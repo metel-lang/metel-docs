@@ -78,7 +78,7 @@ also a reason parallelising the checker would not by itself be enough
   (`infer_fun_decl`, where the remaining residual most likely lives)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_fun_decl`](https://github.com/metel-lang/metel-core/blob/d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L631)
+- [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_fun_decl`](https://github.com/metel-lang/metel-core/blob/f1dabc97b56b57da5af5cf14beba0e57ad9ea873/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L631)
 <!-- limit.py:markers:end -->
 
 ## Resolution

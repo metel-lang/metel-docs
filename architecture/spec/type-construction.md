@@ -58,7 +58,7 @@ Opaque return variables are validated at constraint-composition time, not only a
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::apply_constraint_with_coercion`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L1323) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::apply_constraint_with_coercion`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L1399) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_03_return_impl_aspect_caller_cannot_name.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_03_return_impl_aspect_caller_cannot_name.toml#L1) |
 | `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
 | `related` | ADR-0044, RFC-0037 |
@@ -72,7 +72,7 @@ The typechecker treats `T[]` as `Copy` unconditionally, as a deliberate `InferTy
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3583) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/a6ce39b10ac2cc355c40edfdbd09a33c3b331326/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3665) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
 | `last_reviewed` | cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1 |
 | `related` | ADR-0046, RFC-0126 |
@@ -100,7 +100,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/c89d029f0cf2f237d52e1ff4482c2d04cc747cb4/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L703) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/a6ce39b10ac2cc355c40edfdbd09a33c3b331326/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L703) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::typed_ir_has_no_ascription_node`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/type_checking/tests.rs#L17); [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
 | `last_reviewed` | c89d029f0cf2f237d52e1ff4482c2d04cc747cb4 |
 | `related` | ADR-0009 |
@@ -114,7 +114,7 @@ Operand legality is checked once operand types are resolved: arithmetic and unar
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1462); [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1778) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1474); [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1790) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml#L1) |
 | `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
 | `related` | ADR-0017, `T0005` |
