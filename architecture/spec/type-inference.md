@@ -89,9 +89,9 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/c89d029f0cf2f237d52e1ff4482c2d04cc747cb4/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L19) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L20) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/52_let_polymorphism.toml`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-interpreter/tests/integration/sources/evaluator/generics/52_let_polymorphism.toml#L1); [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.toml#L1) |
-| `last_reviewed` | c89d029f0cf2f237d52e1ff4482c2d04cc747cb4 |
+| `last_reviewed` | d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d |
 | `related` | ADR-0011, ADR-0010 |
 
 ##### Requirement {#arch.type-inference.requirement-6}
