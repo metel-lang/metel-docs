@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-001
 title: "RFC-0121 open rows are only partly implemented"
-summary: "Row kinds, reusable row extension, anonymous row arguments and row-conditional impls work; native open-row parameters and residual dispatch remain limited."
+summary: "Row kinds, reusable row extension, anonymous row arguments and row-conditional impls work; only residual implementation edge cases remain limited."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"
@@ -26,11 +26,9 @@ nominal target, and aspect impls on a record target (`extend<row R: { .. }> { ..
 `extend { x: f64 }: A`; anonymous and nominal records), with row-versus-row coherence
 and runtime dispatch.
 
-- An impl on a record target is matched against a nominal record's declared fields; its
-  row after a partial move (a struct residual) has not been checked, and an aspect that
-  takes type parameters, implemented more than once for one record target, resolves as
-  it does for a nominal type.
-- A `native` function cannot take an open-row-tailed parameter.
+- A record-target impl with an aspect that takes type parameters, implemented more than
+  once for one record target, resolves as it does for a nominal type; residual dispatch
+  after a partial move is implemented and covered by the RFC-0121 fixture suite.
 
 ## Impact
 
