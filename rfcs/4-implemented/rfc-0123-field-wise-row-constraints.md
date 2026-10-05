@@ -2,16 +2,16 @@
 id: rfc-0123
 title: "Field-Wise Row Constraints"
 date: '2026-07-24'
-status: integrated
+status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/793'
-updated: '2026-10-01'
+updated: '2026-10-05'
 coverage:
   "1": { spec: "spec.types.generics.field-wise-row-constraints.legality-1" }
   "2": { kind: untestable, reason: "Rationale for a primitive quantifier over comptime-derive-per-shape as an alternative; not an independent testable claim beyond legality-1's own rule." }
   "3": { kind: untestable, reason: "Prior-art survey (PureScript RowToList, Haskell row-types), not a testable claim of this RFC's own design." }
   "4": { spec: "spec.types.generics.field-wise-row-constraints.legality-1" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1302'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Opened 2026-07-24, unifying three questions the corpus was carrying separately without
@@ -27,18 +27,10 @@ impl_status: in-progress
 > width-subtyping problem, and this cluster's repeated lesson is that large RFCs accumulate
 > contradictions faster than they get read.
 
-> **Status — under review (2026-09-27).** Committed to v0.14.0, tracking issue #793 filed
-> 2026-08-22. RFC-0121 (Open Rows) reached `2-accepted` 2026-09-27, clearing this RFC's
-> only blocker. All five open questions closed the same day — OQ1 (surface syntax) and OQ2
-> (primitive vs. reified mechanism) ratified, OQ3 (heterogeneous fields), OQ4 (nested-record
-> termination) and OQ5 (orphan-rule wording) resolved by inspection. See §1, §4, and Open
-> Questions below.
-
-> **Status — accepted (2026-09-27).** All five open questions closed 2026-09-27, reviewed once more before this transition with no issues found. Design settled per PROCESS.md's 2-accepted bar.
-
-> **Status — integrated (2026-10-01).** Merged into `reference/spec/types.md#field-wise-row-constraints`: `where all R: Aspect` as a `WhereConstraint` alternative, holding when every field type in `R` satisfies `Aspect`. Not implemented yet (`LIMIT-TYPES-002`, `blocked`-exempt on metel-core#1302); additionally depends on RFC-0121's row-kinded generic parameters (`LIMIT-TYPES-001`), landing the same day. Closes `GAP-TYPES-004` (a blanket row-conditional impl's body needing a per-field aspect bound) together with RFC-0121. Cross-checked against RFC-0121 (satisfied — this RFC's `all R: Copy` is exactly what RFC-0121 §4/OQ1 names as the missing piece for abstract-row width subtyping) and RFC-0116/RFC-0120 (satisfied — the motivating `Display`/`Copy`-for-records use cases) — no contradiction found.
-
-> **Status — integrated (2026-10-01).** Spec-rule pass: where all R: Aspect as a WhereConstraint alternative. Blocked-exempt on metel-core#1302 (not implemented); depends on RFC-0121's row-kinded generics. Closes GAP-TYPES-004 together with RFC-0121.
+> **Status — implemented (2026-10-05).** The specification's `where all R: Aspect`
+> constraint is implemented for open-row parameters and row-conditional impls. In particular,
+> an abstract by-value narrowing requires `where all R: Copy` and otherwise reports `T0033`
+> at the generic body's narrowing expression.
 
 ## Summary
 

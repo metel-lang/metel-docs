@@ -1611,27 +1611,28 @@ through a reference (`&{ x: Type, ..R }` or `&mut`/`&var`) never moves the value
 carries no such restriction regardless of `R`'s contents.
 
 When `R`'s own fields are concretely known at the narrowing site, this is checked by
-walking them directly. When `R` is itself abstract (a `<row R>` parameter, narrowed
-by value inside a generic body with no further information), there is nothing to check
-the remainder's fields against without a bound naming the requirement — by-value
-narrowing of an abstract row is rejected unconditionally until that bound exists
-(`all R: Copy`, [Field-wise row constraints](#field-wise-row-constraints) below).
+walking them directly. When `R` is abstract (a `<row R>` parameter narrowed by value
+inside a generic body), the declaration must state `where all R: Copy`
+([Field-wise row constraints](#field-wise-row-constraints) below). Otherwise the body
+is rejected with `T0033` at the narrowing expression.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="By-value narrowing of a `{ x, ..R }` parameter is checked when `R`'s fields are concretely known at the call (T0033, metel-core#1315), and in an abstract generic body only when the body is reconstructed at a call that supplies a non-`Copy` field (T0033 at run time, not at the definition); `where all R: Copy` (metel-core#1302) states the requirement and is checked at the call (T0012). Definition-time rejection of the unconstrained abstract case waits on RFC-0173 (metel-core#1334)." -->
+<!-- rfc.py:last_reviewed d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: By-value narrowing of a `{ x, ..R }` parameter is checked when `R`'s fields are concretely known at the call (T0033, metel-core#1315), and in an abstract generic body only when the body is reconstructed at a call that supplies a non-`Copy` field (T0033 at run time, not at the definition); `where all R: Copy` (metel-core#1302) states the requirement and is checked at the call (T0012). Definition-time rejection of the unconstrained abstract case waits on RFC-0173 (metel-core#1334)._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFic3RyYWN0X29wZW5fcm93X25hcnJvd2luZ19hbGxfY29weV9pc19hbGxvd2VkLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTIxIFx1MDBhNzQgLyBSRkMtMDEyMzogYHdoZXJlIGFsbCBSOiBDb3B5YCBncmFudHMgdGhlIGRlZmluaXRpb24tdGltZVxuLy8gZW50aXRsZW1lbnQgdG8gbmFycm93IGFuIGFic3RyYWN0IG9wZW4tcm93IHZhbHVlIGJ5IHZhbHVlLlxuZnVuIGtlZXBfeDxyb3cgUj4odmFsdWU6IHsgeDogaTY0LCAuLlIgfSkgLT4gaTY0IHsgdmFsdWUueCB9XG5cbmZ1biBmb3J3YXJkPHJvdyBSPih2YWx1ZTogeyB4OiBpNjQsIC4uUiB9KSAtPiBpNjQgd2hlcmUgYWxsIFI6IENvcHkge1xuICAgIGtlZXBfeCh2YWx1ZSlcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGZvcndhcmQoeyB4ID0gMSwgeSA9IDIgfSkgPT0gMSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9nZW5lcmljcy9hYnN0cmFjdF9vcGVuX3Jvd19uYXJyb3dpbmdfYWxsX2NvcHlfaXNfYWxsb3dlZC5tdGwiLCJuYW1lIjoiYWJzdHJhY3Rfb3Blbl9yb3dfbmFycm93aW5nX2FsbF9jb3B5X2lzX2FsbG93ZWQubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMzIiwiY29sIjpudWxsLCJjb250YWlucyI6ImFic3RyYWN0IG9wZW4tcm93IHBhcmFtZXRlciIsImxpbmUiOiI2Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiYWJzdHJhY3Rfb3Blbl9yb3dfbmFycm93aW5nX3JlcXVpcmVzX2FsbF9jb3B5X2lzX3QwMDMzLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTIxIFx1MDBhNzQgLyBSRkMtMDEyMzogdGhlIGdlbmVyaWMgZGVmaW5pdGlvbiBpdHNlbGYgbXVzdCByZWplY3QgYW5cbi8vIGFic3RyYWN0IGJ5LXZhbHVlIG5hcnJvd2luZyB1bmxlc3MgaXRzIHJvdyByZW1haW5kZXIgaXMga25vd24gdG8gYmUgQ29weS5cbmZ1biBrZWVwX3g8cm93IFI+KHZhbHVlOiB7IHg6IGk2NCwgLi5SIH0pIC0+IGk2NCB7IHZhbHVlLnggfVxuXG5mdW4gZm9yd2FyZDxyb3cgUj4odmFsdWU6IHsgeDogaTY0LCAuLlIgfSkgLT4gaTY0IHtcbiAgICBrZWVwX3godmFsdWUpIC8vIEVSUk9SW1QwMDMzXVxufVxuXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9nZW5lcmljcy9hYnN0cmFjdF9vcGVuX3Jvd19uYXJyb3dpbmdfcmVxdWlyZXNfYWxsX2NvcHlfaXNfdDAwMzMubXRsIiwibmFtZSI6ImFic3RyYWN0X29wZW5fcm93X25hcnJvd2luZ19yZXF1aXJlc19hbGxfY29weV9pc190MDAzMy5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
 ### Field-wise row constraints
-
-> **Limitation** LIMIT-TYPES-002
 
 A constraint applies an aspect bound to **every field** of a row, rather than to the
 row's own type as a whole — distinct from a row *bound* (`R: { x: f64, .. }`), which
@@ -1662,7 +1663,7 @@ constrain which labels `R` has (that is an ordinary row bound, composed separate
 <!-- rfc.py:last_reviewed 411515f9790387e5d3d9db86f51270374287e3b6 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/3-integrated/rfc-0123-field-wise-row-constraints.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
