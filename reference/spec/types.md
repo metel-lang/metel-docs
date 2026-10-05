@@ -1347,11 +1347,12 @@ An operator on a bare type parameter (`a + b` over `T`) is rejected (`T0005`): n
 grants it, because no aspect grants an operator yet. `T: Eq` grants `==` through its `eq`
 method.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1364" reason="An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005." -->
+<!-- rfc.py:last_reviewed 1c6eb28092a217366f962dd2e85d56cc63bc427b -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1364: An arithmetic or ordering operator whose operand is a bare declared parameter is T0005 (the operand is checked directly, not through a later unification). Not yet: an operand that reaches the parameter only through a `let` chain or a call result. GAP-TYPES-005._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmlnaWRfb3BlcmF0b3Jfb25fcGFyYW1ldGVyX3JlamVjdGVkLm10bCIsInNvdXJjZSI6Ii8vIE5lZ2F0aXZlIChSRkMtMDE3MyBENSk6IG5vIGFzcGVjdCBncmFudHMgYW4gYXJpdGhtZXRpYyBvciBvcmRlcmluZyBvcGVyYXRvciB5ZXQsIHNvXG4vLyBzdWNoIGFuIG9wZXJhdG9yIG9uIGEgYmFyZSBkZWNsYXJlZCBwYXJhbWV0ZXIgaXMgcmVqZWN0ZWQgKEdBUC1UWVBFUy0wMDUpLiBUaGVcbi8vIHdvcmthcm91bmQgaXMgdG8gcGFzcyB0aGUgb3BlcmF0aW9uIGluLCBvciB0byB3cml0ZSB0aGUgZnVuY3Rpb24gZm9yIHRoZSBjb25jcmV0ZSB0eXBlcy5cbmZ1biBhZGQ8VD4oYTogVCwgYjogVCkgLT4gVCB7IGEgKyBiIH0gLy8gRVJST1JbVDAwMDVdXG5cbmZ1biBtYWluKCkgeyBhZGQoMSwgMik7IH1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2dlbmVyaWNzL3JpZ2lkX29wZXJhdG9yX29uX3BhcmFtZXRlcl9yZWplY3RlZC5tdGwiLCJuYW1lIjoicmlnaWRfb3BlcmF0b3Jfb25fcGFyYW1ldGVyX3JlamVjdGVkLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.types.generics.rigid-type-parameters.dynamics-1}
 
