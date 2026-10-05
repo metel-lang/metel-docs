@@ -105,7 +105,7 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `specified by` | `#type-inference` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::unify`](https://github.com/metel-lang/metel-core/blob/a6ce39b10ac2cc355c40edfdbd09a33c3b331326/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L909) |
 | `verified by` | [`metel-interpreter/tests/unit/type_engine_tests.rs::test_occurs_check_array`](https://github.com/metel-lang/metel-core/blob/e0e5da3a0862fd63b6842e0f5fffa0fa97ab4d4c/metel-interpreter/tests/unit/type_engine_tests.rs#L485); [`metel-interpreter/tests/unit/type_engine_tests.rs::test_occurs_check_function`](https://github.com/metel-lang/metel-core/blob/aeeeb62b91c0037bc42e292ed2d124389abd7c0c/metel-interpreter/tests/unit/type_engine_tests.rs#L494) |
-| `last_reviewed` | 22f1104b6b7e8cc50978fd429537ecfd4267c336 |
+| `last_reviewed` | a6ce39b10ac2cc355c40edfdbd09a33c3b331326 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-7}
