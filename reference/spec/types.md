@@ -1723,15 +1723,17 @@ partial move, wider again after the moved field is restored), exactly the same
 current-row behavior [Named Records](declarations.md#records) states for `record`'s own
 row-bound satisfaction.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-conditional impls resolve against the receiver's row for a nominal target (`extend<row R: { .. }> Session<..R>`) and for a record target (`extend<row R: { .. }> { ..R }: Aspect`, anonymous and nominal records), for inherent and aspect impls (metel-core#833, metel-core#1306 items 5 and 8). Resolution against a struct's current residual row after a partial move has not been checked." -->
+
+<!-- rfc.py:last_reviewed 9ed11284 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-conditional impls resolve against the receiver's row for a nominal target (`extend<row R: { .. }> Session<..R>`) and for a record target (`extend<row R: { .. }> { ..R }: Aspect`, anonymous and nominal records), for inherent and aspect impls (metel-core#833, metel-core#1306 items 5 and 8). Resolution against a struct's current residual row after a partial move has not been checked._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEyOF9yb3dfY29uZGl0aW9uYWxfaW1wbF9hZnRlcl9wYXJ0aWFsX21vdmUubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMjEgcmVtYWluZGVyIChtZXRlbC1jb3JlIzEzMDYpOiBhIHBhcnRpYWxseSBtb3ZlZCBub21pbmFsIHJlY29yZCBpc1xuLy8gY2hlY2tlZCBhZ2FpbnN0IHJlY29yZC10YXJnZXQgcm93IGNvbmRpdGlvbnMgdXNpbmcgaXRzIHJlc2lkdWFsIHJvdy5cblxucmVjb3JkIEhhbmRsZSB7IHB1YmxpYyBpZDogaTY0LCBwdWJsaWMgbmFtZTogU3RyaW5nIH1cblxuYXNwZWN0IERlc2NyaWJlIHsgZnVuIHN0YXRlKCZzZWxmKSAtPiBTdHJpbmc7IH1cblxuZXh0ZW5kPHJvdyBSOiAheyBuYW1lIH0+IHsgLi5SIH06IERlc2NyaWJlIHtcbiAgICBmdW4gc3RhdGUoJnNlbGYpIC0+IFN0cmluZyB7IFwibm8gbmFtZVwiIH1cbn1cblxuZXh0ZW5kPHJvdyBSOiB7IG5hbWU6IFN0cmluZywgLi4gfT4geyAuLlIgfTogRGVzY3JpYmUge1xuICAgIGZ1biBzdGF0ZSgmc2VsZikgLT4gU3RyaW5nIHsgXCJoYXMgbmFtZVwiIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIGggOj0gSGFuZGxlIHsgaWQgPSAxLCBuYW1lID0gXCJzZWNyZXRcIiB9O1xuICAgIGxldCBuYW1lIDo9IGgubmFtZTtcbiAgICBhc3NlcnQobmFtZSA9PSBcInNlY3JldFwiKTtcbiAgICBhc3NlcnQoaC5zdGF0ZSgpID09IFwibm8gbmFtZVwiKTtcbiAgICBwcmludGxuKFwib2tcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzEyOF9yb3dfY29uZGl0aW9uYWxfaW1wbF9hZnRlcl9wYXJ0aWFsX21vdmUubXRsIiwibmFtZSI6IjEyOF9yb3dfY29uZGl0aW9uYWxfaW1wbF9hZnRlcl9wYXJ0aWFsX21vdmUubXRsIn0="></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-2}
 
