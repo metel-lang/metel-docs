@@ -1574,20 +1574,20 @@ type's tail, a struct's own residual-projection tail, or generic-argument positi
 bare identifier in any of these type positions is a type variable, never a row; row and
 type variables are therefore never ambiguous with each other.
 
-An open record type may be a parameter of a free function or an instance method,
-including a `native` function; its row requirements are checked at each call just
-as they are for an ordinary generic function.
+An open record type may occur in a reusable type position, including a function or
+instance-method parameter, a return type, a local annotation, or a nominal field.
+Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
-<!-- rfc.py:last_reviewed 363d72a2a804bb458266359afc22c723725d0b63 -->
+<!-- rfc.py:last_reviewed ec427cd9 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319). Anonymous `..` in generic-argument position (`Builder<..>`) is accepted in free-function and instance-method parameter types (a fresh nameless type variable each, metel-core#1310), but remains rejected in return types and other unsupported type positions (T0032)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters and `..R` are implemented in record tails, residual projections, generic arguments, and reusable open-record type positions (metel-core#1380). Anonymous `..` in generic-argument position (`Builder<..>`) is fresh in reusable type positions (metel-core#1381); native open-row parameters remain tracked separately." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters and `..R` are implemented in a record type's tail (metel-core#1305), a struct's residual-projection tail (metel-core#1309) and generic-argument position (metel-core#1319). Anonymous `..` in generic-argument position (`Builder<..>`) is accepted in free-function and instance-method parameter types (a fresh nameless type variable each, metel-core#1310), but remains rejected in return types and other unsupported type positions (T0032)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters and `..R` are implemented in record tails, residual projections, generic arguments, and reusable open-record type positions (metel-core#1380). Anonymous `..` in generic-argument position (`Builder<..>`) is fresh in reusable type positions (metel-core#1381); native open-row parameters remain tracked separately._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1608,15 +1608,20 @@ to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
 
 
-<!-- rfc.py:last_reviewed a6ce39b1 -->
+<!-- rfc.py:last_reviewed ec427cd9 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (4)</summary>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEyNV9yb3dfZXh0ZW5zaW9uX25vbWluYWxfZmllbGQubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMjEgcmVtYWluZGVyIChtZXRlbC1jb3JlIzEzMDYsICMxMzEwKTogYSBub21pbmFsIGZpZWxkIG1heSBleHRlbmQgYVxuLy8gcm93IHBhcmFtZXRlci4gQ29uc3RydWN0aW5nIHRoZSBub21pbmFsIHR5cGUgaW5mZXJzIHRoZSB0YWlsIGZyb20gdGhlXG4vLyByZWNvcmQncyBmaWVsZHMgdGhhdCB0aGUgZXh0ZW5zaW9uIGRvZXMgbm90IG5hbWUuXG5cbnJlY29yZCBXcmFwPHJvdyBSPiB7IHB1YmxpYyBkYXRhOiB7IHg6IGk2NCwgLi5SIH0gfVxuXG5mdW4gbWFpbigpIHtcbiAgICB2YXIgd3JhcCA6PSBXcmFwIHsgZGF0YSA9IHsgeCA9IDEsIHkgPSAyIH0gfTtcbiAgICB3cmFwLmRhdGEueCA6PSAzO1xuICAgIGFzc2VydCh3cmFwLmRhdGEueCA9PSAzKTtcbiAgICBhc3NlcnQod3JhcC5kYXRhLnkgPT0gMik7XG4gICAgcHJpbnRsbihcIm9rXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy8xMjVfcm93X2V4dGVuc2lvbl9ub21pbmFsX2ZpZWxkLm10bCIsIm5hbWUiOiIxMjVfcm93X2V4dGVuc2lvbl9ub21pbmFsX2ZpZWxkLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFub255bW91c19yb3dfZ2VuZXJpY19hcmd1bWVudF9pbl9yZXR1cm5fdHlwZV9pc190MDAzMi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMSAvICMxMzgxOiBhbm9ueW1vdXMgcm93IGFyZ3VtZW50cyBhcmUgZnJlc2ggaW4gcmV1c2FibGUgdHlwZSBwb3NpdGlvbnMsXG4vLyBpbmNsdWRpbmcgcmV0dXJuIHR5cGVzIGFuZCBsb2NhbCBhbm5vdGF0aW9ucy5cbnJlY29yZCBTZXNzaW9uPHJvdyBSPiB7IHB1YmxpYyBpZDogaTY0LCBwdWJsaWMgZGF0YTogeyAuLlIgfSB9XG5cbmZ1biBtYWtlKCkgLT4gU2Vzc2lvbjwuLj4ge1xuICAgIGxldCB0eXBlZDogU2Vzc2lvbjwuLj4gOj0gU2Vzc2lvbiB7IGlkID0gMSwgZGF0YSA9IHsgbiA9IDEgfSB9O1xuICAgIHR5cGVkXG59XG5cbmZ1biBtYWluKCkge1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZ2VuZXJpY3MvYW5vbnltb3VzX3Jvd19nZW5lcmljX2FyZ3VtZW50X2luX3JldHVybl90eXBlX2lzX3QwMDMyLm10bCIsIm5hbWUiOiJhbm9ueW1vdXNfcm93X2dlbmVyaWNfYXJndW1lbnRfaW5fcmV0dXJuX3R5cGVfaXNfdDAwMzIubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19leHRlbnNpb25fbmVzdGVkX2ZpZWxkX3R5cGUubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMjEgLyAjMTM4MDogYW4gb3BlbiByb3cgbWF5IG9jY3VyIGluIGEgbm9taW5hbCBmaWVsZCB0eXBlLlxucmVjb3JkIEJveDxyb3cgUj4ge1xuICAgIHB1YmxpYyB2YWx1ZTogeyB4OiBpNjQsIC4uUiB9LFxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYm94ZWQgOj0gQm94IHsgdmFsdWUgPSB7IHggPSAxLCBleHRyYSA9IFwib2tcIiB9IH07XG4gICAgYXNzZXJ0KGJveGVkLnZhbHVlLnggPT0gMSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9nZW5lcmljcy9yb3dfZXh0ZW5zaW9uX25lc3RlZF9maWVsZF90eXBlLm10bCIsIm5hbWUiOiJyb3dfZXh0ZW5zaW9uX25lc3RlZF9maWVsZF90eXBlLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19leHRlbnNpb25fcmV0dXJuX3R5cGUubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMjEgLyAjMTM4MDogYW4gb3BlbiByb3cgbWF5IGJlIGNhcnJpZWQgdGhyb3VnaCBhIHJldXNhYmxlIHJldHVybiB0eXBlLlxuZnVuIGlkZW50aXR5PHJvdyBSPih2YWx1ZTogeyB4OiBpNjQsIC4uUiB9KSAtPiAoeyB4OiBpNjQsIC4uUiB9LCBpNjQpIHtcbiAgICBsZXQgdHlwZWQ6IHsgeDogaTY0LCAuLlIgfSA6PSB2YWx1ZTtcbiAgICAodHlwZWQsIDEpXG59XG5cbmZ1biB0YWlsX2lkZW50aXR5PHJvdyBSPih2YWx1ZTogeyAuLlIgfSkgLT4geyAuLlIgfSB7XG4gICAgdmFsdWVcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHNvdXJjZSA6PSB7IHggPSAxLCBleHRyYSA9IFwib2tcIiB9O1xuICAgIGxldCByZXN1bHQgOj0gaWRlbnRpdHkoc291cmNlKTtcbiAgICBhc3NlcnQocmVzdWx0LjAueCA9PSAxKTtcblxuICAgIGxldCB0YWlsIDo9IHRhaWxfaWRlbnRpdHkoeyBleHRyYSA9IDIgfSk7XG4gICAgYXNzZXJ0KHRhaWwuZXh0cmEgPT0gMik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9nZW5lcmljcy9yb3dfZXh0ZW5zaW9uX3JldHVybl90eXBlLm10bCIsIm5hbWUiOiJyb3dfZXh0ZW5zaW9uX3JldHVybl90eXBlLm10bCJ9"></details>
+</details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-3}

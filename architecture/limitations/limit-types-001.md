@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPES-001
 title: "RFC-0121 open rows are only partly implemented"
-summary: "Row kinds, decomposition and row-conditional impls work; row extension, anonymous `..` outside function/method parameters, abstract-row narrowing and generic-body visibility remain limited."
+summary: "Row kinds, reusable row extension, anonymous row arguments and row-conditional impls work; only residual implementation edge cases remain limited."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"
@@ -17,7 +17,8 @@ RFC-0121 is implemented in installments (metel-core#1306), and what is left is t
 the Language Spec still states as design.
 
 Implemented: the `row` generic-parameter kind; `..R` in a record type's tail, a struct's
-residual-projection tail and generic-argument position; a `where R = { label: Type,
+residual-projection tail, generic-argument position and reusable nested/return/field
+type positions; a `where R = { label: Type,
 ..Rest }` decomposition, which bounds `R` and derives `Rest` at each call; by-value width
 subtyping when the row's fields are concretely known at the narrowing site; and
 row-conditional impls (`extend<row R: { .. }> Session<..R>`, inherent and aspect) on a
@@ -25,31 +26,9 @@ nominal target, and aspect impls on a record target (`extend<row R: { .. }> { ..
 `extend { x: f64 }: A`; anonymous and nominal records), with row-versus-row coherence
 and runtime dispatch.
 
-Not implemented, each reproduced against the current implementation:
-
-```metel
-// an anonymous row as a generic argument outside a free function or instance method's parameter type
-fun f() -> Builder<..> { ... }
-```
-
-```
-[T0032] an anonymous row (`..`) is only supported as a generic argument in a free function's
-or instance method's parameter type (`b: Builder<..>`); here, name a `row`-kinded generic parameter (`..R`)
-```
-
-- Row extension, a row literal's trailing `..R` with named fields outside a function
-  parameter (`record Wrap<row R> { data: { x: i64, ..R } }`): rejected with T0032 (it
-  used to panic, metel-core#1324).
-- Abstract-row width subtyping: by-value narrowing of an unconstrained `<row R>` inside a
-  generic body is not rejected, because it needs `all R: Copy` (`LIMIT-TYPES-002`,
-  metel-core#1302).
-- A row-conditional method is not hidden inside a generic body over an unconstrained
-  `<row R>` (metel-core#1323).
-- An impl on a record target is matched against a nominal record's declared fields; its
-  row after a partial move (a struct residual) has not been checked, and an aspect that
-  takes type parameters, implemented more than once for one record target, resolves as
-  it does for a nominal type.
-- A `native` function cannot take an open-row-tailed parameter.
+- A record-target impl with an aspect that takes type parameters, implemented more than
+  once for one record target, resolves as it does for a nominal type; residual dispatch
+  after a partial move is implemented and covered by the RFC-0121 fixture suite.
 
 ## Impact
 
