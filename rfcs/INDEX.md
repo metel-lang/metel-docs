@@ -254,7 +254,7 @@ above it are.
   #1337/#1338, whose near-term path is compiler-derived impls (RFC-0096). Open: loop and
   access spelling, field order, row construction (`Clone`/`Default`), moves out of `self`.
 
-- **RFC-0123** *(integrated 2026-10-01)* — Field-Wise Row Constraints — a constraint
+- **RFC-0123** *(implemented 2026-10-05)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
   questions the corpus tracked separately are one missing construct: RFC-0121's
