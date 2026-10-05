@@ -1591,15 +1591,18 @@ fields `R` carries. A `where R = { label: Type, ..Rest }` equation decomposes a 
 variable `R` into one named field and a remainder `Rest`, and simultaneously bounds `R`
 to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="The `where R = { label: Type, ..Rest }` decomposition is implemented -- it bounds `R` and derives `Rest` at each call (metel-core#1313, metel-core#1321) -- but a row literal's trailing `..R` (row extension, `{ x: T, ..R }` outside a function parameter) is not implemented (metel-core#1310)." -->
+
+
+<!-- rfc.py:last_reviewed a6ce39b1 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: The `where R = { label: Type, ..Rest }` decomposition is implemented -- it bounds `R` and derives `Rest` at each call (metel-core#1313, metel-core#1321) -- but a row literal's trailing `..R` (row extension, `{ x: T, ..R }` outside a function parameter) is not implemented (metel-core#1310)._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEyNV9yb3dfZXh0ZW5zaW9uX25vbWluYWxfZmllbGQubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMjEgcmVtYWluZGVyIChtZXRlbC1jb3JlIzEzMDYsICMxMzEwKTogYSBub21pbmFsIGZpZWxkIG1heSBleHRlbmQgYVxuLy8gcm93IHBhcmFtZXRlci4gQ29uc3RydWN0aW5nIHRoZSBub21pbmFsIHR5cGUgaW5mZXJzIHRoZSB0YWlsIGZyb20gdGhlXG4vLyByZWNvcmQncyBmaWVsZHMgdGhhdCB0aGUgZXh0ZW5zaW9uIGRvZXMgbm90IG5hbWUuXG5cbnJlY29yZCBXcmFwPHJvdyBSPiB7IHB1YmxpYyBkYXRhOiB7IHg6IGk2NCwgLi5SIH0gfVxuXG5mdW4gbWFpbigpIHtcbiAgICB2YXIgd3JhcCA6PSBXcmFwIHsgZGF0YSA9IHsgeCA9IDEsIHkgPSAyIH0gfTtcbiAgICB3cmFwLmRhdGEueCA6PSAzO1xuICAgIGFzc2VydCh3cmFwLmRhdGEueCA9PSAzKTtcbiAgICBhc3NlcnQod3JhcC5kYXRhLnkgPT0gMik7XG4gICAgcHJpbnRsbihcIm9rXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy8xMjVfcm93X2V4dGVuc2lvbl9ub21pbmFsX2ZpZWxkLm10bCIsIm5hbWUiOiIxMjVfcm93X2V4dGVuc2lvbl9ub21pbmFsX2ZpZWxkLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-3}
 
