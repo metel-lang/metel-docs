@@ -77,7 +77,7 @@ count := 99;               // 99 is i32
 The exact-width numeric primitive types are `i8`, `i16`, `i32`, `i64`, `u8`, `u16`,
 `u32`, `u64`, `f32`, and `f64`.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 5c7f7c2a3bd8f4a9f6735ca6c8c556b114b0ef6f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
@@ -1800,7 +1800,7 @@ method is not visible unless `R`'s own bound entails the impl's condition.
 A row bound requires `record` on its type parameter, either at the parameter declaration
 or in a `where` constraint; `record` without a row bound is also a legal any-record bound.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 5c7f7c2a3bd8f4a9f6735ca6c8c556b114b0ef6f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
