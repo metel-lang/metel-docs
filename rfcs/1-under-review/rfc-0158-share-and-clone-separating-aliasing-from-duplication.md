@@ -15,7 +15,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/919'
 > narrow aspect, `Share`, and tightens what `Clone` is allowed to mean, so that "did I
 > just create an alias" stops being invisible at `Rc`/`Arc` call sites.
 
-> **Status — under review (2026-08-31).** purely-additive Share aspect; ready for review alongside RFC-0157
+> **Status — under review (2026-08-31).** Milestoned v0.14.2 (metel-core#919), the Copy/Clone settlement release; purely-additive Share aspect; ready for review alongside RFC-0157
 
 ## Summary
 
