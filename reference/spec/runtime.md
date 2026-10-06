@@ -171,7 +171,7 @@ Arrays, lists, and ranges implement `Iterable<T>`; a user-defined type is usable
 `for-in` only when it implements that aspect. A list's iterator cursor belongs to the
 loop's copied value, so nested loops over one list do not share iteration position.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 642b817f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
