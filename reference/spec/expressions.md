@@ -908,8 +908,8 @@ binding may be reassigned by the loop body or step expression.
 > **Availability:** Array and range iteration since v0.1.0. User-defined `Iterable<T>` implementations since v0.4.0.
 
 [`for-in` works on any type implementing the `Iterable<T>` aspect](runtime.md#spec.runtime.built-in-aspects.iterable-t.legality-1). The loop variable
-receives type `T`. `T[]`, `[T; N]` (array and fixed-size array), and `Range` (produced by
-`..` and `..=`) implement `Iterable<T>` by default. A `T[]` loop binding denotes an
+receives type `T`. `[T]`, `[T; N]` (array and fixed-size array), and `Range` (produced by
+`..` and `..=`) implement `Iterable<T>` by default. A `[T]` loop binding denotes an
 element of an immutable borrowed view: with move checking enabled, a non-`Copy` binding
 may be read or borrowed but not consumed. User-defined types can be made iterable by
 implementing `Iterable<T>`. The loop binding is immutable by default and [may be made

@@ -680,6 +680,9 @@ part of the same records/views substrate review):
   and general operator overloading to their respective RFCs.
 - **RFC-0011** — Operator Overloading Aspects — operator desugaring. RFC-0093 notes
   derived `Eq`/`Ord` depend on this.
+- **RFC-0176** *(draft, opened 2026-10-06)* — Hash Aspect and Structural Hashing —
+  defines the public `Hash` aspect, equality-consistent hashing, and conditional
+  structural hashing without deciding the unresolved equality or ordering APIs.
 - **RFC-0039** *(under review, opened 2026-06-01; #922)* — `aspect` Alias Syntax —
   `aspect Sortable = Comparable + Display + Clone`, a transparent shorthand for compound
   bounds (not a new aspect requiring its own impl); alias-of-alias allowed, cycles error;
