@@ -1579,7 +1579,7 @@ An open record type may occur in a reusable type position, including a function 
 instance-method parameter, a return type, a local annotation, or a nominal field.
 Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
-<!-- rfc.py:last_reviewed 077473949bbf6f2f66a6ea4ca18c73b3f1f27a48 -->
+<!-- rfc.py:last_reviewed 077473949bbf4e6115d3b87cbab3be4032acc8e6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
