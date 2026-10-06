@@ -20,7 +20,7 @@ A panic prints its message, terminates the process with a non-zero status, and c
 caught. Calling `panic`, a failing `assert`, `.yolo()` on an absent or error variant,
 out-of-bounds array access, and integer division by zero trigger a panic.
 
-<!-- rfc.py:last_reviewed 60cdfd504635a2a8c5e6f2d2edf2f9d5eea3f49b -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -64,7 +64,7 @@ the `+` operator.
 
 `print` and `println` accept only values whose type implements `Display`.
 
-<!-- rfc.py:last_reviewed a7b8151cc37f56e7485b2fc48062ed4ba2925b14 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -76,7 +76,7 @@ the `+` operator.
 `print` writes a `Display` value's `to_string` result to stdout without a newline; `println`
 writes the same result followed by a newline.
 
-<!-- rfc.py:last_reviewed de95f8a18ed0ec19509be179013604e7c1964a76 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -87,7 +87,7 @@ writes the same result followed by a newline.
 
 `assert(false)` panics with `"assertion failed"`; `assert(false, msg)` panics with `msg`.
 
-<!-- rfc.py:last_reviewed 60cdfd504635a2a8c5e6f2d2edf2f9d5eea3f49b -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -98,7 +98,7 @@ writes the same result followed by a newline.
 
 `dbg(v)` writes its debug rendering to stderr and evaluates to `v` unchanged.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -109,7 +109,7 @@ writes the same result followed by a newline.
 
 `clock()` returns the current Unix timestamp in milliseconds.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -140,7 +140,7 @@ aspect Display {
 `i64`, `f64`, `boolean`, `String`, and `Char` have built-in `Display` implementations whose
 `to_string` methods return their canonical string representations.
 
-<!-- rfc.py:last_reviewed 25e71d8966dfb6e54799ec22be9247609654a833 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -170,7 +170,7 @@ aspect Iterable<T> {
 Arrays and ranges implement `Iterable<T>`; a user-defined type is usable in `for-in` only
 when it implements that aspect.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -197,7 +197,7 @@ aspect From<S> {
 `i64` implements `From<f64>` and `f64` implements `From<i64>`; user-defined `From<S>`
 implementations make their target type available for `as` casts and `?` error coercion.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -250,7 +250,7 @@ String utility methods operate on Unicode scalar values; index-based operations 
 clamping a slice boundary and returning `None` for an absent character or search result
 rather than panicking.
 
-<!-- rfc.py:last_reviewed 25e71d8966dfb6e54799ec22be9247609654a833 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -279,7 +279,7 @@ rather than panicking.
 
 Calling `.len()` on either `[T]` or `[T; N]` returns its number of elements.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -307,7 +307,7 @@ Calling `.len()` on either `[T]` or `[T; N]` returns its number of elements.
 character or raises `R0016` when `n` is not a valid Unicode scalar value. A character's
 `to_string()` result is its one-character string.
 
-<!-- rfc.py:last_reviewed de3c3d702759c8af64dccfe0bf9901970acfb858 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -363,7 +363,7 @@ The listed `Perhaps<T>` and `Result<T, E>` combinators operate on their correspo
 variants: transforms preserve the non-selected variant, and predicates report which variant
 is present.
 
-<!-- rfc.py:last_reviewed 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -412,7 +412,7 @@ replacing an element in a `List<T>`.
 `List<T>` collection and iteration methods are methods of `List<T>` in `std::core`, not
 free functions in separate collection or iteration modules.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -428,7 +428,7 @@ free functions in separate collection or iteration modules.
 `List::from(source)` copies the elements of `source`, so mutating the resulting list
 does not mutate that source.
 
-<!-- rfc.py:last_reviewed 25e71d8966dfb6e54799ec22be9247609654a833 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -461,7 +461,7 @@ implements `Display`.
 Host-backed fallible APIs use `OsError`, rather than `String`, as their error type; `OsError`
 is available from `std::core` and implements `Display`.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -497,7 +497,7 @@ Read-only process environment inspection.
 `std::env` exposes read-only process-environment inspection through `get` and `vars`; it is
 an explicitly imported host-backed module, not part of the automatic prelude.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -535,7 +535,7 @@ Text-oriented file operations. Fallible operations return `Result<_, OsError>`.
 `std::fs` is an explicitly imported host-backed module whose text-oriented file operations
 have the signatures listed above and report fallible outcomes as `Result<_, OsError>`.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -571,7 +571,7 @@ an error; only a failure to launch the command is an `Err`. The result type is
 program returns `Ok(ProcessOutput)` even for a non-zero exit status; only failure to launch
 returns `Err(OsError)`.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
