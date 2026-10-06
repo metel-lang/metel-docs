@@ -19,7 +19,7 @@ field generically, a way to require an aspect of every field in the row (now spe
 RFC-0123, `3-integrated` — `spec.types.generics.field-wise-row-constraints.legality-1`,
 `where all R: Aspect`). A fully correct implementation of the current Language Spec
 would now deliver both forms; what remains is a pure implementation shortfall
-(`LIMIT-TYPES-001`, `LIMIT-TYPES-002`), not a spec gap.
+(`LIMIT-TYPES-002`), not a spec gap.
 
 ## Impact
 
@@ -35,7 +35,6 @@ None remaining at the spec level — closed by the two RFCs above.
 ## Resolution
 
 Resolved 2026-10-01: RFC-0121 (row variables, row-conditional impl resolution) and
-RFC-0123 (`all R: Aspect`) both reached `3-integrated` the same day, and the spec text
-at `reference/spec/types.md#implementing-an-aspect-for-a-record` now states both forms
-as the accepted design. Neither is implemented yet — see `LIMIT-TYPES-001` and
+RFC-0123 (`all R: Aspect`) both reached the integrated spec; their implementations are
+now complete, with the remaining RFC-0123 limitation tracked separately in
 `LIMIT-TYPES-002`.

@@ -1533,7 +1533,8 @@ rather than declared.
 
 ### Open rows
 
-> **Limitation** LIMIT-TYPES-001
+> **Available in v0.14.0.** RFC-0121 open rows support row extension, decomposition,
+> reusable type positions, and row-conditional implementations.
 
 A `row`-kinded generic parameter abstracts over "the rest of a row" rather than a
 concrete shape. The binder is `row R`; every *use* of the variable is written `..R`,
@@ -1578,23 +1579,18 @@ An open record type may occur in a reusable type position, including a function 
 instance-method parameter, a return type, a local annotation, or a nominal field.
 Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
-<!-- rfc.py:last_reviewed ec427cd9 -->
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1301" reason="Row-kinded generic parameters and `..R` are implemented in record tails, residual projections, generic arguments, and reusable open-record type positions (metel-core#1380). Anonymous `..` in generic-argument position (`Builder<..>`) is fresh in reusable type positions (metel-core#1381); native open-row parameters remain tracked separately." -->
+<!-- rfc.py:last_reviewed 077473949bbf4e6115d3b87cbab3be4032acc8e6 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1301: Row-kinded generic parameters and `..R` are implemented in record tails, residual projections, generic arguments, and reusable open-record type positions (metel-core#1380). Anonymous `..` in generic-argument position (`Builder<..>`) is fresh in reusable type positions (metel-core#1381); native open-row parameters remain tracked separately._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
 <!-- rfc.py:fixtures:start -->
-<details class="rigor-fixtures-toggle" open>
-<summary>Tested by (3)</summary>
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (4)</summary>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFub255bW91c19yb3dfZ2VuZXJpY19hcmd1bWVudF9pbl9hX21ldGhvZC5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMSBpdGVtIDIgKG1ldGVsLWNvcmUjMTMxMCk6IGFuIGFub255bW91cyByb3cgYXJndW1lbnQgaXMgYWNjZXB0ZWQgaW5cbi8vIGFuIGluc3RhbmNlIG1ldGhvZCBwYXJhbWV0ZXIgdHlwZSBhbmQgcmVjZWl2ZXMgYSBmcmVzaCByb3cgdmFyaWFibGUuXG5yZWNvcmQgU2Vzc2lvbjxyb3cgUj4geyBwdWJsaWMgaWQ6IGk2NCwgcHVibGljIGRhdGE6IHsgLi5SIH0gfVxuc3RydWN0IFRvb2wgeyBwdWJsaWMgbjogaTY0IH1cblxuZXh0ZW5kIFRvb2wge1xuICAgIGZ1biB0YWtlKCZzZWxmLCBzOiBTZXNzaW9uPC4uPikgLT4gaTY0IHsgcy5pZCArIHNlbGYubiB9XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCB0b29sIDo9IFRvb2wgeyBuID0gMSB9O1xuICAgIGxldCBzZXNzaW9uIDo9IFNlc3Npb24geyBpZCA9IDIsIGRhdGEgPSB7IHRhZyA9IFwib2tcIiB9IH07XG4gICAgYXNzZXJ0KHRvb2wudGFrZShzZXNzaW9uKSA9PSAzKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2dlbmVyaWNzL2Fub255bW91c19yb3dfZ2VuZXJpY19hcmd1bWVudF9pbl9hX21ldGhvZC5tdGwiLCJuYW1lIjoiYW5vbnltb3VzX3Jvd19nZW5lcmljX2FyZ3VtZW50X2luX2FfbWV0aG9kLm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1ldGhvZF9hbm9ueW1vdXNfcm93X2FyZ3VtZW50Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTIxIGl0ZW0gMiAoIzEzMTApOiBtZXRob2Qgc2lnbmF0dXJlcyBmcmVzaGVuIGFub255bW91cyByb3cgYXJndW1lbnRzXG4vLyBpbmRlcGVuZGVudGx5LCBqdXN0IGFzIGZyZWUtZnVuY3Rpb24gcGFyYW1ldGVycyBkby5cbnJlY29yZCBTZXNzaW9uPHJvdyBSPiB7IHB1YmxpYyBpZDogaTY0LCBwdWJsaWMgZGF0YTogeyAuLlIgfSB9XG5cbmV4dGVuZDxyb3cgUj4gU2Vzc2lvbjwuLlI+IHtcbiAgICBmdW4gdG90YWwoc2VsZiwgbGVmdDogU2Vzc2lvbjwuLj4sIHJpZ2h0OiBTZXNzaW9uPC4uPikgLT4gaTY0IHtcbiAgICAgICAgc2VsZi5pZCArIGxlZnQuaWQgKyByaWdodC5pZFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHggOj0gU2Vzc2lvbiB7IGlkID0gMSwgZGF0YSA9IHsgbGVmdCA9IDEgfSB9O1xuICAgIGxldCB5IDo9IFNlc3Npb24geyBpZCA9IDIsIGRhdGEgPSB7IHJpZ2h0ID0gXCJva1wiIH0gfTtcbiAgICBsZXQgeiA6PSBTZXNzaW9uIHsgaWQgPSAzLCBkYXRhID0geyB0aGlyZCA9IHRydWUgfSB9O1xuICAgIGFzc2VydCh4LnRvdGFsKHksIHopID09IDYpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZ2VuZXJpY3MvbWV0aG9kX2Fub255bW91c19yb3dfYXJndW1lbnQubXRsIiwibmFtZSI6Im1ldGhvZF9hbm9ueW1vdXNfcm93X2FyZ3VtZW50Lm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19leHRlbnNpb25fdGFpbF9maXJzdC5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMTogcm93IGV4dGVuc2lvbiBwZXJtaXRzIHRoZSB0YWlsIGJlZm9yZSBuZXdseS1hZGRlZCBmaWVsZHMuXG5yZWNvcmQgQm94PHJvdyBSPiB7XG4gICAgcHVibGljIHZhbHVlOiB7IC4uUiwgYXV0aDogU3RyaW5nIH0sXG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBib3hlZCA6PSBCb3ggeyB2YWx1ZSA9IHsgaWQgPSAxLCBhdXRoID0gXCJva1wiIH0gfTtcbiAgICBhc3NlcnQoYm94ZWQudmFsdWUuaWQgPT0gMSk7XG4gICAgYXNzZXJ0KGJveGVkLnZhbHVlLmF1dGggPT0gXCJva1wiKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2dlbmVyaWNzL3Jvd19leHRlbnNpb25fdGFpbF9maXJzdC5tdGwiLCJuYW1lIjoicm93X2V4dGVuc2lvbl90YWlsX2ZpcnN0Lm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd190YWlsX3BhcmFtX29uX25hdGl2ZV9mdW5jdGlvbi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEyMSBpdGVtIDY6IG5hdGl2ZSBmdW5jdGlvbnMgY2Fycnkgb3Blbi1yb3cgcGFyYW1ldGVyIGJvdW5kcyBvbiB0aGVpclxuLy8gc2NoZW1lcywganVzdCBhcyBvcmRpbmFyeSBmcmVlIGZ1bmN0aW9ucyBkby5cblxubmF0aXZlKEBzdGQuY29yZS5wcmludGxuKSBmdW4gc2hvdXQ8cm93IFI+KHg6IHsgYTogaTY0LCAuLlIgfSk7XG5cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvcGFyc2luZy9yb3dfdGFpbF9wYXJhbV9vbl9uYXRpdmVfZnVuY3Rpb24ubXRsIiwibmFtZSI6InJvd190YWlsX3BhcmFtX29uX25hdGl2ZV9mdW5jdGlvbi5tdGwifQ=="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
@@ -1611,7 +1607,7 @@ to carry at least that field (equivalent to `R: { label: Type, .. }`).
 <!-- rfc.py:last_reviewed ec427cd9 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1642,7 +1638,7 @@ is rejected with `T0033` at the narrowing expression.
 <!-- rfc.py:last_reviewed d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1747,7 +1743,7 @@ row-bound satisfaction.
 <!-- rfc.py:last_reviewed 9ed11284 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/3-integrated/rfc-0121-open-rows.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1808,7 +1804,8 @@ or in a `where` constraint; `record` without a row bound is also a legal any-rec
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
-<summary>Tested by (2)</summary>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEyOV9ibG9ja19sb2NhbF9yZWNvcmRfcm93X2JvdW5kLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTIxIC8gbWV0ZWwtY29yZSMxMzA3OiBhIGJsb2NrLWxvY2FsIHJlY29yZCBrZWVwcyBpdHMgZGVjbGFyYXRpb25cbi8vIGlkZW50aXR5IHdoZW4gcGFzc2VkIHRvIGEgZ2VuZXJpYyByb3ctYm91bmRlZCBmdW5jdGlvbi5cblxuZnVuIG5lZWRzX2ZkPHJlY29yZCBUOiB7IGZkOiBpNjQsIC4uIH0+KHZhbHVlOiBUKSAtPiBpNjQge1xuICAgIHZhbHVlLmZkXG59XG5cbmZ1biBtYWluKCkge1xuICAgIHJlY29yZCBIYW5kbGUgeyBwdWJsaWMgZmQ6IGk2NCB9XG4gICAgbGV0IGhhbmRsZSA6PSBIYW5kbGUgeyBmZCA9IDMgfTtcbiAgICBhc3NlcnQobmVlZHNfZmQoaGFuZGxlKSA9PSAzKTtcbiAgICBwcmludGxuKFwib2tcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzEyOV9ibG9ja19sb2NhbF9yZWNvcmRfcm93X2JvdW5kLm10bCIsIm5hbWUiOiIxMjlfYmxvY2tfbG9jYWxfcmVjb3JkX3Jvd19ib3VuZC5tdGwifQ=="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjkzX3Jvd19ib3VuZHMubXRsIiwic291cmNlIjoiZnVuIGNsb3NlZF9vazxyZWNvcmQgVDogeyB4OiBpNjQsIHk6IGk2NCB9PihfdmFsdWU6IFQpIC0+IGk2NCB7IDEgfVxuXG5mdW4gb3Blbl9vazxyZWNvcmQgVDogeyB4OiBpNjQsIC4uIH0+KF92YWx1ZTogVCkgLT4gaTY0IHsgMiB9XG5cbmZ1biBsYWJlbF9vbmx5X29rPHJlY29yZCBUOiB7IHRva2VuIH0+KF92YWx1ZTogVCkgLT4gaTY0IHsgMyB9XG5cbmZ1biBtaXhlZF9vazxyZWNvcmQgVDogeyB0b2tlbiwgeTogaTY0LCAuLiB9PihfdmFsdWU6IFQpIC0+IGk2NCB7IDQgfVxuXG5mdW4gd2hlcmVfbWFya2VyX29rPFQ+KF92YWx1ZTogVCkgLT4gaTY0XG53aGVyZSByZWNvcmQgVDogeyB4OiBpNjQsIC4uIH0ge1xuICAgIDVcbn1cblxuZnVuIGFueV9yZWNvcmQ8cmVjb3JkIFQ+KF92YWx1ZTogVCkgLT4gaTY0IHsgNiB9XG5cbmZ1biBuZWdfdHlwZWRfb2s8cmVjb3JkIFQ6ICF7IHg6IGY2NCB9PihfdmFsdWU6IFQpIC0+IGk2NCB7IDcgfVxuXG5mdW4gbmVnX2xhYmVsX29rPHJlY29yZCBUOiAheyB6IH0+KF92YWx1ZTogVCkgLT4gaTY0IHsgOCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGFzc2VydChjbG9zZWRfb2soeyB4ID0gMSwgeSA9IDIgfSkgPT0gMSk7XG4gICAgYXNzZXJ0KG9wZW5fb2soeyB4ID0gMSwgeSA9IDIsIGV4dHJhID0gMyB9KSA9PSAyKTtcbiAgICBhc3NlcnQobGFiZWxfb25seV9vayh7IHRva2VuID0gXCJpZFwiIH0pID09IDMpO1xuICAgIGFzc2VydChtaXhlZF9vayh7IHRva2VuID0gdHJ1ZSwgeSA9IDksIGV4dHJhID0gMSB9KSA9PSA0KTtcbiAgICBhc3NlcnQod2hlcmVfbWFya2VyX29rKHsgeCA9IDEsIGV4dHJhID0gMiB9KSA9PSA1KTtcbiAgICBhc3NlcnQoYW55X3JlY29yZCh7IGFueXRoaW5nID0gMSB9KSA9PSA2KTtcbiAgICBhc3NlcnQobmVnX3R5cGVkX29rKHsgeCA9IDEgfSkgPT0gNyk7XG4gICAgYXNzZXJ0KG5lZ19sYWJlbF9vayh7IHggPSAxIH0pID09IDgpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy85M19yb3dfYm91bmRzLm10bCIsIm5hbWUiOiI5M19yb3dfYm91bmRzLm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJlY29yZF9ib3VuZF9pbmxpbmVfYW5kX3doZXJlX2NsYXVzZV9jb21iaW5lZC5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDExOCBcdTAwYTcxOiB0aGUgYHJlY29yZGAgbWFya2VyIGFuZCBhIHJvdyBib3VuZCBtYXkgYmUgd3JpdHRlbiBhdCB0aGVcbi8vIGdlbmVyaWMgcGFyYW1ldGVyJ3Mgb3duIGRlY2xhcmF0aW9uIEFORCBzZXBhcmF0ZWx5IGluIGEgYHdoZXJlYCBjbGF1c2UgZm9yXG4vLyB0aGUgc2FtZSBwYXJhbWV0ZXI7IHRoZSB0d28gcG9zaXRpb25zIGNvbXBvc2UuIEFsc28gZXhlcmNpc2VzIFx1MDBhNzJhIChhIGJvdW5kXG4vLyBmaWVsZCwgYHhgLCBtYXkgb21pdCBpdHMgdHlwZSkgYW5kIFx1MDBhNzIgKGEgbmVnYXRpdmUgd2hlcmUtY2xhdXNlIGJvdW5kIGlzXG4vLyBlbmZvcmNlZCwgbm90IGp1c3QgcGFyc2VkKS5cbmZ1biBmPHJlY29yZCBUOiB7IHgsIHk6IGk2NCwgLi4gfT4odmFsdWU6IFQpIC0+IGk2NFxud2hlcmUgcmVjb3JkIFQ6ICF7IHogfSB7XG4gICAgdmFsdWUueVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgb2sgOj0geyB4ID0gXCJoaVwiLCB5ID0gNSB9O1xuICAgIGxldCByZXN1bHQgOj0gZihvayk7XG4gICAgYXNzZXJ0KHJlc3VsdCA9PSA1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2dlbmVyaWNzL3JlY29yZF9ib3VuZF9pbmxpbmVfYW5kX3doZXJlX2NsYXVzZV9jb21iaW5lZC5tdGwiLCJuYW1lIjoicmVjb3JkX2JvdW5kX2lubGluZV9hbmRfd2hlcmVfY2xhdXNlX2NvbWJpbmVkLm10bCJ9"></details>
 </details>

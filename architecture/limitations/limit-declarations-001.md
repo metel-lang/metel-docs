@@ -55,8 +55,7 @@ were declared `record`, and `visible_type_kind` resolves `VisibleTypeKind::Recor
 for them (by brand name, uniformly for `Type::Named` and `Type::Residual`, per
 RFC-0137 §3) — a `record`'s row is now structurally visible to row bounds exactly as
 this record's "Impact" section described it should be. Row-conditional impl
-resolution itself remains gated on RFC-0121 (Open Rows, not yet implemented; see
-`LIMIT-TYPES-001`). Verified directly: `record Handle { public fd: i64 }` now parses
+resolution is implemented by RFC-0121. Verified directly: `record Handle { public fd: i64 }` now parses
 and typechecks, `record Handle { fd: i64 }` (missing `public`) is rejected as `P0001`,
 and a function generic over `<record T: { fd: i64, .. }>` accepts `Handle` and its
 narrowed residuals but rejects an equivalent `struct`. This record's exemptions on

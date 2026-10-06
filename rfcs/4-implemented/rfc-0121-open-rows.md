@@ -2,9 +2,9 @@
 id: rfc-0121
 title: "Open Rows"
 date: '2026-07-24'
-status: integrated
+status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/792'
-updated: '2026-10-01'
+updated: '2026-10-06'
 coverage:
   "1": { spec: "spec.types.generics.open-rows.legality-1" }
   "2": { spec: "spec.types.generics.open-rows.legality-2" }
@@ -12,7 +12,7 @@ coverage:
   "4": { spec: "spec.types.generics.open-rows.legality-3" }
   "5": { kind: untestable, reason: "Grammar restated against the real generated grammar -- already stated as part of legality-1/legality-2's own rule text above, not an independent testable claim of its own." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1301'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Extracted from RFC-0090 §2 (open half), §4 and §7 on 2026-07-24** (superseded; see
@@ -62,9 +62,7 @@ impl_status: in-progress
 
 > **Status — accepted (2026-09-27).** All seven open questions closed 2026-09-27 (OQ1/OQ2/OQ4/OQ5 ratified, OQ3/OQ6 descoped non-blocking, OQ7 resolved 2026-08-25); design settled per PROCESS.md's 2-accepted bar.
 
-> **Status — integrated (2026-10-01).** Merged into `reference/spec/types.md#open-rows` (row binder, `..R` use sites, row decomposition, width subtyping) and `#implementing-an-aspect-for-a-record` (row-conditional impl resolution against a value's *current* row, brand-vs-row priority, row-vs-row coherence). All five Legality Rules `blocked`-exempt on metel-core#1301 — `LIMIT-TYPES-001` records the grammar/elaborator gap. The abstract-row case of width subtyping stays additionally gated on RFC-0123's `all R: Copy` even once this RFC itself ships. `GAP-TYPES-004` (blanket row-conditional impl body needing a per-field aspect bound) is resolved once RFC-0123 (`4-implemented`) supplied `all R: Aspect`. Cross-checked against RFC-0120 (`4-implemented`, satisfied — its row-bound-satisfaction claim is exactly what §"row-conditional-impls.legality-1" states) and RFC-0123 (`4-implemented`) — no contradiction found.
-
-> **Status — integrated (2026-10-01).** Spec-rule pass: row binder, ..R use sites, row decomposition, row-conditional impl resolution against a value's current row, brand-vs-row priority, row-vs-row coherence, width-subtyping rule. Blocked-exempt on metel-core#1301 (row kind not implemented).
+> **Status — implemented (2026-10-06).** Open-row extension and reusable row positions are implemented.
 
 ## Summary
 
@@ -457,15 +455,13 @@ grammar citations need updating.
 
 ## Decision
 
-**Outcome:** **Ready for acceptance, 2026-09-27.** No blocking open question remains: OQ1
+**Outcome:** **Implemented.** No blocking open question remains: OQ1
 (width subtyping, §4), OQ2 (row-vs-row coherence, §3), OQ4 (phantom-vs-row-conditional
 typestate, §3), OQ5 (grammar, §5) and OQ7 (brand-vs-row priority, §3) are ratified rules;
 OQ3 (diagnostics) and OQ6 (label polymorphism) are descoped as non-blocking
 implementation follow-up and explicitly out-of-scope respectively. §5's grammar is
-diffed against the real generated grammar, not an illustrative sketch. The only work left
-is the spec-rule pass (coverage frontmatter + Legality Rule blocks for the `row` binder,
-`..R` use sites, row decomposition, row-conditional impl resolution, and the
-width-subtyping rule) done at the `3-integrated` transition, as for RFC-0117 and
-RFC-0129.
+diffed against the real generated grammar, not an illustrative sketch. The implementation
+supports row extension in both field orders, reusable row positions, decomposition,
+width-subtyping, and row-conditional impl resolution.
 
 **Target:** v0.14.0, via metel-core#792.

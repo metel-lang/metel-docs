@@ -92,7 +92,7 @@ was found and reconciled, and where this session did most of its work.
 > re-partition.
 
 > **Re-promoted, 2026-09-03 — the deferral condition is substantially met.** RFC-0116/
-> RFC-0117/RFC-0118 are implemented/integrated and RFC-0120 is accepted; RFC-0119 (the
+> RFC-0117/RFC-0118 are implemented/integrated and RFC-0120 is implemented; RFC-0119 (the
 > `ToRecord` floor RFC-0089 §3 actually depends on) is still `1-under-review` but
 > milestoned v0.13.1, ahead of where linear types are going. **RFC-0089 and RFC-0091**
 > move back to `1-under-review`, **milestoned v0.21.1** — a third design-settlement lane
@@ -450,7 +450,7 @@ above it are.
   scoped, lossy, brand-stripping bridge, incapable of a row-conditional impl on the
   nominal type. Spec-rule pass (coverage frontmatter + Legality blocks) deferred to the
   `3-integrated` transition. Tracker metel-core#791 (v0.13.0).
-- **RFC-0121** *(integrated 2026-10-01)* — Open Rows — `<row R>` / `..R`, row algebra
+- **RFC-0121** *(implemented 2026-10-06)* — Open Rows — `<row R>` / `..R`, row algebra
   (extension is a literal, removal is a where-clause decomposition), row-conditional
   typestate, and the width-subtyping-versus-ownership problem. **The expensive half**, and
   the only piece introducing a row kind or row unification. Depends on RFC-0118, RFC-0120

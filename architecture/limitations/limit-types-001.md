@@ -1,13 +1,11 @@
 ---
 id: LIMIT-TYPES-001
-title: "RFC-0121 open rows are only partly implemented"
-summary: "Row kinds, reusable row extension, anonymous row arguments and row-conditional impls work; only residual implementation edge cases remain limited."
+title: "RFC-0121 open rows were incomplete"
+summary: "Resolved: row extension, reusable row positions, decomposition, and row-conditional implementations are implemented."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "RFC-0121 entering 3-integrated with no implementation yet"
-disposition: planned
-planned_for: v0.14.0
-rfc: RFC-0121
+disposition: resolved
 review: null
 ---
 
@@ -32,13 +30,11 @@ and runtime dispatch.
 
 ## Impact
 
-Visible to Metel programmers: row-polymorphic code over a nominal type works, including
+At the time, row-polymorphic code over a nominal type worked, including
 typestate (`authenticate` / `send_data` as separate impls), and a local aspect can be
 implemented for every record of a given shape. The standard library provides
-the blanket `Display` and `Copy` impls for records, and a function
-that extends a row rather than only narrowing or decomposing it is unavailable.
-`record`'s own row-conditional impl eligibility (`spec.declarations.records.legality-2`,
-`LIMIT-DECLARATIONS-001`) has not been re-checked against this work.
+the blanket `Display` and `Copy` impls for records. Row extension now also permits the
+tail before newly-added fields, such as `{ ..R, auth: String }`.
 
 ## Affects
 
@@ -51,5 +47,5 @@ that extends a row rather than only narrowing or decomposing it is unavailable.
 
 ## Resolution
 
-Planned: tracked as metel-core#1301 (RFC-0121 implementation tracking, milestone
-v0.14.0), with the remaining pieces itemized on metel-core#1306 and metel-core#1310.
+Resolved by metel-core#1301, #1306, and #1384. The grammar and reusable-type
+implementation now accept both `{ fields, ..R }` and `{ ..R, fields }` forms.
