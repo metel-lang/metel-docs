@@ -261,6 +261,15 @@ above it are.
   any other statically known field. Separate from RFC-0174's iteration over all fields; open
   questions cover syntax, label equality, construction, and interaction with linear moves.
 
+- **RFC-0178** *(under-review 2026-10-06 — metel-core#1399, v0.14.0)* — Row Remainder
+  Construction — the value-level half of RFC-0121's removal-by-decomposition: a record
+  **rest pattern** (`{ token, ..rest }`, binding the unnamed remainder as an owned record)
+  and a **row spread** in record literals (`{ ..rest, auth = a }`), so a generic body can
+  take an abstract row apart and rebuild one (typestate over a row, `authenticate`/`with_token`).
+  Presence and absence of labels are entailments of the declared bounds and equations
+  (RFC-0173); no override, at most one spread; owned scrutinees only, with borrowed
+  patterns deferred to RFC-0122. Fixed-label case that RFC-0175's label polymorphism builds on.
+
 - **RFC-0123** *(implemented 2026-10-05)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
