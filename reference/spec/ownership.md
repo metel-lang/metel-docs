@@ -454,6 +454,18 @@ until its type is known.
 > ("cannot unify `{ right }` with `{ left, right }`"). Both are type errors at
 > type-check time.
 
+An anonymous record narrows in the same way, and reading the moved-out label is rejected:
+
+<!-- doc-example: expect-fail reason="`left` was moved out, so the record no longer has it -- T0003 is the point" -->
+```metel
+fun main() {
+    let r := { left = "l", right = "r" };
+    let l := r.left;          // r : { right: String }
+    println(r.right);         // fine: `right` is still present
+    println(r.left);          // error: no field `left` on { right: String }
+}
+```
+
 Narrowing is **path-sensitive**: the residual type at a program point reflects the fields
 moved on every path reaching it, exactly as move tracking already computes — a field
 moved on one arm of an `if` is conservatively moved after the join. A move made inside a
