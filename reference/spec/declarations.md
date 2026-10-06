@@ -2146,6 +2146,12 @@ targets follows the same rules as any other conditional block (above) — two im
 the same aspect for `[T]` conflict (`T0015`) unless one directly negates a bound the
 other requires.
 
+Structural aspect lookup is coercion-aware: when the expression's intrinsic type does
+not match a structural target directly, lookup may consider a finite path of legal
+implicit coercions, retain the selected path, and insert it at the use site. This does
+not merge the source and target types for identity or coherence, and coercion remains
+directional (`[T; N]` to `[T]`, never the reverse).
+
 **Without a matching impl**, a structural type fails an aspect bound with a diagnostic naming the constructor:
 
 ```
@@ -2212,7 +2218,7 @@ generic structural target is registered and dispatched subject to its stated bou
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0177](../../rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

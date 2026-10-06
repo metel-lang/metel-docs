@@ -2,8 +2,20 @@
 id: rfc-0177
 title: "Coercion-Aware Structural Aspect Lookup"
 date: '2026-10-06'
-status: draft
+status: integrated
+coverage:
+  "1": { spec: "spec.declarations.structural-aspect-bounds.legality-2" }
+updated: '2026-10-06'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1296'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1296'
+impl_status: not-started
 ---
+
+> **Status — under review (2026-10-06).** The fixed-size array model is settled; review now covers coercion-aware structural lookup.
+
+> **Status — accepted (2026-10-06).** The initial array coercion relation and lookup behavior are settled; user-defined coercions remain out of scope.
+
+> **Status — integrated (2026-10-06).** Integrated the coercion-aware structural lookup contract into the structural aspect specification.
 
 ## Summary
 
@@ -56,7 +68,7 @@ unannotated mutable literal behave like an immutable borrowed view.
 - Making structural values implement aspects unconditionally.
 - Defining equality, hashing, ordering, or any aspect-specific semantics.
 
-## Decision
+## 1. Coercion-aware lookup
 
 Structural aspect lookup considers the finite set of types reachable from the
 expression's intrinsic type through the language's legal, implicit coercions.

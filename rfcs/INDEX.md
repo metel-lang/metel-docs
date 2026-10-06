@@ -683,7 +683,7 @@ part of the same records/views substrate review):
 - **RFC-0176** *(draft, opened 2026-10-06)* — Hash Aspect and Structural Hashing —
   defines the public `Hash` aspect, equality-consistent hashing, and conditional
   structural hashing without deciding the unresolved equality or ordering APIs.
-- **RFC-0177** *(draft, opened 2026-10-06)* — Coercion-Aware Structural Aspect Lookup —
+- **RFC-0177** *(integrated, 2026-10-06; implementation tracked by #1296)* — Coercion-Aware Structural Aspect Lookup —
   lets structural aspect-bound lookup consider existing implicit coercions, so an
   owning `[T; N]` literal can satisfy an aspect implemented for the borrowed `[T]`
   view without changing the literal's intrinsic type.
