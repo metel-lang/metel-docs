@@ -86,7 +86,7 @@ Keyword disambiguation is a grammar invariant: `keyword` matches a whole word on
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#parsing` |
-| `implements` | [`metel-frontend/src/grammar.pest::ident`](https://github.com/metel-lang/metel-core/blob/6304269efb5b1fde0bb9913b8b34041b52b7128f/metel-frontend/src/grammar.pest#L476); [`metel-frontend/src/grammar.pest::keyword`](https://github.com/metel-lang/metel-core/blob/46f1f6a74b6a2dec071dd6511c82bd1bc668fd03/metel-frontend/src/grammar.pest#L481) |
+| `implements` | [`metel-frontend/src/grammar.pest::ident`](https://github.com/metel-lang/metel-core/blob/6304269efb5b1fde0bb9913b8b34041b52b7128f/metel-frontend/src/grammar.pest#L477); [`metel-frontend/src/grammar.pest::keyword`](https://github.com/metel-lang/metel-core/blob/46f1f6a74b6a2dec071dd6511c82bd1bc668fd03/metel-frontend/src/grammar.pest#L482) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/parsing/keyword_prefixed_identifiers.toml`](https://github.com/metel-lang/metel-core/blob/e351096dc3e82c3715c0709f274081691673946e/metel-interpreter/tests/integration/sources/parsing/keyword_prefixed_identifiers.toml#L1); [`metel-interpreter/tests/integration/sources/parsing/neg_keyword_as_identifier.toml`](https://github.com/metel-lang/metel-core/blob/e351096dc3e82c3715c0709f274081691673946e/metel-interpreter/tests/integration/sources/parsing/neg_keyword_as_identifier.toml#L1) |
 | `last_reviewed` | 46f1f6a74b6a2dec071dd6511c82bd1bc668fd03 |
 | `related` | ADR-0015, ADR-0018 |
