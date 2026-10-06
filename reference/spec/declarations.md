@@ -2271,7 +2271,7 @@ these implementations cannot be overridden by user code.
 
 Array marker-aspect propagation is not part of structural implementation lookup.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 2976fde0 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
