@@ -683,6 +683,10 @@ part of the same records/views substrate review):
 - **RFC-0176** *(draft, opened 2026-10-06)* — Hash Aspect and Structural Hashing —
   defines the public `Hash` aspect, equality-consistent hashing, and conditional
   structural hashing without deciding the unresolved equality or ordering APIs.
+- **RFC-0177** *(draft, opened 2026-10-06)* — Coercion-Aware Structural Aspect Lookup —
+  lets structural aspect-bound lookup consider existing implicit coercions, so an
+  owning `[T; N]` literal can satisfy an aspect implemented for the borrowed `[T]`
+  view without changing the literal's intrinsic type.
 - **RFC-0039** *(under review, opened 2026-06-01; #922)* — `aspect` Alias Syntax —
   `aspect Sortable = Comparable + Display + Clone`, a transparent shorthand for compound
   bounds (not a new aspect requiring its own impl); alias-of-alias allowed, cycles error;
