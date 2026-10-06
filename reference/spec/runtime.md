@@ -160,21 +160,25 @@ aspect Iterable<T> {
 }
 ```
 
-[`[T]` (array) and `Range` (from `..` / `..=`) implement `Iterable<T>`](#spec.runtime.built-in-aspects.iterable-t.legality-1). User-defined types may implement it to be usable in `for-in`.
+[`[T]` (array), `List<T>`, and `Range` (from `..` / `..=`) implement `Iterable<T>`](#spec.runtime.built-in-aspects.iterable-t.legality-1). User-defined types may implement it to be usable in `for-in`.
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.runtime.built-in-aspects.iterable-t.legality-1}
 
-Arrays and ranges implement `Iterable<T>`; a user-defined type is usable in `for-in` only
-when it implements that aspect.
+Arrays, lists, and ranges implement `Iterable<T>`; a user-defined type is usable in
+`for-in` only when it implements that aspect. A list's iterator cursor belongs to the
+loop's copied value, so nested loops over one list do not share iteration position.
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjU5X2l0ZXJhYmxlX2FzcGVjdC5tdGwiLCJzb3VyY2UiOiIvLyBVc2VyLWRlZmluZWQgSXRlcmFibGUgdmlhIGFzcGVjdCBcdTIwMTQgZm9yLWluIGRpc3BhdGNoZXMgdGhyb3VnaCBuZXh0KCkuXG5cbmFzcGVjdCBJdGVyYWJsZTxUPiB7XG4gICAgZnVuIG5leHQoJnZhciBzZWxmKSAtPiBQZXJoYXBzPFQ+O1xufVxuXG5zdHJ1Y3QgQ291bnRlciB7XG4gICAgY3VycmVudDogaTY0LFxuICAgIGxpbWl0OiAgIGk2NCxcbn1cblxuZXh0ZW5kIENvdW50ZXIge1xuICAgIGZ1biBuZXcobGltaXQ6IGk2NCkgLT4gQ291bnRlciB7XG4gICAgICAgIHJldHVybiBDb3VudGVyIHsgY3VycmVudCA9IDAsIGxpbWl0ID0gbGltaXQgfTtcbiAgICB9XG59XG5cbmV4dGVuZCBDb3VudGVyOiBJdGVyYWJsZTxpNjQ+IHtcbiAgICBmdW4gbmV4dCgmdmFyIHNlbGYpIC0+IFBlcmhhcHM8aTY0PiB7XG4gICAgICAgIGlmIChzZWxmLmN1cnJlbnQgPCBzZWxmLmxpbWl0KSB7XG4gICAgICAgICAgICBsZXQgdmFsIDo9IHNlbGYuY3VycmVudDtcbiAgICAgICAgICAgIHNlbGYuY3VycmVudCA6PSBzZWxmLmN1cnJlbnQgKyAxO1xuICAgICAgICAgICAgcmV0dXJuIFBlcmhhcHM6OlNvbWUgeyB2YWx1ZSA9IHZhbCB9O1xuICAgICAgICB9XG4gICAgICAgIHJldHVybiBOb25lO1xuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIHN1bSA6PSAwO1xuICAgIGxldCBjIDo9IENvdW50ZXI6Om5ldyg1KTtcbiAgICBmb3IgKHggaW4gYykge1xuICAgICAgICBzdW0gKz0geDtcbiAgICB9XG4gICAgYXNzZXJ0KHN1bSA9PSAxMCk7IC8vIDArMSsyKzMrNFxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvYXNwZWN0cy81OV9pdGVyYWJsZV9hc3BlY3QubXRsIiwibmFtZSI6IjU5X2l0ZXJhYmxlX2FzcGVjdC5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjYwX2xpc3RfaXRlcmFibGUubXRsIiwic291cmNlIjoiLy8gTGlzdDxUPiBpbXBsZW1lbnRzIEl0ZXJhYmxlPFQ+OyBlYWNoIGxvb3AgZ2V0cyBhbiBpbmRlcGVuZGVudCBjdXJzb3IuXG5cbmZ1biBtYWluKCkge1xuICAgIHZhciBudW1iZXJzOiBMaXN0PGk2ND4gOj0gTGlzdDo6bmV3KCk7XG4gICAgbnVtYmVycy5wdXNoKDEpO1xuICAgIG51bWJlcnMucHVzaCgyKTtcbiAgICBudW1iZXJzLnB1c2goMyk7XG5cbiAgICB2YXIgdG90YWwgOj0gMDtcbiAgICBmb3IgKHggaW4gbnVtYmVycykge1xuICAgICAgICB0b3RhbCArPSB4O1xuICAgIH1cbiAgICBhc3NlcnQodG90YWwgPT0gNik7XG5cbiAgICB2YXIgbmVzdGVkIDo9IDA7XG4gICAgZm9yIChfIGluIG51bWJlcnMpIHtcbiAgICAgICAgZm9yICh4IGluIG51bWJlcnMpIHtcbiAgICAgICAgICAgIG5lc3RlZCArPSB4O1xuICAgICAgICB9XG4gICAgfVxuICAgIGFzc2VydChuZXN0ZWQgPT0gMTgpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvYXNwZWN0cy82MF9saXN0X2l0ZXJhYmxlLm10bCIsIm5hbWUiOiI2MF9saXN0X2l0ZXJhYmxlLm10bCJ9"></details>
+</details>
 <!-- rfc.py:fixtures:end -->
 
 </details>

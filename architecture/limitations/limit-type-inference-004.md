@@ -1,18 +1,18 @@
 ---
 id: LIMIT-TYPE-INFERENCE-004
-title: "`List<T>` does not implement `Iterable<T>`"
-summary: "`for (x in list)` does not typecheck for `List<T>`; iterate `list.as_slice()`."
+title: "`List<T>` iteration"
+summary: "`List<T>` implements `Iterable<T>` with an independent cursor per loop."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#871; confirmed in the metel-core#1217/#1218 limitation analysis"
-disposition: known
-review: null
+disposition: resolved
+review: 2026-10-06
 ---
 
 ## Limitation
 
-`for (x in list)` fails to typecheck for every `List<T>`. Reproduced against
-current `develop`:
+`List<T>` now implements `Iterable<T>` for every `T`. Each `for` loop receives
+its own copied cursor, so nested loops over the same list are independent:
 
 ```metel
 fun main() {
@@ -22,23 +22,22 @@ fun main() {
 }
 ```
 
-```
-[T0001] type error: type `List<i64>` does not implement `Iterable<T>`
-```
-
-`List`'s own methods iterate `self.as_slice()` instead; arrays iterate
-natively.
+The list's existing eager methods continue to use `self.as_slice()` because
+they do not need iterator state.
 
 ## Impact
 
-Visible to Metel programmers: `.as_slice()` is required to iterate a list.
+Visible to Metel programmers: lists can now be used directly in `for` loops.
+`.as_slice()` remains available when an immutable array view is specifically
+required.
 
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- `metel-frontend/src/pipeline/type_checking/inference/expressions.rs` (`for`-`in` `Iterable` check)
-- `metel-frontend/stdlib/core.mtl` (`List` methods)
+- `metel-frontend/stdlib/core.mtl` (`List` and its `Iterable` implementation)
+- `metel-interpreter/src/evaluator/builtins.rs` (native list construction)
 
 ## Resolution
 
-None yet, tracked as `#871`.
+Implemented for #871. The private cursor is part of the copied list value;
+the backing array remains the shared list storage.
