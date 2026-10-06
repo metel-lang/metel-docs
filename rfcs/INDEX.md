@@ -254,6 +254,13 @@ above it are.
   #1337/#1338, whose near-term path is compiler-derived impls (RFC-0096). Open: loop and
   access spelling, field order, row construction (`Clone`/`Default`), moves out of `self`.
 
+- **RFC-0175** *(draft, opened 2026-10-06)* — Label Polymorphism — a dedicated `label`
+  generic kind for record operations that abstract over which field is selected, not merely
+  over the row remainder. Proposes compile-time label literals and checked selection such as
+  `value.[L]`, enabling one `get_field`/`drain_field` helper to work for `token`, `alloc`, or
+  any other statically known field. Separate from RFC-0174's iteration over all fields; open
+  questions cover syntax, label equality, construction, and interaction with linear moves.
+
 - **RFC-0123** *(implemented 2026-10-05)* — Field-Wise Row Constraints — a constraint
   applying an aspect to **every field of a row** rather than to the row's type
   (`extend<row R> { ..R }: Display where all R: Display`). Opened after noticing that two
