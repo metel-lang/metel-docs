@@ -207,6 +207,7 @@ TupleType                → "(" Type ( "," Type )+ ")"
 RecordType               → "{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
 RecordTypeField          → IDENTIFIER ":" Type
 OpenRecordType           → "{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"
+                         | "{" RowTail "," RecordTypeField ( "," RecordTypeField )* ","? "}"
                          | "{" RowTail ","? "}"
 RowTail                  → ".." IDENTIFIER?
 RecordProjectionType     → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
