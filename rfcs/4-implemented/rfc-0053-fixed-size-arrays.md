@@ -14,27 +14,12 @@ coverage:
   "9": { spec: "spec.types.fixed-size-arrays.legality-9" }
 ---
 
-> **Status — qualified (2026-08-12, metel-core#715, #263, #702).** This RFC specifies
-> that "a literal `[e1, ..., eN]` may be typed as either `T[]` or `[T; N]`; the
-> construction pass chooses based on the expected type" — but never says what happens
-> when there is no expected type to consult, which is exactly `println([1, 2, 3])`:
-> `println`'s parameter is bound by a conditional `Display` impl, not a concrete `T[]`
-> or `[T; N]` annotation, so the construction pass has nothing to key its choice on.
-> `declarations.md`'s own worked example claims this compiles via `i64[]`; #715 found
-> the interpreter instead infers `[i64; 3]`, which RFC-0061's structural `Display` impl
-> doesn't cover (it's specced only for `T[]`), so the spec's own example fails to
-> compile. **Ruled: an unconstrained array literal defaults to `T[]`, not `[T; N]`.**
-> This RFC's own Motivation section already treats `T[]` as the general-purpose type
-> and `[T; N]` as the opt-in special case for when size specifically matters, and
-> coercion is one-directional (`[T; N] → T[]` is free, the reverse is a type error) —
-> defaulting the ambiguous case to the general type is the same direction that
-> coercion already treats as cheap, and matches what a reader of `println([1, 2, 3])`
-> actually means (nothing about that call asserts anything about the array's size).
-> This resolves #715 without further spec changes and needs no change to RFC-0061.
-> It does not touch #263 (Copy rules for fixed arrays hardcoded into the typechecker)
-> or #702 (arrays, tuples and other structural types not yet modeled as regular
-> types) — both are pre-existing type-system architecture debt that this RFC's
-> design sits on top of rather than causes, and are tracked separately.
+> **Status — implemented.** Array literals are owning constructions: an unannotated
+> literal `[e1, ..., eN]` has type `[T; N]`. When a surrounding context requires `[T]`,
+> the ordinary `[T; N]` → `[T]` coercion is applied. Structural aspect lookup must be
+> coercion-aware so that `println([1, 2, 3])` can select the standard
+> `extend<T: Display> [T]: Display` implementation after inferring the literal's
+> sized type; that lookup rule is specified separately by RFC-0177.
 
 ## Summary
 
@@ -145,7 +130,8 @@ sum(v);   // T = i64, v coerces to i64[]
 - `[T; N]` unifies only with `[T; N]` (same element type and same size).
 - Coercion to `T[]` is handled in the construction pass: when a `[T; N]` value appears where `T[]` is expected, it is wrapped in a coercion node.
 - A repeat construction `[expr; N]` has type `[T; N]` where `T` is the type of `expr`.
-- A literal `[e1, ..., eN]` may be typed as either `T[]` or `[T; N]`; the construction pass chooses based on the expected type.
+- A literal `[e1, ..., eN]` has type `[T; N]`. If `[T]` is expected, the literal is
+  coerced to `[T]` after construction.
 - `[T; N]` is a valid struct field type.
 - Nested fixed arrays `[[T; M]; N]` are valid and follow the same rules recursively.
 
