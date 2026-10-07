@@ -53,6 +53,13 @@ remain. `{ fd: i64, path: String }` with `path` moved out becomes `{ fd: i64 }` 
 partially-valid value, not an opaque "moved-from" marker, but an ordinary value of a
 narrower record type.
 
+The subset lattice includes the empty row: moving the last non-`Copy` field leaves
+an ordinary `{}` value, not `Unit` or a moved whole binding. Removed-field access
+and wider-row uses are rejected by ordinary type checking, with or without
+`--move-check`. Binding, passing, and returning the empty residual is legal at its
+exact type; moving that binding as a whole is a separate ownership operation.
+Mutable bindings can restore removed fields by assignment, including from empty.
+
 No row variables and no unification are involved. For a closed record over *N* fields the
 space of possible residuals is the subset lattice, bounded by 2^*N* and trivial at
 realistic struct sizes.
