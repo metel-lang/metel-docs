@@ -223,6 +223,24 @@ fun main() {
 3
 ```
 
+The equation also lets the body consume the named field and return its remainder:
+
+```metel
+fun strip<row R, row Rest>(p: { ..R }) -> { ..Rest }
+where R = { token: String, ..Rest } {
+    let { token: _, ..rest } := p;
+    rest
+}
+
+fun main() {
+    println(strip({ token = "t", user = 3 }).user);
+}
+```
+
+This prints `3`. The discarded `token` is consumed; `rest` owns every other field.
+The same pattern works inside a row-conditional impl, allowing a typestate method
+to construct a result such as `Session<..Rest>`. With only `token`, the remainder is `{}`.
+
 ## Rows on nominal types
 
 A `struct` or `record` can take a row parameter, spliced as `..R` in the type's own
@@ -409,10 +427,6 @@ does not widen. See [Move a slice, don't copy it](moving-not-copying) for both.
 - **Records have no `==`, `Eq`, `Ord` or `Hash`.** `Clone`, `Copy` and `Display` exist
   (field-wise); the rest are separate designs. `Display` and `Clone` for records are
   built into the interpreter today (`LIMIT-TYPES-003`).
-- **A derived remainder can be typed but not built generically.** A `where` equation
-  such as `R = { token: String, ..Rest }` lets a method promise `Session<..Rest>`, but
-  there is no way yet to construct the remainder row from `R` inside a generic body, so
-  a typestate step like `authenticate` cannot be written generally. Concrete rows work.
 - **A deeper move does not narrow the outer value.** Moving `root.a.b` leaves `root`'s
   type whole; a record-typed field moves as a unit (`GAP-OWNERSHIP-002`).
 - **Compile-time iteration over a row's fields** (to write your own `Display`-like

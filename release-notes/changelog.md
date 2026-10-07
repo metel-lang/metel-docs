@@ -11,6 +11,10 @@ title: "Metel Language Changelog"
   one owned row with `..expr`. Generic row facts determine the remainder type and prove
   spread-label absence. Spreading through a reference is allowed only when the row is
   `Copy`.
+- Equation-derived remainders retain their declared open tail in free-function and
+  impl bodies. Generic typestate methods can remove a field, construct the derived
+  result, and reverse the transition with a row spread. Exhaustive record patterns
+  also destructure public nominal records with generic row fields.
 
 ## v0.13.1
 
