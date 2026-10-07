@@ -362,6 +362,8 @@ is optional, not removed.
 
 > **Since v0.13.0.**
 
+> **Gap** GAP-EXPRESSIONS-001
+
 A named struct's fields may be destructured directly in a match arm, the same
 bare-field syntax a struct literal uses:
 
