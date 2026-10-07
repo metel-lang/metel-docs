@@ -1598,13 +1598,11 @@ which means no anonymous record is `Display` and `println("${r}")` does not work
 Auto-derived aspects are unaffected — `Send` and `Sync` are computed from field composition
 rather than declared.
 
-### Open rows
+### Open rows {#open-rows}
 
 > **Available in v0.14.0.** RFC-0121 open rows support row extension, decomposition,
 > reusable type positions, and row-conditional implementations.
 
-> **Gap** GAP-TYPES-006
->
 > **Gap** GAP-TYPES-008
 
 A `row`-kinded generic parameter abstracts over "the rest of a row" rather than a
@@ -1623,8 +1621,8 @@ fun get_x<row R>(p: { x: f64, ..R }) -> f64 { p.x }
 RequestBuilder<{ ..R, auth: String }>
 ```
 
-**Removal has no literal form.** A `where` equation names both halves and states how
-they compose, which simultaneously subsumes a row bound (`R = { token, ..Rest }`
+**Removal from an abstract row uses a rest pattern.** A `where` equation names both halves
+and states how they compose, which simultaneously subsumes a row bound (`R = { token, ..Rest }`
 already implies `R: { token, .. }`) and names the remainder:
 
 ```metel
@@ -1635,9 +1633,12 @@ where R = { token: Token, ..Rest }
 }
 ```
 
-The equation constrains the *type*; it does not give a generic body a way to construct
-the remainder value from `R`, so a body that returns `Session<..Rest>` from a `Session<..R>`
-is not expressible for abstract rows. Reading a field the equation promises is:
+The equation constrains the *type*. In a generic body, `{ token, ..rest }` consumes a record
+and binds its unnamed fields as an owned anonymous record. A row spread (`{ ..rest, auth = a }`)
+places an owned record's fields into a new record. The details and current implementation
+limit are specified below.
+
+Reading a field the equation promises is:
 
 ```metel
 fun split<row R, row Rest>(p: { token: i64, ..R }) -> i64
@@ -1650,6 +1651,31 @@ fun main() {
     assert(split({ token = 1, extra = 2, other = 3 }) == 3);
 }
 ```
+
+For a rest pattern, the checker removes the explicitly named labels from the strongest
+decomposition entailed by the scrutinee's type and declared row facts. Other known fields
+and the open tail remain. Thus, if `S = { token: Token, extra: i64, ..Rest }`, then
+`{ token, ..rest }` gives `rest: { extra: i64, ..Rest }`. A presence-only bound such as
+`R: { token, .. }` proves that `token` exists but does not determine the remainder type;
+the pattern is rejected with a distinct “remainder type cannot be determined” diagnostic.
+If all fields are removed from a closed row, the remainder has empty anonymous-record type
+`{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
+
+A record literal accepts at most one spread, including for concrete rows. Written labels must
+be proven absent from the spread row; collisions do not override. Initializers evaluate from
+left to right, while field order/layout is determined by the resulting row/type, not initializer
+order.
+
+##### Legality Rule {#spec.types.generics.open-rows.legality-4}
+
+A record literal contains at most one spread; each explicitly initialized label must be
+entailed absent from the spread row, and an absent-label fact is required for abstract rows.
+A collision is an error, not an override. Spreading an owned record moves its fields into
+the result and consumes the source. Spreading through a reference copies the fields only
+when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
+evaluate left-to-right, while the resulting record layout is determined by its row/type.
+
+<!-- rfc.py:last_reviewed a400f269 -->
 
 A row variable may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
@@ -1727,6 +1753,15 @@ fun main() {
 
 <details>
 <summary>Formal rules</summary>
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0178](../../rfcs/4-implemented/rfc-0178-row-remainder-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsInNvdXJjZSI6ImZ1biB0YWtlX2lkPHJvdyBSLCByb3cgUmVzdD4ocjogeyBpZDogaTY0LCAuLlIgfSkgLT4gaTY0XG53aGVyZSBSID0geyBleHRyYTogaTY0LCAuLlJlc3QgfVxue1xuICAgIGxldCB2YXIgeyBpZCwgLi5yZXN0IH0gOj0gcjtcbiAgICBpZCA6PSBpZCArIDE7XG4gICAgcmVzdC5leHRyYSA6PSByZXN0LmV4dHJhICsgMTtcbiAgICBpZCArIHJlc3QuZXh0cmFcbn1cblxuZnVuIGFkZF9hdXRoPHJvdyBSOiAheyBhdXRoIH0+KHI6IHsgLi5SIH0sIGF1dGg6IGk2NCkgLT4geyAuLlIsIGF1dGg6IGk2NCB9IHtcbiAgICB7IC4uciwgYXV0aCA9IGF1dGggfVxufVxuXG5mdW4gY29weV9yb3cocjogJnsgeDogaTY0LCB5OiBpNjQgfSkgLT4geyB4OiBpNjQsIHk6IGk2NCB9IHtcbiAgICB7IC4uciB9XG59XG5cbnJlY29yZCBQdWJsaWNQYWlyIHtcbiAgICBwdWJsaWMgaWQ6IGk2NCxcbiAgICBwdWJsaWMgZXh0cmE6IGk2NCxcbn1cblxuZnVuIG5vbWluYWxfcmVtYWluZGVyKHBhaXI6IFB1YmxpY1BhaXIpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHBhaXIpIHtcbiAgICAgICAgeyBpZCwgLi50YWlsIH0gPT4gaWQgKyB0YWlsLmV4dHJhXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIC0+IGk2NCB7XG4gICAgYXNzZXJ0KHRha2VfaWQoeyBpZCA9IDcsIGV4dHJhID0gNSB9KSA9PSAxNCk7XG4gICAgbGV0IHIgOj0gYWRkX2F1dGgoeyBpZCA9IDcgfSwgNSk7XG4gICAgbGV0IHRvdGFsIDo9IHRha2VfaWQoeyBpZCA9IDcsIGV4dHJhID0gNSB9KTtcbiAgICBsZXQgYW5vbnltb3VzIDo9IG1hdGNoICh7IGlkID0gdG90YWwsIGV4dHJhID0gci5hdXRoIH0pIHtcbiAgICAgICAgeyBpZCwgLi5yZXN0IH0gPT4gaWQgKyByZXN0LmV4dHJhXG4gICAgfTtcbiAgICBsZXQgb3JpZ2luYWwgOj0geyB4ID0gNCwgeSA9IDYgfTtcbiAgICBsZXQgY29waWVkIDo9IGNvcHlfcm93KCZvcmlnaW5hbCk7XG4gICAgYW5vbnltb3VzICsgbm9taW5hbF9yZW1haW5kZXIoUHVibGljUGFpciB7IGlkID0gMiwgZXh0cmEgPSAzIH0pICsgY29waWVkLnggKyBvcmlnaW5hbC55XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9yZWNvcmRzL3Jvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsIm5hbWUiOiJyb3dfcmVtYWluZGVyX2NvbnN0cnVjdGlvbi5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-1}
 

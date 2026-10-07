@@ -2,12 +2,17 @@
 id: rfc-0178
 title: "Row Remainder Construction"
 date: '2026-10-06'
-status: under-review
-updated: '2026-10-06'
+status: implemented
+coverage:
+  "1": { spec: "spec.expressions.record-rest-patterns.legality-1" }
+  "2": { spec: "spec.types.generics.open-rows.legality-4" }
+  "3": { kind: untestable, reason: "Worked examples combining row remainder construction with RFC-0121 row equations and RFC-0173 rigid generic-body checking; their normative claims are covered by sections 1 and 2." }
+  "4": { kind: untestable, reason: "Cross-RFC interaction analysis; the operative rules are covered by sections 1 and 2." }
+updated: '2026-10-07'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1399'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1399'
+impl_status: implemented
 ---
-
-> **Status — under review (2026-10-06).**
 
 ## Summary
 
@@ -28,7 +33,7 @@ written:
 ```metel
 extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let { token: _, ..rest } := self.data;      // rest : { ..Rest }
+        let { token, ..rest } := self.data;
         Session { id = self.id, data = rest }
     }
 }
@@ -104,34 +109,45 @@ A record pattern may end in `..name`, binding every field the pattern did not na
 record:
 
 ```metel
-let { token, ..rest } := value;          // value : { token: Token, extra: i64, flag: boolean }
-// token : Token, rest : { extra: i64, flag: boolean }
+match (value) {                           // value : { token: Token, extra: i64, flag: boolean }
+    { token, ..rest } => rest             // token : Token, rest : { extra: i64, flag: boolean }
+}
 ```
 
 This is the record counterpart of the array pattern's `..name`, and a refinement of the
-record pattern's existing bare `..` (which still discards). It follows the same
+record pattern's existing bare `..` (which remains discard-only; it does not produce an
+implicit remainder value). It follows the same
 irrefutability rule as the existing record pattern: it matches any record that has the
 named fields.
 
 **Typing.** The binder's type is the source row minus the named fields.
 
 - For a concrete row this is the concrete record of the remaining fields.
-- For an abstract row it is determined by the facts in scope:
-  1. if the scrutinee is typed `{ f1: T1, .., ..R }` directly, the remainder is `{ ..R }`;
-  2. if the scrutinee is typed `{ ..S }` and the declaration states `S = { f1: T1, .., ..Rest }`
-     for exactly the named fields, the remainder is `{ ..Rest }`;
-  3. otherwise the pattern is rejected with the missing entailment named ("`token` is not
-     known to be present in `R`; add a bound or an equation"). A bound `R: { token, .. }`
-     proves presence but names no remainder, so it is not enough.
+- For an abstract row, use the strongest decomposition entailed by the facts in scope,
+  remove the labels named by the pattern, and retain every other known field and the
+  remaining open tail. For example, if the scrutinee has type `{ ..S }` and the declaration
+  states `S = { token: Token, extra: i64, ..Rest }`, then `{ token, ..rest }` gives
+  `rest: { extra: i64, ..Rest }`. If the decomposition is
+  `S = { token: Token, ..Rest }`, it gives `{ ..Rest }`.
+- If the named field is not entailed to be present, reject the pattern with a presence
+  diagnostic ("`token` is not known to be present in `R`; add a bound or an equation"). If
+  presence is entailed but the facts do not determine the remainder type — for example, a
+  bound `R: { token, .. }` with no decomposition — reject it with a distinct diagnostic
+  explaining that the field is known to exist but a decomposition/equation is needed to
+  determine the remainder type. Both diagnostics may use `T0012`, but their messages must
+  distinguish the missing fact.
+- If removing the named fields leaves no fields and no open tail, the bound value has empty
+  anonymous-record type `{}` (not `Unit`).
 
   The named fields' types are taken from the facts as well, so a bound with a field of
   unknown type binds it at the bound's type.
 
-**Ownership.** Matching moves the scrutinee. Each named field moves into its binder (or is
-copied if `Copy`, or dropped immediately for `_`); `..name` takes every other field as one
-owned record. The scrutinee is consumed as a whole, so no residual of it remains.
+**Ownership.** Matching moves the scrutinee. Each named field is bound by the pattern and
+follows the ordinary ownership rules for pattern bindings; `..name` takes every other
+field as one owned record. The scrutinee is consumed as a whole, so no residual of it
+remains.
 
-**Owned scrutinees only.** A rest pattern against a *reference* (`let { x, ..rest } := &r`)
+**Owned scrutinees only.** A rest pattern against a *reference* (`match (&r) { { x, ..rest } => rest }`)
 is reserved: it is rejected with a message pointing at the owned form. Borrowing the
 remainder (`x: &T`, `rest: &{ ..Rest }`, and a split `&var`) needs the shared/exclusive
 rules of borrow checking (RFC-0122), and nothing in the motivating typestate case needs it,
@@ -181,8 +197,10 @@ spread's row is `Copy` (provably, for an abstract row: `where all R: Copy`) — 
 test and the same reason as RFC-0121's by-value width-subtyping rule — and otherwise is
 rejected with a `T0033`-style message pointing at an explicit clone.
 
-**Evaluation order.** Initializers, including `..expr`, are evaluated left to right as
-written; the spread's fields then join the explicitly written ones in the new record.
+**Evaluation order and layout.** Initializers, including `..expr`, are evaluated left to
+right as written. The resulting record's field order/layout is determined by its row/type,
+not by initializer order; record field order is not observable and does not affect type
+identity.
 
 ### 3. Worked examples
 
@@ -191,8 +209,9 @@ The typestate step (signature unchanged from RFC-0121):
 ```metel
 extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let { token: _, ..rest } := self.data;      // §1 case 2: rest : { ..Rest }
-        Session { id = self.id, data = rest }
+        match (self.data) {
+            { token, ..rest } => Session { id = self.id, data = rest } // §1 case 2
+        }
     }
 }
 ```
@@ -211,8 +230,8 @@ A generic utility, taking one known field out and handing back the rest:
 
 ```metel
 fun take_id<row R>(r: { id: i64, ..R }) -> (i64, { ..R }) {
-    let { id, ..rest } := r;      // §1 case 1
-    (id, rest)
+    let { id, ..rest } := r;
+    (id, rest) // §1 case 1
 }
 ```
 
@@ -220,8 +239,9 @@ Must **not** compile:
 
 ```metel
 fun bad<row R>(r: { ..R }) -> i64 {
-    let { id, ..rest } := r;      // error: `id` is not known to be present in `R`
-    id
+    match (r) {
+        { id, ..rest } => id        // error: `id` is not known to be present in `R`
+    }
 }
 
 fun bad2<row R>(r: { ..R }, a: String) -> { ..R, auth: String } {
@@ -252,6 +272,8 @@ fun bad3<row R>(r: &{ ..R }) -> { ..R } {
   that RFC-0175 only has to add the variable.
 - **Array rest patterns.** `[a, ..rest]` already binds the remainder of an array; the
   record form is deliberately the same shape.
+- **Bare record `..`.** It remains a discard, not an unnamed remainder value. A remainder
+  that must remain available is bound explicitly with `..name`.
 
 ---
 
@@ -283,8 +305,11 @@ fun bad3<row R>(r: &{ ..R }) -> { ..R } {
 
 Decided in this RFC:
 
-- **Spread spelling.** A leading `..expr`, allowed at any position among the initializers,
-  mirrors the type-level tail. It is unambiguous (§2).
+- **Spread spelling and count.** One leading `..expr`, allowed at any position among the
+  initializers, mirrors the type-level tail. A literal has at most one spread, including
+  for concrete rows (§2).
+- **Record order.** Initializers evaluate left-to-right, but the resulting field layout is
+  determined by the resulting row/type; initializer order does not affect type identity.
 - **Absence facts.** Presence and absence are entailments of facts the checker already
   records for a generic body (§2); this RFC adds no inference.
 - **No re-branding.** A rest pattern or spread never produces a branded value. The
@@ -329,4 +354,11 @@ the Records and Rows reference is removed on implementation.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** Accept the fixed-label owned forms: `..name` in a record pattern binds the
+owned remainder as an anonymous record, and one `..expr` in a record literal spreads an
+owned row (or copies it through a reference only when every field is `Copy`). Remainder
+typing removes the named labels from the strongest entailed decomposition and retains its
+other known fields and open tail; the empty result is `{}`. Missing presence and an
+undetermined remainder are distinct diagnostic cases. Bare `..` remains discard-only, and
+initializer order does not determine record layout. Borrowed rest patterns, multiple
+spreads, and tuple forms remain explicitly deferred.

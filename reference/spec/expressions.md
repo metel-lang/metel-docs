@@ -428,6 +428,31 @@ ends in `..` may name any subset, including none.
 
 </details>
 
+### Record rest patterns
+
+An anonymous-record or nominal `record` pattern may end in `..name`. The binding receives
+the owned anonymous record made from all fields not named by the pattern. Bare `..` remains
+discard-only. The named fields must be entailed present; the row facts must also determine
+the remainder type. A presence-only bound without a decomposition is insufficient. Removing
+all fields from a closed row produces `{}`. Structs, `Drop` types, and borrowed scrutinees are
+not accepted by this form. Every named field is bound by the pattern and follows the
+ordinary ownership rules for pattern bindings; every unmentioned field moves into the
+remainder binding. Matching consumes the scrutinee as a whole. A nominal `record` is
+eligible only when all of its fields are public, and the remainder loses the nominal brand.
+
+```metel
+match (value) { // value : { token: Token, extra: i64, ..Rest }
+    { token, ..rest } => rest // rest : { extra: i64, ..Rest }
+}
+```
+
+##### Legality Rule {#spec.expressions.record-rest-patterns.legality-1}
+
+A record rest pattern's named fields must be entailed present, and its row facts must
+determine the remainder type after removing those labels; otherwise it is rejected.
+
+<!-- rfc.py:last_reviewed a400f269 -->
+
 ### Matching through a reference
 
 > **Since v0.11.0 (RFC-0108).**
@@ -466,6 +491,15 @@ fun name(c: &Colour) -> String {
 
 <details>
 <summary>Formal rules</summary>
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0178](../../rfcs/4-implemented/rfc-0178-row-remainder-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsInNvdXJjZSI6ImZ1biB0YWtlX2lkPHJvdyBSLCByb3cgUmVzdD4ocjogeyBpZDogaTY0LCAuLlIgfSkgLT4gaTY0XG53aGVyZSBSID0geyBleHRyYTogaTY0LCAuLlJlc3QgfVxue1xuICAgIGxldCB2YXIgeyBpZCwgLi5yZXN0IH0gOj0gcjtcbiAgICBpZCA6PSBpZCArIDE7XG4gICAgcmVzdC5leHRyYSA6PSByZXN0LmV4dHJhICsgMTtcbiAgICBpZCArIHJlc3QuZXh0cmFcbn1cblxuZnVuIGFkZF9hdXRoPHJvdyBSOiAheyBhdXRoIH0+KHI6IHsgLi5SIH0sIGF1dGg6IGk2NCkgLT4geyAuLlIsIGF1dGg6IGk2NCB9IHtcbiAgICB7IC4uciwgYXV0aCA9IGF1dGggfVxufVxuXG5mdW4gY29weV9yb3cocjogJnsgeDogaTY0LCB5OiBpNjQgfSkgLT4geyB4OiBpNjQsIHk6IGk2NCB9IHtcbiAgICB7IC4uciB9XG59XG5cbnJlY29yZCBQdWJsaWNQYWlyIHtcbiAgICBwdWJsaWMgaWQ6IGk2NCxcbiAgICBwdWJsaWMgZXh0cmE6IGk2NCxcbn1cblxuZnVuIG5vbWluYWxfcmVtYWluZGVyKHBhaXI6IFB1YmxpY1BhaXIpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHBhaXIpIHtcbiAgICAgICAgeyBpZCwgLi50YWlsIH0gPT4gaWQgKyB0YWlsLmV4dHJhXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIC0+IGk2NCB7XG4gICAgYXNzZXJ0KHRha2VfaWQoeyBpZCA9IDcsIGV4dHJhID0gNSB9KSA9PSAxNCk7XG4gICAgbGV0IHIgOj0gYWRkX2F1dGgoeyBpZCA9IDcgfSwgNSk7XG4gICAgbGV0IHRvdGFsIDo9IHRha2VfaWQoeyBpZCA9IDcsIGV4dHJhID0gNSB9KTtcbiAgICBsZXQgYW5vbnltb3VzIDo9IG1hdGNoICh7IGlkID0gdG90YWwsIGV4dHJhID0gci5hdXRoIH0pIHtcbiAgICAgICAgeyBpZCwgLi5yZXN0IH0gPT4gaWQgKyByZXN0LmV4dHJhXG4gICAgfTtcbiAgICBsZXQgb3JpZ2luYWwgOj0geyB4ID0gNCwgeSA9IDYgfTtcbiAgICBsZXQgY29waWVkIDo9IGNvcHlfcm93KCZvcmlnaW5hbCk7XG4gICAgYW5vbnltb3VzICsgbm9taW5hbF9yZW1haW5kZXIoUHVibGljUGFpciB7IGlkID0gMiwgZXh0cmEgPSAzIH0pICsgY29waWVkLnggKyBvcmlnaW5hbC55XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9yZWNvcmRzL3Jvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsIm5hbWUiOiJyb3dfcmVtYWluZGVyX2NvbnN0cnVjdGlvbi5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.expressions.pattern-matching.unqualified-variant-patterns.legality-1}
 

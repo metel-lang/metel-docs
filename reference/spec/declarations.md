@@ -27,8 +27,49 @@ fun main() -> i64 {
 
 All three forms require `var`.
 
+### Record-pattern bindings
+
+A block-local binding may use a braced record pattern to bind fields directly.
+The initializer is evaluated once; the named field locals and optional owned
+remainder local become visible for the rest of the block. A plain `let` makes
+each introduced binding immutable. The mutable forms `var` and `let var` make
+every introduced field and remainder binding mutable. Other pattern forms
+continue to use `match`.
+
+```metel
+fun take_id<row R, row Rest>(r: { id: i64, ..R }) -> i64
+where R = { extra: i64, ..Rest }
+{
+    let var { id, ..rest } := r;
+    id := id + 1;
+    rest.extra := rest.extra + 1;
+    id + rest.extra
+}
+```
+
+Each shorthand field name introduces a local with that field's type. The
+pattern follows the same field-presence and remainder-typing rules as a record
+pattern in [`match`](expressions.md#spec.expressions.record-rest-patterns.legality-1).
+In particular, `..name` requires an owned value whose remainder type is known;
+bare `..` discards unmentioned fields.
+
+##### Legality Rule {#spec.declarations.variables.record-pattern-bindings.legality-1}
+
+A braced record-pattern declaration evaluates its initializer once, binds only
+the pattern's named fields and optional remainder, and makes those bindings
+visible from the declaration to the end of its containing block. A `let`
+declaration introduces immutable bindings; `var` and `let var` introduce
+mutable bindings. The pattern must be well-typed under the record-pattern rules.
+
+<!-- rfc.py:last_reviewed a400f269 -->
+
 <details>
 <summary>Formal rules</summary>
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsInNvdXJjZSI6ImZ1biB0YWtlX2lkPHJvdyBSLCByb3cgUmVzdD4ocjogeyBpZDogaTY0LCAuLlIgfSkgLT4gaTY0XG53aGVyZSBSID0geyBleHRyYTogaTY0LCAuLlJlc3QgfVxue1xuICAgIGxldCB2YXIgeyBpZCwgLi5yZXN0IH0gOj0gcjtcbiAgICBpZCA6PSBpZCArIDE7XG4gICAgcmVzdC5leHRyYSA6PSByZXN0LmV4dHJhICsgMTtcbiAgICBpZCArIHJlc3QuZXh0cmFcbn1cblxuZnVuIGFkZF9hdXRoPHJvdyBSOiAheyBhdXRoIH0+KHI6IHsgLi5SIH0sIGF1dGg6IGk2NCkgLT4geyAuLlIsIGF1dGg6IGk2NCB9IHtcbiAgICB7IC4uciwgYXV0aCA9IGF1dGggfVxufVxuXG5mdW4gY29weV9yb3cocjogJnsgeDogaTY0LCB5OiBpNjQgfSkgLT4geyB4OiBpNjQsIHk6IGk2NCB9IHtcbiAgICB7IC4uciB9XG59XG5cbnJlY29yZCBQdWJsaWNQYWlyIHtcbiAgICBwdWJsaWMgaWQ6IGk2NCxcbiAgICBwdWJsaWMgZXh0cmE6IGk2NCxcbn1cblxuZnVuIG5vbWluYWxfcmVtYWluZGVyKHBhaXI6IFB1YmxpY1BhaXIpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHBhaXIpIHtcbiAgICAgICAgeyBpZCwgLi50YWlsIH0gPT4gaWQgKyB0YWlsLmV4dHJhXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIC0+IGk2NCB7XG4gICAgYXNzZXJ0KHRha2VfaWQoeyBpZCA9IDcsIGV4dHJhID0gNSB9KSA9PSAxNCk7XG4gICAgbGV0IHIgOj0gYWRkX2F1dGgoeyBpZCA9IDcgfSwgNSk7XG4gICAgbGV0IHRvdGFsIDo9IHRha2VfaWQoeyBpZCA9IDcsIGV4dHJhID0gNSB9KTtcbiAgICBsZXQgYW5vbnltb3VzIDo9IG1hdGNoICh7IGlkID0gdG90YWwsIGV4dHJhID0gci5hdXRoIH0pIHtcbiAgICAgICAgeyBpZCwgLi5yZXN0IH0gPT4gaWQgKyByZXN0LmV4dHJhXG4gICAgfTtcbiAgICBsZXQgb3JpZ2luYWwgOj0geyB4ID0gNCwgeSA9IDYgfTtcbiAgICBsZXQgY29waWVkIDo9IGNvcHlfcm93KCZvcmlnaW5hbCk7XG4gICAgYW5vbnltb3VzICsgbm9taW5hbF9yZW1haW5kZXIoUHVibGljUGFpciB7IGlkID0gMiwgZXh0cmEgPSAzIH0pICsgY29waWVkLnggKyBvcmlnaW5hbC55XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9yZWNvcmRzL3Jvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsIm5hbWUiOiJyb3dfcmVtYWluZGVyX2NvbnN0cnVjdGlvbi5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.variables.immutable-bindings.legality-1}
 

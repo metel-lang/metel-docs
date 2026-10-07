@@ -5,39 +5,39 @@ summary: "A `where` equation can type the remainder of a row, but no form lets a
 scope: "reference/spec/types.md#open-rows"
 owner: language
 discovered_by: "metel-core#1397 documentation work on records and rows; filed as metel-core#1399"
-disposition: planned
-rfc: RFC-0178
+disposition: resolved
 review: null
 ---
 
 ## Gap
 
-`where R = { token: Token, ..Rest }` lets a signature promise `Session<..Rest>`, and a
-caller gets that type. The language has no value-level form for the same operation. A record
-pattern's bare `..` discards the unnamed fields instead of binding them, and a record
-literal has no `..`-form, although the same tail is written freely in a record *type*. A
-body therefore cannot produce the remainder of an abstract row from the whole, nor extend a
-row by a field. Writing the removed label back is rejected by design.
+**Resolved.** RFC-0178 specifies `..name` as an owned remainder binding in a record
+pattern, and `..expr` as an owned row spread in a record literal. The type rules remove
+named labels from the strongest entailed decomposition, distinguish missing presence from
+an undetermined remainder, and define the empty remainder as `{}`. Bare `..` remains
+discard-only; multiple spreads are outside the feature.
 
-```metel
-extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
-    fun authenticate(self) -> Session<..Rest> { ... }   // no way to write the body
-}
-```
+The implemented forms support that transition by matching the owned record with
+`{ token, ..rest }` and spreading `rest` into the result record.
 
-Concrete rows are unaffected: with the fields known, a literal can be rebuilt by hand.
+The syntax and behavior are specified in
+`reference/spec/expressions.md#record-rest-patterns` and
+`reference/spec/types.md#spec.types.generics.open-rows.legality-4`.
 
 ## Impact
 
-Visible to Metel programmers: the signature of a typestate step over an open row is
-expressible, its implementation is not. Write the step for concrete rows, or model the
-state as a separate type.
+No remaining spec gap. The compiler implementation and integration fixtures are tracked by
+metel-core#1399.
 
 ## Affects
 
 - `spec.types.generics.open-rows.legality-2`
+- `spec.expressions.record-rest-patterns.legality-1`
+- `spec.types.generics.open-rows.legality-4`
+- `RFC-0178`
 
 ## Resolution
 
-Planned: RFC-0178 (`1-under-review`) proposes a record rest pattern (`{ token, ..rest }`) and
-a row spread in record literals (`{ ..rest, auth = a }`). Tracked by metel-core#1399.
+Resolved by RFC-0178's specification and implementation in
+`reference/spec/expressions.md#record-rest-patterns`,
+`reference/spec/types.md#open-rows`, and metel-core#1399.
