@@ -22,34 +22,35 @@ ImportTree → IDENTIFIER "as" IDENTIFIER
            | IDENTIFIER
 ImportItem → IDENTIFIER ( "as" IDENTIFIER )?
 
-Declaration          → FunDeclaration
-                     | StructDeclaration
-                     | RecordDeclaration
-                     | EnumDeclaration
-                     | TypeAliasDeclaration
-                     | ExtendBlock
-                     | AspectDeclaration
-                     | Statement
-                     | VarDeclaration
-                     | LetDeclaration
-TypeAliasDeclaration → "public"? "type" IDENTIFIER GenericParams? ":=" Type ";"
-LetDeclaration       → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
-VarDeclaration       → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
-FunDeclaration       → NativeBinding? "public"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
-NativeBinding        → "native" "(" "@" NATIVE_PATH ")"
-StructDeclaration    → "public"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
-StructFields         → ( StructField "," )* StructField?
-StructField          → "public"? IDENTIFIER ":" ( OpenRecordType | Type )
-RecordDeclaration    → "public"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
-EnumDeclaration      → "public"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
-EnumVariants         → ( EnumVariant "," )* EnumVariant?
-EnumVariant          → IDENTIFIER ( "{" StructFields "}" )?
-ExtendBlock          → "extend" GenericParams? ( OpenRecordType | Type ) ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
-ExtendAspect         → "!"? NamedType
-AssocTypeDef         → "type" IDENTIFIER ":=" Type ";"
-AspectDeclaration    → "public"? "aspect" IDENTIFIER GenericParams? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
-AspectMethod         → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
-AssocTypeDecl        → "type" IDENTIFIER ( ":" BoundList )? ";"
+Declaration              → FunDeclaration
+                         | StructDeclaration
+                         | RecordDeclaration
+                         | EnumDeclaration
+                         | TypeAliasDeclaration
+                         | ExtendBlock
+                         | AspectDeclaration
+                         | Statement
+                         | VarDeclaration
+                         | LetDeclaration
+TypeAliasDeclaration     → "public"? "type" IDENTIFIER GenericParams? ":=" Type ";"
+LetDeclaration           → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
+VarDeclaration           → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
+RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) RecordPattern ":=" Expression ";"
+FunDeclaration           → NativeBinding? "public"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
+NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
+StructDeclaration        → "public"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+StructFields             → ( StructField "," )* StructField?
+StructField              → "public"? IDENTIFIER ":" ( OpenRecordType | Type )
+RecordDeclaration        → "public"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+EnumDeclaration          → "public"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
+EnumVariants             → ( EnumVariant "," )* EnumVariant?
+EnumVariant              → IDENTIFIER ( "{" StructFields "}" )?
+ExtendBlock              → "extend" GenericParams? ( OpenRecordType | Type ) ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
+ExtendAspect             → "!"? NamedType
+AssocTypeDef             → "type" IDENTIFIER ":=" Type ";"
+AspectDeclaration        → "public"? "aspect" IDENTIFIER GenericParams? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
+AspectMethod             → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
+AssocTypeDecl            → "type" IDENTIFIER ( ":" BoundList )? ";"
 
 Params              → Param ( "," Param )* ","?
 Param               → "&" "var"? "self"
@@ -83,6 +84,7 @@ Statement           → WhileStatement
                     | ExpressionStatement
 Block               → "{" BlockItem* Expression? "}"
 BlockItem           → BlockExprStmt
+                    | RecordPatternDeclaration
                     | Declaration
 BlockExprStmt       → ( IfExpression | MatchExpression | LoopExpression ) ";"? !"}"
 ExpressionStatement → Expression ";"
@@ -156,37 +158,45 @@ CaptureItem          → "&" "var" IDENTIFIER
                      | IDENTIFIER "." "clone" "(" ")"
                      | IDENTIFIER
 StructLiteral        → TypePath "{" ( FieldInit ( "," FieldInit )* ","? )? "}"
-RecordLiteral        → "{" ( FieldInit ( "," FieldInit )* ","? )? "}"
+RecordLiteral        → "{" ( RecordInitializer ( "," RecordInitializer )* ","? )? "}"
 RecordProjectionExpr → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
 FieldInit            → IDENTIFIER ( "=" Expression )?
+RecordInitializer    → RecordSpread
+                     | FieldInit
+RecordSpread         → ".." Expression
 PathExpr             → PathRoot ( "::" IDENTIFIER )*
 TypePath             → PathRoot ( "::" IDENTIFIER )*
 
-Pattern          → "_"
-                 | ArrayPattern
-                 | TuplePattern
-                 | RecordPattern
-                 | EnumPattern
-                 | LiteralPattern
-                 | IDENTIFIER
-TuplePattern     → "(" Pattern ( "," Pattern )* ")"
-ArrayPattern     → "[" ArrayPatternBody "]"
-ArrayPatternBody → ( Pattern ( "," Pattern )* ( "," RestPattern )? | RestPattern )?
-RestPattern      → ".." IDENTIFIER
-RecordRest       → ".."
-FieldPatternList → IDENTIFIER ( "," IDENTIFIER )* ( "," RecordRest )? ","?
-                 | RecordRest
-RecordPattern    → "{" FieldPatternList "}"
-EnumPattern      → IDENTIFIER "::" IDENTIFIER ( "{" FieldPatternList "}" )?
-                 | IDENTIFIER "{" FieldPatternList "}"
-LiteralPattern   → SUFFIXED_FLOAT
-                 | FLOAT
-                 | SUFFIXED_INT
-                 | INT
-                 | STRING
-                 | CHAR
-                 | "true"
-                 | "false"
+Pattern                → "_"
+                       | ArrayPattern
+                       | TuplePattern
+                       | RecordPattern
+                       | EnumPattern
+                       | LiteralPattern
+                       | IDENTIFIER
+TuplePattern           → "(" Pattern ( "," Pattern )* ")"
+ArrayPattern           → "[" ArrayPatternBody "]"
+ArrayPatternBody       → ( Pattern ( "," Pattern )* ( "," RestPattern )? | RestPattern )?
+RestPattern            → ".." IDENTIFIER
+RecordRest             → ".."
+RecordRestBinding      → ".." IDENTIFIER
+RecordFieldPattern     → IDENTIFIER ( ":" "_" )?
+RecordFieldPatternList → RecordFieldPattern ( "," RecordFieldPattern )* ( "," ( RecordRestBinding | RecordRest ) )? ","?
+                       | RecordRestBinding
+                       | RecordRest
+FieldPatternList       → IDENTIFIER ( "," IDENTIFIER )* ( "," RecordRest )? ","?
+                       | RecordRest
+RecordPattern          → "{" RecordFieldPatternList "}"
+EnumPattern            → IDENTIFIER "::" IDENTIFIER ( "{" FieldPatternList "}" )?
+                       | IDENTIFIER "{" FieldPatternList "}"
+LiteralPattern         → SUFFIXED_FLOAT
+                       | FLOAT
+                       | SUFFIXED_INT
+                       | INT
+                       | STRING
+                       | CHAR
+                       | "true"
+                       | "false"
 
 Type                     → FunType
                          | MutReferenceType

@@ -4,6 +4,14 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.14.0 (unreleased)
+
+**Row remainder construction (RFC-0178, `metel-core#1399`):**
+- Record patterns can bind the owned remainder with `..name`; record literals can spread
+  one owned row with `..expr`. Generic row facts determine the remainder type and prove
+  spread-label absence. Spreading through a reference is allowed only when the row is
+  `Copy`.
+
 ## v0.13.1
 
 **Released 2026-09-27.** No language syntax changes. This

@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-10-06'
+generated_on: '2026-10-07'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**177 RFCs total.** 29 draft, 42 under review, 9 accepted, 3 integrated (83 live), 67 implemented, 13 superseded, 14 refused (94 settled).
+**177 RFCs total.** 29 draft, 41 under review, 9 accepted, 3 integrated (82 live), 68 implemented, 13 superseded, 14 refused (95 settled).
 
 ## Draft (29)
 
@@ -47,7 +47,7 @@ the curated thematic map.
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 
-## Under Review (42)
+## Under Review (41)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -90,7 +90,6 @@ the curated thematic map.
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
-- **RFC-0178** — Row Remainder Construction (`1-under-review` ; rfcs/1-under-review/rfc-0178-row-remainder-construction.md ; date 2026-10-06 ; updated 2026-10-06)
 
 ## Accepted (9)
 
@@ -110,7 +109,7 @@ the curated thematic map.
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0177** — Coercion-Aware Structural Aspect Lookup (`3-integrated` ; rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md ; date 2026-10-06 ; updated 2026-10-06 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1296)
 
-## Implemented (67)
+## Implemented (68)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -179,6 +178,7 @@ the curated thematic map.
 - **RFC-0167** — Reclassify unsoundness-only runtime errors as internal errors; split R0002 (`4-implemented` ; rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md ; date 2026-09-04 ; updated 2026-09-28 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/991)
 - **RFC-0171** — Prefix array type syntax: [T] and [T; N] (`4-implemented` ; rfcs/4-implemented/rfc-0171-prefix-array-type-syntax-t-and-t-n.md ; date 2026-09-27 ; updated 2026-10-01 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1291)
 - **RFC-0173** — Generic bodies are checked against their declared bounds (`4-implemented` ; rfcs/4-implemented/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md ; date 2026-10-02 ; updated 2026-10-04 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1364)
+- **RFC-0178** — Row Remainder Construction (`4-implemented` ; rfcs/4-implemented/rfc-0178-row-remainder-construction.md ; date 2026-10-06 ; updated 2026-10-07 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1399)
 
 ## Superseded (13)
 

@@ -47,8 +47,8 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::merge_from`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L5037) |
-| `verified by` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::block_local_type_id_is_disjoint_from_name_resolver_ids`](https://github.com/metel-lang/metel-core/blob/00ea5182206865bc4268d46281bafb2767b73cad/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L6944); [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::merge_from_does_not_collapse_same_named_structs`](https://github.com/metel-lang/metel-core/blob/00ea5182206865bc4268d46281bafb2767b73cad/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L6907); [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::same_named_structs_in_two_modules_keep_distinct_field_sets`](https://github.com/metel-lang/metel-core/blob/00ea5182206865bc4268d46281bafb2767b73cad/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L6874) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::merge_from`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L5041) |
+| `verified by` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::block_local_type_id_is_disjoint_from_name_resolver_ids`](https://github.com/metel-lang/metel-core/blob/00ea5182206865bc4268d46281bafb2767b73cad/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L6973); [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::merge_from_does_not_collapse_same_named_structs`](https://github.com/metel-lang/metel-core/blob/00ea5182206865bc4268d46281bafb2767b73cad/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L6936); [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::same_named_structs_in_two_modules_keep_distinct_field_sets`](https://github.com/metel-lang/metel-core/blob/00ea5182206865bc4268d46281bafb2767b73cad/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L6903) |
 | `last_reviewed` | cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1 |
 | `related` | ADR-0025 (unified `TypeDefinitionRegistry`), ADR-0041 |
 
@@ -61,7 +61,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/mod.rs::infer_propagate_error`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/inference/mod.rs#L2109) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/mod.rs::infer_propagate_error`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/inference/mod.rs#L2148) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/construction/tests.rs::from_impl_lookup_runs_in_inference_not_construction`](https://github.com/metel-lang/metel-core/blob/c6932074a86151f5faa1d265d6a761d574ded021/metel-frontend/src/pipeline/type_checking/construction/tests.rs#L76); [`metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.toml#L1) |
 | `last_reviewed` | c6932074a86151f5faa1d265d6a761d574ded021 |
 | `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs) |
@@ -89,9 +89,9 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L20) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/a400f2690d35031480f866ca9f1acb0b0e43f8ae/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L22) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/52_let_polymorphism.toml`](https://github.com/metel-lang/metel-core/blob/22f1104b6b7e8cc50978fd429537ecfd4267c336/metel-interpreter/tests/integration/sources/evaluator/generics/52_let_polymorphism.toml#L1); [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/aspects/stage21_12_aspect_impl_generic_constraint_in_where_clause.toml#L1) |
-| `last_reviewed` | d49ce4e69965354a4d7cd4a8a8588fa1c7517a7d |
+| `last_reviewed` | c53af0be22bb2ccbd0c6b0b72199800a0c7faf31 |
 | `related` | ADR-0011, ADR-0010 |
 
 ##### Requirement {#arch.type-inference.requirement-6}
@@ -133,7 +133,7 @@ one-way `[T; N]` → `[T]` coercion without changing the expression's type ident
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/2976fde037fd1e36839a9f8b09ec457577da5cac/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3945) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/2976fde037fd1e36839a9f8b09ec457577da5cac/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3949) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/aspects/76_array_display_structural_impl.toml`](https://github.com/metel-lang/metel-core/blob/2976fde037fd1e36839a9f8b09ec457577da5cac/metel-interpreter/tests/integration/sources/evaluator/aspects/76_array_display_structural_impl.toml#L1) |
 | `last_reviewed` | 2976fde0 |
 | `related` | RFC-0177; `spec.declarations.structural-aspect-bounds.legality-2` |

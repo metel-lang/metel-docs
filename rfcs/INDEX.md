@@ -261,7 +261,7 @@ above it are.
   any other statically known field. Separate from RFC-0174's iteration over all fields; open
   questions cover syntax, label equality, construction, and interaction with linear moves.
 
-- **RFC-0178** *(under-review 2026-10-06 — metel-core#1399, v0.14.0)* — Row Remainder
+- **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
   Construction — the value-level half of RFC-0121's removal-by-decomposition: a record
   **rest pattern** (`{ token, ..rest }`, binding the unnamed remainder as an owned record)
   and a **row spread** in record literals (`{ ..rest, auth = a }`), so a generic body can

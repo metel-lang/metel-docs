@@ -27,8 +27,54 @@ fun main() -> i64 {
 
 All three forms require `var`.
 
+### Record-pattern bindings
+
+A block-local binding may use a braced record pattern to bind fields directly.
+The initializer is evaluated once; the named field locals and optional owned
+remainder local become visible for the rest of the block. A plain `let` makes
+each introduced binding immutable. The mutable forms `var` and `let var` make
+every introduced field and remainder binding mutable. Other pattern forms
+continue to use `match`.
+
+```metel
+fun take_id<row R, row Rest>(r: { id: i64, ..R }) -> i64
+where R = { extra: i64, ..Rest }
+{
+    let var { id, ..rest } := r;
+    id := id + 1;
+    rest.extra := rest.extra + 1;
+    id + rest.extra
+}
+```
+
+Each shorthand field name introduces a local with that field's type. The
+`field: _` form checks that the field is present and discards its value without
+introducing a local. The pattern follows the same field-presence and
+remainder-typing rules as a record pattern in
+[`match`](expressions.md#spec.expressions.record-rest-patterns.legality-1).
+In particular, `..name` requires an owned value whose remainder type is known;
+bare `..` discards unmentioned fields.
+
+##### Legality Rule {#spec.declarations.variables.record-pattern-bindings.legality-1}
+
+A braced record-pattern declaration evaluates its initializer once, binds only
+the pattern's named fields and optional remainder, and makes those bindings
+visible from the declaration to the end of its containing block. A `let`
+declaration introduces immutable bindings; `var` and `let var` introduce
+mutable bindings. The pattern must be well-typed under the record-pattern rules.
+
+<!-- rfc.py:last_reviewed c53af0be -->
+
 <details>
 <summary>Formal rules</summary>
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19yZW1haW5kZXJfY29uc3RydWN0aW9uLm10bCIsInNvdXJjZSI6ImZ1biB0YWtlX2lkPHJvdyBSLCByb3cgUmVzdD4ocjogeyBpZDogaTY0LCAuLlIgfSkgLT4gaTY0XG53aGVyZSBSID0geyBleHRyYTogaTY0LCAuLlJlc3QgfVxue1xuICAgIGxldCB2YXIgeyBpZCwgLi5yZXN0IH0gOj0gcjtcbiAgICBpZCA6PSBpZCArIDE7XG4gICAgcmVzdC5leHRyYSA6PSByZXN0LmV4dHJhICsgMTtcbiAgICBpZCArIHJlc3QuZXh0cmFcbn1cblxuZnVuIHRha2VfZXh0cmEocjogeyBpZDogaTY0LCBleHRyYTogaTY0IH0pIC0+IGk2NCB7XG4gICAgbGV0IHsgaWQ6IF8sIGV4dHJhIH0gOj0gcjtcbiAgICBleHRyYVxufVxuXG5mdW4gYWRkX2F1dGg8cm93IFI6ICF7IGF1dGggfT4ocjogeyAuLlIgfSwgYXV0aDogaTY0KSAtPiB7IC4uUiwgYXV0aDogaTY0IH0ge1xuICAgIHsgLi5yLCBhdXRoID0gYXV0aCB9XG59XG5cbmZ1biBjb3B5X3JvdyhyOiAmeyB4OiBpNjQsIHk6IGk2NCB9KSAtPiB7IHg6IGk2NCwgeTogaTY0IH0ge1xuICAgIHsgLi5yIH1cbn1cblxucmVjb3JkIFB1YmxpY1BhaXIge1xuICAgIHB1YmxpYyBpZDogaTY0LFxuICAgIHB1YmxpYyBleHRyYTogaTY0LFxufVxuXG5mdW4gbm9taW5hbF9yZW1haW5kZXIocGFpcjogUHVibGljUGFpcikgLT4gaTY0IHtcbiAgICBtYXRjaCAocGFpcikge1xuICAgICAgICB7IGlkLCAuLnRhaWwgfSA9PiBpZCArIHRhaWwuZXh0cmFcbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBhc3NlcnQodGFrZV9pZCh7IGlkID0gNywgZXh0cmEgPSA1IH0pID09IDE0KTtcbiAgICBhc3NlcnQodGFrZV9leHRyYSh7IGlkID0gOCwgZXh0cmEgPSA5IH0pID09IDkpO1xuICAgIGxldCByIDo9IGFkZF9hdXRoKHsgaWQgPSA3IH0sIDUpO1xuICAgIGxldCB0b3RhbCA6PSB0YWtlX2lkKHsgaWQgPSA3LCBleHRyYSA9IDUgfSk7XG4gICAgbGV0IGFub255bW91cyA6PSBtYXRjaCAoeyBpZCA9IHRvdGFsLCBleHRyYSA9IHIuYXV0aCB9KSB7XG4gICAgICAgIHsgaWQsIC4ucmVzdCB9ID0+IGlkICsgcmVzdC5leHRyYVxuICAgIH07XG4gICAgbGV0IG9yaWdpbmFsIDo9IHsgeCA9IDQsIHkgPSA2IH07XG4gICAgbGV0IGNvcGllZCA6PSBjb3B5X3Jvdygmb3JpZ2luYWwpO1xuICAgIGFub255bW91cyArIG5vbWluYWxfcmVtYWluZGVyKFB1YmxpY1BhaXIgeyBpZCA9IDIsIGV4dHJhID0gMyB9KSArIGNvcGllZC54ICsgb3JpZ2luYWwueVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVjb3Jkcy9yb3dfcmVtYWluZGVyX2NvbnN0cnVjdGlvbi5tdGwiLCJuYW1lIjoicm93X3JlbWFpbmRlcl9jb25zdHJ1Y3Rpb24ubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjoiOSIsImNvbnRhaW5zIjpudWxsLCJsaW5lIjoiMiIsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InJvd19yZW1haW5kZXJfbGV0X3JlcXVpcmVzX3ByZXNlbmNlLm10bCIsInNvdXJjZSI6ImZ1biBiYWQ8cm93IFI+KHI6IHsgLi5SIH0pIC0+IGk2NCB7XG4gICAgbGV0IHsgaWQ6IF8sIC4ucmVzdCB9IDo9IHI7IC8vIEVSUk9SW1QwMDEyXVxuICAgIDBcbn1cblxuZnVuIG1haW4oKSAtPiBpNjQge1xuICAgIGJhZCh7IG90aGVyID0gMSB9KVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvcmVjb3Jkcy9yb3dfcmVtYWluZGVyX2xldF9yZXF1aXJlc19wcmVzZW5jZS5tdGwiLCJuYW1lIjoicm93X3JlbWFpbmRlcl9sZXRfcmVxdWlyZXNfcHJlc2VuY2UubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.variables.immutable-bindings.legality-1}
 
