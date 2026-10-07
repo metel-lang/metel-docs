@@ -129,8 +129,13 @@ named fields.
 
 **Ownership.** Matching moves the scrutinee. Each named field moves into its binder (or is
 copied if `Copy`, or dropped immediately for `_`); `..name` takes every other field as one
-owned record. The scrutinee is consumed as a whole, so no residual of it remains. Matching
-a *reference* (`&{ ..R }`) is a separate question (Open Question 3).
+owned record. The scrutinee is consumed as a whole, so no residual of it remains.
+
+**Owned scrutinees only.** A rest pattern against a *reference* (`let { x, ..rest } := &r`)
+is reserved: it is rejected with a message pointing at the owned form. Borrowing the
+remainder (`x: &T`, `rest: &{ ..Rest }`, and a split `&var`) needs the shared/exclusive
+rules of borrow checking (RFC-0122), and nothing in the motivating typestate case needs it,
+since those steps take `self` by value. Recorded as `GAP-EXPRESSIONS-001`.
 
 **Nominal types.** The scrutinee may be an anonymous record or a nominal `record` (whose
 fields are all public). The remainder is always an **anonymous** record: the brand is not
@@ -156,14 +161,19 @@ It is well-formed only if no label occurs twice, so each written label must be p
 **absent** from the spread's row:
 
 - if the spread's row is concrete, by inspection;
-- if it is abstract, by a negative bound (`row R: !{ auth }`) or by an equation that
-  decomposed it — a remainder `Rest` from `R = { token: Token, ..Rest }` is absent `token`
-  by the row invariant, since `R` contains `token` once.
+- if it is abstract, by a fact the checker already holds for the body: a negative bound
+  (`row R: !{ auth }`), or the label a decomposition removed — a remainder `Rest` from
+  `R = { token: Token, ..Rest }` lacks `token`, since `R` contains `token` once. The checker
+  installs both when it checks a generic definition (RFC-0173's implementation), so a spread's
+  absence proof is a lookup, not new inference.
 
 A literal whose absence cannot be shown is rejected (`T0012`, naming the label). A written
 label that is *present* in the spread is rejected too: there is **no override** — a
 spread adds fields, and replacing one is a field assignment (`r.x := v`) on an owned
-value, as today. At most one spread per literal.
+value, as today. A literal has **at most one** spread: combining two abstract rows needs a fact that the two
+are disjoint as wholes, which per-label bounds cannot state (`GAP-TYPES-008`). A leading
+`..expr` cannot collide with a range, since the grammar has no prefix range, and `{ ..rest }`
+alone cannot be a block, so it is unambiguously a record literal.
 
 **Ownership.** Spreading an owned record moves its fields into the result; the source is
 consumed, as in §1. Spreading through a reference is allowed only if every field in the
@@ -269,28 +279,29 @@ fun bad3<row R>(r: &{ ..R }) -> { ..R } {
 
 ---
 
-## Open Questions
+## Decisions and deferrals
 
-1. **Spelling of the spread.** `{ ..rest, auth = a }` mirrors the type-level
-   `{ ..R, auth: String }`. The alternative is trailing-only (`{ auth = a, ..rest }`),
-   Rust-like, which the type-level form does not require. Leading position is proposed
-   because record order is not significant; confirm it does not collide with range
-   expressions (`..x`) inside a record literal's initializer position.
-2. **Is "remainder lacks the decomposed label" already a derived fact?** §2 relies on it.
-   If the current checker records only the equation, absence must be derived from the row
-   invariant at the point of the spread, and the implementation should say so explicitly.
-3. **Patterns against a reference.** `let { x, ..rest } := &r` could yield `x : &T` and
-   `rest : &{ ..Rest }`, a borrowed view of the remainder — the shape RFC-0175 sketches
-   for `drain_field` (`(T, &var { ..R })`). That needs the borrow rules of RFC-0122 for the
-   `&var` case and is deferred; this RFC covers owned scrutinees only.
-4. **More than one spread.** Two spreads need pairwise disjointness of two abstract rows,
-   which a negative bound can express only per label. Deferred; at most one in this RFC.
-5. **Nominal result.** Should a remainder be able to re-acquire a brand — rebuilding a
-   `Session` from a destructured `Session`'s fields? As proposed the user writes the
-   constructor call (`Session { … }`) explicitly, which keeps construction invariants in
-   one place (see RFC-0114).
-6. **Tuples.** If tuples become numeric-label rows (RFC-0151), `(a, ..rest)` should mean
-   the same thing; whether `..rest` over a tuple yields a re-indexed tuple is that RFC's call.
+Decided in this RFC:
+
+- **Spread spelling.** A leading `..expr`, allowed at any position among the initializers,
+  mirrors the type-level tail. It is unambiguous (§2).
+- **Absence facts.** Presence and absence are entailments of facts the checker already
+  records for a generic body (§2); this RFC adds no inference.
+- **No re-branding.** A rest pattern or spread never produces a branded value. The
+  constructor call is written explicitly (`Session { ... }`), which keeps construction
+  invariants in one place (RFC-0114).
+- **Records only.** The forms are specified for anonymous records and nominal `record`s.
+
+Deferred, each with a record in the Architecture Atlas:
+
+- Rest patterns through a reference (borrowed remainder): `GAP-EXPRESSIONS-001`, with
+  RFC-0122.
+- More than one spread per literal: `GAP-TYPES-008`.
+- Tuples, if RFC-0151 makes them numeric-label rows: `GAP-TYPES-009`. The rules here are
+  written so they extend to that case; whether `..rest` over a tuple re-indexes is that RFC's
+  decision.
+
+The gap this RFC closes is `GAP-TYPES-006`.
 
 ---
 

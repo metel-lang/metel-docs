@@ -249,6 +249,8 @@ type, independently of the enclosing function's return type.
 
 Tuples are lightweight anonymous product types.
 
+> **Gap** GAP-TYPES-009
+
 ```metel
 fun main() -> i64 {
     let coord: (i64, i64) := (10, 20);
@@ -1535,6 +1537,10 @@ rather than declared.
 
 > **Available in v0.14.0.** RFC-0121 open rows support row extension, decomposition,
 > reusable type positions, and row-conditional implementations.
+
+> **Gap** GAP-TYPES-006
+>
+> **Gap** GAP-TYPES-008
 
 A `row`-kinded generic parameter abstracts over "the rest of a row" rather than a
 concrete shape. The binder is `row R`; every *use* of the variable is written `..R`,
