@@ -919,7 +919,7 @@ accepted everywhere `struct X { ... }` is — same declaration grammar, same con
 syntax, same field access, same generic-parameter list, same aspect-impl coherence rules
 — with exactly one difference: a `record`'s declared row is *structurally visible*, so
 it satisfies row bounds ([Generics — Row bounds](types.md#row-bounds)) and
-row-conditional impl resolution (`<row R>`, planned for v0.14.0, RFC-0121) the way a
+row-conditional impl resolution ([Generics — Open rows](types.md#open-rows)) the way a
 plain `struct`'s row never does.
 
 > **Available in v0.14.0 (#1350):** `std::core` provides field-wise `Clone` for a record when every field implements `Clone`.
@@ -927,6 +927,26 @@ plain `struct`'s row never does.
 The implementation recursively clones each field and preserves the record's type.
 This does not add `Eq`, `Ord`, or `Hash`; those aspects remain governed by their
 separate designs.
+
+A `record` may take a `row` parameter, spliced as `..R` wherever the type is named; the
+parameter stands for extra fields the user of the type supplies:
+
+```metel
+record Builder<row R> { public name: String, public data: { ..R } }
+
+fun describe<row R>(b: Builder<..R>) -> String { b.name }
+
+fun main() {
+    let a := Builder { name = "a", data = { retries = 3 } };
+    let b := Builder { name = "b", data = { auth = "t", retries = 1 } };
+    assert(describe(a) == "a");
+    assert(describe(b) == "b");
+}
+```
+
+Records of `Copy` fields are `Copy`, and records of `Display` fields are `Display`, through
+`std::core` impls over `{ ..R }` ([Field-wise row
+constraints](types.md#field-wise-row-constraints)).
 
 <details>
 <summary>Formal rules</summary>

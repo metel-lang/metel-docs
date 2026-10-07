@@ -305,6 +305,71 @@ only for an element in the tuple's declared arity.
 
 </details>
 
+## Records and Rows at a Glance
+
+> **Availability:** Since v0.14.0. This section is a map; the rules are stated where each
+> topic is specified, linked below.
+
+Every product type in Metel has a **row**: the set of its labelled fields, each with a
+type. An [anonymous record](#anonymous-records) *is* its row. A `struct` or `record`
+declaration is a **brand** (its name, fixed at declaration) paired with a row. Rows are
+what generic code can talk about structurally, in three increasingly general ways:
+
+| To say | Write | Specified in |
+|---|---|---|
+| "a record with *at least* these fields" | `<record T: { x: f64, .. }>` | [Row bounds](#row-bounds) |
+| "a record with *no* such field" | `<record T: !{ token }>` | [Row bounds](#row-bounds) |
+| "…and name *the rest*, so a signature can carry it" | `<row R>` with `{ x: f64, ..R }` | [Open rows](#open-rows) |
+| "…the rest is this field plus a remainder" | `where R = { token: Token, ..Rest }` | [Open rows](#open-rows) |
+| "every field's *type* satisfies an aspect" | `where all R: Copy` | [Field-wise row constraints](#field-wise-row-constraints) |
+| "this impl applies to every record of this shape" | `extend<row R: { x, .. }> { ..R }: A` | [Implementing an aspect for a record](#implementing-an-aspect-for-a-record) |
+
+Which types a row bound or row-conditional impl can match is decided by the declaration
+kind, not by the fields written:
+
+| | row visible to bounds and row-conditional impls | inherent methods |
+|---|---|---|
+| anonymous record | yes | no |
+| `record` ([Records](declarations.md#records)) | yes | yes |
+| `struct` | **no** | yes |
+| `enum` | **no** | yes |
+
+Narrowing connects these to ownership. Moving a field out of a value leaves a value with
+a smaller row ([Narrowing](ownership.md#narrowing)); a row-conditional impl or bound is
+checked against that *current* row. Passing a wider record by value to a parameter that
+names only some of its fields is *width subtyping*, and is allowed only when no
+non-`Copy` field would be forgotten ([Open rows](#open-rows)).
+
+The example below uses each piece once:
+
+```metel
+record Session<row R> { public id: i64, public data: { ..R } }
+
+// A bound: any record carrying `user: i64`.
+fun user_of<record T: { user: i64, .. }>(e: T) -> i64 { e.user }
+
+// A row variable: carry the rest through unchanged.
+fun keep<row R>(p: { user: i64, ..R }) -> { user: i64, ..R } { p }
+
+// Row-conditional methods: which exist depends on the session's row.
+extend<row R: { token: String, .. }> Session<..R> {
+    fun send(self) -> i64 { self.id * 10 }
+}
+extend<row R: !{ token }> Session<..R> {
+    fun login(self) -> i64 { self.id }
+}
+
+fun main() {
+    assert(user_of({ user = 7, kind = 1 }) == 7);
+    assert(keep({ user = 1, extra = 2 }).extra == 2);
+
+    let anon: Session<{ user: i64 }> := Session { id = 2, data = { user = 1 } };
+    let authed: Session<{ token: String }> := Session { id = 1, data = { token = "t" } };
+    assert(anon.login() == 2);
+    assert(authed.send() == 10);
+}
+```
+
 ## Anonymous Records
 
 > **Availability:** Since v0.12.0.
@@ -1570,6 +1635,96 @@ where R = { token: Token, ..Rest }
 }
 ```
 
+The equation constrains the *type*; it does not give a generic body a way to construct
+the remainder value from `R`, so a body that returns `Session<..Rest>` from a `Session<..R>`
+is not expressible for abstract rows. Reading a field the equation promises is:
+
+```metel
+fun split<row R, row Rest>(p: { token: i64, ..R }) -> i64
+where R = { extra: i64, ..Rest }
+{
+    p.token + p.extra
+}
+
+fun main() {
+    assert(split({ token = 1, extra = 2, other = 3 }) == 3);
+}
+```
+
+A row variable may also be the argument of a nominal type's own row parameter, written
+`..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
+checked at each use:
+
+```metel
+record Builder<row R> { public name: String, public data: { ..R } }
+
+fun auth_of<row R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
+    b.data.auth
+}
+
+fun main() {
+    let b := Builder { name = "req", data = { auth = "tok", retries = 3 } };
+    assert(auth_of(b) == "tok");
+}
+```
+
+An argument whose row lacks a required label is rejected with `T0012`:
+
+<!-- doc-example: expect-fail reason="the argument's row has no `auth` field -- T0012 is the point" -->
+```metel
+record Builder<row R> { public name: String, public data: { ..R } }
+
+fun auth_of<row R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
+    b.data.auth
+}
+
+fun main() {
+    let bare := Builder { name = "bare", data = { retries = 1 } };
+    let _ := auth_of(bare);
+}
+```
+
+**Width subtyping.** A record with extra fields may be passed to a parameter that names
+only some of them (`{ x: f64, ..R }`); the extras bind to `R`. By value this *narrows* the
+argument, so it is allowed only when every extra field is `Copy`:
+
+<!-- doc-example: expect-fail reason="`name` is a String, not Copy, so by-value narrowing is rejected -- T0033 is the point" -->
+```metel
+fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+
+fun main() {
+    let wide := { x = 1, name = "ada" };
+    let _ := get_x(wide);
+}
+```
+
+Taking the record by reference forgets nothing, so it carries no such restriction:
+
+```metel
+fun get_x<row R>(p: &{ x: i64, ..R }) -> i64 { p.x }
+
+fun main() {
+    let wide := { x = 1, name = "ada" };
+    assert(get_x(&wide) == 1);
+    assert(wide.name == "ada");
+}
+```
+
+Inside a generic body the extras are abstract, so a by-value narrowing there needs the
+declaration to say they are `Copy`:
+
+```metel
+fun consume<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+
+fun outer<row R>(s: { x: i64, ..R }) -> i64 where all R: Copy {
+    consume(s) + 1
+}
+
+fun main() {
+    assert(outer({ x = 1, k = 2, flag = true }) == 2);
+}
+```
+
 <details>
 <summary>Formal rules</summary>
 
@@ -1732,6 +1887,62 @@ constraints](#field-wise-row-constraints) above, `all R: Aspect`), which a recor
 impl accepts as `where all R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
 (its body is a built-in, `LIMIT-TYPES-003`) and `Copy` for every record of `Copy` fields (a
 bodyless impl): such a record is copied, not moved.
+
+Two shape-conditional impls are disjoint when some label one requires the other forbids:
+
+```metel
+aspect Describe { fun describe(&self) -> String; }
+
+extend<row R: { name: String, .. }> { ..R }: Describe {
+    fun describe(&self) -> String { "named ${self.name}" }
+}
+extend<row R: !{ name }> { ..R }: Describe {
+    fun describe(&self) -> String { "anonymous" }
+}
+
+fun main() {
+    assert({ name = "ada", age = 36 }.describe() == "named ada");
+    assert({ age = 36 }.describe() == "anonymous");
+}
+```
+
+The impl is chosen from the value's *current* row, so a partial move changes it:
+
+```metel
+record Handle { public id: i64, public name: String }
+
+aspect Describe { fun state(&self) -> String; }
+
+extend<row R: !{ name }> { ..R }: Describe {
+    fun state(&self) -> String { "no name" }
+}
+extend<row R: { name: String, .. }> { ..R }: Describe {
+    fun state(&self) -> String { "has name" }
+}
+
+fun main() {
+    var h := Handle { id = 1, name = "secret" };
+    assert(h.state() == "has name");
+    let name := h.name;                 // h : Handle.{ id }
+    assert(h.state() == "no name");
+    assert(name == "secret");
+}
+```
+
+Two impls whose conditions do not exclude each other overlap and are rejected with
+`T0015`:
+
+<!-- doc-example: expect-fail reason="two row-conditional impls that can both match overlap -- T0015 is the point" -->
+```metel
+aspect Describe { fun describe(&self) -> String; }
+
+extend<row R: { name: String, .. }> { ..R }: Describe {
+    fun describe(&self) -> String { "a" }
+}
+extend<row R: { id: i64, .. }> { ..R }: Describe {
+    fun describe(&self) -> String { "b" }
+}
+```
 
 <details>
 <summary>Formal rules</summary>

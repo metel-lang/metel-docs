@@ -54,13 +54,38 @@ fun main() {
 }
 ```
 
-A struct passed to a row-bounded parameter is a type error. (Named records that
-*would* satisfy a bound are planned; they don't exist yet.) This is the mirror of the
+A struct passed to a row-bounded parameter is a type error. This is the mirror of the
 rule that a `struct`'s row is invisible to structural matching — its identity is its
 name.
+
+If the field names *are* the contract, declare a **named record** instead. A `record`
+has a name, methods and a declaration like a struct, but its row is visible to bounds,
+so it satisfies them. Every field of a `record` is `public`:
+
+```metel
+record Point { public x: i64, public y: i64 }
+
+fun x_of<record T: { x: i64, .. }>(v: T) -> i64 { v.x }
+
+fun main() {
+    let p := Point { x = 1, y = 2 };
+    println(x_of(p));           // a named record satisfies the bound
+}
+```
+
+```
+1
+```
+
+Turning a `struct` into a `record` later is safe for callers; turning a `record` back
+into a `struct` is not, because anyone with a bound naming its fields stops compiling.
 
 ## By the end you'll have
 
 `user_of` and `is_heavy`, each reading a slice of any event that has the field.
+
+Rows can do more than bound a parameter — name "the rest" of a record, split a row,
+or attach methods that exist only for some rows. That is in
+[Reference: Records and Rows](records-and-rows-reference).
 
 **Next:** [Move a slice, don't copy it](moving-not-copying) — hand disjoint parts of one event to two consumers.

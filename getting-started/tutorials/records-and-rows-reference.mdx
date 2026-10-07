@@ -1,0 +1,433 @@
+---
+sidebar_position: 23
+---
+
+# Reference: Records and Rows
+
+The tutorial chapters use records one idea at a time. This page puts the whole
+machinery in one place: what kinds of record there are, how a function asks for "a
+record with at least these fields", how it abstracts over *the rest* of a record, and
+which of those pieces are limited today. The normative rules are in the
+[spec](../../reference/spec/types.md#records-and-rows-at-a-glance); this page is the
+worked-example version.
+
+## Four things with fields
+
+| | written | has a name | row visible to bounds | can have methods |
+|---|---|---|---|---|
+| anonymous record | `{ x = 1, y = 2 }` | no | yes | no (aspect impls only, for a local aspect) |
+| `record` declaration | `record Point { public x: i64, … }` | yes | **yes** | yes |
+| `struct` | `struct Point { x: i64, … }` | yes | **no** | yes |
+| row variable | `row R`, used as `..R` | — | stands for "the rest" | — |
+
+The **row** of a type is its set of labelled fields. An anonymous record *is* its row.
+A `struct` or `record` is a name (its **brand**) plus a row. The only difference between
+`struct` and `record` is whether that row is visible to structural matching — that is
+what the rest of this page is about.
+
+## Anonymous records
+
+```metel
+fun main() {
+    let p := { x = 1, y = 2 };
+    let q := p;                          // a record of Copy fields is copied, not moved
+    println(p.x + q.x);
+    println("${p}");                     // a record of Display fields is Display
+    let c := { name = "ada", n = 1 }.clone();   // a record of Clone fields is Clone
+    println(c.name);
+}
+```
+
+```
+2
+{ x: 1, y: 2 }
+ada
+```
+
+Records are structural (same labels and field types ⇒ same type, in any order) and
+exact (a `{ x, y }` value is not a `{ x }` value). `Copy`, `Clone` and `Display` hold for
+a record exactly when they hold for every field. There is no `==`, `Eq`, `Ord` or
+`Hash` for records yet — see [Known limits](#known-limits).
+
+## Named records
+
+A `record` declaration is a `struct` whose row is public to structural matching. Every
+field must be `public`:
+
+```metel
+record Point { public x: i64, public y: i64 }
+
+fun x_of<record T: { x: i64, .. }>(v: T) -> i64 { v.x }
+
+fun main() {
+    let p := Point { x = 1, y = 2 };   // a named record
+    let q := { x = 5, z = 9 };         // an anonymous record
+    println(x_of(p));
+    println(x_of(q));
+}
+```
+
+```
+1
+5
+```
+
+Both satisfy the bound. Declaring the same type as a `struct` is rejected at the call —
+and the error tells you the fix:
+
+{/* doc-example: expect-fail reason="a struct never satisfies a row bound — T0012; declare it as a record" */}
+```metel
+struct Point { x: i64, y: i64 }
+
+fun x_of<record T: { x: i64, .. }>(v: T) -> i64 { v.x }
+
+fun main() {
+    println(x_of(Point { x = 1, y = 2 }));
+}
+```
+
+Turning a `struct` into a `record` is additive for callers (the type now satisfies
+bounds it did not). Turning a `record` back into a `struct` is **not**: every caller
+whose bound names the type's fields stops compiling, and nothing at the declaration
+points at them. Choose `record` only when the field names really are the contract.
+
+## Row bounds
+
+A bound on a `record`-kinded parameter says which labels the argument must carry:
+
+```metel
+fun user_of<record T: { user: i64, .. }>(e: T) -> i64 { e.user }   // at least `user: i64`
+fun has_user<record T: { user, .. }>(e: T) -> i64 { 1 }            // an `user` of any type
+fun no_token<record T: !{ token }>(e: T) -> i64 { 2 }              // no `token` at all
+fun any_record<record T>(e: T) -> i64 { 3 }                        // any record whatsoever
+
+fun main() {
+    let ev := { user = 7, kind = "buy" };
+    println(user_of(ev));
+    println(has_user(ev));
+    println(no_token(ev));
+    println(any_record(ev));
+}
+```
+
+```
+7
+1
+2
+3
+```
+
+Inside the body only the fields the bound lists are readable. `{ user: i64, .. }` is
+*open* (more fields allowed); `{ user: i64 }` without the `..` is *closed* (exactly
+those). A pattern against an open bound must end in `..`.
+
+## Open rows: naming "the rest"
+
+A row bound names which fields you need. A **row variable** names *everything else*, so
+the rest can appear in the signature:
+
+```metel
+fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+
+fun keep<row R>(p: { x: i64, ..R }) -> { x: i64, ..R } { p }   // the rest flows through
+
+fun main() {
+    let wide := { x = 1, y = 20, flag = true };
+    println(get_x(wide));
+    let same := keep({ x = 2, tag = 7 });
+    println(same.tag);
+}
+```
+
+```
+1
+7
+```
+
+`row R` is the binder; every use is written `..R`. `keep` returns a record with the same
+extra fields it was given — the caller keeps `tag`, with its type, though `keep` never
+mentions it.
+
+### The by-value rule
+
+Passing a wider record **by value** to a `{ x: i64, ..R }` parameter narrows it: the
+fields `R` stands for are no longer reachable through the parameter. That is only sound
+if dropping them loses nothing, so every extra field must be `Copy`:
+
+{/* doc-example: expect-fail reason="by-value narrowing would forget the non-Copy field `name` — T0033" */}
+```metel
+fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+
+fun main() {
+    let wide := { x = 1, name = "ada" };   // `name` is a String: not Copy
+    println(get_x(wide));
+}
+```
+
+Borrow it instead and nothing is forgotten:
+
+```metel
+fun get_x<row R>(p: &{ x: i64, ..R }) -> i64 { p.x }
+
+fun main() {
+    let wide := { x = 1, name = "ada" };
+    println(get_x(&wide));
+    println(wide.name);         // still owned here
+}
+```
+
+```
+1
+ada
+```
+
+Inside a generic body `R` is abstract, so the body cannot see whether its fields are
+`Copy`. If it narrows by value, say so with a [field-wise constraint](#field-wise-constraints):
+
+```metel
+fun consume<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+
+fun outer<row R>(s: { x: i64, ..R }) -> i64 where all R: Copy {
+    consume(s) + 1
+}
+
+fun main() {
+    println(outer({ x = 1, k = 2, flag = true }));
+}
+```
+
+```
+2
+```
+
+Without `where all R: Copy`, `outer` is rejected with `T0033` at the call to `consume`.
+
+### Decomposing a row
+
+A `where` equation splits a row variable into a named field and the remainder. It
+implies the bound, and names the remainder (`Rest`) so a signature can mention it:
+
+```metel
+fun split<row R, row Rest>(p: { token: i64, ..R }) -> i64
+where R = { extra: i64, ..Rest }
+{
+    p.token + p.extra          // `extra` is readable: the equation promised it
+}
+
+fun main() {
+    println(split({ token = 1, extra = 2, other = 3 }));
+}
+```
+
+```
+3
+```
+
+## Rows on nominal types
+
+A `struct` or `record` can take a row parameter, spliced as `..R` in the type's own
+argument list. That is how a type carries "whatever else the caller put in here":
+
+```metel
+record Builder<row R> { public name: String, public data: { ..R } }
+
+fun describe<row R>(b: Builder<..R>) -> String { b.name }
+
+fun auth_of<row R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
+    b.data.auth
+}
+
+fun main() {
+    let b := Builder { name = "req", data = { auth = "tok", retries = 3 } };
+    println(describe(b));
+    println(auth_of(b));
+
+    let bare := Builder { name = "bare", data = { retries = 1 } };
+    println(describe(bare));       // fine: `describe` asks for nothing
+    // auth_of(bare)               // rejected: no `auth` field (T0012)
+}
+```
+
+```
+req
+tok
+bare
+```
+
+### Methods that exist only for some rows
+
+An `extend` block may carry a row condition, and its methods exist only for receivers
+whose row meets it. Disjoint conditions may reuse a method name:
+
+```metel
+record Session<row R> { public id: i64, public data: { ..R } }
+
+extend<row R: { token: String, .. }> Session<..R> {
+    fun send(self) -> i64 { self.id * 10 }          // only once a token is present
+}
+
+extend<row R: !{ token }> Session<..R> {
+    fun login(self) -> i64 { self.id }              // only while there is none
+}
+
+fun main() {
+    let authed: Session<{ token: String }> := Session { id = 1, data = { token = "t" } };
+    let anon: Session<{ user: i64 }> := Session { id = 2, data = { user = 1 } };
+    println(authed.send());
+    println(anon.login());
+    // anon.send()    // rejected: `anon`'s row has no `token`
+}
+```
+
+```
+10
+2
+```
+
+The row is part of the type, so "has a token yet?" is checked at compile time — a state
+machine whose states are rows.
+
+## Field-wise constraints
+
+A row *bound* constrains which labels exist. A **field-wise constraint**, `where all R:
+Aspect`, constrains what every field's *type* can do. It holds when each field of `R`
+satisfies `Aspect`, and vacuously for an empty row:
+
+```metel
+aspect Mark { fun mark(&self) -> i64; }
+extend i64: Mark { fun mark(&self) -> i64 { 1 } }
+extend f64: Mark { fun mark(&self) -> i64 { 2 } }
+
+aspect Label { fun label(&self) -> String; }
+
+extend<row R> { ..R }: Label where all R: Mark {
+    fun label(&self) -> String { "all marked".to_string() }
+}
+
+fun main() {
+    println({ a = 1, b = 2.0 }.label());
+    println({ a = 1 }.label());
+}
+```
+
+```
+all marked
+all marked
+```
+
+This is how the standard library gives `Display` and `Copy` to every record of
+`Display` / `Copy` fields. A record with a field that lacks the aspect is `T0012`,
+naming the field.
+
+## Implementing an aspect for a record
+
+An aspect local to your module may be implemented three ways, from narrowest to widest:
+
+```metel
+// extend { x: f64, y: f64 }: MyAspect { … }                  one concrete row
+// extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }      every row with an `x: f64`
+// extend<row R> { ..R }: MyAspect { … }                      every row
+```
+
+Two row-conditional impls of the same aspect must be provably disjoint — some label
+that one requires and the other forbids. Overlapping ones are `T0015`:
+
+```metel
+aspect Describe { fun describe(&self) -> String; }
+
+extend<row R: { name: String, .. }> { ..R }: Describe {
+    fun describe(&self) -> String { "named ${self.name}" }
+}
+extend<row R: !{ name }> { ..R }: Describe {
+    fun describe(&self) -> String { "anonymous" }
+}
+
+fun main() {
+    println({ name = "ada", age = 36 }.describe());
+    println({ age = 36 }.describe());
+}
+```
+
+```
+named ada
+anonymous
+```
+
+A record's **current** row decides which impl applies, so a partial move changes the
+answer. Moving `name` out of a `Handle` leaves a value that no longer has one:
+
+```metel
+record Handle { public id: i64, public name: String }
+
+aspect Describe { fun state(&self) -> String; }
+
+extend<row R: !{ name }> { ..R }: Describe {
+    fun state(&self) -> String { "no name" }
+}
+extend<row R: { name: String, .. }> { ..R }: Describe {
+    fun state(&self) -> String { "has name" }
+}
+
+fun main() {
+    var h := Handle { id = 1, name = "secret" };
+    println(h.state());
+    let name := h.name;          // moves `name` out; h : Handle.{ id }
+    println(h.state());
+    println(name);
+}
+```
+
+```
+has name
+no name
+secret
+```
+
+If a type has its own impl of the aspect, that impl wins over any row-conditional one.
+
+## Narrowing and widening
+
+Moving a field out of a value narrows its type, for anonymous records and for `struct`s
+and `record`s alike. Reading a moved-out field is a compile error:
+
+{/* doc-example: expect-fail reason="reading a field after it was moved out — T0003, the type no longer has it" */}
+```metel
+fun main() {
+    let r := { left = "l", right = "r" };
+    let l := r.left;       // moves `left`; r : { right: String }
+    println(r.right);
+    println(r.left);       // error: no field `left` on { right: String }
+}
+```
+
+A `struct` or `record` can also be **projected** (`h.{ id }` has type `Handle.{ id }`)
+and **widened back** by reassigning the moved field; an anonymous record narrows but
+does not widen. See [Move a slice, don't copy it](moving-not-copying) for both.
+
+## Known limits
+
+- **Records have no `==`, `Eq`, `Ord` or `Hash`.** `Clone`, `Copy` and `Display` exist
+  (field-wise); the rest are separate designs. `Display` and `Clone` for records are
+  built into the interpreter today (`LIMIT-TYPES-003`).
+- **A derived remainder can be typed but not built generically.** A `where` equation
+  such as `R = { token: String, ..Rest }` lets a method promise `Session<..Rest>`, but
+  there is no way yet to construct the remainder row from `R` inside a generic body, so
+  a typestate step like `authenticate` cannot be written generally. Concrete rows work.
+- **A deeper move does not narrow the outer value.** Moving `root.a.b` leaves `root`'s
+  type whole; a record-typed field moves as a unit (`GAP-OWNERSHIP-002`).
+- **Compile-time iteration over a row's fields** (to write your own `Display`-like
+  aspect) is designed in RFC-0174 but not implemented.
+
+## Quick error guide
+
+| code | what happened |
+|---|---|
+| `T0012` | a struct was given to a row bound; a record lacks a required label; a field lacks the aspect `where all R: …` needs |
+| `T0015` | two row-conditional impls of one aspect overlap |
+| `T0032` | an anonymous row (`Builder<..>`) or a fixed-field open record used where it is not accepted |
+| `T0033` | by-value narrowing would forget a non-`Copy` field; add `where all R: Copy` or borrow |
+| `T0034` | one method name defined twice where both definitions can apply to the same receiver |
+| `T0035` | a generic body used a method or field its declared bounds do not grant |
+| `T0003` | no such field (moved out, or not in the bound), or an undeclared row variable |
+
+Every code has a full entry in the [error code reference](../../reference/error-codes.md).
