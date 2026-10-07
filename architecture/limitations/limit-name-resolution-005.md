@@ -56,12 +56,12 @@ key, not the declaration.
 - `arch.name-resolution.requirement-1`
 - `arch.resolution.requirement-1`
 - [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/f514bce1e0aa89424efb733f08bfdd8b65252028/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L341)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/19f0f036bc714e7237fb35888dfdbca4365248b8/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L426)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/a400f2690d35031480f866ca9f1acb0b0e43f8ae/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L426)
 - [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/ffc8db866d34f6ff1d1d6990d9e7a9421267cd88/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L255)
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/19f0f036bc714e7237fb35888dfdbca4365248b8/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L425)
+- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/a400f2690d35031480f866ca9f1acb0b0e43f8ae/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L425)
 - [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/f514bce1e0aa89424efb733f08bfdd8b65252028/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L340)
 - [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/ffc8db866d34f6ff1d1d6990d9e7a9421267cd88/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L254)
 <!-- limit.py:markers:end -->
