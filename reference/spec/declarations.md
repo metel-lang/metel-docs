@@ -49,8 +49,9 @@ where R = { extra: i64, ..Rest }
 
 Each shorthand field name introduces a local with that field's type. The
 `field: _` form checks that the field is present and discards its value without
-introducing a local. The pattern follows the same field-presence and
-remainder-typing rules as a record pattern in
+introducing a local for it. The field is consumed as part of matching the
+initializer and is excluded from any `..name` remainder. The pattern follows
+the same field-presence and remainder-typing rules as a record pattern in
 [`match`](expressions.md#spec.expressions.record-rest-patterns.legality-1).
 In particular, `..name` requires an owned value whose remainder type is known;
 bare `..` discards unmentioned fields.
@@ -59,9 +60,11 @@ bare `..` discards unmentioned fields.
 
 A braced record-pattern declaration evaluates its initializer once, binds only
 the pattern's named fields and optional remainder, and makes those bindings
-visible from the declaration to the end of its containing block. A `let`
-declaration introduces immutable bindings; `var` and `let var` introduce
-mutable bindings. The pattern must be well-typed under the record-pattern rules.
+visible from the declaration to the end of its containing block. A field written
+as `field: _` must be present but introduces no binding; its value is discarded
+when the initializer is consumed. A `let` declaration introduces immutable
+bindings; `var` and `let var` introduce mutable bindings. The pattern must be
+well-typed under the record-pattern rules.
 
 <!-- rfc.py:last_reviewed c53af0be -->
 
