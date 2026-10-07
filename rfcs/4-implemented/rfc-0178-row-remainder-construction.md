@@ -33,7 +33,7 @@ written:
 ```metel
 extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let { token, ..rest } := self.data;
+        let { token: _, ..rest } := self.data;      // rest : { ..Rest }
         Session { id = self.id, data = rest }
     }
 }
@@ -109,9 +109,8 @@ A record pattern may end in `..name`, binding every field the pattern did not na
 record:
 
 ```metel
-match (value) {                           // value : { token: Token, extra: i64, flag: boolean }
-    { token, ..rest } => rest             // token : Token, rest : { extra: i64, flag: boolean }
-}
+let { token, ..rest } := value;          // value : { token: Token, extra: i64, flag: boolean }
+// token : Token, rest : { extra: i64, flag: boolean }
 ```
 
 This is the record counterpart of the array pattern's `..name`, and a refinement of the
@@ -147,7 +146,7 @@ follows the ordinary ownership rules for pattern bindings; `..name` takes every 
 field as one owned record. The scrutinee is consumed as a whole, so no residual of it
 remains.
 
-**Owned scrutinees only.** A rest pattern against a *reference* (`match (&r) { { x, ..rest } => rest }`)
+**Owned scrutinees only.** A rest pattern against a *reference* (`let { x, ..rest } := &r`)
 is reserved: it is rejected with a message pointing at the owned form. Borrowing the
 remainder (`x: &T`, `rest: &{ ..Rest }`, and a split `&var`) needs the shared/exclusive
 rules of borrow checking (RFC-0122), and nothing in the motivating typestate case needs it,
@@ -209,9 +208,8 @@ The typestate step (signature unchanged from RFC-0121):
 ```metel
 extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        match (self.data) {
-            { token, ..rest } => Session { id = self.id, data = rest } // §1 case 2
-        }
+        let { token: _, ..rest } := self.data; // §1 case 2: rest : { ..Rest }
+        Session { id = self.id, data = rest }
     }
 }
 ```
@@ -239,9 +237,8 @@ Must **not** compile:
 
 ```metel
 fun bad<row R>(r: { ..R }) -> i64 {
-    match (r) {
-        { id, ..rest } => id        // error: `id` is not known to be present in `R`
-    }
+    let { id, ..rest } := r;       // error: `id` is not known to be present in `R`
+    id
 }
 
 fun bad2<row R>(r: { ..R }, a: String) -> { ..R, auth: String } {
