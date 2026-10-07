@@ -169,6 +169,16 @@ dropped, and narrowed again. For a struct over *N* fields the space of residual 
 the subset lattice, bounded by 2^*N* and trivial at realistic struct sizes; there is no
 row variable and no unification involved in computing it.
 
+The empty subset is a branded residual `Handle.{}` when `Handle` declares fields.
+Moving the last non-`Copy` field does not erase the brand, produce `Unit`, or count
+as moving the binding as a whole. Empty residuals can be bound, passed, and returned
+at their exact type; they do not satisfy a wider row or acquire structural eligibility.
+Removed-field access is rejected by ordinary type checking independently of
+`--move-check`; whole-binding use-after-move remains an ownership check.
+Reassigning removed fields of a mutable binding widens even an empty residual,
+recovering the plain nominal type when every field is restored. Full-width
+normalization remains unchanged, including a genuinely zero-field nominal type.
+
 **A struct's own field projection expression (RFC-0116 §4) produces exactly the same
 residual type as a partial move does.** `h.{ fd }` and `h.name` moved out (leaving only
 `fd`) both yield `Handle.{ fd }` — projection is narrowing performed explicitly on a copy

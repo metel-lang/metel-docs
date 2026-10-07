@@ -220,7 +220,7 @@ OpenRecordType           → "{" RecordTypeField ( "," RecordTypeField )* "," Ro
                          | "{" RowTail "," RecordTypeField ( "," RecordTypeField )* ","? "}"
                          | "{" RowTail ","? "}"
 RowTail                  → ".." IDENTIFIER?
-RecordProjectionType     → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
+RecordProjectionType     → TypePath ".{" ( IDENTIFIER ( "," IDENTIFIER )* ","? )? "}"
 OpenRecordProjectionType → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* "," RowTail ","? "}"
                          | TypePath ".{" RowTail ","? "}"
 FunType                  → FunTypeQualifier* "|" TypeList? "|" "->" Type

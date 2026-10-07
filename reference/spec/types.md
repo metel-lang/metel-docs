@@ -450,11 +450,18 @@ it from a struct literal:
 
 ```metel
 Handle.{ fd }           // the type: Handle's row, narrowed to `fd`
+Handle.{}               // the type: Handle's brand with no fields remaining
 ```
 
 A bare identifier inside projection braces is always a **field label**, never a type or a
 row variable. Chained projection (`S.{ a }.{ b }`) and projection in pattern position are not
 accepted.
+
+> **Since v0.14.0:** An empty projection in type position names the empty branded residual.
+
+If the nominal type itself declares no fields, this is a full-width projection and
+normalizes to that nominal type. An empty branded residual of a non-empty type
+is not the anonymous record type `{}` or `Unit`.
 
 Inside an `extend` block, `Self.{ fd }` projects `Self`'s own row exactly as
 `Handle.{ fd }` would project `Handle`'s — `Self` resolves to the enclosing block's

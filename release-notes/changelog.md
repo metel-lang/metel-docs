@@ -6,6 +6,12 @@ title: "Metel Language Changelog"
 
 ## v0.14.0 (unreleased)
 
+**Empty row residuals (`metel-core#1398`):** Moving the last non-`Copy` field
+retains an empty residual rather than restoring the original type. Removed-field
+reads consistently report `T0003` with or without move checking. Empty residuals
+can be passed and returned, retain nominal brands, and widen on field reassignment;
+`Name.{}` names an empty nominal residual type.
+
 **Row remainder construction (RFC-0178, `metel-core#1399`):**
 - Record patterns can bind the owned remainder with `..name`; record literals can spread
   one owned row with `..expr`. Generic row facts determine the remainder type and prove
