@@ -11,10 +11,14 @@ review: null
 
 ## Limitation
 
-Row-conditional method dispatch succeeds on a partial nominal residual, but
-coercing the same receiver to `dyn Aspect` fails with `T0012`. The skipped
-regression is `evaluator/records/release_matrix_residual_dyn_alias.mtl`; see
-metel-core#1413.
+Row-conditional method dispatch succeeded on a partial nominal residual, but
+coercing that receiver to `dyn Aspect` failed with `T0012`; runtime coercion also
+assumed every value had a nominal type id, rejecting anonymous records. Dyn
+values now retain an optional nominal id and the concrete structural receiver
+type, and runtime dispatch routes structural values through record/pattern
+impl lookup. `evaluator/records/release_matrix_residual_dyn_alias.mtl` now passes
+locally without a skip; see metel-core#1413, which remains open pending
+integration.
 
 ## Impact
 
@@ -28,4 +32,5 @@ the corresponding existential aspect type after record narrowing.
 
 ## Resolution
 
-Open; tracked by metel-core#1413.
+Implementation is present locally and covered by the unskipped regression;
+tracked by metel-core#1413 pending integration.

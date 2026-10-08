@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPE-INFERENCE-010
-title: "A public alias loses its defining module's nominal type import"
-summary: "Importing a public alias to a row-specialized nominal type does not make its defining nominal type available to the alias."
+title: "A transparent public alias omitted its nominal type dependency"
+summary: "Alias expansion erased module context for nominal declarations referenced in the alias target."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "v0.14.0 sensitive release-matrix probe; metel-core#1414"
@@ -12,9 +12,11 @@ review: null
 ## Limitation
 
 Importing `public type EmptyPacket := Packet<{}>` without separately importing
-`Packet` reports `unknown type Packet` in the consuming module. A minimal
-two-module regression is `module_semantics/release_matrix_row_callback/`;
-see metel-core#1414.
+`Packet` previously reported `unknown type Packet` in the consuming module.
+Alias expansion now materializes a synthetic import for nominal dependencies
+from the defining module. The two-module regression
+`module_semantics/release_matrix_row_callback/` now passes locally without a
+skip; see metel-core#1414, which remains open pending integration.
 
 ## Impact
 
@@ -28,4 +30,5 @@ module boundaries.
 
 ## Resolution
 
-Open; tracked by metel-core#1414.
+Implementation is present locally and covered by the unskipped regression;
+tracked by metel-core#1414 pending integration.

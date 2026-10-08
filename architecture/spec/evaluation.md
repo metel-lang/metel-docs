@@ -32,8 +32,8 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/mod.rs::get_local`](https://github.com/metel-lang/metel-core/blob/b6dd2086299e7b0f1171283cf36b38806af84021/metel-interpreter/src/evaluator/mod.rs#L1983) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::a_binding_with_no_id_is_simply_not_stored`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L4588); [`metel-interpreter/src/evaluator/mod.rs::define_binding_is_readable_by_local_id`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L4579); [`metel-interpreter/src/evaluator/mod.rs::distinct_local_ids_do_not_alias`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L4599); [`metel-interpreter/tests/integration/sources/module_semantics/top_level_bindings_are_isolated_per_module/test.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/module_semantics/top_level_bindings_are_isolated_per_module/test.toml#L1) |
+| `implements` | [`metel-interpreter/src/evaluator/mod.rs::get_local`](https://github.com/metel-lang/metel-core/blob/b6dd2086299e7b0f1171283cf36b38806af84021/metel-interpreter/src/evaluator/mod.rs#L2000) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::a_binding_with_no_id_is_simply_not_stored`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L4662); [`metel-interpreter/src/evaluator/mod.rs::define_binding_is_readable_by_local_id`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L4653); [`metel-interpreter/src/evaluator/mod.rs::distinct_local_ids_do_not_alias`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L4673); [`metel-interpreter/tests/integration/sources/module_semantics/top_level_bindings_are_isolated_per_module/test.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/module_semantics/top_level_bindings_are_isolated_per_module/test.toml#L1) |
 | `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
 | `related` | `arch.resolution.requirement-1`, `arch.resolution.requirement-2`, ADR-0029, ADR-0054, `#1052a`/`#1052b` series |
 
@@ -46,9 +46,9 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/pattern/mod.rs::match_pattern`](https://github.com/metel-lang/metel-core/blob/c53af0be22bb2ccbd0c6b0b72199800a0c7faf31/metel-interpreter/src/evaluator/pattern/mod.rs#L24) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::perhaps_and_result_have_no_dedicated_value_variants`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4895); [`metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml#L1) |
-| `last_reviewed` | c53af0be22bb2ccbd0c6b0b72199800a0c7faf31 |
+| `implements` | [`metel-interpreter/src/evaluator/pattern/mod.rs::match_pattern`](https://github.com/metel-lang/metel-core/blob/5f038b189cb67c5ec40e51d16a3e11a831a4535e/metel-interpreter/src/evaluator/pattern/mod.rs#L24) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::perhaps_and_result_have_no_dedicated_value_variants`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4969); [`metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml#L1) |
+| `last_reviewed` | 5f038b189cb67c5ec40e51d16a3e11a831a4535e |
 | `related` | ADR-0028, `arch.evaluation.requirement-2` |
 
 ##### Requirement {#arch.evaluation.requirement-4}
@@ -60,7 +60,7 @@ Method dispatch preserves the typed AST's receiver mode: value receivers use the
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/call.rs::bind_method_params`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/call.rs#L33) |
+| `implements` | [`metel-interpreter/src/evaluator/call.rs::bind_method_params`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/call.rs#L82) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/aspects/93_dyn_aspect_mutable_receiver_dispatch.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/aspects/receiver_modes_and_nested_field_mutation.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/aspects/receiver_modes_and_nested_field_mutation.toml#L1) |
 | `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
 | `related` | ADR-0036, RFC-0044 |
@@ -74,8 +74,8 @@ Array values use value semantics at evaluator binding and assignment boundaries:
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/mod.rs::define_binding`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L1942) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::define_binding_deep_clones_arrays`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4807); [`metel-interpreter/src/evaluator/mod.rs::set_local_deep_clones_arrays`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4822) |
+| `implements` | [`metel-interpreter/src/evaluator/mod.rs::define_binding`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L1959) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::define_binding_deep_clones_arrays`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4881); [`metel-interpreter/src/evaluator/mod.rs::set_local_deep_clones_arrays`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4896) |
 | `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
 | `related` | ADR-0007 |
 
@@ -89,7 +89,7 @@ The evaluator maintains call frames in thread-local storage. Call entry pushes i
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/mod.rs::push_frame`](https://github.com/metel-lang/metel-core/blob/2509ef305686205e937c2aabd4ea3edd3577629e/metel-interpreter/src/evaluator/mod.rs#L31) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::call_frames_push_on_entry_and_pop_on_exit`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4842); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_14_stack_single_frame.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_14_stack_single_frame.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_15_stack_outer_frame.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_15_stack_outer_frame.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_16_stack_deep_chain.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_16_stack_deep_chain.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_17_stack_recursive.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_17_stack_recursive.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_18_stack_closure_frame.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_18_stack_closure_frame.toml#L1) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::call_frames_push_on_entry_and_pop_on_exit`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4916); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_14_stack_single_frame.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_14_stack_single_frame.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_15_stack_outer_frame.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_15_stack_outer_frame.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_16_stack_deep_chain.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_16_stack_deep_chain.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_17_stack_recursive.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_17_stack_recursive.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/functions/neg_18_stack_closure_frame.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/functions/neg_18_stack_closure_frame.toml#L1) |
 | `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
 | `related` | ADR-0008 |
 
@@ -102,9 +102,9 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `implemented` |
 | `owner` | `metel-interpreter`, `metel-frontend` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/call.rs::call_runtime_callable`](https://github.com/metel-lang/metel-core/blob/8ceeef9347cf728bb745a41d846c343891fbaba3/metel-interpreter/src/evaluator/call.rs#L95) |
+| `implements` | [`metel-interpreter/src/evaluator/call.rs::call_runtime_callable`](https://github.com/metel-lang/metel-core/blob/5f038b189cb67c5ec40e51d16a3e11a831a4535e/metel-interpreter/src/evaluator/call.rs#L144) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/aspects/79_generic_body_empty_collection_args.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/aspects/79_generic_body_empty_collection_args.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/generics/80_generic_construction_at_calltime.toml`](https://github.com/metel-lang/metel-core/blob/b709fee2babd7b8e859dee816eab60a6056c8bd5/metel-interpreter/tests/integration/sources/evaluator/generics/80_generic_construction_at_calltime.toml#L1) |
-| `last_reviewed` | ac41171940e2afadc5ef7acfe4eb871ddb857227 |
+| `last_reviewed` | 5f038b189cb67c5ec40e51d16a3e11a831a4535e |
 | `related` | ADR-0010, ADR-0011, `LIMIT-EVALUATION-001` |
 
 ##### Requirement {#arch.evaluation.requirement-8}
@@ -116,9 +116,9 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `implemented` |
 | `owner` | `metel-interpreter`, `metel-frontend` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/type_of.rs::value_to_type`](https://github.com/metel-lang/metel-core/blob/57cd28bc83936d7f2cc73a8e5fc9b2f2b3d122c0/metel-interpreter/src/evaluator/type_of.rs#L23) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::dyn_aspect_value_rebuilds_its_dyn_type_without_exposing_the_concrete_value`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-interpreter/src/evaluator/mod.rs#L4917); [`metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml#L1) |
-| `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
+| `implements` | [`metel-interpreter/src/evaluator/type_of.rs::value_to_type`](https://github.com/metel-lang/metel-core/blob/5f038b189cb67c5ec40e51d16a3e11a831a4535e/metel-interpreter/src/evaluator/type_of.rs#L23) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::dyn_aspect_value_rebuilds_its_dyn_type_without_exposing_the_concrete_value`](https://github.com/metel-lang/metel-core/blob/5f038b189cb67c5ec40e51d16a3e11a831a4535e/metel-interpreter/src/evaluator/mod.rs#L4991); [`metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml#L1) |
+| `last_reviewed` | 5f038b189cb67c5ec40e51d16a3e11a831a4535e |
 | `related` | ADR-0053, RFC-0008 |
 
 ##### Requirement {#arch.evaluation.requirement-2}
@@ -130,8 +130,8 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `status` | `partial` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/mod.rs::get_type_value_by_id`](https://github.com/metel-lang/metel-core/blob/5a985cae79415666960fa67e7ff1115683058fd9/metel-interpreter/src/evaluator/mod.rs#L929) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::same_named_types_dispatch_by_symbol_id_not_name`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4878); [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
+| `implements` | [`metel-interpreter/src/evaluator/mod.rs::get_type_value_by_id`](https://github.com/metel-lang/metel-core/blob/5a985cae79415666960fa67e7ff1115683058fd9/metel-interpreter/src/evaluator/mod.rs#L934) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::same_named_types_dispatch_by_symbol_id_not_name`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4952); [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
 | `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
 | `related` | `arch.resolution.requirement-1`, `tools/check_no_semantic_name_lookup.py` |
 
