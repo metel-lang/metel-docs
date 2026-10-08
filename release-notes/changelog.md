@@ -87,6 +87,12 @@ can be passed and returned, retain nominal brands, and widen on field reassignme
 
 **Iteration and method dispatch fixes:**
 
+- Explicit closure capture lists are checked inside generic definitions before
+  any call. An omitted local capture reports `T0026` at the definition instead
+  of escaping to runtime reconstruction as `I0010` (`metel-core#1405`).
+- Generic ownership analysis preserves symbolic row tails and their declared
+  field-wise and absence bounds when forwarding rows through closures, instead
+  of skipping reconstruction with `T0002` (`metel-core#1405`).
 - `List<T>` implements `Iterable<T>` and works in `for in`, with independent
   cursors for nested iteration (`metel-core#871`).
 - Generic aspect methods execute with their own type arguments rather than

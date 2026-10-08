@@ -43,15 +43,18 @@ Primitive types and any type implementing `Copy` are exempt — they are duplica
 Using a non-`Copy` value in assignment, argument, or return position moves it; a later use
 of the source binding is rejected.
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6InVzZSBvZiBtb3ZlZCB2YWx1ZSBgc2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiIwMV9tb3ZlX3RoZW5fdXNlLm10bCIsInNvdXJjZSI6ImZ1biBtYWluKCkge1xuICAgIGxldCBzIDo9IFwiaGVsbG9cIjtcbiAgICBsZXQgbW92ZWQgOj0gcztcbiAgICBsZXQgYWdhaW4gOj0gcztcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL21vdmVfY2hlY2svMDFfbW92ZV90aGVuX3VzZS5tdGwiLCJuYW1lIjoiMDFfbW92ZV90aGVuX3VzZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6InVzZSBvZiBtb3ZlZCB2YWx1ZSBgcmAiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJnZW5lcmljX3Jvd19mb3J3YXJkaW5nX21vdmVzX3Vua25vd25fdGFpbC5tdGwiLCJzb3VyY2UiOiJmdW4gYWRkPHJvdyBSOiAhe3Rva2VufT4ocjogeyAuLlIgfSkgLT4geyB0b2tlbjogU3RyaW5nLCAuLlIgfSB7XG4gICAgeyAuLnIsIHRva2VuID0gXCJzZWNyZXRcIiB9XG59XG5cbmZ1biBmb3J3YXJkPHJvdyBSOiAhe3Rva2VufT4ocjogeyAuLlIgfSkgLT4gaTY0IHtcbiAgICBsZXQgY2FsbGJhY2sgOj0gW3JdIG9uY2UgfHwge1xuICAgICAgICBsZXQgYWRkZWQgOj0gYWRkKHIpO1xuICAgICAgICBsZXQgYWdhaW4gOj0gcjsgLy8gRVJST1JbVDAwMTldXG4gICAgICAgIDdcbiAgICB9O1xuICAgIGNhbGxiYWNrKClcbn1cblxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbW92ZV9jaGVjay9nZW5lcmljX3Jvd19mb3J3YXJkaW5nX21vdmVzX3Vua25vd25fdGFpbC5tdGwiLCJuYW1lIjoiZ2VuZXJpY19yb3dfZm9yd2FyZGluZ19tb3Zlc191bmtub3duX3RhaWwubXRsIn0="></details>
+</details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
