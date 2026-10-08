@@ -6,6 +6,56 @@ title: "Metel Language Changelog"
 
 ## v0.14.0 (unreleased)
 
+This release adds named records and reusable open rows, checks generic bodies
+against their declared bounds, and switches array types to prefix notation.
+
+**Named records and open rows (RFC-0120, RFC-0121):**
+
+- Named records retain nominal identity while participating in structural record
+  operations. Block-local record declarations also retain their own identities
+  (`metel-core#1307`).
+- Open record types can carry a reusable row tail, including in nominal record
+  fields and generic type arguments. Row parameters are supported in functions,
+  methods, native function signatures, and nominal types; row extension supports
+  both head-first and tail-first notation.
+- Row equations such as `where R = { token: String, ..Rest }` derive a remainder
+  at calls and preserve its typed facts inside generic bodies. Residual types and
+  conditional implementations account for remaining fields after partial moves.
+- Width narrowing checks whether discarded fields are `Copy`; generic bodies
+  must have sufficient declared bounds to justify the narrowing.
+
+**Field-wise row bounds (RFC-0123, `metel-core#1302`):**
+
+- `where all R: Aspect` constrains every field of a row, including open tails.
+  These constraints can be forwarded through generic calls and used by
+  conditional implementations.
+- Definition-time checks require `where all R: Copy` when an abstract row is
+  narrowed by value; missing permission is reported as `T0033`.
+
+**Record aspects:**
+
+- Eligible records provide field-wise built-in `Copy`, `Display`, and `Clone`.
+  `Display` prints fields in label order and preserves nominal record names.
+- Record `Clone` clones each field, respects custom field implementations, and
+  also supports eligible residuals (`metel-core#1350`). A regular struct does not
+  acquire `Clone` merely because its fields implement it.
+- Field-wise record `Eq`, `Hash`, and `Ord` are deferred; they are not part of
+  this release.
+
+**Generic definition checking (RFC-0173, `metel-core#1364`):**
+
+- Declared type parameters are rigid in function and method bodies, including
+  enclosing struct/impl parameters, closures, and nested generic functions.
+  Concrete implementation arguments remain concrete.
+- Generic bodies may use only the fields, methods, associated-type bindings,
+  and row facts granted by their declared bounds. Bound forwarding and
+  conditional-method visibility are checked at the definition.
+- Rigidity diagnostics identify the offending expression. A disagreement
+  between generic definition checking and construction is an internal error,
+  `I0010`, rather than an ordinary user type error.
+- Operators on bare type parameters remain unsupported (`T0005`); this release
+  does not introduce operator-to-aspect desugaring.
+
 **Empty row residuals (`metel-core#1398`):** Moving the last non-`Copy` field
 retains an empty residual rather than restoring the original type. Removed-field
 reads consistently report `T0003` with or without move checking. Empty residuals
@@ -13,6 +63,7 @@ can be passed and returned, retain nominal brands, and widen on field reassignme
 `Name.{}` names an empty nominal residual type.
 
 **Row remainder construction (RFC-0178, `metel-core#1399`):**
+
 - Record patterns can bind the owned remainder with `..name`; record literals can spread
   one owned row with `..expr`. Generic row facts determine the remainder type and prove
   spread-label absence. Spreading through a reference is allowed only when the row is
@@ -21,6 +72,41 @@ can be passed and returned, retain nominal brands, and widen on field reassignme
   impl bodies. Generic typestate methods can remove a field, construct the derived
   result, and reverse the transition with a row spread. Exhaustive record patterns
   also destructure public nominal records with generic row fields.
+- Destructuring `let` supports remainder bindings, including mutable bindings.
+  Explicit discard patterns can discard owned non-`Copy` fields; a bare `..`
+  discards remaining fields without binding a remainder. Spread labels cannot
+  overwrite explicit fields.
+
+**Array syntax and inference (`metel-core#1291`, `metel-core#1296`):**
+
+- Array types use `[T]` and `[T; N]` instead of postfix `T[]` and `T[N]`
+  (RFC-0171).
+- Array literals infer sized array types by default: `[1, 2, 3]` infers
+  `[i64; 3]`. Aspect lookup preserves the sized receiver while allowing
+  applicable structural array implementations.
+
+**Iteration and method dispatch fixes:**
+
+- `List<T>` implements `Iterable<T>` and works in `for in`, with independent
+  cursors for nested iteration (`metel-core#871`).
+- Generic aspect methods execute with their own type arguments rather than
+  failing with `I0009` (`metel-core#1365`). Generic aspect defaults retain their
+  aspect parameters and associated-type bindings.
+- Same-named methods in disjoint conditional implementations dispatch using
+  the receiver's arguments. Overlapping duplicate methods are rejected with
+  `T0034` (`metel-core#1322`).
+- Conditional row-method diagnostics explain missing fields and incompatible
+  field types. When disjoint candidates are viable, diagnostics report all
+  viable requirements (`metel-core#1386`).
+
+**Error classification (RFC-0167, `metel-core#991`):**
+
+- Runtime failures that indicate compiler/interpreter invariant violations are
+  classified as internal errors. Retired runtime codes remain reserved.
+- Invalid `main` entry points are rejected with `T0031` before user code runs.
+- `Char::from` with an invalid Unicode scalar reports the runtime error `R0016`
+  with a source location, rather than internal error `I0006`
+  (`metel-core#1297`). It does not yet return a `Result`.
 
 ## v0.13.1
 
