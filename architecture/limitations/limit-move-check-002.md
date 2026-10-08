@@ -49,8 +49,8 @@ use it. The symptom is tracked as `metel-core#1226`.
 - `metel-frontend/src/pipeline/move_check/mod.rs` (`generic_sample_args`, `record_skipped_generic_body`)
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/move_check/mod.rs#L570)
-- [`metel-frontend/src/pipeline/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/45648266c670df9b04d1c66f0f6af573b65f7afa/metel-frontend/src/pipeline/move_check/mod.rs#L1956)
+- [`metel-frontend/src/pipeline/move_check/mod.rs::generic_sample_args`](https://github.com/metel-lang/metel-core/blob/b6da47e5a683a1327336beb135cc2febb45235fd/metel-frontend/src/pipeline/move_check/mod.rs#L571)
+- [`metel-frontend/src/pipeline/move_check/mod.rs::record_skipped_generic_body`](https://github.com/metel-lang/metel-core/blob/45648266c670df9b04d1c66f0f6af573b65f7afa/metel-frontend/src/pipeline/move_check/mod.rs#L1973)
 <!-- limit.py:markers:end -->
 
 ## Resolution
