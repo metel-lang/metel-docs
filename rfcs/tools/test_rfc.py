@@ -363,5 +363,71 @@ class SpecBlockBodiesTests(unittest.TestCase):
             self.assertIn("Second rule's prose.", blocks["spec.example.dynamics-1"][1])
 
 
+class SidecarTomlTests(unittest.TestCase):
+    """Fixture sidecars are real TOML: arrays may span lines, carry comments
+    and trailing commas, and hold strings that contain commas."""
+
+    MULTILINE = (
+        "[options]\n"
+        "spec = [\n"
+        '    "spec.types.generics.open-rows.legality-1",   # first\n'
+        '    "spec.types.generics.open-rows.legality-2",\n'
+        "]\n"
+        "rfc = [ \"rfc-0121\" ,\n"
+        '        "rfc-0123§1" ]\n'
+        "error = [\n"
+        '    "T0033",\n'
+        "]\n"
+        'spec_title = "  A title, with a comma  "\n'
+        "\n"
+        "[expect]\n"
+        'status = "typecheck_error"\n'
+        'code = "T0033"\n'
+        "line = 7\n"
+    )
+
+    def test_multiline_arrays_are_read(self):
+        self.assertEqual(
+            rfc._sidecar_spec_ids(self.MULTILINE),
+            [
+                "spec.types.generics.open-rows.legality-1",
+                "spec.types.generics.open-rows.legality-2",
+            ],
+        )
+        self.assertEqual(
+            rfc.sidecar_options_list(self.MULTILINE, "rfc"), ["rfc-0121", "rfc-0123§1"]
+        )
+        self.assertEqual(rfc.sidecar_options_list(self.MULTILINE, "error"), ["T0033"])
+
+    def test_scalars_and_expect(self):
+        self.assertEqual(rfc._sidecar_spec_title(self.MULTILINE), "A title, with a comma")
+        expect = rfc._sidecar_expect(self.MULTILINE)
+        self.assertEqual(expect["status"], "typecheck_error")
+        self.assertEqual(expect["code"], "T0033")
+        self.assertEqual(expect["line"], "7")
+
+    def test_default_status_and_missing_keys(self):
+        self.assertEqual(rfc._sidecar_expect("")["status"], "success")
+        self.assertEqual(rfc.sidecar_options_list("[options]\n", "spec"), [])
+        self.assertEqual(rfc.sidecar_options_list("not = [valid", "spec"), [])
+
+    def test_scanners_see_multiline_sidecars(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tests_dir = Path(tmp)
+            (tests_dir / "a.toml").write_text(self.MULTILINE)
+            cited = rfc.scan_spec_citations(tests_dir)
+            self.assertEqual(
+                sorted(cited), [
+                    "spec.types.generics.open-rows.legality-1",
+                    "spec.types.generics.open-rows.legality-2",
+                ]
+            )
+            sidecar, _ = rfc.scan_fixture_citations(tests_dir)
+            self.assertIn("rfc-0121", sidecar)
+            self.assertEqual(list(rfc.scan_error_code_citations(tests_dir)), ["T0033"])
+            self.assertEqual(list(rfc.scan_error_code_expectations(tests_dir)), ["T0033"])
+            self.assertEqual(rfc.uncited_own_error_code_fixtures(tests_dir), [])
+
+
 if __name__ == "__main__":
     unittest.main()
