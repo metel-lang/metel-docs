@@ -66,7 +66,7 @@ when the initializer is consumed. A `let` declaration introduces immutable
 bindings; `var` and `let var` introduce mutable bindings. The pattern must be
 well-typed under the record-pattern rules.
 
-<!-- rfc.py:last_reviewed 0161255bd8fde7857a3aa83818c03e9a28ddc44d -->
+<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
 
 <details>
 <summary>Formal rules</summary>
@@ -1285,7 +1285,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1328,7 +1328,7 @@ import (`import m::{A};`), a renamed import (`import m::A as B;`), a glob
 from outside its declaring module, directly or through an `export`, is a visibility
 error.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1876,7 +1876,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
