@@ -62,8 +62,15 @@ reads consistently report `T0003` with or without move checking. Empty residuals
 can be passed and returned, retain nominal brands, and widen on field reassignment;
 `Name.{}` names an empty nominal residual type.
 
+Owned closure capture checking uses the source's type at closure creation, so a
+mutable `once` closure may restore an empty or partial nominal residual. Explicit
+owned captures still consume non-`Copy` sources even when unused or shadowed
+inside the body (`metel-core#1409`).
+
 **Row remainder construction (RFC-0178, `metel-core#1399`):**
 
+- Destructuring a row consumes its source only once under move checking,
+  including equation-derived remainders and discarded fields (`metel-core#1407`).
 - Record patterns can bind the owned remainder with `..name`; record literals can spread
   one owned row with `..expr`. Generic row facts determine the remainder type and prove
   spread-label absence. Spreading through a reference is allowed only when the row is
@@ -86,6 +93,11 @@ can be passed and returned, retain nominal brands, and widen on field reassignme
   applicable structural array implementations.
 
 **Iteration and method dispatch fixes:**
+
+- Empty nominal residuals can be restored after parameter passing and local
+  rebinding, including through captured callbacks (`metel-core#1406`). Missing
+  fields and wrong field types remain rejected; generic residual field types
+  remain distinct between instantiations.
 
 - Explicit closure capture lists are checked inside generic definitions before
   any call. An omitted local capture reports `T0026` at the definition instead
