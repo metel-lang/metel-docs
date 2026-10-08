@@ -87,6 +87,11 @@ can be passed and returned, retain nominal brands, and widen on field reassignme
 
 **Iteration and method dispatch fixes:**
 
+- Empty nominal residuals can be restored after parameter passing and local
+  rebinding, including through captured callbacks (`metel-core#1406`). Missing
+  fields and wrong field types remain rejected; generic residual field types
+  remain distinct between instantiations.
+
 - Explicit closure capture lists are checked inside generic definitions before
   any call. An omitted local capture reports `T0026` at the definition instead
   of escaping to runtime reconstruction as `I0010` (`metel-core#1405`).
