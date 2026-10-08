@@ -579,7 +579,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed 1af04d209f9a354bb195c078866e38a341535285 -->
+<!-- rfc.py:last_reviewed 0161255bd8fde7857a3aa83818c03e9a28ddc44d -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

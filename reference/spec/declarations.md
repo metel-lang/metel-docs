@@ -66,7 +66,7 @@ when the initializer is consumed. A `let` declaration introduces immutable
 bindings; `var` and `let var` introduce mutable bindings. The pattern must be
 well-typed under the record-pattern rules.
 
-<!-- rfc.py:last_reviewed cd8b57d282f75f0fcbf189735e3c46b205471057 -->
+<!-- rfc.py:last_reviewed 0161255bd8fde7857a3aa83818c03e9a28ddc44d -->
 
 <details>
 <summary>Formal rules</summary>

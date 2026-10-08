@@ -1379,7 +1379,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed cd8b57d282f75f0fcbf189735e3c46b205471057 -->
+<!-- rfc.py:last_reviewed 0161255bd8fde7857a3aa83818c03e9a28ddc44d -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1693,7 +1693,7 @@ the result and consumes the source. Spreading through a reference copies the fie
 when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
 evaluate left-to-right, while the resulting record layout is determined by its row/type.
 
-<!-- rfc.py:last_reviewed cd8b57d282f75f0fcbf189735e3c46b205471057 -->
+<!-- rfc.py:last_reviewed 0161255bd8fde7857a3aa83818c03e9a28ddc44d -->
 
 A row variable may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
