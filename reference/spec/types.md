@@ -1379,7 +1379,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1442,7 +1442,7 @@ accepts a definition the rules above reject, and a body the definition check acc
 cannot be rejected by it: if it is, the two checks disagree, which is the internal error
 `I0010`, never a diagnostic about the call site.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1693,7 +1693,7 @@ the result and consumes the source. Spreading through a reference copies the fie
 when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
 evaluate left-to-right, while the resulting record layout is determined by its row/type.
 
-<!-- rfc.py:last_reviewed d0ad3501ef5296dbf2fcdbc3198ec40301c4ccdc -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 A row variable may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
@@ -1904,7 +1904,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>

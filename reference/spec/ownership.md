@@ -43,7 +43,7 @@ Primitive types and any type implementing `Copy` are exempt — they are duplica
 Using a non-`Copy` value in assignment, argument, or return position moves it; a later use
 of the source binding is rejected.
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>

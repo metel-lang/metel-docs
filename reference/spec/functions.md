@@ -557,7 +557,7 @@ binding, or captures any binding by `&` or `&var`. Referencing a free non-`Copy`
 with no capture list is a compile error. A closure whose only free variables are `Copy`
 bindings used by value, or which has no free variables, may omit the list.
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -579,7 +579,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed 8ed18533e08f605e0df6c188f1d30797fb72171f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
