@@ -69,6 +69,8 @@ inside the body (`metel-core#1409`).
 
 **Row remainder construction (RFC-0178, `metel-core#1399`):**
 
+- Destructuring a row consumes its source only once under move checking,
+  including equation-derived remainders and discarded fields (`metel-core#1407`).
 - Record patterns can bind the owned remainder with `..name`; record literals can spread
   one owned row with `..expr`. Generic row facts determine the remainder type and prove
   spread-label absence. Spreading through a reference is allowed only when the row is
