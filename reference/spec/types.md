@@ -1380,7 +1380,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed a05e640b2fd860df61ebd241c1595a7794f941d2 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1701,7 +1701,7 @@ the result and consumes the source. Spreading through a reference copies the fie
 when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
 evaluate left-to-right, while the resulting record layout is determined by its row/type.
 
-<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 A row variable may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
@@ -1813,7 +1813,7 @@ An open record type may occur in a reusable type position, including a function 
 instance-method parameter, a return type, a local annotation, or a nominal field.
 Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
-<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -1870,7 +1870,7 @@ inside a generic body), the declaration must state `where all R: Copy`
 ([Field-wise row constraints](#field-wise-row-constraints) below). Otherwise the body
 is rejected with `T0033` at the narrowing expression.
 
-<!-- rfc.py:last_reviewed a05e640b2fd860df61ebd241c1595a7794f941d2 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -1917,7 +1917,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed a05e640b2fd860df61ebd241c1595a7794f941d2 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
@@ -2041,7 +2041,7 @@ current-row behavior [Named Records](declarations.md#records) states for `record
 row-bound satisfaction.
 
 
-<!-- rfc.py:last_reviewed 1b3dd5591e964ce71df282550a1c3588ccb9af98 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>

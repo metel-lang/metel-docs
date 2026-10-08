@@ -972,7 +972,7 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
 
-<!-- rfc.py:last_reviewed 1b3dd5591e964ce71df282550a1c3588ccb9af98 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>

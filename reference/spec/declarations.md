@@ -66,7 +66,7 @@ when the initializer is consumed. A `let` declaration introduces immutable
 bindings; `var` and `let var` introduce mutable bindings. The pattern must be
 well-typed under the record-pattern rules.
 
-<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <details>
 <summary>Formal rules</summary>
@@ -1014,7 +1014,7 @@ parameter list (including a `row` type parameter, RFC-0121), the same constructi
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 
-<!-- rfc.py:last_reviewed a05e640b2fd860df61ebd241c1595a7794f941d2 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1039,7 +1039,7 @@ either mechanism, regardless of width — projecting every field a `struct` decl
 not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
 §3's worked example).
 
-<!-- rfc.py:last_reviewed 1b3dd5591e964ce71df282550a1c3588ccb9af98 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1291,7 +1291,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed a05e640b2fd860df61ebd241c1595a7794f941d2 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1338,7 +1338,7 @@ import (`import m::{A};`), a renamed import (`import m::A as B;`), a glob
 from outside its declaring module, directly or through an `export`, is a visibility
 error.
 
-<!-- rfc.py:last_reviewed b3790b29364c7ce23fed862a6880a4782c3d603b -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1886,7 +1886,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed 674bfd0d7f6341f56a7548ac30599edae7d0cce2 -->
+<!-- rfc.py:last_reviewed 5f038b189cb67c5ec40e51d16a3e11a831a4535e -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
