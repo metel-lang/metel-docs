@@ -19,6 +19,11 @@ Generic ownership reconstruction retains unknown row tails and declared bounds
 as resolved symbolic witnesses, rather than sampling empty records. See
 [ADR-0060](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0060-symbolic-row-ownership-witnesses.md).
 
+Owned closure sources carry resolved entry types from construction, independent
+of later body restoration or body reconstruction. Ownership analysis consumes
+these explicit captures even if they are unused or shadowed. See
+[ADR-0062](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0062-owned-capture-entry-types.md).
+
 <details>
 <summary>Verifiable architecture claims</summary>
 

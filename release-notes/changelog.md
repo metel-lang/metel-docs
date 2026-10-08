@@ -62,6 +62,11 @@ reads consistently report `T0003` with or without move checking. Empty residuals
 can be passed and returned, retain nominal brands, and widen on field reassignment;
 `Name.{}` names an empty nominal residual type.
 
+Owned closure capture checking uses the source's type at closure creation, so a
+mutable `once` closure may restore an empty or partial nominal residual. Explicit
+owned captures still consume non-`Copy` sources even when unused or shadowed
+inside the body (`metel-core#1409`).
+
 **Row remainder construction (RFC-0178, `metel-core#1399`):**
 
 - Record patterns can bind the owned remainder with `..name`; record literals can spread
