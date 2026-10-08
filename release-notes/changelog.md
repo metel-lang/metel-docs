@@ -23,6 +23,9 @@ against their declared bounds, and switches array types to prefix notation.
   conditional implementations account for remaining fields after partial moves.
 - Width narrowing checks whether discarded fields are `Copy`; generic bodies
   must have sufficient declared bounds to justify the narrowing.
+- Equation-derived remainders grant conditional methods requiring excluded
+  labels, row-parameter aliases substitute their tails, and renamed imported
+  row nominals preserve their type arguments (`metel-core#1423`, `#1425`, `#1426`).
 
 **Field-wise row bounds (RFC-0123, `metel-core#1302`):**
 
@@ -53,6 +56,14 @@ against their declared bounds, and switches array types to prefix notation.
 - Rigidity diagnostics identify the offending expression. A disagreement
   between generic definition checking and construction is an internal error,
   `I0010`, rather than an ordinary user type error.
+- Bounded method lookup substitutes the aspect's declared type arguments,
+  including inherited struct bounds (`metel-core#1424`). Generic methods are
+  rejected through `dyn` receivers, including annotated local aggregates
+  (`metel-core#1427`).
+- Opt-in generic-body move checking retains concrete associated-type bindings
+  and structural row entitlements during reconstruction, closing two concrete
+  analysis skips tracked under `metel-core#273`; the general fail-open policy
+  remains deferred.
 - Operators on bare type parameters remain unsupported (`T0005`); this release
   does not introduce operator-to-aspect desugaring.
 
