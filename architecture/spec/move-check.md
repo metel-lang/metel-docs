@@ -15,6 +15,10 @@ today. Its capture-list and multiplicity checks run unconditionally during
 construction ([closure captures](#arch.move-check.requirement-3)), so a program cannot
 evade a closure ownership error merely by omitting `--move-check`.
 
+Generic ownership reconstruction retains unknown row tails and declared bounds
+as resolved symbolic witnesses, rather than sampling empty records. See
+[ADR-0060](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0060-symbolic-row-ownership-witnesses.md).
+
 <details>
 <summary>Verifiable architecture claims</summary>
 
