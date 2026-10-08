@@ -11,10 +11,12 @@ review: null
 
 ## Limitation
 
-A function accepting `&{ ..R }` with `where all R: Clone` is rejected with
-`T0012` before the body is checked, even though the bound should establish
-field-wise Clone for the borrowed row. The skipped regression is
-`evaluator/records/release_matrix_borrowed_all_clone.mtl`; see metel-core#1412.
+A function accepting `&{ ..R }` with `where all R: Clone` was rejected with
+`T0012` before the body was checked. The parameter lowering now preserves the
+reference while collecting its open-row bound, and borrowed rows no longer get
+the by-value `Copy` width check. The regression
+`evaluator/records/release_matrix_borrowed_all_clone.mtl` passes locally without
+a skip; see metel-core#1412, which remains open pending integration.
 
 ## Impact
 
@@ -28,4 +30,5 @@ field-wise bound that works for owned open rows.
 
 ## Resolution
 
-Open; tracked by metel-core#1412.
+Implementation is present locally and covered by the unskipped regression;
+tracked by metel-core#1412 pending merge.

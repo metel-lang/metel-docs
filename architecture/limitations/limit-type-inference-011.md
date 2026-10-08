@@ -12,12 +12,11 @@ review: null
 ## Limitation
 
 A generic function with an owned parameter `{ id: i64, ..R }` and
-`where all R: Clone` is rejected with `T0035` when its body calls `value.clone()`.
-The fixed field type is Clone and the declared field-wise grant covers the open
-tail, so this call should be available from the definition. The issue-backed
-regression is `evaluator/records/release_matrix_bounded_clone_residual_callback.mtl`;
-see metel-core#1420. This differs from #1412, which is rejected earlier at the
-where clause for a borrowed open-row parameter.
+`where all R: Clone` was rejected with `T0035` when its body called
+`value.clone()`. Generic method entailment now accounts for the fixed row fields
+and carries the declared field-wise requirement to the open tail. The regression
+`evaluator/records/release_matrix_bounded_clone_residual_callback.mtl` now passes
+locally without a skip; metel-core#1420 remains open pending integration.
 
 ## Impact
 
@@ -31,4 +30,5 @@ even when every field is known to satisfy Clone.
 
 ## Resolution
 
-Open; tracked by metel-core#1420.
+Implementation is present locally and covered by the unskipped regression;
+tracked by metel-core#1420 pending merge.
