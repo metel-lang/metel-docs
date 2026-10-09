@@ -61,7 +61,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-inference` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/mod.rs::infer_propagate_error`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/inference/mod.rs#L2197) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/mod.rs::infer_propagate_error`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/inference/mod.rs#L2195) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/construction/tests.rs::from_impl_lookup_runs_in_inference_not_construction`](https://github.com/metel-lang/metel-core/blob/c6932074a86151f5faa1d265d6a761d574ded021/metel-frontend/src/pipeline/type_checking/construction/tests.rs#L125); [`metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/error_handling/stage6_neg_06_error_propagation_mismatched_types.toml#L1) |
 | `last_reviewed` | c6932074a86151f5faa1d265d6a761d574ded021 |
 | `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs) |
