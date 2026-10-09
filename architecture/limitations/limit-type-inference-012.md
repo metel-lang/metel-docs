@@ -5,7 +5,7 @@ summary: "A public nominal record imported from another module has no visible fi
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "v0.14.0 release-matrix probe; metel-core#1421"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -14,13 +14,13 @@ review: null
 A public `Packet` record declared in one module with `Clone` fields was not
 recognized as Clone in a consumer module because the registry merge omitted its
 record-kind identity. The merge now carries that identity, and
-`module_semantics/release_matrix_record_clone_cross_module` passes locally
-without a skip; metel-core#1421 remains open pending integration.
+`module_semantics/release_matrix_record_clone_cross_module` passes without a
+skip. The fix merged in metel-core PR #1422.
 
 ## Impact
 
-Field-wise record Clone cannot be relied on across module boundaries, despite
-the public record and its Clone aspect being available to the consumer.
+Previously, field-wise record Clone could not be relied on across module
+boundaries, despite the public record and its Clone aspect being available.
 
 ## Affects
 
@@ -29,5 +29,6 @@ the public record and its Clone aspect being available to the consumer.
 
 ## Resolution
 
-Implementation is present locally and covered by the unskipped regression;
-tracked by metel-core#1421 pending merge.
+Implemented in metel-core commit `5f038b189cb67c5ec40e51d16a3e11a831a4535e`
+(PR #1422), with the executable imported-record Clone fixture above as exit
+evidence for metel-core#1421.

@@ -5,7 +5,7 @@ summary: "An owned generic row with `where all R: Clone` cannot clone the entire
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "v0.14.0 sensitive release-matrix probe; metel-core#1420"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -15,13 +15,13 @@ A generic function with an owned parameter `{ id: i64, ..R }` and
 `where all R: Clone` was rejected with `T0035` when its body called
 `value.clone()`. Generic method entailment now accounts for the fixed row fields
 and carries the declared field-wise requirement to the open tail. The regression
-`evaluator/records/release_matrix_bounded_clone_residual_callback.mtl` now passes
-locally without a skip; metel-core#1420 remains open pending integration.
+`evaluator/records/release_matrix_bounded_clone_residual_callback.mtl` passes
+without a skip. The fix merged in metel-core PR #1422.
 
 ## Impact
 
-Generic code cannot use field-wise Clone to duplicate an owned anonymous row,
-even when every field is known to satisfy Clone.
+Previously, generic code could not use field-wise Clone to duplicate an owned
+anonymous row, even when every field was known to satisfy Clone.
 
 ## Affects
 
@@ -30,5 +30,8 @@ even when every field is known to satisfy Clone.
 
 ## Resolution
 
-Implementation is present locally and covered by the unskipped regression;
-tracked by metel-core#1420 pending merge.
+Implemented in metel-core commit `5f038b189cb67c5ec40e51d16a3e11a831a4535e`
+(PR #1422), with executable empty/nonempty tails and residual/callback coverage,
+plus `neg_release_matrix_clone_fixed_field_not_clone`; tracked by metel-core#1420.
+The remaining generic move-analysis skip is separate and remains tracked by
+metel-core#273.

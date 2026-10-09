@@ -5,7 +5,7 @@ summary: "Runtime construction lacked the captured bindings' creation-time types
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "v0.14.0 sensitive release-matrix probe; metel-core#1411"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -19,8 +19,8 @@ and ownership analysis. The issue-backed regression
 `evaluator/records/release_matrix_generic_residual_capture.mtl` now passes with
 move checking enabled, covering partial and empty residual captures and field
 restoration. A negative typechecking regression confirms that a moved field
-does not become accessible again inside the captured body. The fixes are local
-and metel-core#1411 remains open pending integration.
+does not become accessible again inside the captured body. The fixes merged in
+[metel-core#1422](https://github.com/metel-lang/metel-core/pull/1422).
 
 ## Impact
 
@@ -34,5 +34,7 @@ captured value's narrowed nominal type.
 
 ## Resolution
 
-Implementation is present locally and covered by passing positive and negative
-regressions; tracked by metel-core#1411 pending integration.
+Implemented in metel-core commit `5f038b189cb67c5ec40e51d16a3e11a831a4535e`
+(PR #1422). The executable residual-capture fixture and the negative
+`neg_release_matrix_generic_capture_moved_field` fixture provide exit evidence
+for metel-core#1411.

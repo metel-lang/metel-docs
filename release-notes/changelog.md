@@ -26,6 +26,9 @@ against their declared bounds, and switches array types to prefix notation.
 - Equation-derived remainders grant conditional methods requiring excluded
   labels, row-parameter aliases substitute their tails, and renamed imported
   row nominals preserve their type arguments (`metel-core#1423`, `#1425`, `#1426`).
+- Imported public nominal aliases retain their definition-site identities through
+  renames and re-exports. Importing an alias does not bring its underlying bare
+  constructor into scope (`metel-core#1414`).
 
 **Field-wise row bounds (RFC-0123, `metel-core#1302`):**
 
