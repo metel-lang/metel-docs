@@ -66,7 +66,10 @@ against their declared bounds, and switches array types to prefix notation.
 - Opt-in generic-body move checking retains concrete associated-type bindings
   and structural row entitlements during reconstruction, closing two concrete
   analysis skips tracked under `metel-core#273`; the general fail-open policy
-  remains deferred.
+  remains unresolved pending the abstract-body migration.
+- Generic ownership reconstruction retains symbolic return-type context for
+  return-only parameters, allowing nested zero-argument generic calls to be
+  analyzed without defaulting the missing context (`metel-core#273`).
 - Operators on bare type parameters remain unsupported (`T0005`); this release
   does not introduce operator-to-aspect desugaring.
 

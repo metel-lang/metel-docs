@@ -1,5 +1,17 @@
 # Move Check {#move-check}
 
+The reusable abstract-body migration is designed in
+[ADR-0063](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0063-abstract-generic-bodies.md). Its first delivery
+retains binder-scoped abstract signatures, declared parameter facts and a staged
+set of typed operations on generic free-function declarations, including ordinary
+call contracts, bounded-aspect method contracts, record and nominal construction,
+nominal residual projections, local rebinding, closure capture modes, borrows,
+control flow, and resolved field/tuple projections. Places carry binding identities
+and use the shared ownership projection algebra. Unavailable selection/coercion
+facts leave an explicit pending preparation result, not an ownership verdict.
+Complete operation coverage and ownership-consumer migration remain implementation
+work. A retained body alone is not evidence that it was analyzed.
+
 An opt-in validation pass over the typed module graph, rejecting use-after-move. Verified directly against `pipeline.rs` and the CLI's `clap` argument (not assumed from prior documentation): `RunOptions`/`main.rs`'s `move_check: bool` derive/default to `false`, and every one of `pipeline.rs`'s three call sites gates the pass behind `if options.move_check`. Owning crate: `metel-frontend`. Defined in `move_check/` and `place.rs` (the addressable lvalue-path representation move check shares with the typechecker).
 
 ## Model
