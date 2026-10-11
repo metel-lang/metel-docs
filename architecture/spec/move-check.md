@@ -5,12 +5,57 @@ The reusable abstract-body migration is designed in
 retains binder-scoped abstract signatures, declared parameter facts and a staged
 set of typed operations on generic free-function declarations, including ordinary
 call contracts, bounded-aspect method contracts, record and nominal construction,
-nominal residual projections, local rebinding, closure capture modes, borrows,
+nominal residual projections, projected local writes (named fields, tuple slots,
+and explicit dereferences), typed closure capture-entry states,
+borrows,
 control flow, and resolved field/tuple projections. Places carry binding identities
 and use the shared ownership projection algebra. Unavailable selection/coercion
 facts leave an explicit pending preparation result, not an ownership verdict.
-Complete operation coverage and ownership-consumer migration remain implementation
-work. A retained body alone is not evidence that it was analyzed.
+
+Annotated locals preserve their solved declared types; exact-type annotations
+are supported without reconstructing the body. Read-copy, reference weakening,
+and other differing-type coercions remain pending until their ownership facts
+are retained explicitly.
+Move checking consumes supported retained free-function and impl-method operations
+directly,
+using binding identity to key the shared flow lattice and the retained fact
+environment to distinguish an unbounded parameter or unknown row tail from one
+granted `Copy`. `checked_abstract_generic_bodies` records completed visits.
+Retained subtraction equations propagate field-wise `Copy` from source rows to
+their remainders, including chains. Every field-wise exception must be among the
+removed labels; a remainder's grant never proves that its source is `Copy`.
+Array reads with retained `u64` indices preserve index evaluation throughout
+projection chains and reject non-`Copy` moves through opaque-index places.
+Coerced indices, temporary-array reads and indexed writes remain pending; even
+a field/tuple assignment reached through an index needs its evaluation retained.
+Structural record patterns retain typed fields, explicit discards, binding
+identities and owned remainders, including unknown open tails. Scrutinee inputs
+are evaluated once rather than again for each projected field. Named remainders
+consume the source as a whole; patterns without one consume their named and
+explicitly discarded fields separately. Parameter-backed open shapes require a
+typed row grant and an exact retained remainder equation; unknown tails are
+preserved. Missing decomposition or remainder ownership facts, and
+nominal/reference patterns, remain pending.
+Closed-source subtraction equations determine actual remainder fields, whose
+retained types decide Copy without sampling. Definition templates preserve
+declared parameters appearing only in row facts without adding caller-visible
+quantifiers.
+Conversely, Copy heads and a Copy remainder compose into a Copy structural row;
+an unproven alternative decomposition cannot override a successful proof.
+Operations and nominal entailments not yet covered by that consumer roll back the
+attempted analysis before the existing reconstruction path runs. Full operation
+coverage and consumer migration remain implementation work.
+Method definition templates retain source names and inherited body grants without
+changing their call-site schemes. Borrowed `self` remains access rather than
+ownership. Conditional variants whose flattened method symbols collide remain
+pending (`LIMIT-NAME-RESOLUTION-005`); structural-target and default-method
+coverage is still staged.
+Closure environment ownership is retained separately from callable axes, and
+preserved through direct local aliases and nested captures. Implicit captures
+retain per-closure entry types and require definition-time `Copy` evidence.
+Closure bodies use a separate flow state. Aggregate/borrowed/coerced closure
+contracts, many-call non-Copy owned-capture legality and derived or nominal
+entailments remain staged consumer boundaries.
 
 An opt-in validation pass over the typed module graph, rejecting use-after-move. Verified directly against `pipeline.rs` and the CLI's `clap` argument (not assumed from prior documentation): `RunOptions`/`main.rs`'s `move_check: bool` derive/default to `false`, and every one of `pipeline.rs`'s three call sites gates the pass behind `if options.move_check`. Owning crate: `metel-frontend`. Defined in `move_check/` and `place.rs` (the addressable lvalue-path representation move check shares with the typechecker).
 
