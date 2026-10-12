@@ -91,6 +91,7 @@ import os
 import re
 import subprocess
 import sys
+import tomllib
 import urllib.error
 import urllib.request
 from collections import Counter
@@ -620,10 +621,7 @@ ERROR_CODE_HEADING_RE = re.compile(r"^### (?P<code>[A-Z]\d{4}) — .+$")
 # dedicated key is what lets a future error-code <-> Legality-Rule cross-link
 # (metel-core#977) read a fixture's *intentional* documented connection
 # instead of inferring one from every incidental [expect].code match.
-COVERAGE_ERROR_LIST_RE = re.compile(r"^\s*error\s*=\s*\[(.*?)\]\s*$", re.MULTILINE)
 COVERAGE_ERROR_CODE_RE = re.compile(r"[A-Z]\d{4}")
-EXPECT_CODE_RE = re.compile(r'^\s*code\s*=\s*"([^"]*)"\s*$', re.MULTILINE)
-EXPECT_SECTION_RE = re.compile(r"\[expect\](.*?)(?=\n\[|\Z)", re.S)
 
 # ADR-0050 §3a: a rigor block's generated backlink to the RFC(s) that
 # established it, delimited so `index --write-spec-origins` can rewrite
@@ -1058,21 +1056,34 @@ def planned_marker_problems():
 # separators so the base64 is byte-stable -- `--check-drift` catches a stale
 # inlined snapshot exactly the way it already catches a stale link.
 
-_EXPECT_KEY_RE = re.compile(
-    r'^\s*(?P<k>status|code|contains|line|col)\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
-)
-_SPEC_TITLE_RE = re.compile(
-    r'^\s*spec_title\s*=\s*(?P<v>.+?)\s*$', re.MULTILINE
-)
+def sidecar_table(toml_text):
+    """A fixture sidecar parsed as real TOML ({} if it does not parse).
+
+    Sidecar keys used to be read with single-line regexes, which silently
+    dropped any array written across lines (`spec = [\n  "a",\n  "b",\n]`) and
+    anything with a trailing comment. The Rust harness rejects a malformed
+    sidecar outright, so a parse failure here only ever means "not a fixture
+    sidecar"; callers treat it as having no citations."""
+    try:
+        return tomllib.loads(toml_text)
+    except tomllib.TOMLDecodeError:
+        return {}
 
 
-def _toml_scalar(raw):
-    """Unquote a sidecar scalar (`"x"` / `'x'` / bare) -- the harness's own
-    parse_scalar, kept minimal."""
-    raw = raw.strip()
-    if len(raw) >= 2 and raw[0] == raw[-1] and raw[0] in "\"'":
-        return raw[1:-1]
-    return raw
+def sidecar_options_list(toml_text, key):
+    """`[options].<key>` as a list of strings (a lone string is a one-item
+    list; anything else is empty)."""
+    value = sidecar_table(toml_text).get("options", {}).get(key)
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, str)]
+    return []
+
+
+def _sidecar_expect_code(toml_text):
+    code = sidecar_table(toml_text).get("expect", {}).get("code")
+    return code if isinstance(code, str) and code else None
 
 
 def _sidecar_expect(toml_text):
@@ -1094,17 +1105,9 @@ def _sidecar_expect(toml_text):
     reported as a bug (metel-core#973 follow-up, 2026-09-04) before this was
     traced to its actual cause."""
     out = {"status": None, "code": None, "contains": None, "line": None, "col": None}
-    in_expect = False
-    for line in toml_text.split("\n"):
-        s = line.strip()
-        if s.startswith("[") and s.endswith("]"):
-            in_expect = s == "[expect]"
-            continue
-        if not in_expect:
-            continue
-        m = _EXPECT_KEY_RE.match(line)
-        if m:
-            out[m.group("k")] = _toml_scalar(m.group("v"))
+    for key, value in sidecar_table(toml_text).get("expect", {}).items():
+        if key in out:
+            out[key] = str(value)
     if out["status"] is None:
         out["status"] = "success"
     return out
@@ -1114,12 +1117,9 @@ def _sidecar_spec_ids(toml_text):
     """This fixture's own `spec = […]` citations, well-formed ids only --
     reuses ADR-0050 §5's own grammar/list regexes (scan_spec_citations'
     single-file equivalent, not corpus-wide)."""
-    m = COVERAGE_TOML_SPEC_LIST_RE.search(toml_text)
-    if not m:
-        return []
     return [
         item.strip()
-        for item in re.findall(r'"([^"]+)"', m.group(1))
+        for item in sidecar_options_list(toml_text, "spec")
         if COVERAGE_SPEC_ID_RE.fullmatch(item.strip())
     ]
 
@@ -1145,18 +1145,9 @@ def _spec_id_label(spec_id):
 def _sidecar_spec_title(toml_text):
     """`spec_title` from `[options]` (metel-core#974), or None. Whitespace-only
     is treated as unset, matching the harness."""
-    in_options = False
-    for line in toml_text.split("\n"):
-        s = line.strip()
-        if s.startswith("[") and s.endswith("]"):
-            in_options = s == "[options]"
-            continue
-        if not in_options:
-            continue
-        m = _SPEC_TITLE_RE.match(line)
-        if m:
-            v = _toml_scalar(m.group("v")).strip()
-            return v or None
+    title = sidecar_table(toml_text).get("options", {}).get("spec_title")
+    if isinstance(title, str):
+        return title.strip() or None
     return None
 
 
@@ -2048,7 +2039,6 @@ COVERAGE_SECTION_HEADER_RE = re.compile(
 COVERAGE_CITATION_RE = re.compile(
     r"rfc-(\d{4}[a-z]?)(?:§(\d+[a-z]?(?:\.\d+[a-z]?)?))?", re.IGNORECASE
 )
-COVERAGE_TOML_RFC_LIST_RE = re.compile(r"^\s*rfc\s*=\s*\[(.*?)\]\s*$", re.MULTILINE)
 COVERAGE_FM_ENTRY_RE = re.compile(
     r'"(?P<section>[^"]+)"\s*:\s*\{\s*kind:\s*(?P<kind>\w+)\s*,\s*reason:\s*"(?P<reason>[^"]*)"'
     r'(?:\s*,\s*ref:\s*"(?P<ref>[^"]*)")?\s*\}'
@@ -2067,7 +2057,6 @@ COVERAGE_VALID_KINDS = {"untestable", "blocked", "elsewhere"}
 COVERAGE_SPEC_ID_RE = re.compile(
     r"spec\.[a-z0-9-]+(?:\.[a-z0-9-]+)+\.(?:legality|dynamics)-\d+[a-z]*"
 )
-COVERAGE_TOML_SPEC_LIST_RE = re.compile(r"^\s*spec\s*=\s*\[(.*?)\]\s*$", re.MULTILINE)
 # A distinct shape from COVERAGE_FM_ENTRY_RE (`spec:` instead of `kind:`) so
 # the two never collide -- an RFC-to-spec-id link isn't a typed exemption
 # and doesn't participate in COVERAGE_VALID_KINDS validation at all.
@@ -2165,10 +2154,7 @@ def scan_fixture_citations(tests_dir):
             text = toml_path.read_text()
         except OSError:
             continue
-        m = COVERAGE_TOML_RFC_LIST_RE.search(text)
-        if not m:
-            continue
-        for item in re.findall(r'"([^"]+)"', m.group(1)):
+        for item in sidecar_options_list(text, "rfc"):
             cm = COVERAGE_CITATION_RE.fullmatch(item.strip())
             if cm:
                 rid = f"rfc-{cm.group(1).lower()}"
@@ -2202,10 +2188,7 @@ def scan_spec_citations(tests_dir):
             text = toml_path.read_text()
         except OSError:
             continue
-        m = COVERAGE_TOML_SPEC_LIST_RE.search(text)
-        if not m:
-            continue
-        for item in re.findall(r'"([^"]+)"', m.group(1)):
+        for item in sidecar_options_list(text, "spec"):
             item = item.strip()
             if COVERAGE_SPEC_ID_RE.fullmatch(item):
                 out.setdefault(item, []).append(toml_path)
@@ -2223,10 +2206,7 @@ def scan_error_code_citations(tests_dir):
             text = toml_path.read_text()
         except OSError:
             continue
-        m = COVERAGE_ERROR_LIST_RE.search(text)
-        if not m:
-            continue
-        for item in re.findall(r'"([^"]+)"', m.group(1)):
+        for item in sidecar_options_list(text, "error"):
             item = item.strip()
             if COVERAGE_ERROR_CODE_RE.fullmatch(item):
                 out.setdefault(item, []).append(toml_path)
@@ -2247,12 +2227,9 @@ def scan_error_code_expectations(tests_dir):
             text = toml_path.read_text()
         except OSError:
             continue
-        em = EXPECT_SECTION_RE.search(text)
-        if not em:
-            continue
-        cm = EXPECT_CODE_RE.search(em.group(1))
-        if cm and cm.group(1):
-            out.setdefault(cm.group(1), []).append(toml_path)
+        code = _sidecar_expect_code(text)
+        if code:
+            out.setdefault(code, []).append(toml_path)
     return out
 
 
@@ -2272,15 +2249,10 @@ def uncited_own_error_code_fixtures(tests_dir):
             text = toml_path.read_text()
         except OSError:
             continue
-        em = EXPECT_SECTION_RE.search(text)
-        if not em:
+        code = _sidecar_expect_code(text)
+        if not code:
             continue
-        cm = EXPECT_CODE_RE.search(em.group(1))
-        if not (cm and cm.group(1)):
-            continue
-        code = cm.group(1)
-        lm = COVERAGE_ERROR_LIST_RE.search(text)
-        cited = {item.strip() for item in re.findall(r'"([^"]+)"', lm.group(1))} if lm else set()
+        cited = {item.strip() for item in sidecar_options_list(text, "error")}
         if code not in cited:
             gaps.append((toml_path, code))
     return gaps
