@@ -282,9 +282,11 @@ decision 7. Everything below is a deliberate trade-off or is tracked elsewhere.*
    the violations the next pass would have found. Theoretical: the deepest cascade
    constructed for the tests (a field's partial move, then the whole struct) settles in
    one extra pass.
-3. **A generic body whose reconstruction fails is skipped** (#273), with a warning and a count in
-   the report. Pre-existing and visible, but still a route past every loop inside such a
-   body.
+3. **A generic body that cannot be analysed fails the run** (#273). Under `--move-check` an
+   unanalysable body is reported as `I0011` and never passes (ADR-0063), so it is no longer
+   a route past the loops inside it. Generic bodies are analysed from their retained
+   definition-time facts; reconstruction against invented concrete arguments remains only
+   for let-polymorphic closures.
 4. **Only the first violation is reported** (#271), so a loop body with several distinct
    loop-carried moves surfaces one at a time.
 

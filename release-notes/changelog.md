@@ -65,8 +65,64 @@ against their declared bounds, and switches array types to prefix notation.
   (`metel-core#1427`).
 - Opt-in generic-body move checking retains concrete associated-type bindings
   and structural row entitlements during reconstruction, closing two concrete
-  analysis skips tracked under `metel-core#273`; the general fail-open policy
-  remains deferred.
+  analysis skips tracked under `metel-core#273`.
+- Generic ownership reconstruction retains symbolic return-type context for
+  return-only parameters, allowing nested zero-argument generic calls to be
+  analyzed without defaulting the missing context (`metel-core#273`).
+- Opt-in move checking now consumes supported retained abstract free-function
+  and impl-method bodies directly, including unused definitions, declared `Copy`
+  and field-wise row bounds and their derived remainders, borrowed calls, array
+  reads and writes with typed indices, structural record destructuring and owned
+  remainders, and exact-type annotated locals. The retained bodies also cover
+  written callable boundaries with capture effects, read-copy and
+  sized-array-to-view conversions, explicit generic call arguments, bounded
+  generic aspect-method calls, blanket generic impl targets, record-pattern
+  matches over declared row bounds, numeric compound assignments, projected
+  restoration, and loop-carried moves, including exact-type value-producing loops and
+  unguarded matches with resolved literal, wildcard, whole-binding and enum
+  patterns. Pattern bindings retain their definition-time types and identities;
+  the scrutinee is evaluated once.
+  Static and unit-variant paths, contextual literal array indices and built-in
+  array length retain their definition-time operations. Row destructuring follows
+  synthesized row equalities and chained or alternate decomposition equations.
+  Associated types used only inside a body retain their declared ownership bounds.
+  Nominal ownership facts retain unrestricted `Copy`/`Drop` impl coverage and
+  resolved aspect identities, including imported aliases. Conditional or negative
+  candidates prevent unproved destructor-absence claims.
+  Conditional nominal impls with ordinary target parameters and inline or `where`
+  aspect bounds can be proved or disproved directly from retained definition grants,
+  including explicitly negative bounds and reordered impl parameters. Applicable
+  negative overrides take precedence; unknown conditions do not prove destructor absence.
+  Indexed writes preserve target-input effects and
+  the interpreter's RHS-first evaluation order. Method definitions preserve inherited grants and
+  borrowed-receiver ownership rules.
+  Nominal receivers retain their resolved declaration identity during inference,
+  allowing abstract ownership checks of consuming generic methods.
+  Conditional method variants retain distinct body and local binders instead of
+  falling back solely because their runtime method-group symbol is shared.
+  Calls retain the receiver mode of the selected variant, including disjoint
+  implementations that differ between borrowing and consuming `self`.
+  Expanded inherited defaults on nominal and record targets retain separate definition-time
+  fact snapshots and lexical identities, so ownership checks unused defaults
+  without mixing type or Copy evidence across implementations or modules.
+  Record-target aspect methods retain definition-local ownership bodies even
+  without callers, preserving the distinction between nominal receivers and
+  their field rows and supporting method-generic name shadowing.
+  Direct closure environments retain explicit and implicit capture-entry
+  ownership through local aliases and nested captures, rather than relying on
+  provisional callable types. Closure free-use collection now includes nominal
+  literal fields and local record-projection sources.
+  Remaining unsupported operations continue through the existing reconstruction
+  path during the migration (`metel-core#273`).
+- `--move-check` now fails with `I0011` when it cannot analyze a generic body, instead of
+  printing a warning and succeeding, so a passing run has checked every body
+  (`metel-core#273`). `I0011` is distinct from `T0019`: nothing was shown to be moved.
+  Operators on unannotated parameters are retained in abstract bodies.
+- A closure with no capture list that captures a value of a generic type without a `Copy`
+  grant is rejected at its definition with `T0026` (spec `legality-6`), for declared
+  parameters without a `Copy` bound and for unannotated ones such as
+  `let f := |a| { |b| { (b, a) } }`. Before, it was accepted unless a non-`Copy`
+  instantiation existed (`metel-core#273`).
 - Operators on bare type parameters remain unsupported (`T0005`); this release
   does not introduce operator-to-aspect desugaring.
 

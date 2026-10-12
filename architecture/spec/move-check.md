@@ -1,5 +1,63 @@
 # Move Check {#move-check}
 
+The reusable abstract-body migration is designed in
+[ADR-0063](https://github.com/metel-lang/metel-docs/blob/main/architecture/decisions/adr-0063-abstract-generic-bodies.md). Its first delivery
+retains binder-scoped abstract signatures, declared parameter facts and a staged
+set of typed operations on generic free-function declarations, including ordinary
+call contracts, bounded-aspect method contracts, record and nominal construction,
+nominal residual projections, projected local writes (named fields, tuple slots,
+and explicit dereferences), typed closure capture-entry states,
+borrows,
+control flow, and resolved field/tuple projections. Places carry binding identities
+and use the shared ownership projection algebra. Unavailable selection/coercion
+facts leave an explicit pending preparation result, not an ownership verdict.
+
+Annotated locals preserve their solved declared types; exact-type annotations
+are supported without reconstructing the body. Read-copy, reference weakening,
+and other differing-type coercions remain pending until their ownership facts
+are retained explicitly.
+Move checking consumes supported retained free-function and impl-method operations
+directly,
+using binding identity to key the shared flow lattice and the retained fact
+environment to distinguish an unbounded parameter or unknown row tail from one
+granted `Copy`. `checked_abstract_generic_bodies` records completed visits.
+Retained subtraction equations propagate field-wise `Copy` from source rows to
+their remainders, including chains. Every field-wise exception must be among the
+removed labels; a remainder's grant never proves that its source is `Copy`.
+Array reads with retained `u64` indices preserve index evaluation throughout
+projection chains and reject non-`Copy` moves through opaque-index places.
+Coerced indices, temporary-array reads and indexed writes remain pending; even
+a field/tuple assignment reached through an index needs its evaluation retained.
+Structural record patterns retain typed fields, explicit discards, binding
+identities and owned remainders, including unknown open tails. Scrutinee inputs
+are evaluated once rather than again for each projected field. Named remainders
+consume the source as a whole; patterns without one consume their named and
+explicitly discarded fields separately. Parameter-backed open shapes require a
+typed row grant and an exact retained remainder equation; unknown tails are
+preserved. Missing decomposition or remainder ownership facts, and
+nominal/reference patterns, remain pending.
+Closed-source subtraction equations determine actual remainder fields, whose
+retained types decide Copy without sampling. Definition templates preserve
+declared parameters appearing only in row facts without adding caller-visible
+quantifiers.
+Conversely, Copy heads and a Copy remainder compose into a Copy structural row;
+an unproven alternative decomposition cannot override a successful proof.
+Operations and nominal entailments not yet covered by that consumer roll back the
+attempted analysis before the existing reconstruction path runs. The integration
+corpus no longer reaches that fallback for functions and methods; let-polymorphic
+closures, which have no retained abstract body, still use reconstruction.
+Method definition templates retain source names and inherited body grants without
+changing their call-site schemes. Borrowed `self` remains access rather than
+ownership. Conditional variants whose flattened method symbols collide remain
+pending (`LIMIT-NAME-RESOLUTION-005`); structural-target and default-method
+coverage is still staged.
+Closure environment ownership is retained separately from callable axes, and
+preserved through direct local aliases and nested captures. Implicit captures
+retain per-closure entry types and require definition-time `Copy` evidence.
+Closure bodies use a separate flow state. Aggregate/borrowed/coerced closure
+contracts, many-call non-Copy owned-capture legality and derived or nominal
+entailments remain staged consumer boundaries.
+
 An opt-in validation pass over the typed module graph, rejecting use-after-move. Verified directly against `pipeline.rs` and the CLI's `clap` argument (not assumed from prior documentation): `RunOptions`/`main.rs`'s `move_check: bool` derive/default to `false`, and every one of `pipeline.rs`'s three call sites gates the pass behind `if options.move_check`. Owning crate: `metel-frontend`. Defined in `move_check/` and `place.rs` (the addressable lvalue-path representation move check shares with the typechecker).
 
 ## Model
@@ -29,16 +87,16 @@ these explicit captures even if they are unused or shadowed. See
 
 ##### Requirement {#arch.move-check.requirement-1}
 
-Move checking is off unless requested (`--move-check` / `RunOptions::move_check`). `check_graph` then rejects seven categories of move violation, reporting the first as `T0019`, and reports generic bodies it cannot check as `unchecked_generic_bodies`, not silently accepted.
+Move checking is off unless requested (`--move-check` / `RunOptions::move_check`). `check_graph` then rejects seven categories of move violation, reporting the first as `T0019`, and fails with `I0011` if any generic body cannot be analysed, so success means every body was checked.
 
 | Field | Value |
 |---|---|
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#move-check` |
-| `implements` | [`metel-frontend/src/pipeline/move_check/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/45648266c670df9b04d1c66f0f6af573b65f7afa/metel-frontend/src/pipeline/move_check/mod.rs#L190) |
-| `verified by` | [`metel-frontend/src/pipeline/move_check/tests.rs::a_by_value_method_through_a_shared_reference_is_rejected_at_the_first_call`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L1433); [`metel-frontend/src/pipeline/move_check/tests.rs::array_element_move_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L628); [`metel-frontend/src/pipeline/move_check/tests.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L288); [`metel-frontend/src/pipeline/move_check/tests.rs::borrowed_array_for_in_cannot_move_a_noncopy_element`](https://github.com/metel-lang/metel-core/blob/25e71d8966dfb6e54799ec22be9247609654a833/metel-frontend/src/pipeline/move_check/tests.rs#L859); [`metel-frontend/src/pipeline/move_check/tests.rs::partial_move_of_drop_type_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L426); [`metel-frontend/src/pipeline/move_check/tests.rs::plain_binding_of_mut_ref_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L740); [`metel-frontend/src/pipeline/move_check/tests.rs::symbolic_row_forwarding_closure_is_checked_without_skipping`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/move_check/tests.rs#L108); [`metel-frontend/src/pipeline/move_check/tests.rs::symbolic_row_without_all_copy_is_still_move_only`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/move_check/tests.rs#L133); [`metel-frontend/src/pipeline/move_check/tests.rs::unchecked_generic_body_is_reported_to_compiler_callers`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L184); [`metel-frontend/src/pipeline/move_check/tests.rs::whole_value_use_after_partial_move_is_a_typecheck_error`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L399); [`metel-interpreter/src/orchestrator/mod.rs::move_checking_is_off_unless_requested`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/src/orchestrator/mod.rs#L313); [`metel-interpreter/tests/integration/sources/evaluator/move_check/01_move_then_use.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/move_check/01_move_then_use.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/move_check/generic_row_forwarding_moves_unknown_tail.toml`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-interpreter/tests/integration/sources/evaluator/move_check/generic_row_forwarding_moves_unknown_tail.toml#L1) |
-| `last_reviewed` | 8ed18533e08f605e0df6c188f1d30797fb72171f |
+| `implements` | [`metel-frontend/src/pipeline/move_check/mod.rs::check_graph`](https://github.com/metel-lang/metel-core/blob/53dddb31d999716a78835591a0ff19e217828aa7/metel-frontend/src/pipeline/move_check/mod.rs#L220) |
+| `verified by` | [`metel-frontend/src/pipeline/move_check/tests.rs::a_by_value_method_through_a_shared_reference_is_rejected_at_the_first_call`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L4754); [`metel-frontend/src/pipeline/move_check/tests.rs::array_element_move_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L3949); [`metel-frontend/src/pipeline/move_check/tests.rs::assignment_move_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L3609); [`metel-frontend/src/pipeline/move_check/tests.rs::borrowed_array_for_in_cannot_move_a_noncopy_element`](https://github.com/metel-lang/metel-core/blob/25e71d8966dfb6e54799ec22be9247609654a833/metel-frontend/src/pipeline/move_check/tests.rs#L4180); [`metel-frontend/src/pipeline/move_check/tests.rs::partial_move_of_drop_type_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L3747); [`metel-frontend/src/pipeline/move_check/tests.rs::plain_binding_of_mut_ref_then_use_is_reported`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L4061); [`metel-frontend/src/pipeline/move_check/tests.rs::symbolic_row_forwarding_closure_is_checked_without_skipping`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/move_check/tests.rs#L3357); [`metel-frontend/src/pipeline/move_check/tests.rs::symbolic_row_without_all_copy_is_still_move_only`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/move_check/tests.rs#L3382); [`metel-frontend/src/pipeline/move_check/tests.rs::unchecked_generic_body_is_reported_to_compiler_callers`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L3447); [`metel-frontend/src/pipeline/move_check/tests.rs::whole_value_use_after_partial_move_is_a_typecheck_error`](https://github.com/metel-lang/metel-core/blob/5586a5cdb8bda4fa8f25a51700e048c33fe28f73/metel-frontend/src/pipeline/move_check/tests.rs#L3720); [`metel-interpreter/src/orchestrator/mod.rs::move_checking_is_off_unless_requested`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/src/orchestrator/mod.rs#L313); [`metel-interpreter/tests/integration/sources/evaluator/move_check/01_move_then_use.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/move_check/01_move_then_use.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/move_check/generic_row_forwarding_moves_unknown_tail.toml`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-interpreter/tests/integration/sources/evaluator/move_check/generic_row_forwarding_moves_unknown_tail.toml#L1) |
+| `last_reviewed` | 53dddb31d999716a78835591a0ff19e217828aa7 |
 | `related` | RFC-0071, `#579` |
 
 ##### Requirement {#arch.move-check.requirement-2}
