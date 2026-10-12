@@ -674,7 +674,8 @@ needed); `pre-push` runs `rfc.py check` (which already degrades gracefully to an
 informational skip when `metel-interpreter/tests` isn't reachable, per ADR-0049 §6). Not a
 CI replacement — catches the same classes of mistake earlier, for whoever has it enabled.
 
-`rfcs/tools/rfc.py` (stdlib-only Python, no dependencies) mechanizes the parts
+`rfcs/tools/rfc.py` (stdlib-only Python 3.11 or newer, no dependencies; it reads fixture
+sidecars with `tomllib`) mechanizes the parts
 of this process that don't need judgment:
 
 - `rfc.py new "Title" -d "description"` — creates a draft with the next free number,
