@@ -65,8 +65,7 @@ against their declared bounds, and switches array types to prefix notation.
   (`metel-core#1427`).
 - Opt-in generic-body move checking retains concrete associated-type bindings
   and structural row entitlements during reconstruction, closing two concrete
-  analysis skips tracked under `metel-core#273`; completeness enforcement
-  remains pending the abstract-body migration.
+  analysis skips tracked under `metel-core#273`.
 - Generic ownership reconstruction retains symbolic return-type context for
   return-only parameters, allowing nested zero-argument generic calls to be
   analyzed without defaulting the missing context (`metel-core#273`).
@@ -115,6 +114,15 @@ against their declared bounds, and switches array types to prefix notation.
   literal fields and local record-projection sources.
   Remaining unsupported operations continue through the existing reconstruction
   path during the migration (`metel-core#273`).
+- `--move-check` now fails with `I0011` when it cannot analyze a generic body, instead of
+  printing a warning and succeeding, so a passing run has checked every body
+  (`metel-core#273`). `I0011` is distinct from `T0019`: nothing was shown to be moved.
+  Operators on unannotated parameters are retained in abstract bodies.
+- A closure with no capture list that captures a value of a generic type without a `Copy`
+  grant is rejected at its definition with `T0026` (spec `legality-6`), for declared
+  parameters without a `Copy` bound and for unannotated ones such as
+  `let f := |a| { |b| { (b, a) } }`. Before, it was accepted unless a non-`Copy`
+  instantiation existed (`metel-core#273`).
 - Operators on bare type parameters remain unsupported (`T0005`); this release
   does not introduce operator-to-aspect desugaring.
 

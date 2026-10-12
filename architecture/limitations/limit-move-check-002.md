@@ -1,11 +1,11 @@
 ---
 id: LIMIT-MOVE-CHECK-002
 title: "Move-check skips generic bodies whose placeholder lacks a row bound or bound methods"
-summary: "Under `--move-check`, a generic body that reads a row-bound field or uses some bound methods is skipped with a warning, so a use-after-move there passes."
+summary: "Resolved: generic bodies are analysed from retained definition-time facts, and a body that cannot be analysed now fails `--move-check` with `I0011`."
 scope: "architecture/spec/move-check.md#move-check"
 owner: metel-frontend
 discovered_by: "metel-core#1212 limitation analysis; `move-check-count` corpus totals (21 user and 30 embedded-std skipped generic bodies)"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -55,5 +55,14 @@ use it. The symptom is tracked as `metel-core#1226`.
 
 ## Resolution
 
-None yet; `metel-core#1226`. Either the placeholder learns the row bound and
-the bound's methods, or a skip becomes a hard failure under `--move-check`.
+Resolved under `metel-core#273`. Generic free functions and impl methods are analysed from
+the abstract bodies retained by definition-time checking (ADR-0063), so a body that reads a
+row-bound field or uses a bound-provided method no longer depends on a placeholder that
+lacks them. The integration corpus has no unchecked generic body and no abstract-body
+fallback, and a regression test asserts it.
+
+A body that still cannot be analysed is no longer skipped with a warning. `--move-check`
+fails with `I0011` (a distinct analysis error, not `T0019`), so an incomplete analysis
+cannot authorize execution.
+
+The example above now reports `T0019` on the second `let`.

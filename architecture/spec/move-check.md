@@ -43,8 +43,9 @@ quantifiers.
 Conversely, Copy heads and a Copy remainder compose into a Copy structural row;
 an unproven alternative decomposition cannot override a successful proof.
 Operations and nominal entailments not yet covered by that consumer roll back the
-attempted analysis before the existing reconstruction path runs. Full operation
-coverage and consumer migration remain implementation work.
+attempted analysis before the existing reconstruction path runs. The integration
+corpus no longer reaches that fallback for functions and methods; let-polymorphic
+closures, which have no retained abstract body, still use reconstruction.
 Method definition templates retain source names and inherited body grants without
 changing their call-site schemes. Borrowed `self` remains access rather than
 ownership. Conditional variants whose flattened method symbols collide remain
@@ -86,7 +87,7 @@ these explicit captures even if they are unused or shadowed. See
 
 ##### Requirement {#arch.move-check.requirement-1}
 
-Move checking is off unless requested (`--move-check` / `RunOptions::move_check`). `check_graph` then rejects seven categories of move violation, reporting the first as `T0019`, and reports generic bodies it cannot check as `unchecked_generic_bodies`, not silently accepted.
+Move checking is off unless requested (`--move-check` / `RunOptions::move_check`). `check_graph` then rejects seven categories of move violation, reporting the first as `T0019`, and fails with `I0011` if any generic body cannot be analysed, so success means every body was checked.
 
 | Field | Value |
 |---|---|

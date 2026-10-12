@@ -117,7 +117,12 @@ environments. Local aliases and nested captures preserve the environment
 contract. Omitted capture lists retain definition-time free-local entry facts,
 with a separate snapshot for each closure even when transitive uses share source
 spans. They require Copy evidence rather than silently treating an unlisted
-non-Copy capture as a legal clone.
+non-Copy capture as a legal clone. That evidence is a definition-time grant: a
+capture whose type is still generic after solving, whether a declared parameter
+without a `Copy` bound or an inferred one, is rejected with `T0026` when the
+definition is checked (spec `legality-6`), never accepted because some instantiation
+happens to be `Copy`. Function-typed captures are judged by construction, which
+sees the real environment, because inference's provisional use axis cannot.
 
 ### Ownership consumer
 
@@ -314,9 +319,15 @@ violation. Reports may retain partial findings and unchecked-body details for
 tooling, but an incomplete report cannot authorize execution under this flag.
 Default mode remains unchanged.
 
-The diagnostic is a defensive safeguard against implementation regressions or a
-future feature lacking ownership integration, not a substitute for eliminating
-the current gaps. Conservative loop-analysis precision remains #272's concern;
+The diagnostic is `I0011`. It is enabled: `check_graph` returns it whenever a
+generic body is unchecked and succeeds only for a complete analysis, and a corpus
+test asserts that no fixture reaches it. It is a defensive safeguard against
+implementation regressions or a future feature lacking ownership integration, not a
+substitute for eliminating the current gaps.
+
+Let-polymorphic closures (`let f := |x| ...`) have no abstract body yet; the move
+checker still reconstructs them against symbolic arguments, and `I0011` applies if that
+fails. Giving them retained abstract bodies is the remaining migration work. Conservative loop-analysis precision remains #272's concern;
 it is distinct from failing to analyze a body.
 
 ## Alternatives Considered
