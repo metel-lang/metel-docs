@@ -77,7 +77,7 @@ count := 99;               // 99 is i32
 The exact-width numeric primitive types are `i8`, `i16`, `i32`, `i64`, `u8`, `u16`,
 `u32`, `u64`, `f32`, and `f64`.
 
-<!-- rfc.py:last_reviewed d823a24dd394301104de4b61644ad723c501a012 -->
+<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
@@ -95,7 +95,7 @@ The exact-width numeric primitive types are `i8`, `i16`, `i32`, `i64`, `u8`, `u1
 
 Conversion between numeric types is written with an explicit `as` cast.
 
-<!-- rfc.py:last_reviewed d823a24dd394301104de4b61644ad723c501a012 -->
+<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
@@ -700,7 +700,7 @@ element count.
 `[T; N]` implicitly coerces to `[T]` wherever `[T]` is expected. The reverse coercion
 is not permitted.
 
-<!-- rfc.py:last_reviewed d823a24dd394301104de4b61644ad723c501a012 -->
+<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
@@ -1426,7 +1426,7 @@ and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed 99e377bfc96d1da8fb4cf544fe1f67ed522becd7 -->
+<!-- rfc.py:last_reviewed 361e16a48ab475161d83d33ad52bbe6fac0c49f2 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

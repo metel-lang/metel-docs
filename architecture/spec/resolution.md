@@ -35,9 +35,9 @@ Once inference has solved a body and the frontend has frozen its resolution, no 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/d823a24dd394301104de4b61644ad723c501a012/metel-frontend/src/identity/allocate.rs#L172) |
+| `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/6469705aaeb2aefd7c60ead845b69e7b6c8dcab4/metel-frontend/src/identity/allocate.rs#L172) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::a_body_with_only_bound_names_has_no_unresolved_references`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L357); [`metel-frontend/src/identity/tests.rs::a_use_of_a_global_declaration_is_classified_as_global`](https://github.com/metel-lang/metel-core/blob/c7bd72760c5672a1ad48f27a66ac31d93a024f6b/metel-frontend/src/identity/tests.rs#L370); [`metel-frontend/src/identity/tests.rs::reference_table_is_total_and_unknown_names_are_explicit`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L345) |
-| `last_reviewed` | d823a24dd394301104de4b61644ad723c501a012 |
+| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -49,9 +49,9 @@ Bindings and value references get structural identities (`LocalId`, `RefId`) fro
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#resolution` |
-| `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/d823a24dd394301104de4b61644ad723c501a012/metel-frontend/src/identity/allocate.rs#L173) |
+| `implements` | [`metel-frontend/src/identity/allocate.rs::allocate_module`](https://github.com/metel-lang/metel-core/blob/6469705aaeb2aefd7c60ead845b69e7b6c8dcab4/metel-frontend/src/identity/allocate.rs#L173) |
 | `verified by` | [`metel-frontend/src/identity/tests.rs::blank_lines_and_reformatting_change_no_identity`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L162); [`metel-frontend/src/identity/tests.rs::editing_one_body_leaves_another_bodys_identities_untouched`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L196); [`metel-frontend/src/identity/tests.rs::inserting_an_earlier_binding_does_not_renumber_a_later_one`](https://github.com/metel-lang/metel-core/blob/534002297dfd1dfc78547baf852ab5cb93d4634f/metel-frontend/src/identity/tests.rs#L183) |
-| `last_reviewed` | d823a24dd394301104de4b61644ad723c501a012 |
+| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}

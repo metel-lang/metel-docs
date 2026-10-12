@@ -98,7 +98,7 @@ the same `match` expression.
 A block arm evaluates its statements and then its tail expression, if any; that tail is the
 arm's result, while a block with no tail produces `()`.
 
-<!-- rfc.py:last_reviewed d823a24dd394301104de4b61644ad723c501a012 -->
+<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
@@ -1540,7 +1540,7 @@ fun main() -> i64 {
 `break` transfers control out of the innermost enclosing loop. In a value-producing
 `loop`, `break expr` supplies that loop's result and bare `break` supplies `()`.
 
-<!-- rfc.py:last_reviewed d823a24dd394301104de4b61644ad723c501a012 -->
+<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
