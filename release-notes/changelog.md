@@ -119,6 +119,10 @@ against their declared bounds, and switches array types to prefix notation.
   printing a warning and succeeding, so a passing run has checked every body
   (`metel-core#273`). `I0011` is distinct from `T0019`: nothing was shown to be moved.
   Operators on unannotated parameters are retained in abstract bodies.
+- A generic function that calls an overloaded function now runs: the standard `assert`
+  (one- and two-argument forms) and a module's own overloads resolve from the defining
+  module's overload table when the body is reconstructed, instead of failing with `I0010`
+  (`undefined name`). Under `--move-check` such bodies are analysed too (`metel-core#1433`).
 - A closure with no capture list that captures a value of a generic type without a `Copy`
   grant is rejected at its definition with `T0026` (spec `legality-6`), for declared
   parameters without a `Copy` bound and for unannotated ones such as

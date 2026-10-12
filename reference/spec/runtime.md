@@ -87,7 +87,7 @@ writes the same result followed by a newline.
 
 `assert(false)` panics with `"assertion failed"`; `assert(false, msg)` panics with `msg`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 6c6828cdbc94434f2debbd7cc6dabbef1cb82ac6 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
