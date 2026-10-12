@@ -660,6 +660,16 @@ class RecordMarkerTests(unittest.TestCase):
                 any("LIMIT-X-001" in f and "no longer is by any current" in f for f in findings), findings
             )
 
+    def test_resolved_record_may_have_lost_its_marker(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n', git=True)
+            (core / "src/lib.rs").write_text("pub fn target_fn() {}\n")
+            self.commit(core, "remove the marker")
+            records = self.write_record(root, "LIMIT-X-001", disposition="resolved")
+            findings = self.regenerate(records, core, False)
+            self.assertFalse(any("no longer is by any current" in f for f in findings), findings)
+
     def test_no_drift_finding_while_the_marker_is_still_current(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

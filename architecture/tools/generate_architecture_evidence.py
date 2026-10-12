@@ -375,6 +375,7 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
     markers = limit_citations(core)
     ever_marked = limit_ids_ever_marked(core)
     known_ids: set[str] = set()
+    retired_ids: set[str] = set()  # dispositions that no longer need a marker
     for path in sorted(records_dir.glob("*.md")):
         text = path.read_text()
         id_match = RECORD_ID.search(text)
@@ -384,6 +385,8 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
         known_ids.add(record_id)
         disposition_match = RECORD_DISPOSITION.search(text)
         disposition = disposition_match.group(1) if disposition_match else None
+        if disposition not in LIMIT_ACTIVE_DISPOSITIONS:
+            retired_ids.add(record_id)
         citations = sorted(set(markers.get(record_id, [])), key=lambda c: (str(c.path), c.item or "", c.line))
         if citations and disposition not in LIMIT_ACTIVE_DISPOSITIONS:
             stale.append(
@@ -416,7 +419,9 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
     for record_id in sorted(set(markers) - known_ids):
         rel = markers[record_id][0].path
         stale.append(f"{rel}: `// limit:` marker cites `{record_id}`, which does not exist")
-    for record_id in sorted(ever_marked - set(markers)):
+    # A retired (e.g. resolved) record is expected to have lost its marker; the flag exists
+    # to catch a marker that disappeared while the record still claims an active limit.
+    for record_id in sorted(ever_marked - set(markers) - retired_ids):
         stale.append(
             f"{record_id}: was cited by a `// limit:` marker in metel-core history and no longer is by any "
             f"current one; confirm the limitation is resolved (and update its disposition) or restore the marker"
