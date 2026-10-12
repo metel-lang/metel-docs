@@ -296,7 +296,7 @@ its narrowed residual type, including an empty residual, is legal.
 
 A field of a `Drop` type may not be moved out.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed d823a24dd394301104de4b61644ad723c501a012 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>

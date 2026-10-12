@@ -165,12 +165,32 @@ of calls and runtime reconstruction. Their abstract `Self` remains distinct from
 the target's row tail: the target describes fields but may accept a nominal
 receiver. In particular, field-wise `Copy` evidence cannot grant nominal `Copy`,
 and method-owned generic names cannot be aliased to the enclosing receiver.
+At a bounded generic method call, inference retains the solved instantiated
+callable contract; this carries a method-owned variable's resolved enclosing
+argument into ownership analysis without re-instantiating it or sampling a
+caller.
+For a blanket implementation, the target `T` freezes as the implementation
+binder's abstract parameter rather than an identity-less nominal spelling. Its
+ownership analysis therefore uses the declared parameter facts directly.
+An open record-kind parameter retains the fields proved by its bound and an
+opaque self tail for a trailing-discard record pattern with no remainder
+binding; this retains no claim about unnamed fields or an independently
+bindable remainder.
 Their destructuring operations retain the pattern-specific field/tail shape
-selected by inference, not a replacement type for `Self`. Unknown nominal
+selected by inference, not a replacement type for `Self`. A nominal record
+shape is instantiated from its carried declaration identity and its fields
+keep their `FieldId` selections; no bare-name lookup supplies that shape.
+Unknown nominal
 destructor absence remains a pending ownership obligation; a structural shape
 or field-wise `Copy` cannot discharge it. Candidate provenance follows the
 selected declaration across registry merges, not its module-local solver
 variable numbers.
+
+Open nominal-projection parameters retain their selected head fields as
+definition-only row facts. This lets a generic body type-check and analyze
+`receiver.field` from the declared residual shape without adding a structural
+row requirement to the caller-visible scheme or erasing the nominal projection
+contract at call sites.
 
 Nominal ownership queries retain coherence evidence alongside the body. During
 migration, the handoff can prove absence of nominal `Copy`/`Drop` candidates by
@@ -186,8 +206,18 @@ identity, including aliases; record-target candidates block only record kinds.
 Unproved candidates remain pending rather than granting ownership permission or
 destructor absence. Ownership consumes the retained result; it
 does not repeat registry selection on symbolic samples.
+An unproved field-wise `Copy` candidate on a nominal `record` is the narrow
+consuming exception: the operation records a move, never a `Copy` grant. This
+keeps generic ownership conservative while conditional destructor absence stays
+pending.
 Conditional nominal candidates additionally retain polarity and resolved aspect
 conditions indexed by target argument, not impl parameter declaration order.
+Named-struct match patterns retain their resolved struct and field identities
+with the solved binding types, so the frozen body never depends on the parser's
+pre-inference ambiguous one-segment pattern spelling.
+Tuple patterns retain their recursive shape and consumer operations descend
+through tuple projections, rather than moving the enclosing scrutinee merely
+because one element binds.
 Inference creates nominal impl receivers with the resolved target declaration
 identity, including inherited default methods. This identity survives into the
 abstract body even for consuming receivers; ownership does not recover it by
@@ -219,6 +249,32 @@ resolve names or merge shadowed bindings. Completed abstract-definition visits
 are recorded explicitly in the analysis report. During migration an unsupported
 operation or entailment rolls back the attempted analysis before the legacy path
 runs; partial results are not reported as a completed abstract-body check.
+
+Written callable boundaries retain an explicit callable-view operation: its
+operand retains the closure's environment and evaluation effects, while its
+result retains the declared function type. Ownership consumes the source once
+and uses the destination multiplicity for subsequent slot uses, never recovering
+capture-derived `Copy` through an erased environment. This represents the
+existing first-order callable conversion, not a general coercion rule.
+
+Declared value boundaries retain solved source/target pairs, including multiple
+boundaries at the same span. Abstract read-copy requires this evidence and a
+definition-time `Copy` proof for the peeled referent, and observes rather than
+moves its source. A mutable-to-shared reference view at an ordinary declared
+boundary consumes its source reference instead. Neither operation substitutes
+for call-site reborrowing or recovers ownership evidence from runtime types.
+
+Sized-array-to-view boundaries retain a distinct view operation: source places
+are observed, while temporary construction inputs are consumed once. The view
+is unconditionally `Copy`; the sized owner still requires field-wise element
+`Copy`. View copying does not grant ownership of indexed elements. A retained
+zero-length array with a bottom element may enter its declared view without
+sampling the generic target element type.
+At calls, the retained selected signature supplies the expected view type.
+Array dispatch additionally retains the receiver kind, so receiver conversion
+does not invent mutable access or move the owning array. Explicit call type
+arguments constrain fresh callee identities during inference rather than
+being recovered from empty literal elements during reconstruction.
 
 For implicit parameters, definition-inferred obligations also participate in
 the judgment where the language already specifies their inference. The artifact

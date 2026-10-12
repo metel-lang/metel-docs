@@ -71,12 +71,15 @@ against their declared bounds, and switches array types to prefix notation.
   return-only parameters, allowing nested zero-argument generic calls to be
   analyzed without defaulting the missing context (`metel-core#273`).
 - Opt-in move checking now consumes supported retained abstract free-function
-  and impl-method bodies directly, including unused definitions, declared `Copy` and field-wise
-  row bounds and their derived remainders, borrowed calls, array reads and writes with typed
-  indices (including numeric casts and Copy elements of temporary arrays), structural
-  record destructuring and owned remainders, exact-type
-  annotated locals, numeric compound assignments, projected restoration
-  and loop-carried moves, including exact-type value-producing loops and
+  and impl-method bodies directly, including unused definitions, declared `Copy`
+  and field-wise row bounds and their derived remainders, borrowed calls, array
+  reads and writes with typed indices, structural record destructuring and owned
+  remainders, and exact-type annotated locals. The retained bodies also cover
+  written callable boundaries with capture effects, read-copy and
+  sized-array-to-view conversions, explicit generic call arguments, bounded
+  generic aspect-method calls, blanket generic impl targets, record-pattern
+  matches over declared row bounds, numeric compound assignments, projected
+  restoration, and loop-carried moves, including exact-type value-producing loops and
   unguarded matches with resolved literal, wildcard, whole-binding and enum
   patterns. Pattern bindings retain their definition-time types and identities;
   the scrutinee is evaluated once.
