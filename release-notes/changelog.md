@@ -123,6 +123,11 @@ against their declared bounds, and switches array types to prefix notation.
   (one- and two-argument forms) and a module's own overloads resolve from the defining
   module's overload table when the body is reconstructed, instead of failing with `I0010`
   (`undefined name`). Under `--move-check` such bodies are analysed too (`metel-core#1433`).
+- Fields of a generic struct whose declared type mentions no type parameter now give their
+  initializers a type hint, so `B { n = 1, v = 2 }` works for `struct B<T> { n: u64, v: T }`
+  (and for `u8`, `i32` and `f32` fields) instead of failing with the internal error `I0001`.
+  Fields that mention a parameter stay unhinted, and a real mismatch is still `T0001`
+  (`metel-core#1438`).
 - A generic struct literal now takes a type parameter that no field mentions (a phantom
   parameter) from its annotation, so `let w: Witness<T> := Witness { count = 2 };` type-checks
   in ordinary code and in a generic body, instead of failing with `T0002` (and `I0010` when
