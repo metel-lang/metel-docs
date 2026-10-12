@@ -557,7 +557,7 @@ binding, or captures any binding by `&` or `&var`. Referencing a free non-`Copy`
 with no capture list is a compile error. A closure whose only free variables are `Copy`
 bindings used by value, or which has no free variables, may omit the list.
 
-<!-- rfc.py:last_reviewed 119862e8e95be8e850d81d66bdda0c0264364d39 -->
+<!-- rfc.py:last_reviewed b5e31f5afc1d13391ece5c9a3e156d5cb4b22e61 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
