@@ -123,6 +123,11 @@ against their declared bounds, and switches array types to prefix notation.
   (one- and two-argument forms) and a module's own overloads resolve from the defining
   module's overload table when the body is reconstructed, instead of failing with `I0010`
   (`undefined name`). Under `--move-check` such bodies are analysed too (`metel-core#1433`).
+- A generic struct literal now takes a type parameter that no field mentions (a phantom
+  parameter) from its annotation, so `let w: Witness<T> := Witness { count = 2 };` type-checks
+  in ordinary code and in a generic body, instead of failing with `T0002` (and `I0010` when
+  the body was reconstructed). An unannotated literal still reports `T0002`, and a
+  mismatching annotation still reports `T0001` (`metel-core#1432`).
 - A closure with no capture list that captures a value of a generic type without a `Copy`
   grant is rejected at its definition with `T0026` (spec `legality-6`), for declared
   parameters without a `Copy` bound and for unannotated ones such as
