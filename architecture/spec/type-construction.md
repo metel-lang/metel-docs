@@ -142,9 +142,9 @@ Aspect default methods are materialized as typed methods before evaluation: infe
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/d823a24dd394301104de4b61644ad723c501a012/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L22) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/6469705aaeb2aefd7c60ead845b69e7b6c8dcab4/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L22) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
-| `last_reviewed` | d823a24dd394301104de4b61644ad723c501a012 |
+| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
 | `related` | ADR-0034 |
 
 ##### Requirement {#arch.type-construction.requirement-10}
