@@ -325,10 +325,16 @@ test asserts that no fixture reaches it. It is a defensive safeguard against
 implementation regressions or a future feature lacking ownership integration, not a
 substitute for eliminating the current gaps.
 
-Let-polymorphic closures (`let f := |x| ...`) have no abstract body yet; the move
-checker still reconstructs them against symbolic arguments, and `I0011` applies if that
-fails. Giving them retained abstract bodies is the remaining migration work. Conservative loop-analysis precision remains #272's concern;
-it is distinct from failing to analyze a body.
+A let-bound polymorphic closure (`let f := |x| ...`) is a generic definition like a
+generic function. Construction gives it the same retained abstract signature and body,
+using the closure's parameters, return type and body as a stand-in declaration keyed by
+its own span, and move checking analyses that body. A bare alias of a generic function
+(`let g := f;`) introduces no body: the function's own is analysed where it is declared.
+
+Symbolic AST reconstruction has been removed from ownership analysis. Where the retained
+body cannot be completed, the body is reported as unanalysed and `I0011` applies.
+Conservative loop-analysis precision remains #272's concern; it is distinct from failing
+to analyze a body.
 
 ## Alternatives Considered
 

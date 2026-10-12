@@ -112,8 +112,9 @@ against their declared bounds, and switches array types to prefix notation.
   ownership through local aliases and nested captures, rather than relying on
   provisional callable types. Closure free-use collection now includes nominal
   literal fields and local record-projection sources.
-  Remaining unsupported operations continue through the existing reconstruction
-  path during the migration (`metel-core#273`).
+  Let-polymorphic closures (`let f := |x| ...`) carry retained abstract bodies as well,
+  and the symbolic reconstruction path that move checking used before is removed
+  (`metel-core#273`).
 - `--move-check` now fails with `I0011` when it cannot analyze a generic body, instead of
   printing a warning and succeeding, so a passing run has checked every body
   (`metel-core#273`). `I0011` is distinct from `T0019`: nothing was shown to be moved.

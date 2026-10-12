@@ -285,8 +285,8 @@ decision 7. Everything below is a deliberate trade-off or is tracked elsewhere.*
 3. **A generic body that cannot be analysed fails the run** (#273). Under `--move-check` an
    unanalysable body is reported as `I0011` and never passes (ADR-0063), so it is no longer
    a route past the loops inside it. Generic bodies are analysed from their retained
-   definition-time facts; reconstruction against invented concrete arguments remains only
-   for let-polymorphic closures.
+   definition-time facts, including let-polymorphic closures; reconstruction against invented
+   concrete arguments is gone from ownership analysis.
 4. **Only the first violation is reported** (#271), so a loop body with several distinct
    loop-carried moves surfaces one at a time.
 
