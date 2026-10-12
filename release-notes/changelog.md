@@ -119,6 +119,10 @@ against their declared bounds, and switches array types to prefix notation.
   printing a warning and succeeding, so a passing run has checked every body
   (`metel-core#273`). `I0011` is distinct from `T0019`: nothing was shown to be moved.
   Operators on unannotated parameters are retained in abstract bodies.
+- A generic function that calls an overloaded function now runs: the standard `assert`
+  (one- and two-argument forms) and a module's own overloads resolve from the defining
+  module's overload table when the body is reconstructed, instead of failing with `I0010`
+  (`undefined name`). Under `--move-check` such bodies are analysed too (`metel-core#1433`).
 - A generic struct literal now takes a type parameter that no field mentions (a phantom
   parameter) from its annotation, so `let w: Witness<T> := Witness { count = 2 };` type-checks
   in ordinary code and in a generic body, instead of failing with `T0002` (and `I0010` when
