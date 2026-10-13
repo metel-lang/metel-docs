@@ -114,7 +114,7 @@ plain `=` spelling is a parse error (RFC-0136).
 A conditional aspect implementation may state its bounds inline on its type parameters or
 in a `where` clause; the two spellings are equivalent.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -151,7 +151,7 @@ satisfy every bound stated by that implementation.
 Conditional implementation bounds are checked whenever the aspect is required, including
 method dispatch, bound satisfaction, and implementation selection.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -835,7 +835,7 @@ Methods may use `self`, `&self`, or `&var self` as their receiver.
 A value receiver receives the ordinary passed value, so a method that returns a changed
 value leaves the caller's original binding unchanged.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1079,7 +1079,7 @@ because every field of a `record` is public. Converting back gives each field th
 `struct` default, module-private, so a field that must stay visible needs an explicit
 `public` again.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1310,7 +1310,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1916,7 +1916,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
@@ -2618,7 +2618,7 @@ this language version.
 An associated type declared with `type Name;` is part of the aspect interface and must
 be defined by each implementation of that aspect.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed faefa18b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -2671,7 +2671,7 @@ corresponding `Self::Name` projection and may be used in method signatures.
 An implementation must define every associated type declared by its aspect; its
 definition fixes that projection to the implementation's concrete type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -2691,7 +2691,7 @@ definition fixes that projection to the implementation's concrete type.
 A projection `T::AssocType` is valid only when the required `T: Aspect` bound is in
 scope, and resolves to that implementation's associated type at an instantiation.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -3171,7 +3171,7 @@ equivalent named type parameter.
 Generic methods in an `extend` block enforce their own bounds, while bounds on the
 enclosing type remain available in the method body.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
@@ -3758,7 +3758,7 @@ methods may use those aspect operations on `T` without restating the bounds.
 An aspect implementation `extend Struct<T>: Aspect` likewise inherits `Struct<T>`'s
 declared aspect bounds without a duplicate declaration.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>

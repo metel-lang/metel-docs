@@ -582,7 +582,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -935,7 +935,7 @@ Closures that capture the same binding by `[&x]` / `[&var x]`, or that capture t
 reference value, observe the same referent; a write through an exclusive reference by one
 closure is visible through the others.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed c0a5dbd6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
