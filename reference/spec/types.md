@@ -600,7 +600,7 @@ The three-way split between `[T]`, `[T; N]`, and `List<T>` below reflects the cu
 `[T]` is an unconditionally-`Copy`, non-owning borrowed view. It has no `Drop`; using a
 view does not move the underlying elements out of the view.
 
-<!-- rfc.py:last_reviewed 2976fde0 -->
+<!-- rfc.py:last_reviewed 0a067998 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md), [rfc-0171](../../rfcs/4-implemented/rfc-0171-prefix-array-type-syntax-t-and-t-n.md)_</span>
@@ -684,7 +684,7 @@ See the note under "Arrays" above — this split is not considered final.
 An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
-<!-- rfc.py:last_reviewed 9c054bff -->
+<!-- rfc.py:last_reviewed 0a067998 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
