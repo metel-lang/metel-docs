@@ -2123,7 +2123,7 @@ orphan rule does not apply because there is no authored impl site.
 An authored `extend Type: Aspect` is rejected with `T0014` when neither the aspect nor
 the target type's outermost constructor is local to the implementing module.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 2dfbafb9 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
