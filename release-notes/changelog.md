@@ -11,6 +11,9 @@ against their declared bounds, and switches array types to prefix notation.
 
 **Named records and open rows (RFC-0120, RFC-0121):**
 
+- Fields of a named record are public by construction and are written without a
+  visibility modifier: `record Point { x: f64, y: f64 }`. A `public` written on a record
+  field is a syntax error (`P0001`) that explains the rule (`metel-core#1440`).
 - Named records retain nominal identity while participating in structural record
   operations. Block-local record declarations also retain their own identities
   (`metel-core#1307`).
