@@ -278,6 +278,29 @@ fields are written bare. A `public` modifier on a `record` field is a compile er
 fields already are, and a second spelling of the same fact would only raise the question
 of what leaving it off means. There is no way to make a record field private.
 
+**Guardrail: a stray `public` is rejected, and the rejection explains the default.** A
+`public` written on a `record` field is a hard syntax error, not a lint or a warning,
+reported at the modifier itself and raised before any type checking. It is a hard error
+because the alternative is two spellings of one fact, and an author who has just moved
+from `struct` is the person most likely to write the second one out of habit. The
+diagnostic must say three things, in whatever words the compiler uses: which field of
+which record it is about; that every field of a `record` is public and so takes no
+modifier, and that the fix is to remove `public`; and, for an author who wrote `public`
+because they were thinking in `struct` terms and wanted the opposite, that a field which
+should stay private belongs in a `struct`.
+
+<!-- doc-example: skip reason="illustrates the amended rule, which the compiler does not enforce yet" -->
+```metel
+record Point {
+    public x: f64,   // error: `public` is not written on a record field
+    y: f64,
+}
+```
+
+An accepted `public` on some records but not others would carry no meaning, so the rule
+has no opt-out and applies to every `record`, generic or not, whatever the field's type.
+It never fires on a `struct`, where `public` keeps its ordinary meaning.
+
 This is not a restriction so much as what the declaration *means*: §2 already establishes
 that `record X` publishes its row as the type's interface — "a record's API is what it
 contains" (RFC-0118 §3). A partially-private row would make a bound like
@@ -288,8 +311,8 @@ local, brand-stripped conversion.
 
 A record therefore differs from a struct in field visibility only where the difference is
 the point: a struct's unmarked field is module-private and a record's is public. Because
-the default flips with the keyword, the diagnostic for a stray `public` says so, and
-`struct` → `record` is documented as publishing every field (§2).
+the default flips with the keyword, the guardrail above explains it at the point of the
+mistake, and `struct` → `record` is documented as publishing every field (§2).
 
 **Numeric field labels are deferred to RFC-0151.** If `(A, B)` becomes the numeric-label
 row `{ 0: A, 1: B }` (RFC-0151, `0-draft`), whether `record R { 0: i64 }` is a legal
