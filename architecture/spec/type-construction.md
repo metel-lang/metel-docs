@@ -100,9 +100,9 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#type-construction` |
-| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/a1911509a800613fcd87b0adfc4f10feea8981a5/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L388) |
+| `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/b78449bb005509ba9c481d069f78861728455810/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L388) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::typed_ir_has_no_ascription_node`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/type_checking/tests.rs#L17); [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
-| `last_reviewed` | a1911509a800613fcd87b0adfc4f10feea8981a5 |
+| `last_reviewed` | b78449bb005509ba9c481d069f78861728455810 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
