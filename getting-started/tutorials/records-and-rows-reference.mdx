@@ -16,7 +16,7 @@ worked-example version.
 | | written | has a name | row visible to bounds | can have methods |
 |---|---|---|---|---|
 | anonymous record | `{ x = 1, y = 2 }` | no | yes | no (aspect impls only, for a local aspect) |
-| `record` declaration | `record Point { public x: i64, … }` | yes | **yes** | yes |
+| `record` declaration | `record Point { x: i64, … }` | yes | **yes** | yes |
 | `struct` | `struct Point { x: i64, … }` | yes | **no** | yes |
 | row variable | `row R`, used as `..R` | — | stands for "the rest" | — |
 
@@ -55,7 +55,7 @@ A `record` declaration is a `struct` whose row is public to structural matching.
 field must be `public`:
 
 ```metel
-record Point { public x: i64, public y: i64 }
+record Point { x: i64, y: i64 }
 
 fun x_of<record T: { x: i64, .. }>(v: T) -> i64 { v.x }
 
@@ -247,7 +247,7 @@ A `struct` or `record` can take a row parameter, spliced as `..R` in the type's 
 argument list. That is how a type carries "whatever else the caller put in here":
 
 ```metel
-record Builder<row R> { public name: String, public data: { ..R } }
+record Builder<row R> { name: String, data: { ..R } }
 
 fun describe<row R>(b: Builder<..R>) -> String { b.name }
 
@@ -278,7 +278,7 @@ An `extend` block may carry a row condition, and its methods exist only for rece
 whose row meets it. Disjoint conditions may reuse a method name:
 
 ```metel
-record Session<row R> { public id: i64, public data: { ..R } }
+record Session<row R> { id: i64, data: { ..R } }
 
 extend<row R: { token: String, .. }> Session<..R> {
     fun send(self) -> i64 { self.id * 10 }          // only once a token is present
@@ -375,7 +375,7 @@ A record's **current** row decides which impl applies, so a partial move changes
 answer. Moving `name` out of a `Handle` leaves a value that no longer has one:
 
 ```metel
-record Handle { public id: i64, public name: String }
+record Handle { id: i64, name: String }
 
 aspect Describe { fun state(&self) -> String; }
 

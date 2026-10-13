@@ -60,10 +60,10 @@ name.
 
 If the field names *are* the contract, declare a **named record** instead. A `record`
 has a name, methods and a declaration like a struct, but its row is visible to bounds,
-so it satisfies them. Every field of a `record` is `public`:
+so it satisfies them. Every field of a `record` is public, so fields are written bare:
 
 ```metel
-record Point { public x: i64, public y: i64 }
+record Point { x: i64, y: i64 }
 
 fun x_of<record T: { x: i64, .. }>(v: T) -> i64 { v.x }
 
