@@ -46,9 +46,9 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `status` | `implemented` |
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
-| `implements` | [`metel-interpreter/src/evaluator/pattern/mod.rs::match_pattern`](https://github.com/metel-lang/metel-core/blob/4be526c24a10b9d098f398b31c8a8ef6fbaaf40c/metel-interpreter/src/evaluator/pattern/mod.rs#L24) |
+| `implements` | [`metel-interpreter/src/evaluator/pattern/mod.rs::match_pattern`](https://github.com/metel-lang/metel-core/blob/fa9d787ff51e4383f6b09366a6b987da6add9b91/metel-interpreter/src/evaluator/pattern/mod.rs#L24) |
 | `verified by` | [`metel-interpreter/src/evaluator/mod.rs::perhaps_and_result_have_no_dedicated_value_variants`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4970); [`metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml#L1) |
-| `last_reviewed` | 4be526c24a10b9d098f398b31c8a8ef6fbaaf40c |
+| `last_reviewed` | fa9d787ff51e4383f6b09366a6b987da6add9b91 |
 | `related` | ADR-0028, `arch.evaluation.requirement-2` |
 
 ##### Requirement {#arch.evaluation.requirement-4}
