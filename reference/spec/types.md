@@ -684,7 +684,7 @@ See the note under "Arrays" above — this split is not considered final.
 An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
@@ -1388,7 +1388,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed adb446a7 -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2071,7 +2071,7 @@ current-row behavior [Named Records](declarations.md#records) states for `record
 row-bound satisfaction.
 
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>

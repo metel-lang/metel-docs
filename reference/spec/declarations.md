@@ -1310,7 +1310,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1916,7 +1916,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed 35c66dea -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
