@@ -2071,7 +2071,7 @@ current-row behavior [Named Records](declarations.md#records) states for `record
 row-bound satisfaction.
 
 
-<!-- rfc.py:last_reviewed 35c66dea -->
+<!-- rfc.py:last_reviewed 4be526c2 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
