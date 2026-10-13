@@ -4,7 +4,7 @@ title: "Named Records"
 date: '2026-07-24'
 status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/791'
-updated: '2026-10-01'
+updated: '2026-10-13'
 coverage:
   "1": { spec: "spec.declarations.records.legality-2" }
   "2": { spec: "spec.declarations.records.legality-3" }
@@ -91,7 +91,8 @@ name, brand, identity, construction, field access, coherence — except one: a `
 declaration brand is *structurally visible*, so its own declared row satisfies row bounds
 (RFC-0118) and is matched by row-conditional impl resolution (RFC-0121). A plain
 `struct`'s brand is not (RFC-0137 §3).** Everything else in this RFC follows from that one
-bit.
+bit. In particular, publishing the row publishes its fields: every field of a `record` is
+public, and a `record` field carries no visibility modifier (§5).
 
 `record` is now the keyword's only job — RFC-0116 dropped it from the anonymous former.
 
@@ -213,9 +214,14 @@ it contains (RFC-0118 §3). Two consequences the framing above misses:
   module.
 - **Field renames stop being internal.** After the upgrade, renaming a field is a breaking
   change to anyone bounded on it. Before it, it was refactoring.
+- **Private fields become public.** A `struct`'s unmarked field is module-private; a
+  `record`'s fields are all public (§5). Converting publishes every field the type has,
+  including ones that were private. Converting back gives each field the `struct` default,
+  so a field that must stay visible needs an explicit `public` again.
 
 So `struct` → `record` should be read as *publishing a contract*, not as *enabling a
-feature*. Tier 2 (`#derive(ToRecord, FromRecord)`, RFC-0119) exists precisely for the author
+feature*. A record has no per-field modifier, so the keyword is the whole of that
+commitment, and the one edit that makes it is the one to review. Tier 2 (`#derive(ToRecord, FromRecord)`, RFC-0119) exists precisely for the author
 who wants row operations **locally** without making that commitment: it grants conversion and
 withholds bound satisfaction, so the layout stays private. **That is what the tier 2 / tier 3
 boundary is actually for** — §1 above describes it in terms of impl-resolution mechanics,
@@ -265,15 +271,25 @@ row-bounded dispatch, now spec text.
 
 ## 5. Field visibility, and numeric labels
 
-**Every field of a `record` is public.** A field-visibility modifier (`private`, or a
-non-`public` field where the module default is private) on a `record` declaration is a
-compile error. This is not a restriction so much as what the declaration *means*: §2
-already establishes that `record X` publishes its row as the type's interface — "a
-record's API is what it contains" (RFC-0118 §3). A partially-private row would make a
-bound like `<record T: { token, .. }>` either a privacy oracle (it reveals whether a
-field the caller can't name exists) or a bound over a label the caller cannot access;
-neither is coherent. An author who wants a private field wants a `struct` (tier 1) or
-tier 2's local, brand-stripped conversion.
+**Every field of a `record` is public, by construction, and a record's fields carry no
+visibility modifier.** `record Point { x: f64, y: f64 }` declares a type whose row is its
+published interface (§2); the `record` keyword is the whole of that declaration, so the
+fields are written bare. A `public` modifier on a `record` field is a compile error: the
+fields already are, and a second spelling of the same fact would only raise the question
+of what leaving it off means. There is no way to make a record field private.
+
+This is not a restriction so much as what the declaration *means*: §2 already establishes
+that `record X` publishes its row as the type's interface — "a record's API is what it
+contains" (RFC-0118 §3). A partially-private row would make a bound like
+`<record T: { token, .. }>` either a privacy oracle (it reveals whether a field the
+caller can't name exists) or a bound over a label the caller cannot access; neither is
+coherent. An author who wants a private field wants a `struct` (tier 1) or tier 2's
+local, brand-stripped conversion.
+
+A record therefore differs from a struct in field visibility only where the difference is
+the point: a struct's unmarked field is module-private and a record's is public. Because
+the default flips with the keyword, the diagnostic for a stray `public` says so, and
+`struct` → `record` is documented as publishing every field (§2).
 
 **Numeric field labels are deferred to RFC-0151.** If `(A, B)` becomes the numeric-label
 row `{ 0: A, 1: B }` (RFC-0151, `0-draft`), whether `record R { 0: i64 }` is a legal

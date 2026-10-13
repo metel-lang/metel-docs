@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-10-07'
+generated_on: '2026-10-13'
 ---
 
 # RFC Registry
@@ -159,7 +159,7 @@ the curated thematic map.
 - **RFC-0116** — Anonymous Record Types (`4-implemented` ; rfcs/4-implemented/rfc-0116-anonymous-record-types.md ; date 2026-07-24 ; updated 2026-07-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/576)
 - **RFC-0117** — Row Narrowing (`4-implemented` ; rfcs/4-implemented/rfc-0117-row-narrowing.md ; date 2026-07-24 ; updated 2026-09-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/789)
 - **RFC-0118** — Row Bounds (`4-implemented` ; rfcs/4-implemented/rfc-0118-row-bounds.md ; date 2026-07-24 ; updated 2026-08-25 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/577)
-- **RFC-0120** — Named Records (`4-implemented` ; rfcs/4-implemented/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-10-01 ; impl implemented ; tracking metel-core#1300)
+- **RFC-0120** — Named Records (`4-implemented` ; rfcs/4-implemented/rfc-0120-named-records.md ; date 2026-07-24 ; updated 2026-10-13 ; impl implemented ; tracking metel-core#1300)
 - **RFC-0121** — Open Rows (`4-implemented` ; rfcs/4-implemented/rfc-0121-open-rows.md ; date 2026-07-24 ; updated 2026-10-06 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1301)
 - **RFC-0123** — Field-Wise Row Constraints (`4-implemented` ; rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md ; date 2026-07-24 ; updated 2026-10-05 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1302)
 - **RFC-0126** — T[] as a Copy Borrowed View (`4-implemented` ; rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md ; date 2026-07-27 ; updated 2026-08-03 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/593)
