@@ -684,7 +684,7 @@ See the note under "Arrays" above — this split is not considered final.
 An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
-<!-- rfc.py:last_reviewed 35c66dea -->
+<!-- rfc.py:last_reviewed 9c054bff -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
