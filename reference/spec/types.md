@@ -1862,7 +1862,7 @@ to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
 
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed d7f6b13a -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -1942,7 +1942,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed d7f6b13a -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
