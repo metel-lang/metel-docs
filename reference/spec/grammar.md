@@ -204,6 +204,7 @@ Type                     → FunType
                          | BracketArrayType
                          | "()"
                          | TupleType
+                         | OpenRecordProjectionType
                          | RecordProjectionType
                          | OpenRecordType
                          | RecordType
