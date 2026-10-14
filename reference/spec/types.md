@@ -1836,7 +1836,15 @@ An open record type may occur in a reusable type position, including a function 
 instance-method parameter, a return type, a local annotation, or a nominal field.
 Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+A struct's residual-projection tail (`Handle.{ fd, ..R }`, `Handle.{ ..R }`) is narrower: it is
+accepted only as the type of a function parameter, and anywhere else (a return type, an
+annotation, a field, under `&`) it is a parse error naming that restriction. A row argument
+to a nominal type (`Session<..R>`), an open record, or a closed projection (`Handle.{ fd }`)
+covers the same ground in those positions. A projection that names no fields
+(`Handle.{ ..R }`) forgets nothing, like `{ ..R }`, so a whole struct may be passed to it; one
+that names fields still obeys the by-value forget rule (`T0033`).
+
+<!-- rfc.py:last_reviewed a4f898d8 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -1865,7 +1873,7 @@ to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
 
 
-<!-- rfc.py:last_reviewed d7f6b13a -->
+<!-- rfc.py:last_reviewed a4f898d8 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
