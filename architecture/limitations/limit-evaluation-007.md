@@ -1,11 +1,11 @@
 ---
 id: LIMIT-EVALUATION-007
-title: "Aspect dispatch on a `{}` residual follows its hidden runtime brand, not its static type"
-summary: "A value typed `{}` that was destructured from a named record dispatches to that record's nominal impl; a literal `{}` dispatches to the row-conditional impl."
+title: "A record rest pattern's remainder kept its record brand at runtime, so aspect dispatch ignored its static type"
+summary: "The remainder bound by `..rest` carried the scrutinee's runtime brand, so dispatch picked the nominal impl although the spec says the remainder is anonymous."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
-discovered_by: "v0.14.0 integration rerun (records x dyn / empty residuals), 2026-10-13; skipped fixture `evaluator/records/release_matrix_empty_residual_dispatch_follows_static_type.toml`"
-disposition: known
+discovered_by: "v0.14.0 integration rerun (records x dyn / empty residuals), 2026-10-13"
+disposition: resolved
 review: null
 ---
 
@@ -40,3 +40,12 @@ same happens through `dyn Aspect`. Tracked by metel-core#1446 (v0.14.1).
 ## Affects
 
 - `spec.types.generics.row-conditional-impls.legality-1`
+
+## Resolution
+
+Fixed 2026-10-13, metel-core#1446 (v0.14.1). The evaluator built the remainder of a record
+rest pattern with the scrutinee's `type_id` (`evaluator/pattern/mod.rs`); it now builds it
+with none, matching `spec.expressions` "Record rest patterns" ("the remainder loses the
+nominal brand"). The regression fixture
+`evaluator/records/release_matrix_empty_residual_dispatch_follows_static_type` is unskipped
+and also covers a non-empty remainder and `dyn Aspect` dispatch.
