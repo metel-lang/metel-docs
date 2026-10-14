@@ -1716,12 +1716,15 @@ order.
 
 A record literal contains at most one spread; each explicitly initialized label must be
 entailed absent from the spread row, and an absent-label fact is required for abstract rows.
-A collision is an error, not an override. Spreading an owned record moves its fields into
+An absent-label fact is a closed row without the label, a decomposition whose remainder
+excludes it, or a label-only negative bound (`R: !{ token }`). A typed negative bound such as
+`R: !{ token: String }` is not one: it only rules out that type, and `R` may still hold the
+label at another type. A collision is an error, not an override. Spreading an owned record moves its fields into
 the result and consumes the source. Spreading through a reference copies the fields only
 when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
 evaluate left-to-right, while the resulting record layout is determined by its row/type.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed d57f9458 -->
 
 A row variable may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
@@ -2180,7 +2183,7 @@ or in a `where` constraint; `record` without a row bound is also a legal any-rec
 A negative row bound is satisfied only when none of its named fields match; it accepts no
 trailing `..` and a negative bound in a `where` clause is enforced like an inline one.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed d57f9458 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
