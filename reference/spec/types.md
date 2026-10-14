@@ -1931,6 +1931,29 @@ empty row. A per-field exception composes through ordinary row decomposition (`w
 = { x: T, ..Rest } where T: SomeOtherBound, all Rest: A`) rather than needing a
 heterogeneous form of its own.
 
+`R` must be a row the declaration can walk: the tail of an open-row parameter
+(`{ ..R }`), the remainder of a `where` decomposition, the tail of an `extend` target
+(`extend<row R> { ..R }`), or a declared `row` generic used as the row argument of a
+named type (`Packet<..R>`), in a function signature or an `extend` target. A row that
+none of these positions mentions has no fields to constrain and is rejected.
+
+```metel
+aspect Mark { fun mark(&self) -> i64; }
+record Packet<row R> { data: { ..R } }
+fun duplicate<row R>(p: Packet<..R>) -> ({ ..R }, { ..R }) where all R: Copy {
+    let d := p.data;
+    (d, d)
+}
+extend<row R> Packet<..R>: Mark where all R: Copy { fun mark(&self) -> i64 { 1 } }
+
+fun main() {
+    let p := Packet { data = { a = 1 } };
+    assert(p.mark() == 1);
+    let pair := duplicate(p);
+    assert(pair.0.a + pair.1.a == 2);
+}
+```
+
 <details>
 <summary>Formal rules</summary>
 
