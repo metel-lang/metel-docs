@@ -580,12 +580,17 @@ generic parameter with the same bound.
 
 ### T0019 — Use of moved value
 
-> **Since v0.12.0, under `--move-check` only.** Move checking is off by default in this release.
+> **Since v0.12.0, under `--move-check` only,** with one exception: using a field that was
+> already moved out of a nominal struct or record (reading it, or projecting it again) is
+> reported without the flag, because the narrowing that makes the field unavailable is a
+> type-level fact. Move checking is off by default in this release.
 
-An ownership rule from RFC-0071 §1/§7 was violated. Seven distinct situations share this
+An ownership rule from RFC-0071 §1/§7 was violated. Eight distinct situations share this
 code, each with its own message:
 
 - a value used after it was moved;
+- a field used after it was moved out of a nominal struct or record, including a second
+  projection of it;
 - a partially moved value used as a whole;
 - a partial move out of a type that implements `Drop`, which is never allowed;
 - a move out of an array element, which is banned outright;

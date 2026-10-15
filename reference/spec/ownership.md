@@ -467,7 +467,7 @@ until its type is known.
 
 An anonymous record narrows in the same way, and reading the moved-out label is rejected:
 
-<!-- doc-example: expect-fail reason="`left` was moved out, so the record no longer has it -- T0003 is the point" -->
+<!-- doc-example: expect-fail reason="`left` was moved out, so the anonymous record no longer has it -- T0003 is the point" -->
 ```metel
 fun main() {
     let r := { left = "l", right = "r" };
@@ -606,8 +606,11 @@ Moving the last remaining non-`Copy` field leaves an empty residual. An anonymou
 record has type `{}`; a nominal struct or record retains its brand with an empty
 row, written `Name.{}`. Neither becomes `Unit`, and a branded empty residual does
 not become an anonymous record. Fields read by copying remain in the row.
-Reading any removed field is a `T0003` type error, including when the row is empty,
-independently of `--move-check`.
+Using a field that was moved out of a nominal struct or record, by reading it or by
+projecting it again, is a `T0019` use of a moved value, including when the row is empty.
+Naming a label the type never declared, or any label absent from an anonymous record
+residual (which no longer remembers what it had), remains a `T0003` unknown-field error.
+Both are reported independently of `--move-check`.
 
 An empty residual may be bound, passed, and returned wherever its exact residual
 type is accepted. It does not satisfy the original non-empty type or a wider row;
@@ -629,7 +632,11 @@ containing `f`. For an otherwise legal by-value field use, the row transition is
 ----------------------------------------------- copy-field
 Γ ⊢ read(p.f): T  ⇒  Γ
 
-Γ(p) = res(B, R)    f ∉ dom(R)
+Γ(p) = res(B, R)    f ∉ dom(R)    B nominal    B declares f
+----------------------------------------------- moved-field
+Γ ⊢ read(p.f)  ⇒  T0019
+
+Γ(p) = res(B, R)    f ∉ dom(R)    otherwise
 ----------------------------------------------- absent-field
 Γ ⊢ read(p.f)  ⇒  T0003
 ```
@@ -637,7 +644,8 @@ containing `f`. For an otherwise legal by-value field use, the row transition is
 The consume-field conclusion includes `R = {}`. These judgments do not
 grant permission to move from a borrowed place or a `Drop` type. An unresolved
 field type is held under [legality-1](#spec.ownership.narrowing.legality-1).
-The absent-field judgment and row transition apply with or without move checking.
+The moved-field and absent-field judgments and the row transition apply with or without
+move checking.
 
 Ordinary binding, argument, and return typing may use `res(B, {})` at that
 same type. No empty-residual rule supplies missing fields, erases `B`, or
@@ -646,7 +654,7 @@ state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
 
-<!-- rfc.py:last_reviewed 121ecd0d -->
+<!-- rfc.py:last_reviewed 777e06d79627 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -714,11 +722,12 @@ operand and produces exactly the same residual type as the equivalent partial mo
 operand narrows by the moved fields. A projection through a reference cannot move a
 non-`Copy` field out of it, and a borrowed projection (`&h.{ f }`, `&var h.{ f }`) of a
 non-`Copy` field is rejected, because it would move; a borrowing form is reserved for
-RFC-0109 and RFC-0122.
+RFC-0109 and RFC-0122. Projecting a field that was already moved out is a use of a moved
+value (`T0019`), with or without `--move-check`.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed 2edb65ad4716 -->
+<!-- rfc.py:last_reviewed 777e06d79627 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -950,7 +959,7 @@ a binding that was moved as a whole.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 777e06d79627 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
