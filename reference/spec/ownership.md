@@ -712,7 +712,7 @@ equivalent partial move.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed a770445761323bbb96448619152def8053da27ae -->
+<!-- rfc.py:last_reviewed 73c2d33d -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
