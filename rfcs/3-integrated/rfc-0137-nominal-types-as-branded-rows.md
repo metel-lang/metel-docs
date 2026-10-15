@@ -181,8 +181,12 @@ normalization remains unchanged, including a genuinely zero-field nominal type.
 
 **A struct's own field projection expression (RFC-0116 §4) produces exactly the same
 residual type as a partial move does.** `h.{ fd }` and `h.name` moved out (leaving only
-`fd`) both yield `Handle.{ fd }` — projection is narrowing performed explicitly on a copy
-of the reference, rather than as a side effect of consuming the original.
+`fd`) both yield `Handle.{ fd }` — projection is a move of the named fields that keeps
+the brand: `Copy` fields are copied, non-`Copy` fields are moved out of the operand and it
+narrows by them. It is therefore rejected through a reference for a non-`Copy` field, and a
+borrowed projection (`&h.{ name }`) of one is rejected too, since it would move. Lending a
+sub-row without consuming it needs a borrowing form, which belongs to RFC-0109 and
+RFC-0122.
 
 ## 3. Eligibility: the brand is universal, visibility to structural matching is not
 
