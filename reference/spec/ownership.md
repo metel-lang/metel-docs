@@ -718,7 +718,7 @@ RFC-0109 and RFC-0122.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed dbe8def97e0f -->
+<!-- rfc.py:last_reviewed 2edb65ad4716 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
