@@ -413,8 +413,10 @@ fields still present.
 > **Since v0.13.0 (RFC-0137, metel-core#857):** a struct's own field projection preserves
 > its nominal brand.
 
-`h.{ fd }` reads fields from a copy of the reference without consuming the original. It
-produces a residual of `h`'s own brand, not a same-shaped anonymous record:
+`h.{ fd }` is a move of the named fields that keeps the brand: a `Copy` field is copied,
+a non-`Copy` field is moved out of `h`, and `h` narrows by the fields moved, exactly as
+for `let n := h.name;`. It produces a residual of `h`'s own brand, not a same-shaped
+anonymous record (and not a bare field value, which is what the plain move yields):
 
 ```metel
 struct Handle { fd: i64, name: String }
@@ -707,12 +709,16 @@ still in its row; naming a field already moved out of it is rejected.
 
 ##### Dynamic Semantics {#spec.ownership.narrowing.dynamics-1}
 
-A struct's own field projection expression produces exactly the same residual type as the
-equivalent partial move.
+A struct's own field projection expression moves the named non-`Copy` fields out of its
+operand and produces exactly the same residual type as the equivalent partial move; the
+operand narrows by the moved fields. A projection through a reference cannot move a
+non-`Copy` field out of it, and a borrowed projection (`&h.{ f }`, `&var h.{ f }`) of a
+non-`Copy` field is rejected, because it would move; a borrowing form is reserved for
+RFC-0109 and RFC-0122.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed 73c2d33d -->
+<!-- rfc.py:last_reviewed dbe8def97e0f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
