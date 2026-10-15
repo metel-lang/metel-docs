@@ -760,7 +760,7 @@ produce all `N` elements.
 Where `[T; N]` is expected, an array literal is accepted only when it contains exactly
 `N` elements of type `T`.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed f9a21afc1bce -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
@@ -1426,7 +1426,7 @@ and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed f9a21afc1bce -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1777,6 +1777,22 @@ fun main() {
 }
 ```
 
+A named tail that the return type hands back is not forgotten: the remainder keeps an
+owner, so the inline spelling agrees with the `where R = { .., ..Rest }` equation form and
+a non-`Copy` remainder is accepted:
+
+```metel
+fun strip<row Rest>(p: { token: String, ..Rest }) -> { ..Rest } {
+    let { token: _, ..rest } := p;
+    rest
+}
+
+fun main() {
+    let rest := strip({ token = "t".to_string(), user = "u".to_string() });
+    assert(rest.user == "u");
+}
+```
+
 Taking the record by reference forgets nothing, so it carries no such restriction:
 
 ```metel
@@ -1895,7 +1911,8 @@ to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
 Narrowing a `{ x: Type, ..R }`-typed value **by value** to just its named fields,
 silently discarding whatever `R` carries, is sound only when every field `R` carries is
-`Copy` — exactly the same borrow-versus-move distinction [Ownership](ownership.md)
+`Copy`. A named tail `R` that also appears in the function's return type is not discarded
+but handed back to the caller, so no field is forgotten and this restriction does not apply — exactly the same borrow-versus-move distinction [Ownership](ownership.md)
 already draws everywhere else a value could be viewed instead of consumed. Narrowing
 through a reference (`&{ x: Type, ..R }` or `&mut`/`&var`) never moves the value, so it
 carries no such restriction regardless of `R`'s contents.
@@ -1906,7 +1923,7 @@ inside a generic body), the declaration must state `where all R: Copy`
 ([Field-wise row constraints](#field-wise-row-constraints) below). Otherwise the body
 is rejected with `T0033` at the narrowing expression.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed f9a21afc1bce -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -2132,7 +2149,7 @@ satisfies a row-conditional impl of the same aspect, the brand-keyed impl is sel
 brand-exact dispatch is checked first, and a match there short-circuits row-conditional
 resolution entirely rather than conflicting with it.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed f9a21afc1bce -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -2171,7 +2188,7 @@ method is not visible unless `R`'s own bound entails the impl's condition.
 A row bound requires `record` on its type parameter, either at the parameter declaration
 or in a `where` constraint; `record` without a row bound is also a legal any-record bound.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed f9a21afc1bce -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
