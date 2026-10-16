@@ -654,7 +654,7 @@ state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
 
-<!-- rfc.py:last_reviewed 777e06d79627 -->
+<!-- rfc.py:last_reviewed a0a20f994b1b -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -727,7 +727,7 @@ value (`T0019`), with or without `--move-check`.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed 777e06d79627 -->
+<!-- rfc.py:last_reviewed a0a20f994b1b -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -959,7 +959,7 @@ a binding that was moved as a whole.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
 
-<!-- rfc.py:last_reviewed 777e06d79627 -->
+<!-- rfc.py:last_reviewed a0a20f994b1b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>

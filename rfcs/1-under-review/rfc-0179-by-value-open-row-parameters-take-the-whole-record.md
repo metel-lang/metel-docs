@@ -178,9 +178,11 @@ them, not decided here:
 2. **Does the `Drop`-impl restriction in §1.5 need its own diagnostic?** Today both a `Drop` brand
    and a plain one with a non-`Copy` field are rejected by the same `T0033` message. After this
    RFC only the `Drop` brand is rejected, so it needs its own message that names `Drop` and #949.
-3. **Function types with an open-row parameter.** This RFC speaks only about declared functions
-   and methods. Whether a function type can carry an open row in a parameter, and what it would
-   mean for the callee to own the remainder, is not decided here.
+3. **Open rows outside parameters.** This RFC speaks only about declared functions, methods and
+   closure parameters, where an open-row tail is solved by the enclosing construct. What a tail
+   means in a return type or a written function type is RFC-0181's question; until it is settled
+   those positions report `T0032`. The rule here extends to a closure parameter unchanged: the
+   closure owns the whole argument.
 
 ## References
 
