@@ -275,8 +275,8 @@ above it are.
   owns the entire argument, so the unnamed fields are the callee's to move, return or drop, not
   forgotten at the call boundary. Replaces RFC-0121 §4's Copy-only by-value width-subtyping rule,
   and makes the inline spelling `{ f: T, ..Rest }` equivalent to the row equation
-  `{ ..R } where R = { f: T, ..Rest }`. Opened from metel-core#1469/#1471; open questions cover linear
-  fields (RFC-0091), `Drop`-impl brands (#949) and writing an intentional discard.
+  `{ ..R } where R = { f: T, ..Rest }`. Opened from metel-core#1469/#1471; linear fields (RFC-0091) and `Drop`-impl
+  brands (#949) are constraints it states and does not decide; no open questions remain.
 
 - **RFC-0180** *(under-review 2026-10-16, #1473; opened 2026-10-16)* — Literal rows in row arguments — a row argument may
   be a literal row, `Req<..{ host: String, ..R }>`, so the return type of a row-extending

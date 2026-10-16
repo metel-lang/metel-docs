@@ -81,7 +81,8 @@ same order as any other record (declaration order, as RFC-0071's drop order sett
 
 `T0033` is no longer raised for by-value open-row parameters, neither at a concrete call nor when
 a generic body forwards its open-row parameter to another by-value open-row function. It keeps
-its other use: spreading a record through a reference when its fields are not all `Copy`.
+its other use, spreading a record through a reference when its fields are not all `Copy`, and its
+documentation is retitled for that rule alone.
 
 ### 1.2 Equivalence with the equation form
 
@@ -95,6 +96,10 @@ callee still owns, and drops, what it cannot name.
 - A reference parameter, `&{ x, ..R }` or `&var { x, ..R }`, never owns the value, forgets
   nothing, and has no `Copy` restriction. This is unchanged.
 - Returning or constructing a record from the remainder is unchanged (RFC-0178).
+- The rule covers declared functions, methods and closure parameters, where the enclosing
+  construct solves the open-row tail; the closure owns the whole argument just as a function
+  does. What an open-row tail means in a return type or a written function type is RFC-0181's
+  question, and those positions report `T0032` until it is settled.
 - A record whose fields are all `Copy` is itself `Copy`, so passing it is a copy and the caller
   keeps its value. The whole-record rule changes nothing there; it matters only for a record with
   a non-`Copy` field.
@@ -118,10 +123,16 @@ them, not decided here:
 - **Linear records (RFC-0091).** A linear field must be used exactly once, so a callee generic
   over an unknown remainder cannot drop it. Once linear fields exist, an open-row parameter
   over a remainder that may contain one must be required to consume or return the remainder.
-- **Types with a `Drop` impl (RFC-0137 §5, #949).** A projection-tailed parameter such as
-  `Handle.{ fd, ..R }` receives the whole `Handle`, and dropping it needs drop dispatch against
-  a narrowed residual, which is not implemented. Until it is, a projection-tailed by-value
-  parameter whose brand implements `Drop` keeps being rejected, with a message that says why.
+- **Types with a `Drop` impl (RFC-0137 §5, #949).** A by-value parameter whose type is a nominal
+  residual of a brand that has a `Drop` impl, such as `Handle.{ fd, ..R }`, receives the whole
+  `Handle`, and dropping it needs drop dispatch against a narrowed residual, which is not
+  implemented. Until it is, such a parameter is rejected with a diagnostic of its own, a new error
+  code allocated at implementation, whose message names `Drop` and #949: "passing `Handle` by value
+  to an open row parameter would drop a narrowed `Handle.{ fd }`; drop dispatch against a narrowed
+  residual is not implemented (RFC-0137 §5, #949)". A plain record that only contains a `Drop`
+  value in its remainder is not affected, because dropping a whole value is ordinary. Today a
+  `Drop` impl can only be empty (non-empty bodies are rejected until #261), so this restriction
+  guards a behaviour that is not yet observable.
 
 ---
 
@@ -149,9 +160,9 @@ them, not decided here:
   still disagree.
 - **Allow it, but require an explicit discard.** The whole-record rule as designed here, plus a
   required `drop(rest)` or `let _ := rest` when a named tail is never used. It keeps §4's
-  visibility without its restriction. It needs explicit `drop` (#261) first, and it is easy to add
-  later as a lint or an error without changing anything this RFC decides, so it is not part of
-  this RFC.
+  visibility without its restriction. It needs explicit `drop` (#261) first, and it can be added
+  later as a lint or an error without changing anything this RFC decides, so this RFC does not
+  mark discards. It is noted on #261 so that it is not lost.
 - **Accept a signature heuristic.** An earlier attempt skipped the check when the tail also
   appeared in the return type (metel-core#1470, closed). It guesses at whether the callee
   returns the remainder and needed a patch for two parameters sharing a tail. It does not
@@ -163,7 +174,9 @@ them, not decided here:
   reference-position paragraph.
 - `reference/spec/types.md`, `spec.types.generics.open-rows.legality-3` and the width-subtyping
   examples: rewrite for the whole-record rule; the `get_x(wide)` example becomes a passing one.
-- `reference/error-codes.md`: `T0033` loses the by-value case.
+- `reference/error-codes.md`: `T0033` loses the by-value case and is retitled for the
+  spread-through-reference rule; the `Drop`-brand restriction gets a new entry (the next free code
+  is `T0036`).
 - Fixtures: the `T0033` by-value fixtures and the `where all R: Copy` narrowing fixtures change
   or are removed; new fixtures cover the inline-versus-equation agreement and a callee that
   drops, returns and destructures the remainder.
@@ -172,17 +185,7 @@ them, not decided here:
 
 ## Open Questions
 
-1. **Should discarding a non-`Copy` remainder be marked?** An open-row parameter that
-   deliberately discards its remainder reads the same as one that forgot it. The explicit-discard
-   alternative is compatible with this RFC and can be adopted once explicit `drop` exists (#261).
-2. **Does the `Drop`-impl restriction in §1.5 need its own diagnostic?** Today both a `Drop` brand
-   and a plain one with a non-`Copy` field are rejected by the same `T0033` message. After this
-   RFC only the `Drop` brand is rejected, so it needs its own message that names `Drop` and #949.
-3. **Open rows outside parameters.** This RFC speaks only about declared functions, methods and
-   closure parameters, where an open-row tail is solved by the enclosing construct. What a tail
-   means in a return type or a written function type is RFC-0181's question; until it is settled
-   those positions report `T0032`. The rule here extends to a closure parameter unchanged: the
-   closure owns the whole argument.
+None.
 
 ## References
 
