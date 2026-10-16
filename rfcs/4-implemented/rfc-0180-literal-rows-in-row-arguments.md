@@ -2,12 +2,23 @@
 id: rfc-0180
 title: "Literal rows in row arguments"
 date: '2026-10-16'
-status: accepted
+status: implemented
+coverage:
+  "1": { spec: "spec.types.generics.open-rows.legality-1" }
+  "1.1": { spec: "spec.types.generics.open-rows.legality-1" }
+  "1.2": { spec: "spec.types.generics.open-rows.legality-1" }
+  "1.3": { spec: "spec.types.generics.open-rows.legality-1" }
+  "1.4": { spec: "spec.types.generics.open-rows.legality-1" }
+  "1.5": { spec: "spec.types.generics.open-rows.legality-1" }
+  "2": { kind: untestable, reason: "Costs of the design (a longer written type, a grammar addition); no behaviour to observe." }
+  "4": { kind: untestable, reason: "Lists the documents changed on acceptance; the spec rule and fixtures it names are covered by section 1." }
 updated: '2026-10-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1473'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1473'
+impl_status: implemented
 ---
 
-> **Status — accepted (2026-10-16).** Accepted by the language owner (2026-10-16); implementation tracked in metel-core#1473
+> **Status — implemented (2026-10-16).** Implemented in metel-core#1473 (v0.14.0)
 
 ## Summary
 
@@ -153,4 +164,4 @@ None.
 
 ## Decision
 
-**Outcome:** **Accepted** (2026-10-16). Literal rows are accepted in row-argument position as specified in §1, with the closed forms `..{}` and `..{ host: String }` included. No open question remained. Implementation is metel-core#1473 (v0.14.0).
+**Outcome:** **Implemented** (2026-10-16). Literal rows are accepted in row-argument position as specified in §1, with the closed forms `..{}` and `..{ host: String }` included. No open question remained. Implemented in metel-core#1473 (v0.14.0).
