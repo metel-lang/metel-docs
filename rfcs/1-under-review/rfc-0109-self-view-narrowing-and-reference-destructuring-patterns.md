@@ -337,35 +337,15 @@ pattern** — a `view`'s field list is a list of field names checked against `St
 the same shape RFC-0032's own pattern-matching rule already covers ("explicitly
 naming a private field in a pattern is a compile error").
 
-**The genuinely open case — worth flagging as likely RFC-0137's own gap, not
-specific to `view`:** a view declared inside the module, naming a private field,
-then exposed outside it through an ordinary `pub` function:
-
-```metel
-// ticketing.mln
-view BarsView for Ticketing { bars }   // legal here — bars is private, this is
-                                         // Ticketing's own module
-
-pub fun peek_bars(t: &var Ticketing) -> &var BarsView { t }   // ordinary RFC-0137
-                                                                 // narrowing coercion
-
-// caller.mln
-let v = peek_bars(&var t);
-v.bars.push(Bar::default());
-// must still be an error — bars is private to ticketing.mln
-```
-
-If field access through a residual only checked visibility at the *declaration*
-site, this would silently defeat RFC-0032 — any `pub` function returning a residual
-over a private field becomes an unintended backdoor. **This isn't actually a
-`view`-specific problem**: `pub fun peek(t: &var Ticketing) -> &var Ticketing.{ bars
-}` has the identical shape with no `view` involved at all, since RFC-0137 residuals
-are ordinary types a function can return. The check has to be re-applied at the
-point of *access*, against the field's own visibility on `Ticketing`, regardless of
-how the residual type reached the caller — but that's a gap in RFC-0137's own
-field-visibility story, not something this RFC introduces or should solve
-independently. **Recorded here because this is where it was found; the fix, if one
-is needed, belongs in RFC-0137.**
+**Residuals do not widen visibility (metel-core#1488).** A view declared inside the module,
+naming a private field, can be exposed outside it through an ordinary `pub` function, so the
+check cannot live at the view's declaration. RFC-0032 visibility is therefore applied at the
+point of use, against the field's own visibility on the struct, however the residual type
+reached the caller: reading a private field through a residual, projecting it, or writing it
+in a residual type outside the declaring module is `T0009`
+(`spec.modules.visibility.legality-3`). What this does not do is hide the private *names* a
+public signature mentions inside the declaring module; whether a view's field list should
+be opaque outside its module is an open design question for this RFC.
 
 ---
 
