@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-10-13'
+generated_on: '2026-10-16'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**177 RFCs total.** 29 draft, 41 under review, 9 accepted, 3 integrated (82 live), 68 implemented, 13 superseded, 14 refused (95 settled).
+**179 RFCs total.** 31 draft, 41 under review, 9 accepted, 3 integrated (84 live), 68 implemented, 13 superseded, 14 refused (95 settled).
 
-## Draft (29)
+## Draft (31)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -46,6 +46,8 @@ the curated thematic map.
 - **RFC-0172** — Sized and Unsized Kinds, and a Generalized Unsizing Coercion (`0-draft` ; rfcs/0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md ; date 2026-10-01)
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
+- **RFC-0179** — By-value open-row parameters take the whole record (`0-draft` ; rfcs/0-draft/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md ; date 2026-10-16)
+- **RFC-0180** — Literal rows in row arguments (`0-draft` ; rfcs/0-draft/rfc-0180-literal-rows-in-row-arguments.md ; date 2026-10-16)
 
 ## Under Review (41)
 
