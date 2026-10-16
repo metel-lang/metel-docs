@@ -1,6 +1,6 @@
 ---
 id: rfc-0181
-title: "Open rows in every type position"
+title: "Anonymous open rows in return and function types"
 date: '2026-10-16'
 status: under-review
 updated: '2026-10-16'
@@ -11,20 +11,17 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1480'
 
 ## Summary
 
-Settle what an open-row tail means in the positions where it is not yet supported: a return
-type and a written function type. An open record with an anonymous tail (`{ x: i64, .. }`) now
-works as a function or method parameter, a `let` or `var` annotation, and a closure parameter
-(metel-core#1478). Those are the positions where the tail is a fresh variable the enclosing
-construct can solve for. In a return type and in a function type the tail has no obvious
-solver, so those positions report `T0032` and are owned by this RFC.
+An open record with an anonymous tail (`{ x: i64, .. }`) is accepted as a function or method
+parameter, a `let` or `var` annotation, a closure parameter and a type alias right-hand side
+(metel-core#1478; `spec.types.generics.open-rows.legality-5`). This RFC decides the positions
+where it is not: a **return type** and a **written function type** keep reporting `T0032`. It
+records why, what to write instead, and what would make us reopen the question.
 
 ---
 
 ## Motivation
 
-An open record can be written with a named tail (`{ x: i64, ..R }`, `R` declared `row`) or an
-anonymous one (`{ x: i64, .. }`). The sibling anonymous splice `Session<..>` already works in all
-of these positions. For an open record, the table below is the state after #1478:
+The table is the state after #1478:
 
 | position | anonymous tail | named tail |
 |---|---|---|
@@ -34,94 +31,98 @@ of these positions. For an open record, the table below is the state after #1478
 | return type | `T0032` | works when `R` comes from a parameter |
 | written function type | `T0032` | works |
 | record or struct field | `T0032` | works (`record W<row R> { d: { x: i64, ..R } }`) |
-| type alias | works (each use is its own fresh row, as a parameter) | works |
+| type alias | works (each use is its own fresh row) | works |
 
-Two gaps follow, and both are real needs:
-
-- **A function that returns an open record with no row input.** `fun make() -> { x: i64, .. }`
-  has no parameter for `R` to come from, so a named tail cannot be written. This is the factory
-  case.
-- **A callback over open records.** `fun each(f: |{ x: i64, .. }| -> i64)` reads naturally as
-  "any function that accepts a record with at least `x`", and the callee wants to call `f` on
-  records of its own.
-
-Neither has an unambiguous meaning, which is why they report `T0032` instead of guessing.
+The three unsupported anonymous cases look like gaps, and two needs are plausible behind them: a
+function that returns an open record with no row input (a factory), and a callback that accepts
+any wider record. This RFC checks each against what the language already does.
 
 ---
 
-## 1. Open design questions
+## 1. Decisions
 
-### 1.1 Return types
+### 1.1 Return types: keep `T0032`
 
-An anonymous tail in a return type is an **existential**: the callee chooses the row, and the
-caller sees `{ x: i64, ..?}` with an extra row it cannot name. The caller can read `x`, and
-pass the value to a by-value open-row parameter. With RFC-0179 the caller owns the whole record
-and the extra fields drop with it, so the existential is sound without an extra bound. It is
-the record analogue of `-> impl Aspect`.
+An anonymous tail in a return type would be an **existential**: the callee chooses the row and
+the caller sees `{ x: i64, ..? }` with an extra row it cannot name. The factory case does not need
+it:
 
-*Proposal.* Accept it, checking that the body's returned record has at least the named fields,
-and treating the remainder as opaque at the call site.
+- A private function can omit its return type, and the **exact** record is inferred: the caller
+  reads every field, which is strictly more than an existential gives.
+- A public function must write a return type (`T0010`), and can write the concrete record in
+  full: `-> { x: i64, y: i64 }`.
+- A function whose row comes from an argument names it: `-> { x: i64, ..R }`.
 
-### 1.2 Written function types
+What an existential would add is **hiding the extra fields from callers**, an API-abstraction
+feature with no demonstrated demand. The `T0032` message for a return type should say what to do:
+omit the type, write the record in full, or name a row parameter that comes from an argument. It
+should not suggest a row parameter alone, which is impossible for a function with no row input.
 
-An anonymous tail in `|{ x: i64, .. }| -> i64` has two readings:
+### 1.2 Written function types: keep `T0032`
 
-- **Rank-1:** a fresh row parameter of the enclosing signature. It is consistent with how an
-  anonymous tail in a parameter works, but the body cannot call `f` on its own records, because
-  the row is the caller's choice. It is accepted by the checker and nearly useless.
-- **Rank-2:** the function accepts every wider record. This is what the callback case wants.
-  Metel's closures are let-polymorphic, so a closure with an open-row parameter is already a
-  value of this kind. Checking a body that calls a parameter of such a type needs higher-rank
-  handling.
+An anonymous tail in `|{ x: i64, .. }| -> i64` has two readings. As a fresh row of the enclosing
+signature (rank-1), the callee cannot call the function on its own records, because the row is
+the caller's choice. As "accepts every wider record" (rank-2), it needs higher-rank checking.
 
-*Proposal.* Keep rejecting an anonymous tail in a function type until a use case needs rank-2.
-A named tail stays rank-1 as today.
+A named row already covers a callback over records of one shape, which is the common case:
+`fun apply<row R>(f: |{ x: i64, ..R }| -> i64, a: { x: i64, ..R }, b: { x: i64, ..R }) -> i64`
+type-checks and runs. A callee that must apply one callback to **differently shaped** records
+it holds can take two callbacks, or be generic over two rows. A closure with an open-row
+parameter already generalizes, so a rank-2 *value* exists; only the written *type* of one does not.
 
-### 1.3 Fields
+### 1.3 Fields: keep `T0032`
 
 An anonymous tail in a struct or record field would make the field's type existential, so two
-values of the same record type could hide different rows. That does not fit a nominal type.
-*Proposal.* Keep `T0032`; `record W<row R> { d: { x: i64, ..R } }` covers the use.
+values of one nominal type could hide different rows. That does not fit a nominal type. A record
+with a row parameter, `record W<row R> { d: { x: i64, ..R } }`, covers the use.
 
-### 1.4 Aliases
+### 1.4 Aliases: unchanged
 
-`type P := { x: i64, .. };` is accepted and each use freshens its own row, exactly like writing
-the open record at the use. *Proposal.* Keep this; document it.
+`type P := { x: i64, .. };` is accepted and each use is its own fresh row, exactly as writing the
+open record at the use. In a return type or function type it reports `T0032` like the written form.
 
 ---
 
-## 2. Costs
+## 2. What reversing a decision would take
 
-- **Existential returns need an opaque row at the call site.** The checker must carry a rigid
-  remainder through the caller's inference without letting it unify with anything.
-- **Rank-2 function types** need higher-rank checking for the callee's body, which Metel has no
-  other use for today.
+- **An existential return** needs an opaque, rigid remainder carried through the caller's inference
+  that unifies with nothing, a distinct type per call site, and a rule for storing such a value in a
+  collection or a tuple. RFC-0179 gives the caller the whole record, so soundness is not the
+  obstacle; the cost is in the checker.
+- **A rank-2 function type** needs higher-rank checking for a body that calls a parameter of that
+  type, which Metel has no other use for today.
 
-## 3. Alternatives considered
+## 3. When to reopen
 
-- **Never allow an anonymous tail outside a parameter.** Simplest, but #1478 already allows it in
-  annotations and closure parameters, where it is unambiguous and useful.
-- **Allow rank-1 in function types now.** Consistent, but it accepts types whose only usable
-  values are trivial.
+- A real API that must **hide** a record's extra fields from its callers (existential return).
+- A real function that must apply **one callback to two row shapes** it holds itself, where two
+  callbacks or two rows are not acceptable (rank-2 function type).
+
+## 4. Changes on acceptance
+
+- The three deferred features are recorded as language gaps, with inline markers in the Open rows
+  section of the spec: GAP-TYPES-010 (an existential return), GAP-TYPES-011 (a written function type
+  over any wider record) and GAP-TYPES-012 (an open-record field). Each is `accepted`, with the
+  reopening trigger from §3 as its review condition.
+- The `T0032` message for a return type lists the alternatives in §1.1 (metel-core#1484).
+- Nothing else: `reference/error-codes.md` and `spec.types.generics.open-rows.legality-5` already
+  state the supported and unsupported positions.
 
 ---
 
 ## Open Questions
 
-1. **Should a factory function with an existential return be allowed at all, or is `impl`-style
-   opacity enough?** The existential is useful but is the largest piece of work here.
-2. **Is a rank-2 function type worth the checking cost**, given that closures already generalize?
-3. **What is the diagnostic when a record with an anonymous tail is stored** in a collection or
-   returned inside a tuple? The existential would propagate; it needs a rule.
+None.
 
 ## References
 
 - RFC-0121 §1 and §5 — row parameters and the grammar of row tails.
-- RFC-0179 — by-value open-row parameters take the whole record (it makes the existential sound).
+- RFC-0179 — by-value open-row parameters take the whole record.
 - RFC-0160 — type aliases.
-- `reference/error-codes.md`, `T0032`.
-- metel-core#1478 — the change that made annotations and closure parameters work and left these
-  positions reporting `T0032`.
+- `reference/error-codes.md`, `T0032`; `reference/spec/types.md`, `legality-5`.
+- `architecture/gaps/`: GAP-TYPES-010, GAP-TYPES-011, GAP-TYPES-012.
+- metel-core#1478 — the change that made annotations and closure parameters work.
+- metel-core#1480 — this RFC's tracker.
 
 ---
 

@@ -1804,6 +1804,25 @@ fun main() {
 }
 ```
 
+An open record with an anonymous tail (`{ x: T, .. }`) is not accepted everywhere; see
+[legality-5](#spec.types.generics.open-rows.legality-5). Three limits are recorded as gaps.
+
+> **Gap** GAP-TYPES-010
+
+A function cannot return an open record while hiding its extra fields: an anonymous tail in a
+return type is `T0032`. Omit the return type, write the record in full, or name a row that comes
+from an argument.
+
+> **Gap** GAP-TYPES-011
+
+A written function type cannot say it accepts any record with at least some fields. A named row
+(`|{ x: T, ..R }| -> U`) works for callbacks over records of one shape.
+
+> **Gap** GAP-TYPES-012
+
+A record or struct field cannot have an open-record type with an anonymous tail; give the record
+a row parameter instead.
+
 <details>
 <summary>Formal rules</summary>
 

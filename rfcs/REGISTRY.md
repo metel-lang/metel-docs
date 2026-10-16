@@ -92,7 +92,7 @@ the curated thematic map.
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
 - **RFC-0179** — By-value open-row parameters take the whole record (`1-under-review` ; rfcs/1-under-review/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md ; date 2026-10-16 ; updated 2026-10-16)
 - **RFC-0180** — Literal rows in row arguments (`1-under-review` ; rfcs/1-under-review/rfc-0180-literal-rows-in-row-arguments.md ; date 2026-10-16 ; updated 2026-10-16)
-- **RFC-0181** — Open rows in every type position (`1-under-review` ; rfcs/1-under-review/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-16)
+- **RFC-0181** — Anonymous open rows in return and function types (`1-under-review` ; rfcs/1-under-review/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-16)
 
 ## Accepted (9)
 
