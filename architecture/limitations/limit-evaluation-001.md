@@ -32,7 +32,7 @@ as a hard requirement elsewhere (ADR-0004's compiler path, ADR-0010).
 - `arch.evaluation.requirement-1`
 
 <!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/6c6828cdbc94434f2debbd7cc6dabbef1cb82ac6/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L832)
+- [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_generic_body`](https://github.com/metel-lang/metel-core/blob/6c6828cdbc94434f2debbd7cc6dabbef1cb82ac6/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L854)
 <!-- limit.py:markers:end -->
 
 ## Resolution
