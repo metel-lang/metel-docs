@@ -60,15 +60,21 @@ RowLiteral → RecordType        // an open or closed record type, as already pa
 ```
 
 `..R` and the anonymous `..` are unchanged. `..{ host: String, ..R }` is an open record type
-used as a row, and `..{ host: String }` is the closed row with exactly that field. The prefix
-`..` already marks "this is a row" (RFC-0121 §1), so no new marker is needed, and the existing
-checks that `..` cannot collide with range syntax apply unchanged (it is type position only).
+used as a row, and `..{ host: String }` is the closed row with exactly that field. The closed
+forms matter: without them a concrete row cannot be named at all, so the type of a typestate
+builder's initial state, `Req<..{}>`, and of a state with exactly one field,
+`Req<..{ host: String }>`, could not be written. Both fail to parse today. `..{}` is the empty
+row and `..` is "any row"; they read alike and mean different things. The prefix `..` already
+marks "this is a row" (RFC-0121 §1), so no new marker is needed, and the existing checks that
+`..` cannot collide with range syntax apply unchanged (it is type position only).
 
 ### 1.2 Meaning
 
 `Req<..{ f₁: T₁, …, ..R }>` denotes `Req` instantiated at the row with those fields extended
 by `R`. It is the same type the checker already builds for a record literal with a spread
 (`{ f₁ = e₁, …, ..d }`), so an inferred return type and its written form agree and unify.
+`Req<..{ f₁: T₁, … }>` denotes `Req` at exactly those fields: the type of
+`Req { data = { f₁ = e₁, … } }`, and `Req<..{}>` the type of `Req { data = {} }`.
 
 ### 1.3 Disjointness
 
@@ -86,8 +92,17 @@ parameter.
 ### 1.5 Where it applies
 
 Everywhere a `RowArg` already can: function and method signatures, annotations, struct and
-record fields, and type aliases (RFC-0160). Anonymous tails in a literal (`..{ host: String, .. }`)
-are freshened per signature as the anonymous `..` already is.
+record fields, and type aliases (RFC-0160).
+
+An anonymous tail inside a literal (`..{ host: String, .. }`) follows the rules for anonymous
+tails by position: it is accepted where an anonymous open record is (parameters, `let`/`var`
+annotations, closure parameters) and reports `T0032` where it is not (a return type, a written
+function type, a field), as RFC-0181 settles. A setter's return type wants a named tail anyway,
+because the tail must be the original `R`; an anonymous one would lose the fields.
+
+An alias can abbreviate a literal row, since aliases already take row parameters (RFC-0160):
+`type WithHost<row R> := Req<..{ host: String, ..R }>`, used as `WithHost<..R>`. A literal row is
+an ordinary type argument inside the alias body, so this needs a fixture and no rule.
 
 ---
 
@@ -117,18 +132,15 @@ are freshened per signature as the anonymous `..` already is.
 - RFC-0121 §5 and `reference/spec/grammar.md` (generated from `grammar.pest`): the `RowArg` production.
 - `reference/spec/types.md`, `spec.types.generics.open-rows.legality-1`: row arguments may be
   literal rows.
-- Fixtures: a written-return-type setter and `build`, a method setter chain, a possibly-present
-  label rejected, a literal row where a type is expected rejected.
+- Fixtures: a written-return-type setter and `build`; a method setter chain; the closed forms
+  `..{}` and `..{ host: String }` as a return type and an annotation; a possibly-present label
+  rejected; a literal row where a type is expected rejected; an alias of a literal row.
 
 ---
 
 ## Open Questions
 
-1. **Is the closed form `..{ host: String }` wanted?** It names a row with exactly one field.
-   It may only confuse next to the open form; the alternative is to accept only open literals.
-2. **Should a type alias be able to abbreviate a literal row** by naming it, such as
-   `type WithHost<row R> := Req<..{ host: String, ..R }>`? RFC-0160 already allows aliases of
-   types with row parameters, so this probably works unchanged and needs a fixture, not a rule.
+None.
 
 ## References
 
