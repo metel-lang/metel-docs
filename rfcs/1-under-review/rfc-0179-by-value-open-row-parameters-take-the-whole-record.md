@@ -98,8 +98,8 @@ callee still owns, and drops, what it cannot name.
 - Returning or constructing a record from the remainder is unchanged (RFC-0178).
 - The rule covers declared functions, methods and closure parameters, where the enclosing
   construct solves the open-row tail; the closure owns the whole argument just as a function
-  does. What an open-row tail means in a return type or a written function type is RFC-0181's
-  question, and those positions report `T0032` until it is settled.
+  does. What an anonymous open-row tail means in a return type or a written function type is
+  settled by RFC-0181: those positions stay unsupported and report `T0032`.
 - A record whose fields are all `Copy` is itself `Copy`, so passing it is a copy and the caller
   keeps its value. The whole-record rule changes nothing there; it matters only for a record with
   a non-`Copy` field.
