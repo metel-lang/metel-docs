@@ -2,8 +2,12 @@
 id: rfc-0179
 title: "By-value open-row parameters take the whole record"
 date: '2026-10-16'
-status: draft
+status: under-review
+updated: '2026-10-16'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1471'
 ---
+
+> **Status — under review (2026-10-16).** Opened for review; drafted from the v0.14.0 record work.
 
 ## Summary
 

@@ -270,7 +270,7 @@ above it are.
   (RFC-0173); no override, at most one spread; owned scrutinees only, with borrowed
   patterns deferred to RFC-0122. Fixed-label case that RFC-0175's label polymorphism builds on.
 
-- **RFC-0179** *(draft, opened 2026-10-16)* — By-value open-row parameters take the whole
+- **RFC-0179** *(under-review 2026-10-16, #1471; opened 2026-10-16)* — By-value open-row parameters take the whole
   record — a by-value parameter with an open row tail (`{ x: f64, ..R }`, `Handle.{ fd, ..R }`)
   owns the entire argument, so the unnamed fields are the callee's to move, return or drop, not
   forgotten at the call boundary. Replaces RFC-0121 §4's Copy-only by-value width-subtyping rule,
@@ -279,7 +279,7 @@ above it are.
   out at the call boundary. Opened from metel-core#1469/#1471; open questions cover linear
   fields (RFC-0091), `Drop`-impl brands (#949) and writing an intentional discard.
 
-- **RFC-0180** *(draft, opened 2026-10-16)* — Literal rows in row arguments — a row argument may
+- **RFC-0180** *(under-review 2026-10-16, #1473; opened 2026-10-16)* — Literal rows in row arguments — a row argument may
   be a literal row, `Req<..{ host: String, ..R }>`, so the return type of a row-extending
   function or method can be written (today it can only be inferred, and methods cannot infer).
   Additive grammar over RFC-0121 §5's `RowArg`; the literal converts to the row-extension form the

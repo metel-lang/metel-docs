@@ -2,8 +2,12 @@
 id: rfc-0180
 title: "Literal rows in row arguments"
 date: '2026-10-16'
-status: draft
+status: under-review
+updated: '2026-10-16'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1473'
 ---
+
+> **Status — under review (2026-10-16).** Opened for review; drafted from the v0.14.0 record work.
 
 ## Summary
 
