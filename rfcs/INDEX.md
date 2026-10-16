@@ -274,9 +274,8 @@ above it are.
   record — a by-value parameter with an open row tail (`{ x: f64, ..R }`, `Handle.{ fd, ..R }`)
   owns the entire argument, so the unnamed fields are the callee's to move, return or drop, not
   forgotten at the call boundary. Replaces RFC-0121 §4's Copy-only by-value width-subtyping rule,
-  makes the inline spelling `{ f: T, ..Rest }` equivalent to the row equation
-  `{ ..R } where R = { f: T, ..Rest }`, and removes the implicit truncation that RFC-0137 rules
-  out at the call boundary. Opened from metel-core#1469/#1471; open questions cover linear
+  and makes the inline spelling `{ f: T, ..Rest }` equivalent to the row equation
+  `{ ..R } where R = { f: T, ..Rest }`. Opened from metel-core#1469/#1471; open questions cover linear
   fields (RFC-0091), `Drop`-impl brands (#949) and writing an intentional discard.
 
 - **RFC-0180** *(under-review 2026-10-16, #1473; opened 2026-10-16)* — Literal rows in row arguments — a row argument may

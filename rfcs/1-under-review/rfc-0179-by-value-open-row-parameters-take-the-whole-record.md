@@ -43,11 +43,11 @@ The equation form is accepted because a tail-only parameter `{ ..R }` is never n
 callee receives the whole record. The inline form is rejected because RFC-0121 §4 treats it as
 narrowing at the call, which forgets the unnamed fields.
 
-**RFC-0121 §4 and RFC-0137 disagree about the call boundary.** RFC-0137 states that a caller
-must match a parameter's row exactly and that there is no implicit truncation at the call
-boundary; narrowing happens only through an explicit move or projection. RFC-0121 §4's
-by-value width subtyping is an implicit truncation at exactly that boundary, and it needs a
-`Copy` rule to stay sound only because the fields are forgotten there.
+**What §4 was protecting, and what it costs.** RFC-0121 §4 chose this rule deliberately: reject a
+by-value open row whose unnamed fields are not `Copy`, and require an explicit
+`where R = { .., ..Rest }` decomposition instead. Besides soundness, that made discarding data
+visible, because the author had to write the remainder down. This RFC gives that up for open-row
+parameters. The alternatives section considers keeping the visibility by other means.
 
 **The restriction protects against a problem the callee can already solve.** §4's reasoning is
 that a forgotten non-`Copy` field has no owner left to drop it. If the callee owns the whole
@@ -76,8 +76,12 @@ open projection (`Handle.{ f₁, …, ..R }`):
   dropped when the parameter goes out of scope.
 
 The call site needs only that the argument has at least the named fields with matching types.
-There is no `Copy` condition on the remainder, and `T0033` is no longer raised for by-value
-open-row parameters.
+There is no `Copy` condition on the remainder. The unnamed fields drop with the parameter, in the
+same order as any other record (declaration order, as RFC-0071's drop order settles it, #261).
+
+`T0033` is no longer raised for by-value open-row parameters, neither at a concrete call nor when
+a generic body forwards its open-row parameter to another by-value open-row function. It keeps
+its other use: spreading a record through a reference when its fields are not all `Copy`.
 
 ### 1.2 Equivalence with the equation form
 
@@ -91,6 +95,9 @@ callee still owns, and drops, what it cannot name.
 - A reference parameter, `&{ x, ..R }` or `&var { x, ..R }`, never owns the value, forgets
   nothing, and has no `Copy` restriction. This is unchanged.
 - Returning or constructing a record from the remainder is unchanged (RFC-0178).
+- A record whose fields are all `Copy` is itself `Copy`, so passing it is a copy and the caller
+  keeps its value. The whole-record rule changes nothing there; it matters only for a record with
+  a non-`Copy` field.
 - `where all R: Copy` keeps its job of letting a body use the row more than once
   (`copy_twice` in RFC-0123). It is no longer needed just to pass the whole parameter on to
   another by-value open-row function.
@@ -120,9 +127,11 @@ them, not decided here:
 
 ## 2. Costs
 
-- **A ratified decision is reversed.** RFC-0121 §4 settled by-value width subtyping on
-  2026-09-27 and recorded no precedent either way. This RFC changes it because the §4 rule
-  forbids what the callee-owns model already makes sound, and because it contradicts RFC-0137.
+- **A ratified decision is reversed, and a visibility property is lost.** RFC-0121 §4 settled
+  by-value width subtyping on 2026-09-27 and recorded no precedent either way. This RFC changes
+  it because the §4 rule forbids what the callee-owns model already makes sound and leaves the
+  inline and equation spellings disagreeing. The cost is that a function can now discard a
+  non-`Copy` remainder without the signature saying so; see the alternative below.
 - **Drop timing becomes observable.** The unnamed fields now drop at the end of the callee's
   scope, not at the caller. That is not visible until destructors run (#261), and it should be
   stated in the spec when they do.
@@ -132,11 +141,17 @@ them, not decided here:
 
 ## 3. Alternatives considered
 
-- **Keep RFC-0121 §4 as written.** Safe, but it leaves the two spellings disagreeing and keeps
-  the implicit truncation that RFC-0137 rules out.
-- **Keep narrowing but drop the extras at the call site.** It makes the extras' drop explicit,
-  but the drop happens in the caller where the callee cannot see or return them, and it keeps
-  the implicit truncation.
+- **Keep RFC-0121 §4 as written.** Safe, and it keeps discards visible, but it leaves the two
+  spellings disagreeing and forces the longer equation form for the most natural generic
+  signature.
+- **Keep narrowing but drop the extras at the call site.** The extras' drop happens in the
+  caller, where the callee cannot see or return them, and the inline and equation spellings
+  still disagree.
+- **Allow it, but require an explicit discard.** The whole-record rule as designed here, plus a
+  required `drop(rest)` or `let _ := rest` when a named tail is never used. It keeps §4's
+  visibility without its restriction. It needs explicit `drop` (#261) first, and it is easy to add
+  later as a lint or an error without changing anything this RFC decides, so it is not part of
+  this RFC.
 - **Accept a signature heuristic.** An earlier attempt skipped the check when the tail also
   appeared in the return type (metel-core#1470, closed). It guesses at whether the callee
   returns the remainder and needed a patch for two parameters sharing a tail. It does not
@@ -157,16 +172,20 @@ them, not decided here:
 
 ## Open Questions
 
-1. **How is dropping the remainder written when explicit drop exists?** An open-row parameter
-   that deliberately discards its remainder reads the same as one that forgot it. Explicit
-   `drop` is #261; whether a lint or a required `drop(rest)` is wanted is open.
-2. **Does the Drop-impl restriction in §1.5 need its own diagnostic code?** Today it would
-   reuse the existing message path; a dedicated one may be clearer once #949 is scheduled.
+1. **Should discarding a non-`Copy` remainder be marked?** An open-row parameter that
+   deliberately discards its remainder reads the same as one that forgot it. The explicit-discard
+   alternative is compatible with this RFC and can be adopted once explicit `drop` exists (#261).
+2. **Does the `Drop`-impl restriction in §1.5 need its own diagnostic?** Today both a `Drop` brand
+   and a plain one with a non-`Copy` field are rejected by the same `T0033` message. After this
+   RFC only the `Drop` brand is rejected, so it needs its own message that names `Drop` and #949.
+3. **Function types with an open-row parameter.** This RFC speaks only about declared functions
+   and methods. Whether a function type can carry an open row in a parameter, and what it would
+   mean for the callee to own the remainder, is not decided here.
 
 ## References
 
 - RFC-0121 §2, §4 and Open Question 1 — the rule this replaces.
-- RFC-0137 — branded rows, the call-boundary rule, and drop dispatch against a residual (§5).
+- RFC-0137 §5 — drop dispatch against a narrowed residual.
 - RFC-0123 — field-wise row constraints (`all R: A`).
 - RFC-0178 — row remainder construction.
 - RFC-0091 — linear records.
