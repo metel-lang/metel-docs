@@ -282,8 +282,9 @@ above it are.
   be a literal row, `Req<..{ host: String, ..R }>`, so the return type of a row-extending
   function or method can be written (today it can only be inferred, and methods cannot infer).
   Additive grammar over RFC-0121 §5's `RowArg`; the literal converts to the row-extension form the
-  checker already builds for a spread literal. Opened from metel-core#1473; unblocks typestate
-  builders written as methods.
+  checker already builds for a spread literal. Includes the closed forms (`..{}`, `..{ host: String }`) so a concrete row such as a builder's
+  initial state can be named. Opened from metel-core#1473; unblocks typestate builders written as
+  methods; no open questions remain.
 
 - **RFC-0181** *(under-review 2026-10-16, #1480; opened 2026-10-16)* — Open rows in every type position — what an
   open-row tail means in a return type and in a written function type, the two positions where an
