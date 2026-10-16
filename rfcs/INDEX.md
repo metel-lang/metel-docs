@@ -285,7 +285,7 @@ above it are.
   checker already builds for a spread literal. Opened from metel-core#1473; unblocks typestate
   builders written as methods.
 
-- **RFC-0181** *(draft, opened 2026-10-16)* — Open rows in every type position — what an
+- **RFC-0181** *(under-review 2026-10-16, #1480; opened 2026-10-16)* — Open rows in every type position — what an
   open-row tail means in a return type and in a written function type, the two positions where an
   anonymous tail (`{ x: i64, .. }`) still reports `T0032`. Proposes an existential for a returned
   open record (sound once RFC-0179 gives the caller the whole record) and keeps function types

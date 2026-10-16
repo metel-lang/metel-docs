@@ -2,8 +2,12 @@
 id: rfc-0181
 title: "Open rows in every type position"
 date: '2026-10-16'
-status: draft
+status: under-review
+updated: '2026-10-16'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1480'
 ---
+
+> **Status — under review (2026-10-16).** Opened for review; split out of RFC-0179 open question 3.
 
 ## Summary
 
