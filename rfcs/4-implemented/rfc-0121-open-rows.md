@@ -309,7 +309,8 @@ argument position** (`Session<..R>`), replacing `TypeArgs`'s current `Type`-only
 TypeArgs → TypeArg ( "," TypeArg )*
 TypeArg  → Type
          | RowArg
-RowArg   → ".." IDENTIFIER?
+RowArg   → ".." ( IDENTIFIER | RowLiteral )?
+RowLiteral → RecordType   // an open or closed record type, RFC-0180
 ```
 
 **Row body — `RecordType` and `RecordProjectionType` both gain a tail**, distinct from

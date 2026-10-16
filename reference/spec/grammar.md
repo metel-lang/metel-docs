@@ -231,6 +231,9 @@ ReferenceType            → "&" Type
 MutReferenceType         → "&" "var" Type
 BracketArrayType         → "[" Type ( ";" INT )? "]"
 NamedType                → TypePath ( "<" TypeArgs ">" )?
-TypeArgs                 → ( RowTail | Type ) ( "," ( RowTail | Type ) )*
+RowArg                   → RowLiteral
+                         | RowTail
+RowLiteral               → ".." ( OpenRecordType | RecordType )
+TypeArgs                 → ( RowArg | Type ) ( "," ( RowArg | Type ) )*
 TypeList                 → Type ( "," Type )*
 ```
