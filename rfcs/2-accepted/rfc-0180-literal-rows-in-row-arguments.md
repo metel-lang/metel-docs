@@ -2,12 +2,12 @@
 id: rfc-0180
 title: "Literal rows in row arguments"
 date: '2026-10-16'
-status: under-review
+status: accepted
 updated: '2026-10-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1473'
 ---
 
-> **Status — under review (2026-10-16).** Opened for review; drafted from the v0.14.0 record work.
+> **Status — accepted (2026-10-16).** Accepted by the language owner (2026-10-16); implementation tracked in metel-core#1473
 
 ## Summary
 
@@ -153,4 +153,4 @@ None.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** **Accepted** (2026-10-16). Literal rows are accepted in row-argument position as specified in §1, with the closed forms `..{}` and `..{ host: String }` included. No open question remained. Implementation is metel-core#1473 (v0.14.0).
