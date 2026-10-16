@@ -100,8 +100,11 @@ open record at the use. In a return type or function type it reports `T0032` lik
 
 ## 4. Changes on acceptance
 
-- The `T0032` message for a return type lists the alternatives in §1.1 (metel-core issue to be
-  filed under #1480).
+- The three deferred features are recorded as language gaps, with inline markers in the Open rows
+  section of the spec: GAP-TYPES-010 (an existential return), GAP-TYPES-011 (a written function type
+  over any wider record) and GAP-TYPES-012 (an open-record field). Each is `accepted`, with the
+  reopening trigger from §3 as its review condition.
+- The `T0032` message for a return type lists the alternatives in §1.1 (metel-core#1484).
 - Nothing else: `reference/error-codes.md` and `spec.types.generics.open-rows.legality-5` already
   state the supported and unsupported positions.
 
@@ -117,6 +120,7 @@ None.
 - RFC-0179 — by-value open-row parameters take the whole record.
 - RFC-0160 — type aliases.
 - `reference/error-codes.md`, `T0032`; `reference/spec/types.md`, `legality-5`.
+- `architecture/gaps/`: GAP-TYPES-010, GAP-TYPES-011, GAP-TYPES-012.
 - metel-core#1478 — the change that made annotations and closure parameters work.
 - metel-core#1480 — this RFC's tracker.
 
