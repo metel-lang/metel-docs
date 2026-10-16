@@ -876,22 +876,26 @@ Replaces retired `R0001`/`R0002`'s `main`-entry cases — see those entries belo
 </details>
 <!-- rfc.py:fixtures:end -->
 
-### T0032 — Anonymous row or fixed-field open record in this position
+### T0032 — Anonymous row in this position
 
-An anonymous row splice (`Builder<..>`, RFC-0121 §5's `TypeArg → Type | RowArg`)
-anywhere other than a free function or instance method's parameter type (a return type, a field), or an
-open record with fixed fields (`{ x: T, ..R }`) anywhere other than a function
-parameter's own type, isn't implemented. In a free function or instance method's parameter type
-`b: Builder<..>` means "any row" and is accepted: each one is a fresh, nameless type
-variable of the signature.
-A named splice (`Builder<..R>`, `R` declared `row`) and a tail-only `{ ..R }` are
-supported. An undeclared row variable is `T0003`, and a
+An anonymous row — the splice `Builder<..>` (RFC-0121 §5) or an open record with an
+anonymous tail, `{ x: T, .. }` — is a fresh, nameless row variable at each occurrence. It is
+accepted in a function or method parameter, a `let` or `var` annotation, and a closure
+parameter (a closure with such a parameter generalizes, so one closure accepts records of
+different shapes). The splice `Builder<..>` is also accepted in a return type and in a written
+function type.
+
+It is `T0032` in a record or struct field, and an open record `{ x: T, .. }` is `T0032` in a
+return type and in a written function type, positions whose meaning is not settled
+(RFC-0181). A named splice (`Builder<..R>`, `R` declared `row`) and a
+tail-only `{ ..R }` are supported everywhere. An undeclared row variable is `T0003`, and a
 `..R` argument for a non-`row` parameter (or a non-record argument for a `row`
 one) is `T0012`
-([metel-core#1310](https://github.com/metel-lang/metel-core/issues/1310)).
+([metel-core#1310](https://github.com/metel-lang/metel-core/issues/1310),
+[#1478](https://github.com/metel-lang/metel-core/issues/1478)).
 
-**Fix:** name the row with a `row`-kinded generic parameter and splice it as `..R`,
-or, for a fixed-field open record, take it as a function parameter.
+**Fix:** name the row with a `row`-kinded generic parameter and splice it as `..R`, or take the
+open record as a parameter, a `let` annotation or a closure parameter.
 
 ### T0033 — By-value width subtyping would forget a non-`Copy` field
 
