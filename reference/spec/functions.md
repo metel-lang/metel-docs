@@ -303,6 +303,10 @@ fun main() -> i64 {
 }
 ```
 
+A closure parameter may be annotated with an open record whose tail is anonymous
+(`|p: { x: i64, .. }| { p.x }`); the closure is then polymorphic in that row and accepts
+records of different shapes ([open rows](types.md#spec.types.generics.open-rows.legality-5)).
+
 ### Capture lists
 
 A closure that reads an outer binding *captures* it. A **capture list** `[…]` before the

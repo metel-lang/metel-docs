@@ -1923,6 +1923,71 @@ is rejected with `T0033` at the narrowing expression.
 </details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.types.generics.open-rows.legality-5}
+
+An open record type whose tail is **anonymous**, `{ x: T, .. }` or `{ .. }`, denotes a record
+with at least the named fields and a remainder that is a **fresh row at each occurrence**. It
+is accepted:
+
+- as the type of a function or method parameter;
+- as the annotation of a `let` or `var` binding;
+- as the annotation of a closure parameter; and
+- as the right-hand side of a type alias, where each use of the alias is its own fresh row.
+
+In a `let` or `var` annotation the fresh row is solved by the initializer, so the binding has
+the initializer's type and every one of its fields stays readable; the annotation names the
+fields that must be present and does not narrow the value. The field types written in the
+annotation apply to the initializer, so `{ x: u8, .. }` makes `x` a `u8`. A closure whose parameter carries
+such an annotation is polymorphic in that row: each call instantiates it afresh, so one closure
+accepts records of different shapes.
+
+```metel
+fun main() {
+    let a: { x: i64, .. } := { x = 1, y = "s".to_string() };
+    assert(a.y == "s");
+
+    let get := |p: { x: i64, .. }| { p.x };
+    assert(get({ x = 1, y = 2 }) == 1);
+    assert(get({ x = 5 }) == 5);
+    assert(get({ x = 7, flag = true }) == 7);
+}
+```
+
+An open record with an anonymous tail is rejected with `T0032` as a **return type**, inside a
+**written function type**, and as a **record or struct field**. In a return type or function type
+the tail has no construct that solves it, and a field's type would differ between values of one
+nominal type. A named tail (`{ x: T, ..R }`, `R` declared `row`) is not affected by this rule
+and is accepted wherever `R` is in scope.
+
+<!-- doc-example: expect-fail reason="an anonymous open record has no solver in a return type -- T0032 is the point" -->
+```metel
+fun make() -> { x: i64, .. } {
+    { x = 1, y = 2 }
+}
+
+fun main() {
+    let _ := make();
+}
+```
+
+<!-- rfc.py:last_reviewed bf76c50aa77e -->
+
+<!-- rfc.py:origins:start -->
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (7)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSB1OCB3aXRoIGkzMiIsImxpbmUiOiI1Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiYW5vbnltb3VzX29wZW5fcmVjb3JkX2Fubm90YXRpb25fZmllbGRfdHlwZV9pc19lbmZvcmNlZC5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzE0Nzg6IHRoZSBmaXhlZCBmaWVsZHMgb2YgYW4gYW5vbnltb3VzLXRhaWwgYW5ub3RhdGlvbiBhcmUgcmVhbCB0eXBlcy4gYHhgIGlzIGEgYHU4YCxcbi8vIHNvIHJlYWRpbmcgaXQgd2hlcmUgYW4gYGkzMmAgaXMgcmVxdWlyZWQgaXMgYSBtaXNtYXRjaC5cbmZ1biBtYWluKCkge1xuICAgIGxldCBjOiB7IHg6IHU4LCAuLiB9IDo9IHsgeCA9IDIwMCwgeSA9IDIgfTtcbiAgICBsZXQgZTogaTMyIDo9IGMueDsgLy8gRVJST1JbVDAwMDFdXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9yZWNvcmRzL2Fub255bW91c19vcGVuX3JlY29yZF9hbm5vdGF0aW9uX2ZpZWxkX3R5cGVfaXNfZW5mb3JjZWQubXRsIiwibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9hbm5vdGF0aW9uX2ZpZWxkX3R5cGVfaXNfZW5mb3JjZWQubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSIsImxpbmUiOiI1Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiYW5vbnltb3VzX29wZW5fcmVjb3JkX2Nsb3N1cmVfYXJndW1lbnRfbWlzc2luZ19maWVsZF9yZWplY3RlZC5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzE0Nzg6IGEgY2xvc3VyZSB3aXRoIGFuIG9wZW4tcm93IHBhcmFtZXRlciBzdGlsbCByZXF1aXJlcyB0aGUgbmFtZWQgZmllbGRzIGF0IHRoZSBjYWxsLlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGdldCA6PSB8cDogeyB4OiBpNjQsIC4uIH18IHsgcC54IH07XG4gICAgbGV0IF8gOj0gZ2V0KHsgeCA9IDEgfSk7XG4gICAgbGV0IF8gOj0gZ2V0KHsgeSA9IDEgfSk7IC8vIEVSUk9SW1QwMDAxXVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvcmVjb3Jkcy9hbm9ueW1vdXNfb3Blbl9yZWNvcmRfY2xvc3VyZV9hcmd1bWVudF9taXNzaW5nX2ZpZWxkX3JlamVjdGVkLm10bCIsIm5hbWUiOiJhbm9ueW1vdXNfb3Blbl9yZWNvcmRfY2xvc3VyZV9hcmd1bWVudF9taXNzaW5nX2ZpZWxkX3JlamVjdGVkLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9jbG9zdXJlX3BhcmFtX2lzX3Jvd19wb2x5bW9ycGhpYy5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzE0Nzg6IGEgY2xvc3VyZSBwYXJhbWV0ZXIgYW5ub3RhdGVkIHdpdGggYW4gYW5vbnltb3VzIG9wZW4gcmVjb3JkIGdlbmVyYWxpemVzIHdpdGhcbi8vIHRoZSBjbG9zdXJlLCBzbyBvbmUgY2xvc3VyZSBhY2NlcHRzIHJlY29yZHMgb2YgZGlmZmVyZW50IHNoYXBlcy4gVGhpcyBpcyB0aGUgb25seSB3YXkgdG8gd3JpdGVcbi8vIGEgcm93LXBvbHltb3JwaGljIGNsb3N1cmU7IGB8cHwgeyBwLnggfWAgY2Fubm90IGluZmVyIHRoZSBzdHJ1Y3QuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgZ2V0IDo9IHxwOiB7IHg6IGk2NCwgLi4gfXwgeyBwLnggfTtcbiAgICBhc3NlcnQoZ2V0KHsgeCA9IDEsIHkgPSAyIH0pID09IDEpO1xuICAgIGFzc2VydChnZXQoeyB4ID0gNSB9KSA9PSA1KTtcbiAgICBhc3NlcnQoZ2V0KHsgeCA9IDcsIG5hbWUgPSBcIm5cIi50b19zdHJpbmcoKSB9KSA9PSA3KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3JlY29yZHMvYW5vbnltb3VzX29wZW5fcmVjb3JkX2Nsb3N1cmVfcGFyYW1faXNfcm93X3BvbHltb3JwaGljLm10bCIsIm5hbWUiOiJhbm9ueW1vdXNfb3Blbl9yZWNvcmRfY2xvc3VyZV9wYXJhbV9pc19yb3dfcG9seW1vcnBoaWMubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMyIiwiY29sIjpudWxsLCJjb250YWlucyI6ImZ1bmN0aW9uIHR5cGUiLCJsaW5lIjoiMiIsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9mdW5jdGlvbl90eXBlX2lzX3QwMDMyLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMTQ3ODogbm9yIGRvZXMgb25lIGluIGEgd3JpdHRlbiBmdW5jdGlvbiB0eXBlIChSRkMtMDE4MSkuXG5mdW4gYXBwbHkoZjogfHsgeDogaTY0LCAuLiB9fCAtPiBpNjQpIC0+IGk2NCB7IC8vIEVSUk9SW1QwMDMyXVxuICAgIDFcbn1cbmZ1biBtYWluKCkgeyBsZXQgXyA6PSAxOyB9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTMuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9yZWNvcmRzL2Fub255bW91c19vcGVuX3JlY29yZF9mdW5jdGlvbl90eXBlX2lzX3QwMDMyLm10bCIsIm5hbWUiOiJhbm9ueW1vdXNfb3Blbl9yZWNvcmRfZnVuY3Rpb25fdHlwZV9pc190MDAzMi5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9pbl9sZXRfYW5ub3RhdGlvbi5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzE0Nzg6IGFuIG9wZW4gcmVjb3JkIHdpdGggYW4gYW5vbnltb3VzIHRhaWwgaXMgYSB2YWxpZCBhbm5vdGF0aW9uIG9uIGEgYGxldGAgb3Jcbi8vIGB2YXJgLiBUaGUgdGFpbCBpcyBhIGZyZXNoIGluZmVyZW5jZSB2YXJpYWJsZSwgc28gdGhlIGJpbmRpbmcgaGFzIHRoZSBpbml0aWFsaXplcidzIGZ1bGwgdHlwZVxuLy8gYW5kIHRoZSBleHRyYSBmaWVsZHMgc3RheSByZWFkYWJsZS4gSXQgdXNlZCB0byBmYWlsIG9uIGFuIGludGVybmFsIGA8b3Blbi1yb3c+YCBwbGFjZWhvbGRlci5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhOiB7IHg6IGk2NCwgLi4gfSA6PSB7IHggPSAxLCB5ID0gXCJzXCIudG9fc3RyaW5nKCkgfTtcbiAgICBhc3NlcnQoYS54ID09IDEpO1xuICAgIGFzc2VydChhLnkgPT0gXCJzXCIpO1xuXG4gICAgdmFyIGI6IHsgeDogaTY0LCAuLiB9IDo9IHsgeCA9IDEsIHkgPSAyIH07XG4gICAgYi54IDo9IDk7XG4gICAgYXNzZXJ0KGIueCA9PSA5ICYmIGIueSA9PSAyKTtcblxuICAgIC8vIHRoZSBhbm5vdGF0aW9uJ3MgZml4ZWQgZmllbGRzIHN0aWxsIHR5cGUgdGhlIGluaXRpYWxpemVyOiBgeGAgaXMgYSBgdThgLCBub3QgYW4gYGk2NGBcbiAgICBsZXQgYzogeyB4OiB1OCwgLi4gfSA6PSB7IHggPSAyMDAsIHkgPSAyIH07XG4gICAgbGV0IGQ6IHU4IDo9IGMueDtcbiAgICBhc3NlcnQoZCA9PSAyMDApO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVjb3Jkcy9hbm9ueW1vdXNfb3Blbl9yZWNvcmRfaW5fbGV0X2Fubm90YXRpb24ubXRsIiwibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9pbl9sZXRfYW5ub3RhdGlvbi5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSIsImxpbmUiOiI0Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiYW5vbnltb3VzX29wZW5fcmVjb3JkX2xldF9hbm5vdGF0aW9uX21pc3NpbmdfZmllbGRfcmVqZWN0ZWQubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNDc4OiB0aGUgYW5ub3RhdGlvbiBzdGlsbCByZXF1aXJlcyBpdHMgZml4ZWQgZmllbGRzLlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IF8gOj0gMTtcbiAgICBsZXQgYTogeyB4OiBpNjQsIC4uIH0gOj0geyB6ID0gMSB9OyAvLyBFUlJPUltUMDAwMV1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xMy4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3JlY29yZHMvYW5vbnltb3VzX29wZW5fcmVjb3JkX2xldF9hbm5vdGF0aW9uX21pc3NpbmdfZmllbGRfcmVqZWN0ZWQubXRsIiwibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9sZXRfYW5ub3RhdGlvbl9taXNzaW5nX2ZpZWxkX3JlamVjdGVkLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDMyIiwiY29sIjpudWxsLCJjb250YWlucyI6InJldHVybiB0eXBlIiwibGluZSI6IjIiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJhbm9ueW1vdXNfb3Blbl9yZWNvcmRfcmV0dXJuX3R5cGVfaXNfdDAwMzIubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNDc4OiBhbiBhbm9ueW1vdXMgb3BlbiByZWNvcmQgaW4gYSByZXR1cm4gdHlwZSBoYXMgbm8gc2V0dGxlZCBtZWFuaW5nIChSRkMtMDE4MSkuXG5mdW4gbWFrZSgpIC0+IHsgeDogaTY0LCAuLiB9IHsgLy8gRVJST1JbVDAwMzJdXG4gICAgeyB4ID0gMSwgeSA9IDIgfVxufVxuZnVuIG1haW4oKSB7IGxldCBfIDo9IG1ha2UoKTsgfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjEzLjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvcmVjb3Jkcy9hbm9ueW1vdXNfb3Blbl9yZWNvcmRfcmV0dXJuX3R5cGVfaXNfdDAwMzIubXRsIiwibmFtZSI6ImFub255bW91c19vcGVuX3JlY29yZF9yZXR1cm5fdHlwZV9pc190MDAzMi5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
 </details>
 
 ### Field-wise row constraints
