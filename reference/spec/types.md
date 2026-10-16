@@ -1916,7 +1916,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed a4f898d8 -->
+<!-- rfc.py:last_reviewed f80865e6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
