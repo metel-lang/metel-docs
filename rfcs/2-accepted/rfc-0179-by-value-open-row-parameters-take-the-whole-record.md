@@ -2,12 +2,12 @@
 id: rfc-0179
 title: "By-value open-row parameters take the whole record"
 date: '2026-10-16'
-status: under-review
-updated: '2026-10-16'
+status: accepted
+updated: '2026-10-17'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1471'
 ---
 
-> **Status — under review (2026-10-16).** Opened for review; drafted from the v0.14.0 record work.
+> **Status — accepted (2026-10-17).** Accepted by the language owner (2026-10-17); implementation tracked in metel-core#1471
 
 ## Summary
 
@@ -201,4 +201,4 @@ None.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** **Accepted** (2026-10-17). A by-value open-row parameter owns the whole argument; `T0033` keeps only the spread-through-reference rule; a by-value parameter over a `Drop`-brand residual is rejected with its own code until #949. No open question remained. Implementation is metel-core#1471 (v0.14.0).
