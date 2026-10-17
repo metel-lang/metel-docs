@@ -343,9 +343,20 @@ check cannot live at the view's declaration. RFC-0032 visibility is therefore ap
 point of use, against the field's own visibility on the struct, however the residual type
 reached the caller: reading a private field through a residual, projecting it, or writing it
 in a residual type outside the declaring module is `T0009`
-(`spec.modules.visibility.legality-3`). What this does not do is hide the private *names* a
-public signature mentions inside the declaring module; whether a view's field list should
-be opaque outside its module is an open design question for this RFC.
+(`spec.modules.visibility.legality-3`). A public function, inherent method, or public field
+may not *write* a private field's name in a residual type either
+(`spec.modules.visibility.legality-8`), so a private name never becomes API.
+
+That rule is deliberately blunt: it forbids rather than hides. A public signature cannot say
+"this method touches the ticketing state" without naming fields the module wants to keep
+private. Niko Matsakis's [abstract fields](https://smallcultfollowing.com/babysteps/blog/2025/02/25/view-types-redux/)
+(*View types redux and abstract fields*, 2025) answer exactly that: `pub abstract experiments =
+(experiment_names, experiment_data)` is a public name for a set of private fields, usable in
+a view-type signature, and the module can change the set without changing any signature. A
+named view here is already a name for a set of fields, so the missing piece is **opacity**:
+a view declared in its module whose field list is not visible outside it, usable in public
+signatures in place of the fields. Whether and how to add that, and whether abstract names
+should also be composable per-field as Niko proposes, is open for this RFC.
 
 ---
 
