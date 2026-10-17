@@ -267,13 +267,15 @@ rather than treating it as still-open.
     therefore always sound and needs no `Copy` restriction; this is the same reasoning
     RFC-0109 already applies to self-view narrowing, generalized from a fixed set of
     fields to an open row.
-  - **By-value width subtyping is where the risk actually lives**, and here the RFC's
-    original proposed rule is ratified as stated: sound only when every field silently
-    widened away is `Copy`. A moved value with a non-`Copy` remainder has no owner left
-    once the narrow-typed value is what's live — that field's drop obligation (or, for a
-    linear field, its use-once obligation) would go unmet. A remainder with any non-`Copy`
-    field is rejected outright and requires an explicit `where R = { .., ..Rest }`
-    decomposition instead, which keeps `Rest` visible and owned.
+  - **By-value, the parameter owns the whole record (RFC-0179, 2026-10-17).** An open-row
+    parameter takes its argument whole, so the fields it does not name are the callee's to
+    move, return or drop; they need not be `Copy`, and nothing is forgotten at the call.
+    This replaces the original rule here (by-value width subtyping sound only when every
+    widened-away field is `Copy`, otherwise an explicit `where R = { .., ..Rest }`
+    decomposition), which forbade what the callee-owns model makes sound and left the inline
+    and equation spellings disagreeing. The one exception is a nominal `Drop` brand, which
+    needs drop dispatch against a narrowed residual (RFC-0137 §5, #949) and is rejected with
+    `T0036` until then.
   - Precedent: none directly on point (stated as a cost above, and still true — no
     row-polymorphic language in the corpus's survey combines this with affine/linear
     ownership), but the split itself is not novel in kind — it is the same borrow/move
@@ -353,23 +355,12 @@ grammar citations need updating.
 1. ~~**The width-subtyping-requires-`Copy` rule is proposed with no precedent to verify
    it against, and not ratified.** Until it is, open records whose non-empty remainder is
    silently discarded should be rejected outright. *(From RFC-0090 OQ3.)*~~
-   **Resolved 2026-09-27 — see "Width subtyping versus ownership" in §4 above.** The rule
-   splits on borrow versus by-value: narrowing through a reference is always sound (no
-   ownership transfer, nothing to drop); by-value narrowing is sound only when every
-   silently-widened-away field is `Copy`, exactly as originally proposed, and is rejected
-   outright otherwise in favor of an explicit `where R = { .., ..Rest }` decomposition.
-   **The half of this that was "no bound expressing 'every field in row `R` is `Copy`' is
-   defined anywhere" is still RFC-0123 (Field-Wise Row Constraints)**, needed identically
-   by RFC-0116 for `Display`. This does not block *this* RFC's acceptance for the
-   **concrete** case — when the narrowed value's row is fully known at the narrowing site,
-   the checker can walk its fields and test each one structurally, no quantifier needed.
-   It does still gate the **generic** case: a function generic over `<row R>` that
-   narrows a `..R`-typed value by value, where `R` is abstract inside the body, has
-   nothing to check the remainder's fields against without a bound at the binder —
-   that bound is RFC-0123's `all R: Copy`-shaped quantifier, not yet accepted. Concretely:
-   by-value narrowing of a concrete row can typecheck under this RFC alone; by-value
-   narrowing of an abstract row stays rejected (unification has no fact to consult) until
-   RFC-0123 lands and can be written as a bound on the binder.
+   **Resolved 2026-09-27, then superseded by RFC-0179 (2026-10-17) — see "Width subtyping
+   versus ownership" in §4 above.** Narrowing through a reference never moves the value and
+   is always sound. By value, an open-row parameter now owns the whole argument, so no
+   `Copy` condition is needed on the remainder, neither at a concrete call nor for an
+   abstract `<row R>` forwarded inside a generic body; the `where all R: Copy`
+   bound (RFC-0123) is only needed to *use* a row more than once.
 2. ~~**Row-conditional impl coherence.** Extending RFC-0036/RFC-0060's conditional-impl
    checking to row-shape conditions — ensuring two impls, one gated on presence and one on
    absence, cannot both apply to an under-constrained row variable — is asserted tractable

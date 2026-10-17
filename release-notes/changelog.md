@@ -24,8 +24,16 @@ against their declared bounds, and switches array types to prefix notation.
 - Row equations such as `where R = { token: String, ..Rest }` derive a remainder
   at calls and preserve its typed facts inside generic bodies. Residual types and
   conditional implementations account for remaining fields after partial moves.
-- Width narrowing checks whether discarded fields are `Copy`; generic bodies
-  must have sufficient declared bounds to justify the narrowing.
+- A by-value open-row parameter takes the whole record: the fields it does not name
+  are the callee's to move, return or drop and need not be `Copy`, and the inline
+  `{ f: T, ..Rest }` spelling now agrees with the row-equation form (RFC-0179,
+  `metel-core#1469`, `#1471`). Passing a `Drop` type to such a parameter is `T0036` until drop
+  dispatch against a narrowed residual exists (`#949`).
+- A row argument can be a literal row, so a setter that adds a field can write its
+  return type: `Request<..{ host: String, ..R }>`, with closed forms `..{ host: String }`
+  and `..{}` (RFC-0180, `metel-core#1473`).
+- A private field stays private through a residual, and a public signature may not
+  name one (`T0009`, `metel-core#1488`).
 - Equation-derived remainders grant conditional methods requiring excluded
   labels, row-parameter aliases substitute their tails, and renamed imported
   row nominals preserve their type arguments (`metel-core#1423`, `#1425`, `#1426`).
@@ -38,8 +46,8 @@ against their declared bounds, and switches array types to prefix notation.
 - `where all R: Aspect` constrains every field of a row, including open tails.
   These constraints can be forwarded through generic calls and used by
   conditional implementations.
-- Definition-time checks require `where all R: Copy` when an abstract row is
-  narrowed by value; missing permission is reported as `T0033`.
+- `where all R: Copy` is needed to use an abstract row more than once; passing it on by
+  value needs no bound (RFC-0179).
 
 **Record aspects:**
 
