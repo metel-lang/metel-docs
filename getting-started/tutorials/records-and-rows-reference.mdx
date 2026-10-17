@@ -150,21 +150,25 @@ mentions it.
 
 ### The by-value rule
 
-Passing a wider record **by value** to a `{ x: i64, ..R }` parameter narrows it: the
-fields `R` stands for are no longer reachable through the parameter. That is only sound
-if dropping them loses nothing, so every extra field must be `Copy`:
+Passing a wider record **by value** to a `{ x: i64, ..R }` parameter hands over the
+**whole** record. The parameter names `x`; the callee owns everything else `R` stands for
+and may return it, destructure it, or let it drop at the end of its scope. The extra fields
+need not be `Copy`:
 
-{/* doc-example: expect-fail reason="by-value narrowing would forget the non-Copy field `name` — T0033" */}
 ```metel
 fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
-    let wide := { x = 1, name = "ada" };   // `name` is a String: not Copy
+    let wide := { x = 1, name = "ada" };   // `name` is a String: not Copy, and that is fine
     println(get_x(wide));
 }
 ```
 
-Borrow it instead and nothing is forgotten:
+```
+1
+```
+
+Borrow it instead and the caller keeps every field:
 
 ```metel
 fun get_x<row R>(p: &{ x: i64, ..R }) -> i64 { p.x }
@@ -181,26 +185,25 @@ fun main() {
 ada
 ```
 
-Inside a generic body `R` is abstract, so the body cannot see whether its fields are
-`Copy`. If it narrows by value, say so with a [field-wise constraint](#field-wise-constraints):
+Inside a generic body `R` is abstract, but the body owns it too, so it can pass the
+parameter on by value with no bound. A [field-wise constraint](#field-wise-constraints) is
+only needed to *use* the row more than once:
 
 ```metel
 fun consume<row R>(p: { x: i64, ..R }) -> i64 { p.x }
 
-fun outer<row R>(s: { x: i64, ..R }) -> i64 where all R: Copy {
+fun outer<row R>(s: { x: i64, ..R }) -> i64 {
     consume(s) + 1
 }
 
 fun main() {
-    println(outer({ x = 1, k = 2, flag = true }));
+    println(outer({ x = 1, k = "kept", flag = true }));
 }
 ```
 
 ```
 2
 ```
-
-Without `where all R: Copy`, `outer` is rejected with `T0033` at the call to `consume`.
 
 ### Decomposing a row
 
@@ -439,7 +442,8 @@ does not widen. See [Move a slice, don't copy it](moving-not-copying) for both.
 | `T0012` | a struct was given to a row bound; a record lacks a required label; a field lacks the aspect `where all R: …` needs |
 | `T0015` | two row-conditional impls of one aspect overlap |
 | `T0032` | an anonymous row (`Builder<..>`) or a fixed-field open record used where it is not accepted |
-| `T0033` | by-value narrowing would forget a non-`Copy` field; add `where all R: Copy` or borrow |
+| `T0033` | a record spread through a reference needs every field `Copy`; clone it or spread an owned record |
+| `T0036` | a by-value open-row parameter over a `Drop` type would drop a narrowed residual (not implemented yet) |
 | `T0034` | one method name defined twice where both definitions can apply to the same receiver |
 | `T0035` | a generic body used a method or field its declared bounds do not grant |
 | `T0003` | no such field (moved out, or not in the bound), or an undeclared row variable |
