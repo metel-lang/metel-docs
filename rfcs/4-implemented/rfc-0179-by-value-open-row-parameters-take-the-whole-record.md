@@ -2,12 +2,24 @@
 id: rfc-0179
 title: "By-value open-row parameters take the whole record"
 date: '2026-10-16'
-status: accepted
+status: implemented
+coverage:
+  "1": { spec: "spec.types.generics.open-rows.legality-3" }
+  "1.1": { spec: "spec.types.generics.open-rows.legality-3" }
+  "1.2": { spec: "spec.types.generics.open-rows.legality-3" }
+  "1.3": { spec: "spec.types.generics.open-rows.legality-3" }
+  "1.4": { spec: "spec.types.generics.open-rows.legality-3" }
+  "1.5": { spec: "spec.types.generics.open-rows.legality-3" }
+  "2": { kind: untestable, reason: "Costs of the design (a reversed ratified decision, drop timing, a relaxation); no behaviour to observe." }
+  "3": { kind: untestable, reason: "Alternatives considered; nothing normative to test." }
+  "4": { kind: untestable, reason: "Lists the documents changed on acceptance; the rule and fixtures it names are covered by section 1." }
 updated: '2026-10-17'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1471'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1471'
+impl_status: implemented
 ---
 
-> **Status — accepted (2026-10-17).** Accepted by the language owner (2026-10-17); implementation tracked in metel-core#1471
+> **Status — implemented (2026-10-17).** Implemented in metel-core#1471 (v0.14.0)
 
 ## Summary
 
@@ -201,4 +213,4 @@ None.
 
 ## Decision
 
-**Outcome:** **Accepted** (2026-10-17). A by-value open-row parameter owns the whole argument; `T0033` keeps only the spread-through-reference rule; a by-value parameter over a `Drop`-brand residual is rejected with its own code until #949. No open question remained. Implementation is metel-core#1471 (v0.14.0).
+**Outcome:** **Implemented** (2026-10-17). A by-value open-row parameter owns the whole argument; `T0033` keeps only the spread-through-reference rule; a by-value parameter over a `Drop`-brand residual is rejected with its own code until #949. No open question remained. Implemented in metel-core#1471 (v0.14.0).
