@@ -1411,7 +1411,7 @@ violation rather than an error at the call site.
 ### I0011 — Move checking could not analyze a body
 
 Under `--move-check`, the move checker could not analyze at least one generic body, so it
-cannot vouch for the program ([ADR-0063](../architecture/decisions/adr-0063-abstract-generic-bodies.md)).
+cannot vouch for the program (ADR-0063, abstract generic bodies).
 This is not a move violation: nothing was shown to be used after a move. It is reported
 as its own error because an incomplete analysis must never authorize execution, and a
 program that passes `--move-check` has had every body checked. Default mode, which does
