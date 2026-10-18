@@ -165,8 +165,12 @@ That restriction is coherent — destruction is a whole-value operation — but 
 also illustrates an important design space. A program may want an operation to
 consume one part of a nominal value while exposing a well-defined residual view
 of the rest. Rust's current ownership surface has no general interface-level
-way to state that contract. [View types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/)
-are one exploration of this broader problem.
+way to state that contract yet. [View types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/)
+are the leading exploration of this broader problem, and as of 2026 it's more
+than an exploration on a blog: a [view-types experiment](https://goals.rust-lang.org/2026/view-types-experiment.html)
+and a broader [field-projections effort](https://goals.rust-lang.org/2026/field-projections.html)
+are both accepted Rust Project Goals, with compiler experiments underway and no
+approved RFC yet.
 
 Metel is exploring explicit record views and field-sensitive ownership in that
 space. The aim is not to discard Rust's safety model, nor to claim that every
