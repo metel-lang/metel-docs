@@ -28,7 +28,8 @@ against their declared bounds, and switches array types to prefix notation.
   are the callee's to move, return or drop and need not be `Copy`, and the inline
   `{ f: T, ..Rest }` spelling now agrees with the row-equation form (RFC-0179,
   `metel-core#1469`, `#1471`). Passing a `Drop` type to such a parameter is `T0036` until drop
-  dispatch against a narrowed residual exists (`#949`).
+  dispatch against a narrowed residual exists (`#949`). `T0033` now covers only spreading a
+  record through a reference.
 - A row argument can be a literal row, so a setter that adds a field can write its
   return type: `Request<..{ host: String, ..R }>`, with closed forms `..{ host: String }`
   and `..{}` (RFC-0180, `metel-core#1473`).
@@ -40,6 +41,24 @@ against their declared bounds, and switches array types to prefix notation.
 - Imported public nominal aliases retain their definition-site identities through
   renames and re-exports. Importing an alias does not bring its underlying bare
   constructor into scope (`metel-core#1414`).
+- An open record with an anonymous tail, `{ x: i64, .. }`, is accepted in `let`/`var`
+  annotations and closure parameters (a closure generalises over the tail, and the
+  annotation's field types apply to the initializer). In a return type or a written
+  function type it is `T0032`, as is a fixed-field open record in a struct or record field,
+  which used to panic (RFC-0181, `metel-core#1478`, `#1324`).
+- A projection `h.{ f }` moves a non-`Copy` field and keeps the brand. Using the moved-out
+  field again, by read or by projecting it again, is `T0019` with or without `--move-check`;
+  borrowing a projection of a non-`Copy` field is `T0001` (`metel-core#1454`, `#1455`).
+- A field can be written through `&var` to a residual at its present fields; an absent field
+  is `T0003` (`metel-core#1465`). A typed negative row bound such as `!{ token: String }`
+  does not prove a spread label absent (`metel-core#1456`). `Handle.{ ..R }` and
+  `Handle.{ fd, ..R }` are function-parameter forms and report a targeted error elsewhere
+  (`metel-core#1460`, `#1461`).
+- Chained row-extending functions over a nominal wrapper keep the fields added earlier
+  (`metel-core#1472`).
+- `extend<record T: { x, .. }> T: Aspect` is rejected at the declaration with `T0001`, pointing
+  to the row-target spelling that applies; it used to be accepted and never apply
+  (`metel-core#1241`).
 
 **Field-wise row bounds (RFC-0123, `metel-core#1302`):**
 
@@ -58,6 +77,15 @@ against their declared bounds, and switches array types to prefix notation.
   acquire `Clone` merely because its fields implement it.
 - Field-wise record `Eq`, `Hash`, and `Ord` are deferred; they are not part of
   this release.
+- A generic `all R: Clone` bound grants `Clone` on an open-row record, and field-wise `Clone`
+  works on a record imported from another module (`metel-core#1420`, `#1421`). Field-wise
+  bounds on a borrowed open-row parameter are no longer rejected as unused
+  (`metel-core#1412`).
+- A nominal residual coerces to its row-conditional aspect object (`dyn`), and a
+  let-polymorphic closure that captures a nominal residual runs instead of raising `I0010`
+  (`metel-core#1413`, `#1411`).
+- The remainder bound by a record rest pattern is anonymous at runtime too, so aspect dispatch
+  on it follows its static type rather than the brand it came from (`metel-core#1446`).
 
 **Generic definition checking (RFC-0173, `metel-core#1364`):**
 
@@ -186,7 +214,8 @@ inside the body (`metel-core#1409`).
   (RFC-0171).
 - Array literals infer sized array types by default: `[1, 2, 3]` infers
   `[i64; 3]`. Aspect lookup preserves the sized receiver while allowing
-  applicable structural array implementations.
+  applicable structural array implementations. Diagnostics spell array views as `[T]`
+  (`metel-core#1448`).
 
 **Iteration and method dispatch fixes:**
 
