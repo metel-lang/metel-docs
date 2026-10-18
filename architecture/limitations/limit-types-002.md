@@ -24,11 +24,11 @@ fun consume<row R>(r: { id: i64, ..R }) -> i64 where all R: Copy { r.id }
 consume({ id = 1, label = "x".to_string() });   // T0012: field `label` ... does not implement `Copy`
 ```
 
-The completed implementation also carries this entitlement into generic bodies. A body over
-an unconstrained `<row R>` that narrows a by-value row
-(`spec.types.generics.open-rows.legality-3`) is rejected with `T0033` at that expression;
-the same body is accepted when it states `where all R: Copy`. The entitlement applies to
-the row's fields, not to `R` as a whole. Other impl targets and a row generic not used as a
+The completed implementation also carries this entitlement into generic bodies. Since
+RFC-0179 a by-value open-row parameter owns its whole argument, so a body over an
+unconstrained `<row R>` may pass such a row on with no bound
+(`spec.types.generics.open-rows.legality-3`); `where all R: Copy` is only needed to use the
+row more than once. The entitlement applies to the row's fields, not to `R` as a whole. Other impl targets and a row generic not used as a
 parameter tail remain rejected with `T0012`, rather than silently ignoring the constraint.
 
 ## Impact
