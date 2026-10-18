@@ -4,10 +4,10 @@ title: "Metel Language Changelog"
 
 # Changelog
 
-## v0.14.0 (unreleased)
+## v0.14.0
 
-This release adds named records and reusable open rows, checks generic bodies
-against their declared bounds, and switches array types to prefix notation.
+**Released 2026-10-18.** This release adds named records and reusable open rows, checks
+generic bodies against their declared bounds, and switches array types to prefix notation.
 
 **Named records and open rows (RFC-0120, RFC-0121):**
 
