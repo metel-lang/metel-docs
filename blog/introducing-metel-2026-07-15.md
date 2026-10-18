@@ -30,18 +30,21 @@ fun main() {
 At first, the goal was small and personal: a statically typed, Rust-influenced interpreted language with a garbage collector, built as a way to learn by making.
 
 As the basics took shape, the project opened into a larger set of questions about
-memory safety, ownership, regions, linear capabilities, structural typing, and
+memory safety, ownership, regions, linear capabilities, structural typing, effects, and
 identity. Federico Bruzzone's [tour of substructural, uniqueness, ownership, and
 capability types](https://federicobruzzone.github.io/posts/eter/a-friendly-tour-of-substructural-uniqueness-ownership-and-capabilities-types-and-more.html)
 was one of the pieces that pushed me further in that direction.
 
 None of these ideas begins with Metel. Region calculi, explicit allocators,
-branded identity, and structural typing have all proved useful somewhere already.
+branded identity, structural typing, and effects have all proved useful somewhere already.
 The question is whether they can form a coherent whole rather than remain useful
 tools in separate languages.
 
 That is not a finished question. Rust itself continues to explore [view
-types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) and a
+types](https://smallcultfollowing.com/babysteps/blog/2021/11/05/view-types/) — now a
+dedicated [2026 experiment goal](https://goals.rust-lang.org/2026/view-types-experiment.html)
+alongside a broader [field-projections effort](https://goals.rust-lang.org/2026/field-projections.html),
+both accepted but still pre-RFC — and a
 [place-based lifetime syntax](https://smallcultfollowing.com/babysteps/blog/2024/06/02/the-borrow-checker-within/)
 aimed at making borrowing easier to teach. Even well-established languages are
 not set in stone: language design is still an active problem.
