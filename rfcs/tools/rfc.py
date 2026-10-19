@@ -1805,12 +1805,22 @@ def fetch_open_milestones(owner="metel-lang", repo="metel-core"):
     return milestones, None
 
 
+HORIZON_RANK = {"now": 0, "next": 1, "parallel": 2, "later": 3}
+
+
 def milestone_sort_key(milestone):
-    """Put semantic-version milestones first, in release order."""
+    """Order milestones: the numbered release first, then themes by horizon.
+
+    Themes carry no version number (ROADMAP.md); the first line of their description is
+    `Horizon: next|later|parallel`. Within a horizon they keep creation order, which is the
+    order they were planned in.
+    """
     match = re.fullmatch(r"v(\d+)\.(\d+)\.(\d+)", milestone.get("title", ""))
     if match:
         return (0, *(int(part) for part in match.groups()))
-    return (1, milestone.get("title", "").lower())
+    horizon = re.match(r"\s*Horizon:\s*(\w+)", milestone.get("description") or "")
+    rank = HORIZON_RANK.get(horizon.group(1).lower(), len(HORIZON_RANK)) if horizon else len(HORIZON_RANK)
+    return (1, rank, milestone.get("number", 0))
 
 
 def build_milestone_report(milestones, trackers):

@@ -86,6 +86,30 @@ class MilestoneReportTests(unittest.TestCase):
         self.assertIn("RFC-0122 #847", report)
         self.assertIn("design settlement", report)
 
+    def test_theme_milestones_sort_by_horizon_after_the_numbered_release(self):
+        milestones = [
+            {"title": "Compiler MVP", "number": 37, "description": "Horizon: later. x"},
+            {"title": "Borrow checking", "number": 29, "description": "Horizon: later. y"},
+            {"title": "Website, docs and project", "number": 38, "description": "Horizon: parallel."},
+            {"title": "Ownership core", "number": 43, "description": "Horizon: next."},
+            {"title": "v0.14.1", "number": 46, "description": "Horizon: now."},
+            {"title": "No horizon yet", "number": 1, "description": ""},
+        ]
+
+        ordered = [m["title"] for m in sorted(milestones, key=rfc.milestone_sort_key)]
+
+        self.assertEqual(
+            ordered,
+            [
+                "v0.14.1",
+                "Ownership core",
+                "Website, docs and project",
+                "Borrow checking",
+                "Compiler MVP",
+                "No horizon yet",
+            ],
+        )
+
 
 class ImplementedCoverageGateTests(unittest.TestCase):
     """`--to implemented` must accept spec-anchored coverage (ADR-0050 §5), not
