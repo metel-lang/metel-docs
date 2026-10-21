@@ -789,3 +789,22 @@ None of this replaces the `3-integrated` phase's actual judgment work (is the de
 sound, do the worked examples really stress-test the interaction) — it only makes the
 procedural half (move the file correctly, don't lose a cross-reference, don't forget to
 check for an existing RFC first) hard to get wrong by accident.
+
+## `rfc.py check`: problems and warnings (metel-core#1510)
+
+`rfc.py check` separates two kinds of finding.
+
+- **Problems** are properties of the change under review, and they fail the check: a
+  directory that disagrees with the frontmatter, a missing `tracking` or `impl_tracking`, a
+  duplicate id, a dangling reference or citation, a missing rule id, an exemption that is
+  malformed, expired or blocked on a closed issue, a rigor block with a citing fixture but no
+  `last_reviewed` marker, a coverage regression, registry or index drift.
+- **Warnings** are freshness signals, which depend on time or on code outside the change: a
+  spec block's citing fixture changed after its recorded `last_reviewed`, its recorded commit
+  is no longer reachable (core merges by rebase), or an open milestoned tracker exists for an
+  RFC that is still a `0-draft`. They print as `warning:` lines and the exit status stays 0, so a
+  pull request that only moves a cited fixture is not failed by it.
+
+`rfc.py check --strict` treats warnings as problems. `/cut-release` runs it, so every review
+that came due is settled before a tag. The architecture checker follows the same rule
+(`generate_architecture_evidence.py --strict`).

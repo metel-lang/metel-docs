@@ -2375,7 +2375,7 @@ def resolve_commit(core, ref):
     return result.stdout.strip() if result.returncode == 0 else None
 
 
-def spec_review_staleness(core, spec_id, spec_path, block_text, citing_toml_paths):
+def spec_review_finding(core, spec_id, spec_path, block_text, citing_toml_paths):
     """metel-core#1192: flag a Formal Rule whose citing fixture(s) moved on
     since a human last reviewed them against the rule's prose. Same model as
     metel-core#1191's `review_staleness` for the Architecture Spec, adapted
@@ -2389,31 +2389,51 @@ def spec_review_staleness(core, spec_id, spec_path, block_text, citing_toml_path
     tracked separately (`coverage_check_problems()`'s "untested" list), and
     requiring the field there too would just duplicate the same finding
     under a different name. Returns None (no citing fixture, or reviewed and
-    current) or a problem string."""
+    current) or `(level, message)`.
+
+    Level (metel-core#1510): a missing marker is a shape error (`"error"`, fails a
+    pull request). What depends on time -- the fixtures changed since the review, or
+    the recorded commit is no longer reachable -- is a `"warning"`: shown on a pull
+    request and enforced at release with `check --strict`, instead of failing every
+    PR that touches a cited fixture."""
     if not citing_toml_paths:
         return None
     reviewed = SPEC_LAST_REVIEWED_RE.search(block_text)
     if not reviewed:
-        return (
+        return "error", (
             f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}` has a citing fixture but no "
             f"`last_reviewed` marker (metel-core#1192) -- add "
             f"`<!-- rfc.py:last_reviewed <sha> -->` after its prose"
         )
     reviewed_sha = resolve_commit(core, reviewed.group("sha"))
     if reviewed_sha is None:
-        return (
+        return "warning", (
             f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}`'s `last_reviewed` "
             f"(`{reviewed.group('sha')}`) is not a commit reachable in metel-core"
         )
     all_paths = [p for toml in citing_toml_paths for p in _fixture_all_paths(toml)]
     code_touch = last_touch_commit_for_paths(core, all_paths)
     if not is_ancestor(core, code_touch, reviewed_sha):
-        return (
+        return "warning", (
             f"{spec_path.relative_to(REPO_ROOT)}: `{spec_id}`'s citing fixture(s) were "
             f"touched by {code_touch[:12]} after `last_reviewed` ({reviewed_sha[:12]}) -- "
             f"confirm the rule's prose still matches and bump `last_reviewed`"
         )
     return None
+
+
+def spec_review_staleness(core, spec_id, spec_path, block_text, citing_toml_paths):
+    """The message of `spec_review_finding`, regardless of level."""
+    finding = spec_review_finding(core, spec_id, spec_path, block_text, citing_toml_paths)
+    return finding[1] if finding else None
+
+
+def apply_strict(problems, warnings, strict):
+    """metel-core#1510: warnings are advisory on a pull request; under `--strict` (a release)
+    they are failures. Returns `(problems, warnings)` as `cmd_check` should treat them."""
+    if strict:
+        return list(problems) + list(warnings), []
+    return list(problems), list(warnings)
 
 
 def uncovered_sections_for_implemented(rid, tests_dir, rfc_path):
@@ -2586,10 +2606,13 @@ def build_coverage_baseline_json(coverage_by_rfc, spec_ids_without_fixture=()):
     return json.dumps(baseline, indent=2, sort_keys=True) + "\n"
 
 
-def coverage_check_problems():
+def coverage_check_problems(warnings=None):
     """ADR-0049. Returns (problems, info_lines) -- problems are check
     failures; info_lines is either the single skip note or the per-RFC
-    coverage summary, always printed, never counted as a failure itself."""
+    coverage summary, always printed, never counted as a failure itself.
+    `warnings`, when given, receives the findings that are advisory on a pull
+    request (a spec block's review is due, metel-core#1510); without it they are
+    returned with the problems."""
     scanned = scan_coverage_corpus()
     if scanned is None:
         return [], [
@@ -2891,11 +2914,12 @@ def coverage_check_problems():
         core = tests_dir.parent.parent
         stale_n = 0
         for spec_id, (spec_path, block_text) in spec_block_bodies().items():
-            problem = spec_review_staleness(
+            finding = spec_review_finding(
                 core, spec_id, spec_path, block_text, spec_citations.get(spec_id, [])
             )
-            if problem:
-                problems.append(problem)
+            if finding:
+                level, problem = finding
+                (warnings if level == "warning" and warnings is not None else problems).append(problem)
                 stale_n += 1
         cited_with_review_n = sum(1 for sid in all_ids if spec_citations.get(sid))
         if cited_with_review_n:
@@ -2965,6 +2989,8 @@ def coverage_check_problems():
 
 def cmd_check(args=None):
     problems = []
+    warnings = []  # advisory on a pull request; failures under --strict (metel-core#1510)
+    strict = bool(getattr(args, "strict", False))
     seen_ids = {}
     known_paths = set()
     current_ids = set()
@@ -3063,7 +3089,9 @@ def cmd_check(args=None):
             f"scheduled RFC tracker check: {len(trackers)} open milestoned "
             f"RFC tracker(s) checked"
         )
-        problems.extend(scheduled_draft_problems(id_to_stage, trackers))
+        # The tracker state is time-dependent (an issue can be scheduled after the RFC last
+        # changed), so it is a freshness signal, not a property of the change under review.
+        warnings.extend(scheduled_draft_problems(id_to_stage, trackers))
 
     problems.extend(status_citation_problems(id_to_stage))
     problems.extend(retired_host_references())
@@ -3111,8 +3139,10 @@ def cmd_check(args=None):
     # on metel_core_tests_dir() reachability the same way.
     problems.extend(planned_marker_problems())
 
-    coverage_problems, coverage_info = coverage_check_problems()
+    coverage_problems, coverage_info = coverage_check_problems(warnings)
     problems.extend(coverage_problems)
+
+    problems, warnings = apply_strict(problems, warnings, strict)
 
     if problems:
         print(f"{len(problems)} problem(s):")
@@ -3120,6 +3150,10 @@ def cmd_check(args=None):
             print(f"  - {p}")
     else:
         print("check: no problems found.")
+    for w in warnings:
+        print(f"warning: {w}")
+    if warnings:
+        print(f"{len(warnings)} warning(s); `check --strict` (a release) treats them as problems.")
     for line in coverage_info:
         print(line)
     print(tracker_info)
@@ -3317,6 +3351,12 @@ def main():
     p_sup.set_defaults(func=cmd_supersede)
 
     p_check = sub.add_parser("check", help="Validate frontmatter/directory consistency and path references")
+    p_check.add_argument(
+        "--strict",
+        action="store_true",
+        help="treat warnings (a spec block's review is due, a scheduled RFC is still a draft) as "
+        "problems; /cut-release runs with it",
+    )
     p_check.set_defaults(func=cmd_check)
 
     p_index = sub.add_parser("index", help="Registry/index maintenance helpers")
