@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for RFC lifecycle checks."""
 
+import argparse
 import subprocess
 import tempfile
 import unittest
@@ -365,6 +366,42 @@ class SpecRuleReviewStalenessTests(unittest.TestCase):
             self.assertIsNotNone(problem)
             self.assertIn("is not a commit reachable", problem)
 
+    def test_a_missing_marker_is_an_error_level_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            core, toml = self.make_core(tmp, '[options]\nspec = ["spec.example.legality-1"]\n')
+            level, message = rfc.spec_review_finding(
+                core, self.SPEC_ID, Path(tmp) / "x.md", self.block(), [toml]
+            )
+            self.assertEqual("error", level)
+            self.assertIn("no `last_reviewed` marker", message)
+
+    def test_a_fixture_moved_after_the_review_is_a_warning_level_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            core, toml = self.make_core(tmp, '[options]\nspec = ["spec.example.legality-1"]\n')
+            reviewed = self.head(core)
+            toml.with_suffix(".mtl").write_text("fun main() { let x := 1; }\n")
+            self.commit(core, "move the cited fixture")
+            level, message = rfc.spec_review_finding(
+                core, self.SPEC_ID, Path(tmp) / "x.md", self.block(reviewed), [toml]
+            )
+            self.assertEqual("warning", level)
+            self.assertIn("touched by", message)
+
+    def test_an_unreachable_review_commit_is_a_warning_level_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            core, toml = self.make_core(tmp, '[options]\nspec = ["spec.example.legality-1"]\n')
+            level, message = rfc.spec_review_finding(
+                core, self.SPEC_ID, Path(tmp) / "x.md", self.block("deadbeefcafe"), [toml]
+            )
+            self.assertEqual("warning", level)
+            self.assertIn("not a commit reachable", message)
+
+    def test_apply_strict_keeps_warnings_advisory_by_default(self):
+        self.assertEqual((["hard"], ["soft"]), rfc.apply_strict(["hard"], ["soft"], False))
+
+    def test_apply_strict_turns_warnings_into_problems(self):
+        self.assertEqual((["hard", "soft"], []), rfc.apply_strict(["hard"], ["soft"], True))
+
 
 class SpecBlockBodiesTests(unittest.TestCase):
     def test_splits_the_spec_corpus_into_per_block_text(self):
@@ -453,5 +490,56 @@ class SidecarTomlTests(unittest.TestCase):
             self.assertEqual(rfc.uncited_own_error_code_fixtures(tests_dir), [])
 
 
+
+
 if __name__ == "__main__":
     unittest.main()
+
+class CheckWiringTests(unittest.TestCase):
+    """metel-core#1510: how `cmd_check` treats a freshness signal, with everything slow or
+    corpus-dependent stubbed out."""
+
+    def run_check(self, strict, hard=()):
+        import contextlib
+        import io
+        from unittest import mock
+
+        out = io.StringIO()
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.multiple(
+            rfc,
+            REPO_ROOT=Path(tmp),
+            INDEX_PATH=Path(tmp) / "no-index.md",
+            find_rfc_files=lambda: [],
+            fetch_open_milestoned_rfc_trackers=lambda: ([{"rfc_id": "rfc-9999"}], None),
+            scheduled_draft_problems=lambda stages, trackers: ["tracker is stale"],
+            status_citation_problems=lambda stages: [],
+            retired_host_references=lambda: list(hard),
+            registry_drift_problem=lambda: None,
+            spec_exemption_problems=lambda: [],
+            planned_marker_problems=lambda: [],
+            coverage_check_problems=lambda warnings=None: (
+                ([] if warnings is None else warnings.append("review is due") or []),
+                [],
+            ),
+        ), contextlib.redirect_stdout(out):
+            problems = rfc.cmd_check(argparse.Namespace(strict=strict))
+        return problems, out.getvalue()
+
+    def test_freshness_signals_are_warnings_by_default(self):
+        problems, output = self.run_check(strict=False)
+        self.assertEqual([], problems)
+        self.assertIn("warning: tracker is stale", output)
+        self.assertIn("warning: review is due", output)
+        self.assertIn("2 warning(s)", output)
+
+    def test_freshness_signals_fail_under_strict(self):
+        problems, output = self.run_check(strict=True)
+        self.assertEqual(["tracker is stale", "review is due"], problems)
+        self.assertNotIn("warning:", output)
+        self.assertIn("2 problem(s)", output)
+
+    def test_a_hard_problem_fails_in_both_modes(self):
+        for strict in (False, True):
+            problems, _ = self.run_check(strict, hard=["retired host cited"])
+            self.assertIn("retired host cited", problems)
+
