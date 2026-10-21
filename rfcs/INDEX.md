@@ -261,6 +261,14 @@ above it are.
   any other statically known field. Separate from RFC-0174's iteration over all fields; open
   questions cover syntax, label equality, construction, and interaction with linear moves.
 
+- **RFC-0182** *(draft, opened 2026-10-21)* — Record delimiters and label syntax — anonymous records
+  written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
+  the `({ x = 1 })` workaround); labels as compile-time values written `.name` and label variables
+  `.[L]` (supplying spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and
+  RFC-0174); and binder kinds inferred from use, so `<row R>` becomes `<R>`. Syntax layer only:
+  the semantics of rows, records and label polymorphism are unchanged. Open: whether types and
+  bounds also take `{| |}`, the transition policy, and whether a field position accepts `.x`.
+
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
   Construction — the value-level half of RFC-0121's removal-by-decomposition: a record
   **rest pattern** (`{ token, ..rest }`, binding the unnamed remainder as an owned record)
