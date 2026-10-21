@@ -14,7 +14,7 @@ sys.modules[SPEC.name] = evidence
 SPEC.loader.exec_module(evidence)
 
 
-class ArchitectureEvidenceTests(unittest.TestCase):
+class EvidenceHelpers:
     def init_git(self, core: Path) -> None:
         subprocess.run(["git", "-C", str(core), "init", "-q"], check=True, capture_output=True)
         subprocess.run(["git", "-C", str(core), "config", "user.email", "test@example.com"], check=True, capture_output=True)
@@ -52,13 +52,19 @@ class ArchitectureEvidenceTests(unittest.TestCase):
         )
         return spec
 
-    def regenerate(self, spec: Path, core: Path, check: bool, ref: str = "a" * 40):
+    def regenerate(self, spec: Path, core: Path, check: bool, ref: str = "a" * 40, warnings=None):
         previous = evidence.DOCS
         evidence.DOCS = spec.parent.parent
+        # `last_touch_commit` is memoized per citation for one run; a test that commits and
+        # checks again is a new run.
+        evidence.last_touch_commit.cache_clear()
         try:
-            return evidence.regenerate(spec, core, evidence.citations(core), check, ref)
+            return evidence.regenerate(spec, core, evidence.citations(core), check, ref, warnings)
         finally:
             evidence.DOCS = previous
+
+
+class ArchitectureEvidenceTests(EvidenceHelpers, unittest.TestCase):
 
     def test_scans_unit_and_fixture_citations_and_regenerates_cells(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -469,15 +475,36 @@ class RecordAffectsCodeLinkTests(unittest.TestCase):
             findings = self.regenerate(records, core, False)
             self.assertTrue(any("no such file" in f for f in findings), findings)
 
-    def test_check_mode_reports_stale_without_writing(self):
+    def test_check_mode_never_writes_and_ignores_the_link(self):
+        # metel-core#1417: whether the bullet carries a rendered link is cosmetic. A bare
+        # `path::symbol` that resolves passes --check; only an unresolvable one is a finding.
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             core = self.make_core(root, "pub fn target_fn() {}\n")
             records = self.write_record(root, "- `src/lib.rs::target_fn`")
             before = (records / "example.md").read_text()
-            findings = self.regenerate(records, core, True)
-            self.assertTrue(any("stale" in f for f in findings), findings)
+            self.assertEqual([], self.regenerate(records, core, True))
             self.assertEqual(before, (records / "example.md").read_text())
+
+    def test_check_mode_fails_when_the_symbol_no_longer_resolves(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn target_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs::target_fn`")
+            self.regenerate(records, core, False)
+            (core / "src/lib.rs").write_text("pub fn renamed() {}\n")
+            findings = self.regenerate(records, core, True)
+            self.assertEqual(1, len(findings), findings)
+            self.assertIn("target_fn", findings[0])
+
+    def test_check_mode_ignores_line_drift_in_a_rendered_link(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn target_fn() {}\n")
+            records = self.write_record(root, "- `src/lib.rs::target_fn`")
+            self.regenerate(records, core, False)
+            (core / "src/lib.rs").write_text("// a\n// b\n// c\npub fn target_fn() {}\n")
+            self.assertEqual([], self.regenerate(records, core, True))
 
     def test_rerun_is_idempotent(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -634,8 +661,29 @@ class RecordMarkerTests(unittest.TestCase):
             records = self.write_record(root, "LIMIT-X-001")
             before = (records / "limit-x-001.md").read_text()
             findings = self.regenerate(records, core, True)
-            self.assertTrue(any("stale" in f for f in findings), findings)
+            self.assertTrue(any("stale" in f and "src/lib.rs::target_fn" in f for f in findings), findings)
             self.assertEqual(before, (records / "limit-x-001.md").read_text())
+
+    def test_check_mode_ignores_line_drift_in_the_marker_block(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            self.regenerate(records, core, False)
+            (core / "src/lib.rs").write_text('// a\n// b\n// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            self.assertEqual([], self.regenerate(records, core, True))
+
+    def test_check_mode_names_a_citation_the_block_lists_but_the_code_no_longer_marks(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn old_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            self.regenerate(records, core, False)
+            (core / "src/lib.rs").write_text('// limit: ["LIMIT-X-001"]\npub fn new_fn() {}\n')
+            findings = [f for f in self.regenerate(records, core, True) if "src/lib.rs::" in f]
+            self.assertEqual(2, len(findings), findings)
+            self.assertTrue(any("lists `src/lib.rs::old_fn`" in f for f in findings), findings)
+            self.assertTrue(any("does not list `src/lib.rs::new_fn`" in f for f in findings), findings)
 
     def test_rerun_is_idempotent(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -736,6 +784,173 @@ class Level2Level3BoundaryTests(unittest.TestCase):
             f1, f2 = self.regenerate_both(records, core, True)
             self.assertEqual([], f1 + f2)
             self.assertEqual(once, (records / "limit-x-001.md").read_text())
+
+
+class SemanticCheckTests(EvidenceHelpers, unittest.TestCase):
+    """metel-core#1417: --check compares what is cited, not how a link renders."""
+
+    RUN = '// arch-implements: ["arch.example.requirement-1"]\npub fn run() {\n    1\n}\n'
+    TEST = '\n// arch-verifies: ["arch.example.requirement-1"]\n#[test]\nfn run_is_tested() {}\n'
+    CHANGED = RUN.replace("    1\n", "    2\n")
+
+    def rendered(self, root: Path, rust: str | None = None):
+        core = self.make_core(root, rust if rust is not None else self.RUN + self.TEST)
+        spec = self.make_spec(root, last_reviewed=self.head(core))
+        self.assertEqual([], self.regenerate(spec, core, False))  # write the cells
+        self.assertEqual([], self.regenerate(spec, core, True))   # and they check clean
+        return core, spec
+
+    def check(self, spec: Path, core: Path, warnings=None):
+        return self.regenerate(spec, core, True, warnings=warnings)
+
+    def test_inserting_lines_above_a_cited_function_passes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text("// intro\n// more\n// lines\n" + self.RUN + self.TEST)
+            self.commit(core, "insert lines above the cited items")
+            self.assertEqual([], self.check(spec, core, []))
+
+    def test_a_newer_commit_to_the_cited_function_does_not_fail_only_warns(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.CHANGED + self.TEST)
+            self.commit(core, "change run's body")
+            warnings: list[str] = []
+            self.assertEqual([], self.check(spec, core, warnings))
+            self.assertEqual(1, len(warnings), warnings)
+            self.assertIn("last_reviewed", warnings[0])
+
+    def test_moving_a_function_within_its_file_passes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.TEST.lstrip("\n") + "\n" + self.RUN)
+            self.commit(core, "reorder")
+            self.assertEqual([], self.check(spec, core, []))
+
+    def test_a_removed_citation_fails_naming_the_requirement_and_the_citation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.TEST.lstrip("\n"))
+            self.commit(core, "remove run and its marker")
+            findings = self.check(spec, core)
+            self.assertTrue(
+                any("`arch.example.requirement-1`" in f and "`implements` cell" in f
+                    and "lists `src/lib.rs::run`" in f and "no longer cites" in f for f in findings),
+                findings,
+            )
+
+    def test_a_renamed_function_fails_with_both_names(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.RUN.replace("run", "go") + self.TEST)
+            self.commit(core, "rename run to go")
+            findings = self.check(spec, core)
+            self.assertTrue(any("lists `src/lib.rs::run`" in f for f in findings), findings)
+            self.assertTrue(any("does not list `src/lib.rs::go`" in f for f in findings), findings)
+
+    def test_moving_a_citation_to_another_file_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.TEST.lstrip("\n"))
+            (core / "src/other.rs").write_text(self.RUN)
+            self.commit(core, "move run to other.rs")
+            findings = self.check(spec, core)
+            self.assertTrue(any("lists `src/lib.rs::run`" in f for f in findings), findings)
+            self.assertTrue(any("does not list `src/other.rs::run`" in f for f in findings), findings)
+
+    def test_each_failing_citation_gets_its_own_line_never_a_corpus_lump(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(
+                (self.RUN + self.TEST).replace("run_is_tested", "renamed_test").replace("fn run", "fn go")
+            )
+            self.commit(core, "rename both items")
+            findings = [f for f in self.check(spec, core, []) if "cell" in f]
+            self.assertEqual(4, len(findings), findings)
+            self.assertFalse(any("corpus" in f or "generated evidence is stale" in f for f in findings), findings)
+
+    def test_an_unknown_claim_id_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(
+                (self.RUN + self.TEST) + '\n// arch-implements: ["arch.example.requirement-9"]\npub fn extra() {}\n'
+            )
+            self.commit(core, "cite an unknown claim")
+            findings = self.check(spec, core)
+            self.assertTrue(any("unknown Architecture Spec claim `arch.example.requirement-9`" in f for f in findings), findings)
+
+    def test_check_mode_never_writes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text("// x\n" + self.RUN.replace("run", "go") + self.TEST)
+            self.commit(core, "rename")
+            before = (spec / "example.md").read_text()
+            self.check(spec, core)
+            self.assertEqual(before, (spec / "example.md").read_text())
+
+    def test_a_stale_last_reviewed_is_a_warning_when_warnings_are_collected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.CHANGED + self.TEST)
+            self.commit(core, "change run")
+            warnings: list[str] = []
+            findings = self.check(spec, core, warnings)
+            self.assertEqual([], findings)
+            self.assertTrue(any("was touched by" in w for w in warnings), warnings)
+
+    def test_a_stale_last_reviewed_stays_an_error_without_a_warnings_list(self):
+        with tempfile.TemporaryDirectory() as directory:
+            core, spec = self.rendered(Path(directory))
+            (core / "src/lib.rs").write_text(self.CHANGED + self.TEST)
+            self.commit(core, "change run")
+            self.assertTrue(any("was touched by" in f for f in self.check(spec, core)))
+
+    def test_a_missing_last_reviewed_field_is_always_an_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST)
+            spec = self.make_spec(root)  # no last_reviewed
+            self.regenerate(spec, core, False)
+            warnings: list[str] = []
+            findings = self.check(spec, core, warnings)
+            self.assertTrue(any("missing a `last_reviewed` field" in f for f in findings), findings)
+            self.assertEqual([], warnings)
+
+    def run_main(self, root: Path, core: Path, *extra: str):
+        import contextlib
+        import io
+
+        previous_docs, previous_argv = evidence.DOCS, sys.argv
+        evidence.DOCS = root / "docs"
+        evidence.last_touch_commit.cache_clear()
+        sys.argv = ["generate", "--core", str(core), "--check", *extra]
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                code = evidence.main()
+        finally:
+            evidence.DOCS, sys.argv = previous_docs, previous_argv
+        return code, err.getvalue()
+
+    def test_warnings_exit_zero_but_strict_fails(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core, spec = self.rendered(root)
+            (core / "src/lib.rs").write_text(self.CHANGED + self.TEST)
+            self.commit(core, "change run")
+            code, err = self.run_main(root, core)
+            self.assertEqual(0, code, err)
+            self.assertIn("warning:", err)
+            code, err = self.run_main(root, core, "--strict")
+            self.assertEqual(1, code, err)
+            self.assertIn("--strict", err)
+
+    def test_strict_is_clean_when_nothing_is_stale(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core, spec = self.rendered(root)
+            code, err = self.run_main(root, core, "--strict")
+            self.assertEqual(0, code, err)
 
 
 if __name__ == "__main__":

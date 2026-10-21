@@ -102,6 +102,23 @@ after that SHA, over exactly the item's own line range, not the whole file. The 
 never refreshes it for you; that's deliberate; see its own docstring for the full
 reasoning about not automating the human-attention step.
 
+**What `--check` compares (metel-core#1417).** `--check` compares *what is cited*, not how
+a link renders. For every requirement and side it compares the set of `path::item` labels
+the code cites against the labels in the committed `implements` / `verified by` cell, and
+does the same for the `// limit:` marker block of a limitation record. The line number and
+commit SHA inside a rendered link are cosmetic and never compared, so inserting lines above
+a cited function, or committing to the cited file, does not fail the check. Removing,
+renaming, or moving a citation off its marker does, with **one finding per citation** that
+names the requirement (or record), the cell, and the label, never a corpus-level "stale".
+Run the generator without `--check` to refresh the links; that is the only mode that
+writes.
+
+**Errors and warnings.** A stale `last_reviewed` (the cited code changed after the recorded
+review, or the recorded commit is no longer reachable) is a **warning**: it is printed with
+the `warning:` prefix and the exit status stays 0, so it shows on a pull request without
+failing it. A release runs the check with `--strict`, which makes warnings fail
+(`/cut-release`). A *missing* `last_reviewed` field is a shape error and always fails.
+
 **Item scope, and a real asymmetry to know about:** Layer 0's marker resolver (`following_item`
 / the `ITEM` regex) is `fn`-only — its own original, narrower scope. Layer 3 below needed
 a broader one (`following_named_item` / `NAMED_ITEM`: `fn`/`static`/`const`/`struct`/
