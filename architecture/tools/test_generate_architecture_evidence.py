@@ -52,14 +52,14 @@ class EvidenceHelpers:
         )
         return spec
 
-    def regenerate(self, spec: Path, core: Path, check: bool, ref: str = "a" * 40, warnings=None):
+    def regenerate(self, spec: Path, core: Path, check: bool, ref: str = "a" * 40, warnings=None, audit: bool = True):
         previous = evidence.DOCS
         evidence.DOCS = spec.parent.parent
         # `last_touch_commit` is memoized per citation for one run; a test that commits and
         # checks again is a new run.
         evidence.last_touch_commit.cache_clear()
         try:
-            return evidence.regenerate(spec, core, evidence.citations(core), check, ref, warnings)
+            return evidence.regenerate(spec, core, evidence.citations(core), check, ref, warnings, audit)
         finally:
             evidence.DOCS = previous
 
@@ -951,6 +951,141 @@ class SemanticCheckTests(EvidenceHelpers, unittest.TestCase):
             core, spec = self.rendered(root)
             code, err = self.run_main(root, core, "--strict")
             self.assertEqual(0, code, err)
+
+
+class PublishModeTests(EvidenceHelpers, unittest.TestCase):
+    """ADR-0064 / metel-core#1509: the committed cells are a placeholder; `--publish` renders them."""
+
+    RUN = '// arch-implements: ["arch.example.requirement-1"]\npub fn run() {\n    1\n}\n'
+    TEST = '\n// arch-verifies: ["arch.example.requirement-1"]\n#[test]\nfn run_is_tested() {}\n'
+
+    def placeholder_spec(self, root: Path, **kwargs) -> Path:
+        spec = self.make_spec(root, **kwargs)
+        page = spec / "example.md"
+        page.write_text(
+            page.read_text()
+            .replace("| old path |", f"| {evidence.EVIDENCE_PLACEHOLDER} |")
+            .replace("| old test |", f"| {evidence.EVIDENCE_PLACEHOLDER} |")
+        )
+        return spec
+
+    def publish(self, spec: Path, core: Path, ref: str = "v9.9.9", warnings=None):
+        return self.regenerate(spec, core, False, ref, warnings, audit=False)
+
+    def test_publish_pins_links_to_the_ref_with_no_git_history(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST, git=False)  # not even a git repository
+            spec = self.placeholder_spec(root)
+            self.assertEqual([], self.publish(spec, core))
+            text = (spec / "example.md").read_text()
+            self.assertIn("(https://github.com/metel-lang/metel-core/blob/v9.9.9/src/lib.rs#L1)", text)
+            self.assertIn("`src/lib.rs::run`", text)
+            self.assertIn("`src/lib.rs::run_is_tested`", text)
+            self.assertNotIn(evidence.EVIDENCE_PLACEHOLDER, text)
+
+    def test_publish_does_not_audit_last_reviewed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST, git=False)
+            spec = self.placeholder_spec(root, last_reviewed="deadbeefcafe")  # unresolvable, no history
+            self.assertEqual([], self.publish(spec, core))
+            # the same input is audited when not publishing
+            findings = self.regenerate(spec, self.make_core(root / "g", self.RUN + self.TEST), True)
+            self.assertTrue(any("last_reviewed" in f for f in findings), findings)
+
+    def test_check_never_compares_a_placeholder_cell(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST)
+            spec = self.placeholder_spec(root, last_reviewed=self.head(core))
+            before = (spec / "example.md").read_text()
+            self.assertEqual([], self.regenerate(spec, core, True))
+            self.assertEqual(before, (spec / "example.md").read_text())
+
+    def test_a_requirement_with_no_evidence_still_fails_with_a_placeholder_cell(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, "pub fn run() {}\n", git=False)
+            spec = self.placeholder_spec(root)
+            findings = self.regenerate(spec, core, True)
+            self.assertTrue(any("lacks arch-implements" in f for f in findings), findings)
+
+    def test_publish_is_idempotent_and_a_rendered_cell_then_checks_clean(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST)
+            spec = self.placeholder_spec(root, last_reviewed=self.head(core))
+            self.publish(spec, core)
+            once = (spec / "example.md").read_text()
+            self.publish(spec, core)
+            self.assertEqual(once, (spec / "example.md").read_text())
+            self.assertEqual([], self.regenerate(spec, core, True))
+
+    def test_publish_skips_the_limit_history_check(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = root / "core"
+            (core / "src").mkdir(parents=True)
+            (core / "src/lib.rs").write_text('// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = root / "docs/architecture/limitations"
+            records.mkdir(parents=True)
+            (records / "limit-x-001.md").write_text(
+                "---\nid: LIMIT-X-001\ndisposition: known\n---\n\n## Limitation\n\nx.\n\n"
+                "## Affects\n\n- `src/lib.rs::target_fn`\n\n## Resolution\n\nNone yet.\n"
+            )
+            previous, previous_docs = evidence.limit_ids_ever_marked, evidence.DOCS
+            evidence.DOCS = root / "docs"
+
+            def forbidden(_core):
+                raise AssertionError("publish must not read git history")
+
+            evidence.limit_ids_ever_marked = forbidden
+            try:
+                findings = evidence.regenerate_record_markers(records, core, "v9.9.9", False, history=False)
+            finally:
+                evidence.limit_ids_ever_marked, evidence.DOCS = previous, previous_docs
+            self.assertEqual([], findings)
+            self.assertIn("blob/v9.9.9/src/lib.rs#L1", (records / "limit-x-001.md").read_text())
+
+    def run_cli(self, root: Path, core: Path, *args: str):
+        import contextlib
+        import io
+
+        previous_docs, previous_argv = evidence.DOCS, sys.argv
+        evidence.DOCS = root / "docs"
+        evidence.last_touch_commit.cache_clear()
+        sys.argv = ["generate", "--core", str(core), *args]
+        err = io.StringIO()
+        try:
+            with contextlib.redirect_stderr(err):
+                try:
+                    code = evidence.main()
+                except SystemExit as exit_:
+                    code = exit_.code
+        finally:
+            evidence.DOCS, sys.argv = previous_docs, previous_argv
+        return code, err.getvalue()
+
+    def test_cli_publish_needs_a_ref_and_excludes_check(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST, git=False)
+            self.placeholder_spec(root)
+            code, err = self.run_cli(root, core, "--publish")
+            self.assertEqual(2, code, err)
+            self.assertIn("--core-ref", err)
+            code, err = self.run_cli(root, core, "--publish", "--core-ref", "v9.9.9", "--check")
+            self.assertEqual(2, code, err)
+
+    def test_cli_publish_renders_and_exits_zero(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, self.RUN + self.TEST, git=False)
+            spec = self.placeholder_spec(root)
+            code, err = self.run_cli(root, core, "--publish", "--core-ref", "v9.9.9")
+            self.assertEqual(0, code, err)
+            self.assertIn("blob/v9.9.9/src/lib.rs", (spec / "example.md").read_text())
 
 
 if __name__ == "__main__":

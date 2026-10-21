@@ -28,6 +28,12 @@ or committing to the cited file never fails the check; removing, renaming or mov
 citation off its marker does, with one finding per citation. A stale ``last_reviewed`` is a
 warning (printed, exit 0) unless ``--strict`` is given, which a release runs.
 
+Publishing (ADR-0064, metel-core#1509): the committed cells are the placeholder
+``_Generated at publish._`` and ``--check`` never compares a placeholder. ``--publish --core-ref
+REF`` writes the links, pinned to ``REF`` and to each item's line in that tree, into a working
+copy that is published and discarded; it needs no git history and does not audit
+``last_reviewed``.
+
 A claim with no evidence for one side carries an ``implements exemption`` /
 ``verification exemption`` row instead (metel-core#1193), in rfc.py's ``kind``
 vocabulary: ``kind: untestable; reason: ...; owner: ...`` (permanent),
@@ -63,6 +69,9 @@ ROW = re.compile(r"^\| `(?P<field>implements|verified by)` \|(?P<value>.*?)\|$",
 # A rendered citation link: [`path::item`](url). The label is the citation's meaning; the url's
 # line number and commit SHA are cosmetic and are never compared in --check (metel-core#1417).
 CITED_LABEL = re.compile(r"\[`([^`]+)`\]\(")
+# ADR-0064: in `metel-docs` the cells are not rendered evidence but a placeholder; the links are
+# produced by `--publish` when documentation is published. `--check` never compares a placeholder.
+EVIDENCE_PLACEHOLDER = "_Generated at publish._"
 EXEMPTION = re.compile(r"^\| `(?P<field>implements exemption|verification exemption)` \| (?P<value>.*?) \|$", re.M)
 LAST_REVIEWED = re.compile(r"^\| `last_reviewed` \| (?P<sha>[0-9a-f]{7,40}) \|$", re.M)
 
@@ -400,7 +409,9 @@ def limit_ids_ever_marked(core: Path) -> set[str]:
     return ids
 
 
-def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | None, check: bool) -> list[str]:
+def regenerate_record_markers(
+    records_dir: Path, core: Path, core_ref: str | None, check: bool, history: bool = True
+) -> list[str]:
     """The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
     `// limit:` markers: fully regenerated each run from every current marker citing
     that record's id, the same full-replace treatment `implements`/`verified by` cells
@@ -413,7 +424,9 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
     if not records_dir.is_dir():
         return stale
     markers = limit_citations(core)
-    ever_marked = limit_ids_ever_marked(core)
+    # The history check needs the full git history; a publish run (ADR-0064) has a shallow
+    # checkout and is not a review, so it is skipped there.
+    ever_marked = limit_ids_ever_marked(core) if history else set()
     known_ids: set[str] = set()
     retired_ids: set[str] = set()  # dispositions that no longer need a marker
     for path in sorted(records_dir.glob("*.md")):
@@ -733,9 +746,14 @@ def review_staleness(core: Path, path: Path, claim: str, block: str, values) -> 
     return finding[1] if finding else None
 
 
-def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str | None, warnings: list[str] | None = None):
+def regenerate(
+    spec_dir: Path, core: Path, evidence, check: bool, core_ref: str | None,
+    warnings: list[str] | None = None, audit: bool = True,
+):
     """`warnings`, when given, receives the findings that are advisory on a PR (a stale
-    `last_reviewed`); without it they are returned with the errors, as before."""
+    `last_reviewed`); without it they are returned with the errors, as before. `audit=False`
+    skips the `last_reviewed` audit, which needs the full git history of `core`: publishing
+    (ADR-0064) runs on a shallow checkout and is not a review."""
     stale, known = [], set()
     for path in spec_dir.glob("*.md"):
         text = path.read_text()
@@ -753,7 +771,7 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str 
                 elif not values[kind]:
                     for problem in exemption_problems(exemptions[field]):
                         stale.append(f"{path.relative_to(DOCS)}: `{claim}` `{field}`: {problem}")
-            finding = review_finding(core, path, claim, block, values)
+            finding = review_finding(core, path, claim, block, values) if audit else None
             if finding:
                 level, message = finding
                 (warnings if level == "warning" and warnings is not None else stale).append(message)
@@ -761,6 +779,10 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str 
                 field = row.group("field")
                 key = "implements" if field == "implements" else "verifies"
                 if check:
+                    if row.group("value").strip() == EVIDENCE_PLACEHOLDER:
+                        # ADR-0064: a placeholder is what the repository stores; the evidence is
+                        # produced at publish time, so there is nothing here to compare.
+                        return row.group(0)
                     # Compare what is cited, not how the link renders: a line shift or a newer
                     # commit changes the url but not the claim's evidence (metel-core#1417).
                     stale.extend(label_findings(
@@ -798,19 +820,31 @@ def main():
         help="fail on warnings too (a `last_reviewed` older than the cited code's last change). "
         "A pull request shows them as warnings; a release (`/cut-release`) runs with --strict",
     )
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="render the evidence for publication (ADR-0064): write the links pinned to --core-ref "
+        "into this working copy, without needing git history and without the `last_reviewed` "
+        "audit. The result is published, never committed to metel-docs",
+    )
     args = parser.parse_args()
+    if args.publish and (args.check or not args.core_ref):
+        parser.error("--publish writes links and requires --core-ref; it cannot be combined with --check")
+    audit = not args.publish
     warnings: list[str] = []
     try:
         core_ref = args.core_ref
         findings = regenerate(
-            DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref, warnings
+            DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref, warnings, audit
         )
         findings += regenerate_record_affects(DOCS / "architecture/limitations", args.core, core_ref, args.check)
         findings += regenerate_record_affects(DOCS / "architecture/gaps", args.core, core_ref, args.check)
         # Level 3 (metel-core#1247) is LIMIT-* only -- GAP-* is chartered by ADR-0057 as
         # a Language Spec concept, not architecture, and metel-core's Rust source has
         # nothing to mark for a gap in what the spec itself says.
-        findings += regenerate_record_markers(DOCS / "architecture/limitations", args.core, core_ref, args.check)
+        findings += regenerate_record_markers(
+            DOCS / "architecture/limitations", args.core, core_ref, args.check, history=audit
+        )
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         findings = [str(error)]
     if warnings:

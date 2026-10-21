@@ -113,6 +113,15 @@ names the requirement (or record), the cell, and the label, never a corpus-level
 Run the generator without `--check` to refresh the links; that is the only mode that
 writes.
 
+**Publishing (ADR-0064, metel-core#1509).** The committed `implements` / `verified by` cells
+are moving to the placeholder `_Generated at publish._`: the links are produced when
+documentation is published, not stored here. `--check` never compares a placeholder cell, so
+requirements migrate one at a time. `generate_architecture_evidence.py --publish --core
+<checkout> --core-ref <tag-or-sha>` writes the links, each pinned to `blob/<ref>/<path>#L<line>`
+for that ref, into the working copy it runs in. It needs no git history (a shallow checkout is
+enough), does not audit `last_reviewed`, and does not read the `// limit:` history. Its output
+is published and discarded, never committed to `metel-docs`.
+
 **Errors and warnings.** A stale `last_reviewed` (the cited code changed after the recorded
 review, or the recorded commit is no longer reachable) is a **warning**: it is printed with
 the `warning:` prefix and the exit status stays 0, so it shows on a pull request without
