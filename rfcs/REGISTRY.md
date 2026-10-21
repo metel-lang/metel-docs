@@ -46,7 +46,7 @@ the curated thematic map.
 - **RFC-0172** — Sized and Unsized Kinds, and a Generalized Unsizing Coercion (`0-draft` ; rfcs/0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md ; date 2026-10-01)
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
-- **RFC-0182** — Record delimiters and label syntax (`0-draft` ; rfcs/0-draft/rfc-0182-record-delimiters-and-label-syntax.md ; date 2026-10-21)
+- **RFC-0182** — Record delimiters, label syntax and rows as record types (`0-draft` ; rfcs/0-draft/rfc-0182-record-delimiters-label-syntax-and-rows-as-record-types.md ; date 2026-10-21)
 
 ## Under Review (41)
 

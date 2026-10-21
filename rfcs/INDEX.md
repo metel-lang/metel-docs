@@ -261,7 +261,7 @@ above it are.
   any other statically known field. Separate from RFC-0174's iteration over all fields; open
   questions cover syntax, label equality, construction, and interaction with linear moves.
 
-- **RFC-0182** *(draft, opened 2026-10-21)* — Record delimiters and label syntax — anonymous records
+- **RFC-0182** *(draft, opened 2026-10-21)* — Record delimiters, label syntax and rows as record types — anonymous records
   written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
   the `({ x = 1 })` workaround); labels as compile-time values written `.name` and label variables
   `.[L]` (supplying spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and
