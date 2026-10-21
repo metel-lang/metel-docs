@@ -8,6 +8,11 @@ implements: metel-core#1141, metel-core#1154, metel-core#1155, metel-core#1157
 updated: '2026-09-22'
 ---
 
+> **Amended 2026-10-21 by ADR-0064.** The generated `implements` / `verified by` cells and the
+> generated `// limit:` blocks described below are **publish-time artifacts**: they are
+> placeholders in `metel-docs` and rendered, pinned to the release tag, when documentation is
+> published. Everything else here (markers, records, the checker, `last_reviewed`) is unchanged.
+
 > **Amended 2026-09-22, chartered by metel-core#1247.** §4's "never limitation
 > records" is narrowed: metel-core may carry `// limit: ["LIMIT-X-001"]`, mirroring
 > `arch-implements`'s placement rule and discovery mechanism (directly above the item;
