@@ -114,9 +114,10 @@ Run the generator without `--check` to refresh the links; that is the only mode 
 writes.
 
 **Publishing (ADR-0064, metel-core#1509).** The committed `implements` / `verified by` cells
-are moving to the placeholder `_Generated at publish._`: the links are produced when
-documentation is published, not stored here. `--check` never compares a placeholder cell, so
-requirements migrate one at a time. `generate_architecture_evidence.py --publish --core
+are the placeholder `_Generated at publish._`, the generated `// limit:` blocks are not
+committed, and a record's `## Affects` bullets are unlinked: the links are produced when
+documentation is published, not stored here. `--check` never compares a placeholder cell or
+the absence of a block. `generate_architecture_evidence.py --publish --core
 <checkout> --core-ref <tag-or-sha>` writes the links, each pinned to `blob/<ref>/<path>#L<line>`
 for that ref, into the working copy it runs in. It needs no git history (a shallow checkout is
 enough), does not audit `last_reviewed`, and does not read the `// limit:` history. Its output
@@ -374,27 +375,29 @@ The code and its markers live in metel-core; the generated evidence text lives i
 metel-docs. Two repositories, two CI jobs, checking *different* things, not mirrors of
 each other:
 
-- **metel-docs' `architecture-check.yml`** checks out metel-core's `develop` branch
-  (never `main` — per the branch model, `main` only syncs at releases and carries none
-  of the current markers) at `fetch-depth: 0` (required: the generator resolves
-  `last_reviewed` staleness and `git_ref()` from history, which a shallow checkout can't
-  answer), then runs `generate_architecture_evidence.py --core metel-core --check`
-  followed by `check_architecture.py --check`. This answers: *is metel-docs' evidence
-  current for the real state of metel-core's integration branch, right now?*
-- **metel-core's "Architecture evidence" job** runs the same generator the other
-  direction — against its own current commit, using its `docs` submodule (a gitlink
-  pinned to one specific metel-docs commit) for the tool and the record files. This
-  answers: *is the evidence text at the docs submodule's pinned commit still accurate for
-  MY code, right now?*
+- **metel-docs' `architecture-check.yml`** (ADR-0064) does **not** check out metel-core. It
+  runs the two tools' regression tests and `check_architecture.py --check` (structure,
+  cross-references, required fields). Nothing in this repository depends on metel-core's
+  code any more, so a core pull request in flight cannot make a docs pull request fail.
+- **metel-core's "Architecture evidence" job** runs the generator's `--check` against its own
+  current commit, using its `docs` submodule (a gitlink pinned to one specific metel-docs
+  commit) for the tool, the requirement list, the exemptions and the record files. This
+  answers: *do the claims, exemptions and markers at the docs submodule's pinned commit still
+  agree with MY code, right now?* It validates meaning (the cited item exists, the claim id
+  exists, tests are not ignored, exemptions are valid and unexpired); it reads no rendered link.
 
-The `docs` gitlink is a normal tracked file entry — **nothing auto-updates it.** A
-metel-core PR that shifts a marker-adjacent line will fail metel-core's own CI job until
-someone bumps the gitlink to a metel-docs commit that already contains regenerated
-evidence for that PR's exact content. This is why marker-adding metel-core work always
-needs a metel-docs regeneration *landed first*, never squeezed into the same PR — the
-regenerated markdown physically lives in the other repository.
+The `docs` gitlink is a normal tracked file entry — **nothing auto-updates it.** Under
+ADR-0064 a metel-core PR that adds, moves or removes an `arch-implements` / `arch-verifies`
+/ `// limit:` marker for an **existing** requirement or record needs **no** metel-docs
+change and no gitlink bump: the evidence is rendered at publish time. A PR that cites a
+**new** claim id still needs that requirement written in metel-docs first, landed before the
+core PR that cites it.
 
 ## The standard landing sequence
+
+> **Largely superseded by ADR-0064 (metel-core#1509).** The regeneration steps below applied
+> while the evidence cells were committed. With publish-time evidence, only a new claim id or
+> a new generator behavior still needs metel-docs work first; the rest is kept as history.
 
 Worked out in practice landing metel-core#1247/#1248 (17 real `// limit:` markers); write
 it down so the next marker-adding change doesn't have to re-derive it by trial and error:

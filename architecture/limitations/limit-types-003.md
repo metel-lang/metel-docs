@@ -49,10 +49,6 @@ have to repeat in Rust.
 - `spec.types.generics.field-wise-row-constraints.legality-1`
 - `spec.types.anonymous-records.legality-1`
 
-<!-- limit.py:markers:start -->
-- [`metel-interpreter/src/evaluator/record_display.rs::record_to_string`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-interpreter/src/evaluator/record_display.rs#L20)
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 Planned: RFC-0174 (`1-under-review`, design settlement metel-core#1340) specifies a

@@ -661,8 +661,20 @@ class RecordMarkerTests(unittest.TestCase):
             records = self.write_record(root, "LIMIT-X-001")
             before = (records / "limit-x-001.md").read_text()
             findings = self.regenerate(records, core, True)
-            self.assertTrue(any("stale" in f and "src/lib.rs::target_fn" in f for f in findings), findings)
+            # ADR-0064: a record with no committed block is the normal state; the block is
+            # produced at publish time, so there is nothing to compare.
+            self.assertEqual([], findings)
             self.assertEqual(before, (records / "limit-x-001.md").read_text())
+
+    def test_check_mode_still_compares_a_committed_block(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n')
+            records = self.write_record(root, "LIMIT-X-001")
+            self.regenerate(records, core, False)  # writes the block
+            (core / "src/lib.rs").write_text('// limit: ["LIMIT-X-001"]\npub fn other_fn() {}\n')
+            findings = self.regenerate(records, core, True)
+            self.assertTrue(any("stale" in f and "src/lib.rs::target_fn" in f for f in findings), findings)
 
     def test_check_mode_ignores_line_drift_in_the_marker_block(self):
         with tempfile.TemporaryDirectory() as directory:

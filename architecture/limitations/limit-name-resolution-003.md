@@ -42,10 +42,6 @@ There is no observable symptom, so no reproducing fixture.
 - `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
 - `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`fresh_local_type_id`)
 
-<!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3111)
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 None yet. Typed allocators (one owner for the whole space, with range checks

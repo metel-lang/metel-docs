@@ -456,7 +456,11 @@ def regenerate_record_markers(
             continue  # nothing to add, nothing to remove -- leave the section exactly as it is
         if check:
             existing = LIMIT_MARKERS_BLOCK.search(body)
-            listed = rendered_labels(existing.group(0)) if existing else set()
+            if existing is None:
+                # ADR-0064: the committed record carries no generated block; it is produced at
+                # publish time. The markers were checked above (record exists and is active).
+                continue
+            listed = rendered_labels(existing.group(0))
             for finding in label_findings(
                 str(path.relative_to(DOCS)),
                 f"the generated `// limit:` marker citations for `{record_id}` are stale: the block",
