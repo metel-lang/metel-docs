@@ -42,6 +42,7 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-website` | `.github/workflows/next.yml`, `scripts/prepare-next-docs.mjs` | PROC-DEPLOY-004, PROC-DEPLOY-005 |
 | `metel-website` | `.github/workflows/check-showcases.yml`, `plugin-tests.yml` | PROC-DEPLOY-007 |
 | `metel-website` | `scripts/build-rfc-index.mjs`, `build-spec-index.mjs` (the `prebuild` step) | PROC-DOCS-005 (search data computed at build) |
+| `metel-website` | `scripts/check-mdx-site-drift.mjs` | PROC-DOCS-011 |
 | `metel-website` | `src/remark/*.mjs` | PROC-DOCS-005 (views computed at build), PROC-DOCS-007 |
 | `metel-website` | `WORKFLOW.md` | process document; links here |
 | `metel-docs-internal` | `reports/strategy/tools/strategy.py`, `rfc_cycle_prep.py` | local: manual strategy tooling, no CI, not part of any pipeline |

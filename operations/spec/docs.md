@@ -153,19 +153,19 @@ The blog is dated like the changelog but its examples are meant to be lifted, so
 | `verified by` | the three workflows; `release-notes` and `rfcs` are excluded on purpose because they document rejected or not-yet-built syntax |
 | `related` | PROC-CI-004, PROC-DEPLOY-007 |
 
-### PROC-DOCS-011 — Documentation pages compile as MDX before they reach the site {#proc-docs-011}
+### PROC-DOCS-011 — Documentation pages compile as MDX, and their links resolve, before they reach the site {#proc-docs-011}
 
-The check does not build `architecture`, `operations`, `rfcs` or `status`, so an MDX error there is first seen by the website build. Its vendored site configuration can also drift from the website's real one (metel-core#698).
+A minimal Docusaurus build of the content the site publishes (`getting-started`, `reference`, `release-notes`, `architecture`, `operations`, `status`, the public stages of `rfcs`, and the blog), with the website's own `exclude` list and drafts excluded as in production. An MDX error fails it, and so does a broken link, as on the real site: the v0.14.0 staging deploy failed twice on a published page linking a draft and on links into unpublished RFC stages. It cannot see what the website's own plugins create or rewrite, nor `sidebars.ts`, nor the footer links; the scaffold's README lists these. Its configuration is kept in step with the website's by the other side: the website's CI reads this directory (the docs submodule is public) and fails when `onBrokenLinks`, `markdown.format`, the `exclude` list or the Docusaurus versions differ.
 
 | Field | Value |
 |---|---|
-| `status` | `partial` |
+| `status` | `implemented` |
 | `owner` | documentation |
-| `trigger` | pull request or push to `metel-docs` `main` |
-| `produces` | a pass or fail from a minimal Docusaurus build |
-| `implemented by` | `metel-docs/.github/workflows/check-mdx.yml`, `metel-docs/tools/mdx-check-site` |
-| `verified by` | the workflow builds `getting-started`, `reference`, `release-notes` and `blog` |
-| `related` | PROC-CI-003 |
+| `trigger` | pull request or push to `metel-docs` `main`; for the drift guard, a pull request or push to `main` of `metel-website` |
+| `produces` | a pass or fail from a minimal Docusaurus build; a pass or fail of the configuration comparison |
+| `implemented by` | `metel-docs/.github/workflows/check-mdx.yml`, `metel-docs/tools/mdx-check-site`, `metel-website/scripts/check-mdx-site-drift.mjs` |
+| `verified by` | the workflow; a page that links a draft and a page that links an unpublished RFC stage each fail the build (reproduced when the check was changed); `check-mdx-site-drift.test.mjs` |
+| `related` | PROC-CI-003, PROC-DEPLOY-007 |
 
 ### PROC-DOCS-012 — The spec fixture viewer embeds the fixture source {#proc-docs-012}
 

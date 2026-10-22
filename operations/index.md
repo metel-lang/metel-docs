@@ -80,7 +80,7 @@ These are stated so that nobody assumes a guarantee that does not exist.
   scripts with no requirement are caught by the discovery of `check_operations.py` (PROC-CI-008),
   but only for the repositories it can reach: `metel-website` and `metel-docs-internal` assets are
   checked when those repositories sit next to the others, locally and at release.
-- The MDX check does not build `architecture`, `operations`, `rfcs` or `status` (PROC-DOCS-011).
+- The MDX check cannot see what the website's plugins create or rewrite, `sidebars.ts`, or the footer links, so a docs change that passes it can still fail the staging deploy (PROC-DOCS-011).
 - Nothing sends the event that rebuilds the unreleased view (PROC-DEPLOY-005).
 - The spec fixture viewer embeds fixture source in every published version (PROC-DOCS-012).
 - The 60-run measurement of core CI after ADR-0064 is pending (PROC-CI-002).
