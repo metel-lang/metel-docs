@@ -51,3 +51,10 @@ is no reproducing fixture.
 
 None yet. A per-compilation allocator (owned by the `SymbolTable`, or by the
 overload table's builder) would make the ids reproducible.
+
+metel-core#1542 made the counter safe at the end of its range (it allocates through a checked helper
+and panics instead of wrapping) but did not change its process-global scope. The embedded `std::core`
+overload table is built once per process and its ids must be identical in every module, which is why
+a plain per-compilation counter does not work. Splitting that table's ids (deterministic, from
+declaration order) from user overload ids (per-graph) is part of the tagged-`SymbolId` proposal in
+metel-core#1546.
