@@ -214,7 +214,7 @@ an unrelated validation bug.
 **Examples / counterexamples.** ADR-0044's fix is the conforming shape for that site.
 `InferContext::split_gen(&self)` is a currently open instance of the same hazard: it
 returns a generator without advancing the context's own counter, so continued allocation
-after `split_gen` reissues already-claimed ids (`LIMIT-TYPE-INFERENCE-005`).
+after `split_gen` reissues already-claimed ids (`LIMIT-TYPE-INFERENCE-006`).
 
 **Enforcement.** None automated.
 
@@ -222,7 +222,7 @@ after `split_gen` reissues already-claimed ids (`LIMIT-TYPE-INFERENCE-005`).
 ownership transfer in its own doc comment — `TypeVarGenerator`'s module doc already does
 this for the `split_gen`-then-thread-through-Pass-2 pattern.
 
-**Expiry.** Revisit once `LIMIT-TYPE-INFERENCE-005`/`-006` close.
+**Expiry.** Revisit once `LIMIT-TYPE-INFERENCE-006` closes.
 
 ## 9. When an ADR is warranted
 
@@ -290,9 +290,11 @@ unrelated-looking bug.
 **Examples / counterexamples.** `SymbolId`'s three-way range split (Standard 2): builtins
 occupy 1-99, the resolver's ids start at 1000, the overload allocator's at
 `0x4000_0000` — `LIMIT-NAME-RESOLUTION-003`: "nothing checks that the resolver's range
-stays below `OVERLOAD_SYM_START`." `TypeVarGenerator`'s six hard-coded offsets (10,000
-through 5,000,000, scattered across six files) — `LIMIT-TYPE-INFERENCE-005`: the
-2,000,000 start is already shared by two unrelated users. Conforming:
+stays below `OVERLOAD_SYM_START`." `TypeVarGenerator`'s hard-coded offsets (10,000
+through 5,000,000, scattered across several files) were the counterexample until
+`LIMIT-TYPE-INFERENCE-005` closed: the 2,000,000 start was shared by two unrelated users.
+Conforming: `type_var_space` declares the ranges in one place, rejects an overlap with a
+`const` assertion and makes a generator panic at the end of its range;
 `identity::allocate::CollisionGuard` turns a `LocalId`/`RefId` structural-hash collision
 into a loud `assert!` — "this exists so that 'unlikely' is enforced, not assumed."
 
@@ -304,8 +306,7 @@ wire format) documents why beside it. A range inside this codebase's own control
 merely hasn't been made checked yet is not an exception — it's tracked as a `LIMIT-*`
 record.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` and
-`LIMIT-TYPE-INFERENCE-005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` close.
 
 ## 12. Repeated ambient parameters are a named context type, not re-threaded by hand
 

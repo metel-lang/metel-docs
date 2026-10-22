@@ -5,7 +5,7 @@ summary: "A `TypeVar` is just a `u32`, so every generator in a run must start pa
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "maintainer note on the type var generator; reviewed in metel-frontend/src/pipeline/type_checking/type_engine/mod.rs"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -64,12 +64,30 @@ of functions (`LIMIT-TYPE-INFERENCE-007`).
 ## Affects
 
 - `arch.type-inference.requirement-1`
-- `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::TypeVarGenerator`
+- `metel-frontend/src/pipeline/type_checking/type_engine/type_var_space/mod.rs::TypeVarGenerator`
 - `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::split_gen`
 - `metel-frontend/src/pipeline/type_checking/mod.rs`, `typechecker/construction.rs`, `move_check/mod.rs` (the offsets)
 
 ## Resolution
 
-None yet. One allocator that owns the whole `TypeVar` space and hands out
-checked, disjoint ranges (or namespaces variables per unit so numbers stop
-needing to be globally unique) would replace the constants.
+Resolved by metel-core#1541. `type_engine/type_var_space` owns the whole `TypeVar` space and
+declares four named, disjoint ranges of 2^24 variables each: local (a module's registry and
+inference), prelude, construction (`construct_generic_body`) and export (alpha-renamed exported
+schemes). The ranges are checked twice. A `const` assertion rejects ranges that overlap, are empty
+or are out of order, so editing one into its neighbour is a compile error. `TypeVarGenerator::fresh`
+asserts it stays inside its range instead of wrapping or entering the next one. `with_counter`, the
+way a literal start was passed, no longer exists; a generator is made with `new()` (local),
+`in_range(RANGE)` or `continuing()` (the same range, from the current counter). Instantiating a
+scheme reserves past the scheme's variables only when they lie in the generator's own range;
+variables of another range are disjoint by construction. The full suite (1,462 integration, 385
+unit tests) passes unchanged, and eight new tests cover the range check, the exhaustion panic and
+the reservation rule.
+
+Two things the record described are not what the code showed when this was closed. The move-check
+starts at 3,000,000 to 5,000,000 listed in the table no longer exist as separate literals (they were
+removed when `split_gen` and `continuing` took over, ADR-0044). Two small allocators still start at
+0 and are not covered by the ranges: the impl-signature counter (`next_signature_type_var`) and the
+throwaway substitution in `resolve_row_field_type`. Both live inside one function's isolated
+substitution and never mix with the module's variables, so they are not a collision risk; they are
+noted here so a future reader does not take the ranges for the whole story. The `split_gen` hazard
+is a different problem and stays tracked as `LIMIT-TYPE-INFERENCE-006`.
