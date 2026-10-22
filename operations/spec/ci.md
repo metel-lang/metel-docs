@@ -92,14 +92,14 @@ The hooks can be bypassed locally; CI is the enforcement. `metel-docs` has its o
 
 ### PROC-CI-007 — Branches, merges and commit messages follow one convention {#proc-ci-007}
 
-Core integrates on `develop` and `main` moves only at a release; pull requests target `develop`. Known discrepancy: `AGENTS.md` prescribes a local `git merge --ff-only`, while pull requests are in practice merged with the hosting service's rebase merge (core) or merge commit (metel-docs, metel-website). One of the two should change; the specification records the practice and leaves the decision to the maintainer.
+Core integrates on `develop` and `main` moves only at a release; pull requests target `develop`. A core pull request is merged with the hosting service's **rebase merge** (`gh pr merge --rebase`), so `develop` stays linear, `main` is a prefix of it at every release, and no merge commit lands on it. The commits get new hashes, so nothing cites a branch commit; a recorded `last_reviewed` that named one stops resolving and is re-recorded at the next review (a warning, PROC-CI-005). `metel-docs` and `metel-website` take pull requests with a merge commit.
 
 | Field | Value |
 |---|---|
-| `status` | `partial` |
+| `status` | `implemented` |
 | `owner` | continuous integration |
 | `trigger` | every change |
-| `produces` | one issue, one branch `<type>/<issue>-<slug>`, one pull request |
-| `implemented by` | `metel-core/AGENTS.md`; the `commit-msg` hook |
-| `verified by` | the hook and branch protection |
-| `related` | PROC-CI-006 |
+| `produces` | one issue, one branch `<type>/<issue>-<slug>`, one pull request, one linear history on `develop` |
+| `implemented by` | `metel-core/AGENTS.md` (§ GitHub and branch workflow), `.claude/commands/ship-issue.md`; the `commit-msg` and `pre-push` hooks |
+| `verified by` | the `commit-msg` hook (no attribution trailers) and the `pre-push` hook (no merge commit in a push to `develop`); the merge method itself is a maintainer step, not checked |
+| `related` | PROC-CI-006, PROC-CI-005 |
