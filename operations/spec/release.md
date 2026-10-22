@@ -122,6 +122,14 @@ It needs only the repository's own token and writes to no other repository. A fa
 
 Secrets appear only by class: a write token for `metel-website` lives in `metel-core`; deploy credentials for the hosting project live in `metel-website`. No secret value appears in this specification.
 
+| Secret | Lives in | Scope |
+|---|---|---|
+| `WEBSITE_TOKEN` | `metel-core` | write to `metel-website` only |
+| `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` | `metel-website` | deploy access for the hosting project |
+| built-in `GITHUB_TOKEN` | each repository | same-repository writes (`develop-latest`, the GitHub release) and public reads (checker, rolling binary); no cross-repository credential is needed for them |
+
+The tokens that once authenticated the private documentation submodule and the old sync into `metel-docs` are retired (ADR-0051); they should be removed from the repository settings, not left provisioned. `metel-core/RELEASING.md` lists how each remaining secret is provisioned.
+
 | Field | Value |
 |---|---|
 | `status` | `implemented` |

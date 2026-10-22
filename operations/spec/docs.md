@@ -136,6 +136,13 @@ The sorting test asks whether a fully correct implementation of the current spec
 
 The checker is fetched fresh from core `develop` by the other repositories, so there is nothing to keep in sync by hand.
 
+What is checked is what a reader copies: the language spec, tutorials, quickstart, error codes, the blog and the site's showcases must compile. Two places are excluded on purpose, not by oversight:
+
+- **`release-notes/changelog.md`** documents rejections, known limitations and before/after syntax, so it is the page most likely to quote syntax that deliberately does not compile. Holding a historical record to "compiles against the current binary" would mean rewriting past entries or piling `expect-fail` markers on them. Checking only the newest section was considered and not taken: it adds markers to every release's rejection examples for no gain.
+- **`rfcs/`** describes proposed, superseded and refused syntax: a draft proposes what does not exist yet and a refused RFC documents syntax never built. Neither can compile and both are correct as written.
+
+The blog is dated like the changelog but its examples are meant to be lifted, so it stays checked: a newcomer copying a broken example out of an introduction is worse than editing an archived post when syntax moves.
+
 | Field | Value |
 |---|---|
 | `status` | `implemented` |

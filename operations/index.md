@@ -78,9 +78,6 @@ These are stated so that nobody assumes a guarantee that does not exist.
   scripts with no requirement are caught by the discovery of `check_operations.py` (PROC-CI-008),
   but only for the repositories it can reach: `metel-website` and `metel-docs-internal` assets are
   checked when those repositories sit next to the others, locally and at release.
-- `metel-core/PROCESSES.md` lists core's workflows, scripts and commands and is checked for that
-  (`inventory doc up to date`); its sections for `metel-docs` and `metel-website` are not
-  checked, so the inventory in this specification, which is, is the one to trust (PROC-CI-008).
 - The MDX check does not build `architecture`, `operations`, `rfcs` or `status` (PROC-DOCS-011).
 - Gap and limitation records name retired version numbers in `planned_for` (metel-core#1525).
 - No automated path publishes a docs-only change between releases (PROC-DEPLOY-006), and nothing
