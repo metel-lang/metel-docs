@@ -446,7 +446,9 @@ For a **struct** (RFC-0137 slice 2, metel-core#858), `h.name` produces the same 
 residual type, `h.{ fd }`, as a projection does. For an **anonymous `record`** (RFC-0117,
 metel-core#789), moving `r.left` out leaves `r : { right: i64 }`. Using the narrowed value
 where the whole type or a wider row is required is a type error at type-check time, not only
-a `--move-check` finding.
+a `--move-check` finding. The converse is an error too and is worded for what it is: a whole
+value where a narrowed type is required (a call argument or an annotated binding) moved
+nothing and is not narrowed implicitly; narrowing is an explicit move or projection.
 
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a value over *N* fields, the space of residual shapes is the subset

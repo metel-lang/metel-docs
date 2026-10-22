@@ -15,6 +15,13 @@ title: "Metel Language Changelog"
   has no methods". It was `T0002`, "cannot infer receiver type for method call; add a type
   annotation", which sent the user to an annotation the receiver already had
   (`metel-core#1242`).
+- Passing a whole struct where a narrowed type is required (`take(s)` for a parameter
+  `Strings.{ a, c }`, or `let t: Strings.{ a, c } := s`) no longer says "a partially-moved
+  `Strings` cannot be used where the whole `Strings` is required", which names the opposite
+  situation: nothing was moved. It now says the value is whole, that the position requires the
+  narrowed type, and that narrowing happens through an explicit move or projection
+  (`value.{ a, c }`), not at a call or binding. The program was already rejected; only the
+  wording changes (`metel-core#1458`).
 
 ## v0.14.0
 
