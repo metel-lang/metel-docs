@@ -30,6 +30,13 @@ name: Check doc examples
 # non-aspect method inside `extend Person: Greet` -- both found by hand,
 # neither reachable by this job as it was configured (metel-core#693).
 #
+# metel-core#1512: the binary is rebuilt after every push to core's `develop`, so right
+# after a core merge this job could start against the previous one and fail a docs PR for a
+# feature that IS merged; and a docs PR for a feature that is NOT merged yet failed with an
+# example error that did not say why. The job now waits (up to 30 minutes) for a binary that
+# includes core `develop` as it is, or each `Depends-on: metel-lang/metel-core#N` line in the PR
+# description, and fails naming what is missing. See .github/scripts/wait-for-core-binary.sh.
+#
 # release-notes/ and rfcs/ are deliberately excluded, not overlooked: both
 # exist to document rejected, superseded, or not-yet-built syntax that cannot
 # compile by design. See metel-core's PROCESSES.md
@@ -44,8 +51,25 @@ on:
 jobs:
   check-examples:
     runs-on: ubuntu-latest
+    # The wait below can last up to 30 minutes after a core merge (cargo build time).
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+
+      - name: wait-for-core-binary self-test
+        run: .github/scripts/test_wait_for_core_binary.sh
+
+      # metel-core#1512: the binary below is rebuilt after every push to core's `develop`. Wait
+      # until it includes what this change needs (core `develop` as it is now, or each
+      # `Depends-on: metel-lang/metel-core#N` line in the PR description), and fail naming
+      # what is missing, so a docs PR for a feature already merged in core passes without a
+      # manual re-run and one for a feature that is not merged yet says so.
+      - name: Wait for a metel-core binary that includes what this change needs
+        id: core
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: .github/scripts/wait-for-core-binary.sh
 
       # Both the develop-latest pre-release asset and tools/check_doc_examples.py
       # are public reads on metel-core -- the built-in GITHUB_TOKEN covers
@@ -59,6 +83,7 @@ jobs:
         run: |
           gh release download develop-latest --repo metel-lang/metel-core --pattern 'metel-linux-x86_64' --output metel
           chmod +x metel
+          echo "Examples checked against the metel-core binary built from \`${{ steps.core.outputs.core_sha }}\`." >> "$GITHUB_STEP_SUMMARY"
 
       # Fetched fresh every run rather than vendored, so this job always
       # checks against metel-core's current script with nothing to keep in
@@ -83,3 +108,14 @@ jobs:
             getting-started \
             blog \
             reference
+
+      - name: How to fix a failure
+        if: failure()
+        run: |
+          {
+            echo "### The examples did not pass against metel-core \`${{ steps.core.outputs.core_sha || 'unknown' }}\`"
+            echo ""
+            echo "- If they document a feature that is **not merged in metel-core yet**, merge that pull request first,"
+            echo "  or add \`Depends-on: metel-lang/metel-core#N\` to this pull request's description; the job then waits for a binary that includes it."
+            echo "- If the feature **is** merged, the binary may be older than the merge: re-run once core's \`publish rolling develop binary\` job has finished."
+          } >> "$GITHUB_STEP_SUMMARY"
