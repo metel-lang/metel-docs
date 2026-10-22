@@ -22,7 +22,7 @@ in the Resolution section.
 
 ##### Requirement {#arch.name-resolution.requirement-1}
 
-Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: builtin `std::core` items at fixed `SYM_*` ids, user declarations from `USER_SYM_START`, and a separate range for overloads. The same declaration keeps one id under any importer, alias or resolution order.
+Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: builtin `std::core` items as fixed `Builtin` ids and every other named declaration as a `Declared` id. Overload definitions and block-local types are their own kinds of `SymbolId`, so ids of different kinds cannot collide. The same declaration keeps one id under any importer, alias or resolution order.
 
 | Field | Value |
 |---|---|

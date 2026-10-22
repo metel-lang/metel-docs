@@ -207,7 +207,7 @@ Nothing is open. A later change to any of these amends this ADR.
 Each step is independently reviewable and leaves the suite green; none is started by this ADR.
 
 0. **Audit** (done, recorded above). It settled the former open questions 1, 2 and 4.
-1. **Introduce the enum behind the existing surface.** `SymbolId` becomes the enum with `Declared`,
+1. **Introduce the enum behind the existing surface.** *Done: metel-core#1546, PR #1548.* `SymbolId` becomes the enum with `Declared`,
    `BlockLocal` and `Builtin`; `USER_SYM_START` and the `SYM_*` constants keep working through
    constructors, the ranges are removed, `Ord` is removed from `SymbolId` and `BindingId` and the four
    test sorts are rewritten, and `Overload`/`CoreOverload` stay a single temporary variant fed by the
