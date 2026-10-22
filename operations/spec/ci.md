@@ -78,7 +78,7 @@ A problem is a property of the change under review. A warning depends on time or
 
 ### PROC-CI-006 — Local hooks run the fast checks before a commit and the heavy ones before a push {#proc-ci-006}
 
-The hooks can be bypassed locally; CI is the enforcement. `metel-docs` has its own pre-commit hook that runs the tooling tests.
+The hooks can be bypassed locally; CI is the enforcement. `metel-docs` has its own hooks: `pre-commit` runs the tooling tests, `pre-push` runs `rfc.py check`, `commit-msg` rejects attribution trailers.
 
 | Field | Value |
 |---|---|
@@ -103,3 +103,19 @@ Core integrates on `develop` and `main` moves only at a release; pull requests t
 | `implemented by` | `metel-core/AGENTS.md` (§ GitHub and branch workflow), `.claude/commands/ship-issue.md`; the `commit-msg` and `pre-push` hooks |
 | `verified by` | the `commit-msg` hook (no attribution trailers) and the `pre-push` hook (no merge commit in a push to `develop`); the merge method itself is a maintainer step, not checked |
 | `related` | PROC-CI-006, PROC-CI-005 |
+
+### PROC-CI-008 — The Operations Specification is checked against the repositories {#proc-ci-008}
+
+`check_operations.py` validates the specification's structure (ids, anchors, statuses, the field table, cross-references, tracking issues of planned requirements) and the paths a requirement says implement it, and discovers every workflow, script, hook, slash command and cargo bin in the repositories it can reach, requiring each to appear in `operations/inventory.md` (or be marked `local`) and every inventory row to name something that exists. Structural findings, and assets of `metel-docs` itself, fail the check. An asset of another repository that the inventory does not list is a warning on a pull request and fails under `--strict`, because requiring `metel-docs` to change before a `metel-core` pull request could pass is the circularity of PROC-CI-002. A `# Process: PROC-…` marker in a workflow or script must name an existing requirement.
+
+| Field | Value |
+|---|---|
+| `status` | `partial` |
+| `owner` | continuous integration |
+| `trigger` | `architecture-check` on `metel-docs` (docs assets only); core CI (core and the pinned docs; website skipped; warnings only); `/cut-release` (all reachable repositories, `--strict`) |
+| `produces` | findings, and warnings for unlisted assets of other repositories |
+| `implemented by` | `metel-docs/architecture/tools/check_operations.py` |
+| `verified by` | `test_check_operations.py`; the real tree is clean |
+| `related` | PROC-CI-002, PROC-DOCS-009, PROC-RELEASE-008 |
+
+Partial because the assets of `metel-website` and `metel-docs-internal` are checked only where those repositories are checked out next to the others: locally and at release, not on every pull request.
