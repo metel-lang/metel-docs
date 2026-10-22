@@ -5,9 +5,9 @@ title: "Operations inventory"
 # Operations inventory
 
 Every workflow, script, hook and command in the four repositories, and the requirement each one
-implements. An entry marked `local` is a manual aid with no contract. Until the checker of
-metel-core#1507 exists this table is maintained by hand; an operational asset missing from it is a
-gap in the specification.
+implements. An entry marked `local` is a manual aid with no contract. The requirement cells are
+judgment and are written by hand; `check_operations.py` (PROC-CI-008) discovers the assets and fails
+or warns when one is missing from this table or a row names something that no longer exists.
 
 | Repository | Asset | Requirements |
 |---|---|---|
@@ -22,13 +22,12 @@ gap in the specification.
 | `metel-core` | `tools/check_doc_examples.py` | PROC-DOCS-010 |
 | `metel-core` | `tools/bump-docs.sh`, `tools/test_bump_docs.sh` | PROC-DOCS-003 |
 | `metel-core` | `tools/changelog-status.sh` | PROC-WORK-003, PROC-RELEASE-008 |
-| `metel-core` | `tools/check_inventory.sh` | PROC-CI-001 |
 | `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py` | PROC-CI-001, PROC-CI-006 |
 | `metel-core` | `metel-frontend/src/bin/gen_grammar.rs`, `check_stdlib_docs.rs` | PROC-DOCS-005 |
 | `metel-core` | `metel-interpreter/src/bin/move-check-count.rs` | local: a measurement `/milestone-integration-test` runs (PROC-WORK-007), no contract of its own |
 | `metel-core` | `AGENTS.md` | process document: PROC-WORK-001, PROC-WORK-002, PROC-WORK-003, PROC-WORK-008, PROC-CI-007 |
 | `metel-core` | `ROADMAP.md` | process document: PROC-WORK-004, PROC-WORK-005, PROC-WORK-006 |
-| `metel-core` | `RELEASING.md`, `PROCESSES.md` | process documents; they link here (PROC-RELEASE-001) |
+| `metel-core` | `RELEASING.md`, `PROCESSES.md` | process documents; they link here (PROC-RELEASE-001). `PROCESSES.md` holds only the pipeline diagram until metel-core#1534 |
 | `metel-docs` | `.github/workflows/architecture-check.yml`, `rfc-check.yml` | PROC-CI-003, PROC-DOCS-008, PROC-DOCS-009 |
 | `metel-docs` | `.github/workflows/check-examples.yml`, `.github/scripts/wait-for-core-binary.sh`, `test_wait_for_core_binary.sh` | PROC-CI-004, PROC-DOCS-010 |
 | `metel-docs` | `.github/workflows/check-mdx.yml`, `tools/mdx-check-site` | PROC-DOCS-011 |

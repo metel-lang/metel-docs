@@ -4,11 +4,11 @@ title: "Continuous integration"
 
 # Continuous integration
 
-What each repository's CI guarantees, in the state after ADR-0064. Source: the workflows, `.githooks`, `metel-core/PROCESSES.md`.
+What each repository's CI guarantees, in the state after ADR-0064. Source: the workflows, and `.githooks`.
 
 ### PROC-CI-001 — Core CI runs a fixed set of checks on every push and pull request to develop and main {#proc-ci-001}
 
-Jobs: `test / clippy / fmt` (format, clippy with pedantic lints, tests); `rfc.py check`; `Architecture evidence` (meaning of the architecture markers, then `check_architecture.py` over skipped and pending fixtures); `grammar.md up to date`; `runtime.md matches stdlib declarations`; `doc examples`; `inventory doc up to date`; `tools self-tests`; `clippy-allow ratchet`; `no post-freeze semantic name lookup`; `no flat module file beside its own directory`. On a push to `develop` only, `publish rolling develop binary` rebuilds the `develop-latest` pre-release.
+Jobs: `test / clippy / fmt` (format, clippy with pedantic lints, tests); `rfc.py check`; `Architecture evidence` (meaning of the architecture markers, then `check_architecture.py` over skipped and pending fixtures); `grammar.md up to date`; `runtime.md matches stdlib declarations`; `doc examples`; `tools self-tests`; `clippy-allow ratchet`; `no post-freeze semantic name lookup`; `no flat module file beside its own directory`. On a push to `develop` only, `publish rolling develop binary` rebuilds the `develop-latest` pre-release.
 
 | Field | Value |
 |---|---|

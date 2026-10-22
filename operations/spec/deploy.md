@@ -80,6 +80,15 @@ The receiving side exists. Nothing sends the event, so the six-hour schedule is 
 
 There is no automated path for a docs-only change (a typo, a rewritten section, a blog post) short of a version tag. Today the maintainer bumps the website's docs pointer by pull request, moves a release tag to redeploy, or builds and deploys with the hosting CLI. Tracked in metel-core#692.
 
+The manual procedure used today, run from a machine with the hosting CLI linked to the project:
+
+1. Merge the `metel-docs` pull request to its `main`.
+2. In `metel-website`, bump the `docs` submodule pointer to that commit, run `npm run typecheck && npm run build`, and push to `main`. No docs snapshot is cut; that happens only for a minor release (PROC-RELEASE-004).
+3. `npx vercel pull --environment=preview && npx vercel build && npx vercel deploy --prebuilt` produces a staging deployment, the same commands `deploy.yml` runs.
+4. Read the build output under `.vercel/output/static/` to confirm the fix is in it: the hosting provider's deployment protection redirects a plain request to the staging URL to a sign-in page.
+5. `npx vercel pull --environment=production && npx vercel promote <staging-url> --yes`, the promotion `promote.yml` performs.
+6. Request the production site directly, which has no deployment protection, to confirm the change is live.
+
 | Field | Value |
 |---|---|
 | `status` | `planned` |
