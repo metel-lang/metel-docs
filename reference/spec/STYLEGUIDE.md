@@ -139,8 +139,8 @@ retired days later. *After*: the paragraph that states the behaviour, followed b
 above; when the issue closes, delete the marker line. No record is written.
 
 The site renders the record's one-line `summary` (or the sentence written after the ID,
-when a rule needs its own wording), a link to the record, and chips from its `planned_for`
-and `rfc` fields. Write the marker where the limit applies: under the rule or heading it
+when a rule needs its own wording), a link to the record, and chips from its `tracked_by`
+(issue links) and `rfc` fields. Write the marker where the limit applies: under the rule or heading it
 qualifies. `check_architecture.py` requires each marker to cite an existing, active
 record of the kind its label names, and every active `GAP-*` to be cited in the chapter
 its `scope` names. If no record exists yet, write one; do not describe the limit in prose.

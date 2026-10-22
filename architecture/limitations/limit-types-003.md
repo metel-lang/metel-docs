@@ -6,6 +6,7 @@ scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-core#1338: implementing `Display` for records after RFC-0123's `where all R: Display` landed"
 disposition: planned
+tracked_by: metel-core#1340
 rfc: RFC-0174
 review: null
 ---

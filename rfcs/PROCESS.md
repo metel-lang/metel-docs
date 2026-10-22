@@ -302,8 +302,8 @@ down that it was the general answer.
     own `impl_tracking` issue. Never hand-write the rendered span underneath it —
     `rfc.py index --write-spec-origins` generates that, same as an origins backlink.
   - A `LIMIT-<AREA>-<NNN>` record (`architecture/limitations/`, ADR-0057 §4's shared
-    shape with `GAP-*`) with `disposition: planned`, `planned_for` this RFC's target
-    release, `rfc:` this RFC's id, and `## Resolution` naming the same tracking issue.
+    shape with `GAP-*`) with `disposition: planned`, `tracked_by` the tracking issue,
+    `rfc:` this RFC's id, and `## Resolution` naming the same tracking issue.
     Use `LIMIT-*`, never `GAP-*`, for this case — ADR-0057 §2's sorting test is exactly
     "the spec promises (or an accepted RFC will promise) something the implementation
     does not yet deliver," which is what every RFC between `3-integrated` and

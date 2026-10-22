@@ -6,6 +6,7 @@ scope: "reference/spec/ownership.md#spec.ownership.narrowing.legality-1"
 owner: language
 discovered_by: "maintainer note on `flow_state.rs` `moved_shallow_projections`; checked against reference/spec/ownership.md (Narrowing)"
 disposition: planned
+tracked_by: metel-core#900
 review: null
 ---
 
@@ -54,6 +55,6 @@ the always-on narrowing does not cover nested paths.
 ## Resolution
 
 Planned: RFC-0150 (Nested Row Narrowing, `1-under-review`) is tracked as
-metel-core#900, milestone v0.18.1. When it is accepted and implemented, a move
+metel-core#900. When it is accepted and implemented, a move
 of `root.a.b` narrows the row of `a` inside `root`'s residual, and this gap
 closes against that RFC.

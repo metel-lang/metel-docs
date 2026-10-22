@@ -81,7 +81,6 @@ These are stated so that nobody assumes a guarantee that does not exist.
   but only for the repositories it can reach: `metel-website` and `metel-docs-internal` assets are
   checked when those repositories sit next to the others, locally and at release.
 - The MDX check does not build `architecture`, `operations`, `rfcs` or `status` (PROC-DOCS-011).
-- Gap and limitation records name retired version numbers in `planned_for` (metel-core#1525).
 - No automated path publishes a docs-only change between releases (PROC-DEPLOY-006), and nothing
   sends the event that rebuilds the unreleased view (PROC-DEPLOY-005).
 - The spec fixture viewer embeds fixture source in every published version (PROC-DOCS-012).

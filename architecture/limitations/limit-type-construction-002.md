@@ -5,7 +5,7 @@ summary: "Overload sets are seeded by two different mechanisms; exporting them a
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "ADR-0038"
-disposition: planned
+disposition: known
 review: null
 ---
 
@@ -13,7 +13,7 @@ review: null
 
 An "exportable overload sets" mechanism — overloads carried in
 `GlobalExports`, resolved through ordinary imports like any other
-declaration — is future work, tracked as METEL-188. Today the graph-import
+declaration — is future work, not scheduled. Today the graph-import
 path and the single-program path (which performs no imports) seed overload
 sets through two different mechanisms rather than one shared one, because
 the shared mechanism doesn't exist yet.
@@ -33,6 +33,6 @@ into it by `SymbolId`.
 
 ## Resolution
 
-None yet — tracked as METEL-188. If it lands, ADR-0038 states the
+None yet: the earlier tracking issue (metel-core#258) was closed pending a language-design RFC that defines the model and settles shadow-versus-extend semantics; an implementation issue is opened once that RFC is accepted. If it lands, ADR-0038 states the
 graph-path seeding becomes an ordinary import and the single-program path
 keeps its existing seeding unchanged.
