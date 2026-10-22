@@ -947,7 +947,13 @@ one) is `T0012`
 [#1478](https://github.com/metel-lang/metel-core/issues/1478)).
 
 **Fix:** name the row with a `row`-kinded generic parameter and splice it as `..R`, or take the
-open record as a parameter, a `let` annotation or a closure parameter.
+open record as a parameter, a `let` annotation or a closure parameter. For a **return type**
+(a function, a method, an aspect method declaration or a closure annotation) the message lists
+what works instead: omit the return type so the exact record is inferred (private functions only;
+a `public` declaration needs an explicit type, `T0010`), write the record in full
+(`-> { x: i64, y: i64 }`), or name a `row` parameter when the row comes from an argument
+(`-> { x: i64, ..R }`). For a **written function type** it says to share one `R` between the
+parameter and the result when the callback maps records of one shape.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
