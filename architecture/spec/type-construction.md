@@ -46,7 +46,7 @@ Construction stamps the typed IR with the identities the frontend already produc
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6c6828cdbc94434f2debbd7cc6dabbef1cb82ac6 |
+| `last_reviewed` | 69cfa63c874aa18a07d0aafaea58ac8357084211 |
 | `related` | `arch.resolution.requirement-2`, `arch.resolution.requirement-3`, ADR-0054, `#1051`, `#1052` |
 
 ##### Requirement {#arch.type-construction.requirement-3}
