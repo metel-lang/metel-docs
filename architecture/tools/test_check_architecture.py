@@ -845,3 +845,105 @@ class FixtureCitationTests(unittest.TestCase):
 
     def test_missing_core_root_returns_no_fixtures(self):
         self.assertEqual([], ca.find_skipped_fixtures(self.tmp / "nonexistent"))
+
+    # -- `skip = "pending: #N"` (metel-core#1514) --------------------------------------------------
+    OPEN = staticmethod(lambda n: {"state": "open", "milestone": "v0.14.1"})
+
+    def check_pending(self, resolver, unresolved=None):
+        return ca.check_skip_fixture_citations(self.tmp, [], self.tmp, resolver, unresolved)
+
+    def test_pending_skip_for_an_open_scheduled_issue_passes(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(self.OPEN)
+        self.assertEqual([], [str(f) for f in findings])
+
+    def test_pending_skip_for_a_closed_issue_fails_naming_the_issue(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(lambda n: {"state": "closed", "milestone": "v0.14.1"})
+        self.assertEqual(1, len(findings), [str(f) for f in findings])
+        self.assertIn("metel-core#1480", str(findings[0]))
+        self.assertIn("stale", str(findings[0]))
+
+    def test_pending_skip_without_a_milestone_fails(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(lambda n: {"state": "open", "milestone": None})
+        self.assertTrue(any("no milestone" in str(f) for f in findings))
+
+    def test_pending_skip_for_a_missing_issue_fails(self):
+        self.write_fixture("a.toml", "pending: #999999")
+        findings, _ = self.check_pending(lambda n: {"missing": True})
+        self.assertTrue(any("does not exist" in str(f) for f in findings))
+
+    def test_pending_skip_with_an_unreachable_api_never_fails(self):
+        self.write_fixture("a.toml", "pending: metel-core#1480")
+        unresolved = []
+        findings, _ = self.check_pending(lambda n: None, unresolved)
+        self.assertEqual([], [str(f) for f in findings])
+        self.assertEqual([1480], unresolved)
+
+    def test_pending_skip_without_a_resolver_is_accepted_syntactically(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(None)
+        self.assertEqual([], [str(f) for f in findings])
+
+    def test_a_pending_skip_does_not_need_a_limit_record(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(self.OPEN)
+        self.assertFalse(any("cites no LIMIT-*" in str(f) for f in findings))
+
+
+class ReleaseGateTests(unittest.TestCase):
+    """`check_architecture.py --release-gate` (metel-core#1514): what blocks `/cut-release`."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.spec = self.tmp / "docs" / "reference" / "spec"
+        self.spec.mkdir(parents=True)
+        self.sources = self.tmp / "core" / "metel-interpreter" / "tests" / "integration" / "sources"
+        self.sources.mkdir(parents=True)
+
+    def gate(self, resolver, milestone="v0.14.1", with_core=True):
+        core = self.tmp / "core" if with_core else None
+        refs = ca.pending_references(self.spec, self.tmp, core)
+        return [str(f) for f in ca.release_gate_findings(refs, resolver, milestone)]
+
+    def test_references_come_from_markers_and_fixtures(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1\n```\n> **Pending** metel-core#2\n```\n")
+        (self.sources / "a.toml").write_text('[options]\nskip = "pending: #3"\n')
+        (self.sources / "b.toml").write_text('[options]\nskip = "LIMIT-X-001"\n')
+        refs = ca.pending_references(self.spec, self.tmp, self.tmp / "core")
+        self.assertEqual([1, 3], sorted(n for _, n in refs))
+        self.assertEqual([1], [n for _, n in ca.pending_references(self.spec, self.tmp, None)])
+
+    def test_an_issue_open_in_the_release_milestone_blocks(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        findings = self.gate(lambda n: {"state": "open", "milestone": "v0.14.1"})
+        self.assertEqual(1, len(findings), findings)
+        self.assertIn("still open in v0.14.1", findings[0])
+        self.assertIn("metel-core#1480", findings[0])
+
+    def test_an_issue_in_a_later_milestone_does_not_block(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        self.assertEqual([], self.gate(lambda n: {"state": "open", "milestone": "Ownership core"}))
+
+    def test_a_marker_without_a_milestone_blocks(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        self.assertTrue(any("no milestone" in f for f in self.gate(lambda n: {"state": "open", "milestone": None})))
+
+    def test_a_closed_issue_blocks_as_a_stale_marker(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        self.assertTrue(any("stale" in f for f in self.gate(lambda n: {"state": "closed", "milestone": "v0.14.1"})))
+
+    def test_an_unverifiable_issue_blocks_unlike_the_everyday_check(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        findings = self.gate(lambda n: None)
+        self.assertTrue(any("could not be verified" in f for f in findings), findings)
+
+    def test_a_pending_fixture_skip_blocks_like_a_marker(self):
+        (self.sources / "a.toml").write_text('[options]\nskip = "pending: #77"\n')
+        findings = self.gate(lambda n: {"state": "open", "milestone": "v0.14.1"})
+        self.assertTrue(any("metel-core#77" in f and "a.toml" in f for f in findings), findings)
+
+    def test_no_references_passes(self):
+        self.assertEqual([], self.gate(lambda n: {"state": "open", "milestone": "v0.14.1"}))

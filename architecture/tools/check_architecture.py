@@ -756,6 +756,21 @@ def gh_issue_resolver(number: int):
     return {"state": str(data.get("state", "")).lower(), "milestone": (data.get("milestone") or {}).get("title")}
 
 
+def pending_issue_problem(number: int, info: dict, what: str = "`> **Pending**`") -> str | None:
+    """Why `what` citing metel-core#N is no longer valid, given the resolver's answer, or None.
+    Valid while the issue exists, is open, and has a milestone (metel-core#1418)."""
+    if info.get("missing"):
+        return f"{what} cites metel-core#{number}, which does not exist"
+    if info.get("state") != "open":
+        return (
+            f"{what} cites metel-core#{number}, which is {info.get('state')}: it is stale; remove it "
+            f"(or convert it to a Gap/Limitation record if the part is deliberately left unimplemented)"
+        )
+    if not info.get("milestone"):
+        return f"{what} cites metel-core#{number}, which has no milestone; a pending part must be scheduled"
+    return None
+
+
 def check_pending_markers(language_spec_dir: Path, repo_root: Path, resolver=None, unresolved=None) -> list:
     """The `> **Pending** metel-core#N` markers in the Language Spec chapters (metel-core#1418):
     well formed, and (when a `resolver` is given) the issue exists, is open, and has a
@@ -779,12 +794,10 @@ def check_pending_markers(language_spec_dir: Path, repo_root: Path, resolver=Non
             if info is None:
                 if unresolved is not None:
                     unresolved.append(number)
-            elif info.get("missing"):
-                findings.append(Finding(rel, f"`> **Pending**` cites metel-core#{number}, which does not exist"))
-            elif info.get("state") != "open":
-                findings.append(Finding(rel, f"`> **Pending**` cites metel-core#{number}, which is {info.get('state')}: the marker is stale; remove it (or convert it to a Gap/Limitation record if the part is deliberately left unimplemented)"))
-            elif not info.get("milestone"):
-                findings.append(Finding(rel, f"`> **Pending**` cites metel-core#{number}, which has no milestone; a pending part must be scheduled"))
+                continue
+            problem = pending_issue_problem(number, info)
+            if problem:
+                findings.append(Finding(rel, problem))
     return findings
 
 
@@ -830,6 +843,10 @@ def lint_claim_length(spec_dir: Path, repo_root: Path) -> list[Finding]:
 # checkout, same structural gap `arch=[...]` cross-checking already documents; this only
 # runs with `--core`.
 FIXTURE_LIMIT_RE = re.compile(r"\bLIMIT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}\b")
+# `skip = "pending: #1234"` (metel-core#1514): the fixture is skipped only until an issue lands,
+# the transient case. Valid while the issue is open and has a milestone; a closed issue means the
+# skip must go (the fixture should pass now).
+FIXTURE_PENDING_RE = re.compile(r"^\s*pending:\s*(?:metel-core)?#(\d+)\b", re.IGNORECASE)
 EXEMPT_RE = re.compile(r"\bexempt\b", re.IGNORECASE)
 
 
@@ -852,7 +869,7 @@ def find_skipped_fixtures(core_root: Path) -> list[tuple[Path, str]]:
 
 
 def check_skip_fixture_citations(
-    core_root: Path, limit_records: list, repo_root: Path
+    core_root: Path, limit_records: list, repo_root: Path, resolver=None, unresolved=None
 ) -> tuple[list[Finding], list[Finding]]:
     """Findings: a skipped fixture cites a missing or inactive LIMIT-*, or cites neither a
     LIMIT-* nor "exempt". Warnings (not findings): an active LIMIT-* with no citing skip
@@ -865,6 +882,18 @@ def check_skip_fixture_citations(
 
     for path, reason in find_skipped_fixtures(core_root):
         rel = path.relative_to(core_root)
+        pending = FIXTURE_PENDING_RE.match(reason)
+        if pending:
+            number = int(pending.group(1))
+            info = resolver(number) if resolver is not None else {"state": "open", "milestone": "(unchecked)"}
+            if info is None:
+                if unresolved is not None:
+                    unresolved.append(number)
+            else:
+                problem = pending_issue_problem(number, info, f"`skip = \"pending: #{number}\"`")
+                if problem:
+                    findings.append(Finding(str(rel), problem))
+            continue
         ids = FIXTURE_LIMIT_RE.findall(reason)
         if not ids:
             if not EXEMPT_RE.search(reason):
@@ -890,6 +919,48 @@ def check_skip_fixture_citations(
             continue
         warnings.append(Finding(record_id, "active limitation has no citing skipped fixture and names no metel-core# reproduction; unevidenced"))
     return findings, warnings
+
+
+def pending_references(language_spec_dir: Path, repo_root: Path, core_root: Path | None = None) -> list[tuple[str, int]]:
+    """Every pending reference in the tree as `(where, issue number)`: the `> **Pending**` markers
+    in the Language Spec chapters and, with a metel-core checkout, the `skip = "pending: #N"`
+    fixtures (metel-core#1514)."""
+    refs: list[tuple[str, int]] = []
+    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+        if path.name.upper() == "STYLEGUIDE.MD":
+            continue
+        text = FENCE_RE.sub("", path.read_text())
+        for m in PENDING_MARKER_LINE_RE.finditer(text):
+            ref = PENDING_MARKER_REF_RE.match(m.group(1))
+            if ref:
+                refs.append((str(path.relative_to(repo_root)), int(ref.group(1))))
+    if core_root is not None:
+        for path, reason in find_skipped_fixtures(core_root):
+            pending = FIXTURE_PENDING_RE.match(reason)
+            if pending:
+                refs.append((str(path.relative_to(core_root)), int(pending.group(1))))
+    return refs
+
+
+def release_gate_findings(references, resolver, milestone: str) -> list[Finding]:
+    """The release gate (metel-core#1514, run by `/cut-release`): a pending reference blocks the
+    release while its issue is still open in the milestone being released, or has no milestone,
+    or is gone, or cannot be verified. A part that is not done by release is either implemented
+    (the marker leaves with the issue), moved to a later milestone, or converted to a Gap or
+    Limitation record. An unreachable GitHub is a failure here, unlike in the everyday check: a
+    gate cannot pass what it could not verify."""
+    findings: list[Finding] = []
+    for where, number in references:
+        info = resolver(number)
+        if info is None:
+            findings.append(Finding(where, f"pending on metel-core#{number}, which could not be verified (GitHub not reachable); the release gate cannot pass an unverified pending part"))
+            continue
+        problem = pending_issue_problem(number, info, "a pending part")
+        if problem:
+            findings.append(Finding(where, problem))
+        elif info.get("milestone") == milestone:
+            findings.append(Finding(where, f"pending on metel-core#{number}, which is still open in {milestone}: implement it, move it to a later milestone, or convert the part to a Gap/Limitation record"))
+    return findings
 
 
 def _pending_excused_lines(lines: list[str]) -> set[int]:
@@ -1114,7 +1185,23 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--check", action="store_true", help="CI gate: exit 1 on any finding")
     p.add_argument("--core", type=Path, help="a metel-core checkout, to also check skipped-fixture LIMIT-* citations (metel-core#1219)")
+    p.add_argument(
+        "--release-gate",
+        metavar="MILESTONE",
+        help="the release gate (metel-core#1514): fail while a pending marker or fixture cites an issue "
+        "still open in MILESTONE, without a milestone, or that cannot be verified. Runs only this gate",
+    )
     args = p.parse_args()
+
+    if args.release_gate:
+        refs = pending_references(LANGUAGE_SPEC_DIR, REPO_ROOT, args.core)
+        gate = release_gate_findings(refs, gh_issue_resolver, args.release_gate)
+        scope = "spec markers" + (" and skipped fixtures" if args.core else " (pass --core to include skipped fixtures)")
+        print(f"Release gate for {args.release_gate}: {len(refs)} pending reference(s) in {scope}.")
+        for f in gate:
+            print(f"  - {f}")
+        print("Release gate: PASS" if not gate else f"Release gate: {len(gate)} blocking finding(s).")
+        return 1 if gate else 0
 
     pending_unresolved: list = []
     findings = run_checks(pending_resolver=gh_issue_resolver, pending_unresolved=pending_unresolved)
@@ -1125,7 +1212,7 @@ def main() -> int:
     fixture_warnings: list = []
     if args.core:
         fixture_findings, fixture_warnings = check_skip_fixture_citations(
-            args.core, limitation_records_for_fixtures, REPO_ROOT
+            args.core, limitation_records_for_fixtures, REPO_ROOT, gh_issue_resolver, pending_unresolved
         )
         findings.extend(fixture_findings)
 

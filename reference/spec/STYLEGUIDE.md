@@ -123,6 +123,17 @@ unimplemented in a shipped version, convert the marker to a `Gap` or `Limitation
 is the only path that leaves it in a release. Prose beside a `Pending` marker (its own paragraph
 and the one before it) is not flagged by the limit-phrasing lint.
 
+A fixture that documents the same not-yet-built part is skipped with `skip = "pending: #1234"`
+(a `[options]` or top-level `skip` in its sidecar) instead of a `LIMIT-*` citation. The same rule
+applies: valid while the issue is open and has a milestone, a failure once it is closed.
+
+**Release gate.** `/cut-release` runs `check_architecture.py --release-gate <milestone> --core .`.
+It refuses a tag while any pending marker or `pending:` fixture cites an issue still open in the
+milestone being released, an issue with no milestone, a closed or missing issue, or one it could
+not verify (GitHub unreachable: a gate cannot pass what it could not verify, unlike the everyday
+check, which skips an unreachable API). A pending part that is not done at release is implemented
+(the marker leaves with the issue), moved to a later milestone, or converted to a record.
+
 *Before* (spec written ahead of the code): a `GAP-*` record is filed, and has to be resolved and
 retired days later. *After*: the paragraph that states the behaviour, followed by the one marker
 above; when the issue closes, delete the marker line. No record is written.
