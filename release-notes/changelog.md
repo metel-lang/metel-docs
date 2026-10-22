@@ -29,6 +29,14 @@ title: "Metel Language Changelog"
   `cannot unify { x: ?1 } with { x: i64, y: i64 }`, with an internal inference variable and no
   hint which field was wrong. The code stays `T0001`; the same mismatch through a row bound is
   `T0012` in the same words (`metel-core#1483`).
+- `T0032` for an anonymous open record (`{ x: T, .. }`) in a return type no longer advises naming a
+  row parameter alone, which a function with no row input cannot do. It lists what works in that
+  position. A private function: omit the return type so the exact record is inferred, write the
+  record in full, or name a row parameter when the row comes from an argument. A method or an
+  aspect method declaration: write the record in full or name a row parameter (leaving the type
+  out makes it return `()`). A closure: omit the annotation or write the record in full. In a
+  written function type it says to share one `R` between the parameter and the result
+  (`metel-core#1484`).
 
 ## v0.14.0
 
