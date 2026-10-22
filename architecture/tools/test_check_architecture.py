@@ -465,7 +465,7 @@ class GapRecordTests(ArchitectureCorpusCase):
         self.assertEqual([], self.findings())
 
     def test_planned_needs_an_rfc_or_issue(self):
-        text = VALID_GAP.replace("disposition: known", "disposition: planned")
+        text = VALID_GAP.replace("disposition: known", "disposition: planned").replace("review: null", "tracked_by: metel-core#239\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertTrue(any("`planned` requires an RFC" in f for f in self.findings()))
         ok = text.replace("None yet.", "Tracked as #239.")
@@ -590,14 +590,24 @@ class SpecLimitMarkerTests(GapRecordTests):
         self.chapter_with("```\n> **Gap** GAP-TYPES-009\n```")
         self.assertEqual([], self.marker_findings(require_gap_citations=False))
 
-    def test_planned_for_must_be_a_release(self):
-        text = VALID_GAP.replace("review: null", "planned_for: soon\nreview: null")
+    def test_planned_for_is_retired(self):
+        text = VALID_GAP.replace("review: null", "planned_for: v0.16.0\nreview: null")
         self.write_gap_corpus(gap_text=text)
-        self.assertTrue(any("must be a release" in f for f in self.marker_findings()))
+        self.assertTrue(any("`planned_for` is retired" in f and "tracked_by" in f for f in self.marker_findings()))
+
+    def test_tracked_by_must_look_like_an_issue(self):
+        text = VALID_GAP.replace("review: null", "tracked_by: soon\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("`tracked_by` entry `soon`" in f for f in self.marker_findings()))
+
+    def test_a_planned_record_must_name_its_tracking_issue(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: planned").replace("None yet.", "Tracked as #239.")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("must name its tracking issue" in f for f in self.marker_findings()))
 
     def test_valid_schedule_fields_pass(self):
         self.write_rfc("2-accepted", "0122")
-        text = VALID_GAP.replace("review: null", "planned_for: v0.16.0\nrfc: RFC-0122\nreview: null")
+        text = VALID_GAP.replace("review: null", "tracked_by: metel-core#1293, metel-core#12\nrfc: RFC-0122\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertEqual([], self.marker_findings())
 
@@ -607,9 +617,58 @@ class SpecLimitMarkerTests(GapRecordTests):
         self.assertTrue(any("RFC-0999" in f and "does not exist" in f for f in self.marker_findings()))
 
     def test_schedule_fields_are_rejected_on_a_finished_record(self):
-        text = VALID_GAP.replace("disposition: known", "disposition: superseded").replace("review: null", "planned_for: v0.16.0\nreview: null")
+        text = VALID_GAP.replace("disposition: known", "disposition: superseded").replace("review: null", "tracked_by: metel-core#5\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertTrue(any("remove them from a resolved or superseded record" in f for f in self.marker_findings()))
+
+
+class TrackedByStateTests(GapRecordTests):
+    """The state of the issues a record's `tracked_by` names (metel-core#1525): resolved through the
+    same resolver as pending markers, so a fake one stands in for GitHub."""
+
+    def corpus(self, tracked="metel-core#7"):
+        text = VALID_GAP.replace("disposition: known", "disposition: planned").replace("review: null", f"tracked_by: {tracked}\nreview: null").replace("None yet.", "Tracked as #7.")
+        self.write_gap_corpus(gap_text=text)
+
+    def problems(self, answers, tracked="metel-core#7"):
+        self.corpus(tracked)
+        warnings, unresolved = [], []
+        findings = self.run_checks(pending_resolver=lambda n: answers.get(n), pending_unresolved=unresolved, tracked_warnings=warnings)
+        return [str(f) for f in findings], [str(w) for w in warnings], unresolved
+
+    def test_an_open_scheduled_issue_is_clean(self):
+        self.assertEqual(([], [], []), self.problems({7: {"state": "open", "milestone": "Drop and partial moves"}}))
+
+    def test_a_missing_issue_is_a_finding(self):
+        findings, _, _ = self.problems({7: {"missing": True}})
+        self.assertTrue(any("metel-core#7, which does not exist" in f for f in findings))
+
+    def test_a_record_whose_every_issue_is_closed_is_a_stale_plan_warning(self):
+        findings, warnings, _ = self.problems({7: {"state": "closed", "milestone": "v0.14.0"}})
+        self.assertEqual([], findings)
+        self.assertTrue(any("every issue in `tracked_by` is closed" in w for w in warnings))
+
+    def test_one_open_issue_keeps_the_plan_alive(self):
+        _, warnings, _ = self.problems({7: {"state": "closed", "milestone": "x"}, 8: {"state": "open", "milestone": "y"}}, "metel-core#7, metel-core#8")
+        self.assertEqual([], warnings)
+
+    def test_an_open_issue_without_a_milestone_is_a_warning(self):
+        _, warnings, _ = self.problems({7: {"state": "open", "milestone": None}})
+        self.assertTrue(any("has no milestone" in w for w in warnings))
+
+    def test_an_unreachable_github_is_reported_not_failed(self):
+        findings, warnings, unresolved = self.problems({})
+        self.assertEqual(([], []), (findings, warnings))
+        self.assertEqual([7], unresolved)
+
+    def test_the_release_gate_blocks_a_stale_plan_and_an_unverifiable_one(self):
+        self.corpus()
+        recs = ca.scheduled_records(self.tmp)
+        self.assertEqual([], [str(f) for f in ca.tracked_gate_findings(recs, self.tmp, lambda n: {"state": "open", "milestone": "m"})])
+        stale = [str(f) for f in ca.tracked_gate_findings(recs, self.tmp, lambda n: {"state": "closed", "milestone": "m"})]
+        self.assertTrue(any("is closed" in f for f in stale))
+        blind = [str(f) for f in ca.tracked_gate_findings(recs, self.tmp, lambda n: None)]
+        self.assertTrue(any("could not be verified" in f for f in blind))
 
 
 class LimitPhrasingLintTests(unittest.TestCase):

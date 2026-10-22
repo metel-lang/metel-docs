@@ -61,8 +61,9 @@ version, and a pending part becomes one of them only by an explicit conversion a
 
 Frontmatter: `id`, `title`, `summary`, `scope`, `owner`, `discovered_by`, `disposition`,
 `review` (required once `disposition: accepted`), plus the optional scheduling pair
-`planned_for: vX.Y.Z` / `rfc: RFC-NNNN[, ...]` a Language Spec chapter's one-line marker
-renders from. Body: `## Limitation`/`## Gap`, `## Impact`, `## Affects`, `## Resolution`.
+`tracked_by: metel-core#N[, ...]` / `rfc: RFC-NNNN[, ...]` a Language Spec chapter's one-line marker
+renders from. A record never names a version: the tracking issue's milestone is the schedule, and a version is chosen only at a cut (`ROADMAP.md`).
+`planned_for` is retired. Body: `## Limitation`/`## Gap`, `## Impact`, `## Affects`, `## Resolution`.
 
 **Disposition vocabulary** (`known`, `accepted`, `mitigated`, `planned`, `resolved`,
 `superseded`) and the rules `check_architecture.py` enforces on it:
@@ -71,8 +72,12 @@ renders from. Body: `## Limitation`/`## Gap`, `## Impact`, `## Affects`, `## Res
 - `resolved` requires real exit evidence in `## Resolution`, not a placeholder — for a
   `GAP-*` specifically, that means an `affects` RFC at stage `3-integrated` or
   `4-implemented`; a closed issue alone is never enough for either kind.
-- `planned` requires an RFC in `affects` or an issue reference in `## Resolution`
-  (`GAP-*`); `LIMIT-*`'s own `planned` check is looser (schema only, no forced RFC
+- `planned` requires `tracked_by: metel-core#N` (both kinds), and for `GAP-*` also an RFC in
+  `affects` or an issue reference in `## Resolution`. The state of those issues is read from GitHub:
+  a tracked issue that does not exist fails; a record whose every tracked issue is closed (the plan
+  has gone stale: resolve it, or re-plan with a new issue, or make it `known` if nothing is
+  scheduled) or whose open issue has no milestone is a warning, and `--release-gate` refuses to
+  tag on it (metel-core#1525); `LIMIT-*`'s own `planned` check is looser (schema only, no forced RFC
   linkage) — this asymmetry is real, not an oversight described elsewhere in this
   document, and is worth knowing before assuming the two kinds are checked identically.
 - `known`/`accepted`/`mitigated`/`planned` count as **active** for every "does a marker
@@ -326,7 +331,7 @@ carry a one-line pointer to an **Architecture** Atlas record —
 `> **Gap** GAP-X-001` or `> **Limitation** LIMIT-X-001` (metel-core#1235,
 `check_architecture.py`'s `SPEC_LIMIT_MARKER_RE`, deliberately label-generic — it accepts
 either label in either spec tree). The website renders the record's summary and its
-`planned_for`/`rfc` chips into that line at build time; the chapter text never copies them
+`tracked_by`/`rfc` chips into that line at build time; the chapter text never copies them
 by hand, so they cannot go stale independently of the record. Real example
 (`reference/spec/functions.md:930`):
 

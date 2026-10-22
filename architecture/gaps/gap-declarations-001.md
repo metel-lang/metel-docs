@@ -5,8 +5,7 @@ summary: "A tuple cannot implement an aspect; use a named struct. An anonymous r
 scope: "reference/spec/declarations.md#spec.declarations.structural-aspect-bounds.legality-6"
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; `reference/spec/types.md` (Planned for v0.14.0 note)"
-disposition: planned
-planned_for: v0.14.0
+disposition: known
 rfc: RFC-0061
 review: null
 ---
@@ -36,5 +35,7 @@ using a named struct instead. Auto-derived aspects are unaffected.
 
 ## Resolution
 
-Records: resolved by metel-core#1306 item 8. Tuples: planned for v0.14.0, tracked as
-metel-core#239.
+Records: resolved by metel-core#1306 item 8. Tuples: not scheduled. metel-core#239 and #1217 closed by
+rejecting the impl with a diagnostic (`T0001`, "cannot `extend` a tuple type"), the path those issues
+themselves recommended, so the gap stands until the language decides between per-arity boilerplate and
+variadic generics; no issue tracks that decision yet.

@@ -120,7 +120,7 @@ No implementation starts below the integrated stage. Moving to integrated needs 
 
 ### PROC-DOCS-009 — Gaps and limitations are records with a lifecycle {#proc-docs-009}
 
-The sorting test asks whether a fully correct implementation of the current spec would still behave this way (Gap) or the spec promises more than the code delivers (Limitation); if the spec is clear and the code is wrong it is a bug and an issue. A record is reproduced on `develop` before it is written. Known weakness: `planned_for` still names retired version numbers (metel-core#1525).
+The sorting test asks whether a fully correct implementation of the current spec would still behave this way (Gap) or the spec promises more than the code delivers (Limitation); if the spec is clear and the code is wrong it is a bug and an issue. A record is reproduced on `develop` before it is written. A record never names a version: a `planned` record names the issue that tracks it (`tracked_by`), whose milestone is its schedule. A plan whose every issue is closed, or whose open issue has no milestone, is a warning that blocks the release gate, so a plan cannot go stale unnoticed.
 
 | Field | Value |
 |---|---|
