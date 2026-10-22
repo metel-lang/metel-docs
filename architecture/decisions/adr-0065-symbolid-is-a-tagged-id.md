@@ -41,15 +41,23 @@ Done against `develop` at the merge of #1547. Method is stated so the result can
 | Question | Finding | Method |
 |---|---|---|
 | Does code branch on the numeric value? | One site: the evaluator's `id.0 >= OVERLOAD_SYM_START`, selecting the error for a missing overload value. | grep for `.0` on `SymbolId`-typed bindings, `OVERLOAD_SYM_START`, `USER_SYM_START` outside `symbols.rs` |
-| Does anything depend on `SymbolId`'s ordering? | In `metel-frontend`'s library the only consumer of `SymbolId: Ord` is `BindingId`'s own derived `Ord` (`BindingId::Global(SymbolId)`, `identity/mod.rs`). No `BTreeMap`/`BTreeSet` keyed by `SymbolId` and no sort over `SymbolId`s was found. Whether anything sorts `BindingId`s was **not** checked, and the interpreter crate was **not** compiled for this (rustc stopped at the first failing crate). | removed `PartialOrd, Ord` from `SymbolId` and built; reverted |
+| Does anything depend on `SymbolId`'s ordering? | No. With `PartialOrd, Ord` removed from `SymbolId` and from `BindingId` (the only type whose derive needed it, via `BindingId::Global(SymbolId)`), the whole workspace builds, interpreter and every test target included, except four `sort()` calls on `BindingId` in `identity/tests.rs` (lines 130, 150, 339, 487), which normalise a set of ids before comparing it. No production code and nothing in `metel-interpreter` orders ids. | removed both derives and ran `cargo build --workspace --all-targets --keep-going`, then `cargo build -p metel --all-targets`; reverted |
 | Is the number hashed into other ids? | Yes. `InheritedMethodTarget::Nominal(SymbolId)` derives `Hash` and is a `LexicalPath` component, and `LocalId`/`RefId` hash that path. So the `LocalId`s of inherited-default method bodies depend on the numeric `SymbolId` of their nominal target. Declared ids are a declaration's rank in the program's sorted list (`LIMIT-NAME-RESOLUTION-004`), so by that record they shift when a program adds or removes a declaration. The effect on `LocalId` stability was read from the code and the record, **not** demonstrated by an experiment. | read `identity/lexical_path.rs`, `identity/allocate.rs` |
 | Who allocates overload ids? | Two sites in `type_checking/overload/mod.rs`: per-module table construction, and the once-per-process core table. | grep `next_overload_symbol` |
+| Does every overloaded name have a `Declared` symbol, including across imports? | Yes. The resolver interns every named top-level declaration, `Fun` included, under `(module, name)` and `intern` dedups on that key, so same-named functions in one module share exactly one id and the same name in two modules gets two. A throwaway test (discarded) resolved two modules each defining `f` twice and got `f` = 1000 and `a::f` = 1002, one entry per defining module. An imported overload entry already carries the *declaring* module's ids, and a module that declares its own `fun` of that name shadows imported groups entirely, so a group id is always the defining module's. Overloads are top-level free functions only; impl methods are not in the table. | read `intern_all_symbols`, `decl_any_name`, `build_overload_table`; scratch test |
+| Is the resolver's symbol map reachable where the table is built? | In the module-graph path, yes: `check_one_module` holds `names: &ResolvedNames` and passes `Some(&names.symbols)` into `check_impl_with_report`, which builds the table. But `build_overload_table` and `build_table_from_decls` take only declarations and a registry and group by name *string*; the symbols are not passed to them today. The structural id therefore needs `symbols` added to those signatures. The `Option` is `None` only in `check_impl`, which is `#[allow(dead_code)]`. | read `type_checking/mod.rs` |
+| What does a larger id cost? | Measured as an upper bound. `SymbolId` widened to a 16-byte, 16-aligned `u128` (larger than the 12-byte enum) needed only five casts inside `symbols.rs` and the evaluator's one range test to compile. On a generated program of 1,200 structs, 2,400 ordinary functions, 80 overload definitions (40 overloaded names) and about 880 calls (`metel`, debug build, check plus run), peak memory over three runs each was 138.3 MB (137.9, 138.2, 138.8) against 140.0 MB (139.5, 140.1, 140.4): +1.7 MB, about +1.2%, with no change in run time (about 25 s either way). One program and one build profile; the data layout, not the profile, drives this. | `big_symbolid.mtl`; Python `resource.getrusage` on the child |
 | How widely is the constructor used? | 47 non-test `SymbolId(…)` construction sites; 48 files mention `SymbolId` at all; tests mint ids by number (`SymbolId(1000)`). | grep |
 
-Three consequences for the decision. The set of code that *interprets* the number is tiny, so a type
-that replaces the number costs mostly mechanical edits, not redesign. The hash dependency means the
-type's `Hash` is part of the identity contract, not an implementation detail. And the unchecked items
-above are a prerequisite for the migration, not a footnote (see Sequencing).
+Three consequences for the decision. The set of code that *interprets* the number is tiny (one range
+test; the 16-byte build needed five casts in `symbols.rs` and that one test), so a type that replaces the
+number costs mostly mechanical edits, not redesign. The hash dependency means the type's `Hash` is part
+of the identity contract, not an implementation detail. And the size is not a reason to hold back.
+
+Still not checked: the `LocalId`-stability effect of the hash dependency was read from the code and
+`LIMIT-NAME-RESOLUTION-004`, not reproduced, and nothing pins a literal `LocalId` or `SymbolId` value
+outside the tests that were found by the build above (a search for tests asserting a numeric id was not
+made beyond that).
 
 ## Decision
 
@@ -81,7 +89,7 @@ minted `SymbolId(1000)` use a `#[cfg(test)]` constructor. Kind tests become matc
 (`matches!(id, SymbolId::Overload { .. } | SymbolId::CoreOverload(_))`), and an exhaustive `match` on
 `SymbolId` forces a consumer to consider every kind when one is added.
 
-### 3. Overload identity is structural, not counted (recommended; see Open question 1)
+### 3. Overload identity is structural, not counted
 
 An overload definition is identified by the symbol of the overloaded name and its position among that
 name's overloads:
@@ -94,7 +102,8 @@ name's overloads:
   core table is still built once per process, but its ids no longer depend on a counter's value at the
   moment of first use; they are the same in every process and every compilation.
 
-This is the shape ADR-0063 already uses for impl-method bodies ("the resolved method-group symbol and
+Construction requires passing the resolver's `symbols` map into `build_overload_table` (it is not an
+input today; see the audit). This is the shape ADR-0063 already uses for impl-method bodies ("the resolved method-group symbol and
 a definition ordinal within that group"), and it carries the same caveat: reordering overloads of one
 name is a structural edit and changes their ids. It fixes `LIMIT-NAME-RESOLUTION-002` and makes
 ADR-0054's reproducibility statement true for overloads.
@@ -103,9 +112,10 @@ ADR-0054's reproducibility statement true for overloads.
 
 `Hash` is derived and is part of the identity contract: `InheritedMethodTarget::Nominal(SymbolId)`
 feeds it into `LocalId`/`RefId` hashes, so a change to the derived hash changes those ids' values
-once, at the migration. `Ord` is kept only while `BindingId` derives it; if no sort over `BindingId`
-exists (Sequencing, step 1) both derives are removed, so no code can come to depend on the order of
-kinds, which carries no meaning.
+once, at the migration. `PartialOrd` and `Ord` are **not** derived on `SymbolId`, and are removed from
+`BindingId` with it: the audit found nothing outside four test sorts that needs them, and an order over
+kinds carries no meaning that code should come to rely on. The four test sites compare sets and use a
+sorted-by-debug-string or hash-set comparison instead.
 
 ## Consequences
 
@@ -116,8 +126,8 @@ become reproducible per graph, closing `LIMIT-NAME-RESOLUTION-002`, and `core_ov
 depending on call order.
 
 **Cost.** The id grows from 4 to 12 bytes with the structural overload variant (8 without it), in a
-type that is a hash key and stored widely; this has not been measured and should be before the
-migration is accepted. The `SymbolId(n)` constructor disappears from 47 sites and the tests that use
+type that is a hash key and stored widely. Measured as an upper bound with a 16-byte id, the effect on
+peak memory of a large generated program was about +1.2% and none on run time (see the audit). The `SymbolId(n)` constructor disappears from 47 sites and the tests that use
 it. The numeric values of `LocalId`/`RefId` for inherited-default bodies change once. Anything that
 pins a literal id value in a test changes with it.
 
@@ -138,8 +148,9 @@ allocator. Right choice if the migration's cost is judged to outweigh the gain.
 **B. A private `u32` with the kind in the high bits and checked constructors.** Keeps the id at 4
 bytes and `Copy`, and makes a cross-kind collision unconstructible outside the module. It does not
 give an exhaustive `match`, the payload is capped (about 2^28 per kind), and the kind is still decoded
-from bits, so it is Alternative A with a better lock. It is the credible fallback if the size
-measurement in the Cost paragraph goes badly.
+from bits, so it is Alternative A with a better lock. The size measurement did not go badly, so
+it is no longer needed as a fallback; it remains the cheaper option if the exhaustive `match` is judged
+not worth having.
 
 **C. One newtype per kind (`TypeSymbol`, `FunctionSymbol`, …).** The strongest static typing, since a
 function can demand the kind it needs. But most of the 48 files that mention `SymbolId` handle several
@@ -149,39 +160,44 @@ anyway; this is Decision 1 spread over more types.
 **D. A per-compilation counter for overloads, with `CoreOverload` as a separate variant.** The smaller
 change for `LIMIT-NAME-RESOLUTION-002`: `Overload(u32)` from an allocator that restarts per graph.
 Reproducible only if the order in which overload tables are built is itself deterministic, which is
-one more thing to keep true. See Open question 1.
+one more thing to keep true. Not chosen: the audit found the structural form workable, so the counter's
+ordering dependency can be avoided outright.
 
 ## Open questions
 
-1. **Overload identity: structural `{ group, ordinal }` (Decision 3) or a per-graph counter
-   `Overload(u32)` (Alternative D)?** Structural has no ordering dependency but needs the overloaded
-   name to have a `Declared` symbol in every case, which has not been verified (the resolver's
-   `overloaded_names` suggests it does; a module that defines overloads of a name it also imports is the
-   case to check) and makes the id 12 bytes. The counter keeps the id at 8 bytes but depends on table
-   build order. Recommended: structural, if the check passes.
-2. **Is `Ord` kept on `SymbolId`?** Only if something orders `BindingId`s. The audit left that open.
-3. **Should `Declared` be split into std and user now?** `LIMIT-NAME-RESOLUTION-004` argues std
+Settled by the audit (recorded so the reasoning is not lost):
+
+1. **Overload identity** is structural `{ group, ordinal }` (Decision 3). Every overloaded name has a
+   `Declared` symbol in its defining module, imports carry the declaring module's ids and shadowing is
+   total, so the group id cannot collide; the only added work is passing `symbols` to the table builder.
+2. **`Ord` is dropped** (Decision 4); only four test sorts used it.
+3. **Size does not decide it.** About +1.2% peak memory at a 16-byte upper bound.
+
+Still open:
+
+4. **Should `Declared` be split into std and user now?** `LIMIT-NAME-RESOLUTION-004` argues std
    declarations should have stable ids across programs, which a `Std(u32)` variant could give, but that
    is the separate generation-from-`core.mtl` work and is left out here.
-4. **Does the size matter?** A measurement of `SymbolId`'s share of a representative compile's memory
-   (the type registry and the runtime symbol registry hold the most) decides between Decision 1 as
-   written and Alternative B.
+5. **Is the structural overload ordinal acceptable as an edit-sensitive id?** Reordering overloads of one
+   name changes their ids, as reordering impl variants does under ADR-0063. If a consumer needs ids that
+   survive reordering, the ordinal would have to come from the parameter types instead, which is
+   larger than this ADR.
 
 ## Sequencing
 
 Each step is independently reviewable and leaves the suite green; none is started by this ADR.
 
-1. **Close the unchecked audit items.** Build the whole workspace, interpreter included, with
-   `Ord` removed from `SymbolId` and list what breaks; check whether any `BindingId` is sorted;
-   check the overloaded-name case in Open question 1; measure the size (Open question 4). This
-   settles Open questions 1, 2 and 4 and amends this ADR before any code changes.
-2. **Introduce the enum behind the existing surface.** `SymbolId` becomes the enum with `Declared`,
+0. **Audit** (done, recorded above). It settled the former open questions 1, 2 and 4.
+1. **Introduce the enum behind the existing surface.** `SymbolId` becomes the enum with `Declared`,
    `BlockLocal` and `Builtin`; `USER_SYM_START` and the `SYM_*` constants keep working through
-   constructors, the ranges are removed, and `Overload`/`CoreOverload` stay a single temporary variant
-   fed by the existing counter. Regenerate any test that pinned an inherited-default `LocalId` value.
-3. **Split the overload ids** per Decision 3 (or Alternative D), delete the process-global counter and
-   close `LIMIT-NAME-RESOLUTION-002`.
-4. **Retire the range machinery and its tests**, replace them with the tests of the new invariants (no
+   constructors, the ranges are removed, `Ord` is removed from `SymbolId` and `BindingId` and the four
+   test sorts are rewritten, and `Overload`/`CoreOverload` stay a single temporary variant fed by the
+   existing counter. Replace the evaluator's range test with a match. Regenerate any test that pinned an
+   inherited-default `LocalId` value.
+2. **Split the overload ids** per Decision 3: pass `symbols` into `build_overload_table`, introduce
+   `Overload { group, ordinal }` and `CoreOverload(n)`, delete the process-global counter and close
+   `LIMIT-NAME-RESOLUTION-002`.
+3. **Retire the range machinery and its tests**, replace them with the tests of the new invariants (no
    cross-kind collision by construction; core overload ids identical across two compilations in one
    process; overload ids identical across two builds of the same graph), and update Engineering
    Standards 2 and 11.
