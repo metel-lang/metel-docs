@@ -5,7 +5,7 @@ summary: "User, overload and block-local ids share one `u32` split into ranges b
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
 discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -39,10 +39,22 @@ There is no observable symptom, so no reproducing fixture.
 ## Affects
 
 - `arch.name-resolution.requirement-1`
-- `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
+- `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `SymbolRange`, the declared ranges, `allocate_from`, `allocate_down`)
 - `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`fresh_local_type_id`)
 
 ## Resolution
 
-None yet. Typed allocators (one owner for the whole space, with range checks
-and a private `map`) would turn the convention into an invariant.
+Resolved by metel-core#1542. `identity/symbols.rs` declares the whole space as six named ranges
+(builtin types, builtin aspects, stdlib reserved, user, overload, block-local) and rejects, with a
+`const` assertion, ranges that overlap, are empty or are out of order, so editing one into its
+neighbour is a compile error. Each allocator now stops at the end of its range instead of crossing
+it: `SymbolTable::intern` asserts it stays inside the user range, the overload counter allocates
+through `allocate_from` (a checked `fetch_update` that panics instead of wrapping), and the type
+engine's descending block-local allocator, which used `saturating_sub` and would have reused one id
+forever at the bottom, uses `allocate_down` over its own range (the record's third allocator, now
+bounded below as well as above). `SymbolTable.map` is private, with `map()` and `into_map()`. Tests
+cover the range check, each allocator's exhaustion and the table seeding.
+
+What this does not do: the kind of a `SymbolId` is still recovered by inspecting the number (the
+evaluator tests `id.0 >= OVERLOAD_SYM_START`). Making a kind collision unrepresentable needs a tagged
+id, tracked in metel-core#1546, which would also retire the ranges.

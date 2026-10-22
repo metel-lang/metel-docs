@@ -47,9 +47,10 @@ deliberately excluded.
 (`BindingId`, `LocalId`) — one owner, checked-range construction. Violating, currently
 live: `SymbolId`'s space is split across three independent allocators (`SymbolTable`'s
 own counter, the overload table's process-global `AtomicU32`, `typeinference`'s
-descending block-local counter) — `LIMIT-NAME-RESOLUTION-002/003/004/005`, with two
+descending block-local counter) — `LIMIT-NAME-RESOLUTION-002/004/005`, with two
 concrete bugs already caused: two impls, and separately two overloaded methods, each
-pair silently sharing one `SymbolId`.
+pair silently sharing one `SymbolId`. The ranges are declared and checked since
+metel-core#1542; one owner of the whole id is metel-core#1546.
 
 **Enforcement.** None; caught by review recognizing the shape. A structural checker akin
 to Standard 3's is a natural follow-up once the `SymbolId` unification those records call
@@ -58,7 +59,7 @@ for lands.
 **Exception process.** A deliberately independent, scoped identity space gets a
 `LIMIT-*` record stating why.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/004/005` close.
 
 ## 3. No unresolved source-name lookup after the resolution boundary
 
@@ -287,10 +288,13 @@ with no mechanism to notice a second, unrelated choice reusing the same number, 
 range's real usage growing past the next one's start. The failure surfaces later, as an
 unrelated-looking bug.
 
-**Examples / counterexamples.** `SymbolId`'s three-way range split (Standard 2): builtins
+**Examples / counterexamples.** `SymbolId`'s range split (Standard 2) — builtins
 occupy 1-99, the resolver's ids start at 1000, the overload allocator's at
-`0x4000_0000` — `LIMIT-NAME-RESOLUTION-003`: "nothing checks that the resolver's range
-stays below `OVERLOAD_SYM_START`." `TypeVarGenerator`'s hard-coded offsets (10,000
+`0x4000_0000`, block-local types count down from the top — was the counterexample until
+`LIMIT-NAME-RESOLUTION-003` closed: "nothing checks that the resolver's range stays below
+`OVERLOAD_SYM_START`." Now `symbols.rs` declares the ranges, a `const` assertion rejects an overlap,
+and each allocator panics at the end of its range (metel-core#1542); the stronger form, a tagged id
+in which a kind collision cannot be written, is metel-core#1546. `TypeVarGenerator`'s hard-coded offsets (10,000
 through 5,000,000, scattered across several files) were the counterexample until
 `LIMIT-TYPE-INFERENCE-005` closed: the 2,000,000 start was shared by two unrelated users.
 Conforming: `type_var_space` declares the ranges in one place, rejects an overlap with a
@@ -306,7 +310,7 @@ wire format) documents why beside it. A range inside this codebase's own control
 merely hasn't been made checked yet is not an exception — it's tracked as a `LIMIT-*`
 record.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/004/005` close.
 
 ## 12. Repeated ambient parameters are a named context type, not re-threaded by hand
 

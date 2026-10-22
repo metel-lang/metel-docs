@@ -45,6 +45,14 @@ there is no reproducing fixture.
 
 ## Resolution
 
-None yet. Generating the fixed ids from the `std::core` declarations, or
-dropping the fixed ids in favour of name lookup everywhere, would remove the
-second source of truth.
+Narrowed by metel-core#1542; the record stays open. The 21 builtins are now one `Builtin` enum,
+declared once by a `builtins!` macro (variant, fixed id, `std::core` name, kind); its discriminants
+are the ids, the `SYM_*` constants are aliases of them, and `SymbolTable::new` and the evaluator's two
+lookups read from the enum, so the three hand-kept copies are one and a duplicate id does not compile.
+A test checks that each builtin is either declared in the embedded `std::core` or one of the 15
+intrinsic types (not both, not neither), so the enum and `core.mtl` can no longer drift unnoticed.
+
+Still open: the ids are still hand-numbered in the macro list (not generated from the `std::core`
+declarations), the reserved ranges 19-49, 53-99 and 100-999 are still unused, and every other std
+declaration is still numbered per program from the sorted declaration list. Dropping the fixed ids in
+favour of name lookup everywhere, or generating them, would close it.
