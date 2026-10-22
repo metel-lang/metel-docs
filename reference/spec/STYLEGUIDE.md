@@ -107,6 +107,26 @@ ADR-0057):
 > **Limitation** LIMIT-EVALUATION-005: closure environments are not destroyed until destructors run.
 ```
 
+**Pending**, for the transient case: a part of the spec that is not implemented *yet*, because
+the spec text landed first and the code follows in the same milestone, or because a limit was
+found while implementing and is being fixed now. It is one marker line that cites the issue
+tracking the work, and it has no record, disposition or review date:
+
+```markdown
+> **Pending** metel-core#1480 the new form is accepted by the checker but not yet by the evaluator.
+```
+
+The marker is valid while the issue is **open** and has a **milestone**. When the issue closes
+the marker is stale and CI fails until it is removed; the release gate refuses to tag while a
+marker's issue in that release's milestone is still open. If the part is instead deliberately left
+unimplemented in a shipped version, convert the marker to a `Gap` or `Limitation` record, which
+is the only path that leaves it in a release. Prose beside a `Pending` marker (its own paragraph
+and the one before it) is not flagged by the limit-phrasing lint.
+
+*Before* (spec written ahead of the code): a `GAP-*` record is filed, and has to be resolved and
+retired days later. *After*: the paragraph that states the behaviour, followed by the one marker
+above; when the issue closes, delete the marker line. No record is written.
+
 The site renders the record's one-line `summary` (or the sentence written after the ID,
 when a rule needs its own wording), a link to the record, and chips from its `planned_for`
 and `rfc` fields. Write the marker where the limit applies: under the rule or heading it

@@ -77,8 +77,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 import tomllib
@@ -721,6 +723,71 @@ def check_spec_limit_markers(
     return findings
 
 
+# `> **Pending** metel-core#1234 optional note` (metel-core#1418): "this part of the spec is not
+# implemented yet, and an issue tracks it". It is for the transient case -- the spec text lands
+# first and the code follows in the same milestone -- where a GAP/LIMIT record's lifecycle (disposition,
+# owner, review, resolution) is out of proportion. The record kinds stay reserved for what is
+# deliberately left in a released version. A marker is valid while its issue is open and has a
+# milestone; a closed issue means the marker is stale and must go.
+PENDING_MARKER_LINE_RE = re.compile(r"^>\s*\*\*Pending\*\*(.*)$", re.MULTILINE)
+PENDING_MARKER_REF_RE = re.compile(r"^\s+(?:metel-lang/)?metel-core#(\d+)\b")
+PENDING_REPO = "metel-lang/metel-core"
+
+
+def gh_issue_resolver(number: int):
+    """What `check_pending_markers` needs to know about `metel-core#N`: `{"state": "open"|"closed",
+    "milestone": title or None}`, `{"missing": True}` when there is no such issue, or `None` when
+    GitHub cannot be reached (no `gh`, no network, no token): an unreachable API never fails the
+    check, the same rule the generator applies to an exemption's issue."""
+    try:
+        out = subprocess.run(
+            ["gh", "issue", "view", str(number), "--repo", PENDING_REPO, "--json", "state,milestone"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if out.returncode != 0:
+        lowered = out.stderr.lower()
+        return {"missing": True} if "could not resolve" in lowered or "not found" in lowered else None
+    try:
+        data = json.loads(out.stdout)
+    except json.JSONDecodeError:
+        return None
+    return {"state": str(data.get("state", "")).lower(), "milestone": (data.get("milestone") or {}).get("title")}
+
+
+def check_pending_markers(language_spec_dir: Path, repo_root: Path, resolver=None, unresolved=None) -> list:
+    """The `> **Pending** metel-core#N` markers in the Language Spec chapters (metel-core#1418):
+    well formed, and (when a `resolver` is given) the issue exists, is open, and has a
+    milestone. A closed issue is a stale marker. Numbers the resolver could not reach are
+    appended to `unresolved`, never reported as findings."""
+    findings: list = []
+    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+        if path.name.upper() == "STYLEGUIDE.MD":
+            continue
+        rel = str(path.relative_to(repo_root))
+        text = FENCE_RE.sub("", path.read_text())
+        for m in PENDING_MARKER_LINE_RE.finditer(text):
+            ref = PENDING_MARKER_REF_RE.match(m.group(1))
+            if not ref:
+                findings.append(Finding(rel, "a `> **Pending**` marker must name its issue: `> **Pending** metel-core#1234`"))
+                continue
+            number = int(ref.group(1))
+            if resolver is None:
+                continue
+            info = resolver(number)
+            if info is None:
+                if unresolved is not None:
+                    unresolved.append(number)
+            elif info.get("missing"):
+                findings.append(Finding(rel, f"`> **Pending**` cites metel-core#{number}, which does not exist"))
+            elif info.get("state") != "open":
+                findings.append(Finding(rel, f"`> **Pending**` cites metel-core#{number}, which is {info.get('state')}: the marker is stale; remove it (or convert it to a Gap/Limitation record if the part is deliberately left unimplemented)"))
+            elif not info.get("milestone"):
+                findings.append(Finding(rel, f"`> **Pending**` cites metel-core#{number}, which has no milestone; a pending part must be scheduled"))
+    return findings
+
+
 # Phrasing that states a limit in prose. A limit belongs in a `> **Gap**` / `> **Limitation**`
 # marker citing a record, so new prose like this is a prompt to write the record.
 LIMIT_PHRASE_RE = re.compile(
@@ -732,7 +799,7 @@ LIMIT_PHRASE_RE = re.compile(
 # Lines that carry such words for another reason: generated fixture/exemption markup,
 # doc-example directives, HTML, headings, and the markers themselves.
 LIMIT_LINT_SKIP_RE = re.compile(
-    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Since|Changed in)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
+    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Pending|Since|Changed in)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
 )
 
 
@@ -825,6 +892,26 @@ def check_skip_fixture_citations(
     return findings, warnings
 
 
+def _pending_excused_lines(lines: list[str]) -> set[int]:
+    """1-based line numbers of the prose a `> **Pending**` marker excuses (metel-core#1418): the
+    paragraph it sits in and the paragraph just before it, since the marker follows the prose
+    that states the part is not implemented yet."""
+    blocks: list[tuple[int, int]] = []  # (first, last) 0-based lines of each blank-separated block
+    start = None
+    for i, line in enumerate(lines + [""]):
+        if line.strip():
+            start = i if start is None else start
+        elif start is not None:
+            blocks.append((start, i - 1))
+            start = None
+    excused: set[int] = set()
+    for index, (first, last) in enumerate(blocks):
+        if any(PENDING_MARKER_LINE_RE.match(lines[i]) for i in range(first, last + 1)):
+            for a, b in ([blocks[index - 1]] if index else []) + [(first, last)]:
+                excused.update(range(a + 1, b + 2))
+    return excused
+
+
 def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Finding]:
     """Warn-only (metel-core#1235): limit phrasing in Language Spec prose outside a marker.
     Never fails the check; the reader decides whether it is a limit that needs a record."""
@@ -833,11 +920,13 @@ def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Findin
         if path.name.upper() == "STYLEGUIDE.MD":
             continue
         in_fence = False
-        for number, line in enumerate(path.read_text().splitlines(), 1):
+        lines = path.read_text().splitlines()
+        excused = _pending_excused_lines(lines)
+        for number, line in enumerate(lines, 1):
             if line.lstrip().startswith("```"):
                 in_fence = not in_fence
                 continue
-            if in_fence or LIMIT_LINT_SKIP_RE.search(line):
+            if in_fence or number in excused or LIMIT_LINT_SKIP_RE.search(line):
                 continue
             m = LIMIT_PHRASE_RE.search(line)
             if m:
@@ -854,6 +943,8 @@ def run_checks(
     language_spec_dir: Path = None,
     rfcs_dir: Path = None,
     require_gap_citations: bool = None,
+    pending_resolver=None,
+    pending_unresolved: list = None,
 ) -> list[Finding]:
     spec_dir = spec_dir or (repo_root / "architecture" / "spec")
     limitations_dir = limitations_dir or (repo_root / "architecture" / "limitations")
@@ -991,6 +1082,8 @@ def run_checks(
         )
     )
 
+    findings.extend(check_pending_markers(language_spec_dir, repo_root, pending_resolver, pending_unresolved))
+
     # Cross-file: every `affects` entry, and every standardized
     # "Known limitations" link, must resolve to a real id that actually exists
     # somewhere in the corpus. The groups must agree with record disposition.
@@ -1023,7 +1116,8 @@ def main() -> int:
     p.add_argument("--core", type=Path, help="a metel-core checkout, to also check skipped-fixture LIMIT-* citations (metel-core#1219)")
     args = p.parse_args()
 
-    findings = run_checks()
+    pending_unresolved: list = []
+    findings = run_checks(pending_resolver=gh_issue_resolver, pending_unresolved=pending_unresolved)
 
     limitation_records_for_fixtures = [
         (path, *parse_limitation_file(path)) for path in sorted(LIMITATIONS_DIR.glob("*.md"))
@@ -1046,6 +1140,12 @@ def main() -> int:
         print("Skipped-fixture LIMIT-* citations: skipped (needs --core; same structural gap as the arch=[...] cross-check above).")
 
     warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT) + fixture_warnings
+    if pending_unresolved:
+        print(
+            "`> **Pending**` state not checked for "
+            + ", ".join(f"metel-core#{n}" for n in sorted(set(pending_unresolved)))
+            + " (GitHub not reachable from here; an unreachable API never fails the check)."
+        )
     if warnings:
         print(f"\n{len(warnings)} warning(s) (do not fail the check):")
         for w in warnings:

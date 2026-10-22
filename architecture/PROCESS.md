@@ -48,6 +48,14 @@ code doesn't yet deliver, so it's a `LIMIT-*`. Both → file both, cross-linked 
 `affects`. Neither (the spec is clear and the code is simply wrong) → that's a bug, filed
 as an issue, not a record of either kind.
 
+**A fourth outcome, transient (metel-core#1418).** *Will the code deliver it in this milestone?*
+Yes → neither record kind: write a `> **Pending** metel-core#N` marker in the Language Spec
+chapter (see `reference/spec/STYLEGUIDE.md`). It carries no disposition, owner or review date; its
+whole lifecycle is the issue's. `check_architecture.py` fails the check while the issue is closed
+or has no milestone, and the release gate refuses a tag while a marker's issue in that release's
+milestone is open. `GAP-*` and `LIMIT-*` are reserved for what is deliberately left in a released
+version, and a pending part becomes one of them only by an explicit conversion at release.
+
 ## Record schema (`LIMIT-*` / `GAP-*`)
 
 Frontmatter: `id`, `title`, `summary`, `scope`, `owner`, `discovered_by`, `disposition`,

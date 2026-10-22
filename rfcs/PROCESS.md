@@ -790,6 +790,15 @@ sound, do the worked examples really stress-test the interaction) — it only ma
 procedural half (move the file correctly, don't lose a cross-reference, don't forget to
 check for an existing RFC first) hard to get wrong by accident.
 
+## Spec text ahead of the code (metel-core#1418)
+
+An RFC reaches `3-integrated` when its spec text is merged, which is usually before the code that
+implements it. Mark each part of that text that the implementation does not deliver yet with a
+`> **Pending** metel-core#N` marker citing the implementation issue (`impl_tracking` is the
+natural one); do not file a `GAP-*` or `LIMIT-*` record for a gap that the same milestone closes.
+The marker leaves with the issue. If the part is deliberately left out of a release, convert the
+marker to a record then. See `reference/spec/STYLEGUIDE.md`.
+
 ## `rfc.py check`: problems and warnings (metel-core#1510)
 
 `rfc.py check` separates two kinds of finding.

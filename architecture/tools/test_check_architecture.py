@@ -644,6 +644,93 @@ class LimitPhrasingLintTests(unittest.TestCase):
         self.assertFalse(hasattr(ca, "lint_limit_phrasing") and "lint_limit_phrasing" in ca.run_checks.__code__.co_names)
 
 
+class PendingMarkerTests(unittest.TestCase):
+    """`> **Pending** metel-core#N` markers (metel-core#1418): the transient "not implemented yet,
+    an issue tracks it" marker, valid while the issue is open and has a milestone."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, True)
+        self.spec = self.root / "reference" / "spec"
+        self.spec.mkdir(parents=True)
+
+    def chapter(self, text):
+        (self.spec / "types.md").write_text(text)
+
+    def check(self, resolver=None, unresolved=None):
+        return [str(f) for f in ca.check_pending_markers(self.spec, self.root, resolver, unresolved)]
+
+    OPEN = staticmethod(lambda n: {"state": "open", "milestone": "v0.14.1"})
+
+    def test_a_marker_for_an_open_scheduled_issue_passes(self):
+        self.chapter("# T\n\nProse.\n\n> **Pending** metel-core#1480 the new form.\n")
+        self.assertEqual([], self.check(self.OPEN))
+
+    def test_a_marker_for_a_closed_issue_is_stale(self):
+        self.chapter("> **Pending** metel-core#1480\n")
+        findings = self.check(lambda n: {"state": "closed", "milestone": "v0.14.1"})
+        self.assertEqual(1, len(findings), findings)
+        self.assertIn("metel-core#1480", findings[0])
+        self.assertIn("stale", findings[0])
+
+    def test_a_marker_for_an_issue_with_no_milestone_is_a_finding(self):
+        self.chapter("> **Pending** metel-core#1480\n")
+        findings = self.check(lambda n: {"state": "open", "milestone": None})
+        self.assertTrue(any("no milestone" in f for f in findings), findings)
+
+    def test_a_marker_for_a_missing_issue_is_a_finding(self):
+        self.chapter("> **Pending** metel-core#999999\n")
+        findings = self.check(lambda n: {"missing": True})
+        self.assertTrue(any("does not exist" in f for f in findings), findings)
+
+    def test_an_unreachable_api_never_fails(self):
+        self.chapter("> **Pending** metel-core#1480\n> **Pending** metel-core#1481\n")
+        unresolved = []
+        self.assertEqual([], self.check(lambda n: None, unresolved))
+        self.assertEqual([1480, 1481], unresolved)
+
+    def test_a_marker_without_an_issue_is_malformed(self):
+        self.chapter("> **Pending** soon\n")
+        findings = self.check(self.OPEN)
+        self.assertTrue(any("must name its issue" in f for f in findings), findings)
+
+    def test_a_marker_naming_another_repository_is_malformed(self):
+        self.chapter("> **Pending** other-org/other-repo#5\n")
+        self.assertTrue(any("must name its issue" in f for f in self.check(self.OPEN)))
+
+    def test_the_repository_prefix_is_accepted(self):
+        self.chapter("> **Pending** metel-lang/metel-core#1480\n")
+        self.assertEqual([], self.check(self.OPEN))
+
+    def test_without_a_resolver_only_the_syntax_is_checked(self):
+        self.chapter("> **Pending** metel-core#1480\n")
+        self.assertEqual([], self.check(None))
+
+    def test_a_marker_in_a_code_fence_is_ignored(self):
+        self.chapter("```\n> **Pending**\n```\n")
+        self.assertEqual([], self.check(self.OPEN))
+
+    def lint(self, text):
+        (self.spec / "types.md").write_text(text)
+        return [str(w) for w in ca.lint_limit_phrasing(self.spec, self.root)]
+
+    def test_the_marker_line_and_the_prose_it_follows_are_not_flagged(self):
+        text = "# T\n\nThe new form is not yet implemented.\n\n> **Pending** metel-core#1480\n"
+        self.assertEqual([], self.lint(text))
+
+    def test_prose_in_the_marker_paragraph_is_not_flagged(self):
+        self.assertEqual([], self.lint("# T\n\n> **Pending** metel-core#1480\n> not yet supported here.\n"))
+
+    def test_limit_prose_elsewhere_is_still_flagged(self):
+        text = "# T\n\nThe new form is not yet implemented.\n\n> **Pending** metel-core#1480\n\nAnother form is not supported.\n"
+        warnings = self.lint(text)
+        self.assertEqual(1, len(warnings), warnings)
+        self.assertIn("types.md:7", warnings[0])
+
+    def test_run_checks_includes_the_pending_markers(self):
+        self.assertIn("pending_resolver", ca.run_checks.__code__.co_varnames)
+
+
 class FrontmatterQuotingTests(GapRecordTests):
     def test_unescaped_inner_quote_is_a_finding(self):
         bad = VALID_GAP.replace('summary: "A one-line summary."', 'summary: "A \"quoted\" word, unescaped: "capability" here."')
