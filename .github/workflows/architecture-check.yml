@@ -41,5 +41,9 @@ jobs:
       # request in flight cannot make a docs pull request fail. That the cited code and claims
       # still agree is checked from metel-core's own CI (`Architecture evidence`), against the
       # exact docs commit that core pins.
+      # The `> **Pending** metel-core#N` markers (metel-core#1418) are checked against the issue's
+      # state; a public read, so the built-in token is enough.
       - name: check_architecture.py --check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 architecture/tools/check_architecture.py --check
