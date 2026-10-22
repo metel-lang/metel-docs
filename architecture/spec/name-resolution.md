@@ -31,7 +31,7 @@ Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: 
 | `specified by` | `#name-resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | baec2e953248f57292445eb07b2cff0527042f73 |
 | `related` | METEL-185, ADR-0041 |
 
 ##### Requirement {#arch.name-resolution.requirement-2}
