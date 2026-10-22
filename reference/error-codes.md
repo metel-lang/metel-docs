@@ -90,6 +90,12 @@ A float literal cannot be represented as an `f64`.
 
 Two types that must be equal are not.
 
+When both are records, the message names the field that differs instead of printing the two
+types: `the record is missing field `y` (expected `{ x: i64, y: i64 }`, found `{ x: integer }`)`,
+``field `z` is not part of `{ x: i64, y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``.
+An unresolved numeric literal prints as `integer` or `float` and an open tail as `..`. The same
+mismatch reached through a row bound is `T0012`, in the same words.
+
 **Fix:** ensure the expression produces the expected type. Add an explicit cast if widening (e.g. `x as f64`).
 
 The same code also covers an `extend` block the language does not permit, which is a
