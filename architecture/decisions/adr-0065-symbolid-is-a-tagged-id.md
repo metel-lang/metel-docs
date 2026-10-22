@@ -2,9 +2,10 @@
 id: adr-0065
 title: "SymbolId Is a Tagged Id, Not a Number in a Range"
 date: '2026-10-22'
-status: proposed
+status: accepted
 relates: adr-0038, adr-0041, adr-0054, adr-0063
 implements: metel-core#1546
+updated: '2026-10-22'
 ---
 
 ## Context
@@ -117,6 +118,27 @@ once, at the migration. `PartialOrd` and `Ord` are **not** derived on `SymbolId`
 kinds carries no meaning that code should come to rely on. The four test sites compare sets and use a
 sorted-by-debug-string or hash-set comparison instead.
 
+### 5. `Declared` is not split into std and user now
+
+A `Std(u32)` variant would promise ids that are stable across programs, and they are not: today they
+are ranks in each program's sorted declaration list (`LIMIT-NAME-RESOLUTION-004`). Stability needs the
+ids generated from `core.mtl`, which is separate work. Adding the variant later is cheap, because an
+exhaustive `match` on `SymbolId` lists every consumer that must handle a new kind. The cost of waiting is
+a second one-time shift in the derived `Hash`, and so in the `LocalId` values of inherited-default
+bodies; the audit found nothing that persists or pins those values, and ids cannot be persisted
+(`LIMIT-RESOLUTION-001`). The split is made in the same change that generates the std ids.
+
+### 6. The overload ordinal is edit-sensitive, and that is accepted
+
+Reordering the overloads of one name changes their ids. This is not a new property: `Declared` ids are a
+declaration's rank in the sorted list and already shift when a program adds or removes any declaration,
+so an ordinal within one name's overloads is strictly more stable than they are. ADR-0054's guarantee
+(the same resolved graph yields the same ids) holds; a reordered source is a different graph. ADR-0063
+accepts the same property for impl-method bodies. Deriving the ordinal from parameter types would mean
+hashing types that may contain type variables and named types, which brings back collision guards and a
+larger id to buy stability nothing needs. If an incremental or caching layer later keys by `SymbolId`
+across edits, it should cache on the declaration, not on the id.
+
 ## Consequences
 
 **Gained.** A kind collision is not expressible. The numeric ranges and their checks stop being a
@@ -163,9 +185,9 @@ Reproducible only if the order in which overload tables are built is itself dete
 one more thing to keep true. Not chosen: the audit found the structural form workable, so the counter's
 ordering dependency can be avoided outright.
 
-## Open questions
+## Questions raised and how they were settled
 
-Settled by the audit (recorded so the reasoning is not lost):
+Settled by the audit:
 
 1. **Overload identity** is structural `{ group, ordinal }` (Decision 3). Every overloaded name has a
    `Declared` symbol in its defining module, imports carry the declaring module's ids and shadowing is
@@ -173,15 +195,12 @@ Settled by the audit (recorded so the reasoning is not lost):
 2. **`Ord` is dropped** (Decision 4); only four test sorts used it.
 3. **Size does not decide it.** About +1.2% peak memory at a 16-byte upper bound.
 
-Still open:
+Decided after the audit (Decisions 5 and 6):
 
-4. **Should `Declared` be split into std and user now?** `LIMIT-NAME-RESOLUTION-004` argues std
-   declarations should have stable ids across programs, which a `Std(u32)` variant could give, but that
-   is the separate generation-from-`core.mtl` work and is left out here.
-5. **Is the structural overload ordinal acceptable as an edit-sensitive id?** Reordering overloads of one
-   name changes their ids, as reordering impl variants does under ADR-0063. If a consumer needs ids that
-   survive reordering, the ordinal would have to come from the parameter types instead, which is
-   larger than this ADR.
+4. **`Declared` is not split into std and user now.** Revisit with the `core.mtl` id generation.
+5. **The edit-sensitive overload ordinal is accepted.**
+
+Nothing is open. A later change to any of these amends this ADR.
 
 ## Sequencing
 
