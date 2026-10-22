@@ -22,6 +22,13 @@ title: "Metel Language Changelog"
   narrowed type, and that narrowing happens through an explicit move or projection
   (`value.{ a, c }`), not at a call or binding. The program was already rejected; only the
   wording changes (`metel-core#1458`).
+- A record that does not fit a record type (an argument, an annotated `let`, a field
+  initializer) now reports the difference as a record diff instead of the raw types: ``the record
+  is missing field `y` (expected `{ x: i64, y: i64 }`, found `{ x: integer }`)``, ``field `z` is not
+  part of `{ x: i64, y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``. Before, it was
+  `cannot unify { x: ?1 } with { x: i64, y: i64 }`, with an internal inference variable and no
+  hint which field was wrong. The code stays `T0001`; the same mismatch through a row bound is
+  `T0012` in the same words (`metel-core#1483`).
 
 ## v0.14.0
 
