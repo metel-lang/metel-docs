@@ -12,7 +12,7 @@ requirement show that they hold. It describes what the project does now, and say
 process is partial, planned or still manual.
 
 The specification was written while the processes it describes were being changed (metel-core
-v0.14.1), so each change landed with its requirement. It has 43 requirements in five areas:
+v0.14.1), so each change landed with its requirement. It has 44 requirements in five areas:
 
 | Area | Page | Covers |
 |---|---|---|
@@ -75,12 +75,12 @@ and the change that makes it untrue updates it.
 These are stated so that nobody assumes a guarantee that does not exist.
 
 - That a requirement marked `implemented` is still true is not checked. Code, workflows and
-  scripts with no requirement are not detected: the inventory is maintained by hand until the
-  checker of metel-core#1507 exists.
+  scripts with no requirement are caught by the discovery of `check_operations.py` (PROC-CI-008),
+  but only for the repositories it can reach: `metel-website` and `metel-docs-internal` assets are
+  checked when those repositories sit next to the others, locally and at release.
 - `metel-core/PROCESSES.md` lists core's workflows, scripts and commands and is checked for that
-  (`inventory doc up to date`); its sections for `metel-docs` and `metel-website` are not checked
-  and lag the workflows (for example `architecture-check`, `next.yml` and `plugin-tests.yml` are
-  missing from it).
+  (`inventory doc up to date`); its sections for `metel-docs` and `metel-website` are not
+  checked, so the inventory in this specification, which is, is the one to trust (PROC-CI-008).
 - The MDX check does not build `architecture`, `operations`, `rfcs` or `status` (PROC-DOCS-011).
 - Gap and limitation records name retired version numbers in `planned_for` (metel-core#1525).
 - No automated path publishes a docs-only change between releases (PROC-DEPLOY-006), and nothing

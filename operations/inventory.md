@@ -25,6 +25,7 @@ gap in the specification.
 | `metel-core` | `tools/check_inventory.sh` | PROC-CI-001 |
 | `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py` | PROC-CI-001, PROC-CI-006 |
 | `metel-core` | `metel-frontend/src/bin/gen_grammar.rs`, `check_stdlib_docs.rs` | PROC-DOCS-005 |
+| `metel-core` | `metel-interpreter/src/bin/move-check-count.rs` | local: a measurement `/milestone-integration-test` runs (PROC-WORK-007), no contract of its own |
 | `metel-core` | `AGENTS.md` | process document: PROC-WORK-001, PROC-WORK-002, PROC-WORK-003, PROC-WORK-008, PROC-CI-007 |
 | `metel-core` | `ROADMAP.md` | process document: PROC-WORK-004, PROC-WORK-005, PROC-WORK-006 |
 | `metel-core` | `RELEASING.md`, `PROCESSES.md` | process documents; they link here (PROC-RELEASE-001) |
@@ -33,8 +34,9 @@ gap in the specification.
 | `metel-docs` | `.github/workflows/check-mdx.yml`, `tools/mdx-check-site` | PROC-DOCS-011 |
 | `metel-docs` | `architecture/tools/generate_architecture_evidence.py` | PROC-DOCS-004, PROC-DOCS-006, PROC-CI-002, PROC-CI-005 |
 | `metel-docs` | `architecture/tools/check_architecture.py` | PROC-DOCS-007, PROC-DOCS-009 |
+| `metel-docs` | `architecture/tools/check_operations.py` (+ tests) | PROC-CI-008 |
 | `metel-docs` | `rfcs/tools/rfc.py` | PROC-DOCS-005, PROC-DOCS-006, PROC-DOCS-008, PROC-DOCS-012, PROC-CI-005 |
-| `metel-docs` | `.githooks/pre-commit` | PROC-CI-006 |
+| `metel-docs` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
 | `metel-website` | `.github/workflows/deploy.yml` | PROC-DEPLOY-001, PROC-DEPLOY-002 |
 | `metel-website` | `.github/workflows/promote.yml` | PROC-DEPLOY-003 |
 | `metel-website` | `.github/workflows/next.yml`, `scripts/prepare-next-docs.mjs` | PROC-DEPLOY-004, PROC-DEPLOY-005 |

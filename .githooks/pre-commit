@@ -17,4 +17,4 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_OBJECT_DIRECTORY GIT_A
 set -e
 
 echo "pre-commit: rfc.py / architecture tooling unit tests"
-python3 -m unittest rfcs.tools.test_rfc architecture.tools.test_generate_architecture_evidence architecture.tools.test_check_architecture
+python3 -m unittest rfcs.tools.test_rfc architecture.tools.test_generate_architecture_evidence architecture.tools.test_check_architecture architecture.tools.test_check_operations

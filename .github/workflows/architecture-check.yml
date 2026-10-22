@@ -47,3 +47,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 architecture/tools/check_architecture.py --check
+
+      # The Operations Specification (metel-core#1507): structure, cross-references, and the assets
+      # of this repository against operations/inventory.md. Only this repository is checked out, so
+      # the assets of the others are skipped here; core's CI and /cut-release check those.
+      - name: Operations Specification
+        run: |
+          python3 -m unittest architecture/tools/test_check_operations.py
+          python3 architecture/tools/check_operations.py --check
