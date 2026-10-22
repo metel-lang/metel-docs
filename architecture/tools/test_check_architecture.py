@@ -607,7 +607,7 @@ class SpecLimitMarkerTests(GapRecordTests):
 
     def test_valid_schedule_fields_pass(self):
         self.write_rfc("2-accepted", "0122")
-        text = VALID_GAP.replace("review: null", "tracked_by: metel-core#1293, #12\nrfc: RFC-0122\nreview: null")
+        text = VALID_GAP.replace("review: null", "tracked_by: metel-core#1293, metel-core#12\nrfc: RFC-0122\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertEqual([], self.marker_findings())
 

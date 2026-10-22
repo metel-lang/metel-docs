@@ -120,7 +120,7 @@ SPEC_LIMIT_MARKER_RE = re.compile(
 MARKER_LABEL_FOR_PREFIX = {"GAP": "Gap", "LIMIT": "Limitation"}
 # Optional scheduling fields on an active record: the release it is planned for and the
 # RFC(s) that specify the change. The chapter marker renders them from here.
-TRACKED_BY_RE = re.compile(r"^(?:metel-core)?#(\d+)$")
+TRACKED_BY_RE = re.compile(r"^metel-core#(\d+)$")  # no bare `#N`: a YAML reader takes that for a comment
 # Flipped on by the chapter conversion (metel-core#1235 step 3): until every active GAP
 # is cited from its chapter, requiring it would fail the corpus.
 REQUIRE_GAP_CITATIONS = True
