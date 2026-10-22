@@ -218,7 +218,7 @@ are "the checker has nothing to work with here":
 
 ### T0003 — Undefined name
 
-A name is used but not defined in the current scope.
+A name is used but not defined in the current scope. The same code reports a method call on a type that has no such method, including a function type, which implements no aspect and so has no methods (`f.clone()`, or `"${f}"`, which calls `to_string`).
 
 **Fix:** define the variable or function before use, or correct the spelling.
 

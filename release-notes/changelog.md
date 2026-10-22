@@ -4,6 +4,18 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.14.1
+
+**In progress on `develop` — not yet released.**
+
+**Diagnostics:**
+
+- A method call on a function value (`f.clone()`, or `"${f}"`, which calls `to_string`) is
+  now `T0003`, "no method `clone` on `|i64| -> i64`: a function type implements no aspect, so it
+  has no methods". It was `T0002`, "cannot infer receiver type for method call; add a type
+  annotation", which sent the user to an annotation the receiver already had
+  (`metel-core#1242`).
+
 ## v0.14.0
 
 **Released 2026-10-18.** This release adds named records and reusable open rows, checks
