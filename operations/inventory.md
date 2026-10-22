@@ -38,6 +38,7 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-docs` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
 | `metel-website` | `.github/workflows/deploy.yml` | PROC-DEPLOY-001, PROC-DEPLOY-002 |
 | `metel-website` | `.github/workflows/promote.yml` | PROC-DEPLOY-003 |
+| `metel-website` | `.github/workflows/publish-docs.yml` | PROC-DEPLOY-006 |
 | `metel-website` | `.github/workflows/next.yml`, `scripts/prepare-next-docs.mjs` | PROC-DEPLOY-004, PROC-DEPLOY-005 |
 | `metel-website` | `.github/workflows/check-showcases.yml`, `plugin-tests.yml` | PROC-DEPLOY-007 |
 | `metel-website` | `scripts/build-rfc-index.mjs`, `build-spec-index.mjs` (the `prebuild` step) | PROC-DOCS-005 (search data computed at build) |

@@ -76,28 +76,27 @@ The receiving side exists. Nothing sends the event, so the six-hour schedule is 
 | `verified by` | none |
 | `related` | PROC-DEPLOY-004 |
 
-### PROC-DEPLOY-006 — Corrected documentation reaches production without a release {#proc-deploy-006}
+### PROC-DEPLOY-006 — Corrected documentation reaches staging without a release {#proc-deploy-006}
 
-There is no automated path for a docs-only change (a typo, a rewritten section, a blog post) short of a version tag. Today the maintainer bumps the website's docs pointer by pull request, moves a release tag to redeploy, or builds and deploys with the hosting CLI. Tracked in metel-core#692.
+A documentation change (a typo, a rewritten section, a blog post) does not wait for a version tag. A person runs the workflow once the `metel-docs` pull request is merged. It moves the website's `docs` pointer to a commit that is on `metel-docs` `main` (a commit that is not is refused, so an unmerged pull request cannot reach the site), builds the site, and only then commits the pointer to `main` and deploys the result to staging. It commits nothing when the pointer is already there. It cuts no snapshot (PROC-RELEASE-004), so released versions' documentation does not change; unversioned pages such as the blog do. It never touches production: a person promotes the staging build as for a release (PROC-DEPLOY-003). It deploys the website's `main` as it stands, so site code merged since the last deploy ships with it.
 
-The manual procedure used today, run from a machine with the hosting CLI linked to the project:
+Fallback when the workflow itself is unavailable: the same steps by hand, with the hosting CLI linked to the project.
 
 1. Merge the `metel-docs` pull request to its `main`.
-2. In `metel-website`, bump the `docs` submodule pointer to that commit, run `npm run typecheck && npm run build`, and push to `main`. No docs snapshot is cut; that happens only for a minor release (PROC-RELEASE-004).
-3. `npx vercel pull --environment=preview && npx vercel build && npx vercel deploy --prebuilt` produces a staging deployment, the same commands `deploy.yml` runs.
+2. In `metel-website`, bump the `docs` submodule pointer to that commit, run `npm run typecheck && npm run build`, and push to `main`.
+3. `npx vercel pull --environment=preview && npx vercel build && npx vercel deploy --prebuilt` produces a staging deployment.
 4. Read the build output under `.vercel/output/static/` to confirm the fix is in it: the hosting provider's deployment protection redirects a plain request to the staging URL to a sign-in page.
-5. `npx vercel pull --environment=production && npx vercel promote <staging-url> --yes`, the promotion `promote.yml` performs.
-6. Request the production site directly, which has no deployment protection, to confirm the change is live.
+5. Promote as PROC-DEPLOY-003 does, then request the production site directly to confirm the change is live.
 
 | Field | Value |
 |---|---|
-| `status` | `planned` |
+| `status` | `implemented` |
 | `owner` | website |
-| `trigger` | manual today |
-| `produces` | documentation changes published between releases |
-| `implemented by` | none |
-| `verified by` | none |
-| `related` | PROC-DEPLOY-003, PROC-DOCS-002 |
+| `trigger` | manual: `workflow_dispatch` of `publish-docs.yml`, with an optional `metel-docs` commit |
+| `produces` | the docs pointer on `main` moved to the commit, and a staging deployment of the result with the promotion command in its summary |
+| `implemented by` | `metel-website/.github/workflows/publish-docs.yml` |
+| `verified by` | the build in the workflow (a broken page fails before anything is pushed); the ancestry check that refuses a commit not on `metel-docs` `main`; run once against a real change (metel-core#692) |
+| `related` | PROC-DEPLOY-003, PROC-DOCS-002, PROC-RELEASE-004 |
 
 ### PROC-DEPLOY-007 — Changes to the site's own code are checked on every pull request {#proc-deploy-007}
 

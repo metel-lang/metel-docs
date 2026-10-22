@@ -60,7 +60,7 @@ flowchart TD
     deploy["deploy.yml: build and deploy to staging<br/>PROC-DEPLOY-001, PROC-DEPLOY-002"]
     promote["promote.yml: manual promotion to production<br/>PROC-DEPLOY-003"]
     prod(["metel-lang.org"])
-    docsOnly["docs-only change between releases:<br/>manual procedure, no workflow<br/>PROC-DEPLOY-006"]
+    docsOnly["publish-docs.yml: manual, a docs-only change between releases<br/>bumps the docs pointer, builds, deploys to staging<br/>PROC-DEPLOY-006"]
 
     gap --> work --> integ --> gate
     gate -.-> tag
@@ -70,7 +70,7 @@ flowchart TD
     chain --> deploy
     deploy -. "reviewed by a person" .-> promote
     promote --> prod
-    docsOnly -.-> prod
+    docsOnly -.-> promote
 ```
 
 ## Not drawn
