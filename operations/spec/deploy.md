@@ -95,7 +95,7 @@ Fallback when the workflow itself is unavailable: the same steps by hand, with t
 | `trigger` | manual: `workflow_dispatch` of `publish-docs.yml`, with an optional `metel-docs` commit |
 | `produces` | the docs pointer on `main` moved to the commit, and a staging deployment of the result with the promotion command in its summary |
 | `implemented by` | `metel-website/.github/workflows/publish-docs.yml` |
-| `verified by` | the build in the workflow (a broken page fails before anything is pushed); the ancestry check that refuses a commit not on `metel-docs` `main`; run once against a real change (metel-core#692) |
+| `verified by` | the build in the workflow (a broken page fails before anything is pushed); the ancestry check that refuses a commit not on `metel-docs` `main`; run once against the then-current metel-docs main (workflow run 39778286717 committed `docs: publish metel-docs 723d06c` and deployed to staging) |
 | `related` | PROC-DEPLOY-003, PROC-DOCS-002, PROC-RELEASE-004 |
 
 ### PROC-DEPLOY-007 — Changes to the site's own code are checked on every pull request {#proc-deploy-007}
