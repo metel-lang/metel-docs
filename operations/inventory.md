@@ -27,7 +27,7 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-core` | `metel-interpreter/src/bin/move-check-count.rs` | local: a measurement `/milestone-integration-test` runs (PROC-WORK-007), no contract of its own |
 | `metel-core` | `AGENTS.md` | process document: PROC-WORK-001, PROC-WORK-002, PROC-WORK-003, PROC-WORK-008, PROC-CI-007 |
 | `metel-core` | `ROADMAP.md` | process document: PROC-WORK-004, PROC-WORK-005, PROC-WORK-006 |
-| `metel-core` | `RELEASING.md`, `PROCESSES.md` | process documents; they link here (PROC-RELEASE-001). `PROCESSES.md` holds only the pipeline diagram until metel-core#1534 |
+| `metel-core` | `RELEASING.md`, `PROCESSES.md` | process documents; they link here (PROC-RELEASE-001). `PROCESSES.md` is a pointer to this specification |
 | `metel-docs` | `.github/workflows/architecture-check.yml`, `rfc-check.yml` | PROC-CI-003, PROC-DOCS-008, PROC-DOCS-009 |
 | `metel-docs` | `.github/workflows/check-examples.yml`, `.github/scripts/wait-for-core-binary.sh`, `test_wait_for_core_binary.sh` | PROC-CI-004, PROC-DOCS-010 |
 | `metel-docs` | `.github/workflows/check-mdx.yml`, `tools/mdx-check-site` | PROC-DOCS-011 |
