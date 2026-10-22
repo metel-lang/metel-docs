@@ -80,8 +80,6 @@ These are stated so that nobody assumes a guarantee that does not exist.
   (`inventory doc up to date`); its sections for `metel-docs` and `metel-website` are not checked
   and lag the workflows (for example `architecture-check`, `next.yml` and `plugin-tests.yml` are
   missing from it).
-- Pull requests to core are merged with the hosting service's rebase merge, while `AGENTS.md`
-  describes a local fast-forward (PROC-CI-007).
 - The MDX check does not build `architecture`, `operations`, `rfcs` or `status` (PROC-DOCS-011).
 - Gap and limitation records name retired version numbers in `planned_for` (metel-core#1525).
 - No automated path publishes a docs-only change between releases (PROC-DEPLOY-006), and nothing
@@ -99,6 +97,11 @@ These are stated so that nobody assumes a guarantee that does not exist.
 - **Placeholder**: `_Generated at publish._`, what `metel-docs` stores where the evidence links are
   produced at publish time.
 - **Pending marker**: `> **Pending** metel-core#N`, spec text that runs ahead of the code.
+
+## When documents disagree
+
+The specification wins. A document that states a process contract differently is wrong and is fixed
+to cite the requirement (metel-core#1528).
 
 ## Sources
 
