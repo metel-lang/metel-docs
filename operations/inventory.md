@@ -15,17 +15,19 @@ gap in the specification.
 | `metel-core` | `.github/workflows/release.yml` | PROC-RELEASE-002 to PROC-RELEASE-007, PROC-RELEASE-009 |
 | `metel-core` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
 | `metel-core` | `.claude/commands/cut-release.md` | PROC-RELEASE-001, PROC-RELEASE-008 |
-| `metel-core` | `.claude/commands/gap-analysis.md`, `milestone-integration-test.md` | PROC-RELEASE-008 (they precede the gate) |
-| `metel-core` | `.claude/commands/start-issue.md`, `ship-issue.md` | PROC-CI-007 |
+| `metel-core` | `.claude/commands/gap-analysis.md`, `milestone-integration-test.md` | PROC-WORK-007, PROC-WORK-005, PROC-WORK-006 |
+| `metel-core` | `.claude/commands/start-issue.md`, `ship-issue.md` | PROC-WORK-001, PROC-CI-007 |
 | `metel-core` | `.claude/commands/new-rfc.md` | PROC-DOCS-008 |
 | `metel-core` | `.claude/commands/review-typechecker.md` | local: a review aid, no contract |
 | `metel-core` | `tools/check_doc_examples.py` | PROC-DOCS-010 |
 | `metel-core` | `tools/bump-docs.sh`, `tools/test_bump_docs.sh` | PROC-DOCS-003 |
-| `metel-core` | `tools/changelog-status.sh` | PROC-RELEASE-008 (an aid to the changelog check) |
+| `metel-core` | `tools/changelog-status.sh` | PROC-WORK-003, PROC-RELEASE-008 |
 | `metel-core` | `tools/check_inventory.sh` | PROC-CI-001 |
 | `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py` | PROC-CI-001, PROC-CI-006 |
 | `metel-core` | `metel-frontend/src/bin/gen_grammar.rs`, `check_stdlib_docs.rs` | PROC-DOCS-005 |
-| `metel-core` | `RELEASING.md`, `PROCESSES.md`, `AGENTS.md`, `ROADMAP.md` | process documents; they link here (PROC-RELEASE-001, PROC-CI-007) |
+| `metel-core` | `AGENTS.md` | process document: PROC-WORK-001, PROC-WORK-002, PROC-WORK-003, PROC-WORK-008, PROC-CI-007 |
+| `metel-core` | `ROADMAP.md` | process document: PROC-WORK-004, PROC-WORK-005, PROC-WORK-006 |
+| `metel-core` | `RELEASING.md`, `PROCESSES.md` | process documents; they link here (PROC-RELEASE-001) |
 | `metel-docs` | `.github/workflows/architecture-check.yml`, `rfc-check.yml` | PROC-CI-003, PROC-DOCS-008, PROC-DOCS-009 |
 | `metel-docs` | `.github/workflows/check-examples.yml`, `.github/scripts/wait-for-core-binary.sh`, `test_wait_for_core_binary.sh` | PROC-CI-004, PROC-DOCS-010 |
 | `metel-docs` | `.github/workflows/check-mdx.yml`, `tools/mdx-check-site` | PROC-DOCS-011 |

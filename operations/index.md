@@ -12,7 +12,7 @@ requirement show that they hold. It describes what the project does now, and say
 process is partial, planned or still manual.
 
 The specification was written while the processes it describes were being changed (metel-core
-v0.14.1), so each change landed with its requirement. It has 35 requirements in four areas:
+v0.14.1), so each change landed with its requirement. It has 43 requirements in five areas:
 
 | Area | Page | Covers |
 |---|---|---|
@@ -20,6 +20,7 @@ v0.14.1), so each change landed with its requirement. It has 35 requirements in 
 | `DEPLOY` | [Deployment](spec/deploy.md) | staging, promotion, the unreleased view |
 | `DOCS` | [Documentation](spec/docs.md) | the source of truth, pins, generated artifacts, reviews, lifecycles |
 | `CI` | [Continuous integration](spec/ci.md) | what each repository's CI guarantees, hooks, conventions |
+| `WORK` | [Work management](spec/work.md) | issues and branches, verification tiers, milestones and themes, bugs, the milestone gates |
 
 [Inventory](inventory.md) maps every workflow, script, hook and command to the requirements it
 implements.
