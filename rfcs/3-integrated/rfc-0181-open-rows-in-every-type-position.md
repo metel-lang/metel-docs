@@ -72,6 +72,11 @@ What an existential would add is **hiding the extra fields from callers**, an AP
 feature with no demonstrated demand. The `T0032` message for a return type should say what to do:
 omit the type, write the record in full, or name a row parameter that comes from an argument. It
 should not suggest a row parameter alone, which is impossible for a function with no row input.
+The advice is per position (metel-core#1484): omitting the type infers the record only for a
+private free function and for a closure's return annotation. A method or an aspect method
+declaration that omits its return type returns `()`, so those two are told to write the record in
+full or name a row parameter, and a closure, which cannot name a row parameter, to omit the
+annotation or write the record in full.
 
 ### 1.2 Written function types: keep `T0032`
 
