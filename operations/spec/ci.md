@@ -108,13 +108,15 @@ Core integrates on `develop` and `main` moves only at a release; pull requests t
 
 `check_operations.py` validates the specification's structure (ids, anchors, statuses, the field table, cross-references, tracking issues of planned requirements) and the paths a requirement says implement it, and discovers every workflow, script, hook, slash command and cargo bin in the repositories it can reach, requiring each to appear in `operations/inventory.md` (or be marked `local`) and every inventory row to name something that exists. Structural findings, and assets of `metel-docs` itself, fail the check. An asset of another repository that the inventory does not list is a warning on a pull request and fails under `--strict`, because requiring `metel-docs` to change before a `metel-core` pull request could pass is the circularity of PROC-CI-002. A `# Process: PROC-…` marker in a workflow or script must name an existing requirement.
 
+The flow diagrams of [`flows.md`](../flows.md) are checked for staleness by the same tool. A node that cites a requirement that does not exist, or a workflow, script or command that does not exist, is a finding when every repository is readable (otherwise the asset may live in one that is not, and nothing is said). A workflow or slash command that no node mentions, and an implemented or partial requirement that no node cites, is a warning (a finding for `metel-docs`' own workflows, and under `--strict`) unless the page lists it under `## Not drawn` with a reason. A node that says `manual` for a workflow that also runs on events, or omits it for one that only runs when dispatched, is a warning.
+
 | Field | Value |
 |---|---|
 | `status` | `partial` |
 | `owner` | continuous integration |
 | `trigger` | `architecture-check` on `metel-docs` (docs assets only); core CI (core and the pinned docs; website skipped; warnings only); `/cut-release` (all reachable repositories, `--strict`) |
 | `produces` | findings, and warnings for unlisted assets of other repositories |
-| `implemented by` | `metel-docs/architecture/tools/check_operations.py` |
+| `implemented by` | `metel-docs/architecture/tools/check_operations.py`, `metel-docs/architecture/tools/check_flows.py` |
 | `verified by` | `test_check_operations.py`; the real tree is clean |
 | `related` | PROC-CI-002, PROC-DOCS-009, PROC-RELEASE-008 |
 

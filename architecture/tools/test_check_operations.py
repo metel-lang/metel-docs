@@ -33,9 +33,22 @@ class Workspace(unittest.TestCase):
         (self.core / ".github" / "workflows" / "ci.yml").write_text("name: CI\n")
         self.write_spec(requirement())
         self.write_inventory("| `metel-core` | `.github/workflows/ci.yml` | PROC-CI-001 |\n")
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]'])
 
     def write_spec(self, *reqs, page="ci.md"):
         (self.docs / "operations" / "spec" / page).write_text("# Page\n\n" + "\n".join(reqs))
+
+    def write_flows(self, nodes, not_drawn=()):
+        body = "\n".join(f"    {n}" for n in nodes)
+        table = "".join(f"| `{k}` | {v} |\n" for k, v in not_drawn)
+        (self.docs / "operations" / "flows.md").write_text(
+            f"# Flows\n\n```mermaid\nflowchart TD\n{body}\n```\n\n## Not drawn\n\n| Item | Reason |\n|---|---|\n{table}"
+        )
+
+    def add_workflow(self, name, on="push"):
+        (self.core / ".github" / "workflows" / name).write_text(f"name: x\non:\n  {on}:\n\njobs: {{}}\n")
+        rows = (self.docs / "operations" / "inventory.md").read_text()
+        (self.docs / "operations" / "inventory.md").write_text(rows + f"| `metel-core` | `.github/workflows/{name}` | PROC-CI-001 |\n")
 
     def write_inventory(self, rows):
         (self.docs / "operations" / "inventory.md").write_text(
@@ -155,6 +168,7 @@ class DiscoveryTests(Workspace):
             "| `metel-core` | `.github/workflows/ci.yml` | PROC-CI-001 |\n"
             "| `metel-core` | `.claude/commands/start-issue.md`, `ship-issue.md` | PROC-CI-001 |\n"
         )
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]', 's["/start-issue and /ship-issue"]'])
         self.assertEqual(([], []), self.run_checks()[:2])
 
     def test_test_files_are_not_assets_of_their_own(self):
@@ -214,6 +228,94 @@ class MarkerTests(Workspace):
     def test_a_valid_process_marker_passes(self):
         (self.core / ".github" / "workflows" / "ci.yml").write_text("name: CI\n# Process: PROC-CI-001\n")
         self.assertEqual([], self.errors())
+
+
+class FlowTests(Workspace):
+    def test_a_missing_page_is_an_error(self):
+        (self.docs / "operations" / "flows.md").unlink()
+        self.assertTrue(any("flow diagrams page is missing" in e for e in self.errors()))
+
+    def test_a_node_citing_an_unknown_requirement_is_an_error(self):
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001, PROC-CI-099"]'])
+        self.assertTrue(any("PROC-CI-099" in e and "not a requirement" in e for e in self.errors()))
+
+    def test_a_name_that_may_live_in_an_unreadable_repository_is_not_reported(self):
+        self.write_flows(['ci["old-name.yml<br/>PROC-CI-001"]', 'x["ci.yml"]'])
+        errors, warnings, _, _ = self.run_checks()
+        self.assertEqual(([], []), (errors, warnings))  # metel-website is not readable, so it may live there
+
+    def test_a_renamed_workflow_is_an_error_when_every_repository_is_readable(self):
+        for name in ("metel-website", "metel-docs-internal"):
+            (self.ws / name).mkdir()
+        self.write_flows(['ci["old-name.yml<br/>PROC-CI-001"]', 'x["ci.yml"]'])
+        self.assertTrue(any("old-name.yml" in e for e in self.errors()))
+
+    def test_a_missing_command_is_an_error_when_every_repository_is_readable(self):
+        for name in ("metel-website", "metel-docs-internal"):
+            (self.ws / name).mkdir()
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]', 'c["/cut-release"]'])
+        self.assertTrue(any("/cut-release" in e for e in self.errors()))
+
+    def test_an_existing_command_is_resolved(self):
+        (self.core / ".claude" / "commands").mkdir(parents=True)
+        (self.core / ".claude" / "commands" / "cut-release.md").write_text("x\n")
+        self.write_inventory("| `metel-core` | `.github/workflows/ci.yml`, `.claude/commands/cut-release.md` | PROC-CI-001 |\n")
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]', 'c["/cut-release<br/>PROC-CI-001"]'])
+        self.assertEqual(([], []), self.run_checks()[:2])
+
+    def test_a_path_like_slash_is_not_a_command(self):
+        self.write_flows(['ci["ci.yml rebuilds /docs/next<br/>PROC-CI-001"]'])
+        self.assertEqual(([], []), self.run_checks()[:2])
+
+    def test_an_undrawn_workflow_is_a_warning_for_another_repository(self):
+        self.add_workflow("extra.yml")
+        errors, warnings, _, _ = self.run_checks()
+        self.assertEqual([], errors)
+        self.assertTrue(any("extra.yml" in w and "no flow diagram" in w for w in warnings))
+
+    def test_an_undrawn_workflow_of_metel_docs_is_an_error(self):
+        wf = self.docs / ".github" / "workflows"
+        wf.mkdir(parents=True)
+        (wf / "docs-check.yml").write_text("name: x\non:\n  push:\n")
+        self.write_inventory("| `metel-core` | `.github/workflows/ci.yml` | PROC-CI-001 |\n| `metel-docs` | `.github/workflows/docs-check.yml` | PROC-CI-001 |\n")
+        self.assertTrue(any("docs-check.yml" in e for e in self.errors()))
+
+    def test_not_drawn_excuses_a_workflow(self):
+        self.add_workflow("extra.yml")
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]'], [("extra.yml", "an aid")])
+        self.assertEqual(([], []), self.run_checks()[:2])
+
+    def test_an_undrawn_requirement_is_a_warning_and_not_drawn_excuses_it(self):
+        self.write_spec(requirement(), requirement(rid="PROC-CI-002", title="Another"))
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]'])
+        self.assertTrue(any("PROC-CI-002" in w and "no flow diagram node" in w for w in self.run_checks()[1]))
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]'], [("PROC-CI-002", "a rule")])
+        self.assertEqual(([], []), self.run_checks()[:2])
+
+    def test_a_planned_requirement_need_not_be_drawn(self):
+        self.write_spec(requirement(), requirement(rid="PROC-CI-002", title="Later", status="planned", extra_text="Tracked in metel-core#1.\n\n"))
+        self.assertEqual(([], []), self.run_checks()[:2])
+
+    def test_excusing_an_unknown_requirement_is_an_error(self):
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]'], [("PROC-CI-099", "gone")])
+        self.assertTrue(any("PROC-CI-099" in e for e in self.errors()))
+
+    def test_manual_must_match_the_workflow_triggers(self):
+        self.add_workflow("promote.yml", on="workflow_dispatch")
+        self.write_flows(['ci["ci.yml<br/>PROC-CI-001"]', 'p["promote.yml<br/>PROC-CI-001"]'])
+        self.assertTrue(any("promote.yml" in w and "manual" in w for w in self.run_checks()[1]))
+        (self.core / ".github" / "workflows" / "ci.yml").write_text("name: CI\non:\n  push:\n")
+        self.write_flows(['ci["ci.yml manual<br/>PROC-CI-001"]', 'p["promote.yml manual<br/>PROC-CI-001"]'])
+        warnings = self.run_checks()[1]
+        self.assertFalse(any("promote.yml" in w for w in warnings))
+        self.assertTrue(any("ci.yml" in w and "also runs on events" in w for w in warnings))
+
+    def test_workflow_triggers_are_read_from_block_and_inline_forms(self):
+        from check_flows import workflow_triggers
+        self.assertEqual({"push", "pull_request"}, workflow_triggers("name: x\non:\n  push:\n    branches: [a]\n  pull_request:\njobs: {}\n"))
+        self.assertEqual({"workflow_dispatch"}, workflow_triggers("on: workflow_dispatch\n"))
+        self.assertEqual({"push", "pull_request"}, workflow_triggers("on: [push, pull_request]\n"))
+        self.assertEqual(set(), workflow_triggers("name: x\n"))
 
 
 class ReachabilityAndCliTests(Workspace):
