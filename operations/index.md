@@ -24,6 +24,8 @@ v0.14.1), so each change landed with its requirement. It has 44 requirements in 
 
 [Inventory](inventory.md) maps every workflow, script, hook and command to the requirements it
 implements.
+[Flows](flows.md) draws the implementation flow and the release flow, and is checked against the
+repositories and the requirements (PROC-CI-008).
 
 ## How to read a requirement
 

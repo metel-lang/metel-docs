@@ -26,6 +26,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from check_architecture import Finding  # noqa: E402
+from check_flows import check_flows  # noqa: E402
 
 DOCS_ROOT = Path(__file__).resolve().parent.parent.parent
 STATUSES = {"implemented", "partial", "planned"}
@@ -265,6 +266,11 @@ def run(docs_root: Path | None = None, workspace: Path | None = None):
     errors += inv_errors
     warnings = path_warnings + warnings
     errors += check_markers(repos, ids)
+    rows = parse_inventory(ops / "inventory.md")
+    local = {t.split(" ")[0].rsplit("/", 1)[-1] for _, tokens, cell, _ in rows if re.search(r"\blocal\b", cell) for t in tokens}
+    flow_errors, flow_warnings = check_flows(ops, docs_root, reqs, ids, {r: discover(r, b) for r, b in repos.items()}, repos, REPOS, local)
+    errors += flow_errors
+    warnings += flow_warnings
     skipped = [r for r in REPOS if r not in repos]
     return errors, warnings, skipped, len(reqs)
 
