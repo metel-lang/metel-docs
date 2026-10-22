@@ -60,7 +60,7 @@ Opaque return variables are validated at constraint-composition time, not only a
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
+| `last_reviewed` | 945b99728c0dfff47ec0a42ae9d2a2ff4f6c1b72 |
 | `related` | ADR-0044, RFC-0037 |
 
 ##### Requirement {#arch.type-construction.requirement-4}
@@ -88,7 +88,7 @@ Until destructors run, a `std::core::Drop` impl may declare only an empty `drop`
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
+| `last_reviewed` | 945b99728c0dfff47ec0a42ae9d2a2ff4f6c1b72 |
 | `related` | ADR-0047, RFC-0071 §9c, `#261` |
 
 ##### Requirement {#arch.type-construction.requirement-6}
@@ -116,7 +116,7 @@ Operand legality is checked once operand types are resolved: arithmetic and unar
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
+| `last_reviewed` | 945b99728c0dfff47ec0a42ae9d2a2ff4f6c1b72 |
 | `related` | ADR-0017, `T0005` |
 
 ##### Requirement {#arch.type-construction.requirement-8}
