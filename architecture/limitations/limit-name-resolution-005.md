@@ -20,10 +20,13 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
    aspects, `let`/`mut` globals and type aliases are keyed by their bare name
    (`decl_any_name`). A struct and a function both called `Foo` in one module
    share an id, and `definitions.entry(id).or_insert(span)` keeps only the first
-   declaration's span, so a second declaration is invisible to goto-definition.
-   I found no runtime misbehaviour for this pair (a struct `Foo` and `fun Foo`,
-   used locally and through an import, both behave correctly): the registries
-   that consume the id happen to be per-kind.
+   declaration's span, so the second is invisible to goto-definition. That pair
+   is legal (types and values are separate namespaces) and behaves correctly,
+   used locally and through an import: the registries that consume the id happen
+   to be per-kind. Two declarations in the *same* namespace (two structs, a
+   struct and an enum, a `let` and a `fun`) used to share an id as well; they are
+   now `T0037` (`metel-core#1560`), so only the legal cross-namespace pair still
+   shares a key.
 2. **A method's key drops its impl's type arguments.** `method_symbol_name`
    builds `Target::Aspect::method` (or `Target::method`) from the target's *base
    name*. `extend W<i64>: Tag { fun t … }` and `extend W<String>: Tag { fun t … }`
@@ -46,8 +49,8 @@ answer from their own impl, for aspect impls, inherent `extend` blocks and throu
 `T0034`, as is the same name in two inherent blocks that can apply to one receiver
 (`metel-core#1322`, `metel-core#1229`). Neither was fixed by changing the key: `method_symbol_name`
 still builds `W::Tag::t` for both impls, so the weakness is structural and shows up wherever a
-consumer relies on the id alone. Case 1 has no observed runtime effect: identity is a string key, not
-the declaration.
+consumer relies on the id alone. Case 1 has no observed runtime effect for the legal pair; identity is
+a string key, not the declaration.
 
 ## Affects
 
@@ -56,13 +59,19 @@ the declaration.
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::check_duplicate_declarations`
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
 
 ## Resolution
 
-None yet for the key. The symptoms were closed one at a time: different instantiations of a generic
-type keep separate method behaviour (`metel-core#1228`), and a name defined twice where both definitions
-can apply to one receiver is `T0034` (`metel-core#1322` for inherent blocks, `metel-core#1229` for
-aspect impls and aspect declarations). What remains is to key a method by its declaration (for example
-the impl's position or a canonical form of its target type including arguments) and to make
-`intern_all_symbols` reject or disambiguate two declarations that map to one key.
+Narrowed by `metel-core#1560`; the record stays open. Two declarations in one namespace of a module are now
+`T0037` (structs, enums, aspects and type aliases share the type namespace; functions, `let` and `var` share
+the value namespace; a type and a value may share a name). The symptoms of cases 2 and 3 were closed one at a
+time: different instantiations of a generic type keep separate method behaviour (`metel-core#1228`), and a
+name defined twice where both definitions can apply to one receiver is `T0034` (`metel-core#1322` for inherent
+blocks, `metel-core#1229` for aspect impls and aspect declarations).
+
+Still open, tracked in `metel-core#1571`: the table is still keyed by `(module, name)`, so the legal
+cross-namespace pair (`struct Foo` and `fun Foo`) shares one id, and a method is still keyed by a string built
+from its target's base name. Closing it means a `(module, namespace, name)` key with namespace-split scope
+bindings and imports, and a method key built from the impl's canonical target type including its arguments.

@@ -1060,6 +1060,20 @@ that only contains a `Drop` value is not affected.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDM2IiwiY29sIjpudWxsLCJjb250YWlucyI6ImRyb3AgZGlzcGF0Y2ggYWdhaW5zdCBhIG5hcnJvd2VkIHJlc2lkdWFsIiwibGluZSI6IjEzIiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoib3Blbl9wcm9qZWN0aW9uX3BhcmFtX292ZXJfZHJvcF9icmFuZF9pc190MDAzNi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDE3OSBzZWN0aW9uIDEuNTogcGFzc2luZyBhIGBEcm9wYCBicmFuZCB0byBhIHByb2plY3Rpb24tdGFpbGVkIHBhcmFtZXRlciB3b3VsZCBkcm9wIGFcbi8vIG5hcnJvd2VkIGBIYW5kbGUueyBmZCB9YCwgd2hpY2ggbmVlZHMgZHJvcCBkaXNwYXRjaCBhZ2FpbnN0IGEgbmFycm93ZWQgcmVzaWR1YWwgKCM5NDkpLlxuc3RydWN0IEhhbmRsZSB7IGZkOiBpNjQsIG5hbWU6IFN0cmluZyB9XG5cbmV4dGVuZCBIYW5kbGU6IERyb3Age1xuICAgIGZ1biBkcm9wKCZ2YXIgc2VsZikgeyB9XG59XG5cbmZ1biByZWFkX2ZkPHJvdyBSPihoOiBIYW5kbGUueyBmZCwgLi5SIH0pIC0+IGk2NCB7IGguZmQgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgaCA6PSBIYW5kbGUgeyBmZCA9IDMsIG5hbWUgPSBcInhcIi50b19zdHJpbmcoKSB9O1xuICAgIGxldCBfIDo9IHJlYWRfZmQoaCk7IC8vIEVSUk9SW1QwMDM2XVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE0LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvcmVjb3Jkcy9vcGVuX3Byb2plY3Rpb25fcGFyYW1fb3Zlcl9kcm9wX2JyYW5kX2lzX3QwMDM2Lm10bCIsIm5hbWUiOiJvcGVuX3Byb2plY3Rpb25fcGFyYW1fb3Zlcl9kcm9wX2JyYW5kX2lzX3QwMDM2Lm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvdHlwZXMubWQjc3BlYy50eXBlcy5nZW5lcmljcy5vcGVuLXJvd3MubGVnYWxpdHktMyIsImlkIjoic3BlYy50eXBlcy5nZW5lcmljcy5vcGVuLXJvd3MubGVnYWxpdHktMyIsImxhYmVsIjoiT3BlbiByb3dzIEwzIn1dfQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
+### T0037 — Duplicate top-level declaration
+
+A top-level name is declared twice in one namespace of one module. Structs, enums,
+aspects and type aliases share the *type* namespace; functions, `let` and `var` share the
+*value* namespace. A type and a value may share a name (`struct Foo` and `fun Foo`
+coexist); two types, or a binding and a function, may not. Two `fun`s of one name are an
+overload set, so repeating a function is `T0011` only when their
+parameter types are identical. Without this error the second declaration shared the first
+one's identity and went unseen.
+
+`let _ := ...` binds nothing, so repeating it is allowed.
+
+**Fix:** rename one of the declarations, or merge them.
+
 ### R0001 — No `main` function defined
 
 > **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs
