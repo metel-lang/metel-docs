@@ -149,7 +149,7 @@ Aspect default methods are materialized as typed methods before evaluation: infe
 
 ##### Requirement {#arch.type-construction.requirement-10}
 
-Free-function overload selection is exact-match, and construction stamps the selected callable's stable `SymbolId` on the typed call; the runtime dispatches that identity through its symbol-value registry, and overload sets stay module-local.
+Free-function overload selection is exact-match, and construction stamps the selected callable's `SymbolId` on the typed call, an id derived from the program and so identical on every compilation; the runtime dispatches it through its symbol-value registry, and overload sets stay module-local.
 
 | Field | Value |
 |---|---|
@@ -158,7 +158,7 @@ Free-function overload selection is exact-match, and construction stamps the sel
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | d05bbfd47ae51437f565e0142a58f8e8a950d114 |
+| `last_reviewed` | fdf9591ce7923f93c5974ae00d281b7a7d20343d |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
