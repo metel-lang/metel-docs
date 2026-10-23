@@ -49,7 +49,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
+| `last_reviewed` | d05bbfd47ae51437f565e0142a58f8e8a950d114 |
 | `related` | ADR-0025 (unified `TypeDefinitionRegistry`), ADR-0041 |
 
 ##### Requirement {#arch.type-inference.requirement-3}

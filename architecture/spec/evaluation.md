@@ -118,7 +118,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `specified by` | `#evaluation` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 5f038b189cb67c5ec40e51d16a3e11a831a4535e |
+| `last_reviewed` | d05bbfd47ae51437f565e0142a58f8e8a950d114 |
 | `related` | ADR-0053, RFC-0008 |
 
 ##### Requirement {#arch.evaluation.requirement-2}
@@ -132,7 +132,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `specified by` | `#evaluation` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
+| `last_reviewed` | d05bbfd47ae51437f565e0142a58f8e8a950d114 |
 | `related` | `arch.resolution.requirement-1`, `tools/check_no_semantic_name_lookup.py` |
 
 </details>
