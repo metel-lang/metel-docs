@@ -57,8 +57,11 @@ title: "Metel Language Changelog"
   (`T0003`), although the declaration itself type-checked. Block-local enums can now be
   constructed and matched, and a `match` on one is checked for exhaustiveness against its own
   variants (`metel-core#1557`). A generic block-local enum still fails
-  (`metel-core#1556`), and naming an outer local type after an inner block has shadowed it still
-  fails (`metel-core#1561`).
+  (`metel-core#1556`).
+- A struct, record or enum declared inside a function body could not be named once an inner block had
+  declared a type with the same name: `struct P { x: i64 }` followed by an `if (true) { struct P { y: i64 } }`
+  made the later `P { x = 2 }` fail with `unknown struct`. The outer type is now back in scope when the
+  inner block ends, at any nesting depth (`metel-core#1561`).
 
 ## v0.14.0
 
