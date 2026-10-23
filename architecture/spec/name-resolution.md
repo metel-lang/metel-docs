@@ -22,7 +22,7 @@ in the Resolution section.
 
 ##### Requirement {#arch.name-resolution.requirement-1}
 
-Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: builtin `std::core` items are `Builtin` ids, the rest `Declared`; overloads and block-local types are separate kinds, so kinds cannot collide. A declaration keeps one id under any importer, alias or resolution order.
+Every top-level declaration gets a `SymbolId` from one `SymbolTable` keyed by (module, namespace, name), so a struct and a function of one name differ. Builtins are `Builtin` ids, the rest `Declared`; overloads and block-local types are separate kinds. A declaration keeps one id under any importer or alias.
 
 | Field | Value |
 |---|---|
@@ -36,7 +36,7 @@ Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: 
 
 ##### Requirement {#arch.name-resolution.requirement-2}
 
-An explicit `import` wins over a glob, and two explicit imports of one local name are an error. Globs are tiered: a user glob silently beats the auto-inserted std glob, and `T0011` fires only when two globs of the same tier export the same name.
+An explicit `import` beats a glob, and two explicit imports of one local name in one namespace are an error. A user glob silently beats the auto-inserted std glob; `T0011` fires only when two globs of the same tier export one name.
 
 | Field | Value |
 |---|---|
