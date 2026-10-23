@@ -45,12 +45,12 @@ deliberately excluded.
 
 **Examples / counterexamples.** Conforming: `identity::allocate`'s structural allocators
 (`BindingId`, `LocalId`) — one owner, checked-range construction. Violating, currently
-live: `SymbolId`'s space is split across three independent allocators (`SymbolTable`'s
-own counter, the overload table's process-global `AtomicU32`, `typeinference`'s
-descending block-local counter) — `LIMIT-NAME-RESOLUTION-002/004/005`, with two
-concrete bugs already caused: two impls, and separately two overloaded methods, each
-pair silently sharing one `SymbolId`. The ranges are declared and checked since
-metel-core#1542; one owner of the whole id is metel-core#1546.
+live: `SymbolId` was split across three independent allocators (`SymbolTable`'s own counter, the
+overload table's process-global `AtomicU32`, the type engine's descending block-local counter), with
+two concrete bugs already caused: two impls, and separately two overloaded methods, each pair silently
+sharing one `SymbolId`. It is now one type whose variants are the kinds, each with one owning allocator
+or a pure derivation (ADR-0065, metel-core#1546), and no counter is process-global. What stays open is
+that a symbol is still a `(module, name)` key (`LIMIT-NAME-RESOLUTION-004/005`).
 
 **Enforcement.** None; caught by review recognizing the shape. A structural checker akin
 to Standard 3's is a natural follow-up once the `SymbolId` unification those records call
@@ -59,7 +59,7 @@ for lands.
 **Exception process.** A deliberately independent, scoped identity space gets a
 `LIMIT-*` record stating why.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/004/005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-004/005` close.
 
 ## 3. No unresolved source-name lookup after the resolution boundary
 
@@ -311,7 +311,7 @@ wire format) documents why beside it. A range inside this codebase's own control
 merely hasn't been made checked yet is not an exception — it's tracked as a `LIMIT-*`
 record.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/004/005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-004/005` close.
 
 ## 12. Repeated ambient parameters are a named context type, not re-threaded by hand
 
