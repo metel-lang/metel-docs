@@ -5,7 +5,7 @@ summary: "Free-function overload ids are allocated from a static counter shared 
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
 discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -46,17 +46,31 @@ is no reproducing fixture.
 
 - `arch.name-resolution.requirement-1`
 - `arch.type-construction.requirement-10`
-- `metel-frontend/src/pipeline/type_checking/overload/mod.rs::NEXT_OVERLOAD_SYM`
+- `metel-frontend/src/pipeline/type_checking/overload/mod.rs::OverloadIds`
 
 ## Resolution
 
-None yet. A per-compilation allocator (owned by the `SymbolTable`, or by the
-overload table's builder) would make the ids reproducible.
+Resolved by ADR-0065 step 2 (metel-core#1546, PR #1551). There is no counter any more, so there is
+nothing process-global to reset. An overload definition's id is derived from the program:
 
-metel-core#1542 made the counter safe at the end of its range, and ADR-0065 step 1 (metel-core#1546,
-PR #1548) made its ids their own kind (`SymbolId::Overload`), but neither changed its process-global
-scope. The embedded `std::core`
-overload table is built once per process and its ids must be identical in every module, which is why
-a plain per-compilation counter does not work. Splitting that table's ids (deterministic, from
-declaration order) from user overload ids (per-graph) is part of the tagged-`SymbolId` proposal in
-metel-core#1546.
+- in a user module, `SymbolId::Overload { group, ordinal }`: `group` is the overloaded name's
+  `Declared` symbol in the module that defines it (the table builder now takes the resolver's
+  `symbols`), `ordinal` the definition's position among that name's overloads in source order. The id
+  is a function of those two values, so the same program is numbered the same way however many times it
+  is compiled, and two modules that overload one name get different ids because their groups differ;
+- in the embedded `std::core`, `SymbolId::CoreOverload(n)`: `n` is the definition's index in the core
+  table's declaration order. The table is still built once per process (every module must see the same
+  ids), but its ids no longer depend on a counter's value at first use. Groups are walked in first-seen
+  order, not `HashMap` order, so `n` does not depend on a per-process hash seed.
+
+Exit evidence: `overload_ids_do_not_depend_on_what_was_compiled_earlier_in_the_process`
+(`type_checking/tests.rs`) compiles a multi-module program, then an unrelated one, then the first again,
+and requires identical overload ids in every module's table. Applied alone to the pre-change code it fails
+with "the same program was numbered differently the second time it was compiled", which is the behaviour
+this record described. Further tests in `overload/tests.rs` cover source-position numbering, distinct ids
+across modules, dense in-order core ids that are identical on a rebuild, and an internal error for an
+overloaded name with no resolved symbol.
+
+What this fixes of ADR-0054's promise: two runs over the same resolved module graph now produce
+identical overload ids too. A consequence worth knowing: reordering the overloads of one name changes
+their ids, as reordering impl variants does under ADR-0063 (ADR-0065 Decision 6).

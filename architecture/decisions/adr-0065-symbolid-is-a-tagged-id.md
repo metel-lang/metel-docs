@@ -234,7 +234,7 @@ Each step is independently reviewable and leaves the suite green; none is starte
    test sorts are rewritten, and `Overload`/`CoreOverload` stay a single temporary variant fed by the
    existing counter. Replace the evaluator's range test with a match. Regenerate any test that pinned an
    inherited-default `LocalId` value.
-2. **Split the overload ids** per Decision 3: pass `symbols` into `build_overload_table`, introduce
+2. **Split the overload ids** per Decision 3. *Done: metel-core#1546, PR #1551.* Pass `symbols` into `build_overload_table`, introduce
    `Overload { group, ordinal }` and `CoreOverload(n)`, delete the process-global counter and close
    `LIMIT-NAME-RESOLUTION-002`.
 3. **Retire the range machinery and its tests**, replace them with the tests of the new invariants (no

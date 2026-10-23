@@ -63,5 +63,6 @@ the six ranges, `SymbolRange`, the `const` assertions, `allocate_from` and `allo
 above were deleted. The payloads are private index types, minted only by `SymbolTable`,
 `BlockLocalAllocator` and `allocate_overload`, each of which panics at the end of its index space
 instead of wrapping. The evaluator's range test is a match on the `Overload` kind. The `Overload`
-kind is still one variant fed by the process-global counter; splitting it is step 2
+kind was at that point still one variant fed by a process-global counter; ADR-0065 step 2 split it into
+`Overload { group, ordinal }` and `CoreOverload(n)` and deleted the counter
 (`LIMIT-NAME-RESOLUTION-002`).
