@@ -39,17 +39,15 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
 
 ## Impact
 
-Cases 2 and 3 are silent wrong results, reproduced against current `develop`.
-Case 2: with the two impls above, `W { v = 1 }.t()` and `W { v = "s" }.t()` both
-return the *last* impl's value, and swapping the blocks swaps the answer (also
-for inherent `extend` blocks and through a generic bound); coherence accepts the
-program (`metel-core#1228`). Case 3: `extend S { fun m(&self, x: i64) …; fun
-m(&self, x: String) … }` is accepted and only the `String` method exists
-(`s.m(5)` then fails to typecheck), and two `m()` methods with identical
-signatures are accepted with no duplicate error, the second running (free
-functions get `T0011` for the same mistake; `metel-core#1229`). Case 1 has no
-observed runtime effect today but is the same weakness: identity is a string
-key, not the declaration.
+Cases 2 and 3 no longer give wrong results. Case 2: `W { v = 1 }.t()` and `W { v = "s" }.t()` each
+answer from their own impl, for aspect impls, inherent `extend` blocks and through a generic bound
+(`metel-core#1228`, checked again at `metel-core#1229`). Case 3: a repeated method name in one
+`extend` block, whatever the parameter types, or in one aspect impl or `aspect` declaration, is
+`T0034`, as is the same name in two inherent blocks that can apply to one receiver
+(`metel-core#1322`, `metel-core#1229`). Neither was fixed by changing the key: `method_symbol_name`
+still builds `W::Tag::t` for both impls, so the weakness is structural and shows up wherever a
+consumer relies on the id alone. Case 1 has no observed runtime effect: identity is a string key, not
+the declaration.
 
 ## Affects
 
@@ -62,7 +60,9 @@ key, not the declaration.
 
 ## Resolution
 
-None yet; the bugs are `metel-core#1228` and `metel-core#1229`. The fix is to key a method by its
-declaration (for example the impl's position or a canonical form of its target
-type including arguments) and to make `intern_all_symbols` reject or
-disambiguate two declarations that map to one key.
+None yet for the key. The symptoms were closed one at a time: different instantiations of a generic
+type keep separate method behaviour (`metel-core#1228`), and a name defined twice where both definitions
+can apply to one receiver is `T0034` (`metel-core#1322` for inherent blocks, `metel-core#1229` for
+aspect impls and aspect declarations). What remains is to key a method by its declaration (for example
+the impl's position or a canonical form of its target type including arguments) and to make
+`intern_all_symbols` reject or disambiguate two declarations that map to one key.

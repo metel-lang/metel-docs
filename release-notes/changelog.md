@@ -62,6 +62,9 @@ title: "Metel Language Changelog"
   declared a type with the same name: `struct P { x: i64 }` followed by an `if (true) { struct P { y: i64 } }`
   made the later `P { x = 2 }` fail with `unknown struct`. The outer type is now back in scope when the
   inner block ends, at any nesting depth (`metel-core#1561`).
+- A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
+  twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
+  as it already was for inherent `extend` blocks (`metel-core#1229`).
 
 ## v0.14.0
 
