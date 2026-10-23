@@ -71,6 +71,10 @@ title: "Metel Language Changelog"
   (`match (p) { Point { x, .. } => ... }`) was an internal error (`I0001: invalid pattern path`).
   It now binds the fields, for generic local types at the scrutinee's type arguments, and an
   unknown field is `T0003` as for a top-level struct (`metel-core#1565`).
+- Inside a block that declares an enum with the same name as an outer one, a `match` on a value of
+  the outer enum resolved its bare-variant patterns against the inner enum and silently took no arm.
+  Block-local types now keep their identity on annotations and on enum values, so the value is matched
+  against its own enum (`metel-core#1568`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).

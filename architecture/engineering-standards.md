@@ -74,6 +74,10 @@ durable shape as the rest of this document.
 frozen-IR files (`identity/mod.rs`, `typed_ast/mod.rs`, `place.rs`, `query.rs`) for a
 `HashMap`/`BTreeMap` field keyed by `String`/`Span`. `identity::position`
 (`PositionIndex`) is the one sanctioned exception (rebuilt per snapshot, per ADR-0054).
+Construction is not frozen yet (ADR-0054 step 6), so `construction/mod.rs` is scanned too with
+each existing map exempted and justified: a new `String`- or `Span`-keyed map there fails CI.
+A block-local type's name is resolved once, where it is written (`written_type_id`, and the
+annotation converter), and its identity travels on the type from then on.
 The evaluator's `RuntimeRegistry` is a currently uncovered gap (`LIMIT-EVALUATION-003`) —
 the natural next extension of `SCAN_FILES`.
 
