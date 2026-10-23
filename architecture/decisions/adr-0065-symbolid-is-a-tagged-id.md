@@ -5,7 +5,7 @@ date: '2026-10-22'
 status: accepted
 relates: adr-0038, adr-0041, adr-0054, adr-0063
 implements: metel-core#1546
-updated: '2026-10-22'
+updated: '2026-10-23'
 ---
 
 ## Context
@@ -237,7 +237,9 @@ Each step is independently reviewable and leaves the suite green; none is starte
 2. **Split the overload ids** per Decision 3. *Done: metel-core#1546, PR #1551.* Pass `symbols` into `build_overload_table`, introduce
    `Overload { group, ordinal }` and `CoreOverload(n)`, delete the process-global counter and close
    `LIMIT-NAME-RESOLUTION-002`.
-3. **Retire the range machinery and its tests**, replace them with the tests of the new invariants (no
-   cross-kind collision by construction; core overload ids identical across two compilations in one
-   process; overload ids identical across two builds of the same graph), and update Engineering
-   Standards 2 and 11.
+3. **Retire the range machinery and its tests, and test the new invariants.** *Done.* The ranges and
+   their allocators were deleted in step 1, and metel-core#1552 removed the last stale reference (a comment
+   naming `USER_SYM_START`). The invariants are tested: no cross-kind collision by construction; core
+   overload ids dense, in declaration order and identical on a rebuild; overload ids identical when the same
+   program is compiled again after an unrelated one; block-local ids unique across the module graph.
+   Engineering Standards 2 and 11 are updated.
