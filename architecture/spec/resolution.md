@@ -37,7 +37,7 @@ Once inference has solved a body and the frontend has frozen its resolution, no 
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
+| `last_reviewed` | 703187718680e63a486017330b38a7d90194f95c |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -51,7 +51,7 @@ Bindings and value references get structural identities (`LocalId`, `RefId`) fro
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
+| `last_reviewed` | 703187718680e63a486017330b38a7d90194f95c |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
