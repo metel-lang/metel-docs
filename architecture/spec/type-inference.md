@@ -77,7 +77,7 @@ Inference and construction are separate passes: inference solves constraints and
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
+| `last_reviewed` | ca27babb1362605fcf7ed2444314f9f16a1b021d |
 | `related` | ADR-0002, `arch.type-construction.requirement-1` |
 
 ##### Requirement {#arch.type-inference.requirement-5}
