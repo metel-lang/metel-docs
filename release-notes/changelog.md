@@ -46,6 +46,12 @@ title: "Metel Language Changelog"
   `Copy`-ness, so a use-after-move of the non-`Copy` record was accepted, and a valid copy of the
   `Copy` record was rejected as "use of moved value". Each record is now judged by its own fields
   (`metel-core#1553`).
+- The same confusion remained for block-local types with no fields. A record with no fields is `Copy`
+  and a struct with none is not, but a same-named one declared later was still judged by the first:
+  with `--move-check`, a use-after-move of a zero-field struct that followed a zero-field record was
+  accepted, and a valid copy of a zero-field record that followed a zero-field struct was rejected.
+  A block-local struct or record is now identified by its own declaration, not by its name and
+  field names (`metel-core#1555`).
 
 ## v0.14.0
 
