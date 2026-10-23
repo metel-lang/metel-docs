@@ -467,7 +467,9 @@ Top-level `struct` and `enum` declarations are [hoisted to program scope](#spec.
 referenced before their declaration appears in the source.
 
 Types declared inside a function body are local to that body from their declaration
-point onward; they are not visible from other functions.
+point onward; they are not visible from other functions. A local `struct`, `record` or `enum`
+may declare type parameters and bounds exactly as a top-level one does (`record Box<T> { x: T }`);
+they are checked where the type is constructed and applied at each use.
 
 ```metel
 fun make_point() -> Point {

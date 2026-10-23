@@ -56,12 +56,17 @@ title: "Metel Language Changelog"
   `Mode::A` reported an internal error (`I0001`) and `M::A { x = 1 }` reported `unknown enum`
   (`T0003`), although the declaration itself type-checked. Block-local enums can now be
   constructed and matched, and a `match` on one is checked for exhaustiveness against its own
-  variants (`metel-core#1557`). A generic block-local enum still fails
-  (`metel-core#1556`).
+  variants (`metel-core#1557`).
 - A struct, record or enum declared inside a function body could not be named once an inner block had
   declared a type with the same name: `struct P { x: i64 }` followed by an `if (true) { struct P { y: i64 } }`
   made the later `P { x = 2 }` fail with `unknown struct`. The outer type is now back in scope when the
   inner block ends, at any nesting depth (`metel-core#1561`).
+- A `struct`, `record` or `enum` declared inside a function body can now have type parameters.
+  The declaration was accepted before but the parameter was dropped, so every use failed with an
+  unrelated `cannot unify ... 'T'`. `record Box<T> { x: T }` in a function body now behaves like the
+  same declaration at top level: `Box { x = 1 }`, `Box<i64>` annotations, field reads, bounds
+  (`T0012`) and `--move-check` Copy-ness all work (`metel-core#1556`). A phantom parameter
+  (`record Marker<T> {}`) still needs an annotation, as at top level.
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
