@@ -988,9 +988,10 @@ so nothing is forgotten at a call.
 ### T0034 — Duplicate method definition
 
 A method name is defined twice where both definitions can apply to the same receiver: twice
-in one `extend` block, or in two inherent `extend` blocks of one type whose coverage
-overlaps. Without this error the later definition would silently replace the earlier one at
-dispatch.
+in one `extend` block (inherent or an aspect impl), twice in one `aspect` declaration, or in
+two inherent `extend` blocks of one type whose coverage overlaps. Without this error the
+later definition would silently replace the earlier one at dispatch. Methods are not
+overloaded, so different parameter types do not make two same-named methods distinct.
 
 Blocks whose coverage is provably disjoint may reuse a name — `extend W<i64>` and
 `extend W<String>`, bounds that contradict (`T: Tag` and `T: !Tag`), or row bounds that
