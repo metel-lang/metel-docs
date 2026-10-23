@@ -67,6 +67,10 @@ title: "Metel Language Changelog"
   same declaration at top level: `Box { x = 1 }`, `Box<i64>` annotations, field reads, bounds
   (`T0012`) and `--move-check` Copy-ness all work (`metel-core#1556`). A phantom parameter
   (`record Marker<T> {}`) still needs an annotation, as at top level.
+- A struct pattern naming a `struct` or `record` declared inside a function body
+  (`match (p) { Point { x, .. } => ... }`) was an internal error (`I0001: invalid pattern path`).
+  It now binds the fields, for generic local types at the scrutinee's type arguments, and an
+  unknown field is `T0003` as for a top-level struct (`metel-core#1565`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
