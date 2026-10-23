@@ -38,6 +38,15 @@ title: "Metel Language Changelog"
   written function type it says to share one `R` between the parameter and the result
   (`metel-core#1484`).
 
+**Move checking fixes:**
+
+- `--move-check` judged a block-local record by the wrong type when an earlier record in the same
+  module had the same name and the same field names but different field types (`record P { x: i64 }`
+  in one function, `record P { x: String }` in another). The later one took the earlier one's
+  `Copy`-ness, so a use-after-move of the non-`Copy` record was accepted, and a valid copy of the
+  `Copy` record was rejected as "use of moved value". Each record is now judged by its own fields
+  (`metel-core#1553`).
+
 ## v0.14.0
 
 **Released 2026-10-18.** This release adds named records and reusable open rows, checks
