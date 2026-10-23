@@ -52,6 +52,13 @@ title: "Metel Language Changelog"
   accepted, and a valid copy of a zero-field record that followed a zero-field struct was rejected.
   A block-local struct or record is now identified by its own declaration, not by its name and
   field names (`metel-core#1555`).
+- A unit or struct-like variant of an enum declared inside a function body could not be used:
+  `Mode::A` reported an internal error (`I0001`) and `M::A { x = 1 }` reported `unknown enum`
+  (`T0003`), although the declaration itself type-checked. Block-local enums can now be
+  constructed and matched, and a `match` on one is checked for exhaustiveness against its own
+  variants (`metel-core#1557`). A generic block-local enum still fails
+  (`metel-core#1556`), and naming an outer local type after an inner block has shadowed it still
+  fails (`metel-core#1561`).
 
 ## v0.14.0
 
