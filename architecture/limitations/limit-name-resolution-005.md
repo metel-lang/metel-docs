@@ -27,11 +27,12 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
    struct and an enum, a `let` and a `fun`) used to share an id as well; they are
    now `T0037` (`metel-core#1560`), so only the legal cross-namespace pair still
    shares a key.
-2. **A method's key drops its impl's type arguments.** `method_symbol_name`
-   builds `Target::Aspect::method` (or `Target::method`) from the target's *base
-   name*. `extend W<i64>: Tag { fun t … }` and `extend W<String>: Tag { fun t … }`
-   both produce `W::Tag::t`, so both methods receive one `SymbolId` and the
-   id-keyed method registry keeps whichever was registered last.
+2. **A method's key drops its impl's type arguments.** *(Fixed by `metel-core#1571`.)*
+   `method_symbol_name` used to be fed the target's *base name*, so
+   `extend W<i64>: Tag { fun t … }` and `extend W<String>: Tag { fun t … }` both produced
+   `W::Tag::t` and both methods received one `SymbolId`. `impl_method_symbol_name` now renders the
+   target and the aspect with their type arguments (`W<i64>::Tag::t`, `S::Conv<String>::conv`),
+   naming an impl's own type parameters by position; a target with no arguments keeps its bare name.
 
 3. **Methods are not overloaded, so a repeated name collides even inside one
    impl.** Two methods called `m` in one `extend S` block, whatever their
@@ -47,9 +48,9 @@ answer from their own impl, for aspect impls, inherent `extend` blocks and throu
 (`metel-core#1228`, checked again at `metel-core#1229`). Case 3: a repeated method name in one
 `extend` block, whatever the parameter types, or in one aspect impl or `aspect` declaration, is
 `T0034`, as is the same name in two inherent blocks that can apply to one receiver
-(`metel-core#1322`, `metel-core#1229`). Neither was fixed by changing the key: `method_symbol_name`
-still builds `W::Tag::t` for both impls, so the weakness is structural and shows up wherever a
-consumer relies on the id alone. Case 1 has no observed runtime effect for the legal pair; identity is
+(`metel-core#1322`, `metel-core#1229`). Those symptoms were closed without changing the key; the key itself now
+distinguishes the instantiations (`metel-core#1571`), so a consumer relying on the id alone no longer
+conflates them. Case 1 has no observed runtime effect for the legal pair; identity is
 a string key, not the declaration.
 
 ## Affects
@@ -59,6 +60,7 @@ a string key, not the declaration.
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::impl_method_symbol_name`
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::check_duplicate_declarations`
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
 
@@ -71,7 +73,9 @@ time: different instantiations of a generic type keep separate method behaviour 
 name defined twice where both definitions can apply to one receiver is `T0034` (`metel-core#1322` for inherent
 blocks, `metel-core#1229` for aspect impls and aspect declarations).
 
+A method is now keyed by its target and aspect with their type arguments (`metel-core#1571`, first slice).
+
 Still open, tracked in `metel-core#1571`: the table is still keyed by `(module, name)`, so the legal
-cross-namespace pair (`struct Foo` and `fun Foo`) shares one id, and a method is still keyed by a string built
-from its target's base name. Closing it means a `(module, namespace, name)` key with namespace-split scope
-bindings and imports, and a method key built from the impl's canonical target type including its arguments.
+cross-namespace pair (`struct Foo` and `fun Foo`) shares one id. Closing it means a
+`(module, namespace, name)` key with namespace-split scope bindings, imports and exports, and a reference
+resolver that picks the namespace from the position a name is written in.
