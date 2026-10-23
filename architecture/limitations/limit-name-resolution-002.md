@@ -11,11 +11,12 @@ review: null
 
 ## Limitation
 
-`SymbolTable` allocates user declarations from its own per-table counter, so a
-fresh `SymbolTable` restarts at `USER_SYM_START`. Overload-definition ids are
-different: `typechecker/overload.rs` draws them from
-`static NEXT_OVERLOAD_SYM: AtomicU32`, initialised to `OVERLOAD_SYM_START`
-(`0x4000_0000`) and advanced with a `Relaxed` `fetch_add`. Nothing resets it. Its
+`SymbolTable` allocates declared ids from its own per-table counter, so a
+fresh `SymbolTable` restarts at index 0. Overload-definition ids are
+different: `type_checking/overload` draws them from
+`static NEXT_OVERLOAD_SYM: AtomicU32`, initialised to 0 and advanced by
+`allocate_overload` (a compare-exchange loop that panics rather than wraps).
+Nothing resets it. Its
 own comment gives the reason ("keeps ids unique across the whole graph so the
 evaluator's symbol registry never collides"), but the scope is the whole
 process, not one compilation.
@@ -52,8 +53,9 @@ is no reproducing fixture.
 None yet. A per-compilation allocator (owned by the `SymbolTable`, or by the
 overload table's builder) would make the ids reproducible.
 
-metel-core#1542 made the counter safe at the end of its range (it allocates through a checked helper
-and panics instead of wrapping) but did not change its process-global scope. The embedded `std::core`
+metel-core#1542 made the counter safe at the end of its range, and ADR-0065 step 1 (metel-core#1546,
+PR #1548) made its ids their own kind (`SymbolId::Overload`), but neither changed its process-global
+scope. The embedded `std::core`
 overload table is built once per process and its ids must be identical in every module, which is why
 a plain per-compilation counter does not work. Splitting that table's ids (deterministic, from
 declaration order) from user overload ids (per-graph) is part of the tagged-`SymbolId` proposal in

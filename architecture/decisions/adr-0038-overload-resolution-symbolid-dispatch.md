@@ -81,6 +81,8 @@ Each overloaded definition gets a unique `SymbolId` from a dedicated range
 (`symbols::OVERLOAD_SYM_START = 0x4000_0000`, process-global atomic allocator
 in `typechecker::overload`). The range is disjoint from the name-resolver's
 user range (1000+) so the two allocators never need to coordinate.
+*Superseded in form by ADR-0065 (metel-core#1546): the numeric range no longer exists. An
+overload's id is `SymbolId::Overload`, its own kind, so it cannot collide with a declared id.*
 
 The flow:
 

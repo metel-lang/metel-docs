@@ -292,9 +292,10 @@ unrelated-looking bug.
 occupy 1-99, the resolver's ids start at 1000, the overload allocator's at
 `0x4000_0000`, block-local types count down from the top — was the counterexample until
 `LIMIT-NAME-RESOLUTION-003` closed: "nothing checks that the resolver's range stays below
-`OVERLOAD_SYM_START`." Now `symbols.rs` declares the ranges, a `const` assertion rejects an overlap,
-and each allocator panics at the end of its range (metel-core#1542); the stronger form, a tagged id
-in which a kind collision cannot be written, is metel-core#1546. `TypeVarGenerator`'s hard-coded offsets (10,000
+`OVERLOAD_SYM_START`." It was first made checked (declared ranges, a `const` assertion, allocators
+that panic at the end of their range; metel-core#1542), then replaced by the conforming form:
+`SymbolId` is an enum whose variants are the kinds, with private payloads minted by one allocator
+each, so a collision between kinds cannot be written (ADR-0065, metel-core#1546). `TypeVarGenerator`'s hard-coded offsets (10,000
 through 5,000,000, scattered across several files) were the counterexample until
 `LIMIT-TYPE-INFERENCE-005` closed: the 2,000,000 start was shared by two unrelated users.
 Conforming: `type_var_space` declares the ranges in one place, rejects an overlap with a

@@ -74,7 +74,8 @@ pub enum SymbolId {
 }
 ```
 
-Two kinds cannot collide because they are different variants. The six ranges, `SymbolRange`,
+Two ids of different kinds cannot be equal because they are different variants. Uniqueness *within*
+a kind is a separate property that the kind's allocator provides (see Decision 2). The six ranges, `SymbolRange`,
 `ALL_RANGES`, the `const` assertions, `allocate_from`, `allocate_down` and the end-of-range panics are
 deleted. Each variant's payload keeps only the limit a `u32` has, which is enforced by a checked
 increment in the one allocator that owns the variant. `Declared` is not called `User` because the
@@ -83,9 +84,17 @@ from user is a separate question (`LIMIT-NAME-RESOLUTION-004`).
 
 ### 2. Payloads are private; one module constructs each variant
 
-`SymbolTable` is the only code that builds `Declared`, an allocator owned by the type engine's context
-is the only code that builds `BlockLocal`, and the overload module builds the two overload variants.
-Outside those, an id can be compared, hashed, matched and passed, not forged from a number. Tests that
+`SymbolTable` is the only code that builds `Declared`, `BlockLocalAllocator` is the only code that
+builds `BlockLocal`, and the overload module builds the two overload variants through a crate-private
+function. Outside those, an id can be compared, hashed, matched and passed, not forged from a number.
+
+Each allocator is responsible for uniqueness within its kind, and the scope of that guarantee is the
+scope of the allocator: one `SymbolTable` per resolved graph for `Declared`; the registry chain that
+`check_graph` builds in module order for `BlockLocal`, whose allocator `merge_from` carries forward so
+a module's first local type does not reuse a dependency's id; one process-global counter for the
+temporary `Overload` variant until step 2. Making an allocator and minting from it is public for
+`SymbolTable` and `BlockLocalAllocator` (a second table or allocator mints equal ids by construction),
+so what the types rule out is forging a specific index, not creating a second allocator. Tests that
 minted `SymbolId(1000)` use a `#[cfg(test)]` constructor. Kind tests become matches
 (`matches!(id, SymbolId::Overload { .. } | SymbolId::CoreOverload(_))`), and an exhaustive `match` on
 `SymbolId` forces a consumer to consider every kind when one is added.
@@ -153,6 +162,18 @@ peak memory of a large generated program was about +1.2% and none on run time (s
 it. The numeric values of `LocalId`/`RefId` for inherited-default bodies change once. Anything that
 pins a literal id value in a test changes with it.
 
+**Found by adversarial review (step 1, metel-core#1548) and fixed there.** Two defects survived the
+design and the first test run. (1) `allocate_overload` was public and took the caller's counter, so
+code outside the crate could mint `Overload(n)` for any `n`; it is crate-private, with `compile_fail`
+doctests guarding it. (2) Block-local ids restarted at index 0 in every module, so two modules each
+registered a different local type as `BlockLocal(0)` and the later `struct_env.insert` overwrote the
+earlier definition in the shared registry. The old numeric ids repeated across modules in the same way,
+and no program was observed to give a wrong answer, but the metadata is kept after a block closes for
+runtime generic-body reconstruction (#1307), which is exactly the reader that would have found the wrong
+entry. `merge_from` now moves the allocator past the one it merges. The lesson recorded here: the enum
+rules out a collision between kinds, not between two allocators of one kind, so each allocator's scope
+has to be stated and tested.
+
 **Not changed.** `LIMIT-NAME-RESOLUTION-005` (a symbol is a `(module, name)` key, so distinct
 declarations such as impl methods with different type arguments can share one id) is a different
 problem and is not addressed; a tagged id makes it easier to fix later (a `Method` kind) but does not
@@ -207,7 +228,7 @@ Nothing is open. A later change to any of these amends this ADR.
 Each step is independently reviewable and leaves the suite green; none is started by this ADR.
 
 0. **Audit** (done, recorded above). It settled the former open questions 1, 2 and 4.
-1. **Introduce the enum behind the existing surface.** `SymbolId` becomes the enum with `Declared`,
+1. **Introduce the enum behind the existing surface.** *Done: metel-core#1546, PR #1548.* `SymbolId` becomes the enum with `Declared`,
    `BlockLocal` and `Builtin`; `USER_SYM_START` and the `SYM_*` constants keep working through
    constructors, the ranges are removed, `Ord` is removed from `SymbolId` and `BindingId` and the four
    test sorts are rewritten, and `Overload`/`CoreOverload` stay a single temporary variant fed by the

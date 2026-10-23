@@ -39,7 +39,7 @@ There is no observable symptom, so no reproducing fixture.
 ## Affects
 
 - `arch.name-resolution.requirement-1`
-- `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `SymbolRange`, the declared ranges, `allocate_from`, `allocate_down`)
+- `metel-frontend/src/identity/symbols.rs` (`SymbolId`, `SymbolTable`, `BlockLocalAllocator`, `allocate_overload`)
 - `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`fresh_local_type_id`)
 
 ## Resolution
@@ -55,6 +55,13 @@ forever at the bottom, uses `allocate_down` over its own range (the record's thi
 bounded below as well as above). `SymbolTable.map` is private, with `map()` and `into_map()`. Tests
 cover the range check, each allocator's exhaustion and the table seeding.
 
-What this does not do: the kind of a `SymbolId` is still recovered by inspecting the number (the
-evaluator tests `id.0 >= OVERLOAD_SYM_START`). Making a kind collision unrepresentable needs a tagged
-id, tracked in metel-core#1546, which would also retire the ranges.
+What #1542 did not do, and what replaced it: it left the kind of a `SymbolId` to be recovered by
+inspecting the number (the evaluator tested `id.0 >= OVERLOAD_SYM_START`). ADR-0065 step 1
+(metel-core#1546, PR #1548) removed that: `SymbolId` is now an enum whose variants are the kinds
+(`Builtin`, `Declared`, `BlockLocal`, `Overload`), so a collision between kinds cannot be written, and
+the six ranges, `SymbolRange`, the `const` assertions, `allocate_from` and `allocate_down` described
+above were deleted. The payloads are private index types, minted only by `SymbolTable`,
+`BlockLocalAllocator` and `allocate_overload`, each of which panics at the end of its index space
+instead of wrapping. The evaluator's range test is a match on the `Overload` kind. The `Overload`
+kind is still one variant fed by the process-global counter; splitting it is step 2
+(`LIMIT-NAME-RESOLUTION-002`).
