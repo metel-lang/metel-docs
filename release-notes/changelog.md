@@ -75,6 +75,11 @@ title: "Metel Language Changelog"
   the outer enum resolved its bare-variant patterns against the inner enum and silently took no arm.
   Block-local types now keep their identity on annotations and on enum values, so the value is matched
   against its own enum (`metel-core#1568`).
+- A top-level name declared twice in one namespace of a module is now an error (`T0037`). Before,
+  `struct Foo` twice, a `struct` and an `enum` (or `aspect`, or `type` alias) of one name, and a `let`
+  beside a `fun` of one name were all accepted, and the second declaration silently shared the first
+  one's identity. Types and values are separate namespaces, so `struct Foo` and `fun Foo` still
+  coexist, and functions of one name remain an overload set (`metel-core#1560`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).

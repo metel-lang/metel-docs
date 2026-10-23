@@ -463,6 +463,11 @@ fun main() {
 }
 ```
 
+A module's top-level names live in two namespaces. Structs, enums, aspects and type aliases
+share the type namespace; functions, `let` and `var` share the value namespace. Declaring a
+name twice in one namespace is an error ([T0037](../error-codes.md#t0037--duplicate-top-level-declaration));
+a type and a value may share a name, and two functions of one name form an overload set.
+
 Top-level `struct` and `enum` declarations are [hoisted to program scope](#spec.declarations.variables.scoping-and-shadowing.legality-4) — they may be
 referenced before their declaration appears in the source.
 
