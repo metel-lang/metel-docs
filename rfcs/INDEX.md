@@ -1454,7 +1454,7 @@ implementation).
 - **RFC-0186** — Rows as an operator on record parameters. Removes the `row` generic kind
   and `where all`: a parameter is `record R`, `..R` is its row, and the field-wise constraint
   is `where ..R: A`. Amends RFC-0121 and RFC-0123; RFC-0125, RFC-0146, RFC-0174 and RFC-0175
-  use the syntax it replaces.
+  use the syntax it replaces. Tracked by metel-core#1597.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
