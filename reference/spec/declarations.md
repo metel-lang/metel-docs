@@ -511,7 +511,7 @@ Top-level `extend` blocks follow the same declaration-order rule as the types th
 Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
 declaration, and the outer declaration is not visible outside its own scope.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed bdfd52c5a48a2d2f39d52bb4a3b208440bb4fc06 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -586,7 +586,7 @@ no value of that name, in the type namespace (a zero-field struct used as a valu
 binding of the same name shadows both: the name then refers to the local for the rest of its
 scope, and a call through it calls the local.
 
-<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
+<!-- rfc.py:last_reviewed bdfd52c5a48a2d2f39d52bb4a3b208440bb4fc06 -->
 
 </details>
 
