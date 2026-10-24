@@ -2,8 +2,12 @@
 id: rfc-0184
 title: "Rename Perhaps to Option"
 date: '2026-10-24'
-status: draft
+status: under-review
+updated: '2026-10-24'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1595'
 ---
+
+> **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
 
 ## Summary
 
