@@ -568,7 +568,7 @@ declared twice in one namespace of one module is rejected with
 name are an overload set instead (identical parameter types are rejected as `T0011`), and
 `let _ := ...` binds no name, so it may be repeated.
 
-<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-6}
 
@@ -577,14 +577,14 @@ each use finds the one its position asks for. A type position resolves in the ty
 a type annotation, an `extend` or aspect target, the head of a struct, record or enum
 literal, and the head of a pattern.
 
-<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-7}
 
 A bare name in expression position resolves in the value namespace, and, when the module has
 no value of that name, in the type namespace (a zero-field struct used as a value).
 
-<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 
 </details>
 
