@@ -1435,12 +1435,10 @@ implementation).
 ## Small, mostly standalone syntax/ergonomics items
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
-<<<<<<< HEAD
 - **RFC-0185** — Remove type-directed dereference. Retires the implicit read-copy out of a
   reference (RFC-0067a §3a): reading through a reference is always `*r`; selector auto-deref
   stays. It is RFC-0112's declined "Strict Go" alternative, so accepting it supersedes
   RFC-0112 and vice versa. Tracked by metel-core#1596.
-=======
 - **RFC-0183** — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
@@ -1453,7 +1451,6 @@ implementation).
   (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Perhaps` rejection in
   `functions.md`; supersedes the unresolved parts of refused RFC-0079 §6 and its Open
   Question 4. Tracked by metel-core#1593 (report: #1589).
->>>>>>> origin/main
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
