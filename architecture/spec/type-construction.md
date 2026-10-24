@@ -130,7 +130,7 @@ Import visibility is diagnosed while building import schemes, where the full mod
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | ADR-0024, `T0003`, `T0009` |
 
 ##### Requirement {#arch.type-construction.requirement-9}
@@ -158,7 +158,7 @@ Free-function overload selection is exact-match, and construction stamps the sel
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | fdf9591ce7923f93c5974ae00d281b7a7d20343d |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
