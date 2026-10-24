@@ -285,6 +285,15 @@ handle into the importing module's scope.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGhlbHBlcjo6YW5zd2VyO1xuZnVuIG1haW4oKSAtPiBpNjQgeyByZXR1cm4gYW5zd2VyKCk7IH1cbiJ9LHsibmFtZSI6ImhlbHBlci5tdGwiLCJzb3VyY2UiOiJwdWJsaWMgZnVuIGFuc3dlcigpIC0+IGk2NCB7IHJldHVybiA3OyB9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL21vZHVsZV9zZW1hbnRpY3MvZXhwbGljaXRfbmFtZWRfaW1wb3J0X2Z1bmN0aW9uX2NhbGwiLCJuYW1lIjoiZXhwbGljaXRfbmFtZWRfaW1wb3J0X2Z1bmN0aW9uX2NhbGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.modules.imports.legality-5}
+
+`import m::name` binds `name` in every namespace in which module `m` provides it, whether
+`m` declares it or re-exports it, and `export m::name` re-exports it in the same way; an alias
+renames the name in each. A name that `m` provides as both a type and a value is therefore
+imported as both. A module handle (`import m`) binds in the type namespace.
+
+<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+
 </details>
 
 ## Re-exports
@@ -475,6 +484,16 @@ glob-provided name.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDExIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiJpbXBvcnQgYTo6KjtcbmltcG9ydCBiOjoqO1xuZnVuIG1haW4oKSAtPiBpNjQgeyByZXR1cm4gZm9vKCk7IH1cbiJ9LHsibmFtZSI6ImEubXRsIiwic291cmNlIjoicHVibGljIGZ1biBmb28oKSAtPiBpNjQgeyByZXR1cm4gMTsgfVxuIn0seyJuYW1lIjoiYi5tdGwiLCJzb3VyY2UiOiJwdWJsaWMgZnVuIGZvbygpIC0+IGk2NCB7IHJldHVybiAyOyB9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL21vZHVsZV9zZW1hbnRpY3MvdHdvX2dsb2JfaW1wb3J0c19zYW1lX25hbWVfaXNfdDAwMTEiLCJuYW1lIjoidHdvX2dsb2JfaW1wb3J0c19zYW1lX25hbWVfaXNfdDAwMTEifQ=="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.import-conflicts.legality-5}
+
+Two explicit imports of one local name conflict only when they bind it in the same namespace.
+With a struct `Foo` in module `a` and a function `Foo` in module `b`, `import a::Foo;` and
+`import b::Foo;` together are legal, and each use finds the one it needs. Two imports that both
+provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
+[legality-4](#spec.modules.import-conflicts.legality-4).
+
+<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
 
 </details>
 
@@ -701,6 +720,16 @@ already rejected by [legality-3](#spec.modules.visibility.legality-3).
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiLy8gUmVzaWR1YWwgcHJpdmFjeSB4IHBhcnRpYWwgbW92ZXMgeCB3aG9sZS1yZWNvcmQgb3BlbiByb3dzIChtZXRlbC1jb3JlIzE0ODgsIFJGQy0wMTc5KTogY29kZVxuLy8gb3V0c2lkZSB0aGUgbW9kdWxlIG1vdmVzIGEgcHVibGljIG5vbi1Db3B5IGZpZWxkIG91dCwgd2hpY2ggbmFycm93cyB0aGUgdmFsdWUgdG8gYSByZXNpZHVhbFxuLy8gdGhhdCBoaWRlcyB0aGUgcHJpdmF0ZSBmaWVsZDsgdGhlIHJlc2lkdWFsIGlzIHBhc3NlZCBvbiBnZW5lcmljYWxseSBhbmQgdG8gYSBwcm9qZWN0aW9uLXRhaWxcbi8vIHBhcmFtZXRlciB0aGF0IG5hbWVzIG9ubHkgYSBwdWJsaWMgZmllbGQuXG5pbXBvcnQgdGlja2V0OjpUaWNrZXQ7XG5pbXBvcnQgdGlja2V0OjptYWtlO1xuXG5mdW4gaWRfb2Y8cm93IFI+KHQ6IFRpY2tldC57IGlkLCAuLlIgfSkgLT4gaTY0IHsgdC5pZCB9XG5mdW4gcGFzczxUPih4OiBUKSAtPiBUIHsgeCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCB0IDo9IG1ha2UoKTtcbiAgICBsZXQgbGFiZWwgOj0gdC5sYWJlbDtcbiAgICBsZXQga2VwdCA6PSBwYXNzKHQpO1xuICAgIGFzc2VydChpZF9vZihrZXB0KSA9PSAxKTtcbiAgICBhc3NlcnQobGFiZWwgPT0gXCJsXCIpO1xufVxuIn0seyJuYW1lIjoidGlja2V0Lm10bCIsInNvdXJjZSI6InB1YmxpYyBzdHJ1Y3QgVGlja2V0IHsgcHVibGljIGlkOiBpNjQsIHB1YmxpYyBsYWJlbDogU3RyaW5nLCBzZWNyZXQ6IFN0cmluZyB9XG5wdWJsaWMgZnVuIG1ha2UoKSAtPiBUaWNrZXQgeyBUaWNrZXQgeyBpZCA9IDEsIGxhYmVsID0gXCJsXCIudG9fc3RyaW5nKCksIHNlY3JldCA9IFwic1wiLnRvX3N0cmluZygpIH0gfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE0LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9tb2R1bGVfc2VtYW50aWNzL3JlbGVhc2VfbWF0cml4X2xhdGVfcmVzaWR1YWxfcHJpdmFjeV93aXRoX3dob2xlX3JlY29yZF9wcm9qZWN0aW9uIiwibmFtZSI6InJlbGVhc2VfbWF0cml4X2xhdGVfcmVzaWR1YWxfcHJpdmFjeV93aXRoX3dob2xlX3JlY29yZF9wcm9qZWN0aW9uIn0="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-9}
+
+A name that a module provides as a public type and a private function can be imported: the
+import is accepted and brings in the type. Using the name as a value is then rejected with
+`T0009`, reported at the use rather than at the import, and a local binding of that name
+shadows it. A name the module provides publicly in no namespace is rejected at the import:
+`T0009` when it is private there, `T0003` when it does not exist.
+
+<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
 
 </details>
 
