@@ -48,9 +48,11 @@ The specification holds current rules, not rationale or issue history; rationale
 | `verified by` | none enforced: the script reports and a person reads it at the release gate (PROC-RELEASE-008) |
 | `related` | PROC-RELEASE-008, PROC-DOCS-001 |
 
-### PROC-WORK-004 — Work is planned in themes, and exactly one numbered milestone is a release in progress {#proc-work-004}
+### PROC-WORK-004 — Work is planned in themes, and at most one patch and the next minor release carry version numbers {#proc-work-004}
 
-The one numbered milestone (`vX.Y.Z`) is what the next tag will contain. Every other milestone is a theme with no version number. When a release is cut, the version is chosen by the versioning rule and the theme is renamed to it; renaming keeps its issues. Issues, RFC `target` fields, spec notes, blog and release notes say planned or name the theme, and never name a version that has not been cut.
+The numbered milestone with the lowest version (`vX.Y.Z`) is the release in progress: it is what the next tag will contain. While it is a patch, one further numbered milestone may exist for the next minor release (`vX.(Y+1).0`), so that the minor is planned, analysed and prepared before the patch ships. There are never two patch milestones or two minor milestones, and never a numbered milestone further out than the next minor. Every other milestone is a theme with no version number. A numbered milestone is made by renaming a theme once the version is chosen by the versioning rule; renaming keeps its issues. Issues, RFC `target` fields, spec notes, blog and release notes say planned or name the theme, and never name a version that has not been cut.
+
+**The minor milestone does not merge ahead of the patch.** A patch never changes the language (PROC-RELEASE-001) and is tagged from `develop`, so while a patch milestone is open nothing language-visible from the minor milestone merges to `develop`, and no `metel-docs` change that only the minor needs reaches the docs commit `metel-core` pins. Allowed meanwhile: `/gap-analysis` on the minor, rewriting its issues, RFC lifecycle changes, and branches and pull requests kept open (draft) against it. When the patch tag is pushed the minor becomes the release in progress and its held pull requests merge. A bug goes to the patch milestone only if fixing it changes no accepted program (`ROADMAP.md`, Release type); otherwise it goes to the minor.
 
 | Field | Value |
 |---|---|
@@ -59,7 +61,7 @@ The one numbered milestone (`vX.Y.Z`) is what the next tag will contain. Every o
 | `trigger` | planning, and the cut of a release |
 | `produces` | milestones named for capabilities, carrying a horizon (`now`, `next`, `later`, `parallel`), an outcome, an exit test and what they come after |
 | `implemented by` | `metel-core/ROADMAP.md`; the GitHub milestones |
-| `verified by` | none automated: `rfc.py milestones` prints the report ordered by horizon, and the order list is in `ROADMAP.md` |
+| `verified by` | none automated: `rfc.py milestones` prints the report ordered by horizon (numbered milestones first, lowest version first), and the order list is in `ROADMAP.md` |
 | `related` | PROC-WORK-005, PROC-RELEASE-001 |
 
 ### PROC-WORK-005 — A theme milestone is coherent {#proc-work-005}
