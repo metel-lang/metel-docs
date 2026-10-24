@@ -37,7 +37,7 @@ Once inference has solved a body and the frontend has frozen its resolution, no 
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 703187718680e63a486017330b38a7d90194f95c |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -51,7 +51,7 @@ Bindings and value references get structural identities (`LocalId`, `RefId`) fro
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 703187718680e63a486017330b38a7d90194f95c |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -65,7 +65,7 @@ Struct fields and enum variants are interned to stable `FieldId` / `VariantId`, 
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | ADR-0054 step 3, `#1051` |
 
 ##### Requirement {#arch.resolution.requirement-4}

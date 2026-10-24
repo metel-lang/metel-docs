@@ -31,7 +31,7 @@ Every top-level declaration gets a `SymbolId` from one `SymbolTable` keyed by (m
 | `specified by` | `#name-resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | d05bbfd47ae51437f565e0142a58f8e8a950d114 |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | METEL-185, ADR-0041 |
 
 ##### Requirement {#arch.name-resolution.requirement-2}
@@ -45,7 +45,7 @@ An explicit `import` beats a glob, and two explicit imports of one local name in
 | `specified by` | `#name-resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | `T0011`, ADR-0026 |
 
 ##### Requirement {#arch.name-resolution.requirement-3}
@@ -59,7 +59,7 @@ Each bare-identifier reference is `Res::Def` (a top-level declaration, with its 
 | `specified by` | `#name-resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | METEL-187, ADR-0041 |
 
 </details>

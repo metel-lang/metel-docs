@@ -269,7 +269,7 @@ A let-bound polymorphic closure is a generic definition: it retains an abstract 
 | `specified by` | `#move-check` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6c6828cdbc94434f2debbd7cc6dabbef1cb82ac6 |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | `ADR-0063`, `#273` |
 
 ##### Requirement {#arch.move-check.requirement-6}
