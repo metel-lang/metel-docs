@@ -582,7 +582,9 @@ literal, and the head of a pattern.
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-7}
 
 A bare name in expression position resolves in the value namespace, and, when the module has
-no value of that name, in the type namespace (a zero-field struct used as a value).
+no value of that name, in the type namespace (a zero-field struct used as a value). A local
+binding of the same name shadows both: the name then refers to the local for the rest of its
+scope, and a call through it calls the local.
 
 <!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 

@@ -90,6 +90,10 @@ title: "Metel Language Changelog"
   the visibility error `T0009`, as it already was for a private function on its own. The import itself
   is accepted because the type is public, so the error is reported at the use, and a local of the same
   name still shadows it (`metel-core#1575`).
+- A local `let`, `var` or parameter did not shadow a function of the same name declared in the same
+  module when the name was used as a value: `fun f() ...` and `let f := 9; f == 9` compared an integer
+  with the function and failed with a type error. The innermost binding now wins whichever kind it is,
+  and the function is back once the local's scope ends (`metel-core#1578`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
