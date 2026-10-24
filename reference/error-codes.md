@@ -1074,6 +1074,18 @@ one's identity and went unseen.
 
 **Fix:** rename one of the declarations, or merge them.
 
+### T0038 — Declaring a type with the name of an intrinsic type
+
+A struct, enum, aspect, type alias, or block-local struct or enum is declared with the name of an
+intrinsic type: `boolean`, `String`, `Char`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`,
+`f32`, `f64`, `Range` or `RangeInclusive`. The language provides these types and `std::core` declares
+none of them, so a user type of the same name would capture part of the compiler's lookups by name:
+with `struct String { ... }` declared, `println` of an ordinary string failed because the `Display`
+impl belongs to the primitive. Only the type namespace is reserved. A function or `let` may use
+the name, and the types `std::core` declares (`List`, `Perhaps`, `Result`, ...) are not covered.
+
+**Fix:** rename the type.
+
 ### R0001 — No `main` function defined
 
 > **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs

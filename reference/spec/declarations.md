@@ -588,6 +588,17 @@ scope, and a call through it calls the local.
 
 <!-- rfc.py:last_reviewed bdfd52c5a48a2d2f39d52bb4a3b208440bb4fc06 -->
 
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-8}
+
+The names of the intrinsic types (`boolean`, `String`, `Char`, `i8`, `i16`, `i32`, `i64`, `u8`,
+`u16`, `u32`, `u64`, `f32`, `f64`, `Range` and `RangeInclusive`) are reserved in the type
+namespace: declaring a struct, enum, aspect, type alias or block-local struct or enum with one of
+them is rejected with [`T0038`](../error-codes.md#t0038--declaring-a-type-with-the-name-of-an-intrinsic-type).
+A function or `let` may use the name, and the rule does not cover the types `std::core`
+declares (`List`, `Perhaps`, `Result`, ...).
+
+<!-- rfc.py:last_reviewed 366594ebc8d1dccd0fc6946e9ed03b4f5d599fbd -->
+
 </details>
 
 ---
