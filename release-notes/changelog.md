@@ -85,6 +85,11 @@ title: "Metel Language Changelog"
   every consumer of the id had to happen to be per-kind. Imports bring a name in every namespace the
   source module provides it in; a name public in either namespace is importable, and a private function
   no longer blocks the import of a public type of its name (`metel-core#1571`).
+- Using a private function whose name an imported public type shares (`import lib::Foo;` then `Foo()`,
+  with `public struct Foo` and a private `fun Foo` in `lib`) was reported as `undefined name`. It is now
+  the visibility error `T0009`, as it already was for a private function on its own. The import itself
+  is accepted because the type is public, so the error is reported at the use, and a local of the same
+  name still shadows it (`metel-core#1575`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
