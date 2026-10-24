@@ -22,7 +22,7 @@ in the Resolution section.
 
 ##### Requirement {#arch.name-resolution.requirement-1}
 
-Every top-level declaration gets a `SymbolId` from one `SymbolTable` keyed by (module, namespace, name), so a struct and a function of one name differ. Builtins are `Builtin` ids, the rest `Declared`; overloads and block-local types are separate kinds. It keeps one id under any importer.
+Every top-level declaration gets a `SymbolId` from one `SymbolTable` keyed by (module, namespace, name), so a struct and a function of one name differ, and it keeps that id under any importer. Builtins are `Builtin` ids, std items `Std` ids fixed by the stdlib alone, user items `Declared`.
 
 | Field | Value |
 |---|---|
