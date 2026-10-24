@@ -1435,6 +1435,10 @@ implementation).
 ## Small, mostly standalone syntax/ergonomics items
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
+- **RFC-0185** — Remove type-directed dereference. Retires the implicit read-copy out of a
+  reference (RFC-0067a §3a): reading through a reference is always `*r`; selector auto-deref
+  stays. It is RFC-0112's declined "Strict Go" alternative, so accepting it supersedes
+  RFC-0112 and vice versa. Tracked by metel-core#1596.
 - **RFC-0183** — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
