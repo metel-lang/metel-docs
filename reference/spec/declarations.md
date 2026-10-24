@@ -607,7 +607,7 @@ value that std produced keeps the type std declared: a `match` on it names the v
 type, and a method called on it is found on that type, whichever type the name now means in the
 caller.
 
-<!-- rfc.py:last_reviewed 6fa78971e6fd908af6956d0a93949559f09c0bd2 -->
+<!-- rfc.py:last_reviewed 0bacac7eb32d5fd0a1477618f47fae501e1c5d71 -->
 
 </details>
 

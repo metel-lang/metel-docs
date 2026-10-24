@@ -102,7 +102,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6fa78971e6fd908af6956d0a93949559f09c0bd2 |
+| `last_reviewed` | 0bacac7eb32d5fd0a1477618f47fae501e1c5d71 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
