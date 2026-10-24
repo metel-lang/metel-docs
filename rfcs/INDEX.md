@@ -1438,7 +1438,7 @@ implementation).
 - **RFC-0185** — Remove type-directed dereference. Retires the implicit read-copy out of a
   reference (RFC-0067a §3a): reading through a reference is always `*r`; selector auto-deref
   stays. It is RFC-0112's declined "Strict Go" alternative, so accepting it supersedes
-  RFC-0112 and vice versa.
+  RFC-0112 and vice versa. Tracked by metel-core#1596.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
