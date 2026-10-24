@@ -1435,6 +1435,11 @@ implementation).
 ## Small, mostly standalone syntax/ergonomics items
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
+- **RFC-0182** — `?` on `Perhaps`. Early-return `None` from a `Perhaps`-returning function;
+  the operand and return type constructors must match, and the mixed cases stay errors
+  (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Perhaps` rejection in
+  `functions.md`; supersedes the unresolved parts of refused RFC-0079 §6 and its Open
+  Question 4. Tracked by metel-core#1593 (report: #1589).
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.

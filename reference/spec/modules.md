@@ -233,7 +233,7 @@ import. Loading another module alone does not make that module's names available
 An aliased import binds only its alias locally. The alias may be used wherever the
 imported declaration's kind permits, including as a value, type, or constructor.
 
-<!-- rfc.py:last_reviewed 0bacac7eb32d5fd0a1477618f47fae501e1c5d71 -->
+<!-- rfc.py:last_reviewed 33d4a37696e073c0581e3e0a4a08a119a20677bd -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -393,7 +393,7 @@ You can still write `import std::core::Perhaps;` or `import std::core::*;` expli
 Every module has the `std::core` names available without an import; the same names may also
 be named through their explicit `std::core::` paths.
 
-<!-- rfc.py:last_reviewed 0bacac7eb32d5fd0a1477618f47fae501e1c5d71 -->
+<!-- rfc.py:last_reviewed 33d4a37696e073c0581e3e0a4a08a119a20677bd -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
