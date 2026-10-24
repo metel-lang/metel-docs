@@ -100,6 +100,11 @@ title: "Metel Language Changelog"
   `String does not implement Display`. The fifteen intrinsic type names are now reserved in the type
   namespace and declaring one is the error `T0038`. A function or `let` may still use the name, and the
   types `std::core` declares (`List`, `Perhaps`, ...) are not affected (`metel-core#1582`).
+- A module that declared its own `Perhaps` or `Result` broke every use of the core one on values from
+  std: `match (std::env::get("X")) { Some { value } => ... }` failed with `T0003` "unresolved pattern
+  path `Some`", and `.ok_or(...)` on such a value with `I0001` "no method `ok_or` on `Perhaps`". Patterns
+  and method calls on a value now use the type the value actually has, so shadowing a core type behaves
+  the same as shadowing any other (`metel-core#1585`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
