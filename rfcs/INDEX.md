@@ -1435,6 +1435,13 @@ implementation).
 ## Small, mostly standalone syntax/ergonomics items
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
+- **RFC-0183** — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
+  to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
+  reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
+  RFC-0136 incidentally removed, RFC-0100).
+- **RFC-0184** — Rename `Perhaps` to `Option`. Pure rename; `Some`/`None` and the methods
+  unchanged. Reverses the "deliberate identity" rationale recorded in RFC-0098; the
+  decision is whether identity or familiarity wins.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
