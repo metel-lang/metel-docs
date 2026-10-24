@@ -559,6 +559,33 @@ that function body.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQ2X2xvY2FsX3N0cnVjdF9zY29wZS5tdGwiLCJzb3VyY2UiOiIvLyBMb2NhbCBzdHJ1Y3QgZGVjbGFyYXRpb25zIGFyZSBzY29wZWQgdG8gdGhlaXIgZW5jbG9zaW5nIGZ1bmN0aW9uIGJvZHkuXG4vLyBUd28gZnVuY3Rpb25zIG1heSBkZWNsYXJlIHN0cnVjdHMgd2l0aCB0aGUgc2FtZSBuYW1lIGluZGVwZW5kZW50bHkuXG5cbmZ1biBtYWtlX3BvaW50KCkgLT4gaTY0IHtcbiAgICBzdHJ1Y3QgUG9pbnQgeyB4OiBpNjQsIHk6IGk2NCB9XG4gICAgbGV0IHAgOj0gUG9pbnQgeyB4ID0gMywgeSA9IDQgfTtcbiAgICBwLnggKyBwLnlcbn1cblxuLy8gU2FtZSBzdHJ1Y3QgbmFtZSwgZGlmZmVyZW50IGZpZWxkcyBcdTIwMTQgbm8gY29sbGlzaW9uIHdpdGggbWFrZV9wb2ludCdzIFBvaW50LlxuZnVuIG1ha2VfbmFtZWQoKSAtPiBpNjQge1xuICAgIHN0cnVjdCBQb2ludCB7IGxhYmVsOiBpNjQgfVxuICAgIGxldCBwIDo9IFBvaW50IHsgbGFiZWwgPSA5OSB9O1xuICAgIHAubGFiZWxcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KG1ha2VfcG9pbnQoKSAgPT0gNyk7XG4gICAgYXNzZXJ0KG1ha2VfbmFtZWQoKSAgPT0gOTkpO1xuXG4gICAgLy8gTG9jYWwgc3RydWN0IHVzYWJsZSBpbmxpbmUgd2l0aGluIHRoZSBzYW1lIGJsb2NrLlxuICAgIHN0cnVjdCBWZWMyIHsgZHg6IGk2NCwgZHk6IGk2NCB9XG4gICAgbGV0IHYgOj0gVmVjMiB7IGR4ID0gMTAsIGR5ID0gMjAgfTtcbiAgICBhc3NlcnQodi5keCArIHYuZHkgPT0gMzApO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE0LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy80Nl9sb2NhbF9zdHJ1Y3Rfc2NvcGUubXRsIiwibmFtZSI6IjQ2X2xvY2FsX3N0cnVjdF9zY29wZS5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-5}
+
+A module's top-level names live in two namespaces. The *type* namespace holds structs, enums,
+aspects and type aliases; the *value* namespace holds functions, `let` and `var`. A name
+declared twice in one namespace of one module is rejected with
+[`T0037`](../error-codes.md#t0037--duplicate-top-level-declaration). Two functions of one
+name are an overload set instead (identical parameter types are rejected as `T0011`), and
+`let _ := ...` binds no name, so it may be repeated.
+
+<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-6}
+
+A type and a value of one name may coexist in a module (`struct Foo` beside `fun Foo`), and
+each use finds the one its position asks for. A type position resolves in the type namespace:
+a type annotation, an `extend` or aspect target, the head of a struct, record or enum
+literal, and the head of a pattern.
+
+<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-7}
+
+A bare name in expression position resolves in the value namespace, and, when the module has
+no value of that name, in the type namespace (a zero-field struct used as a value).
+
+<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+
 </details>
 
 ---
