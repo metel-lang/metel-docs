@@ -599,6 +599,16 @@ declares (`List`, `Perhaps`, `Result`, ...).
 
 <!-- rfc.py:last_reviewed 5685d9e65530a5ed1ecdb66fa9f3b4067e77a075 -->
 
+##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-9}
+
+A module may declare a type with the name of one `std::core` declares (`Perhaps`, `Result`,
+`List`, ...), and the module's own declaration then wins for every name written in that module. A
+value that std produced keeps the type std declared: a `match` on it names the variants of that
+type, and a method called on it is found on that type, whichever type the name now means in the
+caller.
+
+<!-- rfc.py:last_reviewed 6fa78971e6fd908af6956d0a93949559f09c0bd2 -->
+
 </details>
 
 ---
