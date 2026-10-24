@@ -94,6 +94,12 @@ title: "Metel Language Changelog"
   module when the name was used as a value: `fun f() ...` and `let f := 9; f == 9` compared an integer
   with the function and failed with a type error. The innermost binding now wins whichever kind it is,
   and the function is back once the local's scope ends (`metel-core#1578`).
+- Declaring a type with the name of an intrinsic type (`struct String`, `enum Char`, `type boolean := ...`,
+  a block-local `struct u8`, ...) was accepted, and the program then behaved inconsistently: some uses of
+  the name meant the primitive and some the new type, and `println` of an ordinary string failed with
+  `String does not implement Display`. The fifteen intrinsic type names are now reserved in the type
+  namespace and declaring one is the error `T0038`. A function or `let` may still use the name, and the
+  types `std::core` declares (`List`, `Perhaps`, ...) are not affected (`metel-core#1582`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
