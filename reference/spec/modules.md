@@ -292,7 +292,7 @@ handle into the importing module's scope.
 renames the name in each. A name that `m` provides as both a type and a value is therefore
 imported as both. A module handle (`import m`) binds in the type namespace.
 
-<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 
 </details>
 
@@ -493,7 +493,7 @@ With a struct `Foo` in module `a` and a function `Foo` in module `b`, `import a:
 provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
 [legality-4](#spec.modules.import-conflicts.legality-4).
 
-<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 
 </details>
 
@@ -729,7 +729,7 @@ import is accepted and brings in the type. Using the name as a value is then rej
 shadows it. A name the module provides publicly in no namespace is rejected at the import:
 `T0009` when it is private there, `T0003` when it does not exist.
 
-<!-- rfc.py:last_reviewed 1c4388bdc2ced5fb0041898bbd8e44c244b63a7a -->
+<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
 
 </details>
 
