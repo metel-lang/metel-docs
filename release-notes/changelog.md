@@ -105,6 +105,13 @@ title: "Metel Language Changelog"
   path `Some`", and `.ok_or(...)` on such a value with `I0001` "no method `ok_or` on `Perhaps`". Patterns
   and method calls on a value now use the type the value actually has, so shadowing a core type behaves
   the same as shadowing any other (`metel-core#1585`).
+- A qualified path to a `std::core` type in a type position (`std::core::Perhaps<i64>`) was rejected
+  as `unknown type`, although the same path already worked in an expression. It now resolves, so the
+  core type can be named when a module shadows its name (`metel-core#1587`).
+- A variant of an aliased core enum could not be built against an annotation that uses the alias:
+  `import std::core::Result as CR;` with `let r: CR<i64, String> := CR::Ok { value = 1 }` failed with
+  `T0002`, because the type parameter the variant does not fix (`E`) was not taken from the
+  annotation. It is now (`metel-core#1588`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
