@@ -597,7 +597,7 @@ them is rejected with [`T0038`](../error-codes.md#t0038--declaring-a-type-with-t
 A function or `let` may use the name, and the rule does not cover the types `std::core`
 declares (`List`, `Perhaps`, `Result`, ...).
 
-<!-- rfc.py:last_reviewed 366594ebc8d1dccd0fc6946e9ed03b4f5d599fbd -->
+<!-- rfc.py:last_reviewed 5685d9e65530a5ed1ecdb66fa9f3b4067e77a075 -->
 
 </details>
 
