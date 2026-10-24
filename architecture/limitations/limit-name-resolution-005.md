@@ -5,7 +5,7 @@ summary: "`ResolvedNames.symbols` keys ids by module path and a name string: eve
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
 discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs and `ResolvedNames.symbols`; reproduced as metel-core#1228 and #1229"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -66,16 +66,23 @@ a string key, not the declaration.
 
 ## Resolution
 
-Narrowed by `metel-core#1560`; the record stays open. Two declarations in one namespace of a module are now
-`T0037` (structs, enums, aspects and type aliases share the type namespace; functions, `let` and `var` share
-the value namespace; a type and a value may share a name). The symptoms of cases 2 and 3 were closed one at a
-time: different instantiations of a generic type keep separate method behaviour (`metel-core#1228`), and a
-name defined twice where both definitions can apply to one receiver is `T0034` (`metel-core#1322` for inherent
-blocks, `metel-core#1229` for aspect impls and aspect declarations).
+Resolved by `metel-core#1560`, `metel-core#1571` and the symptom fixes before them.
 
-A method is now keyed by its target and aspect with their type arguments (`metel-core#1571`, first slice).
+- Case 1 (one key space for every kind): the symbol table is keyed by `(module, namespace, name)`.
+  Structs, enums, aspects, type aliases and module handles are type-namespace symbols; functions,
+  `let`, `var` and methods are value-namespace symbols. `struct Foo` and `fun Foo` have different ids
+  and each keeps its own definition span. Two declarations in one namespace are `T0037`
+  (`metel-core#1560`). `ModuleScope` bindings, `pub_surface`, `declared_names` and re-exports carry the
+  namespace, so an import brings a name in every namespace the source module provides it in, and a name
+  public in either namespace is importable.
+- Case 2 (a method's key drops its impl's type arguments): `impl_method_symbol_name` renders the
+  target and the aspect with their arguments (`W<i64>::Tag::t`, `S::Conv<String>::conv`), naming an
+  impl's own type parameters by position (`metel-core#1571`, first slice). Different instantiations were
+  already dispatched correctly (`metel-core#1228`).
+- Case 3 (a repeated method name collides): `T0034` for a name defined twice where both definitions can
+  apply to one receiver (`metel-core#1322` for inherent blocks, `metel-core#1229` for aspect impls and
+  aspect declarations).
 
-Still open, tracked in `metel-core#1571`: the table is still keyed by `(module, name)`, so the legal
-cross-namespace pair (`struct Foo` and `fun Foo`) shares one id. Closing it means a
-`(module, namespace, name)` key with namespace-split scope bindings, imports and exports, and a reference
-resolver that picks the namespace from the position a name is written in.
+The reference resolver tries the value namespace first and then the type namespace for a bare name (a
+unit struct is a type used as a value); type positions, impl targets and aspects resolve in the type
+namespace.

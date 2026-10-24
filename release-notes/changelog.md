@@ -80,6 +80,11 @@ title: "Metel Language Changelog"
   beside a `fun` of one name were all accepted, and the second declaration silently shared the first
   one's identity. Types and values are separate namespaces, so `struct Foo` and `fun Foo` still
   coexist, and functions of one name remain an overload set (`metel-core#1560`).
+- A struct and a function of one name now have separate identities. Before, they shared one internal
+  id, so only the first kept its definition location (go-to-definition could not find the second), and
+  every consumer of the id had to happen to be per-kind. Imports bring a name in every namespace the
+  source module provides it in; a name public in either namespace is importable, and a private function
+  no longer blocks the import of a public type of its name (`metel-core#1571`).
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
