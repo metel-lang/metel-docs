@@ -9,6 +9,12 @@ elaboration, and evaluation. It processes modules in dependency order and carrie
 their exported schemes forward ([module handoff](#arch.type-construction.requirement-1)).
 Where earlier stages resolved an identity, construction preserves it on typed nodes
 instead of replacing it with another name lookup ([identity stamping](#arch.type-construction.requirement-2)).
+Locals, nested generic functions and move state are keyed by the binding's identity
+([local identity](#arch.type-construction.requirement-13)); that identity is required of every
+run ([required identity](#arch.type-construction.requirement-14)); and a written type name
+becomes a declaration id in one place ([written names](#arch.type-construction.requirement-15)).
+Module-level values are still found by name
+([`LIMIT-TYPE-CONSTRUCTION-004`](../limitations/limit-type-construction-004.md)).
 
 It is also the last place to enforce rules whose operands must already be concrete:
 ascriptions disappear after guiding construction ([ascriptions](#arch.type-construction.requirement-6)),
@@ -32,7 +38,7 @@ facts ([defaults](#arch.type-construction.requirement-9), [overloads](#arch.type
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 2c95c6d9c5f131d86fa08889153355b451e12c9e |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0022 |
 
 ##### Requirement {#arch.type-construction.requirement-2}
@@ -46,7 +52,7 @@ Construction stamps the typed IR with the identities the frontend already produc
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 69cfa63c874aa18a07d0aafaea58ac8357084211 |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | `arch.resolution.requirement-2`, `arch.resolution.requirement-3`, ADR-0054, `#1051`, `#1052` |
 
 ##### Requirement {#arch.type-construction.requirement-3}
@@ -102,7 +108,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 0bacac7eb32d5fd0a1477618f47fae501e1c5d71 |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
@@ -158,7 +164,7 @@ Free-function overload selection is exact-match, and construction stamps the sel
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
@@ -172,7 +178,7 @@ At a generic struct literal or field access, construction instantiates the decla
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 8717cc6088e4dcf55f6f5580e60ad936d9bf69cf |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0012 |
 
 ##### Requirement {#arch.type-construction.requirement-12}
@@ -188,6 +194,48 @@ Generic runtime reconstruction recovers a struct or enum's type arguments from i
 | `verified by` | _Generated at publish._ |
 | `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
 | `related` | ADR-0043 |
+
+##### Requirement {#arch.type-construction.requirement-13}
+
+Construction resolves a local by lexical identity: its environments and move state are keyed by the binding's `LocalId`, and a reference resolves through the span → `BindingId` bridge, never by spelling. Only module-level values are found by name.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | ``metel-frontend`` |
+| `specified by` | `#type-construction` |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `related` | ADR-0054, `LIMIT-TYPE-CONSTRUCTION-004`, `#1570` |
+
+##### Requirement {#arch.type-construction.requirement-14}
+
+The frozen identity tables (the member table and the span → `BindingId` bridge) are required by every checking entry point and by runtime reconstruction of a generic body; there is no run without them. A caller builds them from the parsed graph before normalization.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | ``metel-frontend`, `metel-interpreter`` |
+| `specified by` | `#type-construction` |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `related` | ADR-0054, `#1570` |
+
+##### Requirement {#arch.type-construction.requirement-15}
+
+A written type name becomes a declaration id in one place, `ConstructCtx::written_type_id` (block-local declarations first). Everything else reads the id off the type; a struct's concrete fields are keyed by that `SymbolId`, and a top-level declaration's own `SymbolId` is read off its span.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | ``metel-frontend`` |
+| `specified by` | `#type-construction` |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `related` | ADR-0054, `#1568`, `#1570` |
 
 </details>
 
