@@ -25,8 +25,9 @@ moved on since the last time someone did.
 ``path::item`` label of each citation, per requirement and side. The line number and the
 commit SHA inside a rendered link are cosmetic, so inserting lines above a cited function
 or committing to the cited file never fails the check; removing, renaming or moving a
-citation off its marker does, with one finding per citation. A stale ``last_reviewed`` is a
-warning (printed, exit 0) unless ``--strict`` is given, which a release runs.
+citation off its marker does, with one finding per citation. A stale ``last_reviewed``, and a
+limitation record still active after its ``// limit:`` marker vanished (metel-core#1598), are
+warnings (printed, exit 0) unless ``--strict`` is given, which a release runs.
 
 Publishing (ADR-0064, metel-core#1509): the committed cells are the placeholder
 ``_Generated at publish._`` and ``--check`` never compares a placeholder. ``--publish --core-ref
@@ -410,9 +411,14 @@ def limit_ids_ever_marked(core: Path) -> set[str]:
 
 
 def regenerate_record_markers(
-    records_dir: Path, core: Path, core_ref: str | None, check: bool, history: bool = True
+    records_dir: Path, core: Path, core_ref: str | None, check: bool, history: bool = True,
+    warnings: list[str] | None = None,
 ) -> list[str]:
-    """The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
+    """`warnings`, when given, receives the one finding that is advisory on a PR (a record
+    still active although its marker vanished from the code, metel-core#1598); without it
+    that finding is returned with the errors, as before.
+
+    The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
     `// limit:` markers: fully regenerated each run from every current marker citing
     that record's id, the same full-replace treatment `implements`/`verified by` cells
     get -- not the line-level patch `regenerate_record_affects` (level 2) does for a
@@ -486,8 +492,11 @@ def regenerate_record_markers(
         stale.append(f"{rel}: `// limit:` marker cites `{record_id}`, which does not exist")
     # A retired (e.g. resolved) record is expected to have lost its marker; the flag exists
     # to catch a marker that disappeared while the record still claims an active limit.
+    # The record lives in metel-docs and the marker in metel-core, so a core PR that resolves
+    # a limitation cannot also retire the record: on a PR this is a warning, and a release
+    # (`/cut-release`, `--strict`) refuses it (metel-core#1598).
     for record_id in sorted(ever_marked - set(markers) - retired_ids):
-        stale.append(
+        (warnings if warnings is not None else stale).append(
             f"{record_id}: was cited by a `// limit:` marker in metel-core history and no longer is by any "
             f"current one; confirm the limitation is resolved (and update its disposition) or restore the marker"
         )
@@ -847,7 +856,7 @@ def main():
         # a Language Spec concept, not architecture, and metel-core's Rust source has
         # nothing to mark for a gap in what the spec itself says.
         findings += regenerate_record_markers(
-            DOCS / "architecture/limitations", args.core, core_ref, args.check, history=audit
+            DOCS / "architecture/limitations", args.core, core_ref, args.check, history=audit, warnings=warnings
         )
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         findings = [str(error)]
