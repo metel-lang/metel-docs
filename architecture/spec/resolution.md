@@ -17,6 +17,8 @@ looking the spelling up again ([frozen references](#arch.resolution.requirement-
 Lexical bindings and uses receive structural identities that survive unrelated edits
 ([lexical identity](#arch.resolution.requirement-2)); fields and variants receive the
 same treatment at the declaration level ([member identity](#arch.resolution.requirement-3)).
+The walk leaves no code uncovered: a module's bare top-level statements get identities too, and a
+top-level declaration's span maps to its symbol ([coverage](#arch.resolution.requirement-5)).
 
 Editor lookup is intentionally different. A position index maps an ephemeral parsed
 snapshot back to these identities, but position never becomes a semantic key
@@ -37,7 +39,7 @@ Once inference has solved a body and the frontend has frozen its resolution, no 
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -51,7 +53,7 @@ Bindings and value references get structural identities (`LocalId`, `RefId`) fro
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -81,6 +83,20 @@ Struct fields and enum variants are interned to stable `FieldId` / `VariantId`, 
 | `verified by` | _Generated at publish._ |
 | `last_reviewed` | de72649a95a5c947ac985069b692008b76a82f7e |
 | `related` | ADR-0054 (2026-09-10 amendment) |
+
+##### Requirement {#arch.resolution.requirement-5}
+
+The identity walk covers every body of code, including a module's bare top-level statements (walked as one block under a per-module owner), and maps a top-level declaration's own span to its `SymbolId`.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | ``metel-frontend`` |
+| `specified by` | `#resolution` |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `related` | ADR-0054, `#1570` |
 
 </details>
 

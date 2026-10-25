@@ -49,7 +49,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | a271b2bc4b7f42a256ea5c0a1cae339156e8ba92 |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0025 (unified `TypeDefinitionRegistry`), ADR-0041 |
 
 ##### Requirement {#arch.type-inference.requirement-3}
@@ -77,7 +77,7 @@ Inference and construction are separate passes: inference solves constraints and
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0002, `arch.type-construction.requirement-1` |
 
 ##### Requirement {#arch.type-inference.requirement-5}

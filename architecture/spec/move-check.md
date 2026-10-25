@@ -241,7 +241,7 @@ Closure capture legality holds with move checking off: type checking rejects unl
 | `specified by` | `#move-check` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | b5e31f5afc1d13391ece5c9a3e156d5cb4b22e61 |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
 
 ##### Requirement {#arch.move-check.requirement-4}
@@ -255,7 +255,7 @@ Definition-time checking retains an abstract signature and typed body for every 
 | `specified by` | `#move-check` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6c6828cdbc94434f2debbd7cc6dabbef1cb82ac6 |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | `ADR-0063`, `#273` |
 
 ##### Requirement {#arch.move-check.requirement-5}
@@ -269,7 +269,7 @@ A let-bound polymorphic closure is a generic definition: it retains an abstract 
 | `specified by` | `#move-check` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
 | `related` | `ADR-0063`, `#273` |
 
 ##### Requirement {#arch.move-check.requirement-6}

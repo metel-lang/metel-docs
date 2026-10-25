@@ -1,40 +1,41 @@
 ---
 id: LIMIT-TYPE-CONSTRUCTION-004
-title: "Generic closure reconstruction omitted captured types"
-summary: "Runtime construction lacked the captured bindings' creation-time types when rebuilding a polymorphic closure body."
+title: "Construction finds module-level values and their schemes by name"
+summary: "Module-level values and the inference SchemeEnv are keyed by spelling in construction; everything a binding names is keyed by identity."
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
-discovered_by: "v0.14.0 sensitive release-matrix probe; metel-core#1411"
-disposition: resolved
+discovered_by: "metel-core#1570 step 3 scoping (corpus measurement of SchemeEnv keys)"
+disposition: known
 review: null
 ---
 
 ## Limitation
 
-Generic closure reconstruction previously omitted the static types of captured
-bindings. A closure over a partially moved nominal record could therefore fail
-with I0010 at its call site; the move checker also could not analyze the body.
-Generic closures now carry those creation-time capture types into construction
-and ownership analysis. The issue-backed regression
-`evaluator/records/release_matrix_generic_residual_capture.mtl` now passes with
-move checking enabled, covering partial and empty residual captures and field
-restoration. A negative typechecking regression confirms that a moved field
-does not become accessible again inside the captured body. The fixes merged in
-[metel-core#1422](https://github.com/metel-lang/metel-core/pull/1422).
+Construction resolves locals, nested generic functions, struct fields, types, aspects and
+top-level declarations by identity. Module-level values (functions, builtins, top-level
+`let`/`var`) are still found by name: `ConstructCtx::module_values` and `module_fn_decls` are seeded
+from the inference output `SchemeEnv`, a `HashMap<String, TypeScheme>`, and a callee reads its scheme
+from it by spelling. The two maps are exempted in `check_no_semantic_name_lookup.py`'s scan with this
+record as the retirement condition.
+
+The blocker is a path callee such as `List::new`: path normalization stamps no symbol on a
+`Type::method` path, so the use site has no identity to look the scheme up by. Measured over the
+integration corpus, about 15,000 of the `SchemeEnv` entries built are such joined keys, against
+imported names (~58%) and `std::core` items (~40%), which can carry an id from where they are
+produced.
 
 ## Impact
 
-Previously, generic closure checking could not reliably reconstruct the
-captured value's narrowed nominal type.
+Internal. A module-level value whose spelling is shadowed or aliased is resolved correctly today by
+the name resolver's own tables before construction; the name-keyed read happens after that, on a
+spelling the resolver already accepted.
 
 ## Affects
 
-- `spec.types.generics.rigid-type-parameters.legality-1`
-- `spec.functions.closures.dynamics-5`
+- `arch.type-construction.requirement-13`
+- `metel-frontend/src/pipeline/type_checking/construction/mod.rs` (`module_values`, `module_fn_decls`, `lookup_module`)
 
 ## Resolution
 
-Implemented in metel-core commit `5f038b189cb67c5ec40e51d16a3e11a831a4535e`
-(PR #1422). The executable residual-capture fixture and the negative
-`neg_release_matrix_generic_capture_moved_field` fixture provide exit evidence
-for metel-core#1411.
+None yet; metel-core#1604 (not yet scheduled) is the work: path normalization stamps the impl-method symbol on
+`Type::method` paths, the inference output carries an origin `BindingId`, and the two maps go.
