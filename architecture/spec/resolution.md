@@ -95,7 +95,7 @@ The identity walk covers every body of code, including a module's bare top-level
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 5c96fccefb930800580084a8f4d2ea8dea05f97c |
 | `related` | ADR-0054, `#1570` |
 
 </details>
