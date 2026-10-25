@@ -143,6 +143,14 @@ the `warning:` prefix and the exit status stays 0, so it shows on a pull request
 failing it. A release runs the check with `--strict`, which makes warnings fail
 (`/cut-release`). A *missing* `last_reviewed` field is a shape error and always fails.
 
+The same split applies to a limitation record that is still active although its `// limit:`
+marker has vanished from the code (metel-core#1598). The record lives in `metel-docs` and the
+marker in `metel-core`, so a core pull request that resolves a limitation cannot also retire the
+record: it would need a docs change merged and pinned first. That finding is therefore a
+**warning** on a pull request, and `--strict` at release refuses it, which is the point at which
+the disposition has to be settled. A marker that cites a record that does not exist stays an
+error.
+
 **Item scope, and a real asymmetry to know about:** Layer 0's marker resolver (`following_item`
 / the `ITEM` regex) is `fn`-only — its own original, narrower scope. Layer 3 below needed
 a broader one (`following_named_item` / `NAMED_ITEM`: `fn`/`static`/`const`/`struct`/
@@ -228,7 +236,8 @@ inside it (`Level2Level3BoundaryTests` pins the fix).
 **Drift detection**, the other half of Layer 3: `limit_ids_ever_marked()` walks
 `git log -p -G 'limit:' -- '*.rs' '*.pest'` (current branch history) and flags any
 `LIMIT-*` id that was once cited by a marker and is no longer cited by *any* current one.
-This is a finding, never a silent drop — whether that means the limitation is resolved or
+This is a finding, never a silent drop (a warning on a pull request, an error under `--strict` at
+release; see "Errors and warnings") — whether that means the limitation is resolved or
 the marker merely moved elsewhere is a human judgment the tooling deliberately does not
 make. A record still cited by a live marker but whose disposition has fallen out of the
 active set is flagged the other way too (marker and disposition disagreeing about whether

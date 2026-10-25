@@ -720,6 +720,39 @@ class RecordMarkerTests(unittest.TestCase):
                 any("LIMIT-X-001" in f and "no longer is by any current" in f for f in findings), findings
             )
 
+    def test_vanished_marker_is_a_warning_when_warnings_are_collected(self):
+        """metel-core#1598: the record lives in metel-docs, so a core PR that resolves a
+        limitation cannot retire it too; a PR sees a warning and a release (--strict) refuses."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-001"]\npub fn target_fn() {}\n', git=True)
+            (core / "src/lib.rs").write_text("pub fn target_fn() {}\n")
+            self.commit(core, "remove the marker")
+            records = self.write_record(root, "LIMIT-X-001")
+            previous = evidence.DOCS
+            evidence.DOCS = records.parent.parent.parent
+            try:
+                warnings: list[str] = []
+                findings = evidence.regenerate_record_markers(records, core, "a" * 40, False, warnings=warnings)
+            finally:
+                evidence.DOCS = previous
+            self.assertEqual([], findings)
+            self.assertTrue(any("LIMIT-X-001" in w and "no longer is by any current" in w for w in warnings), warnings)
+
+    def test_marker_pointing_at_a_missing_record_stays_an_error_with_warnings_collected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core = self.make_core(root, '// limit: ["LIMIT-X-999"]\npub fn target_fn() {}\n', git=True)
+            records = self.write_record(root, "LIMIT-X-001")
+            previous = evidence.DOCS
+            evidence.DOCS = records.parent.parent.parent
+            try:
+                warnings: list[str] = []
+                findings = evidence.regenerate_record_markers(records, core, "a" * 40, False, warnings=warnings)
+            finally:
+                evidence.DOCS = previous
+            self.assertTrue(any("LIMIT-X-999" in f and "does not exist" in f for f in findings), findings)
+
     def test_resolved_record_may_have_lost_its_marker(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
@@ -953,6 +986,26 @@ class SemanticCheckTests(EvidenceHelpers, unittest.TestCase):
             code, err = self.run_main(root, core)
             self.assertEqual(0, code, err)
             self.assertIn("warning:", err)
+            code, err = self.run_main(root, core, "--strict")
+            self.assertEqual(1, code, err)
+            self.assertIn("--strict", err)
+
+    def test_a_vanished_limit_marker_is_a_warning_that_strict_refuses(self):
+        """metel-core#1598: a PR that resolves a limitation warns; a release refuses."""
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            core, spec = self.rendered(root, self.RUN + self.TEST + '// limit: ["LIMIT-X-001"]\npub fn limited() {}\n')
+            (core / "src/lib.rs").write_text(self.RUN + self.TEST + "pub fn limited() {}\n")
+            self.commit(core, "resolve the limitation")
+            records = root / "docs/architecture/limitations"
+            records.mkdir(parents=True)
+            (records / "limit-x-001.md").write_text(
+                "---\nid: LIMIT-X-001\ndisposition: known\n---\n\n## Limitation\n\nx.\n\n"
+                "## Affects\n\n\n\n## Resolution\n\nNone yet.\n"
+            )
+            code, err = self.run_main(root, core)
+            self.assertEqual(0, code, err)
+            self.assertIn("warning: LIMIT-X-001: was cited by a `// limit:` marker", err)
             code, err = self.run_main(root, core, "--strict")
             self.assertEqual(1, code, err)
             self.assertIn("--strict", err)
