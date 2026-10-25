@@ -206,7 +206,7 @@ Construction resolves a local by lexical identity: its environments and move sta
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 5c96fccefb930800580084a8f4d2ea8dea05f97c |
 | `related` | ADR-0054, `LIMIT-TYPE-CONSTRUCTION-004`, `#1570` |
 
 ##### Requirement {#arch.type-construction.requirement-14}
@@ -220,7 +220,7 @@ The frozen identity tables (the member table and the span → `BindingId` bridge
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 5c96fccefb930800580084a8f4d2ea8dea05f97c |
 | `related` | ADR-0054, `#1570` |
 
 ##### Requirement {#arch.type-construction.requirement-15}
@@ -234,7 +234,7 @@ A written type name becomes a declaration id in one place, `ConstructCtx::writte
 | `specified by` | `#type-construction` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 5c96fccefb930800580084a8f4d2ea8dea05f97c |
 | `related` | ADR-0054, `#1568`, `#1570` |
 
 </details>
