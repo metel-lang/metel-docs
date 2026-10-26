@@ -1310,6 +1310,8 @@ fun main() {
 An early `None` exit leaves the enclosing function or closure body, not the block containing
 the `?`.
 
+> **Gap** GAP-FUNCTIONS-004
+
 <details>
 <summary>Formal rules</summary>
 
