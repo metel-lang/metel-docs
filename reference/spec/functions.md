@@ -447,7 +447,7 @@ function type) or, failing that, from the body, exactly as an omitted return typ
 closure whose parameter stays fully generic is polymorphic (`let id := |x| { x }`). A parameter
 that nothing determines is [T0002](../error-codes.md#t0002--annotation-required).
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed 32dd1e571867b7a596654542717267143c325406 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
