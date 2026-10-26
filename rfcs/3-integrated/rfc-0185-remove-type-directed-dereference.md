@@ -2,14 +2,24 @@
 id: rfc-0185
 title: "Remove Type-Directed Dereference"
 date: '2026-10-24'
-status: accepted
+coverage:
+  "1": { spec: "spec.types.references.reading-a-value-out-of-a-reference.legality-1" }
+  "2": { kind: untestable, reason: "an alternatives analysis; it states no rule a program can exhibit" }
+  "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
+  "4": { kind: untestable, reason: "records resolved design questions; each resolution is stated as a rule in section 1" }
+  "5": { kind: untestable, reason: "a cross-check against other rules; it states no new rule" }
+status: integrated
 updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1596'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1631'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
 
 > **Status — accepted (2026-10-26).** Open questions resolved 2026-10-26
+
+> **Status — integrated (2026-10-26).** Spec integrated; implementation tracked in #1631
 
 ## Summary
 
@@ -230,6 +240,27 @@ corpus should hold only one.
 5. **Release timing.** *Resolved: v0.15.0*, with a changelog migration note.
 
 ---
+
+## Integration cross-check (2026-10-26)
+
+Worked against the integrated spec and the implemented RFCs it touches:
+
+- **`let y: i64 := r;`** (`r: &i64`) — `spec.types.references.reading-a-value-out-of-a-reference.legality-1`
+  now rejects it as `T0001` with the `*r` help line; `let y: i64 := *r;` is accepted
+  (`spec.expressions.references.dynamics-7/-8`). No other rule depended on the old form.
+- **Chains** — `**rr` reads one layer per `*`; the old "peel every layer" behaviour is gone.
+- **Selectors** — field access, indexing and method dispatch auto-deref unchanged
+  (`expressions.md`, "Auto-deref covers selectors only"); the exception sentence it carried
+  for type-directed copy is removed.
+- **`&var T` → `&T`** coercion (`spec.types.references.legality-1`) is a reference-to-reference
+  conversion and is unaffected.
+- **Match scrutinees** (RFC-0108) peel references for patterns; unchanged.
+- **Ascription** — `spec.types.type-ascription.legality-1` is reworded: ascription never reads
+  through a reference but keeps dyn erasure, `[T; N]` → `[T]` and singleton coercions (RFC-0078).
+- **RFC-0066** — its type-directed extraction is made explicit (`*ptr`) in the same change; it is
+  unimplemented and returns to `1-under-review`.
+- **T0024** — kept for an explicit `*r` of a non-`Copy` referent at the former read-copy sites, so
+  the always-on rejection from #649 is not lost; the implicit forms are `T0001`.
 
 ## References
 

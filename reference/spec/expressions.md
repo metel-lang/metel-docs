@@ -480,8 +480,8 @@ fun name(c: &Colour) -> String {
 }
 ```
 
-Bindings introduced by a pattern matched through a reference copy the referent, following
-the ordinary type-directed copy rule (see [Types](types.md#reading-a-value-out-of-a-reference)).
+Bindings introduced by a pattern matched through a reference copy the referent
+(RFC-0108); the referent must be `Copy` to be bound by value.
 
 Reference-transparency and unqualified variants compose — peeling happens first, so a bare
 variant resolves against the referent's enum:
@@ -710,7 +710,7 @@ scrutinee value.
 ##### Dynamic Semantics {#spec.expressions.pattern-matching.matching-through-a-reference.dynamics-2}
 
 Bindings introduced while matching through a reference copy values from the peeled
-referent under the ordinary type-directed copy rule.
+referent (RFC-0108).
 
 <!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
@@ -1057,7 +1057,7 @@ fun main() -> i64 {
     var n := 1;
     let p: &var i64 := &var n;
     *p := 4;   // write-through: mutate the referent via explicit deref
-    return p; // type-directed copy: reads the value out at `return`
+    return *p; // explicit read of the referent
 }
 ```
 
@@ -1067,10 +1067,9 @@ Rules:
 - `&var x` creates an exclusive reference `&var T` where `x` is a `var` addressable lvalue
 - `*p` dereferences a reference — reading the referent, or, as an assignment target
   (`*p = v`), writing through to it (see "Dereference" below)
-- reading a plain value out of a reference with no field/method involved can also go
-  through type-directed copy (see
-  [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference)),
-  and field access, index, and method dispatch go through auto-deref (below)
+- reading a plain value out of a reference is always `*p` (see
+  [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference));
+  field access, index, and method dispatch go through auto-deref (below)
 - assigning to a reference-typed binding (`p = v`) **rebinds** it, like any other type;
   `*p = v` is the spelling that writes through
 
@@ -1293,7 +1292,7 @@ fun main() -> i64 {
 }
 ```
 
-Indexing, argument passing, and assignment remain ordinary reference operations — none of them are the value-extraction case (see `types.md`), so none require type-directed copy.
+Indexing, argument passing, and assignment remain ordinary reference operations — none of them is the value-extraction case (see `types.md`); reading the value out is `*p`.
 
 <details>
 <summary>Formal rules</summary>

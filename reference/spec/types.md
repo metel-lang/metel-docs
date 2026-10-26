@@ -915,9 +915,8 @@ duplicated. Passing one as an argument reborrows instead of moving — see
 
 References are first-class values, but they are distinct from the referent type. Ordinary
 access — field reads/writes, indexing, method dispatch, reading a plain value out — goes
-through auto-deref and type-directed copy; an explicit dereference operator `*p` is also
-available (v0.11.0) for reading through a reference and for writing through a
-`&var T` (`*p = v`). See [Expressions — References](expressions.md#references).
+through auto-deref (selectors only); the explicit dereference operator `*p` (v0.11.0)
+reads through a reference and writes through a `&var T` (`*p = v`). See [Expressions — References](expressions.md#references).
 
 `&var` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&var T` propagate back to the original storage location:
 
@@ -957,64 +956,67 @@ used where `&var T` is expected.
 
 ### Reading a value out of a reference
 
-No field, no method, no operator — just the plain value a reference points to. This
-cannot be a *move* (references never own their referent), only a *copy*, and only when
-the referent's type permits copying:
+> **Pending** metel-core#1631 the checker still copies out of a reference implicitly at
+> declared-type positions; RFC-0185 removes that, and the rejected forms below are still accepted.
+
+Reading the value a reference points to is always spelled `*r`. This cannot be a *move*
+(references never own their referent), only a *copy*, and only when the referent's type
+permits copying:
 
 ```metel
 fun main() -> i64 {
     let x := 42;
     let r: &i64 := &x;
-    let y: i64 := r;   // type-directed copy: y's declared type differs from r's
+    let y: i64 := *r;   // explicit read: copies the referent out
     return y;
 }
 ```
 
-**The copy fires at every position where a declared or expected type is already
-known** — not only `let`/`var` bindings and explicit ascription, but also a `return`
-value against the enclosing function's declared return type, a `break` value against
-the enclosing `loop`'s inferred type, and any tail expression of a function/method/
-closure body, an `if`/`else` branch, or a `match` arm (each of those resolves its
-result against a declared or expected type the same way a `let` binding does):
+A reference is never implicitly converted to its referent, at any position: not a `let`
+or `var` annotation, a call argument, a `return` value, a `break` value, the tail
+expression of a body, an `if`/`else` branch, a `match` arm, or an ascription. Each is a
+type error, [T0001](../error-codes.md#t0001--type-mismatch), whose help line names the fix:
+
+<!-- doc-example: skip reason="rejected form; still accepted until metel-core#1631 lands" -->
+```metel
+fun get(r: &i64) -> i64 {
+    r          // error[T0001]: expected i64, found &i64
+               // = help: read the value out with `*r` (copies a Copy referent)
+}
+```
 
 ```metel
 fun bump(p: &var i64) -> i64 {
     *p += 1;
-    p          // tail expression, no explicit `return` — copies out of p
+    *p         // tail expression: explicit read
 }
 ```
 
-It never fires silently at a plain call site; `fun f(v: i64)` called as `f(r)` where
-`r: &i64` is a type error, not an implicit copy. Argument position has no declared type
-of its own for the rule to compare against, the same reason RFC-0066's type-directed
-extraction of an allocated value (§3a, accepted) does not fire implicitly at a plain-parameter
-call site either; cited here only for the parallel.
-
-Chains through multiple reference layers the same way auto-deref does — reaching the
-declared type may require copying out of more than one layer:
+A chain of reference layers is read one `*` per layer:
 
 ```metel
 fun main() -> i64 {
     let x := 42;
     let r: &i64 := &x;
     let rr: &&i64 := &r;
-    let y: i64 := rr;   // copies through both layers of the chain
+    let y: i64 := **rr;   // one `*` for each layer
     return y;
 }
 ```
 
-A non-`Copy` `T` cannot be produced this way: a value moves, it is not copied out of a
-reference (see [Ownership](ownership.md)).
+`&var T` still coerces to `&T` where a shared reference is expected
+([spec.types.references.legality-1](#spec.types.references.legality-1)). A non-`Copy` `T`
+cannot be read out of a reference: `*r` of a non-`Copy` referent is a move out of a
+reference, rejected by the move checker (see [Ownership](ownership.md)).
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.references.reading-a-value-out-of-a-reference.legality-1}
 
-Where a declared or expected non-reference type is known, a reference expression may
-copy out its referent through every reference layer only when the referent is `Copy`.
-This applies to bindings, ascriptions, returns, breaks, and tail expressions, but not
-to an un-ascribed call argument.
+A reference-typed expression is never implicitly converted to its referent type. Where a
+non-reference type is expected, a reference-typed expression is a type error; `*r` reads
+the referent out, one `*` per reference layer, and only a `Copy` referent can be read out.
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
@@ -1169,7 +1171,7 @@ A `List<T>` is distinct from `[T]`; obtaining its array view requires an explici
 
 > **Availability:** Since v0.2.0.
 
-The `:` operator [asserts that an expression has a given type without performing any runtime conversion](#spec.types.type-ascription.legality-1). It is a pure type-inference hint — no code is emitted at runtime.
+The `:` operator [asserts that an expression has a given type](#spec.types.type-ascription.legality-1). It is a type-inference hint that also supplies the expected type for unsizing coercions; it never reads through a reference.
 
 Type ascription is mainly an ergonomics feature. Most code should type-check from
 its surrounding context alone; `:` is for the cases where spelling out the intended
@@ -1198,8 +1200,9 @@ fun main() -> i64 {
 
 ##### Legality Rule {#spec.types.type-ascription.legality-1}
 
-`expr : T` constrains `expr` to type `T` and supplies `T` as its expected type; it performs
-no runtime conversion.
+`expr : T` constrains `expr` to type `T` and supplies `T` as its expected type. It never
+reads a value out of a reference; it may apply the unsizing coercions that an expected type
+already drives (`dyn` erasure, `[T; N]` to `[T]`, singleton types).
 
 <!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 

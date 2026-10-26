@@ -98,6 +98,10 @@ mismatch reached through a row bound is `T0012`, in the same words.
 
 **Fix:** ensure the expression produces the expected type. Add an explicit cast if widening (e.g. `x as f64`).
 
+When the expected type is the referent of a reference-typed expression (`&T` found where `T`
+is expected), the error carries `= help: read the value out with `*r` (copies a Copy
+referent)` (RFC-0185). A reference is never converted to its referent implicitly.
+
 The same code also covers an `extend` block the language does not permit, which is a
 distinct situation sharing one code:
 
@@ -836,16 +840,18 @@ instead of `[T]` for storage that needs index-write access.
 
 > **Since v0.12.1.**
 
-RFC-0067a §3a's "read-copy": a `let`/`mut` binding, `return`/`break` value, tail
-expression, or explicit ascription (`expr: T`) whose own declared type differs from
-its initializer's reference type (`&U`/`&var U`) implicitly copies the referent out —
-but only when `U` is `Copy`. A reference only grants access, never ownership, so
-reading a non-`Copy` value out this way would silently duplicate it with no move and
-no explicit clone.
+> **Pending** metel-core#1631 until RFC-0185 lands the code is raised by the implicit
+> read-copy described in RFC-0067a §3a; the text below is the target behaviour.
 
-Checked once against the fully-dereferenced type at the end of a reference chain, not
-each intermediate layer — `let x: i64 = rr;` where `rr: &&i64` is unaffected, since
-`i64` is `Copy` regardless of how many reference layers it's read through.
+An explicit read `*r` that copies a value out of a reference — as a `let`/`var` initializer,
+`return`/`break` value, tail expression, or ascription operand — where the referent type
+`U` is not `Copy`. A reference only grants access, never ownership, so reading a non-`Copy`
+value out this way would silently duplicate it with no move and no explicit clone.
+
+Checked once against the fully-dereferenced type at the end of a reference chain
+(`**rr`), not each intermediate layer. The implicit forms (`let x: T := r;`) are no longer
+read-copies at all: they are [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed)
+with a `= help: read the value out with `*r`` line (RFC-0185).
 
 **Fix:** call `.clone()` if the type implements `Clone`, or restructure the code to
 take ownership of the value directly instead of reading it through a reference.
