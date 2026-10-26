@@ -37,24 +37,24 @@ let total: i64 := List::from([1, 2, 3, 4])
     .fold(0i64, |a: i64, x: i64| -> i64 { a + x });   // 40
 ```
 
-`find` returns the first matching element as a `Perhaps`, and `concat` joins two
+`find` returns the first matching element as an `Option`, and `concat` joins two
 lists. `push`, `pop`, `get`, and `len` round out the collection.
 
-## Perhaps and Result
+## Option and Result
 
-`Perhaps<T>` (a value or nothing) and `Result<T, E>` (a success or an error) are
+`Option<T>` (a value or nothing) and `Result<T, E>` (a success or an error) are
 the core optional and fallible types. Rather than always reaching for `match`,
 use their combinators:
 
 ```metel
 fun main() {
-    let maybe := Perhaps::Some { value = 21 };
+    let maybe := Option::Some { value = 21 };
     fun double(x: i64) -> i64 { x * 2 }
 
-    // Transform inside the Perhaps, then supply a fallback.
+    // Transform inside the Option, then supply a fallback.
     let doubled := maybe.map(double).unwrap_or(0); // 42
 
-    let nothing: Perhaps<i64> := None;
+    let nothing: Option<i64> := None;
     println(nothing.is_none());            // true
     println(nothing.unwrap_or(7));         // 7
 }
@@ -150,7 +150,7 @@ failure to launch the command is an `Err`.
 
 ## Where things live
 
-Everything under "Lists", "Perhaps and Result", and "Strings" is in `std::core`
+Everything under "Lists", "Option and Result", and "Strings" is in `std::core`
 and needs no import. The host modules — `std::env`, `std::fs`, `std::process` —
 must be imported explicitly, the same as any other module. See the
 [Runtime reference](../../reference/spec/runtime.md) for the complete signatures.

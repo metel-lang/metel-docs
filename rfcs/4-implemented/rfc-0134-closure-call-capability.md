@@ -447,8 +447,8 @@ exact match is required, a sound under-approximation.
 **Stdlib `once`-annotation sweep — a delivery item.** Under the `many` default, every
 unqualified closure-typed stdlib parameter is `many`-required. That is correct for
 loop-calling combinators (`List::map` / `filter` / `fold` / `find`, `for_each`) but
-over-constrains ones that call the callback at most once (`Perhaps::map` / `Result::map` /
-`Perhaps::and_then` / `unwrap_or_else` / `filter` / `map_or` and siblings) — those get
+over-constrains ones that call the callback at most once (`Option::map` / `Result::map` /
+`Option::and_then` / `unwrap_or_else` / `filter` / `map_or` and siblings) — those get
 `f: once (T) -> U` as part of landing this RFC. Mechanical (grep `core.mtl` for
 closure-typed parameters, classify by call shape); tracked on #269 / ADR-0052.
 

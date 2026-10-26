@@ -22,30 +22,30 @@ in the Resolution section.
 
 ##### Requirement {#arch.name-resolution.requirement-1}
 
-Every top-level declaration gets a `SymbolId` from one canonical `SymbolTable`: builtin `std::core` items at fixed `SYM_*` ids, user declarations from `USER_SYM_START`, and a separate range for overloads. The same declaration keeps one id under any importer, alias or resolution order.
+Every top-level declaration gets a `SymbolId` from one `SymbolTable` keyed by (module, namespace, name), so a struct and a function of one name differ, and it keeps that id under any importer. Builtins are `Builtin` ids, std items `Std` ids fixed by the stdlib alone, user items `Declared`.
 
 | Field | Value |
 |---|---|
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | [`metel-frontend/src/identity/symbols.rs::intern`](https://github.com/metel-lang/metel-core/blob/d7eda62548ed76567555873444bdf792d76db730/metel-frontend/src/identity/symbols.rs#L119); [`metel-frontend/src/identity/symbols.rs::new`](https://github.com/metel-lang/metel-core/blob/2509ef305686205e937c2aabd4ea3edd3577629e/metel-frontend/src/identity/symbols.rs#L80) |
-| `verified by` | [`metel-frontend/src/identity/symbols.rs::builtin_std_core_declarations_are_pre_seeded_at_their_fixed_ids`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/symbols.rs#L137); [`metel-frontend/src/identity/symbols.rs::user_declarations_are_allocated_from_the_user_range_below_the_overload_range`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-frontend/src/identity/symbols.rs#L146); [`metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs::aliased_import_has_same_symbol_id_as_direct_import`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs#L598); [`metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs::distinct_declarations_get_distinct_symbol_ids`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs#L641); [`metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs::same_declaration_gets_same_symbol_id_regardless_of_importer`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs#L555); [`metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs::symbol_id_is_independent_of_module_resolution_order`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs#L773); [`metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs::symbol_id_is_stable_in_symbol_table`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs#L743) |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | METEL-185, ADR-0041 |
 
 ##### Requirement {#arch.name-resolution.requirement-2}
 
-An explicit `import` wins over a glob, and two explicit imports of one local name are an error. Globs are tiered: a user glob silently beats the auto-inserted std glob, and `T0011` fires only when two globs of the same tier export the same name.
+An explicit `import` beats a glob, and two explicit imports of one local name in one namespace are an error. A user glob silently beats the auto-inserted std glob; `T0011` fires only when two globs of the same tier export one name.
 
 | Field | Value |
 |---|---|
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::add_explicit`](https://github.com/metel-lang/metel-core/blob/2509ef305686205e937c2aabd4ea3edd3577629e/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L722); [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::resolve_module`](https://github.com/metel-lang/metel-core/blob/20c81a3b5a66fd55d0cb53c8235cd16e023e53a2/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L440) |
-| `verified by` | [`metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs::resolves_explicit_item_import`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/name_resolver/tests.rs#L75); [`metel-interpreter/tests/integration/sources/module_semantics/explicit_import_wins_over_glob_same_name/test.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/module_semantics/explicit_import_wins_over_glob_same_name/test.toml#L1); [`metel-interpreter/tests/integration/sources/module_semantics/two_explicit_imports_same_local_name_is_t0011/test.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/module_semantics/two_explicit_imports_same_local_name_is_t0011/test.toml#L1); [`metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_is_t0011/test.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_is_t0011/test.toml#L1); [`metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_unused_no_t0011/test.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/module_semantics/two_glob_imports_same_name_unused_no_t0011/test.toml#L1); [`metel-interpreter/tests/integration/sources/module_semantics/user_glob_wins_over_std_glob_same_name_no_t0011/test.toml`](https://github.com/metel-lang/metel-core/blob/282f563360390f6648e81bc9d3974bcb8070c496/metel-interpreter/tests/integration/sources/module_semantics/user_glob_wins_over_std_glob_same_name_no_t0011/test.toml#L1) |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | `T0011`, ADR-0026 |
 
 ##### Requirement {#arch.name-resolution.requirement-3}
@@ -57,9 +57,9 @@ Each bare-identifier reference is `Res::Def` (a top-level declaration, with its 
 | `status` | `implemented` |
 | `owner` | `metel-frontend` |
 | `specified by` | `#name-resolution` |
-| `implements` | [`metel-frontend/src/pipeline/name_resolution/reference_resolver/mod.rs::collect_references`](https://github.com/metel-lang/metel-core/blob/97fe6c79a296273b7cafb1c21991c5f30d24f288/metel-frontend/src/pipeline/name_resolution/reference_resolver/mod.rs#L72) |
-| `verified by` | [`metel-frontend/src/pipeline/name_resolution/reference_resolver/tests.rs::local_binding_shadows_top_level_declaration`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/reference_resolver/tests.rs#L38); [`metel-frontend/src/pipeline/name_resolution/reference_resolver/tests.rs::resolves_top_level_call_to_its_symbol_id`](https://github.com/metel-lang/metel-core/blob/006a9aafdcb4bc9c7328ad882c08d32737058a51/metel-frontend/src/pipeline/name_resolution/reference_resolver/tests.rs#L19) |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `implements` | _Generated at publish._ |
+| `verified by` | _Generated at publish._ |
+| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
 | `related` | METEL-187, ADR-0041 |
 
 </details>

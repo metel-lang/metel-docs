@@ -302,8 +302,8 @@ down that it was the general answer.
     own `impl_tracking` issue. Never hand-write the rendered span underneath it —
     `rfc.py index --write-spec-origins` generates that, same as an origins backlink.
   - A `LIMIT-<AREA>-<NNN>` record (`architecture/limitations/`, ADR-0057 §4's shared
-    shape with `GAP-*`) with `disposition: planned`, `planned_for` this RFC's target
-    release, `rfc:` this RFC's id, and `## Resolution` naming the same tracking issue.
+    shape with `GAP-*`) with `disposition: planned`, `tracked_by` the tracking issue,
+    `rfc:` this RFC's id, and `## Resolution` naming the same tracking issue.
     Use `LIMIT-*`, never `GAP-*`, for this case — ADR-0057 §2's sorting test is exactly
     "the spec promises (or an accepted RFC will promise) something the implementation
     does not yet deliver," which is what every RFC between `3-integrated` and
@@ -789,3 +789,31 @@ None of this replaces the `3-integrated` phase's actual judgment work (is the de
 sound, do the worked examples really stress-test the interaction) — it only makes the
 procedural half (move the file correctly, don't lose a cross-reference, don't forget to
 check for an existing RFC first) hard to get wrong by accident.
+
+## Spec text ahead of the code (metel-core#1418)
+
+An RFC reaches `3-integrated` when its spec text is merged, which is usually before the code that
+implements it. Mark each part of that text that the implementation does not deliver yet with a
+`> **Pending** metel-core#N` marker citing the implementation issue (`impl_tracking` is the
+natural one); do not file a `GAP-*` or `LIMIT-*` record for a gap that the same milestone closes.
+The marker leaves with the issue. If the part is deliberately left out of a release, convert the
+marker to a record then. See `reference/spec/STYLEGUIDE.md`.
+
+## `rfc.py check`: problems and warnings (metel-core#1510)
+
+`rfc.py check` separates two kinds of finding.
+
+- **Problems** are properties of the change under review, and they fail the check: a
+  directory that disagrees with the frontmatter, a missing `tracking` or `impl_tracking`, a
+  duplicate id, a dangling reference or citation, a missing rule id, an exemption that is
+  malformed, expired or blocked on a closed issue, a rigor block with a citing fixture but no
+  `last_reviewed` marker, a coverage regression, registry or index drift.
+- **Warnings** are freshness signals, which depend on time or on code outside the change: a
+  spec block's citing fixture changed after its recorded `last_reviewed`, its recorded commit
+  is no longer reachable (core merges by rebase), or an open milestoned tracker exists for an
+  RFC that is still a `0-draft`. They print as `warning:` lines and the exit status stays 0, so a
+  pull request that only moves a cited fixture is not failed by it.
+
+`rfc.py check --strict` treats warnings as problems. `/cut-release` runs it, so every review
+that came due is settled before a tag. The architecture checker follows the same rule
+(`generate_architecture_evidence.py --strict`).

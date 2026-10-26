@@ -6,7 +6,7 @@ scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-core#1211 limitation analysis; skipped fixture `evaluator/closures/v0_13_0_captured_drop_order.toml`"
 disposition: planned
-planned_for: v0.15.0
+tracked_by: metel-core#261
 rfc: RFC-0071
 review: null
 ---
@@ -43,11 +43,7 @@ reason and should be enabled when the limitation is lifted.
 - `arch.evaluation.requirement-1`
 - `arch.type-construction.requirement-5`
 
-<!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/construction/declarations.rs::reject_inert_destructor`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/declarations.rs#L546)
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 Planned: tracked as metel-core#261 (RFC-0071 3/4: drop order and explicit
-drop, milestone v0.15.0).
+drop).

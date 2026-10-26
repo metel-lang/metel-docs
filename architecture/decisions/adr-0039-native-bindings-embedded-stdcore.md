@@ -105,7 +105,9 @@ String / array `len` pattern methods (keyed by runtime value shape).
   2_000_000+ range (`refresh_scheme_for_export`), and `Substitution::bind`
   drops identity bindings. Ranges in use: module/registry gens ~0+,
   `CorePrelude` 10_000+, `construct_generic_body` 1_000_000+, exports
-  2_000_000+, overload SymbolIds 0x4000_0000+ (ADR-0038).
+  2_000_000+, overload SymbolIds 0x4000_0000+ (ADR-0038). *Superseded for the TypeVar ranges by
+  metel-core#1541: they are now four named ranges declared and checked in `type_var_space`, not
+  literals at the call sites; the SymbolId ranges are unchanged.*
 - **Primitive impl targets.** `impl Display for i64` requires the method's
   self type to be `Concrete(I64)`, not `Named("i64")`; `primitive_type_from_name`
   is applied at every self-type construction site.

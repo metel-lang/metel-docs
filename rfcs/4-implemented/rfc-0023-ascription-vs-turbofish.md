@@ -21,7 +21,7 @@ RFC-0021 introduced `:` as a type ascription operator in expression position. It
 
 ```metel
 foo([] : String[]);                    // empty array in argument position
-foo(nope : Perhaps<String>);           // nope in argument position
+foo(nope : Option<String>);           // nope in argument position
 match flag { true => [] : Int[], ... } // empty literal in match arm
 ```
 

@@ -2,7 +2,7 @@
 id: adr-0020
 title: "Qualified Path Resolution via Last-Segment Fallback"
 date: '2026-05-28'
-status: active
+status: superseded by ADR-0066
 ---
 
 ## Context

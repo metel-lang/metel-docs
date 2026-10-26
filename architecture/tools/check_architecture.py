@@ -46,8 +46,9 @@ log. Its overview and section prose may cite an issue or ADR where that adds
 architectural context, but must not narrate a completed milestone, a next
 step, or an unaudited session as if it were current behavior.
 
-A `LIMIT-*` / `GAP-*` record may carry `planned_for: vX.Y.Z` and `rfc: RFC-NNNN[, ...]`,
-the release and RFC(s) for pending work; a Language Spec chapter states a limit as a
+A `LIMIT-*` / `GAP-*` record may carry `tracked_by: metel-core#N[, ...]` and `rfc: RFC-NNNN[, ...]`,
+the issue(s) and RFC(s) for pending work (the issue's milestone is its schedule; a version is chosen
+only at a cut, so no record names one, metel-core#1525); a Language Spec chapter states a limit as a
 one-line marker, `> **Gap** GAP-X-001` or `> **Limitation** LIMIT-X-001`, that cites an
 existing active record, and the site renders the record's summary and these fields
 into it (metel-core#1235). Only the checks are here; the chapters convert in a later step.
@@ -77,8 +78,10 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 import tomllib
@@ -117,7 +120,7 @@ SPEC_LIMIT_MARKER_RE = re.compile(
 MARKER_LABEL_FOR_PREFIX = {"GAP": "Gap", "LIMIT": "Limitation"}
 # Optional scheduling fields on an active record: the release it is planned for and the
 # RFC(s) that specify the change. The chapter marker renders them from here.
-PLANNED_FOR_RE = re.compile(r"^v\d+\.\d+\.\d+$")
+TRACKED_BY_RE = re.compile(r"^metel-core#(\d+)$")  # no bare `#N`: a YAML reader takes that for a comment
 # Flipped on by the chapter conversion (metel-core#1235 step 3): until every active GAP
 # is cited from its chapter, requiring it would fail the corpus.
 REQUIRE_GAP_CITATIONS = True
@@ -651,21 +654,38 @@ def check_gap_records(
     return findings, {fm.get("id"): (p, fm, a) for p, fm, a, _ in gaps}
 
 
+def tracked_issues(fm: dict) -> list[int]:
+    """The issue numbers a record's `tracked_by` names (malformed entries are left to the structural check)."""
+    out = []
+    for ref in [r.strip() for r in str(fm.get("tracked_by") or "").split(",") if r.strip()]:
+        m = TRACKED_BY_RE.match(ref)
+        if m:
+            out.append(int(m.group(1)))
+    return out
+
+
 def check_schedule_fields(records: list, repo_root: Path, rfcs_dir: Path) -> list:
-    """`planned_for` (a `vX.Y.Z` release) and `rfc` (`RFC-NNNN`, comma-separated for
-    several) are optional on an active record, and meaningless on a finished one."""
+    """`tracked_by` (`metel-core#N`, comma-separated for several) and `rfc` (`RFC-NNNN`, likewise) are
+    optional on an active record, and meaningless on a finished one. A `planned` record must name the
+    issue that tracks it, so that a tool, not a grep, can tell when the plan has gone stale
+    (metel-core#1525). The retired `planned_for: vX.Y.Z` is refused: a version is chosen at a cut."""
     findings: list = []
     for path, fm in records:
         rel = path.relative_to(repo_root)
-        planned_for = fm.get("planned_for")
+        if fm.get("planned_for"):
+            findings.append(Finding(str(rel), "`planned_for` is retired: name the tracking issue in `tracked_by: metel-core#N` instead (its milestone is the schedule)"))
+        tracked_by = fm.get("tracked_by")
         rfc = fm.get("rfc")
-        if not planned_for and not rfc:
+        if fm.get("disposition") == "planned" and not tracked_by:
+            findings.append(Finding(str(rel), "a `planned` record must name its tracking issue in `tracked_by: metel-core#N`"))
+        if not tracked_by and not rfc:
             continue
         if fm.get("disposition") in ("resolved", "superseded"):
-            findings.append(Finding(str(rel), "`planned_for` / `rfc` describe pending work; remove them from a resolved or superseded record"))
+            findings.append(Finding(str(rel), "`tracked_by` / `rfc` describe pending work; remove them from a resolved or superseded record"))
             continue
-        if planned_for and not PLANNED_FOR_RE.match(planned_for):
-            findings.append(Finding(str(rel), f"`planned_for: {planned_for}` must be a release like `v0.14.0`"))
+        for ref in [r.strip() for r in str(tracked_by or "").split(",") if r.strip()]:
+            if not TRACKED_BY_RE.match(ref):
+                findings.append(Finding(str(rel), f"`tracked_by` entry `{ref}` must look like `metel-core#1234`"))
         for ref in [r.strip() for r in (rfc or "").split(",") if r.strip()]:
             m = RFC_REF_RE.match(ref)
             if not m or not ref.startswith("RFC-"):
@@ -673,6 +693,40 @@ def check_schedule_fields(records: list, repo_root: Path, rfcs_dir: Path) -> lis
             elif rfc_stage(rfcs_dir, m.group(1)) is None:
                 findings.append(Finding(str(rel), f"`rfc` entry `{ref}` does not exist under rfcs/"))
     return findings
+
+
+def tracked_record_problems(records: list, repo_root: Path, resolver, unresolved=None):
+    """(errors, warnings) for the issues `tracked_by` names, by their state on GitHub (metel-core#1525).
+    An issue that does not exist is an error. A record whose every tracked issue is closed (the plan
+    has gone stale: resolve the record or re-plan it) or whose open issue has no milestone (nobody
+    scheduled it) is a warning, which the release gate treats as blocking. An unreachable GitHub never
+    fails the everyday check, the same rule as for pending markers."""
+    errors: list = []
+    warnings: list = []
+    for path, fm in records:
+        if fm.get("disposition") in ("resolved", "superseded"):
+            continue
+        numbers = tracked_issues(fm)
+        if not numbers:
+            continue
+        rel = str(path.relative_to(repo_root))
+        infos = {}
+        for n in numbers:
+            info = resolver(n)
+            if info is None:
+                if unresolved is not None:
+                    unresolved.append(n)
+                continue
+            if info.get("missing"):
+                errors.append(Finding(rel, f"`tracked_by` names metel-core#{n}, which does not exist"))
+                continue
+            infos[n] = info
+        if infos and all(i.get("state") != "open" for i in infos.values()):
+            warnings.append(Finding(rel, "every issue in `tracked_by` is closed (" + ", ".join(f"metel-core#{n}" for n in infos) + "): resolve the record or re-plan it with a new tracking issue"))
+        for n, i in infos.items():
+            if i.get("state") == "open" and not i.get("milestone"):
+                warnings.append(Finding(rel, f"`tracked_by` names metel-core#{n}, which has no milestone: a planned record must be scheduled"))
+    return errors, warnings
 
 
 def check_spec_limit_markers(
@@ -721,6 +775,84 @@ def check_spec_limit_markers(
     return findings
 
 
+# `> **Pending** metel-core#1234 optional note` (metel-core#1418): "this part of the spec is not
+# implemented yet, and an issue tracks it". It is for the transient case -- the spec text lands
+# first and the code follows in the same milestone -- where a GAP/LIMIT record's lifecycle (disposition,
+# owner, review, resolution) is out of proportion. The record kinds stay reserved for what is
+# deliberately left in a released version. A marker is valid while its issue is open and has a
+# milestone; a closed issue means the marker is stale and must go.
+PENDING_MARKER_LINE_RE = re.compile(r"^>\s*\*\*Pending\*\*(.*)$", re.MULTILINE)
+PENDING_MARKER_REF_RE = re.compile(r"^\s+(?:metel-lang/)?metel-core#(\d+)\b")
+PENDING_REPO = "metel-lang/metel-core"
+
+
+def gh_issue_resolver(number: int):
+    """What `check_pending_markers` needs to know about `metel-core#N`: `{"state": "open"|"closed",
+    "milestone": title or None}`, `{"missing": True}` when there is no such issue, or `None` when
+    GitHub cannot be reached (no `gh`, no network, no token): an unreachable API never fails the
+    check, the same rule the generator applies to an exemption's issue."""
+    try:
+        out = subprocess.run(
+            ["gh", "issue", "view", str(number), "--repo", PENDING_REPO, "--json", "state,milestone"],
+            capture_output=True, text=True, timeout=30,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    if out.returncode != 0:
+        lowered = out.stderr.lower()
+        return {"missing": True} if "could not resolve" in lowered or "not found" in lowered else None
+    try:
+        data = json.loads(out.stdout)
+    except json.JSONDecodeError:
+        return None
+    return {"state": str(data.get("state", "")).lower(), "milestone": (data.get("milestone") or {}).get("title")}
+
+
+def pending_issue_problem(number: int, info: dict, what: str = "`> **Pending**`") -> str | None:
+    """Why `what` citing metel-core#N is no longer valid, given the resolver's answer, or None.
+    Valid while the issue exists, is open, and has a milestone (metel-core#1418)."""
+    if info.get("missing"):
+        return f"{what} cites metel-core#{number}, which does not exist"
+    if info.get("state") != "open":
+        return (
+            f"{what} cites metel-core#{number}, which is {info.get('state')}: it is stale; remove it "
+            f"(or convert it to a Gap/Limitation record if the part is deliberately left unimplemented)"
+        )
+    if not info.get("milestone"):
+        return f"{what} cites metel-core#{number}, which has no milestone; a pending part must be scheduled"
+    return None
+
+
+def check_pending_markers(language_spec_dir: Path, repo_root: Path, resolver=None, unresolved=None) -> list:
+    """The `> **Pending** metel-core#N` markers in the Language Spec chapters (metel-core#1418):
+    well formed, and (when a `resolver` is given) the issue exists, is open, and has a
+    milestone. A closed issue is a stale marker. Numbers the resolver could not reach are
+    appended to `unresolved`, never reported as findings."""
+    findings: list = []
+    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+        if path.name.upper() == "STYLEGUIDE.MD":
+            continue
+        rel = str(path.relative_to(repo_root))
+        text = FENCE_RE.sub("", path.read_text())
+        for m in PENDING_MARKER_LINE_RE.finditer(text):
+            ref = PENDING_MARKER_REF_RE.match(m.group(1))
+            if not ref:
+                findings.append(Finding(rel, "a `> **Pending**` marker must name its issue: `> **Pending** metel-core#1234`"))
+                continue
+            number = int(ref.group(1))
+            if resolver is None:
+                continue
+            info = resolver(number)
+            if info is None:
+                if unresolved is not None:
+                    unresolved.append(number)
+                continue
+            problem = pending_issue_problem(number, info)
+            if problem:
+                findings.append(Finding(rel, problem))
+    return findings
+
+
 # Phrasing that states a limit in prose. A limit belongs in a `> **Gap**` / `> **Limitation**`
 # marker citing a record, so new prose like this is a prompt to write the record.
 LIMIT_PHRASE_RE = re.compile(
@@ -732,7 +864,7 @@ LIMIT_PHRASE_RE = re.compile(
 # Lines that carry such words for another reason: generated fixture/exemption markup,
 # doc-example directives, HTML, headings, and the markers themselves.
 LIMIT_LINT_SKIP_RE = re.compile(
-    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Since|Changed in)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
+    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Pending|Since|Changed in)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
 )
 
 
@@ -763,6 +895,10 @@ def lint_claim_length(spec_dir: Path, repo_root: Path) -> list[Finding]:
 # checkout, same structural gap `arch=[...]` cross-checking already documents; this only
 # runs with `--core`.
 FIXTURE_LIMIT_RE = re.compile(r"\bLIMIT-[A-Z0-9]+(?:-[A-Z0-9]+)*-\d{3}\b")
+# `skip = "pending: #1234"` (metel-core#1514): the fixture is skipped only until an issue lands,
+# the transient case. Valid while the issue is open and has a milestone; a closed issue means the
+# skip must go (the fixture should pass now).
+FIXTURE_PENDING_RE = re.compile(r"^\s*pending:\s*(?:metel-core)?#(\d+)\b", re.IGNORECASE)
 EXEMPT_RE = re.compile(r"\bexempt\b", re.IGNORECASE)
 
 
@@ -785,7 +921,7 @@ def find_skipped_fixtures(core_root: Path) -> list[tuple[Path, str]]:
 
 
 def check_skip_fixture_citations(
-    core_root: Path, limit_records: list, repo_root: Path
+    core_root: Path, limit_records: list, repo_root: Path, resolver=None, unresolved=None
 ) -> tuple[list[Finding], list[Finding]]:
     """Findings: a skipped fixture cites a missing or inactive LIMIT-*, or cites neither a
     LIMIT-* nor "exempt". Warnings (not findings): an active LIMIT-* with no citing skip
@@ -798,6 +934,18 @@ def check_skip_fixture_citations(
 
     for path, reason in find_skipped_fixtures(core_root):
         rel = path.relative_to(core_root)
+        pending = FIXTURE_PENDING_RE.match(reason)
+        if pending:
+            number = int(pending.group(1))
+            info = resolver(number) if resolver is not None else {"state": "open", "milestone": "(unchecked)"}
+            if info is None:
+                if unresolved is not None:
+                    unresolved.append(number)
+            else:
+                problem = pending_issue_problem(number, info, f"`skip = \"pending: #{number}\"`")
+                if problem:
+                    findings.append(Finding(str(rel), problem))
+            continue
         ids = FIXTURE_LIMIT_RE.findall(reason)
         if not ids:
             if not EXEMPT_RE.search(reason):
@@ -825,6 +973,88 @@ def check_skip_fixture_citations(
     return findings, warnings
 
 
+def pending_references(language_spec_dir: Path, repo_root: Path, core_root: Path | None = None) -> list[tuple[str, int]]:
+    """Every pending reference in the tree as `(where, issue number)`: the `> **Pending**` markers
+    in the Language Spec chapters and, with a metel-core checkout, the `skip = "pending: #N"`
+    fixtures (metel-core#1514)."""
+    refs: list[tuple[str, int]] = []
+    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+        if path.name.upper() == "STYLEGUIDE.MD":
+            continue
+        text = FENCE_RE.sub("", path.read_text())
+        for m in PENDING_MARKER_LINE_RE.finditer(text):
+            ref = PENDING_MARKER_REF_RE.match(m.group(1))
+            if ref:
+                refs.append((str(path.relative_to(repo_root)), int(ref.group(1))))
+    if core_root is not None:
+        for path, reason in find_skipped_fixtures(core_root):
+            pending = FIXTURE_PENDING_RE.match(reason)
+            if pending:
+                refs.append((str(path.relative_to(core_root)), int(pending.group(1))))
+    return refs
+
+
+def release_gate_findings(references, resolver, milestone: str) -> list[Finding]:
+    """The release gate (metel-core#1514, run by `/cut-release`): a pending reference blocks the
+    release while its issue is still open in the milestone being released, or has no milestone,
+    or is gone, or cannot be verified. A part that is not done by release is either implemented
+    (the marker leaves with the issue), moved to a later milestone, or converted to a Gap or
+    Limitation record. An unreachable GitHub is a failure here, unlike in the everyday check: a
+    gate cannot pass what it could not verify."""
+    findings: list[Finding] = []
+    for where, number in references:
+        info = resolver(number)
+        if info is None:
+            findings.append(Finding(where, f"pending on metel-core#{number}, which could not be verified (GitHub not reachable); the release gate cannot pass an unverified pending part"))
+            continue
+        problem = pending_issue_problem(number, info, "a pending part")
+        if problem:
+            findings.append(Finding(where, problem))
+        elif info.get("milestone") == milestone:
+            findings.append(Finding(where, f"pending on metel-core#{number}, which is still open in {milestone}: implement it, move it to a later milestone, or convert the part to a Gap/Limitation record"))
+    return findings
+
+
+def scheduled_records(repo_root: Path = REPO_ROOT) -> list:
+    """(path, frontmatter) of every gap and limitation record, for the release gate."""
+    out = []
+    for d in (repo_root / "architecture" / "limitations", repo_root / "architecture" / "gaps"):
+        for path in sorted(d.glob("*.md")) if d.is_dir() else []:
+            out.append((path, parse_limitation_file(path)[0]))
+    return out
+
+
+def tracked_gate_findings(records: list, repo_root: Path, resolver) -> list[Finding]:
+    """The release gate's view of `tracked_by` (metel-core#1525): a plan gone stale blocks the cut,
+    and so does an issue GitHub could not be asked about."""
+    unresolved: list = []
+    errors, warnings = tracked_record_problems(records, repo_root, resolver, unresolved)
+    gate = errors + warnings
+    for n in sorted(set(unresolved)):
+        gate.append(Finding("architecture records", f"`tracked_by` names metel-core#{n}, which could not be verified (GitHub not reachable); the release gate cannot pass an unverified plan"))
+    return gate
+
+
+def _pending_excused_lines(lines: list[str]) -> set[int]:
+    """1-based line numbers of the prose a `> **Pending**` marker excuses (metel-core#1418): the
+    paragraph it sits in and the paragraph just before it, since the marker follows the prose
+    that states the part is not implemented yet."""
+    blocks: list[tuple[int, int]] = []  # (first, last) 0-based lines of each blank-separated block
+    start = None
+    for i, line in enumerate(lines + [""]):
+        if line.strip():
+            start = i if start is None else start
+        elif start is not None:
+            blocks.append((start, i - 1))
+            start = None
+    excused: set[int] = set()
+    for index, (first, last) in enumerate(blocks):
+        if any(PENDING_MARKER_LINE_RE.match(lines[i]) for i in range(first, last + 1)):
+            for a, b in ([blocks[index - 1]] if index else []) + [(first, last)]:
+                excused.update(range(a + 1, b + 2))
+    return excused
+
+
 def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Finding]:
     """Warn-only (metel-core#1235): limit phrasing in Language Spec prose outside a marker.
     Never fails the check; the reader decides whether it is a limit that needs a record."""
@@ -833,11 +1063,13 @@ def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Findin
         if path.name.upper() == "STYLEGUIDE.MD":
             continue
         in_fence = False
-        for number, line in enumerate(path.read_text().splitlines(), 1):
+        lines = path.read_text().splitlines()
+        excused = _pending_excused_lines(lines)
+        for number, line in enumerate(lines, 1):
             if line.lstrip().startswith("```"):
                 in_fence = not in_fence
                 continue
-            if in_fence or LIMIT_LINT_SKIP_RE.search(line):
+            if in_fence or number in excused or LIMIT_LINT_SKIP_RE.search(line):
                 continue
             m = LIMIT_PHRASE_RE.search(line)
             if m:
@@ -854,6 +1086,9 @@ def run_checks(
     language_spec_dir: Path = None,
     rfcs_dir: Path = None,
     require_gap_citations: bool = None,
+    pending_resolver=None,
+    pending_unresolved: list = None,
+    tracked_warnings: list = None,
 ) -> list[Finding]:
     spec_dir = spec_dir or (repo_root / "architecture" / "spec")
     limitations_dir = limitations_dir or (repo_root / "architecture" / "limitations")
@@ -981,6 +1216,16 @@ def run_checks(
             rfcs_dir,
         )
     )
+    if pending_resolver is not None:
+        tracked_errors, tracked_stale = tracked_record_problems(
+            [(p, fm) for p, fm, _, _ in limitation_records] + [(p, fm) for p, fm, _ in gap_records.values()],
+            repo_root,
+            pending_resolver,
+            pending_unresolved,
+        )
+        findings.extend(tracked_errors)
+        if tracked_warnings is not None:
+            tracked_warnings.extend(tracked_stale)
     findings.extend(
         check_spec_limit_markers(
             language_spec_dir,
@@ -990,6 +1235,8 @@ def run_checks(
             REQUIRE_GAP_CITATIONS if require_gap_citations is None else require_gap_citations,
         )
     )
+
+    findings.extend(check_pending_markers(language_spec_dir, repo_root, pending_resolver, pending_unresolved))
 
     # Cross-file: every `affects` entry, and every standardized
     # "Known limitations" link, must resolve to a real id that actually exists
@@ -1021,9 +1268,29 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     p.add_argument("--check", action="store_true", help="CI gate: exit 1 on any finding")
     p.add_argument("--core", type=Path, help="a metel-core checkout, to also check skipped-fixture LIMIT-* citations (metel-core#1219)")
+    p.add_argument(
+        "--release-gate",
+        metavar="MILESTONE",
+        help="the release gate (metel-core#1514): fail while a pending marker or fixture cites an issue "
+        "still open in MILESTONE, without a milestone, or that cannot be verified, and while a record's "
+        "`tracked_by` plan has gone stale (metel-core#1525). Runs only this gate",
+    )
     args = p.parse_args()
 
-    findings = run_checks()
+    if args.release_gate:
+        refs = pending_references(LANGUAGE_SPEC_DIR, REPO_ROOT, args.core)
+        gate = release_gate_findings(refs, gh_issue_resolver, args.release_gate)
+        gate += tracked_gate_findings(scheduled_records(), REPO_ROOT, gh_issue_resolver)
+        scope = "spec markers" + (" and skipped fixtures" if args.core else " (pass --core to include skipped fixtures)")
+        print(f"Release gate for {args.release_gate}: {len(refs)} pending reference(s) in {scope}.")
+        for f in gate:
+            print(f"  - {f}")
+        print("Release gate: PASS" if not gate else f"Release gate: {len(gate)} blocking finding(s).")
+        return 1 if gate else 0
+
+    pending_unresolved: list = []
+    tracked_warnings: list = []
+    findings = run_checks(pending_resolver=gh_issue_resolver, pending_unresolved=pending_unresolved, tracked_warnings=tracked_warnings)
 
     limitation_records_for_fixtures = [
         (path, *parse_limitation_file(path)) for path in sorted(LIMITATIONS_DIR.glob("*.md"))
@@ -1031,7 +1298,7 @@ def main() -> int:
     fixture_warnings: list = []
     if args.core:
         fixture_findings, fixture_warnings = check_skip_fixture_citations(
-            args.core, limitation_records_for_fixtures, REPO_ROOT
+            args.core, limitation_records_for_fixtures, REPO_ROOT, gh_issue_resolver, pending_unresolved
         )
         findings.extend(fixture_findings)
 
@@ -1045,7 +1312,13 @@ def main() -> int:
     else:
         print("Skipped-fixture LIMIT-* citations: skipped (needs --core; same structural gap as the arch=[...] cross-check above).")
 
-    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT) + fixture_warnings
+    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT) + fixture_warnings + tracked_warnings
+    if pending_unresolved:
+        print(
+            "Issue state (pending markers, skipped fixtures, `tracked_by`) not checked for "
+            + ", ".join(f"metel-core#{n}" for n in sorted(set(pending_unresolved)))
+            + " (GitHub not reachable from here; an unreachable API never fails the check)."
+        )
     if warnings:
         print(f"\n{len(warnings)} warning(s) (do not fail the check):")
         for w in warnings:

@@ -6,7 +6,7 @@ scope: "reference/spec/functions.md#first-class-functions"
 owner: language
 discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/declarations.md`"
 disposition: planned
-planned_for: v0.21.1
+tracked_by: metel-core#923
 rfc: RFC-0161
 review: null
 ---
@@ -25,9 +25,8 @@ No aspect bound can require "any callable", and `dyn Callable` cannot be written
 
 ## Resolution
 
-Planned for v0.21.1, tracked as metel-core#923 (RFC-0161, `1-under-review`). Deliberately
-kept off the ownership-and-freeze roadmap (v0.13.1–v0.20.0): `Callable`/`dyn Callable`
-completes the closure/aspect surface but establishes no new identity for the language,
-unlike the ownership and row-polymorphism work those milestones carry. v0.21.1 already
-carries other design settlement deferred the same way (comptime, derive, record
-conversions).
+Planned, tracked as metel-core#923 (RFC-0161, `1-under-review`). Deliberately kept off the
+ownership-and-freeze themes of the roadmap: `Callable`/`dyn Callable` completes the
+closure/aspect surface but establishes no new identity for the language, unlike the ownership
+and row-polymorphism work those themes carry. It sits with the other design settlement deferred
+the same way (comptime, derive, record conversions).

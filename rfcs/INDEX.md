@@ -261,15 +261,6 @@ above it are.
   any other statically known field. Separate from RFC-0174's iteration over all fields; open
   questions cover syntax, label equality, construction, and interaction with linear moves.
 
-- **RFC-0182** *(draft, opened 2026-10-21)* — Record delimiters, label syntax and rows as record types — anonymous records
-  written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
-  the `({ x = 1 })` workaround); labels as compile-time values written `.name` and label variables
-  `.[L]` (supplying spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and
-  RFC-0174); and rows as record types, with `..` the operator that takes a record type's row, so there is no
-  `row` kind or keyword (`<row R>` becomes `<R>`, a row argument is a record type, RFC-0180's
-  `..{ … }` argument form goes). Syntax layer only: the semantics of rows, records and label
-  polymorphism are unchanged. Open: whether types and
-  bounds also take `{| |}`, `..` on a struct, the transition policy, and a label-typed parameter.
 
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
   Construction — the value-level half of RFC-0121's removal-by-decomposition: a record
@@ -817,7 +808,7 @@ number, a backwards RFC-0067a split direction).
   bare allocation expression with no concrete type to filter by — stays a hard
   compile error, matching how Kotlin's own context parameters resolve a genuine
   same-type collision (loudly, not by nesting depth), not a new silent tiebreak.
-- **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
+- **RFC-0066** *(under review — amended 2026-10-26 by RFC-0185: extraction is `*ptr`)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
 - **RFC-0067** *(under review — reverted from accepted 2026-08-02)* — Lifetime Anchors — the narrowed remainder after RFC-0067a
@@ -1445,6 +1436,38 @@ implementation).
 ## Small, mostly standalone syntax/ergonomics items
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
+- **RFC-0185** *(implemented, v0.15.0)* — Remove type-directed dereference. Retires the implicit read-copy out of a
+  reference (RFC-0067a §3a): reading through a reference is always `*r`; selector auto-deref
+  stays. It is RFC-0112's declined "Strict Go" alternative and supersedes it. Tracked by
+  metel-core#1596; implemented by metel-core#1631.
+- **RFC-0183** — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
+  to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
+  reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
+  RFC-0136 incidentally removed, RFC-0100). Tracked by metel-core#1594.
+- **RFC-0184** *(implemented 2026-10-26 — metel-core#1595, #1625)* — Rename `Perhaps` to `Option`. Pure
+  rename; `Some`/`None` and the methods unchanged. Reverses the "deliberate identity" rationale
+  recorded in RFC-0098; familiarity won. Hard cut with a `T0003` hint ("`Perhaps` is now
+  `Option`"), no alias; `Option` stays shadowable like `Result` and `List`; RFC-0182 was
+  rewritten to say `Option`; dated posts stay as records.
+- **RFC-0182** — `?` on `Option` (written as `Perhaps`; named `Option` since RFC-0184).
+  Early-return `None` from an `Option`-returning function;
+  the operand and return type constructors must match, and the mixed cases stay errors
+  (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Option` rejection in
+  `functions.md`; supersedes the unresolved parts of refused RFC-0079 §6 and its Open
+  Question 4. Tracked by metel-core#1593 (report: #1589).
+- **RFC-0186** — Rows as an operator on record parameters. Removes the `row` generic kind
+  and `where all`: a parameter is `record R`, `..R` is its row, and the field-wise constraint
+  is `where ..R: A`. Amends RFC-0121 and RFC-0123; RFC-0125, RFC-0146, RFC-0174 and RFC-0175
+  use the syntax it replaces. Tracked by metel-core#1597.
+- **RFC-0187** *(draft, opened 2026-10-21)* — Record delimiters, label syntax and rows as record types — anonymous records
+  written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
+  the `({ x = 1 })` workaround); labels as compile-time values written `.name` and label variables
+  `.[L]` (supplying spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and
+  RFC-0174); and rows as record types, with `..` the operator that takes a record type's row, so there is no
+  `row` kind or keyword (`<row R>` becomes `<R>`, a row argument is a record type, RFC-0180's
+  `..{ … }` argument form goes). Syntax layer only: the semantics of rows, records and label
+  polymorphism are unchanged. Open: whether types and
+  bounds also take `{| |}`, `..` on a struct, the transition policy, and a label-typed parameter.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
@@ -1457,7 +1480,7 @@ implementation).
   between them — every language treats a zero divisor as strictly worse than
   overflow, because wrapping/saturating are coherent total answers for overflow that
   simply don't exist for division by zero. Lays out six options for division (status
-  quo, a Perhaps-returning checked_div, a NonZero<T> wrapper type making division
+  quo, an Option-returning checked_div, a NonZero<T> wrapper type making division
   total by construction, a fully Result-returning /, deferring to RFC-0014, or a
   lint) and seven for overflow (status quo, checked_*, wrapping_* and saturating_*
   — both already total functions, no wrapper type needed — overflowing_*, a
@@ -1513,7 +1536,7 @@ implementation).
 - **RFC-0107** *(implemented 2026-07-21 — issue #559)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
-  collision risk). Generalizes the existing `Perhaps::None`-only special case
+  collision risk). Generalizes the existing `Option::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
 - **RFC-0108** *(implemented 2026-07-21 — issue #559)* — Reference-Transparent Match Scrutinees —
   matching a `&T`/`&var T` value directly (`match c { Colour::Red => .., .. }` for
@@ -1545,7 +1568,7 @@ implementation).
   read-side extensions split into RFC-0112. Also corrects its own earlier claim that
   index-path write-through was "kept unchanged" — it does not work through a reference
   today, so it is an addition with real cost.
-- **RFC-0112** *(draft, opened 2026-07-21)* — Auto-Deref Scope and Expected-Type
+- **RFC-0112** *(superseded by RFC-0185, 2026-10-26; opened 2026-07-21)* — Auto-Deref Scope and Expected-Type
   Provenance — **the auto-deref half.** Where implicit read-copy fires, and how that
   boundary is *enforced* rather than emergent. Rule: it fires only when the expected type
   was authored in the declaration the expression is lexically inside — not a callee's
@@ -1557,7 +1580,7 @@ implementation).
   two positions (struct fields, match arms) it does not actually cover. Its §4.2 records
   where RFC-0110's "what does `&i64 == &i64` do?" open question actually led: nowhere near
   auto-deref — `==` has no operand check at all, so it typechecks and then aborts at runtime
-  for references, structs, enums (including `Perhaps`), arrays, tuples and unit. Filed as
+  for references, structs, enums (including `Option`), arrays, tuples and unit. Filed as
   issue #561; aspect-dispatch design fix at #259 / RFC-0062.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
@@ -1572,7 +1595,7 @@ implementation).
   rename: `.` already means field/method access (RFC-0045), so this RFC has to settle a
   real disambiguation rule before the grammar change is well-formed. Capitalization-
   based disambiguation (Option A) was reviewed and rejected — it fails on real fixture
-  code (`std::core::Perhaps::Some`, and the RFC's own worked example) since module path
+  code (`std::core::Option::Some`, and the RFC's own worked example) since module path
   segments are lowercase, same as values; resolved at name-resolution time instead
   (Option B), reusing the existing `Expr::ResolvedPath` pattern already in the codebase.
   Turbofish (RFC-0023), found as a third, separate use of `::` this RFC also addresses,
@@ -1794,7 +1817,7 @@ RFC-0064 (structured fork-join `||`, retracted 2026-07-07 — its one guarantee,
 cannot be silently abandoned, relocated onto `JoinHandle<T>` from `spawn`), plus
 RFC-0084 (refused 2026-07-10 — reverted in place to reaffirm RFC-0053's
 `[T; N]`/`[expr; N]` exactly, with nothing left of its own to propose), plus RFC-0079
-(refused 2026-07-10 — most of `Perhaps<T>`/`Result<T, E>` was already implemented and
+(refused 2026-07-10 — most of `Option<T>`/`Result<T, E>` was already implemented and
 spec'd by the time it was written, and its `?`-operator section was factually wrong
 relative to already-shipped `From`-based coercion; real remaining gaps tracked at
 https://app.clickup.com/t/86cap1wzb).

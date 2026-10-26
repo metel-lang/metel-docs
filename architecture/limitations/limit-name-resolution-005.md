@@ -5,7 +5,7 @@ summary: "`ResolvedNames.symbols` keys ids by module path and a name string: eve
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
 discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs and `ResolvedNames.symbols`; reproduced as metel-core#1228 and #1229"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -20,15 +20,19 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
    aspects, `let`/`mut` globals and type aliases are keyed by their bare name
    (`decl_any_name`). A struct and a function both called `Foo` in one module
    share an id, and `definitions.entry(id).or_insert(span)` keeps only the first
-   declaration's span, so a second declaration is invisible to goto-definition.
-   I found no runtime misbehaviour for this pair (a struct `Foo` and `fun Foo`,
-   used locally and through an import, both behave correctly): the registries
-   that consume the id happen to be per-kind.
-2. **A method's key drops its impl's type arguments.** `method_symbol_name`
-   builds `Target::Aspect::method` (or `Target::method`) from the target's *base
-   name*. `extend W<i64>: Tag { fun t … }` and `extend W<String>: Tag { fun t … }`
-   both produce `W::Tag::t`, so both methods receive one `SymbolId` and the
-   id-keyed method registry keeps whichever was registered last.
+   declaration's span, so the second is invisible to goto-definition. That pair
+   is legal (types and values are separate namespaces) and behaves correctly,
+   used locally and through an import: the registries that consume the id happen
+   to be per-kind. Two declarations in the *same* namespace (two structs, a
+   struct and an enum, a `let` and a `fun`) used to share an id as well; they are
+   now `T0037` (`metel-core#1560`), so only the legal cross-namespace pair still
+   shares a key.
+2. **A method's key drops its impl's type arguments.** *(Fixed by `metel-core#1571`.)*
+   `method_symbol_name` used to be fed the target's *base name*, so
+   `extend W<i64>: Tag { fun t … }` and `extend W<String>: Tag { fun t … }` both produced
+   `W::Tag::t` and both methods received one `SymbolId`. `impl_method_symbol_name` now renders the
+   target and the aspect with their type arguments (`W<i64>::Tag::t`, `S::Conv<String>::conv`),
+   naming an impl's own type parameters by position; a target with no arguments keeps its bare name.
 
 3. **Methods are not overloaded, so a repeated name collides even inside one
    impl.** Two methods called `m` in one `extend S` block, whatever their
@@ -39,36 +43,46 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
 
 ## Impact
 
-Cases 2 and 3 are silent wrong results, reproduced against current `develop`.
-Case 2: with the two impls above, `W { v = 1 }.t()` and `W { v = "s" }.t()` both
-return the *last* impl's value, and swapping the blocks swaps the answer (also
-for inherent `extend` blocks and through a generic bound); coherence accepts the
-program (`metel-core#1228`). Case 3: `extend S { fun m(&self, x: i64) …; fun
-m(&self, x: String) … }` is accepted and only the `String` method exists
-(`s.m(5)` then fails to typecheck), and two `m()` methods with identical
-signatures are accepted with no duplicate error, the second running (free
-functions get `T0011` for the same mistake; `metel-core#1229`). Case 1 has no
-observed runtime effect today but is the same weakness: identity is a string
-key, not the declaration.
+Cases 2 and 3 no longer give wrong results. Case 2: `W { v = 1 }.t()` and `W { v = "s" }.t()` each
+answer from their own impl, for aspect impls, inherent `extend` blocks and through a generic bound
+(`metel-core#1228`, checked again at `metel-core#1229`). Case 3: a repeated method name in one
+`extend` block, whatever the parameter types, or in one aspect impl or `aspect` declaration, is
+`T0034`, as is the same name in two inherent blocks that can apply to one receiver
+(`metel-core#1322`, `metel-core#1229`). Those symptoms were closed without changing the key; the key itself now
+distinguishes the instantiations (`metel-core#1571`), so a consumer relying on the id alone no longer
+conflates them. Case 1 has no observed runtime effect for the legal pair; identity is
+a string key, not the declaration.
 
 ## Affects
 
 - `arch.name-resolution.requirement-1`
 - `arch.resolution.requirement-1`
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/f514bce1e0aa89424efb733f08bfdd8b65252028/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L341)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/a400f2690d35031480f866ca9f1acb0b0e43f8ae/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L426)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/ffc8db866d34f6ff1d1d6990d9e7a9421267cd88/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L255)
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::impl_method_symbol_name`
+- `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::check_duplicate_declarations`
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
-
-<!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::decl_any_name`](https://github.com/metel-lang/metel-core/blob/a400f2690d35031480f866ca9f1acb0b0e43f8ae/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L425)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::intern_all_symbols`](https://github.com/metel-lang/metel-core/blob/f514bce1e0aa89424efb733f08bfdd8b65252028/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L340)
-- [`metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::method_symbol_name`](https://github.com/metel-lang/metel-core/blob/ffc8db866d34f6ff1d1d6990d9e7a9421267cd88/metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs#L254)
-<!-- limit.py:markers:end -->
 
 ## Resolution
 
-None yet; the bugs are `metel-core#1228` and `metel-core#1229`. The fix is to key a method by its
-declaration (for example the impl's position or a canonical form of its target
-type including arguments) and to make `intern_all_symbols` reject or
-disambiguate two declarations that map to one key.
+Resolved by `metel-core#1560`, `metel-core#1571` and the symptom fixes before them.
+
+- Case 1 (one key space for every kind): the symbol table is keyed by `(module, namespace, name)`.
+  Structs, enums, aspects, type aliases and module handles are type-namespace symbols; functions,
+  `let`, `var` and methods are value-namespace symbols. `struct Foo` and `fun Foo` have different ids
+  and each keeps its own definition span. Two declarations in one namespace are `T0037`
+  (`metel-core#1560`). `ModuleScope` bindings, `pub_surface`, `declared_names` and re-exports carry the
+  namespace, so an import brings a name in every namespace the source module provides it in, and a name
+  public in either namespace is importable.
+- Case 2 (a method's key drops its impl's type arguments): `impl_method_symbol_name` renders the
+  target and the aspect with their arguments (`W<i64>::Tag::t`, `S::Conv<String>::conv`), naming an
+  impl's own type parameters by position (`metel-core#1571`, first slice). Different instantiations were
+  already dispatched correctly (`metel-core#1228`).
+- Case 3 (a repeated method name collides): `T0034` for a name defined twice where both definitions can
+  apply to one receiver (`metel-core#1322` for inherent blocks, `metel-core#1229` for aspect impls and
+  aspect declarations).
+
+The reference resolver tries the value namespace first and then the type namespace for a bare name (a
+unit struct is a type used as a value); type positions, impl targets and aspects resolve in the type
+namespace.

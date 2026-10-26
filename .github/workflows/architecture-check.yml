@@ -35,21 +35,23 @@ jobs:
       - name: Architecture evidence generator regression tests
         run: python3 -m unittest architecture/tools/test_generate_architecture_evidence.py
 
-      # Docs PRs validate against metel-core's integration branch, `develop`
-      # (`main` only syncs at releases, so it carries none of the current
-      # arch-implements/arch-verifies markers). The paired, exact revision is
-      # checked again from metel-core's own CI. fetch-depth: 0 is required:
-      # the generator resolves its evidence ref and each claim's last-touch
-      # commit from git history, which a shallow checkout cannot answer.
-      - uses: actions/checkout@v4
-        with:
-          repository: metel-lang/metel-core
-          ref: develop
-          path: metel-core
-          fetch-depth: 0
-
-      - name: generated Architecture evidence is current
-        run: python3 architecture/tools/generate_architecture_evidence.py --core metel-core --check
-
+      # ADR-0064 (metel-core#1509): the Architecture Spec's evidence cells are placeholders here and
+      # are rendered when documentation is published, so there is nothing in this repository that
+      # depends on metel-core's code. This job therefore does not check out metel-core: a core pull
+      # request in flight cannot make a docs pull request fail. That the cited code and claims
+      # still agree is checked from metel-core's own CI (`Architecture evidence`), against the
+      # exact docs commit that core pins.
+      # The `> **Pending** metel-core#N` markers (metel-core#1418) are checked against the issue's
+      # state; a public read, so the built-in token is enough.
       - name: check_architecture.py --check
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python3 architecture/tools/check_architecture.py --check
+
+      # The Operations Specification (metel-core#1507): structure, cross-references, and the assets
+      # of this repository against operations/inventory.md. Only this repository is checked out, so
+      # the assets of the others are skipped here; core's CI and /cut-release check those.
+      - name: Operations Specification
+        run: |
+          python3 -m unittest architecture/tools/test_check_operations.py
+          python3 architecture/tools/check_operations.py --check

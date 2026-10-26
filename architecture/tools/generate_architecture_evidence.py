@@ -21,6 +21,20 @@ conflict. ``last_reviewed`` only does its job if a person writes it by hand
 after rereading the claim; the check's only role is to notice when the code
 moved on since the last time someone did.
 
+``--check`` compares what is cited, not how a link renders (metel-core#1417): the
+``path::item`` label of each citation, per requirement and side. The line number and the
+commit SHA inside a rendered link are cosmetic, so inserting lines above a cited function
+or committing to the cited file never fails the check; removing, renaming or moving a
+citation off its marker does, with one finding per citation. A stale ``last_reviewed``, and a
+limitation record still active after its ``// limit:`` marker vanished (metel-core#1598), are
+warnings (printed, exit 0) unless ``--strict`` is given, which a release runs.
+
+Publishing (ADR-0064, metel-core#1509): the committed cells are the placeholder
+``_Generated at publish._`` and ``--check`` never compares a placeholder. ``--publish --core-ref
+REF`` writes the links, pinned to ``REF`` and to each item's line in that tree, into a working
+copy that is published and discarded; it needs no git history and does not audit
+``last_reviewed``.
+
 A claim with no evidence for one side carries an ``implements exemption`` /
 ``verification exemption`` row instead (metel-core#1193), in rfc.py's ``kind``
 vocabulary: ``kind: untestable; reason: ...; owner: ...`` (permanent),
@@ -52,7 +66,13 @@ ATTRIBUTE = re.compile(r"#!?\[.*?\]", re.S)
 COMMENT = re.compile(r"//[^\n]*|/\*.*?\*/", re.S)
 PEST_RULE = re.compile(r"^[ \t]*([A-Za-z_][A-Za-z0-9_]*)[ \t]*=[ \t]*[@_$!]?\{", re.M)
 REQ = re.compile(rf"^(##### Requirement \{{#({ID})\}}\n.*?)(?=^##### Requirement|\Z)", re.M | re.S)
-ROW = re.compile(r"^\| `(?P<field>implements|verified by)` \|.*?\|$", re.M)
+ROW = re.compile(r"^\| `(?P<field>implements|verified by)` \|(?P<value>.*?)\|$", re.M)
+# A rendered citation link: [`path::item`](url). The label is the citation's meaning; the url's
+# line number and commit SHA are cosmetic and are never compared in --check (metel-core#1417).
+CITED_LABEL = re.compile(r"\[`([^`]+)`\]\(")
+# ADR-0064: in `metel-docs` the cells are not rendered evidence but a placeholder; the links are
+# produced by `--publish` when documentation is published. `--check` never compares a placeholder.
+EVIDENCE_PLACEHOLDER = "_Generated at publish._"
 EXEMPTION = re.compile(r"^\| `(?P<field>implements exemption|verification exemption)` \| (?P<value>.*?) \|$", re.M)
 LAST_REVIEWED = re.compile(r"^\| `last_reviewed` \| (?P<sha>[0-9a-f]{7,40}) \|$", re.M)
 
@@ -247,6 +267,36 @@ def resolve_named_citation(core: Path, rel_path: str, symbol: str) -> Citation:
     return Citation(Path(rel_path), symbol, start_line, start_line, end_line)
 
 
+def citation_label(citation: Citation) -> str:
+    return f"{citation.path}::{citation.item}" if citation.item else f"{citation.path}"
+
+
+def cited_labels(citations) -> set[str]:
+    return {citation_label(c) for c in citations}
+
+
+def rendered_labels(text: str) -> set[str]:
+    """The `path::item` labels of the citation links in already-rendered text."""
+    return set(CITED_LABEL.findall(text))
+
+
+def label_findings(where: str, subject: str, expected: set[str], actual: set[str]) -> list[str]:
+    """One finding per citation that differs between what the code cites (`expected`) and what the
+    document lists (`actual`), ignoring the line number and commit SHA of each link."""
+    findings = []
+    for label in sorted(expected - actual):
+        findings.append(
+            f"{where}: {subject} does not list `{label}`, which the code now cites; "
+            f"run the generator without --check to refresh it"
+        )
+    for label in sorted(actual - expected):
+        findings.append(
+            f"{where}: {subject} lists `{label}`, which the code no longer cites "
+            f"(moved, renamed or removed); update the document or restore the marker"
+        )
+    return findings
+
+
 def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str | None, check: bool) -> list[str]:
     """Rewrite every resolvable `path::symbol` bullet in a `LIMIT-*`/`GAP-*`
     record's `## Affects` into a commit-pinned, line-accurate link -- the same
@@ -282,16 +332,16 @@ def regenerate_record_affects(records_dir: Path, core: Path, core_ref: str | Non
             except ValueError as error:
                 stale.append(f"{path.relative_to(DOCS)}: {error}")
                 continue
+            if check:
+                # The meaning of the bullet is that `path::symbol` still resolves (reported above
+                # when it does not). The link's line and commit are cosmetic: not compared.
+                continue
             ref = citation_ref(core, citation, core_ref)
             link = f"https://github.com/metel-lang/metel-core/blob/{ref}/{citation.path}#L{citation.line}"
             new_line = f"- [`{token}`]({link})"
             new_body = new_body.replace(bullet.group(0), new_line, 1)
-        if new_body != body:
-            new_text = text[: section.start(2)] + new_body + text[section.end(2) :]
-            if check:
-                stale.append(f"{path.relative_to(DOCS)}: generated Affects code links are stale")
-            else:
-                path.write_text(new_text)
+        if new_body != body and not check:
+            path.write_text(text[: section.start(2)] + new_body + text[section.end(2) :])
     return stale
 
 
@@ -360,8 +410,15 @@ def limit_ids_ever_marked(core: Path) -> set[str]:
     return ids
 
 
-def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | None, check: bool) -> list[str]:
-    """The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
+def regenerate_record_markers(
+    records_dir: Path, core: Path, core_ref: str | None, check: bool, history: bool = True,
+    warnings: list[str] | None = None,
+) -> list[str]:
+    """`warnings`, when given, receives the one finding that is advisory on a PR (a record
+    still active although its marker vanished from the code, metel-core#1598); without it
+    that finding is returned with the errors, as before.
+
+    The delimited subsection of a `LIMIT-*` record's `## Affects` driven by
     `// limit:` markers: fully regenerated each run from every current marker citing
     that record's id, the same full-replace treatment `implements`/`verified by` cells
     get -- not the line-level patch `regenerate_record_affects` (level 2) does for a
@@ -373,7 +430,9 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
     if not records_dir.is_dir():
         return stale
     markers = limit_citations(core)
-    ever_marked = limit_ids_ever_marked(core)
+    # The history check needs the full git history; a publish run (ADR-0064) has a shallow
+    # checkout and is not a review, so it is skipped there.
+    ever_marked = limit_ids_ever_marked(core) if history else set()
     known_ids: set[str] = set()
     retired_ids: set[str] = set()  # dispositions that no longer need a marker
     for path in sorted(records_dir.glob("*.md")):
@@ -401,6 +460,21 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
         body = section.group(2)
         if not citations and not LIMIT_MARKERS_BLOCK.search(body):
             continue  # nothing to add, nothing to remove -- leave the section exactly as it is
+        if check:
+            existing = LIMIT_MARKERS_BLOCK.search(body)
+            if existing is None:
+                # ADR-0064: the committed record carries no generated block; it is produced at
+                # publish time. The markers were checked above (record exists and is active).
+                continue
+            listed = rendered_labels(existing.group(0))
+            for finding in label_findings(
+                str(path.relative_to(DOCS)),
+                f"the generated `// limit:` marker citations for `{record_id}` are stale: the block",
+                cited_labels(citations),
+                listed,
+            ):
+                stale.append(finding)
+            continue
         without_block = LIMIT_MARKERS_BLOCK.sub("", body).rstrip("\n")
         if citations:
             block = LIMIT_MARKERS_START + "\n" + "".join(
@@ -412,17 +486,17 @@ def regenerate_record_markers(records_dir: Path, core: Path, core_ref: str | Non
         else:
             new_body = without_block + "\n\n" if without_block else ""
         if new_body != body:
-            if check:
-                stale.append(f"{path.relative_to(DOCS)}: generated `// limit:` marker citations for `{record_id}` are stale")
-            else:
-                path.write_text(text[: section.start(2)] + new_body + text[section.end(2) :])
+            path.write_text(text[: section.start(2)] + new_body + text[section.end(2) :])
     for record_id in sorted(set(markers) - known_ids):
         rel = markers[record_id][0].path
         stale.append(f"{rel}: `// limit:` marker cites `{record_id}`, which does not exist")
     # A retired (e.g. resolved) record is expected to have lost its marker; the flag exists
     # to catch a marker that disappeared while the record still claims an active limit.
+    # The record lives in metel-docs and the marker in metel-core, so a core PR that resolves
+    # a limitation cannot also retire the record: on a PR this is a warning, and a release
+    # (`/cut-release`, `--strict`) refuses it (metel-core#1598).
     for record_id in sorted(ever_marked - set(markers) - retired_ids):
-        stale.append(
+        (warnings if warnings is not None else stale).append(
             f"{record_id}: was cited by a `// limit:` marker in metel-core history and no longer is by any "
             f"current one; confirm the limitation is resolved (and update its disposition) or restore the marker"
         )
@@ -643,29 +717,35 @@ def exemption_problems(value: str) -> list[str]:
     return problems
 
 
-def review_staleness(core: Path, path: Path, claim: str, block: str, values) -> str | None:
+def review_finding(core: Path, path: Path, claim: str, block: str, values) -> tuple[str, str] | None:
     """metel-core#1191: flag a claim whose cited code moved on since a human
     last reviewed it. `last_reviewed` is deliberately hand-typed, never
     auto-written here the way `implements`/`verified by` are -- a field the
     generator could refresh for you gives no forcing function at all,
     since accepting its diff takes no more attention than a merge
     conflict. This function only ever reports staleness; nothing in this
-    module writes to `last_reviewed`."""
+    module writes to `last_reviewed`.
+
+    Returns `(level, message)`. A missing field is an `error` (the shape is
+    wrong). Everything that depends on time -- the cited code changed since the
+    review, or the recorded commit is no longer reachable -- is a `warning`
+    (metel-core#1417): it is its own explicit signal, shown on a PR and enforced
+    at release with `--strict`, instead of failing every PR that touches cited code."""
     reviewed = LAST_REVIEWED.search(block)
     if not reviewed:
-        return f"{path.relative_to(DOCS)}: `{claim}` is missing a `last_reviewed` field (metel-core#1191)"
+        return "error", f"{path.relative_to(DOCS)}: `{claim}` is missing a `last_reviewed` field (metel-core#1191)"
     all_citations = values["implements"] + values["verifies"]
     if not all_citations:
         return None  # fully exempt; nothing to compare `last_reviewed` against
     reviewed_sha = resolve_commit(core, reviewed.group("sha"))
     if reviewed_sha is None:
-        return (
+        return "warning", (
             f"{path.relative_to(DOCS)}: `{claim}`'s `last_reviewed` "
             f"(`{reviewed.group('sha')}`) is not a commit reachable in metel-core"
         )
     code_touch = most_recent_commit(core, [last_touch_commit(core, c) for c in all_citations])
     if not is_ancestor(core, code_touch, reviewed_sha):
-        return (
+        return "warning", (
             f"{path.relative_to(DOCS)}: `{claim}`'s cited code was touched by {code_touch[:12]} "
             f"after `last_reviewed` ({reviewed_sha[:12]}) -- confirm the claim still holds and "
             f"bump `last_reviewed`"
@@ -673,7 +753,20 @@ def review_staleness(core: Path, path: Path, claim: str, block: str, values) -> 
     return None
 
 
-def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str | None):
+def review_staleness(core: Path, path: Path, claim: str, block: str, values) -> str | None:
+    """The message of `review_finding`, regardless of level."""
+    finding = review_finding(core, path, claim, block, values)
+    return finding[1] if finding else None
+
+
+def regenerate(
+    spec_dir: Path, core: Path, evidence, check: bool, core_ref: str | None,
+    warnings: list[str] | None = None, audit: bool = True,
+):
+    """`warnings`, when given, receives the findings that are advisory on a PR (a stale
+    `last_reviewed`); without it they are returned with the errors, as before. `audit=False`
+    skips the `last_reviewed` audit, which needs the full git history of `core`: publishing
+    (ADR-0064) runs on a shallow checkout and is not a review."""
     stale, known = [], set()
     for path in spec_dir.glob("*.md"):
         text = path.read_text()
@@ -691,12 +784,27 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str 
                 elif not values[kind]:
                     for problem in exemption_problems(exemptions[field]):
                         stale.append(f"{path.relative_to(DOCS)}: `{claim}` `{field}`: {problem}")
-            finding = review_staleness(core, path, claim, block, values)
+            finding = review_finding(core, path, claim, block, values) if audit else None
             if finding:
-                stale.append(finding)
+                level, message = finding
+                (warnings if level == "warning" and warnings is not None else stale).append(message)
             def replace(row):
                 field = row.group("field")
                 key = "implements" if field == "implements" else "verifies"
+                if check:
+                    if row.group("value").strip() == EVIDENCE_PLACEHOLDER:
+                        # ADR-0064: a placeholder is what the repository stores; the evidence is
+                        # produced at publish time, so there is nothing here to compare.
+                        return row.group(0)
+                    # Compare what is cited, not how the link renders: a line shift or a newer
+                    # commit changes the url but not the claim's evidence (metel-core#1417).
+                    stale.extend(label_findings(
+                        str(path.relative_to(DOCS)),
+                        f"`{claim}`'s `{field}` cell",
+                        cited_labels(values[key]),
+                        rendered_labels(row.group("value")),
+                    ))
+                    return row.group(0)
                 value = render(values[key], core, core_ref) if values[key] else "_Exempt; see exemption below._"
                 return f"| `{field}` | {value} |"
             new_block = ROW.sub(replace, block)
@@ -704,8 +812,6 @@ def regenerate(spec_dir: Path, core: Path, evidence, check: bool, core_ref: str 
                 changed = changed.replace(block, new_block)
         if changed != text and not check:
             path.write_text(changed)
-        if changed != text and check:
-            stale.append(f"{path.relative_to(DOCS)}: generated evidence is stale")
     for claim in sorted(evidence):
         if claim not in known:
             stale.append(f"metel-core: citation targets unknown Architecture Spec claim `{claim}`")
@@ -721,20 +827,46 @@ def main():
         "of each citation's own last-touched commit (e.g. for a past release's evidence)",
     )
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--strict",
+        action="store_true",
+        help="fail on warnings too (a `last_reviewed` older than the cited code's last change). "
+        "A pull request shows them as warnings; a release (`/cut-release`) runs with --strict",
+    )
+    parser.add_argument(
+        "--publish",
+        action="store_true",
+        help="render the evidence for publication (ADR-0064): write the links pinned to --core-ref "
+        "into this working copy, without needing git history and without the `last_reviewed` "
+        "audit. The result is published, never committed to metel-docs",
+    )
     args = parser.parse_args()
+    if args.publish and (args.check or not args.core_ref):
+        parser.error("--publish writes links and requires --core-ref; it cannot be combined with --check")
+    audit = not args.publish
+    warnings: list[str] = []
     try:
         core_ref = args.core_ref
-        findings = regenerate(DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref)
+        findings = regenerate(
+            DOCS / "architecture/spec", args.core, citations(args.core), args.check, core_ref, warnings, audit
+        )
         findings += regenerate_record_affects(DOCS / "architecture/limitations", args.core, core_ref, args.check)
         findings += regenerate_record_affects(DOCS / "architecture/gaps", args.core, core_ref, args.check)
         # Level 3 (metel-core#1247) is LIMIT-* only -- GAP-* is chartered by ADR-0057 as
         # a Language Spec concept, not architecture, and metel-core's Rust source has
         # nothing to mark for a gap in what the spec itself says.
-        findings += regenerate_record_markers(DOCS / "architecture/limitations", args.core, core_ref, args.check)
+        findings += regenerate_record_markers(
+            DOCS / "architecture/limitations", args.core, core_ref, args.check, history=audit, warnings=warnings
+        )
     except (OSError, ValueError, subprocess.CalledProcessError) as error:
         findings = [str(error)]
+    if warnings:
+        print("\n".join(f"warning: {w}" for w in warnings), file=sys.stderr)
     if findings:
         print("\n".join(findings), file=sys.stderr)
+        return 1
+    if warnings and args.strict:
+        print(f"{len(warnings)} warning(s) treated as errors by --strict", file=sys.stderr)
         return 1
     return 0
 

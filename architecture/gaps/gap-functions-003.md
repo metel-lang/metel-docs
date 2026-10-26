@@ -6,7 +6,7 @@ scope: "reference/spec/functions.md#first-class-functions"
 owner: language
 discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/functions.md`"
 disposition: planned
-planned_for: v0.18.1
+tracked_by: metel-core#936
 rfc: RFC-0163
 review: null
 ---
@@ -25,4 +25,4 @@ A closure that could be copied loses that once it passes through a slot with a w
 
 ## Resolution
 
-Planned for v0.18.1, tracked as metel-core#936 (RFC-0163).
+Planned, tracked as metel-core#936 (RFC-0163).

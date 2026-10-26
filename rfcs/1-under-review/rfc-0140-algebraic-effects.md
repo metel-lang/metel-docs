@@ -372,7 +372,7 @@ else in this design is an existing rule applied to one new value type, not a new
 - **RFC-0063 (Allocator Handles, `2-accepted`)** and **RFC-0065 (Allocator Ergonomics,
   `2-accepted`)** — supply the allocator-tag sendability rules §3/§8 apply unchanged, and
   the elision this RFC's examples assume.
-- **RFC-0066 (Allocated-Value Extraction, `2-accepted`)** and **RFC-0067 (Lifetime
+- **RFC-0066 (Allocated-Value Extraction, `1-under-review`)** and **RFC-0067 (Lifetime
   Anchors, `1-under-review`)** — supply the move-out form §7 reuses and the `&r var T`
   borrow-checker guarantee §4 depends on entirely. §4 is a real ergonomic tension in
   RFC-0067's own design surfacing here, not a defect in either RFC.
@@ -495,7 +495,7 @@ review might reasonably decide don't block acceptance.*
   drop ordering
 - RFC-0063 (Allocator Handles, `2-accepted`), RFC-0065 (Allocator Ergonomics,
   `2-accepted`) — allocator-tag sendability
-- RFC-0066 (Allocated-Value Extraction, `2-accepted`) — move-out form reused in §7
+- RFC-0066 (Allocated-Value Extraction, `1-under-review`) — move-out form reused in §7
 - RFC-0067 (Lifetime Anchors, `1-under-review`) — the `&r var T` guarantee §4 depends on
 - RFC-0068 (Struct-Owned Allocators, `2-accepted`) — §6's handler-state mechanism
 - RFC-0072 (Negative Bounds, `4-implemented`) — `T: !Drop`

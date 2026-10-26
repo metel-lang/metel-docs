@@ -5,7 +5,7 @@ summary: "User, overload and block-local ids share one `u32` split into ranges b
 scope: "architecture/spec/name-resolution.md#name-resolution"
 owner: metel-frontend
 discovered_by: "maintainer review of metel-frontend/src/identity/symbols.rs"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -39,14 +39,30 @@ There is no observable symptom, so no reproducing fixture.
 ## Affects
 
 - `arch.name-resolution.requirement-1`
-- `metel-frontend/src/identity/symbols.rs` (`SymbolTable`, `USER_SYM_START`, `OVERLOAD_SYM_START`)
+- `metel-frontend/src/identity/symbols.rs` (`SymbolId`, `SymbolTable`, `BlockLocalAllocator`, `allocate_overload`)
 - `metel-frontend/src/pipeline/type_checking/type_engine/mod.rs` (`fresh_local_type_id`)
-
-<!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::fresh_local_type_id`](https://github.com/metel-lang/metel-core/blob/c6ec0b2359501dc4cf81a2dcc33793e0b173b7e6/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L3111)
-<!-- limit.py:markers:end -->
 
 ## Resolution
 
-None yet. Typed allocators (one owner for the whole space, with range checks
-and a private `map`) would turn the convention into an invariant.
+Resolved by metel-core#1542. `identity/symbols.rs` declares the whole space as six named ranges
+(builtin types, builtin aspects, stdlib reserved, user, overload, block-local) and rejects, with a
+`const` assertion, ranges that overlap, are empty or are out of order, so editing one into its
+neighbour is a compile error. Each allocator now stops at the end of its range instead of crossing
+it: `SymbolTable::intern` asserts it stays inside the user range, the overload counter allocates
+through `allocate_from` (a checked `fetch_update` that panics instead of wrapping), and the type
+engine's descending block-local allocator, which used `saturating_sub` and would have reused one id
+forever at the bottom, uses `allocate_down` over its own range (the record's third allocator, now
+bounded below as well as above). `SymbolTable.map` is private, with `map()` and `into_map()`. Tests
+cover the range check, each allocator's exhaustion and the table seeding.
+
+What #1542 did not do, and what replaced it: it left the kind of a `SymbolId` to be recovered by
+inspecting the number (the evaluator tested `id.0 >= OVERLOAD_SYM_START`). ADR-0065 step 1
+(metel-core#1546, PR #1548) removed that: `SymbolId` is now an enum whose variants are the kinds
+(`Builtin`, `Declared`, `BlockLocal`, `Overload`), so a collision between kinds cannot be written, and
+the six ranges, `SymbolRange`, the `const` assertions, `allocate_from` and `allocate_down` described
+above were deleted. The payloads are private index types, minted only by `SymbolTable`,
+`BlockLocalAllocator` and `allocate_overload`, each of which panics at the end of its index space
+instead of wrapping. The evaluator's range test is a match on the `Overload` kind. The `Overload`
+kind was at that point still one variant fed by a process-global counter; ADR-0065 step 2 split it into
+`Overload { group, ordinal }` and `CoreOverload(n)` and deleted the counter
+(`LIMIT-NAME-RESOLUTION-002`).

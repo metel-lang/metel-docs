@@ -1,5 +1,5 @@
 ---
-id: rfc-0182
+id: rfc-0187
 title: "Record delimiters, label syntax and rows as record types"
 date: '2026-10-21'
 status: draft

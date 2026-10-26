@@ -48,12 +48,22 @@ code doesn't yet deliver, so it's a `LIMIT-*`. Both → file both, cross-linked 
 `affects`. Neither (the spec is clear and the code is simply wrong) → that's a bug, filed
 as an issue, not a record of either kind.
 
+**A fourth outcome, transient (metel-core#1418).** *Will the code deliver it in this milestone?*
+Yes → neither record kind: write a `> **Pending** metel-core#N` marker in the Language Spec
+chapter (see `reference/spec/STYLEGUIDE.md`). It carries no disposition, owner or review date; its
+whole lifecycle is the issue's. A skipped fixture documenting the same part uses
+`skip = "pending: #N"` with the same validity rule. `check_architecture.py` fails the check while the issue is closed
+or has no milestone, and the release gate refuses a tag while a marker's issue in that release's
+milestone is open. `GAP-*` and `LIMIT-*` are reserved for what is deliberately left in a released
+version, and a pending part becomes one of them only by an explicit conversion at release.
+
 ## Record schema (`LIMIT-*` / `GAP-*`)
 
 Frontmatter: `id`, `title`, `summary`, `scope`, `owner`, `discovered_by`, `disposition`,
 `review` (required once `disposition: accepted`), plus the optional scheduling pair
-`planned_for: vX.Y.Z` / `rfc: RFC-NNNN[, ...]` a Language Spec chapter's one-line marker
-renders from. Body: `## Limitation`/`## Gap`, `## Impact`, `## Affects`, `## Resolution`.
+`tracked_by: metel-core#N[, ...]` / `rfc: RFC-NNNN[, ...]` a Language Spec chapter's one-line marker
+renders from. A record never names a version: the tracking issue's milestone is the schedule, and a version is chosen only at a cut (`ROADMAP.md`).
+`planned_for` is retired. Body: `## Limitation`/`## Gap`, `## Impact`, `## Affects`, `## Resolution`.
 
 **Disposition vocabulary** (`known`, `accepted`, `mitigated`, `planned`, `resolved`,
 `superseded`) and the rules `check_architecture.py` enforces on it:
@@ -62,8 +72,12 @@ renders from. Body: `## Limitation`/`## Gap`, `## Impact`, `## Affects`, `## Res
 - `resolved` requires real exit evidence in `## Resolution`, not a placeholder — for a
   `GAP-*` specifically, that means an `affects` RFC at stage `3-integrated` or
   `4-implemented`; a closed issue alone is never enough for either kind.
-- `planned` requires an RFC in `affects` or an issue reference in `## Resolution`
-  (`GAP-*`); `LIMIT-*`'s own `planned` check is looser (schema only, no forced RFC
+- `planned` requires `tracked_by: metel-core#N` (both kinds), and for `GAP-*` also an RFC in
+  `affects` or an issue reference in `## Resolution`. The state of those issues is read from GitHub:
+  a tracked issue that does not exist fails; a record whose every tracked issue is closed (the plan
+  has gone stale: resolve it, or re-plan with a new issue, or make it `known` if nothing is
+  scheduled) or whose open issue has no milestone is a warning, and `--release-gate` refuses to
+  tag on it (metel-core#1525); `LIMIT-*`'s own `planned` check is looser (schema only, no forced RFC
   linkage) — this asymmetry is real, not an oversight described elsewhere in this
   document, and is worth knowing before assuming the two kinds are checked identically.
 - `known`/`accepted`/`mitigated`/`planned` count as **active** for every "does a marker
@@ -101,6 +115,41 @@ only ever *audits*, never writes — it flags when the cited code was touched by
 after that SHA, over exactly the item's own line range, not the whole file. The tool
 never refreshes it for you; that's deliberate; see its own docstring for the full
 reasoning about not automating the human-attention step.
+
+**What `--check` compares (metel-core#1417).** `--check` compares *what is cited*, not how
+a link renders. For every requirement and side it compares the set of `path::item` labels
+the code cites against the labels in the committed `implements` / `verified by` cell, and
+does the same for the `// limit:` marker block of a limitation record. The line number and
+commit SHA inside a rendered link are cosmetic and never compared, so inserting lines above
+a cited function, or committing to the cited file, does not fail the check. Removing,
+renaming, or moving a citation off its marker does, with **one finding per citation** that
+names the requirement (or record), the cell, and the label, never a corpus-level "stale".
+Run the generator without `--check` to refresh the links; that is the only mode that
+writes.
+
+**Publishing (ADR-0064, metel-core#1509).** The committed `implements` / `verified by` cells
+are the placeholder `_Generated at publish._`, the generated `// limit:` blocks are not
+committed, and a record's `## Affects` bullets are unlinked: the links are produced when
+documentation is published, not stored here. `--check` never compares a placeholder cell or
+the absence of a block. `generate_architecture_evidence.py --publish --core
+<checkout> --core-ref <tag-or-sha>` writes the links, each pinned to `blob/<ref>/<path>#L<line>`
+for that ref, into the working copy it runs in. It needs no git history (a shallow checkout is
+enough), does not audit `last_reviewed`, and does not read the `// limit:` history. Its output
+is published and discarded, never committed to `metel-docs`.
+
+**Errors and warnings.** A stale `last_reviewed` (the cited code changed after the recorded
+review, or the recorded commit is no longer reachable) is a **warning**: it is printed with
+the `warning:` prefix and the exit status stays 0, so it shows on a pull request without
+failing it. A release runs the check with `--strict`, which makes warnings fail
+(`/cut-release`). A *missing* `last_reviewed` field is a shape error and always fails.
+
+The same split applies to a limitation record that is still active although its `// limit:`
+marker has vanished from the code (metel-core#1598). The record lives in `metel-docs` and the
+marker in `metel-core`, so a core pull request that resolves a limitation cannot also retire the
+record: it would need a docs change merged and pinned first. That finding is therefore a
+**warning** on a pull request, and `--strict` at release refuses it, which is the point at which
+the disposition has to be settled. A marker that cites a record that does not exist stays an
+error.
 
 **Item scope, and a real asymmetry to know about:** Layer 0's marker resolver (`following_item`
 / the `ITEM` regex) is `fn`-only — its own original, narrower scope. Layer 3 below needed
@@ -187,7 +236,8 @@ inside it (`Level2Level3BoundaryTests` pins the fix).
 **Drift detection**, the other half of Layer 3: `limit_ids_ever_marked()` walks
 `git log -p -G 'limit:' -- '*.rs' '*.pest'` (current branch history) and flags any
 `LIMIT-*` id that was once cited by a marker and is no longer cited by *any* current one.
-This is a finding, never a silent drop — whether that means the limitation is resolved or
+This is a finding, never a silent drop (a warning on a pull request, an error under `--strict` at
+release; see "Errors and warnings") — whether that means the limitation is resolved or
 the marker merely moved elsewhere is a human judgment the tooling deliberately does not
 make. A record still cited by a live marker but whose disposition has fallen out of the
 active set is flagged the other way too (marker and disposition disagreeing about whether
@@ -290,7 +340,7 @@ carry a one-line pointer to an **Architecture** Atlas record —
 `> **Gap** GAP-X-001` or `> **Limitation** LIMIT-X-001` (metel-core#1235,
 `check_architecture.py`'s `SPEC_LIMIT_MARKER_RE`, deliberately label-generic — it accepts
 either label in either spec tree). The website renders the record's summary and its
-`planned_for`/`rfc` chips into that line at build time; the chapter text never copies them
+`tracked_by`/`rfc` chips into that line at build time; the chapter text never copies them
 by hand, so they cannot go stale independently of the record. Real example
 (`reference/spec/functions.md:930`):
 
@@ -348,27 +398,29 @@ The code and its markers live in metel-core; the generated evidence text lives i
 metel-docs. Two repositories, two CI jobs, checking *different* things, not mirrors of
 each other:
 
-- **metel-docs' `architecture-check.yml`** checks out metel-core's `develop` branch
-  (never `main` — per the branch model, `main` only syncs at releases and carries none
-  of the current markers) at `fetch-depth: 0` (required: the generator resolves
-  `last_reviewed` staleness and `git_ref()` from history, which a shallow checkout can't
-  answer), then runs `generate_architecture_evidence.py --core metel-core --check`
-  followed by `check_architecture.py --check`. This answers: *is metel-docs' evidence
-  current for the real state of metel-core's integration branch, right now?*
-- **metel-core's "Architecture evidence" job** runs the same generator the other
-  direction — against its own current commit, using its `docs` submodule (a gitlink
-  pinned to one specific metel-docs commit) for the tool and the record files. This
-  answers: *is the evidence text at the docs submodule's pinned commit still accurate for
-  MY code, right now?*
+- **metel-docs' `architecture-check.yml`** (ADR-0064) does **not** check out metel-core. It
+  runs the two tools' regression tests and `check_architecture.py --check` (structure,
+  cross-references, required fields). Nothing in this repository depends on metel-core's
+  code any more, so a core pull request in flight cannot make a docs pull request fail.
+- **metel-core's "Architecture evidence" job** runs the generator's `--check` against its own
+  current commit, using its `docs` submodule (a gitlink pinned to one specific metel-docs
+  commit) for the tool, the requirement list, the exemptions and the record files. This
+  answers: *do the claims, exemptions and markers at the docs submodule's pinned commit still
+  agree with MY code, right now?* It validates meaning (the cited item exists, the claim id
+  exists, tests are not ignored, exemptions are valid and unexpired); it reads no rendered link.
 
-The `docs` gitlink is a normal tracked file entry — **nothing auto-updates it.** A
-metel-core PR that shifts a marker-adjacent line will fail metel-core's own CI job until
-someone bumps the gitlink to a metel-docs commit that already contains regenerated
-evidence for that PR's exact content. This is why marker-adding metel-core work always
-needs a metel-docs regeneration *landed first*, never squeezed into the same PR — the
-regenerated markdown physically lives in the other repository.
+The `docs` gitlink is a normal tracked file entry — **nothing auto-updates it.** Under
+ADR-0064 a metel-core PR that adds, moves or removes an `arch-implements` / `arch-verifies`
+/ `// limit:` marker for an **existing** requirement or record needs **no** metel-docs
+change and no gitlink bump: the evidence is rendered at publish time. A PR that cites a
+**new** claim id still needs that requirement written in metel-docs first, landed before the
+core PR that cites it.
 
 ## The standard landing sequence
+
+> **Largely superseded by ADR-0064 (metel-core#1509).** The regeneration steps below applied
+> while the evidence cells were committed. With publish-time evidence, only a new claim id or
+> a new generator behavior still needs metel-docs work first; the rest is kept as history.
 
 Worked out in practice landing metel-core#1247/#1248 (17 real `// limit:` markers); write
 it down so the next marker-adding change doesn't have to re-derive it by trial and error:

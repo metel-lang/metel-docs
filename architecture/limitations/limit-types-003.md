@@ -6,6 +6,7 @@ scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "metel-core#1338: implementing `Display` for records after RFC-0123's `where all R: Display` landed"
 disposition: planned
+tracked_by: metel-core#1340
 rfc: RFC-0174
 review: null
 ---
@@ -48,10 +49,6 @@ have to repeat in Rust.
 
 - `spec.types.generics.field-wise-row-constraints.legality-1`
 - `spec.types.anonymous-records.legality-1`
-
-<!-- limit.py:markers:start -->
-- [`metel-interpreter/src/evaluator/record_display.rs::record_to_string`](https://github.com/metel-lang/metel-core/blob/cb6e01cd8aff28da4c3f2a860dbcb18969b4f2f1/metel-interpreter/src/evaluator/record_display.rs#L20)
-<!-- limit.py:markers:end -->
 
 ## Resolution
 

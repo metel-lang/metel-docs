@@ -44,10 +44,6 @@ issue needs to be found or filed.
 - `arch.type-construction.requirement-7`
 - `metel-frontend/src/pipeline/type_checking/construction/mod.rs` (equality guard)
 
-<!-- limit.py:markers:start -->
-- [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1267)
-<!-- limit.py:markers:end -->
-
 ## Resolution
 
 None yet; needs a tracking issue (the cited `#263` no longer matches).

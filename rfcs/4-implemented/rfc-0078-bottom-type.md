@@ -160,8 +160,8 @@ not apply — there is no single type to coerce to.
 `Result<T, !>` satisfies the conditions: `Ok { value: T }` is the one inhabited
 variant with one field; `Err { error: ! }` is uninhabited. See §4.1.
 
-`Perhaps<!>` does not satisfy the conditions: `None` is inhabited but has zero fields.
-`Perhaps<!>` does not implicitly coerce to any type.
+`Option<!>` does not satisfy the conditions: `None` is inhabited but has zero fields.
+`Option<!>` does not implicitly coerce to any type.
 
 ### 3.4 Inference through match
 
@@ -226,9 +226,9 @@ Fallible custom allocators (where `AllocationError = SomeError`) produce
 
 ---
 
-## 5. `Perhaps<T>` and `!`
+## 5. `Option<T>` and `!`
 
-`Perhaps<!>` is a type with only one inhabited variant: `Perhaps::None`. The
+`Option<!>` is a type with only one inhabited variant: `Option::None`. The
 `Some` variant would require a value of type `!`, which cannot be constructed.
 This type is not practically useful and the compiler may warn when it appears in
 user-written code. It is not prohibited — it can arise from generic instantiation.
@@ -285,7 +285,7 @@ convention already established in RFC-0063.
   `Result<@a T, !>` collapse at allocation sites.
 - RFC-0071 (Ownership and Move Semantics) — move semantics; `!` values are never
   moved (they cannot be constructed).
-- RFC-0079 (Perhaps and Result, refused 2026-07-10 — most of its content was already
+- RFC-0079 (`Perhaps` and Result, refused 2026-07-10 — most of its content was already
   implemented/spec'd by the time it was written; real remaining gaps tracked at
   https://app.clickup.com/t/86cap1wzb) — `Result<T, !>`'s exhaustiveness and the
   inhabited-singleton collapse this RFC specifies (§3.3-§4.1) are what actually govern

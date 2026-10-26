@@ -4,6 +4,166 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.15.0
+
+**In progress on `develop` — not yet released.**
+
+**Breaking changes:**
+
+- `Perhaps<T>` is renamed `Option<T>` (RFC-0184, `metel-core#1625`). Only the name changes: the variants
+  `Some { value }` and `None`, every method (`is_some`, `unwrap_or`, `and_then`, `ok_or`, `yolo`, ...),
+  and all type-checking behaviour are as before. Write `Option<T>` in annotations, `Option::None` and
+  `std::core::Option::Some { .. }` in paths, and `import std::core::Option`. There is no alias:
+  `Perhaps` is no longer a name in `std::core`, and using it where nothing declares it is `T0003` with
+  the message "`Perhaps` is now `Option`" (for a type, a path, an expression or pattern name, and an
+  import). A module that declares its own `Perhaps` is unaffected, and `Option` may be shadowed by a
+  module or block declaration like `Result` and `List`. Diagnostics that print the type now print
+  `Option<String>`. The specification, tutorials and getting-started pages say `Option`; dated posts
+  are left as published.
+- A reference is no longer read out implicitly as its referent (RFC-0185, `metel-core#1631`).
+  Reading the value a reference points to is always `*r`; one `*` per layer of a chain. These now
+  fail with `T0001`, "expected `i64`, found `&i64`", and the help line "read the value out with
+  `*r` (copies a Copy referent)": `let y: i64 := r;`, a call argument `take(r)`, `return r`, a
+  tail expression, `break r`, and an ascription `(r: i64)`. Write `let y: i64 := *r;`,
+  `take(*r)`, `return *r`, `*r` as the tail, `break *r`, and `(*r: i64)`; use `**rr` for
+  `rr: &&i64`. Field access, indexing and method calls still auto-dereference, `&var T` still
+  coerces to `&T`, and ascription still performs `dyn` and `[T; N]` to `[T]` coercions. Error code
+  `T0024` (read-copy of a non-`Copy` value) is retired: a non-`Copy` read is `T0001` when
+  implicit and `T0019` under `--move-check` when written `*r`. The specification and tutorials
+  are updated.
+
+## v0.14.1
+
+**Released 2026-10-26.** A patch release of diagnostics, block-local types, name resolution and
+tooling. It is the first patch to carry language-visible fixes; the milestone records each one as an
+exception to "no accepted programs change" (the rejected-to-accepted list, the accepted-to-rejected
+list `T0037`, `T0038`, `T0034`, and the `--move-check`-only identity fixes). No syntax changes.
+
+**Diagnostics:**
+
+- A method call on a function value (`f.clone()`, or `"${f}"`, which calls `to_string`) is
+  now `T0003`, "no method `clone` on `|i64| -> i64`: a function type implements no aspect, so it
+  has no methods". It was `T0002`, "cannot infer receiver type for method call; add a type
+  annotation", which sent the user to an annotation the receiver already had
+  (`metel-core#1242`).
+- Passing a whole struct where a narrowed type is required (`take(s)` for a parameter
+  `Strings.{ a, c }`, or `let t: Strings.{ a, c } := s`) no longer says "a partially-moved
+  `Strings` cannot be used where the whole `Strings` is required", which names the opposite
+  situation: nothing was moved. It now says the value is whole, that the position requires the
+  narrowed type, and that narrowing happens through an explicit move or projection
+  (`value.{ a, c }`), not at a call or binding. The program was already rejected; only the
+  wording changes (`metel-core#1458`).
+- A record that does not fit a structurally written record type (`{ x: i64, y: i64 }`; an argument,
+  an annotated `let`, a field initializer) now reports the difference as a record diff instead of the
+  raw types: ``the record
+  is missing field `y` (expected `{ x: i64, y: i64 }`, found `{ x: integer }`)``, ``field `z` is not
+  part of `{ x: i64, y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``. Before, it was
+  `cannot unify { x: ?1 } with { x: i64, y: i64 }`, with an internal inference variable and no
+  hint which field was wrong. The code stays `T0001`; the same mismatch through a row bound is
+  `T0012` in the same words (`metel-core#1483`). A record checked against a *named* `record` still
+  prints the raw types, with an inference variable (`cannot unify { x: ?1 } with P`); that is
+  `metel-core#1618`.
+- `T0032` for an anonymous open record (`{ x: T, .. }`) in a return type no longer advises naming a
+  row parameter alone, which a function with no row input cannot do. It lists what works in that
+  position. A private function: omit the return type so the exact record is inferred, write the
+  record in full, or name a row parameter when the row comes from an argument. A method or an
+  aspect method declaration: write the record in full or name a row parameter (leaving the type
+  out makes it return `()`). A closure: omit the annotation or write the record in full. In a
+  written function type it says to share one `R` between the parameter and the result
+  (`metel-core#1484`).
+
+**Move checking fixes:**
+
+- `--move-check` judged a block-local record by the wrong type when an earlier record in the same
+  module had the same name and the same field names but different field types (`record P { x: i64 }`
+  in one function, `record P { x: String }` in another). The later one took the earlier one's
+  `Copy`-ness, so a use-after-move of the non-`Copy` record was accepted, and a valid copy of the
+  `Copy` record was rejected as "use of moved value". Each record is now judged by its own fields
+  (`metel-core#1553`).
+- The same confusion remained for block-local types with no fields. A record with no fields is `Copy`
+  and a struct with none is not, but a same-named one declared later was still judged by the first:
+  with `--move-check`, a use-after-move of a zero-field struct that followed a zero-field record was
+  accepted, and a valid copy of a zero-field record that followed a zero-field struct was rejected.
+  A block-local struct or record is now identified by its own declaration, not by its name and
+  field names (`metel-core#1555`).
+- A unit or struct-like variant of an enum declared inside a function body could not be used:
+  `Mode::A` reported an internal error (`I0001`) and `M::A { x = 1 }` reported `unknown enum`
+  (`T0003`), although the declaration itself type-checked. Block-local enums can now be
+  constructed and matched, and a `match` on one is checked for exhaustiveness against its own
+  variants (`metel-core#1557`).
+- A struct, record or enum declared inside a function body could not be named once an inner block had
+  declared a type with the same name: `struct P { x: i64 }` followed by an `if (true) { struct P { y: i64 } }`
+  made the later `P { x = 2 }` fail with `unknown struct`. The outer type is now back in scope when the
+  inner block ends, at any nesting depth (`metel-core#1561`).
+- A `struct`, `record` or `enum` declared inside a function body can now have type parameters.
+  The declaration was accepted before but the parameter was dropped, so every use failed with an
+  unrelated `cannot unify ... 'T'`. `record Box<T> { x: T }` in a function body now behaves like the
+  same declaration at top level: `Box { x = 1 }`, `Box<i64>` annotations, field reads, bounds
+  (`T0012`) and `--move-check` Copy-ness all work (`metel-core#1556`). A phantom parameter
+  (`record Marker<T> {}`) still needs an annotation, as at top level.
+- A struct pattern naming a `struct` or `record` declared inside a function body
+  (`match (p) { Point { x, .. } => ... }`) was an internal error (`I0001: invalid pattern path`).
+  It now binds the fields, for generic local types at the scrutinee's type arguments, and an
+  unknown field is `T0003` as for a top-level struct (`metel-core#1565`).
+- Inside a block that declares an enum with the same name as an outer one, a `match` on a value of
+  the outer enum resolved its bare-variant patterns against the inner enum and silently took no arm.
+  Block-local types now keep their identity on annotations and on enum values, so the value is matched
+  against its own enum (`metel-core#1568`).
+- A top-level name declared twice in one namespace of a module is now an error (`T0037`). Before,
+  `struct Foo` twice, a `struct` and an `enum` (or `aspect`, or `type` alias) of one name, and a `let`
+  beside a `fun` of one name were all accepted, and the second declaration silently shared the first
+  one's identity. Types and values are separate namespaces, so `struct Foo` and `fun Foo` still
+  coexist, and functions of one name remain an overload set (`metel-core#1560`).
+- A struct and a function of one name now have separate identities. Before, they shared one internal
+  id, so only the first kept its definition location (go-to-definition could not find the second), and
+  every consumer of the id had to happen to be per-kind. Imports bring a name in every namespace the
+  source module provides it in; a name public in either namespace is importable, and a private function
+  no longer blocks the import of a public type of its name (`metel-core#1571`).
+- Using a private function whose name an imported public type shares (`import lib::Foo;` then `Foo()`,
+  with `public struct Foo` and a private `fun Foo` in `lib`) was reported as `undefined name`. It is now
+  the visibility error `T0009`, as it already was for a private function on its own. The import itself
+  is accepted because the type is public, so the error is reported at the use, and a local of the same
+  name still shadows it (`metel-core#1575`).
+- A local `let`, `var` or parameter did not shadow a function of the same name declared in the same
+  module when the name was used as a value: `fun f() ...` and `let f := 9; f == 9` compared an integer
+  with the function and failed with a type error. The innermost binding now wins whichever kind it is,
+  and the function is back once the local's scope ends (`metel-core#1578`).
+- Declaring a type with the name of an intrinsic type (`struct String`, `enum Char`, `type boolean := ...`,
+  a block-local `struct u8`, ...) was accepted, and the program then behaved inconsistently: some uses of
+  the name meant the primitive and some the new type, and `println` of an ordinary string failed with
+  `String does not implement Display`. The fifteen intrinsic type names are now reserved in the type
+  namespace and declaring one is the error `T0038`. A function or `let` may still use the name, and the
+  types `std::core` declares (`List`, `Perhaps`, ...) are not affected (`metel-core#1582`).
+- A module that declared its own `Perhaps` or `Result` broke every use of the core one on values from
+  std: `match (std::env::get("X")) { Some { value } => ... }` failed with `T0003` "unresolved pattern
+  path `Some`", and `.ok_or(...)` on such a value with `I0001` "no method `ok_or` on `Perhaps`". Patterns
+  and method calls on a value now use the type the value actually has, so shadowing a core type behaves
+  the same as shadowing any other (`metel-core#1585`).
+- A qualified path to a `std::core` type in a type position (`std::core::Perhaps<i64>`) was rejected
+  as `unknown type`, although the same path already worked in an expression where nothing shadows the
+  name. It now resolves, so the core type can be named in a type position when a module shadows its
+  name. In an expression, `std::core::Result::Ok { .. }` still resolves to the module's own `Result`
+  when it declares one (`metel-core#1587`, `metel-core#1616`).
+- A variant of an aliased core enum could not be built against an annotation that uses the alias:
+  `import std::core::Result as CR;` with `let r: CR<i64, String> := CR::Ok { value = 1 }` failed with
+  `T0002`, because the type parameter the variant does not fix (`E`) was not taken from the
+  annotation. It is now (`metel-core#1588`).
+- A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
+  twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
+  as it already was for inherent `extend` blocks (`metel-core#1229`).
+
+**Known issues (tracked, none new in this release):**
+
+- A `struct`, `record` or `enum` declared inside a function does not shadow a same-named module-level,
+  imported or `std::core` type; the outer type is still the one the name resolves to
+  (`metel-core#1615`).
+- `std::core::Result::Ok { .. }` in an expression names the module's own `Result` when the module
+  declares one (`metel-core#1616`).
+- A record checked against a named `record` reports `cannot unify { x: ?1 } with P`
+  (`metel-core#1618`).
+- `T0030` rejects a `[&x]` borrow of a local that shadows an enclosing closure's by-value capture of
+  the same name (`metel-core#1613`).
+
 ## v0.14.0
 
 **Released 2026-10-18.** This release adds named records and reusable open rows, checks

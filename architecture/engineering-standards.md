@@ -45,11 +45,12 @@ deliberately excluded.
 
 **Examples / counterexamples.** Conforming: `identity::allocate`'s structural allocators
 (`BindingId`, `LocalId`) — one owner, checked-range construction. Violating, currently
-live: `SymbolId`'s space is split across three independent allocators (`SymbolTable`'s
-own counter, the overload table's process-global `AtomicU32`, `typeinference`'s
-descending block-local counter) — `LIMIT-NAME-RESOLUTION-002/003/004/005`, with two
-concrete bugs already caused: two impls, and separately two overloaded methods, each
-pair silently sharing one `SymbolId`.
+live: `SymbolId` was split across three independent allocators (`SymbolTable`'s own counter, the
+overload table's process-global `AtomicU32`, the type engine's descending block-local counter), with
+two concrete bugs already caused: two impls, and separately two overloaded methods, each pair silently
+sharing one `SymbolId`. It is now one type whose variants are the kinds, each with one owning allocator
+or a pure derivation (ADR-0065, metel-core#1546), and no counter is process-global. What stays open is
+that a symbol is still a `(module, name)` key (`LIMIT-NAME-RESOLUTION-004/005`).
 
 **Enforcement.** None; caught by review recognizing the shape. A structural checker akin
 to Standard 3's is a natural follow-up once the `SymbolId` unification those records call
@@ -58,7 +59,7 @@ for lands.
 **Exception process.** A deliberately independent, scoped identity space gets a
 `LIMIT-*` record stating why.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-004/005` close.
 
 ## 3. No unresolved source-name lookup after the resolution boundary
 
@@ -73,6 +74,10 @@ durable shape as the rest of this document.
 frozen-IR files (`identity/mod.rs`, `typed_ast/mod.rs`, `place.rs`, `query.rs`) for a
 `HashMap`/`BTreeMap` field keyed by `String`/`Span`. `identity::position`
 (`PositionIndex`) is the one sanctioned exception (rebuilt per snapshot, per ADR-0054).
+Construction is not frozen yet (ADR-0054 step 6), so `construction/mod.rs` is scanned too with
+each existing map exempted and justified: a new `String`- or `Span`-keyed map there fails CI.
+A block-local type's name is resolved once, where it is written (`written_type_id`, and the
+annotation converter), and its identity travels on the type from then on.
 The evaluator's `RuntimeRegistry` is a currently uncovered gap (`LIMIT-EVALUATION-003`) —
 the natural next extension of `SCAN_FILES`.
 
@@ -214,7 +219,7 @@ an unrelated validation bug.
 **Examples / counterexamples.** ADR-0044's fix is the conforming shape for that site.
 `InferContext::split_gen(&self)` is a currently open instance of the same hazard: it
 returns a generator without advancing the context's own counter, so continued allocation
-after `split_gen` reissues already-claimed ids (`LIMIT-TYPE-INFERENCE-005`).
+after `split_gen` reissues already-claimed ids (`LIMIT-TYPE-INFERENCE-006`).
 
 **Enforcement.** None automated.
 
@@ -222,7 +227,7 @@ after `split_gen` reissues already-claimed ids (`LIMIT-TYPE-INFERENCE-005`).
 ownership transfer in its own doc comment — `TypeVarGenerator`'s module doc already does
 this for the `split_gen`-then-thread-through-Pass-2 pattern.
 
-**Expiry.** Revisit once `LIMIT-TYPE-INFERENCE-005`/`-006` close.
+**Expiry.** Revisit once `LIMIT-TYPE-INFERENCE-006` closes.
 
 ## 9. When an ADR is warranted
 
@@ -287,12 +292,18 @@ with no mechanism to notice a second, unrelated choice reusing the same number, 
 range's real usage growing past the next one's start. The failure surfaces later, as an
 unrelated-looking bug.
 
-**Examples / counterexamples.** `SymbolId`'s three-way range split (Standard 2): builtins
+**Examples / counterexamples.** `SymbolId`'s range split (Standard 2) — builtins
 occupy 1-99, the resolver's ids start at 1000, the overload allocator's at
-`0x4000_0000` — `LIMIT-NAME-RESOLUTION-003`: "nothing checks that the resolver's range
-stays below `OVERLOAD_SYM_START`." `TypeVarGenerator`'s six hard-coded offsets (10,000
-through 5,000,000, scattered across six files) — `LIMIT-TYPE-INFERENCE-005`: the
-2,000,000 start is already shared by two unrelated users. Conforming:
+`0x4000_0000`, block-local types count down from the top — was the counterexample until
+`LIMIT-NAME-RESOLUTION-003` closed: "nothing checks that the resolver's range stays below
+`OVERLOAD_SYM_START`." It was first made checked (declared ranges, a `const` assertion, allocators
+that panic at the end of their range; metel-core#1542), then replaced by the conforming form:
+`SymbolId` is an enum whose variants are the kinds, with private payloads minted by one allocator
+each, so a collision between kinds cannot be written (ADR-0065, metel-core#1546). `TypeVarGenerator`'s hard-coded offsets (10,000
+through 5,000,000, scattered across several files) were the counterexample until
+`LIMIT-TYPE-INFERENCE-005` closed: the 2,000,000 start was shared by two unrelated users.
+Conforming: `type_var_space` declares the ranges in one place, rejects an overlap with a
+`const` assertion and makes a generator panic at the end of its range;
 `identity::allocate::CollisionGuard` turns a `LocalId`/`RefId` structural-hash collision
 into a loud `assert!` — "this exists so that 'unlikely' is enforced, not assumed."
 
@@ -304,8 +315,7 @@ wire format) documents why beside it. A range inside this codebase's own control
 merely hasn't been made checked yet is not an exception — it's tracked as a `LIMIT-*`
 record.
 
-**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-002/003/004/005` and
-`LIMIT-TYPE-INFERENCE-005` close.
+**Expiry.** Revisit once `LIMIT-NAME-RESOLUTION-004/005` close.
 
 ## 12. Repeated ambient parameters are a named context type, not re-threaded by hand
 

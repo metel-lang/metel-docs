@@ -275,9 +275,9 @@ row instead.
    **Resolved 2026-09-27 — see §1 above.** Recommended, not required: RFC-0114 is
    `0-draft`, and this RFC's own position (the convention already stated) is the whole
    current rule, not a placeholder.
-3. ~~**Omitted-field defaulting.** If a struct declares a field as `Perhaps<T>`, `from_record`
+3. ~~**Omitted-field defaulting.** If a struct declares a field as `Option<T>`, `from_record`
    could accept an input record lacking that label entirely and default it to
-   `Perhaps::none()` — value-level and dynamic, a different axis from row-level absence. It
+   `Option::none()` — value-level and dynamic, a different axis from row-level absence. It
    earns its keep for generic code that reconstructs *any* `FromRecord` type from a partial
    record. Specified in RFC-0090 §8 as a rider; carried here unresolved, since it is
    separable from the core conversion and nothing depends on it.~~

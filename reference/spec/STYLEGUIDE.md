@@ -56,7 +56,7 @@ marker when the section covers more than one capability. Place an inline `Since`
 drove it:
 
 ```markdown
-> **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Perhaps<T>`, not literals.**
+> **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Option<T>`, not literals.**
 ```
 
 An inline `Since` or `Changed in` row is provenance, not a secondary container for the
@@ -107,9 +107,40 @@ ADR-0057):
 > **Limitation** LIMIT-EVALUATION-005: closure environments are not destroyed until destructors run.
 ```
 
+**Pending**, for the transient case: a part of the spec that is not implemented *yet*, because
+the spec text landed first and the code follows in the same milestone, or because a limit was
+found while implementing and is being fixed now. It is one marker line that cites the issue
+tracking the work, and it has no record, disposition or review date:
+
+```markdown
+> **Pending** metel-core#1480 the new form is accepted by the checker but not yet by the evaluator.
+```
+
+The marker is valid while the issue is **open** and has a **milestone**. When the issue closes
+the marker is stale and CI fails until it is removed; the release gate refuses to tag while a
+marker's issue in that release's milestone is still open. If the part is instead deliberately left
+unimplemented in a shipped version, convert the marker to a `Gap` or `Limitation` record, which
+is the only path that leaves it in a release. Prose beside a `Pending` marker (its own paragraph
+and the one before it) is not flagged by the limit-phrasing lint.
+
+A fixture that documents the same not-yet-built part is skipped with `skip = "pending: #1234"`
+(a `[options]` or top-level `skip` in its sidecar) instead of a `LIMIT-*` citation. The same rule
+applies: valid while the issue is open and has a milestone, a failure once it is closed.
+
+**Release gate.** `/cut-release` runs `check_architecture.py --release-gate <milestone> --core .`.
+It refuses a tag while any pending marker or `pending:` fixture cites an issue still open in the
+milestone being released, an issue with no milestone, a closed or missing issue, or one it could
+not verify (GitHub unreachable: a gate cannot pass what it could not verify, unlike the everyday
+check, which skips an unreachable API). A pending part that is not done at release is implemented
+(the marker leaves with the issue), moved to a later milestone, or converted to a record.
+
+*Before* (spec written ahead of the code): a `GAP-*` record is filed, and has to be resolved and
+retired days later. *After*: the paragraph that states the behaviour, followed by the one marker
+above; when the issue closes, delete the marker line. No record is written.
+
 The site renders the record's one-line `summary` (or the sentence written after the ID,
-when a rule needs its own wording), a link to the record, and chips from its `planned_for`
-and `rfc` fields. Write the marker where the limit applies: under the rule or heading it
+when a rule needs its own wording), a link to the record, and chips from its `tracked_by`
+(issue links) and `rfc` fields. Write the marker where the limit applies: under the rule or heading it
 qualifies. `check_architecture.py` requires each marker to cite an existing, active
 record of the kind its label names, and every active `GAP-*` to be cited in the chapter
 its `scope` names. If no record exists yet, write one; do not describe the limit in prose.
@@ -185,7 +216,7 @@ A struct-literal field initializer is `ident`, optionally followed by `= expr`. 
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJzb3VyY2UiOiIvLyBTaG9ydGhhbmQgZmllbGQgaW5pdGlhbGlzYXRpb246IGBQb2ludCB7IHgsIHkgfWAgZGVzdWdhcnMgdG8gYFBvaW50IHsgeCA9IHgsIHkgPSB5IH1gLlxuXG5zdHJ1Y3QgUG9pbnQgeyB4OiBpNjQsIHk6IGk2NCB9XG5cbnN0cnVjdCBOYW1lZCB7IG5hbWU6IFN0cmluZywgdmFsdWU6IGk2NCB9XG5cbmZ1biBtYWtlX3BvaW50KHg6IGk2NCwgeTogaTY0KSAtPiBQb2ludCB7XG4gICAgUG9pbnQgeyB4LCB5IH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgLy8gQmFzaWMgc2hvcnRoYW5kOiBib3RoIGZpZWxkcy5cbiAgICBsZXQgeCA6PSAzO1xuICAgIGxldCB5IDo9IDc7XG4gICAgbGV0IHAgOj0gUG9pbnQgeyB4LCB5IH07XG4gICAgYXNzZXJ0KHAueCA9PSAzKTtcbiAgICBhc3NlcnQocC55ID09IDcpO1xuXG4gICAgLy8gTWl4ZWQ6IHNob3J0aGFuZCBhbmQgZXhwbGljaXQuXG4gICAgbGV0IHgyIDo9IDEwO1xuICAgIGxldCBwMiA6PSBQb2ludCB7IHggPSB4MiwgeSA9IDIwIH07XG4gICAgYXNzZXJ0KHAyLnggPT0gMTApO1xuICAgIGFzc2VydChwMi55ID09IDIwKTtcblxuICAgIC8vIFNob3J0aGFuZCB2aWEgZnVuY3Rpb24gdGhhdCB1c2VzIGl0IGludGVybmFsbHkuXG4gICAgbGV0IHAzIDo9IG1ha2VfcG9pbnQoNSwgNik7XG4gICAgYXNzZXJ0KHAzLnggPT0gNSk7XG4gICAgYXNzZXJ0KHAzLnkgPT0gNik7XG5cbiAgICAvLyBTdHJpbmcgZmllbGQuXG4gICAgbGV0IG5hbWUgOj0gXCJoZWxsb1wiO1xuICAgIGxldCB2YWx1ZSA6PSA0MjtcbiAgICBsZXQgbiA6PSBOYW1lZCB7IG5hbWUsIHZhbHVlIH07XG4gICAgYXNzZXJ0KG4udmFsdWUgPT0gNDIpO1xuICAgIGFzc2VydChuLm5hbWUubGVuKCkgPT0gNSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJuYW1lIjoiNDNfc2hvcnRoYW5kX2ZpZWxkLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJzb3VyY2UiOiIvLyBTaG9ydGhhbmQgZmllbGQgaW5pdGlhbGlzYXRpb246IGBQb2ludCB7IHgsIHkgfWAgZGVzdWdhcnMgdG8gYFBvaW50IHsgeCA9IHgsIHkgPSB5IH1gLlxuXG5zdHJ1Y3QgUG9pbnQgeyB4OiBpNjQsIHk6IGk2NCB9XG5cbnN0cnVjdCBOYW1lZCB7IG5hbWU6IFN0cmluZywgdmFsdWU6IGk2NCB9XG5cbmZ1biBtYWtlX3BvaW50KHg6IGk2NCwgeTogaTY0KSAtPiBQb2ludCB7XG4gICAgUG9pbnQgeyB4LCB5IH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgLy8gQmFzaWMgc2hvcnRoYW5kOiBib3RoIGZpZWxkcy5cbiAgICBsZXQgeCA6PSAzO1xuICAgIGxldCB5IDo9IDc7XG4gICAgbGV0IHAgOj0gUG9pbnQgeyB4LCB5IH07XG4gICAgYXNzZXJ0KHAueCA9PSAzKTtcbiAgICBhc3NlcnQocC55ID09IDcpO1xuXG4gICAgLy8gTWl4ZWQ6IHNob3J0aGFuZCBhbmQgZXhwbGljaXQuXG4gICAgbGV0IHgyIDo9IDEwO1xuICAgIGxldCBwMiA6PSBQb2ludCB7IHggPSB4MiwgeSA9IDIwIH07XG4gICAgYXNzZXJ0KHAyLnggPT0gMTApO1xuICAgIGFzc2VydChwMi55ID09IDIwKTtcblxuICAgIC8vIFNob3J0aGFuZCB2aWEgZnVuY3Rpb24gdGhhdCB1c2VzIGl0IGludGVybmFsbHkuXG4gICAgbGV0IHAzIDo9IG1ha2VfcG9pbnQoNSwgNik7XG4gICAgYXNzZXJ0KHAzLnggPT0gNSk7XG4gICAgYXNzZXJ0KHAzLnkgPT0gNik7XG5cbiAgICAvLyBTdHJpbmcgZmllbGQuXG4gICAgbGV0IG5hbWUgOj0gXCJoZWxsb1wiO1xuICAgIGxldCB2YWx1ZSA6PSA0MjtcbiAgICBsZXQgbiA6PSBOYW1lZCB7IG5hbWUsIHZhbHVlIH07XG4gICAgYXNzZXJ0KG4udmFsdWUgPT0gNDIpO1xuICAgIGFzc2VydChuLm5hbWUubGVuKCkgPT0gNSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJuYW1lIjoiNDNfc2hvcnRoYW5kX2ZpZWxkLm10bCJ9"></details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
@@ -200,7 +231,7 @@ A shorthand field `ident` in a struct literal evaluates identically to `ident = 
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJzb3VyY2UiOiIvLyBTaG9ydGhhbmQgZmllbGQgaW5pdGlhbGlzYXRpb246IGBQb2ludCB7IHgsIHkgfWAgZGVzdWdhcnMgdG8gYFBvaW50IHsgeCA9IHgsIHkgPSB5IH1gLlxuXG5zdHJ1Y3QgUG9pbnQgeyB4OiBpNjQsIHk6IGk2NCB9XG5cbnN0cnVjdCBOYW1lZCB7IG5hbWU6IFN0cmluZywgdmFsdWU6IGk2NCB9XG5cbmZ1biBtYWtlX3BvaW50KHg6IGk2NCwgeTogaTY0KSAtPiBQb2ludCB7XG4gICAgUG9pbnQgeyB4LCB5IH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgLy8gQmFzaWMgc2hvcnRoYW5kOiBib3RoIGZpZWxkcy5cbiAgICBsZXQgeCA6PSAzO1xuICAgIGxldCB5IDo9IDc7XG4gICAgbGV0IHAgOj0gUG9pbnQgeyB4LCB5IH07XG4gICAgYXNzZXJ0KHAueCA9PSAzKTtcbiAgICBhc3NlcnQocC55ID09IDcpO1xuXG4gICAgLy8gTWl4ZWQ6IHNob3J0aGFuZCBhbmQgZXhwbGljaXQuXG4gICAgbGV0IHgyIDo9IDEwO1xuICAgIGxldCBwMiA6PSBQb2ludCB7IHggPSB4MiwgeSA9IDIwIH07XG4gICAgYXNzZXJ0KHAyLnggPT0gMTApO1xuICAgIGFzc2VydChwMi55ID09IDIwKTtcblxuICAgIC8vIFNob3J0aGFuZCB2aWEgZnVuY3Rpb24gdGhhdCB1c2VzIGl0IGludGVybmFsbHkuXG4gICAgbGV0IHAzIDo9IG1ha2VfcG9pbnQoNSwgNik7XG4gICAgYXNzZXJ0KHAzLnggPT0gNSk7XG4gICAgYXNzZXJ0KHAzLnkgPT0gNik7XG5cbiAgICAvLyBTdHJpbmcgZmllbGQuXG4gICAgbGV0IG5hbWUgOj0gXCJoZWxsb1wiO1xuICAgIGxldCB2YWx1ZSA6PSA0MjtcbiAgICBsZXQgbiA6PSBOYW1lZCB7IG5hbWUsIHZhbHVlIH07XG4gICAgYXNzZXJ0KG4udmFsdWUgPT0gNDIpO1xuICAgIGFzc2VydChuLm5hbWUubGVuKCkgPT0gNSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJuYW1lIjoiNDNfc2hvcnRoYW5kX2ZpZWxkLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJzb3VyY2UiOiIvLyBTaG9ydGhhbmQgZmllbGQgaW5pdGlhbGlzYXRpb246IGBQb2ludCB7IHgsIHkgfWAgZGVzdWdhcnMgdG8gYFBvaW50IHsgeCA9IHgsIHkgPSB5IH1gLlxuXG5zdHJ1Y3QgUG9pbnQgeyB4OiBpNjQsIHk6IGk2NCB9XG5cbnN0cnVjdCBOYW1lZCB7IG5hbWU6IFN0cmluZywgdmFsdWU6IGk2NCB9XG5cbmZ1biBtYWtlX3BvaW50KHg6IGk2NCwgeTogaTY0KSAtPiBQb2ludCB7XG4gICAgUG9pbnQgeyB4LCB5IH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgLy8gQmFzaWMgc2hvcnRoYW5kOiBib3RoIGZpZWxkcy5cbiAgICBsZXQgeCA6PSAzO1xuICAgIGxldCB5IDo9IDc7XG4gICAgbGV0IHAgOj0gUG9pbnQgeyB4LCB5IH07XG4gICAgYXNzZXJ0KHAueCA9PSAzKTtcbiAgICBhc3NlcnQocC55ID09IDcpO1xuXG4gICAgLy8gTWl4ZWQ6IHNob3J0aGFuZCBhbmQgZXhwbGljaXQuXG4gICAgbGV0IHgyIDo9IDEwO1xuICAgIGxldCBwMiA6PSBQb2ludCB7IHggPSB4MiwgeSA9IDIwIH07XG4gICAgYXNzZXJ0KHAyLnggPT0gMTApO1xuICAgIGFzc2VydChwMi55ID09IDIwKTtcblxuICAgIC8vIFNob3J0aGFuZCB2aWEgZnVuY3Rpb24gdGhhdCB1c2VzIGl0IGludGVybmFsbHkuXG4gICAgbGV0IHAzIDo9IG1ha2VfcG9pbnQoNSwgNik7XG4gICAgYXNzZXJ0KHAzLnggPT0gNSk7XG4gICAgYXNzZXJ0KHAzLnkgPT0gNik7XG5cbiAgICAvLyBTdHJpbmcgZmllbGQuXG4gICAgbGV0IG5hbWUgOj0gXCJoZWxsb1wiO1xuICAgIGxldCB2YWx1ZSA6PSA0MjtcbiAgICBsZXQgbiA6PSBOYW1lZCB7IG5hbWUsIHZhbHVlIH07XG4gICAgYXNzZXJ0KG4udmFsdWUgPT0gNDIpO1xuICAgIGFzc2VydChuLm5hbWUubGVuKCkgPT0gNSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzLzQzX3Nob3J0aGFuZF9maWVsZC5tdGwiLCJuYW1lIjoiNDNfc2hvcnRoYW5kX2ZpZWxkLm10bCJ9"></details>
 <!-- rfc.py:fixtures:end -->
 
 </details>

@@ -4,7 +4,7 @@ sidebar_position: 22
 
 # Reference: Control Flow, Options, and Errors
 
-Reference material. `Result` and `?` are introduced in the arc on [Parse into fields, fail loudly](parsing-and-results); this page is the full picture — `if`/`match`/`loop`/`while`/`for`, `Perhaps<T>`, and error propagation.
+Reference material. `Result` and `?` are introduced in the arc on [Parse into fields, fail loudly](parsing-and-results); this page is the full picture — `if`/`match`/`loop`/`while`/`for`, `Option<T>`, and error propagation.
 
 ## If, while, for-in, and loop
 
@@ -29,7 +29,7 @@ fun main() {
 `loop` runs indefinitely; `break expr` exits it and produces a value, which is what makes `loop` useful for a search that needs to bail out early with a result:
 
 ```metel
-fun first_over(threshold: i64, values: [i64]) -> Perhaps<i64> {
+fun first_over(threshold: i64, values: [i64]) -> Option<i64> {
     var i: u64 := 0;
     loop {
         if ((i as i64) >= values.len()) {
@@ -80,20 +80,20 @@ a pattern binds its fields (`Circle { radius }`); a no-field variant is written
 `Unit`. The qualified form `Shape::Circle { … }` is accepted anywhere and is
 required in an expression when the expected type doesn't pin the enum down.
 
-`Perhaps<T>` and `Result<T, E>` (below) are ordinary enums — `None` / `Some { value }`
+`Option<T>` and `Result<T, E>` (below) are ordinary enums — `None` / `Some { value }`
 and `Err { error }` / `Ok { value }` are just their variants.
 
-## Perhaps\<T\>: optional values
+## Option\<T\>: optional values
 
-`Perhaps<T>` represents a value that may or may not be present. It has two variants:
+`Option<T>` represents a value that may or may not be present. It has two variants:
 
-- `Perhaps::Some { value: T }` — holds a value
-- `Perhaps::None` — holds nothing
+- `Option::Some { value: T }` — holds a value
+- `Option::None` — holds nothing
 
 Use it whenever a function can legitimately return nothing (a search that finds no result, a field that is not set):
 
 ```metel
-fun find(haystack: [String], needle: String) -> Perhaps<i64> {
+fun find(haystack: [String], needle: String) -> Option<i64> {
     var i := 0;
     for (let s in haystack) {
         if (s == needle) {
@@ -119,11 +119,11 @@ fun main() {
 }
 ```
 
-`.yolo()` unwraps a `Perhaps::Some` and panics on `Perhaps::None` — use it only when you are certain the value is present:
+`.yolo()` unwraps an `Option::Some` and panics on `Option::None` — use it only when you are certain the value is present:
 
 ```metel
 fun main() {
-    let result := Perhaps::Some { value = 42 };
+    let result := Option::Some { value = 42 };
     let n := result.yolo();    // panics if None
 println(n);               // 42
 }
@@ -403,7 +403,7 @@ ok: Ada, age 30
 - `if`/`else` works as a statement and as an expression.
 - `while` repeats while a condition holds; `for-in` iterates over arrays and ranges.
 - `loop { break value; }` produces a value when the right moment is found.
-- `Perhaps<T>` represents an optional value; always handle both `Some` and `None`.
+- `Option<T>` represents an optional value; always handle both `Some` and `None`.
 - `Result<T, E>` represents a recoverable error; `?` propagates errors automatically.
 - `From<E>` lets `?` coerce between error types without explicit conversions.
 - `match` guards (`if cond`) add extra conditions to individual arms; tuples destructure by position.

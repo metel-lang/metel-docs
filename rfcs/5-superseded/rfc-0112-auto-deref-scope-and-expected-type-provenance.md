@@ -2,8 +2,12 @@
 id: rfc-0112
 title: "Auto-Deref Scope and Expected-Type Provenance"
 date: '2026-07-21'
-status: draft
+status: superseded
+updated: '2026-10-26'
+superseded_by: rfc-0185
 ---
+
+> **Status — superseded (2026-10-26).** RFC-0185 removes the type-directed read-copy RFC-0112 sought to scope
 
 ## Summary
 
@@ -325,7 +329,7 @@ to discover. `construct_binop`'s `Eq | Ne` arm has no operand check at all — P
 constrains the two operands to unify with each other, so mixed types are caught by
 unification while same-type-on-both-sides reaches an evaluator whose `==` arms cover only
 the numeric scalars, `Boolean`, `Str` and `Char`. This is not reference-specific: structs,
-enums (including `Perhaps`), arrays, tuples and unit all behave the same way.
+enums (including `Option`), arrays, tuples and unit all behave the same way.
 
 **Filed as issue #561**, with the design fix (routing `==` through the `Eq` aspect that
 already exists at `stdlib/core.mtl:194` and already works via `.eq()` method dispatch)

@@ -465,7 +465,7 @@ class GapRecordTests(ArchitectureCorpusCase):
         self.assertEqual([], self.findings())
 
     def test_planned_needs_an_rfc_or_issue(self):
-        text = VALID_GAP.replace("disposition: known", "disposition: planned")
+        text = VALID_GAP.replace("disposition: known", "disposition: planned").replace("review: null", "tracked_by: metel-core#239\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertTrue(any("`planned` requires an RFC" in f for f in self.findings()))
         ok = text.replace("None yet.", "Tracked as #239.")
@@ -590,14 +590,24 @@ class SpecLimitMarkerTests(GapRecordTests):
         self.chapter_with("```\n> **Gap** GAP-TYPES-009\n```")
         self.assertEqual([], self.marker_findings(require_gap_citations=False))
 
-    def test_planned_for_must_be_a_release(self):
-        text = VALID_GAP.replace("review: null", "planned_for: soon\nreview: null")
+    def test_planned_for_is_retired(self):
+        text = VALID_GAP.replace("review: null", "planned_for: v0.16.0\nreview: null")
         self.write_gap_corpus(gap_text=text)
-        self.assertTrue(any("must be a release" in f for f in self.marker_findings()))
+        self.assertTrue(any("`planned_for` is retired" in f and "tracked_by" in f for f in self.marker_findings()))
+
+    def test_tracked_by_must_look_like_an_issue(self):
+        text = VALID_GAP.replace("review: null", "tracked_by: soon\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("`tracked_by` entry `soon`" in f for f in self.marker_findings()))
+
+    def test_a_planned_record_must_name_its_tracking_issue(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: planned").replace("None yet.", "Tracked as #239.")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("must name its tracking issue" in f for f in self.marker_findings()))
 
     def test_valid_schedule_fields_pass(self):
         self.write_rfc("2-accepted", "0122")
-        text = VALID_GAP.replace("review: null", "planned_for: v0.16.0\nrfc: RFC-0122\nreview: null")
+        text = VALID_GAP.replace("review: null", "tracked_by: metel-core#1293, metel-core#12\nrfc: RFC-0122\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertEqual([], self.marker_findings())
 
@@ -607,9 +617,58 @@ class SpecLimitMarkerTests(GapRecordTests):
         self.assertTrue(any("RFC-0999" in f and "does not exist" in f for f in self.marker_findings()))
 
     def test_schedule_fields_are_rejected_on_a_finished_record(self):
-        text = VALID_GAP.replace("disposition: known", "disposition: superseded").replace("review: null", "planned_for: v0.16.0\nreview: null")
+        text = VALID_GAP.replace("disposition: known", "disposition: superseded").replace("review: null", "tracked_by: metel-core#5\nreview: null")
         self.write_gap_corpus(gap_text=text)
         self.assertTrue(any("remove them from a resolved or superseded record" in f for f in self.marker_findings()))
+
+
+class TrackedByStateTests(GapRecordTests):
+    """The state of the issues a record's `tracked_by` names (metel-core#1525): resolved through the
+    same resolver as pending markers, so a fake one stands in for GitHub."""
+
+    def corpus(self, tracked="metel-core#7"):
+        text = VALID_GAP.replace("disposition: known", "disposition: planned").replace("review: null", f"tracked_by: {tracked}\nreview: null").replace("None yet.", "Tracked as #7.")
+        self.write_gap_corpus(gap_text=text)
+
+    def problems(self, answers, tracked="metel-core#7"):
+        self.corpus(tracked)
+        warnings, unresolved = [], []
+        findings = self.run_checks(pending_resolver=lambda n: answers.get(n), pending_unresolved=unresolved, tracked_warnings=warnings)
+        return [str(f) for f in findings], [str(w) for w in warnings], unresolved
+
+    def test_an_open_scheduled_issue_is_clean(self):
+        self.assertEqual(([], [], []), self.problems({7: {"state": "open", "milestone": "Drop and partial moves"}}))
+
+    def test_a_missing_issue_is_a_finding(self):
+        findings, _, _ = self.problems({7: {"missing": True}})
+        self.assertTrue(any("metel-core#7, which does not exist" in f for f in findings))
+
+    def test_a_record_whose_every_issue_is_closed_is_a_stale_plan_warning(self):
+        findings, warnings, _ = self.problems({7: {"state": "closed", "milestone": "v0.14.0"}})
+        self.assertEqual([], findings)
+        self.assertTrue(any("every issue in `tracked_by` is closed" in w for w in warnings))
+
+    def test_one_open_issue_keeps_the_plan_alive(self):
+        _, warnings, _ = self.problems({7: {"state": "closed", "milestone": "x"}, 8: {"state": "open", "milestone": "y"}}, "metel-core#7, metel-core#8")
+        self.assertEqual([], warnings)
+
+    def test_an_open_issue_without_a_milestone_is_a_warning(self):
+        _, warnings, _ = self.problems({7: {"state": "open", "milestone": None}})
+        self.assertTrue(any("has no milestone" in w for w in warnings))
+
+    def test_an_unreachable_github_is_reported_not_failed(self):
+        findings, warnings, unresolved = self.problems({})
+        self.assertEqual(([], []), (findings, warnings))
+        self.assertEqual([7], unresolved)
+
+    def test_the_release_gate_blocks_a_stale_plan_and_an_unverifiable_one(self):
+        self.corpus()
+        recs = ca.scheduled_records(self.tmp)
+        self.assertEqual([], [str(f) for f in ca.tracked_gate_findings(recs, self.tmp, lambda n: {"state": "open", "milestone": "m"})])
+        stale = [str(f) for f in ca.tracked_gate_findings(recs, self.tmp, lambda n: {"state": "closed", "milestone": "m"})]
+        self.assertTrue(any("is closed" in f for f in stale))
+        blind = [str(f) for f in ca.tracked_gate_findings(recs, self.tmp, lambda n: None)]
+        self.assertTrue(any("could not be verified" in f for f in blind))
 
 
 class LimitPhrasingLintTests(unittest.TestCase):
@@ -642,6 +701,93 @@ class LimitPhrasingLintTests(unittest.TestCase):
     def test_lint_never_fails_the_check(self):
         # Warnings are separate from findings: run_checks does not include them.
         self.assertFalse(hasattr(ca, "lint_limit_phrasing") and "lint_limit_phrasing" in ca.run_checks.__code__.co_names)
+
+
+class PendingMarkerTests(unittest.TestCase):
+    """`> **Pending** metel-core#N` markers (metel-core#1418): the transient "not implemented yet,
+    an issue tracks it" marker, valid while the issue is open and has a milestone."""
+
+    def setUp(self):
+        self.root = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.root, True)
+        self.spec = self.root / "reference" / "spec"
+        self.spec.mkdir(parents=True)
+
+    def chapter(self, text):
+        (self.spec / "types.md").write_text(text)
+
+    def check(self, resolver=None, unresolved=None):
+        return [str(f) for f in ca.check_pending_markers(self.spec, self.root, resolver, unresolved)]
+
+    OPEN = staticmethod(lambda n: {"state": "open", "milestone": "v0.14.1"})
+
+    def test_a_marker_for_an_open_scheduled_issue_passes(self):
+        self.chapter("# T\n\nProse.\n\n> **Pending** metel-core#1480 the new form.\n")
+        self.assertEqual([], self.check(self.OPEN))
+
+    def test_a_marker_for_a_closed_issue_is_stale(self):
+        self.chapter("> **Pending** metel-core#1480\n")
+        findings = self.check(lambda n: {"state": "closed", "milestone": "v0.14.1"})
+        self.assertEqual(1, len(findings), findings)
+        self.assertIn("metel-core#1480", findings[0])
+        self.assertIn("stale", findings[0])
+
+    def test_a_marker_for_an_issue_with_no_milestone_is_a_finding(self):
+        self.chapter("> **Pending** metel-core#1480\n")
+        findings = self.check(lambda n: {"state": "open", "milestone": None})
+        self.assertTrue(any("no milestone" in f for f in findings), findings)
+
+    def test_a_marker_for_a_missing_issue_is_a_finding(self):
+        self.chapter("> **Pending** metel-core#999999\n")
+        findings = self.check(lambda n: {"missing": True})
+        self.assertTrue(any("does not exist" in f for f in findings), findings)
+
+    def test_an_unreachable_api_never_fails(self):
+        self.chapter("> **Pending** metel-core#1480\n> **Pending** metel-core#1481\n")
+        unresolved = []
+        self.assertEqual([], self.check(lambda n: None, unresolved))
+        self.assertEqual([1480, 1481], unresolved)
+
+    def test_a_marker_without_an_issue_is_malformed(self):
+        self.chapter("> **Pending** soon\n")
+        findings = self.check(self.OPEN)
+        self.assertTrue(any("must name its issue" in f for f in findings), findings)
+
+    def test_a_marker_naming_another_repository_is_malformed(self):
+        self.chapter("> **Pending** other-org/other-repo#5\n")
+        self.assertTrue(any("must name its issue" in f for f in self.check(self.OPEN)))
+
+    def test_the_repository_prefix_is_accepted(self):
+        self.chapter("> **Pending** metel-lang/metel-core#1480\n")
+        self.assertEqual([], self.check(self.OPEN))
+
+    def test_without_a_resolver_only_the_syntax_is_checked(self):
+        self.chapter("> **Pending** metel-core#1480\n")
+        self.assertEqual([], self.check(None))
+
+    def test_a_marker_in_a_code_fence_is_ignored(self):
+        self.chapter("```\n> **Pending**\n```\n")
+        self.assertEqual([], self.check(self.OPEN))
+
+    def lint(self, text):
+        (self.spec / "types.md").write_text(text)
+        return [str(w) for w in ca.lint_limit_phrasing(self.spec, self.root)]
+
+    def test_the_marker_line_and_the_prose_it_follows_are_not_flagged(self):
+        text = "# T\n\nThe new form is not yet implemented.\n\n> **Pending** metel-core#1480\n"
+        self.assertEqual([], self.lint(text))
+
+    def test_prose_in_the_marker_paragraph_is_not_flagged(self):
+        self.assertEqual([], self.lint("# T\n\n> **Pending** metel-core#1480\n> not yet supported here.\n"))
+
+    def test_limit_prose_elsewhere_is_still_flagged(self):
+        text = "# T\n\nThe new form is not yet implemented.\n\n> **Pending** metel-core#1480\n\nAnother form is not supported.\n"
+        warnings = self.lint(text)
+        self.assertEqual(1, len(warnings), warnings)
+        self.assertIn("types.md:7", warnings[0])
+
+    def test_run_checks_includes_the_pending_markers(self):
+        self.assertIn("pending_resolver", ca.run_checks.__code__.co_varnames)
 
 
 class FrontmatterQuotingTests(GapRecordTests):
@@ -758,3 +904,105 @@ class FixtureCitationTests(unittest.TestCase):
 
     def test_missing_core_root_returns_no_fixtures(self):
         self.assertEqual([], ca.find_skipped_fixtures(self.tmp / "nonexistent"))
+
+    # -- `skip = "pending: #N"` (metel-core#1514) --------------------------------------------------
+    OPEN = staticmethod(lambda n: {"state": "open", "milestone": "v0.14.1"})
+
+    def check_pending(self, resolver, unresolved=None):
+        return ca.check_skip_fixture_citations(self.tmp, [], self.tmp, resolver, unresolved)
+
+    def test_pending_skip_for_an_open_scheduled_issue_passes(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(self.OPEN)
+        self.assertEqual([], [str(f) for f in findings])
+
+    def test_pending_skip_for_a_closed_issue_fails_naming_the_issue(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(lambda n: {"state": "closed", "milestone": "v0.14.1"})
+        self.assertEqual(1, len(findings), [str(f) for f in findings])
+        self.assertIn("metel-core#1480", str(findings[0]))
+        self.assertIn("stale", str(findings[0]))
+
+    def test_pending_skip_without_a_milestone_fails(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(lambda n: {"state": "open", "milestone": None})
+        self.assertTrue(any("no milestone" in str(f) for f in findings))
+
+    def test_pending_skip_for_a_missing_issue_fails(self):
+        self.write_fixture("a.toml", "pending: #999999")
+        findings, _ = self.check_pending(lambda n: {"missing": True})
+        self.assertTrue(any("does not exist" in str(f) for f in findings))
+
+    def test_pending_skip_with_an_unreachable_api_never_fails(self):
+        self.write_fixture("a.toml", "pending: metel-core#1480")
+        unresolved = []
+        findings, _ = self.check_pending(lambda n: None, unresolved)
+        self.assertEqual([], [str(f) for f in findings])
+        self.assertEqual([1480], unresolved)
+
+    def test_pending_skip_without_a_resolver_is_accepted_syntactically(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(None)
+        self.assertEqual([], [str(f) for f in findings])
+
+    def test_a_pending_skip_does_not_need_a_limit_record(self):
+        self.write_fixture("a.toml", "pending: #1480")
+        findings, _ = self.check_pending(self.OPEN)
+        self.assertFalse(any("cites no LIMIT-*" in str(f) for f in findings))
+
+
+class ReleaseGateTests(unittest.TestCase):
+    """`check_architecture.py --release-gate` (metel-core#1514): what blocks `/cut-release`."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+        self.spec = self.tmp / "docs" / "reference" / "spec"
+        self.spec.mkdir(parents=True)
+        self.sources = self.tmp / "core" / "metel-interpreter" / "tests" / "integration" / "sources"
+        self.sources.mkdir(parents=True)
+
+    def gate(self, resolver, milestone="v0.14.1", with_core=True):
+        core = self.tmp / "core" if with_core else None
+        refs = ca.pending_references(self.spec, self.tmp, core)
+        return [str(f) for f in ca.release_gate_findings(refs, resolver, milestone)]
+
+    def test_references_come_from_markers_and_fixtures(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1\n```\n> **Pending** metel-core#2\n```\n")
+        (self.sources / "a.toml").write_text('[options]\nskip = "pending: #3"\n')
+        (self.sources / "b.toml").write_text('[options]\nskip = "LIMIT-X-001"\n')
+        refs = ca.pending_references(self.spec, self.tmp, self.tmp / "core")
+        self.assertEqual([1, 3], sorted(n for _, n in refs))
+        self.assertEqual([1], [n for _, n in ca.pending_references(self.spec, self.tmp, None)])
+
+    def test_an_issue_open_in_the_release_milestone_blocks(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        findings = self.gate(lambda n: {"state": "open", "milestone": "v0.14.1"})
+        self.assertEqual(1, len(findings), findings)
+        self.assertIn("still open in v0.14.1", findings[0])
+        self.assertIn("metel-core#1480", findings[0])
+
+    def test_an_issue_in_a_later_milestone_does_not_block(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        self.assertEqual([], self.gate(lambda n: {"state": "open", "milestone": "Ownership core"}))
+
+    def test_a_marker_without_a_milestone_blocks(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        self.assertTrue(any("no milestone" in f for f in self.gate(lambda n: {"state": "open", "milestone": None})))
+
+    def test_a_closed_issue_blocks_as_a_stale_marker(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        self.assertTrue(any("stale" in f for f in self.gate(lambda n: {"state": "closed", "milestone": "v0.14.1"})))
+
+    def test_an_unverifiable_issue_blocks_unlike_the_everyday_check(self):
+        (self.spec / "types.md").write_text("> **Pending** metel-core#1480\n")
+        findings = self.gate(lambda n: None)
+        self.assertTrue(any("could not be verified" in f for f in findings), findings)
+
+    def test_a_pending_fixture_skip_blocks_like_a_marker(self):
+        (self.sources / "a.toml").write_text('[options]\nskip = "pending: #77"\n')
+        findings = self.gate(lambda n: {"state": "open", "milestone": "v0.14.1"})
+        self.assertTrue(any("metel-core#77" in f and "a.toml" in f for f in findings), findings)
+
+    def test_no_references_passes(self):
+        self.assertEqual([], self.gate(lambda n: {"state": "open", "milestone": "v0.14.1"}))

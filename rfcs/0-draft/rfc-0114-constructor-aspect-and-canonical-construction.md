@@ -312,7 +312,7 @@ insert, so the assignment is rejected, and reconstruction must go through an exp
 call to `construct`, handled with the same already-existing machinery ordinary fallible
 calls already use (`?`, `match`, `.unwrap_or`) — the `?` operator with `From`-based error
 coercion has been live since v0.4.0 (noted in RFC-0079's own refusal record, which
-otherwise only confirms `Result<T, E>` and `Perhaps<T>` are already implemented and
+otherwise only confirms `Result<T, E>` and `Option<T>` are already implemented and
 spec'd, not that anything about them needs inventing here).
 
 **One rule decides both halves, and it is not a new rule.** Whether a type gets the
@@ -514,7 +514,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
   (inhabited-singleton coercion) — the two already-implemented rules §5's fallibility
   resolution reuses rather than inventing new machinery
 - `public/rfcs/6-refused/rfc-0079-perhaps-and-result.md` — refused as redundant with
-  reality, not with the type itself: confirms `Result<T, E>`/`Perhaps<T>` and the
+  reality, not with the type itself: confirms `Result<T, E>`/`Option<T>` and the
   `?`-operator with `From`-based error coercion are already implemented, live since
   v0.4.0, which §5 depends on for the fallible-type path
 - `public/rfcs/4-implemented/rfc-0082-associated-types.md` §9 — the declined general
