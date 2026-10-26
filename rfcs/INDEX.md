@@ -261,6 +261,7 @@ above it are.
   any other statically known field. Separate from RFC-0174's iteration over all fields; open
   questions cover syntax, label equality, construction, and interaction with linear moves.
 
+
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
   Construction — the value-level half of RFC-0121's removal-by-decomposition: a record
   **rest pattern** (`{ token, ..rest }`, binding the unnamed remainder as an owned record)
@@ -1458,6 +1459,15 @@ implementation).
   and `where all`: a parameter is `record R`, `..R` is its row, and the field-wise constraint
   is `where ..R: A`. Amends RFC-0121 and RFC-0123; RFC-0125, RFC-0146, RFC-0174 and RFC-0175
   use the syntax it replaces. Tracked by metel-core#1597.
+- **RFC-0187** *(draft, opened 2026-10-21)* — Record delimiters, label syntax and rows as record types — anonymous records
+  written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
+  the `({ x = 1 })` workaround); labels as compile-time values written `.name` and label variables
+  `.[L]` (supplying spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and
+  RFC-0174); and rows as record types, with `..` the operator that takes a record type's row, so there is no
+  `row` kind or keyword (`<row R>` becomes `<R>`, a row argument is a record type, RFC-0180's
+  `..{ … }` argument form goes). Syntax layer only: the semantics of rows, records and label
+  polymorphism are unchanged. Open: whether types and
+  bounds also take `{| |}`, `..` on a struct, the transition policy, and a label-typed parameter.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
