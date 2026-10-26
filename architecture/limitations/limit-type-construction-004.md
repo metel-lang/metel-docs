@@ -5,7 +5,7 @@ summary: "Module-level values and the inference SchemeEnv are keyed by spelling 
 scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "metel-core#1570 step 3 scoping (corpus measurement of SchemeEnv keys)"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -37,5 +37,15 @@ spelling the resolver already accepted.
 
 ## Resolution
 
-None yet; metel-core#1604 (not yet scheduled) is the work: path normalization stamps the impl-method symbol on
-`Type::method` paths, the inference output carries an origin `BindingId`, and the two maps go.
+Resolved by metel-core#1604 (PRs #1608, #1609, #1610). `Type::member` static constructors are read from the
+registry by the type's `SymbolId` and the member name (`List::new` was the only joined key construction
+ever read: 150 reads over the integration corpus, all `List::new`/`List::from`). The inference output
+now also yields the module's schemes keyed by the declaration they belong to (`SchemeIds`): a function
+or closure under the binder recorded for its declaration span, an import or `std::core` entry under the
+`SymbolId` its name denotes in the module's scope. `ConstructCtx::module_values` and `module_fn_decls`
+are keyed by `BindingId`, a use site reaches a scheme through the binding the identity pass resolved it
+to, and the runtime `TypeCtx` carries the same table, so a reconstructed generic body reads it too. The
+two exemptions in `check_no_semantic_name_lookup.py`'s scan are gone, and the name-keyed `scheme_env` is
+no longer carried past inference's own export step. The path normalization step the original plan named
+turned out unnecessary: an impl-method symbol embeds the impl's type arguments, which a written
+`Type::method` path cannot reconstruct, and the registry already keys methods by owner identity.
