@@ -2,8 +2,8 @@
 id: rfc-0182
 title: "Question Mark on Option"
 date: '2026-10-24'
-status: under-review
-updated: '2026-10-24'
+status: accepted
+updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1593'
 ---
 
@@ -13,6 +13,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1593'
 > 2026-10-26) renames it `Option<T>`; the text below uses the new name throughout so the `?` rule
 > never appears under the old one. No design change.
 
+> **Status — accepted (2026-10-26).** Reviewed 2026-10-26; open questions resolved
+
 ## Summary
 
 Extend the `?` operator to `Option<T>`. In a function (or closure) that returns
@@ -20,8 +22,8 @@ Extend the `?` operator to `Option<T>`. In a function (or closure) that returns
 the enclosing function on `None`. `?` stays one operator with one rule: **the operand's
 type constructor must match the enclosing function's return type constructor.**
 
-Mixed use is not added. `?` on a `Option` inside a `Result`-returning function, and `?` on
-a `Result` inside a `Option`-returning function, remain type errors, and the diagnostic
+Mixed use is not added. `?` on an `Option` inside a `Result`-returning function, and `?` on
+a `Result` inside an `Option`-returning function, remain type errors, and the diagnostic
 names the existing conversion (`.ok_or(...)`, `.ok()`) that bridges them.
 
 This is a language-surface change to a shipped operator, so it needs this RFC before any
@@ -87,13 +89,17 @@ should be stated in the error (see §6).
 
 The return type decides which row applies. That matters for inference: an operand whose type
 is still a variable when `?` is checked (a closure parameter, an un-annotated `let`) is
-resolved by the return type, as it is today, instead of being ambiguous. The return type
-must therefore be known to be `Result` or `Option` at the `?`; outside such a function the
-error stays `T0005`.
+resolved by the return type, as it is today, instead of being ambiguous.
+
+When the return type is itself still unresolved (a closure with no written return type), the
+operand decides: if its constructor is already `Result` or `Option`, that fixes the return
+type's constructor, and the matching rule then applies. If both are unresolved the error is
+`T0002`, asking for an annotation. Outside any function or closure `?` stays `T0005`; every
+mismatched pairing is `T0001` with the message in §6.
 
 ```metel
 fun port(env_name: String) -> Option<u16> {
-    let raw := get(env_name)?;           // Option<String>, in a Option-returning fn
+    let raw := get(env_name)?;           // Option<String>, in an Option-returning fn
     let n   := parse_u16(raw)?;          // Option<u16>
     Some { value = n }
 }
@@ -115,6 +121,26 @@ with the same value-category rules as the `Result` desugaring (`e` is moved, `va
 moved out, the early return is an ordinary `return` for ownership and drop purposes). The
 explicit `return` is the same one `?` on `Result` already lowers to, so `once`/`mutating`
 closure bodies, `defer`-style scopes and move checking see no new control-flow shape.
+
+---
+
+### Nesting, early exit and scope
+
+- **Nested types.** Each `?` strips one layer and checks it against the return type, so
+  `Option<Result<T, E>>` and `Result<Option<T>, E>` need no transpose rule:
+
+  ```metel
+  fun first_port(names: List<String>) -> Option<u16> {
+      let raw := names.first()?;               // Option<String>   -> String
+      let n   := parse_u16(raw).ok()?;         // Result -> Option  -> u16
+      Some { value = n }
+  }
+  ```
+- **Early exit leaves the function.** `e?` in the tail of an inner block returns from the
+  enclosing function or closure body, not from the block, exactly as for `Result`.
+- **Drops and moves.** The `return None` path is an ordinary `return`: every binding live in
+  scope is dropped or moved as it would be at an explicit `return`. A partially moved struct
+  live at the `?` is handled by the existing rules; no new ownership rule is needed.
 
 ---
 
@@ -143,7 +169,7 @@ let home := get("HOME").ok_or(ConfigError::NoHome)?;
 `?` rule stays "type constructors match". RFC-0079's Open Question 4 is therefore answered
 "no, use `ok_or`".
 
-### `Result` inside a `Option`-returning function
+### `Result` inside an `Option`-returning function
 
 `e?` would discard the error. Silently throwing an `Err` away is the opposite of what the
 operator signals; `.ok()` makes the discard visible at the site (`parse(s).ok()?`).
@@ -172,7 +198,7 @@ operator signals; `.ok()` makes the discard visible at the site (`parse(s).ok()?
 ## 4. Interactions
 
 - **Closures.** `?` returns from the nearest enclosing function or closure body. A closure
-  with a `Option<U>` return can use it exactly as a `Result`-returning one can today.
+  with an `Option<U>` return can use it exactly as a `Result`-returning one can today.
   RFC-0153's `mutating` closures already state that an early exit is "a `?`-propagated
   `Err` or an early `return`" (`spec.functions.closures.dynamics-13`); that sentence widens to
   "`?`-propagated `Err` or `None`".
@@ -183,9 +209,10 @@ operator signals; `.ok()` makes the discard visible at the site (`parse(s).ok()?
   may shadow `Option`/`Result`, so an implementation must constrain against the *core*
   declarations by id, not by name; otherwise a module that declares its own `Result` breaks
   `?` on std values. This RFC's implementation must include that.
-- **Error codes.** Unchanged in the Result row (`T0005` for `?` outside a
-  Result-returning function, `T0007` for a missing `From`). `T0005`'s message widens to name
-  both return types. See §6.
+- **Error codes.** The Result row is unchanged for a missing `From` (`T0007`). `T0005` stays
+  for `?` with no enclosing function or closure, and its message widens to name both return
+  types. Every mismatched pairing (including `?` in a function returning neither) is `T0001`
+  with the message in §6 and no inference variables. See §6.
 
 ---
 
@@ -225,25 +252,25 @@ leave #1589's complaint standing.
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-26
 
-1. **Is a closed `{Result, Option}` rule enough, or should this wait for a `Try` aspect?**
-   §3.2 argues the closed rule is the first two impls of that aspect. The risk is that the
-   closed rule bakes in a semantics (`None` has no payload, so no conversion step) that an
-   aspect would have to generalise. Is that acceptable debt?
-2. **Should the `Option`-in-`Result` case be revisited with a conversion hook later?**
-   §2 says no for now, on the grounds that `ok_or` is one word. If real code shows the
-   `ok_or(SameError)` repeated across a function, an `E2: From<NoneError>`-style impl is the
-   place to add it, and it would be a strictly additive rule.
-3. **`?` on a `Option<Result<T, E>>` / `Result<Option<T>, E>` (transpose).** Not addressed:
-   each `?` strips one layer and checks it against the return type, so nesting works by
-   repeated `?`. Worth one worked example before acceptance.
-4. **Implicit-return position.** `get("X")?` as the tail expression of a block that is not
-   the function body: the early `return` leaves the function, not the block. This is the
-   same as `Result` today but should be stated in the Dynamic Semantics.
-5. **Move checking.** The `return None` path drops everything live in scope, as an ordinary
-   `return` does. Confirm this needs no new rule and add a fixture (a partially moved struct
-   live at the `?`).
+1. **Closed `{Result, Option}` rule or a `Try` aspect.** *Resolved: the closed rule.* It is the
+   first two impls of a future `Try` aspect, so a later aspect is an additive generalisation.
+   The accepted debt is that "`None` has no payload, so no conversion step" is fixed until then.
+2. **Revisiting `Option`-in-`Result` with a conversion hook.** *Resolved: not now.* `ok_or` is
+   one word at the site that knows the error. If real code repeats `ok_or(SameError)`, an
+   `E2: From<NoneError>`-style impl is a strictly additive rule.
+3. **Nested `Option`/`Result` (transpose).** *Resolved:* each `?` strips one layer; worked
+   example in §1.
+4. **Implicit-return position.** *Resolved:* `?` returns from the enclosing function or closure
+   body, not the block; stated in §1 and in the new Dynamic Semantics.
+5. **Move checking.** *Resolved:* `return None` is an ordinary `return`; no new rule. A fixture
+   with a partially moved struct live at the `?` is part of the implementation.
+6. **Error codes (added in review).** *Resolved:* mismatches are `T0001` with the §6 message;
+   `T0005` only without an enclosing function; `T0007` for a missing `From`. §1 and §4 said
+   `T0005` for the mismatch; that was wrong against the implementation.
+7. **Closures without a written return type (added in review).** *Resolved:* the operand fixes
+   the constructor when the return type is unresolved; both unresolved is `T0002`.
 
 ---
 
@@ -261,4 +288,11 @@ leave #1589's complaint standing.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** accepted (2026-10-26).
+
+`?` extends to `Option<T>` under one rule: the operand's type constructor must match the
+enclosing function's. `None` propagates as `return None`. Mixed use is not added; the
+diagnostic names `.ok_or(...)` and `.ok()`. Mismatches are `T0001`; an unresolved closure return
+type is fixed by the operand. Closed `{Result, Option}` rule now; a `Try` aspect is a later,
+additive generalisation. Implementation constrains against the core declarations by id (not the
+spelling `"Result"`) so a shadowing module is safe.
