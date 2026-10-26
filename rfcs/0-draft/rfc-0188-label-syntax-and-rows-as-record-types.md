@@ -1,21 +1,19 @@
 ---
-id: rfc-0187
-title: "Record delimiters, label syntax and rows as record types"
-date: '2026-10-21'
+id: rfc-0188
+title: "Label syntax and rows as record types"
+date: '2026-10-26'
 status: draft
 ---
 
 ## Summary
 
-Three surface changes to how records, rows and labels are written, decided together because each
-one changes how the others read:
+Two surface changes to how labels and rows are written, split out of RFC-0187 (which keeps only the
+record delimiters):
 
-1. **Anonymous records get their own delimiters, `{| … |}`**, so a record is never confused with a
-   block. A record is written the same way in every position: no parentheses, no "the block wins".
-2. **A label as a compile-time value is written `.name`**, and a label variable `.[L]`. Ordinary
+1. **A label as a compile-time value is written `.name`**, and a label variable `.[L]`. Ordinary
    fields keep their plain identifier. This is the spelling that label polymorphism (RFC-0175),
    tuples as numeric-label rows (RFC-0151) and compile-time field iteration (RFC-0174) are missing.
-3. **Rows are record types, and `..` is the operator that takes a record type's row.** There is no
+2. **Rows are record types, and `..` is the operator that takes a record type's row.** There is no
    `row` kind and no `row` keyword: `<row R>` becomes `<R>`, a row argument is just a record type
    (`Session<R>`, not `Session<..R>`), and the remainder bound by a rest pattern is an ordinary
    record value. A label binder needs no keyword either: `.[L]` marks a label at its uses.
@@ -24,29 +22,15 @@ The semantics of rows (RFC-0121), of records (RFC-0116, RFC-0120) and of label p
 (RFC-0175) are not changed here. This RFC is the syntax layer, and it answers RFC-0175's open
 questions 1 to 4 on spelling.
 
+**Dependency.** The examples below write records as `{| … |}`, which RFC-0187 proposes. The two
+changes are independent in meaning: if RFC-0187 is declined, every `{| … |}` here reads `{ … }` and
+nothing else in this RFC changes.
+
 This is a design draft. Nothing here is accepted, and the grammar is unchanged until it is.
 
 ---
 
 ## Motivation
-
-### 1. A record literal collides with a block
-
-An anonymous record `{ x = 1 }` and a block `{ x = 1 }` are the same text. RFC-0116 resolves this
-deterministically, by letting the block win, and the consequences are written into the spec and
-into the records post as a warning:
-
-- `{ x }` and `{ x = 1 }` are records only in pure-expression positions (the right-hand side of a
-  `let`, call arguments, operands). In an `if`/`else` arm, a `match` arm, or a function, closure
-  or loop body they are a block whose tail is `x` or the assignment `x = 1`.
-- To get a record there you write `({ x = 1 })`.
-- A multi-field literal `{ x = 1, y = 2 }` works anywhere, only because a comma is invalid inside
-  a block, so the parser backtracks to the record. The rule is therefore subtle, not simple: whether
-  a literal needs parentheses depends on its length and its position.
-- The type side reads the same way. `fun f() -> { x: i64 } { … }` is two brace groups in a row.
-
-Feedback on the published syntax asked for record delimiters distinct from block delimiters. This
-is the same problem seen from the reader's side.
 
 ### 2. Labels have no spelling of their own
 
@@ -87,67 +71,7 @@ returns its row. Adding a `label` kind keyword (RFC-0175) would repeat the redun
 
 ## Proposal
 
-### 1. Record delimiters: `{| … |}`
-
-An anonymous record is written between `{|` and `|}`, in a literal, a pattern, a type, a row bound
-and a row equation alike:
-
-```metel
-let p := {| x = 1.0, y = 2.0 |};
-let q := {| x, y |};                       // punned, valid in every position
-fun origin() -> {| x: f64, y: f64 |} {| x = 0.0, y = 0.0 |}
-let {| x, y |} := p;                       // pattern
-fun len<R>(p: {| x: f64, ..R |}) -> f64 { … }           // open row type
-fun n<R>(p: {| x: f64, ..R |}) where R = {| y: f64, ..Rest |} { … }
-type Req = Request<{| host: String, ..R |}>;            // a record type is the argument (RFC-0180's `..{…}` goes)
-```
-
-The record forms that exist today keep their other parts and change only the outer delimiters:
-
-| Today | Proposed |
-|---|---|
-| `{ x = 1, y = 2 }` | `{\| x = 1, y = 2 \|}` |
-| `{ x, y }` | `{\| x, y \|}` |
-| `{ ..r, auth = a }` (RFC-0178 spread) | `{\| ..r, auth = a \|}` |
-| `{ token, ..rest }` (rest pattern) | `{\| token, ..rest \|}` |
-| `{ x: f64, ..R }`, `{ .. }` | `{\| x: f64, ..R \|}`, `{\| .. \|}` |
-| `R: { x: f64, .. }`, `!{ token }` | `R: {\| x: f64, .. \|}`, `!{\| token \|}` |
-| `where R = { token: T, ..Rest }` | `where R = {\| token: T, ..Rest \|}` |
-| `Name<..{ host: String, ..R }>` (RFC-0180) | `Name<{\| host: String, ..R \|}>`, see §3 |
-
-The empty record is `{| |}`.
-
-**What does not change:**
-
-- Named struct and variant literals and patterns, `Point { x = 1 }` and `Shape::Circle { r }`.
-  A leading type path already tells them apart from a block.
-- Blocks, including a block that starts with a closure.
-- Projection types and expressions, `Handle.{ fd }` and `r.{ a, b }`. Their `.{` is already
-  distinct, and they list field names only (see open question 3).
-- Closure syntax, `|x| …`, and its capture lists.
-
-#### Parsing
-
-`{|` and `|}` are not tokens in the current grammar: they occur nowhere in the fixture corpus, the
-standard library, the spec, the tutorials or the blog. The record production is
-`"{|" ~ entries ~ "|}"`. Two cases need a rule:
-
-- **A block that starts with a closure and has no space**, `{|x| x + 1}`. The record parse fails
-  (after `{|` a record needs `ident`, `ident = expr`, `..expr` or `|}`; `x| x + 1}` provides none of
-  them) and the block parse succeeds. A record is tried wherever `{|` starts one, and otherwise the
-  text is a block, so no program changes meaning. A prototype must confirm that no input is accepted
-  both ways.
-- **`||` and `|}` inside a record.** A field value may be a closure, `{| f = |x| x + 1 |}`, or
-  contain `||`. The closing `|}` is recognised only where a binary `|` or `||` could not continue the
-  expression, because `}` is not an operand.
-
-The formatter writes `{| … |}` with spaces inside and writes a closure-first block as `{ |x| … }`.
-That removes the reader's remaining doubt about `{|x|`.
-
-The rule "a block wins in a block-admitting position" and the parenthesization workaround
-`({ x = 1 })` disappear from RFC-0116. A record means the same thing in every position.
-
-### 2. Labels: `.name` and `.[L]`
+### 1. Labels: `.name` and `.[L]`
 
 A **label** is a compile-time atom, written with a leading dot where it appears as a value or a
 variable:
@@ -187,7 +111,7 @@ everything twice. Whether `.x` should also be accepted in field position is open
 a drained field and the meaning of `r.[L]` for a non-`Copy` field are RFC-0175's, and its open
 questions 5 to 8 stay open. This RFC settles only how a label is written.
 
-### 3. Rows are record types; `..` takes a record type's row
+### 2. Rows are record types; `..` takes a record type's row
 
 There is no `row` kind. A generic parameter that stands for a record shape is an ordinary type
 parameter that happens to be a record type, and `..X` denotes the **row of the record type `X`**:
@@ -257,9 +181,9 @@ keep their semantics; the front end's internal row machinery can stay as it is. 
 is unchanged by this RFC. With `R` a record type, `R: Copy` could say the same thing for the record
 as a whole, given the row-conditional impls of RFC-0123, but that simplification is a follow-up.
 
-### 4. A worked example: a record map
+### 3. A worked example: a record map
 
-With the three parts together, a map keyed at compile time looks like this. The label-typed
+With both parts together, a map keyed at compile time looks like this. The label-typed
 parameter `l: .[L]` (a label literal is also its own singleton type) is not defined by this RFC and is
 open question 9; the turbofish form `m.put::<.host>("a.com")` needs nothing beyond §2.
 
@@ -287,22 +211,6 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 
 ## Alternatives Considered
 
-### Delimiters
-
-| Option | Record | Verdict |
-|---|---|---|
-| `{\| … \|}` | `{\| x = 1 \|}` | **Proposed.** Stays in the `{ }` family, covers the empty record, keeps `x` plain. Two characters heavier than today. |
-| Field prefix only | `{ .x = 1, .y = 2 }` | Makes a field never start a block, but leaves `{ }` as an empty block, so the empty record needs its own spelling. Marks every field of every literal, and `.x` next to the rest `..r` is a one-dot slip. Declined as the record delimiter; the dot is kept for labels (§2). |
-| `#{ … }` | `#{ x = 1 }` | Unambiguous and light. Declined only because RFC-0175's open question 2 lists `#field` as a label literal form, which would give `#` two meanings. Reconsidered if label literals are not `#`-based. |
-| `%{ … }` | `%{ x = 1 }` | `%` is the remainder operator. |
-| `[\| … \|]` | `[\| x = 1 \|]` | Brackets suggest arrays and capture lists. |
-| `(\| … \|)` | `(\| x = 1 \|)` | Parenthesized closures, `(\|x\| x + 1)`, are common, so it collides far more often than `{\|` does. |
-| `.{ … }` | `.{ x = 1 }` | Clashes with the `..{` row-literal splice (RFC-0180), `...{`, and with RFC-0099 dot paths. |
-| `record { … }` | `record { x = 1 }` | Consistent with named literals, but heavy in every signature. |
-| Parser rules, no token | `{ x = 1 }`; `{ x, }` for one pun | Make assignment a statement only, so it cannot be a block tail, and require a trailing comma for a single pun. Changes what some existing blocks mean (a body that is a single unterminated assignment). Not measured; would need a corpus count first. |
-| Labeled tuple | `(x = 1, y = 2)` | Collides with RFC-0100's keyword-argument calls and with a parenthesized assignment. |
-| Keep the status quo | parenthesize in block positions | Keeps the rule the feedback objected to. |
-
 ### Labels
 
 - **String literals**, `get::<"id", …>` (RFC-0175's notation): a label would look like a runtime
@@ -323,35 +231,18 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 
 ---
 
-## Prior art
-
-| Language | Relevant form |
-|---|---|
-| Rust | Struct literals are prefixed with a type path (`Point { x: 1 }`) and parenthesized in conditions, which is how Metel's *named* literals already avoid the problem. There is no anonymous record. |
-| Zig | Anonymous struct literal `.{ .x = 1 }` with `.field` entries. Both its `.{` and its field prefix are the options weighed above. |
-| Erlang | Map literal `#{ k => v }`. |
-| Elixir | Map literal `%{ k => v }`. |
-| OCaml | `{\| … \|}` is a quoted-string delimiter there, so its use is unrelated and creates no confusion in Metel. |
-| Swift | Labeled tuples `(x: 1, y: 2)`. |
-
----
-
 ## Interactions
 
-- **RFC-0116 (Anonymous Record Types):** the block-versus-record rule and the `({ x = 1 })`
-  workaround are removed; the type-former, punning, projection and identity rules are unchanged.
-- **RFC-0120 (Named Records), RFC-0137, RFC-0117 (Row Narrowing):** semantic content unchanged.
-  Only the surface of their examples changes. `record T` and `Point { … }` keep their forms.
-- **RFC-0121 (Open Rows):** the row kind and `<row R>` are replaced by §3 here. Row bounds,
-  equations and `..R` tails change delimiters and are read as bounds on record types. §1's reasoning
-  on the binder is superseded; the semantics of rows are unchanged.
+- **RFC-0187 (Anonymous record delimiters):** supplies the `{| … |}` spelling used in the examples.
+- **RFC-0121 (Open Rows):** the row kind and `<row R>` are replaced by §2 here. Row bounds,
+  equations and `..R` tails are read as bounds on record types. §1's reasoning on the binder is
+  superseded; the semantics of rows are unchanged.
 - **RFC-0180 (Literal rows in row arguments):** its `..{ … }` argument form is no longer needed, since
   a row argument is a record type; the rest of that RFC's rules (kind check, tail recognition) apply
   to record-type arguments.
-- **RFC-0178 (Row Remainder Construction):** the rest pattern and spread change delimiters; the rest
-  value now has the record type `Rest` directly.
-- **RFC-0120 and RFC-0137 (Named records, branded rows):** a record type being a (brand, row) pair is what makes `..` well
-  defined; `..` is the projection to the row.
+- **RFC-0178 (Row Remainder Construction):** the rest value now has the record type `Rest` directly.
+- **RFC-0120 and RFC-0137 (Named records, branded rows):** a record type being a (brand, row) pair is
+  what makes `..` well defined; `..` is the projection to the row.
 - **RFC-0123 (Field-wise constraints):** `where all R: A` is unchanged here.
 - **RFC-0175 (Label Polymorphism):** this RFC supplies spellings for its questions 1 to 4 (binder,
   literal form, selection, use in construction). RFC-0175 keeps the semantics and is amended, not
@@ -359,8 +250,7 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 - **RFC-0151 (Tuples as numeric-label rows):** `.0`, `.1` give its rows a legible spelling.
 - **RFC-0174 (compile-time iteration over a row's fields):** a label value can be written `.name`.
 - **RFC-0099 (dot-separated paths) and RFC-0100 (keyword-argument construction):** a leading `.name`
-  or `.[L]` never starts a path or a call argument, so neither is affected. RFC-0100 is the reason
-  parenthesized labeled tuples were declined.
+  or `.[L]` never starts a path or a call argument, so neither is affected.
 
 ---
 
@@ -369,69 +259,51 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 This is a breaking, language-visible change and so at least a minor version when it ships, never a
 patch. It is mechanical:
 
-- Every anonymous record literal, pattern, type, row bound, row equation and row-literal argument
-  changes outer delimiters. A rough grep of the integration fixtures finds on the order of 80
-  anonymous record literal lines and 180 record-type annotation lines, plus the spec, the tutorials,
-  the blog posts and the examples inside RFCs.
-- Every `<row R>` binder loses its keyword, every `Name<..R>` argument becomes `Name<R>`, every `..{ … }`
-  row-literal argument becomes a record type, and a `{ ..R }` field type becomes `R`.
-- A parse-based rewriter produces the new forms, so the migration is not a hand edit. A literal like
-  `{ x = 1 }` is a record only in positions where it parses as one today; the rewriter must emit
-  `{| x = 1 |}` for exactly those, and leave blocks alone.
-- Transition policy is open question 5.
-
-Timing matters: the published records post and the tutorials teach the current syntax, and the
-core surface freeze would fix whatever is current at that point. Deciding before the freeze avoids
-a post-freeze break.
+- Every `<row R>` binder loses its keyword, every `Name<..R>` argument becomes `Name<R>`, every
+  `..{ … }` row-literal argument becomes a record type, and a `{ ..R }` field type becomes `R`.
+- Labels are new syntax; no existing program uses `.name` or `.[L]` in these positions.
+- A parse-based rewriter produces the new forms, so the migration is not a hand edit.
+- Transition policy is open question 1.
 
 ---
 
 ## Changes on Acceptance
 
-- `grammar.pest` and the generated `grammar.md`: `record_lit`, `record_pattern`, `record_type`,
-  `open_record_type`, `row_bound`; `generic_param` without `row_kw` or `record_kw`; `row_arg` and
-  `row_literal` removed; label literals and `.[ ]`; the `..` type operator.
-- Spec: types (records, open rows), expressions (record literals, selection), patterns, generics
-  (rows as record types, the `..` operator and its rules), and the removal of the block-wins paragraph.
+- `grammar.pest` and the generated `grammar.md`: `generic_param` without `row_kw` or `record_kw`;
+  `row_arg` and `row_literal` removed; label literals and `.[ ]`; the `..` type operator.
+- Spec: generics (rows as record types, the `..` operator and its rules), expressions (selection by
+  label), and types (label literals).
 - A new diagnostic for `..` on a non-record type or a struct, and one for `Name<..R>`;
   `reference/error-codes.md`.
-- RFC-0116, RFC-0120, RFC-0121, RFC-0178 and RFC-0180 examples updated, RFC-0175 amended.
-- Fixtures: the corpus migrated by the rewriter; new fixtures for each position, the closure-first
-  block, the empty record, `..` on each kind of type, brand erasure, and `.[L]` once RFC-0175 is
-  integrated.
-- Tutorials and blog examples updated, with the published records post revised or annotated.
+- RFC-0121, RFC-0178 and RFC-0180 examples updated, RFC-0175 amended.
+- Fixtures: the corpus migrated by the rewriter; new fixtures for `..` on each kind of type, brand
+  erasure, and `.[L]` once RFC-0175 is integrated.
 
 ---
 
 ## Open Questions
 
-1. **Types and bounds:** should `{| … |}` apply in type and bound position (as written here, one
-   rule everywhere), or only to literals and patterns, with types and bounds keeping `{ … }`
-   because no block can occur there? The cost of the uniform rule is weight in signatures; the
-   benefit is `-> {| x: i64 |} { … }` no longer reading as two brace groups.
+1. **Transition:** one release where the old row forms still parse with a deprecation diagnostic, or
+   a hard break with the rewriter? The project has no warning channel today, so a deprecation would
+   be an error with a suggested rewrite.
 2. **Dot in field position:** should a field entry also accept `.x` as an equivalent spelling of
    `x`? Recommended no: one way to write a field.
 3. **Label lists:** projections `Handle.{ fd }` and negative bounds `!{| token |}` list label names
    without values. Should they use `.fd`, or stay plain? Recommended plain, since `.{` and `!`
    already mark them.
 4. **`.[expr]`:** is a computed label beyond a variable needed now, or only when RFC-0174 asks for it?
-5. **Transition:** one release where the old forms still parse in unambiguous positions with a
-   deprecation diagnostic, or a hard break with the rewriter? The project has no warning channel
-   today, so a deprecation would be an error with a suggested rewrite.
-6. **Empty-record spelling:** `{| |}` only, or also `{||}`? Recommended `{| |}` as canonical, with
-   `{||}` a parse error to keep the closure edge case quiet.
-7. **`..S` on a struct:** an error as proposed, or should a struct's row be extractable? Residual
+5. **`..S` on a struct:** an error as proposed, or should a struct's row be extractable? Residual
    projections `Handle.{ fd }` are the nearest case.
-8. **Record-ness inferred from `..`:** a parameter first used bare and later under `..` is a record
+6. **Record-ness inferred from `..`:** a parameter first used bare and later under `..` is a record
    type from that use; should a parameter with no such use but a record-shaped intent need a way to
    say so, or is the instantiation-time error enough?
-9. **A label-typed parameter** (`l: .[L]`, a label literal being its own singleton type) so a call
+7. **A label-typed parameter** (`l: .[L]`, a label literal being its own singleton type) so a call
    can write `m.put(.host, v)`. Alternatives are the turbofish only, or a parameter pattern
    `fun put<L, V>(self, .[L], v: V)`. This interacts with RFC-0170's literal types.
-10. **Explicit instantiation:** `f::<{| y: i64 |}>(…)` now passes a record type for a remainder.
-    Allowed, or only inferred?
-11. **`R: Copy` for `where all R: Copy`:** fold the field-wise bound into an ordinary aspect bound on a
-    record type, here or in a follow-up? Recommended follow-up.
+8. **Explicit instantiation:** `f::<{| y: i64 |}>(…)` now passes a record type for a remainder.
+   Allowed, or only inferred?
+9. **`R: Copy` for `where all R: Copy`:** fold the field-wise bound into an ordinary aspect bound on a
+   record type, here or in a follow-up? Recommended follow-up.
 
 ---
 
@@ -439,19 +311,17 @@ a post-freeze break.
 
 Before this leaves draft:
 
-- A grammar prototype of `{| … |}` parses the whole integration corpus after the rewriter runs,
-  and a differential run shows identical results to the current syntax.
-- No input is accepted both as a block and as a record.
-- The closure-first block `{|x| x + 1}` and `{| f = |x| x + 1 |}` both parse as intended.
 - Every existing row-kind signature typechecks under the record-type reading with the same results,
   including branded instantiations of a remainder parameter.
 - `..` on a struct and on a non-record type is rejected with a targeted error.
+- `.[L]` parses and resolves once RFC-0175 is integrated, and a label never starts a path or a call
+  argument.
 
 ---
 
 ## References
 
-- RFC-0116 — Anonymous Record Types (the block-versus-record rule).
+- RFC-0187 — Anonymous record delimiters (`{| … |}`).
 - RFC-0120 — Named Records; RFC-0117 — Row Narrowing.
 - RFC-0121 — Open Rows (§1 binder kinds and the projection-brace rule); RFC-0137 — Branded rows;
   RFC-0123 — Field-wise constraints; RFC-0170 — Literal types and discriminated structural unions.
