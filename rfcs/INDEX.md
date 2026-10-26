@@ -1443,7 +1443,7 @@ implementation).
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
   RFC-0136 incidentally removed, RFC-0100). Tracked by metel-core#1594.
-- **RFC-0184** *(accepted 2026-10-26 — metel-core#1595)* — Rename `Perhaps` to `Option`. Pure
+- **RFC-0184** *(integrated 2026-10-26 — metel-core#1595; implementation metel-core#1625)* — Rename `Perhaps` to `Option`. Pure
   rename; `Some`/`None` and the methods unchanged. Reverses the "deliberate identity" rationale
   recorded in RFC-0098; familiarity won. Hard cut with a `T0003` hint ("`Perhaps` is now
   `Option`"), no alias; `Option` stays shadowable like `Result` and `List`; RFC-0182 was

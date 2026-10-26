@@ -2811,19 +2811,22 @@ a reachable ordinary return is a type error.
 
 </details>
 
-## `Perhaps<T>`
+## `Option<T>`
 
-`Perhaps<T>` is the built-in optional type. There is no null — all absence is expressed via `Perhaps<T>`.
+> **Pending** metel-core#1625 the implementation still spells this type `Perhaps`; the examples in this section are skipped until the rename lands, and the rest of the specification changes with it.
 
-[The type of `None` is `Perhaps<T>` for some `T` that must be determinable from context](#spec.types.perhaps-t.legality-1). If no context constrains `T` — for example, a bare `let x = None` with no annotation and no subsequent use that pins the element type — the program is a type error. An explicit annotation is required in that case:
+`Option<T>` is the built-in optional type. There is no null — all absence is expressed via `Option<T>`.
 
-> **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Perhaps<T>`, not literals.**
+[The type of `None` is `Option<T>` for some `T` that must be determinable from context](#spec.types.perhaps-t.legality-1). If no context constrains `T` — for example, a bare `let x = None` with no annotation and no subsequent use that pins the element type — the program is a type error. An explicit annotation is required in that case:
 
-`None` and `Some` have no special status in the grammar or the type system. They resolve exactly as `Red` does for a user-declared `enum Colour { Red, .. }` — bare where the expected type determines the enum, qualified (`Perhaps::None`) anywhere. Everything said here about needing a determinable type follows from that general rule rather than from a rule about `None` specifically, and the same is true of `Result<T, E>`'s `Ok`/`Err`. See [Expressions — Unqualified variant constructors](expressions.md#unqualified-variant-constructors).
+> **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Option<T>`, not literals.**
 
+`None` and `Some` have no special status in the grammar or the type system. They resolve exactly as `Red` does for a user-declared `enum Colour { Red, .. }` — bare where the expected type determines the enum, qualified (`Option::None`) anywhere. Everything said here about needing a determinable type follows from that general rule rather than from a rule about `None` specifically, and the same is true of `Result<T, E>`'s `Ok`/`Err`. See [Expressions — Unqualified variant constructors](expressions.md#unqualified-variant-constructors).
+
+<!-- doc-example: skip reason="pending metel-core#1625 (RFC-0184): written Option, which the compiler accepts once the rename lands" -->
 ```metel
 fun main() -> i64 {
-    let x: Perhaps<i64> := None;
+    let x: Option<i64> := None;
     match (x) {
         Some { value } => value,
         None => 0,
@@ -2831,10 +2834,11 @@ fun main() -> i64 {
 }
 ```
 
+<!-- doc-example: skip reason="pending metel-core#1625 (RFC-0184): written Option, which the compiler accepts once the rename lands" -->
 ```metel
 fun main() -> i64 {
-    let result: Perhaps<i64> := None;
-    let value: Perhaps<i64> := Some { value = 42 };
+    let result: Option<i64> := None;
+    let value: Option<i64> := Some { value = 42 };
     match (value) {
         Some { value } => value,
         None => match (result) {
@@ -2847,12 +2851,13 @@ fun main() -> i64 {
 
 Use `match` to unwrap safely:
 
+<!-- doc-example: skip reason="pending metel-core#1625 (RFC-0184): written Option, which the compiler accepts once the rename lands" -->
 ```metel
 struct User {
     id: i64,
 }
 
-fun find_user(id: i64) -> Perhaps<User> {
+fun find_user(id: i64) -> Option<User> {
     if (id == 1) {
         return Some { value = User { id = 1 } };
     }
@@ -2869,12 +2874,13 @@ fun main() -> i64 {
 
 `.yolo()` unwraps, panicking if the value is `None`:
 
+<!-- doc-example: skip reason="pending metel-core#1625 (RFC-0184): written Option, which the compiler accepts once the rename lands" -->
 ```metel
 struct User {
     id: i64,
 }
 
-fun find_user(id: i64) -> Perhaps<User> {
+fun find_user(id: i64) -> Option<User> {
     if (id == 1) {
         return Some { value = User { id = 1 } };
     }
@@ -2892,10 +2898,10 @@ fun main() -> i64 {
 
 ##### Legality Rule {#spec.types.perhaps-t.legality-1}
 
-`None` is the empty variant of `Perhaps<T>` and is valid only where the expected type
-determines `T`; `Perhaps::None` is valid wherever the qualified variant is named.
+`None` is the empty variant of `Option<T>` and is valid only where the expected type
+determines `T`; `Option::None` is valid wherever the qualified variant is named.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c062052463f05ba40316d189b7281920f4ab98df -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md), [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -2909,6 +2915,20 @@ determines `T`; `Perhaps::None` is valid wherever the qualified variant is named
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQyX3ZhcmlhbnRfZGVmZXJyYWxfcmVzb2x2ZXMubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyODUncyBjaGVjayBtdXN0IG5vdCBmaXJlIG9uIGEgZGVmZXJyYWwgdGhhdCAqZG9lcyogcmVzb2x2ZSwgYXQgYW55IG9mIHRoZVxuLy8gcG9zaXRpb25zIFJGQy0wMTExIHN1cHBvcnRzLCBhbmQgbXVzdCBsZWF2ZSBnZW51aW5lbHkgcG9seW1vcnBoaWMgZGVmZXJyYWxzIGFsb25lLlxuZW51bSBDb2xvdXIgeyBSZWQsIEdyZWVuLCBCbHVlIH1cblxuZnVuIHBhaW50KGM6IENvbG91cikgLT4gaTY0IHsgcmV0dXJuIDE7IH1cbmZ1biBmYXZvdXJpdGUoKSAtPiBDb2xvdXIgeyBHcmVlbiB9XG5cbi8vIEEgY2xvc3VyZSB3aXRoIGEgZGVjbGFyZWQgcmV0dXJuIHR5cGUgZ2l2ZXMgaXRzIGJvZHkgYW4gZXhwZWN0ZWQgdHlwZSwgc28gYSBiYXJlXG4vLyB2YXJpYW50IGluc2lkZSBpdCByZXNvbHZlcyBub3JtYWxseS5cbmZ1biBhbm5vdGF0ZWRfY2xvc3VyZSgpIC0+IENvbG91ciB7XG4gICAgbGV0IGYgOj0gfHwgLT4gQ29sb3VyIHsgUmVkIH07XG4gICAgcmV0dXJuIGYoKTtcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGM6IENvbG91ciA6PSBSZWQ7XG4gICAgYXNzZXJ0KHBhaW50KGMpID09IDEpO1xuICAgIGFzc2VydChwYWludChCbHVlKSA9PSAxKTtcblxuICAgIGxldCBnOiBDb2xvdXIgOj0gZmF2b3VyaXRlKCk7XG4gICAgYXNzZXJ0KHBhaW50KGcpID09IDEpO1xuXG4gICAgbGV0IHA6IFBlcmhhcHM8aTY0PiA6PSBTb21lIHsgdmFsdWUgPSA1IH07XG4gICAgbGV0IHE6IFBlcmhhcHM8aTY0PiA6PSBOb25lO1xuICAgIGFzc2VydChwYWludChhbm5vdGF0ZWRfY2xvc3VyZSgpKSA9PSAxKTtcblxuICAgIC8vIEFuIGVtcHR5IGFycmF5IGxpdGVyYWwgaXMgZGVmZXJyZWQgdG9vLCBhbmQgaXMgKmdlbnVpbmVseSogcG9seW1vcnBoaWMgLS0gdGhlXG4gICAgLy8gIzI4NSBjaGVjayBpcyBzY29wZWQgdG8gYmFyZSB2YXJpYW50cyBwcmVjaXNlbHkgc28gdGhpcyBrZWVwcyB3b3JraW5nLlxuICAgIGxldCBtayA6PSB8fCB7IFtdIH07XG4gICAgbGV0IGludHM6IFtpNjRdIDo9IG1rKCk7XG4gICAgbGV0IHN0cnM6IFtTdHJpbmddIDo9IG1rKCk7XG4gICAgYXNzZXJ0KGludHMubGVuKCkgPT0gMCk7XG4gICAgYXNzZXJ0KHN0cnMubGVuKCkgPT0gMCk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9lbnVtcy80Ml92YXJpYW50X2RlZmVycmFsX3Jlc29sdmVzLm10bCIsIm5hbWUiOiI0Ml92YXJpYW50X2RlZmVycmFsX3Jlc29sdmVzLm10bCJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.perhaps-t.legality-2}
+
+The built-in optional type is named `Option`. `std::core` declares no type named `Perhaps`: a
+reference to `Perhaps` that resolves to nothing is [`T0003`](../error-codes.md#t0003--undefined-name),
+and its message states that `Perhaps` is now `Option`. That covers `Perhaps` written as a type,
+as a path or the leading segment of one (`Perhaps::None`, `std::core::Perhaps`), as an expression
+or pattern name, and in an import. A module that declares its own `Perhaps` is unaffected, and
+`Option` may be shadowed like `Result` and `List`
+([scoping-and-shadowing legality-9](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-9)).
+
+<!-- rfc.py:last_reviewed c062052463f05ba40316d189b7281920f4ab98df -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1625" reason="The rename is accepted and integrated (RFC-0184) but not implemented yet; the fixtures for each T0003 hint site land with it." -->
 
 </details>
 
