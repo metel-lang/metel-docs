@@ -3,7 +3,7 @@ id: rfc-0183
 title: "Initialization-Only Walrus"
 date: '2026-10-24'
 status: under-review
-updated: '2026-10-24'
+updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1594'
 ---
 
@@ -94,9 +94,12 @@ declarations.
 
 ### Grammar
 
-`assign_op`'s plain alternative changes from `":="` to `"=" ~ !"="`; the compound
+`assign_op`'s plain alternative changes from `":="` to `"=" ~ !("=" | ">")`; the compound
 alternatives are untouched. `:=` is removed from `assign_op` and stays in `let_decl`,
 `let_mut_decl`, the record-pattern declaration, `type_alias`, and `assoc_type_def`.
+
+Assignment (plain and compound) moves out of `assign_expr` into statement position: a block
+statement, a match arm body, and a `for` header's init and update clauses (Open Question 1).
 
 ### Audit (RFC-0136's table, restated)
 
@@ -184,28 +187,48 @@ The proposal does not leave that to the type checker. See Open Question 1.
 
 ---
 
-## Open Questions
+## Review findings (2026-10-26)
 
-1. **Is assignment still an expression?** The grammar allows `assign_expr` anywhere an
-   expression goes. Options: (a) keep it, accept the `f(x = 1)` overlap and resolve it in
-   RFC-0100's call-argument production (a leading `ident =` is a keyword argument);
-   (b) make plain `=` assignment a *statement-position* form: a block statement, a match
-   arm body, a closure body, never an argument, initializer, condition or operand. (b)
-   removes the overlap and the `if (x = 1)` class by grammar, at the cost of rejecting
-   assignment in nested expression positions that nothing meaningful uses today (its value
-   is `()`). Recommendation: (b), checked against the fixture corpus for any assignment in
-   a non-statement position.
-2. **Migration path.** Hard cut (as in RFC-0136) or a release where plain `:=` reassignment
-   still parses with a deprecation diagnostic? A hard cut matches precedent; a deprecation
-   window needs the parser to accept both and the formatter to rewrite.
-3. **Assignment targets.** The parser accepts a name, field, tuple element (`t.0`) and index
-   as plain-assignment targets. Confirm each moves identically. Destructuring targets
-   (`(a, b) := (b, a)`) are *not* supported today (the checker reports an internal error;
-   filed separately), so this RFC neither relies on nor adds them.
-4. **Pattern-position renaming (metel-core#706).** RFC-0136 assigned it `local := field`.
-   Under this RFC it introduces `local`, so `:=` is still right; confirm no wording in that
-   RFC's drafts relies on the old "kept" invariant.
-5. **Release timing.** v0.14.1 is bug-fix only; this belongs to a feature milestone. Which?
+A review against the grammar and the corpus found four things this RFC did not say.
+
+1. **`{ x = 1 }` becomes ambiguous.** With plain assignment on `=` and assignment an expression,
+   `{ x = 1 }` is both an anonymous record (RFC-0116) and a block whose tail is the assignment
+   `x = 1`. RFC-0116's rule "a block wins in a block-admitting position" would silently turn a
+   record tail such as `fun f() -> { x: i64 } { { x = 1 } }` (accepted today) into a block that
+   returns `()`. The shorthand `{ x }` has the same shape. Resolved by Open Question 1: assignment
+   is a statement, never a block's tail, so a block ending in `x = 1` with no `;` is a record.
+2. **The `f(x = 1)` overlap (§2) is future-only.** RFC-0100 (keyword arguments) is
+   `1-under-review` and the grammar has no `keyword_arg` rule, so there is no overlap in the
+   language today. Making assignment a statement removes it before RFC-0100 can create it.
+3. **Measured migration.** Reassignments written `target := expr;` (declarations excluded):
+   287 sites in 163 of 1740 fixtures, 5 in the standard library, 29 in 14 spec, tutorial, blog and
+   README files, and 23 in 12 RFC worked examples. Every fixture site is a `;`-terminated
+   statement except one match arm body (`0 => total := total + i,`); none is a block's tail
+   without `;`. Compound assignment appears in 14 `for` update clauses
+   (`for (var i := 0; i < n; i += 1)`), which the statement-position rule must keep.
+4. **Tokenisation.** The plain operator is `"=" ~ !"="`. Match arms are written `pat => expr`, and
+   `=>` begins with `=`; pest backtracks correctly, but the rule should read `"=" ~ !("=" | ">")`
+   so a guard such as `n if n > 0 => ...` never attempts an assignment parse.
+
+---
+
+## Open Questions — resolved 2026-10-26
+
+1. **Is assignment still an expression?** *Resolved: no, option (b).* Assignment (plain and
+   compound) is a statement. It is allowed as a block statement `target = expr;`, as the body of a
+   match arm, and in a `for` header's init and update clauses. It is not an operand, argument,
+   initializer, condition, or a block's tail expression. Consequences: `f(x = 1)` and `if (x = 1)`
+   are grammar errors (the latter with the hint "`=` assigns; did you mean `==`?"), and
+   `{ x = 1 }` stays an anonymous record. The type of an assignment is no longer `()` as a value
+   anyone can use.
+2. **Migration path.** *Resolved: hard cut*, as RFC-0136 did, with targeted diagnostics for both
+   old spellings (§1).
+3. **Assignment targets.** *Confirmed.* The parser's `unary_expr` target covers a name, field,
+   tuple element and index; each moves to `=` identically. Destructuring targets stay out of scope.
+4. **Pattern-position renaming (metel-core#706).** *Confirmed unaffected.* `local := field`
+   introduces `local`, so `:=` is still right; nothing relies on RFC-0136's "kept" wording.
+5. **Release timing.** *Resolved: v0.15.0*, the milestone already on the tracking issue, so the
+   release's explicit-syntax changes (Option rename, `*r`, `?` on Option) migrate once.
 
 ---
 
