@@ -2,12 +2,26 @@
 id: rfc-0185
 title: "Remove Type-Directed Dereference"
 date: '2026-10-24'
-status: under-review
-updated: '2026-10-24'
+coverage:
+  "1": { spec: "spec.types.references.reading-a-value-out-of-a-reference.legality-1" }
+  "2": { kind: untestable, reason: "an alternatives analysis; it states no rule a program can exhibit" }
+  "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
+  "4": { kind: untestable, reason: "records resolved design questions; each resolution is stated as a rule in section 1" }
+  "5": { kind: untestable, reason: "a cross-check against other rules; it states no new rule" }
+status: implemented
+updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1596'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1631'
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
+
+> **Status — accepted (2026-10-26).** Open questions resolved 2026-10-26
+
+> **Status — integrated (2026-10-26).** Spec integrated; implementation tracked in #1631
+
+> **Status — implemented (2026-10-26).** Implemented by metel-core#1631
 
 ## Summary
 
@@ -205,26 +219,51 @@ corpus should hold only one.
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-26
 
-1. **RFC-0066 §3a, extraction of an allocated value.** RFC-0067a §3a was explicitly modelled
-   on it ("the same pattern RFC-0066 §3a already established"). RFC-0066 is `2-accepted`, not
-   implemented, and says extraction is never implicit at a plain-parameter call site. Does the
-   same objection apply to the type-directed extraction it *does* allow? This RFC covers
-   references only; the answer should be decided together with it, not by default, so that
-   the two type-directed mechanisms do not diverge.
-2. **Corpus measurement first?** Recommendation: land the diagnostic (old behaviour as an
-   error with a suggestion) behind a flag, run the corpus, and put the count in this RFC
-   before it is accepted, as RFC-0136's migration surface could not be.
-3. **Hard cut or deprecation window.** As in RFC-0183: hard cut by precedent, or one release
-   with a warning. A warning here is cheap because the old behaviour is already implemented.
-4. **`break (p: i64)`.** The ascription expression `(p: i64)` in a `break` value is how the
-   current fixture drives the old rule. Without it the form is just an ordinary ascription
-   (RFC-0021); confirm nothing else relied on ascription as a coercion.
-5. **Release timing.** v0.14.1 is bug-fix only; this belongs to a feature milestone with a
-   migration note in the changelog.
+1. **RFC-0066 §3a, extraction of an allocated value.** *Resolved: extraction is explicit
+   too.* RFC-0066 is amended in the same change: `*ptr` is the only way to move a value out
+   of an `@a T` pointer, and the type-directed forms (`let node: Node := ptr;`, `ptr: Node`,
+   `process(ptr: Node)`) are removed. RFC-0066 returns to `1-under-review` with the amendment
+   (it is not implemented, so nothing regresses) and is re-accepted on its own track.
+2. **Corpus measurement first?** *Resolved: measured.* With the read-copy disabled, 22 of
+   1541 integration fixtures fail (6 negative `evaluator/references/neg_14..19_read_copy_*`
+   and 16 positive: references 01, 02, 03, 05, 07, 13; functions 66-70; closures 74; types
+   14; structs 70, 94; move_check `abstract_read_copy_boundaries`), 4 of 427 unit tests
+   (`move_check::tests`), and 4 of 215 documentation examples (`expressions.md`, three in
+   `types.md`). README, getting-started, tutorials and the blog: none. Every site is migrated
+   in the implementing change.
+3. **Hard cut or deprecation window.** *Resolved: hard cut*, with a diagnostic help line:
+   `= help: read the value out with `*r` (copies a Copy referent)`.
+4. **`break (p: i64)` and ascription.** *Resolved.* Ascription stops performing the
+   read-copy. It keeps its dyn-erasure and singleton coercions (RFC-0078), which are
+   unrelated to references. `spec.types.type-ascription.legality-1` is reworded to say so;
+   it previously claimed "no runtime conversion", which was already untrue.
+5. **Release timing.** *Resolved: v0.15.0*, with a changelog migration note.
 
 ---
+
+## Integration cross-check (2026-10-26)
+
+Worked against the integrated spec and the implemented RFCs it touches:
+
+- **`let y: i64 := r;`** (`r: &i64`) — `spec.types.references.reading-a-value-out-of-a-reference.legality-1`
+  now rejects it as `T0001` with the `*r` help line; `let y: i64 := *r;` is accepted
+  (`spec.expressions.references.dynamics-7/-8`). No other rule depended on the old form.
+- **Chains** — `**rr` reads one layer per `*`; the old "peel every layer" behaviour is gone.
+- **Selectors** — field access, indexing and method dispatch auto-deref unchanged
+  (`expressions.md`, "Auto-deref covers selectors only"); the exception sentence it carried
+  for type-directed copy is removed.
+- **`&var T` → `&T`** coercion (`spec.types.references.legality-1`) is a reference-to-reference
+  conversion and is unaffected.
+- **Match scrutinees** (RFC-0108) peel references for patterns; unchanged.
+- **Ascription** — `spec.types.type-ascription.legality-1` is reworded: ascription never reads
+  through a reference but keeps dyn erasure, `[T; N]` → `[T]` and singleton coercions (RFC-0078).
+- **RFC-0066** — its type-directed extraction is made explicit (`*ptr`) in the same change; it is
+  unimplemented and returns to `1-under-review`.
+- **T0024** — retired. It only existed to reject the implicit read-copy of a non-`Copy` referent;
+  with the implicit read gone, the implicit forms are `T0001` and an explicit `*r` of a non-`Copy`
+  referent is `T0019` from the move checker (`--move-check`), as it already was.
 
 ## References
 
@@ -242,4 +281,10 @@ corpus should hold only one.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** accepted (2026-10-26).
+
+Reading through a reference is always `*r`. The type-directed read-copy is removed at every
+site (`let` annotation, call argument, `return`, tail, `break`, ascription) as a hard cut
+in v0.15.0 with a `*r` help line and a changelog migration note. Ascription keeps its
+dyn/singleton coercions. RFC-0066's type-directed extraction is made explicit (`*ptr`) in
+the same change. Supersedes RFC-0112.

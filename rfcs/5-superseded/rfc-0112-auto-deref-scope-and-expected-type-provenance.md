@@ -2,8 +2,12 @@
 id: rfc-0112
 title: "Auto-Deref Scope and Expected-Type Provenance"
 date: '2026-07-21'
-status: draft
+status: superseded
+updated: '2026-10-26'
+superseded_by: rfc-0185
 ---
+
+> **Status — superseded (2026-10-26).** RFC-0185 removes the type-directed read-copy RFC-0112 sought to scope
 
 ## Summary
 

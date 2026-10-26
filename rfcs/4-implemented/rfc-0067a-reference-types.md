@@ -14,6 +14,8 @@ coverage:
   "4": { spec: "spec.types.references.legality-1" }
 ---
 
+> **Amended 2026-10-26 (RFC-0185):** §3a's type-directed read-copy out of a reference is removed; reading through a reference is always `*r`.
+
 > **Status — accepted.** Split 2026-07-07 from the original RFC-0067 ("Reference Types"),
 > which bundled a syntax rename with two genuinely separate concerns: lifetime anchors
 > (borrow-checker core) and allocator-pointer (`@a T`) interaction. This RFC keeps only the

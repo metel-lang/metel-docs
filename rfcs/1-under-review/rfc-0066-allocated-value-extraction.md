@@ -2,8 +2,9 @@
 id: rfc-0066
 title: "Allocated Value Extraction"
 date: '2026-06-27'
-updated: '2026-07-10'
-status: accepted
+updated: '2026-10-26'
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/1630'
 ---
 
 > **Status — under review.** Rewritten syntax 2026-07-05. This RFC is the trigger for
@@ -32,6 +33,8 @@ status: accepted
 > for the case this rule would otherwise leave with no cheap alternative.
 
 > **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
+
+> **Status — under review (2026-10-26).** RFC-0185 amendment: extraction made explicit (*ptr)
 
 ## Summary
 
@@ -90,7 +93,7 @@ dropped by its new owner. This is exactly symmetric with `@Heap expr` allocation
 
 ```metel
 let ptr = @Heap String { … };
-let s = ptr: String;  // type ascription drives move-out; heap slot freed; ptr consumed
+let s := *ptr;  // explicit extraction moves out; heap slot freed; ptr consumed
 // s is dropped normally when it goes out of scope
 ```
 
@@ -123,7 +126,7 @@ valid:
 
 ```metel
 let ptr = @a Point { x = 1, y = 2 };
-let p = ptr: Point;   // type ascription copies Point out — ptr still valid, slot intact
+let p := *ptr;   // explicit extraction copies Point out — ptr still valid, slot intact
 ```
 
 Copy extraction works for any region kind and imposes no Drop-related constraint.
@@ -136,7 +139,7 @@ destructor. Nothing leaks; nothing runs twice:
 
 ```metel
 let ptr = @a Pair { a = 1, b = 2 };  // Pair has no Drop impl
-let p = ptr: Pair;                     // type ascription moves out — safe; slot orphaned
+let p := *ptr;                     // explicit extraction moves out — safe; slot orphaned
 // arena frees the raw memory on drop, no destructor to call
 ```
 
@@ -165,68 +168,51 @@ idiomatic. Custom allocators with specific requirements may implement Option B i
 
 ---
 
-## 3. Type-directed move-out
+## 3. Explicit move-out
 
-Move-out is expressed in two equivalent forms:
+> **Amended 2026-10-26 (RFC-0185).** Move-out was type-directed (a `let` annotation or an
+> ascription `ptr: T` extracted the value). RFC-0185 removes the equivalent
+> type-directed read-copy for references; to keep the two mechanisms from diverging,
+> extraction is now spelled `*ptr` and nothing else drives it. The earlier forms
+> `let node: Node := ptr;`, `ptr: Node` and `process(ptr: Node)` are rejected.
 
-**Type-directed binding** — when a `let` binding declares type `T` and the right-hand
-side is `@a T`, move-out is implicit:
-
-```metel
-let node: Node := ptr;   // declared type drives move-out; ptr consumed
-```
-
-**Type ascription** — the ascription operator drives move-out in any expression position,
-including call sites and return expressions:
+Move-out is written with the dereference operator (RFC-0110) at the exact point
+extraction happens:
 
 ```metel
-let ptr = @a Node { val = 1, next = null };
-let node = ptr: Node;         // ascription in expression position
-process(ptr: Node);           // move-out at call site
+let ptr := @a Node { val = 1, next = null };
+let node: Node := *ptr;       // extraction; ptr consumed
+process(*ptr);                // extraction at a call site
 ```
 
-Both forms obey the same constraints: unconditionally legal for `@Heap T`; requires
+The form obeys the same constraints: unconditionally legal for `@Heap T`; requires
 `T: !Drop` for bulk-deallocating `@a T` (Option A). The compiler enforces this via the
 negative bound — if `T` has a `Drop` impl the binding is rejected at the call site.
 
 ---
 
-## 3a. Extraction is never implicit at a plain-parameter call site
+## 3a. Extraction is never implicit
 
-§3 gives two forms that drive move-out: a `let` binding whose *own* declared type is
-plain `T`, and explicit ascription (`ptr: T`). Both are written by the caller, at the
-exact point extraction happens. A third, unwritten form is conspicuously absent: a
-function parameter declared as plain `T`, called with an `@a T` argument and no
-ascription at all —
+Extraction is written `*ptr` and only that. A `let` annotation, an ascription, a `return`
+or tail expression, or a plain `T` parameter never extracts on its own:
 
 ```metel
 fun consume(val: Node) -> Node { val }
 
-let ptr = @a Node { val = 1 };
-consume(ptr);          // is this move-out, a type error, or something else?
+let ptr := @a Node { val = 1 };
+consume(ptr);          // compile error: expected Node, found @a Node
 ```
 
-**This is a compile error, not implicit move-out.** A parameter is a binding, and it
-may be tempting to read §3's "type-directed binding" rule as covering it by analogy —
-but doing so would make a function's callability depend invisibly on the *caller's*
-storage choice. `consume`'s signature gives no hint that calling it could fail: if
-`Node: Drop` and `ptr` came from a bulk-deallocating allocator, `consume(ptr)` would
-silently hit the §2.2.3 restriction from a call site that looks unremarkable, for a
-reason legible only by tracing back to wherever `ptr` was allocated. That is exactly
-the failure mode storage transparency (RFC-0063, `reports/memory-model/lifetimes-vs-regions-2026-07-02.md`
-§3) exists to prevent: plain-looking code should not have to think about storage, and
-that includes not having its legality silently depend on a caller's storage decision.
-
-The rule generalizes RFC-0063 §3's restriction on the allocation direction —
-*"type-directed allocation applies at the binding level only; nested sub-expressions
-require an explicit `@`"* — to the extraction direction: **type-directed conversion,
-in either direction, fires only for a `let` binding whose own declared type differs
-from its initializer's, never silently across a call boundary.** `consume(ptr)` above
-is rejected; the caller must write one of:
+A function's callability must not depend invisibly on the *caller's* storage choice.
+`consume`'s signature gives no hint that calling it could fail: if `Node: Drop` and `ptr`
+came from a bulk-deallocating allocator, an implicit extraction would hit the §2.2.3
+restriction from a call site that looks unremarkable. That is the failure mode storage
+transparency (RFC-0063, `reports/memory-model/lifetimes-vs-regions-2026-07-02.md` §3)
+exists to prevent. The caller must write the extraction:
 
 ```metel
-consume(ptr: Node);          // explicit ascription — extracts, subject to §2's rules
-let v: Node := ptr;
+consume(*ptr);               // explicit extraction, subject to §2's rules
+let v: Node := *ptr;
 consume(v);                  // same extraction, spelled at the binding
 ```
 
@@ -288,9 +274,9 @@ encompasses the clone's use is valid.
 |---|---|---|---|---|
 | Borrow `&T` | `&ptr` | `&ptr` | `&ptr` | `&ptr` |
 | Borrow `&var T` | `&var ptr` | `&var ptr` | `&var ptr` | `&var ptr` |
-| Copy out | `ptr: T` | `ptr: T` | — | — |
-| Move out | `ptr: T` | — | `ptr: T` | not supported |
-| Type-directed move | `let x: T = ptr` | — | `let x: T = ptr` | not supported |
+| Copy out | `*ptr` | `*ptr` | — | — |
+| Move out | `*ptr` | — | `*ptr` | not supported |
+| Type-directed move | removed (RFC-0185) | — | removed | not supported |
 | Clone out | `src.clone()` | — | — | `src.clone()` |
 
 ---

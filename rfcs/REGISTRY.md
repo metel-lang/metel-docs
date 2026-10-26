@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**185 RFCs total.** 29 draft, 45 under review, 9 accepted, 4 integrated (87 live), 71 implemented, 13 superseded, 14 refused (98 settled).
+**185 RFCs total.** 28 draft, 45 under review, 8 accepted, 4 integrated (85 live), 72 implemented, 14 superseded, 14 refused (100 settled).
 
-## Draft (29)
+## Draft (28)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -34,7 +34,6 @@ the curated thematic map.
 - **RFC-0101** — Grammar-Enforced Naming Case Conventions (`0-draft` ; rfcs/0-draft/rfc-0101-grammar-enforced-naming-case-conventions.md ; date 2026-07-14 ; updated 2026-07-17)
 - **RFC-0104** — Multi-Aspect Extend Blocks with Shared Bodies (`0-draft` ; rfcs/0-draft/rfc-0104-multi-aspect-extend-blocks-with-shared-bodies.md ; date 2026-07-14)
 - **RFC-0105** — Struct-Embedded Aspect Lists (`0-draft` ; rfcs/0-draft/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-07-14)
-- **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`0-draft` ; rfcs/0-draft/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21)
 - **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-07-24)
 - **RFC-0128** — Exportable overload sets and shadow-versus-extend semantics (`0-draft` ; rfcs/0-draft/rfc-0128-exportable-overload-sets-and-shadow-versus-extend-semantics.md ; date 2026-08-04)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
@@ -51,6 +50,7 @@ the curated thematic map.
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
+- **RFC-0066** — Allocated Value Extraction (`1-under-review` ; rfcs/1-under-review/rfc-0066-allocated-value-extraction.md ; date 2026-06-27 ; updated 2026-10-26)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
 - **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-08-23)
@@ -92,14 +92,12 @@ the curated thematic map.
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
 - **RFC-0182** — Question Mark on Option (`1-under-review` ; rfcs/1-under-review/rfc-0182-question-mark-on-perhaps.md ; date 2026-10-24 ; updated 2026-10-24)
 - **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-24)
-- **RFC-0185** — Remove Type-Directed Dereference (`1-under-review` ; rfcs/1-under-review/rfc-0185-remove-type-directed-dereference.md ; date 2026-10-24 ; updated 2026-10-24)
 - **RFC-0186** — Rows as an Operator on Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-24)
 
-## Accepted (9)
+## Accepted (8)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
-- **RFC-0066** — Allocated Value Extraction (`2-accepted` ; rfcs/2-accepted/rfc-0066-allocated-value-extraction.md ; date 2026-06-27 ; updated 2026-07-10)
 - **RFC-0068** — Struct-Owned Allocators (`2-accepted` ; rfcs/2-accepted/rfc-0068-struct-owned-allocators.md ; date 2026-06-28 ; updated 2026-07-10)
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
@@ -114,7 +112,7 @@ the curated thematic map.
 - **RFC-0177** — Coercion-Aware Structural Aspect Lookup (`3-integrated` ; rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md ; date 2026-10-06 ; updated 2026-10-06 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1296)
 - **RFC-0181** — Anonymous open rows in return and function types (`3-integrated` ; rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-20 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1480)
 
-## Implemented (71)
+## Implemented (72)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -187,8 +185,9 @@ the curated thematic map.
 - **RFC-0179** — By-value open-row parameters take the whole record (`4-implemented` ; rfcs/4-implemented/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md ; date 2026-10-16 ; updated 2026-10-17 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1471)
 - **RFC-0180** — Literal rows in row arguments (`4-implemented` ; rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md ; date 2026-10-16 ; updated 2026-10-16 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1473)
 - **RFC-0184** — Rename Perhaps to Option (`4-implemented` ; rfcs/4-implemented/rfc-0184-rename-perhaps-to-option.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1625)
+- **RFC-0185** — Remove Type-Directed Dereference (`4-implemented` ; rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1631)
 
-## Superseded (13)
+## Superseded (14)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -203,6 +202,7 @@ the curated thematic map.
 - **RFC-0055** — Comptime (`5-superseded` ; rfcs/5-superseded/rfc-0055-comptime.md ; date 2026-06-05 ; updated 2026-07-09)
 - **RFC-0083** — Public Value Exports (`5-superseded` ; rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/539)
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
+- **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
 
 ## Refused (14)
 
