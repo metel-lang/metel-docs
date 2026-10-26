@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**185 RFCs total.** 29 draft, 45 under review, 10 accepted, 4 integrated (88 live), 70 implemented, 13 superseded, 14 refused (97 settled).
+**185 RFCs total.** 29 draft, 45 under review, 9 accepted, 5 integrated (88 live), 70 implemented, 13 superseded, 14 refused (97 settled).
 
 ## Draft (29)
 
@@ -95,7 +95,7 @@ the curated thematic map.
 - **RFC-0185** — Remove Type-Directed Dereference (`1-under-review` ; rfcs/1-under-review/rfc-0185-remove-type-directed-dereference.md ; date 2026-10-24 ; updated 2026-10-24)
 - **RFC-0186** — Rows as an Operator on Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-24)
 
-## Accepted (10)
+## Accepted (9)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -106,14 +106,14 @@ the curated thematic map.
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
-- **RFC-0184** — Rename Perhaps to Option (`2-accepted` ; rfcs/2-accepted/rfc-0184-rename-perhaps-to-option.md ; date 2026-10-24 ; updated 2026-10-26)
 
-## Integrated (4)
+## Integrated (5)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0177** — Coercion-Aware Structural Aspect Lookup (`3-integrated` ; rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md ; date 2026-10-06 ; updated 2026-10-06 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1296)
 - **RFC-0181** — Anonymous open rows in return and function types (`3-integrated` ; rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-20 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1480)
+- **RFC-0184** — Rename Perhaps to Option (`3-integrated` ; rfcs/3-integrated/rfc-0184-rename-perhaps-to-option.md ; date 2026-10-24 ; updated 2026-10-26 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1625)
 
 ## Implemented (70)
 

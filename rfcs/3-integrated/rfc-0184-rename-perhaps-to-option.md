@@ -2,14 +2,21 @@
 id: rfc-0184
 title: "Rename Perhaps to Option"
 date: '2026-10-24'
-status: accepted
+coverage:
+  "1": { kind: blocked, reason: "the rename is integrated into spec.types.perhaps-t.legality-2 but not implemented; its fixtures land with the implementation", ref: "metel-core#1625" }
+  "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
+status: integrated
 updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1595'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1625'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
 
 > **Status — accepted (2026-10-26).** Rename accepted by the language owner; hard cut, shadowable, RFC-0182 rewritten, dated posts left as records
+
+> **Status — integrated (2026-10-26).** Spec section renamed with a new rule for the removed name; cross-checked against the integrated spec and the sibling RFCs
 
 ## Summary
 
@@ -203,6 +210,71 @@ a hard cut, or one release in which `Perhaps` remains as a deprecated alias.
 - RFC-0182 — `?` on `Perhaps`.
 - metel-core#1585, #1570 — by-name lookups of core types, the same sites the rename touches.
 - `reference/spec/types.md` — "Perhaps<T>" (`spec.types.perhaps-t.*`).
+
+---
+
+## Integration cross-check (2026-10-26)
+
+The rename is not implemented, so these worked examples are derived from the integrated spec's rules, not
+run; each becomes a fixture with the implementation (metel-core#1625). They hunt for interactions with
+already-integrated features and with the sibling RFCs still under review.
+
+**1. The removed name, at every site the hint covers** (`spec.types.perhaps-t.legality-2`).
+
+```metel
+import std::core::Perhaps;                       // T0003, "`Perhaps` is now `Option`"
+fun f(x: Perhaps<i64>) -> i64 { 0 }              // T0003, same hint (type position)
+fun g() { let a := std::core::Perhaps::None; }   // T0003, same hint (qualified path)
+fun h() { let b := Perhaps::None; }              // T0003, same hint (leading path segment)
+```
+
+The hint is an addition to the message of the existing code; no new code, and no change when the name
+resolves to something. It must not fire for a path that merely ends in `Perhaps` (`other::Perhaps` where
+`other` is a user module that declares no such item): that is an ordinary unresolved path.
+
+**2. A module that declares its own `Perhaps`** is a user type like any other. After the rename it no longer
+shadows anything, so `enum Perhaps { Maybe, Not }` plus `Perhaps::Maybe` resolves to the user's enum with no
+hint, and the shadowing fixtures written against the old name keep their meaning once they shadow `Option`.
+
+**3. Shadowing `Option`** (`scoping-and-shadowing.legality-9`, metel-core#1585). A module-level or
+block-local `enum Option<T> { Has { v: T }, Nothing }` wins for names written in that module; a value
+`std::env::get` returns keeps the core type, so `match` on it names core's `Some`/`None`. Naming the core
+type from inside the shadowing module works in a type position (`std::core::Option<i64>`, #1587). The
+qualified *expression* form (`std::core::Option::Some { value = 1 }`) resolves to the module's own `Option`
+today for the same reason it does for `Result` (metel-core#1616, open): the rename inherits that bug, it
+does not add one. The interaction is recorded here so the fixture for it is written against #1616's fix, not
+against the bug.
+
+**4. Aliased imports of the core type** (#1588). `import std::core::Option as Opt;` then
+`let r: Opt<i64> := Opt::Some { value = 1 };` constructs against the annotation, as `import std::core::Result
+as CR;` does today. The alias is a user-chosen name, so the hint never applies to it.
+
+**5. `?` on `Option`** (RFC-0182, rewritten to `Option` with this acceptance). The enclosing-return-type
+constraint compares the core `Option`, not a name; a function returning a shadowing user `Option` is neither
+`Result` nor the core type and keeps the "needs the enclosing function to return" error. No interaction with
+the rename beyond the spelling in the messages.
+
+**6. The intrinsic-name reservation** (`legality-8`). `Option` is not an intrinsic type name and is not added
+to the list; `T0038` does not apply, and `int_03_generic_option_chain` (a user `enum Option<T>`) keeps
+compiling. The reserved list and the shadowable core list stay disjoint.
+
+**7. Diagnostics that print the type.** Unification, bound and record-diff messages print `Option<String>`.
+Nothing in the message grammar depends on the name; the `T0001` text in RFC-0182's example becomes
+`cannot unify Option<String> with Result<?1, ?2>`.
+
+**8. Identity.** The core declaration is interned once under its new name, and a user `Perhaps` or `Option`
+gets its own `Declared` id (ADR-0065: ids are tagged, so no kind can collide). The by-name registry sites
+the RFC lists compare the declaring module's id since metel-core#1585/#1604; the rename changes the
+registered string and the `Builtin` variant, not how a site finds the type.
+
+**9. Sibling RFCs.** RFC-0182 (rewritten, no remaining dependency on the old name). RFC-0183 (`:=` is
+initialization-only), RFC-0185 (type-directed dereference) and RFC-0186 (row operator) do not mention the
+type or its variants in a rule; their examples that say `Perhaps` change spelling only, when those RFCs
+are next edited.
+
+**Result.** No contradiction with the integrated spec and none with the RFCs active in the same cluster.
+One dependency is recorded (example 3, #1616); it is an existing bug the rename does not worsen.
+
 
 ---
 
