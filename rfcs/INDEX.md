@@ -1449,7 +1449,7 @@ implementation).
   recorded in RFC-0098; familiarity won. Hard cut with a `T0003` hint ("`Perhaps` is now
   `Option`"), no alias; `Option` stays shadowable like `Result` and `List`; RFC-0182 was
   rewritten to say `Option`; dated posts stay as records.
-- **RFC-0182** *(accepted 2026-10-26)* — `?` on `Option`.
+- **RFC-0182** *(implemented, v0.15.0)* — `?` on `Option`.
   Early-return `None` from an `Option`-returning function;
   the operand and return type constructors must match, and the mixed cases stay errors
   (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Option` rejection in

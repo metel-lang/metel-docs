@@ -9,11 +9,11 @@ coverage:
   "4": { spec: "spec.functions.closures.dynamics-13" }
   "5": { kind: untestable, reason: "lists the spec edits made by this change; each is covered by its own rule" }
   "6": { spec: "spec.functions.the-operator.legality-1" }
-status: integrated
+status: implemented
 updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1593'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1635'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
@@ -25,6 +25,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-26).** Reviewed 2026-10-26; open questions resolved
 
 > **Status — integrated (2026-10-26).** Spec integrated; implementation tracked in #1635
+
+> **Status — implemented (2026-10-26).** Implemented by metel-core#1635
 
 ## Summary
 
