@@ -1118,7 +1118,7 @@ consumed by the call.
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-13}
 
-An early exit from a `mutating` call is a `?`-propagated `Err` or an early `return`, not a
+An early exit from a `mutating` call is a `?`-propagated `Err` or `None`, or an early `return`, not a
 `panic` — a panic is uncatchable and leaves no observable post-exit state
 ([runtime.md](runtime.md#spec.runtime.panics.dynamics-1)). On such an exit from a `var`
 (non-`once`) call, mutations already made stay in the environment, the exclusive borrow
@@ -1242,7 +1242,7 @@ parentheses. There is no standalone instantiation-without-calling value form:
 
 ## The ? Operator
 
-> **Availability:** Matching-error `?` since v0.1.0. `From`-based error coercion since v0.4.0.
+> **Availability:** Matching-error `?` since v0.1.0. `From`-based error coercion since v0.4.0. `?` on `Option<T>` since v0.15.0 (RFC-0182).
 
 Inside a function returning `Result<T, E>`, [`?` propagates errors early](#spec.functions.the-operator.dynamics-2):
 
@@ -1276,17 +1276,44 @@ satisfy `E2: From<E1>`](#spec.functions.the-operator.legality-2). When `E1 == E2
 conversion is performed. When they differ, `From::from` is called automatically on the
 error value before re-wrapping in `Err`.
 
-[`?` does not apply to `Option<T>`](#spec.functions.the-operator.legality-1) in this
-language version. It is supported only for `Result<T, E>`, so using `?` on an `Option`
-value is a type error (`T0001`) rather than an early `None` return.
+`?` also applies to `Option<T>` in a function or closure returning `Option<U>`: `e?` is the
+`Some` value, or returns `None` from the enclosing function. The operand's type constructor
+must match the enclosing return type's ([legality rule 1](#spec.functions.the-operator.legality-1)); mixed use is a
+type error (`T0001`) whose help line names the bridge, `.ok_or(...)` for an `Option` in a
+`Result` function and `.ok()` for a `Result` in an `Option` function.
+
+```metel
+fun sum_first_two(xs: List<i64>) -> Option<i64> {
+    let a := xs.get(0)?;                  // Option<i64> -> i64, or return None
+    let b := xs.get(1)?;
+    Some { value = a + b }
+}
+
+fun half(r: Result<i64, String>) -> Option<i64> {
+    let n := r.ok()?;                     // Result -> Option, then `?`
+    Some { value = n / 2 }
+}
+
+fun main() {
+    let xs: List<i64> := [3, 4];
+    assert(sum_first_two(xs).unwrap_or(0) == 7);
+    assert(sum_first_two([1]).is_none());
+    assert(half(Ok { value = 8 }).unwrap_or(0) == 4);
+}
+```
+
+An early `None` exit leaves the enclosing function or closure body, not the block containing
+the `?`.
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.functions.the-operator.legality-1}
 
-The `?` operator requires a `Result<T, E>` operand; applying it to `Option<T>` or any
-other type is a type error.
+The `?` operator requires an operand of type `Result<T, E>` or `Option<T>` whose type
+constructor equals that of the enclosing function or closure's return type; any other
+operand, or any other pairing, is a type error. When the return type is not yet known, the
+operand's constructor fixes it.
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
@@ -1297,8 +1324,9 @@ other type is a type error.
 
 ##### Legality Rule {#spec.functions.the-operator.legality-2}
 
-The enclosing function's return type must be `Result<U, E2>`, and the operand error
-type `E1` must equal `E2` or satisfy `E2: From<E1>`.
+For a `Result` operand, the enclosing function's return type must be `Result<U, E2>`, and the
+operand error type `E1` must equal `E2` or satisfy `E2: From<E1>`. An `Option` operand has no
+error type and no conversion.
 
 <!-- rfc.py:last_reviewed 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
 
@@ -1330,6 +1358,13 @@ function; when the error types differ, the returned error is `E2::from(error)`.
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjYxX3Byb3BhZ2F0ZV9lcnJvcl9jb2VyY2lvbi5tdGwiLCJzb3VyY2UiOiIvLyBgP2Agb3BlcmF0b3Igd2l0aCBGcm9tIGNvZXJjaW9uOiBFMSAhPSBFMi5cblxuYXNwZWN0IEZyb208VD4ge1xuICAgIGZ1biBmcm9tKHZhbHVlOiBUKSAtPiBTZWxmO1xufVxuXG5zdHJ1Y3QgUGFyc2VFcnJvciB7XG4gICAgbXNnOiBTdHJpbmcsXG59XG5cbnN0cnVjdCBBcHBFcnJvciB7XG4gICAgbXNnOiBTdHJpbmcsXG59XG5cbmV4dGVuZCBBcHBFcnJvcjogRnJvbTxQYXJzZUVycm9yPiB7XG4gICAgZnVuIGZyb20odmFsdWU6IFBhcnNlRXJyb3IpIC0+IEFwcEVycm9yIHtcbiAgICAgICAgcmV0dXJuIEFwcEVycm9yIHsgbXNnID0gXCJwYXJzZSBlcnJvcjogXCIgKyB2YWx1ZS5tc2cgfTtcbiAgICB9XG59XG5cbmZ1biBwYXJzZV9pbnQoczogU3RyaW5nKSAtPiBSZXN1bHQ8aTY0LCBQYXJzZUVycm9yPiB7XG4gICAgaWYgKHMgPT0gXCI0MlwiKSB7XG4gICAgICAgIHJldHVybiBSZXN1bHQ6Ok9rIHsgdmFsdWUgPSA0MiB9O1xuICAgIH1cbiAgICByZXR1cm4gUmVzdWx0OjpFcnIgeyBlcnJvciA9IFBhcnNlRXJyb3IgeyBtc2cgPSBcImludmFsaWQgaW50ZWdlclwiIH0gfTtcbn1cblxuZnVuIGxvYWQoczogU3RyaW5nKSAtPiBSZXN1bHQ8aTY0LCBBcHBFcnJvcj4ge1xuICAgIGxldCBuIDo9IHBhcnNlX2ludChzKT87XG4gICAgcmV0dXJuIFJlc3VsdDo6T2sgeyB2YWx1ZSA9IG4gKiAyIH07XG59XG5cbmZ1biBtYWluKCkge1xuICAgIG1hdGNoIChsb2FkKFwiNDJcIikpIHtcbiAgICAgICAgUmVzdWx0OjpPayB7IHZhbHVlIH0gPT4gYXNzZXJ0KHZhbHVlID09IDg0KSxcbiAgICAgICAgUmVzdWx0OjpFcnIgeyBlcnJvciB9ID0+IGFzc2VydChmYWxzZSksXG4gICAgfTtcblxuICAgIG1hdGNoIChsb2FkKFwiYmFkXCIpKSB7XG4gICAgICAgIFJlc3VsdDo6T2sgeyB2YWx1ZSB9ID0+IGFzc2VydChmYWxzZSksXG4gICAgICAgIFJlc3VsdDo6RXJyIHsgZXJyb3IgfSA9PiBhc3NlcnQoZXJyb3IubXNnID09IFwicGFyc2UgZXJyb3I6IGludmFsaWQgaW50ZWdlclwiKSxcbiAgICB9O1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE0LjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZXJyb3JfaGFuZGxpbmcvNjFfcHJvcGFnYXRlX2Vycm9yX2NvZXJjaW9uLm10bCIsIm5hbWUiOiI2MV9wcm9wYWdhdGVfZXJyb3JfY29lcmNpb24ubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.functions.the-operator.dynamics-3}
+
+Evaluating `Some { value }?` produces `value`; evaluating `None?` immediately returns `None`
+from the enclosing function or closure body, dropping every live binding as an ordinary
+`return` does.
+
 
 </details>
 
