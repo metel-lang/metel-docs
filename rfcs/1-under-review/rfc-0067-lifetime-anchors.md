@@ -312,7 +312,7 @@ fun pick<&s, &t: &s>(&s Str, &t Str) -> &t Str { ... }
 field access and method dispatch deref through the allocator pointer transparently.
 
 ```metel
-let node = @a Node { val = 1, next = Perhaps::None };
+let node = @a Node { val = 1, next = Option::None };
 
 let v = node.val;      // auto-deref: @a Node → Node, read field
 node.val = 2;          // auto-deref: @a Node → Node, write field

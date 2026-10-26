@@ -108,7 +108,7 @@ keyword collision.
 ## 4. Interaction with sibling surface-syntax RFCs
 
 - **RFC-0099 (Dot-Separated Module Paths) — does *not* rescue Option A.** RFC-0099's own disambiguation
-  problem (`std.core.Perhaps.Some`) isn't a type-vs-value casing question — it's that *module* path
+  problem (`std.core.Option.Some`) isn't a type-vs-value casing question — it's that *module* path
   segments (`std`, `core`, `parser`) are lowercase, same as values, sitting in the middle of a path that's
   unambiguously "type-side." This RFC doesn't introduce a fourth category for modules, and even if it did,
   a hard casing rule still couldn't distinguish "lowercase module segment, keep resolving" from "lowercase

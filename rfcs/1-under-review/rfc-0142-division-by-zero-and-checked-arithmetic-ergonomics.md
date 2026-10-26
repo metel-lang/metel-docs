@@ -315,14 +315,14 @@ before the division — unenforced (nothing stops the guard and the division fro
 drifting apart during a later edit), and boilerplate repeated at every call site that
 cares.
 
-### 6.2 Option B — `checked_div`/`checked_rem`, `Perhaps<T>`-returning, `/` unchanged
+### 6.2 Option B — `checked_div`/`checked_rem`, `Option<T>`-returning, `/` unchanged
 
-Add `a.checked_div(b) -> Perhaps<T>` / `a.checked_rem(b) -> Perhaps<T>` (per integer
+Add `a.checked_div(b) -> Option<T>` / `a.checked_rem(b) -> Option<T>` (per integer
 type, matching `core.mtl`'s existing per-type method style) alongside the unchanged
 panicking `/`/`%`. Directly mirrors Rust's `checked_div`. Cheap to implement (a
-native method returning `nope`/`Perhaps::Some` instead of panicking — the zero-check
+native method returning `nope`/`Option::Some` instead of panicking — the zero-check
 already exists in `eval_binop`, this just changes what happens on the `true` branch),
-composes with `?`/`match`/`unwrap_or` the same as every other `Perhaps`-returning
+composes with `?`/`match`/`unwrap_or` the same as every other `Option`-returning
 stdlib function already does (`env::get`, `List::get`).
 
 Ergonomic *for code that remembers to reach for it* — but doesn't change `/`'s own
@@ -338,7 +338,7 @@ The type-safe candidate. A wrapper type per integer type (or one generic
 `NonZero<T: Integer>`), constructed fallibly:
 
 ```metel
-let n: Perhaps<NonZero<i64>> := NonZero::new(user_input);
+let n: Option<NonZero<i64>> := NonZero::new(user_input);
 ```
 
 `a / b` where `b: NonZero<T>` becomes a **total function** — panic-free by
@@ -352,7 +352,7 @@ detail:**
 - **The runtime-computed case still needs a fallible constructor.** This is
   irreducible: whether a runtime value is zero is real information, and it has to
   enter the type system through *some* fallible step, the same as Option B's
-  `checked_div`. `NonZero::new` returning `Perhaps<NonZero<T>>` is that step —
+  `checked_div`. `NonZero::new` returning `Option<NonZero<T>>` is that step —
   `NonZero<T>` doesn't remove this cost, it relocates it from "checked at every
   division" to "checked once at construction," which pays off only when one
   `NonZero<T>` value gets divided into more than once (a loop, a function called
@@ -386,7 +386,7 @@ this is the most expensive option to build well, and the option most likely to b
 built *badly* (a `NonZero<T>` nobody reaches for because it's more typing than
 `checked_div` for no benefit) if the ergonomics work is skipped.
 
-### 6.4 Option D — `/`/`%` themselves return `Perhaps<T>`/`Result<T, E>`
+### 6.4 Option D — `/`/`%` themselves return `Option<T>`/`Result<T, E>`
 
 The maximal-safety end of the spectrum: change what `/` *means* for integers, so
 every division is checked, always. No language in the §4 survey does this for its
@@ -439,7 +439,7 @@ division's status quo**: a manual pre-check for division is one comparison
 multiplication) — exactly the kind of thing a language provides a checked primitive
 for rather than leaving to be re-derived correctly on every use.
 
-### 7.2 Option B′ — `checked_add`/`checked_sub`/`checked_mul`/`checked_div`, `Perhaps<T>`-returning
+### 7.2 Option B′ — `checked_add`/`checked_sub`/`checked_mul`/`checked_div`, `Option<T>`-returning
 
 Direct mirror of division's Option B (§6.2), applied to all four operators. Cheap for
 the same reason: the `checked_*` calls already exist in `eval_binop`, this only
@@ -451,7 +451,7 @@ this just gives code that remembers to reach for it a way out.
 
 **No division equivalent exists in this document** — this is new territory, and the
 cheapest genuinely type-safe option in either half of this RFC. Two's-complement
-wraparound, returned directly as `T`: no `Perhaps`, no fallible constructor, no
+wraparound, returned directly as `T`: no `Option`, no fallible constructor, no
 narrowing story, because wrapping is *already* a total function over every possible
 `(a, b)` pair — there is no input that makes it fail. `wrapping_div` still needs the
 zero-divisor guard `checked_div` does (wrapping doesn't rescue *that* condition,
@@ -527,13 +527,13 @@ own timeline.
 **Overflow.** Ship Options C′ and D′ together (§7.3, §7.4) — `wrapping_*` and
 `saturating_*` — before, or at least alongside, Option B′ (`checked_*`, §7.2). This
 inverts the division recommendation's ordering, deliberately: for division, the
-checked/`Perhaps` option was the cheap one and the type-safe wrapper was the
+checked/`Option` option was the cheap one and the type-safe wrapper was the
 expensive, contingent one. For overflow, §5.2's asymmetry flips that — wrapping and
-saturating are *already* the cheap, unconditionally type-safe options (no `Perhaps`,
+saturating are *already* the cheap, unconditionally type-safe options (no `Option`,
 no wrapper type, no narrowing story needed at all), while `checked_*` adds nothing
 over them except a way to detect the condition happened, which `overflowing_*`
 (Option E′, §7.5) already subsumes. Ship C′/D′ now; add B′/E′ only if a real use case
-asks for the boolean/`Perhaps` shape specifically rather than a clamped or wrapped
+asks for the boolean/`Option` shape specifically rather than a clamped or wrapped
 value. Option F′ (contextual `checked`/`unchecked`, §7.6) is real, working precedent
 elsewhere, but is language-feature-sized work, not stdlib-addition-sized — worth its
 own follow-up RFC if pursued, not bundled into this one's recommendation. Option G′,
@@ -559,7 +559,7 @@ above ships, not a substitute for any of it.
    itself?~~ **Resolved 2026-08-26 — D3 amended, not the implementation.** No
    debug/release build-mode concept exists for Metel programs at all; building one
    solely for this was judged not worth it. See §2.
-4. **Does `Perhaps<NonZero<T>>::yolo()` for a compile-time-provable-nonzero literal
+4. **Does `Option<NonZero<T>>::yolo()` for a compile-time-provable-nonzero literal
    need to exist as an ergonomic escape hatch**, or does §6.3's literal-inference
    proposal make that path unnecessary in practice? Only matters if literal inference
    doesn't fully land.

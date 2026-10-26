@@ -395,7 +395,7 @@ the attachment target explicit:
 ```metel
 @derive(Clone)             // metadata attaches to the following declaration
 struct Node<storage a> {
-    next: Perhaps<Node@a>, // storage identity attaches to the preceding type
+    next: Option<Node@a>, // storage identity attaches to the preceding type
 }
 ```
 

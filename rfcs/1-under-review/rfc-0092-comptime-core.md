@@ -198,7 +198,7 @@ double work to reconcile — no content conflict here, just independent confirma
 
 ## 1. Generics as comptime sugar
 
-A `type` (e.g. `Point`, `i64`, `Perhaps<T>`) can be bound, passed, and returned like any
+A `type` (e.g. `Point`, `i64`, `Option<T>`) can be bound, passed, and returned like any
 other comptime-known value. This is also the natural explanation for Metel's existing
 `<T>` generics (spec: `public/reference/spec/types.md`, "Generics"): Zig does not have
 `<T>`-style generics as a mechanism separate from comptime — `fun first(comptime T: type, arr: T[])`
@@ -246,12 +246,12 @@ implemented as a constraint verified against `typeinfo(T)` and aspect-impl looku
 comptime evaluation of the body. Concretely:
 
 ```metel
-fun first<T: Clone>(arr: [T]) -> Perhaps<T> {
+fun first<T: Clone>(arr: [T]) -> Option<T> {
     // comptime T: type, with `T: Clone` checked against typeinfo(T)/impl lookup
     // at this definition, exactly as RFC-0061's bound checker already does today —
     // not deferred to whichever call site happens to instantiate T
     if (array_len(arr) == 0) { return None; }
-    return Perhaps::Some { value = arr[0] };
+    return Option::Some { value = arr[0] };
 }
 ```
 

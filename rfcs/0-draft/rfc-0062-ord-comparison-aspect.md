@@ -197,7 +197,7 @@ pub fun clamp<T: Ord>(x: T, lo: T, hi: T) -> T { min(max(x, lo), hi) }
 // List<T> (std::core)
 extend List<T> {
     pub fun contains(self, value: T) -> boolean where T: Eq { … }
-    pub fun max(self) -> Perhaps<T> where T: Ord { … }
+    pub fun max(self) -> Option<T> where T: Ord { … }
     // sort: see Open Questions (needs a mutable in-place or returning form)
 }
 ```

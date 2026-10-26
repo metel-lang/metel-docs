@@ -237,7 +237,7 @@ must go through `.clone()` or an owning path instead.
 | `*mut T` coerces to `*T` | `&var T` coerces to `&T` |
 
 RFC-0043 §6 (auto-deref for field access, method calls) is preserved. RFC-0043 §8 (no pointer
-arithmetic) carries over unchanged. Nullability via `Perhaps<*T>` becomes `Perhaps<&T>`.
+arithmetic) carries over unchanged. Nullability via `Option<*T>` becomes `Option<&T>`.
 
 ---
 

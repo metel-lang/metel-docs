@@ -206,7 +206,7 @@ Some { value: f(value) }                    // literal — `:` becomes `=`
 ```
 
 and they co-occur, including on a single line — `stdlib/core.mtl:42` is
-`Perhaps::Some { value } => Perhaps::Some { value: f(value) }`, a pattern and a literal in
+`Option::Some { value } => Option::Some { value: f(value) }`, a pattern and a literal in
 one expression.
 
 **Consequence: a naive regex sweep will corrupt declarations.** The migration wants either a

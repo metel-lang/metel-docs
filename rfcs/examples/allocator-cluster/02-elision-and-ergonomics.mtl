@@ -100,11 +100,11 @@ fun pick_shorter_lived<&s, &t: &s>(long_lived: &t String, short_lived: &s String
 //                                           │
 // fun parse_header(@a: BumpAlloc,           │ fun parse_header(@a: BumpAlloc,
 //     line: String,                         │     line: String,
-// ) -> Perhaps<@a Header> { ... }           │ ) -> Perhaps<@Header> { ... }
+// ) -> Option<@a Header> { ... }           │ ) -> Option<@Header> { ... }
 //                                           │
 // fun find_header<&a>(@a: BumpAlloc,        │ fun find_header(@a: BumpAlloc,
 //     req: &a Request, name: String,        │     req: &Request, name: String,
-// ) -> Perhaps<&a String> { ... }           │ ) -> Perhaps<&String> { ... }
+// ) -> Option<&a String> { ... }           │ ) -> Option<&String> { ... }
 //
 // The allocator parameter itself is never elided away — `@a: BumpAlloc` is
 // the one place a storage decision is actually being made (RFC-0063's

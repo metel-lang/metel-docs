@@ -4,6 +4,23 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.15.0
+
+**In progress on `develop` — not yet released.**
+
+**Breaking changes:**
+
+- `Perhaps<T>` is renamed `Option<T>` (RFC-0184, `metel-core#1625`). Only the name changes: the variants
+  `Some { value }` and `None`, every method (`is_some`, `unwrap_or`, `and_then`, `ok_or`, `yolo`, ...),
+  and all type-checking behaviour are as before. Write `Option<T>` in annotations, `Option::None` and
+  `std::core::Option::Some { .. }` in paths, and `import std::core::Option`. There is no alias:
+  `Perhaps` is no longer a name in `std::core`, and using it where nothing declares it is `T0003` with
+  the message "`Perhaps` is now `Option`" (for a type, a path, an expression or pattern name, and an
+  import). A module that declares its own `Perhaps` is unaffected, and `Option` may be shadowed by a
+  module or block declaration like `Result` and `List`. Diagnostics that print the type now print
+  `Option<String>`. The specification, tutorials and getting-started pages say `Option`; dated posts
+  are left as published.
+
 ## v0.14.1
 
 **Released 2026-10-26.** A patch release of diagnostics, block-local types, name resolution and

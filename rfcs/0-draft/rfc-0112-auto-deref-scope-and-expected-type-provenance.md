@@ -325,7 +325,7 @@ to discover. `construct_binop`'s `Eq | Ne` arm has no operand check at all — P
 constrains the two operands to unify with each other, so mixed types are caught by
 unification while same-type-on-both-sides reaches an evaluator whose `==` arms cover only
 the numeric scalars, `Boolean`, `Str` and `Char`. This is not reference-specific: structs,
-enums (including `Perhaps`), arrays, tuples and unit all behave the same way.
+enums (including `Option`), arrays, tuples and unit all behave the same way.
 
 **Filed as issue #561**, with the design fix (routing `==` through the `Eq` aspect that
 already exists at `stdlib/core.mtl:194` and already works via `.eq()` method dispatch)

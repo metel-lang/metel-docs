@@ -39,10 +39,10 @@ prefix. Scoped to pattern position only — `match p { Red => ..., Green => ... 
 
 Every enum-variant pattern today requires full qualification, with one pre-existing,
 hardcoded exception. `Pattern::None(Span)` is a dedicated AST node special-cased for
-exactly `Perhaps::None` (`src/ast/mod.rs`, matched in `src/evaluator/pattern.rs`,
+exactly `Option::None` (`src/ast/mod.rs`, matched in `src/evaluator/pattern.rs`,
 `src/typechecker/construction.rs`'s `pattern_covers_variant`, and elsewhere) — every
-existing test fixture already writes `match n { None => -1, Perhaps::Some { value } =>
-value }`, never `Perhaps::None`. `None` gets the ergonomic short form; `Some` does not,
+existing test fixture already writes `match n { None => -1, Option::Some { value } =>
+value }`, never `Option::None`. `None` gets the ergonomic short form; `Some` does not,
 and neither does any variant of a user-defined enum:
 
 ```metel
@@ -60,7 +60,7 @@ fun name(c: Colour) -> String {
 The repetition scales with variant count and is pure noise once the match's scrutinee
 type is already known — `c`'s type is `Colour`, so every arm's `Colour::` prefix is
 exactly the same, forced, and uninformative. This RFC generalizes the existing
-`Perhaps::None` special case into a real language feature covering any enum, rather than
+`Option::None` special case into a real language feature covering any enum, rather than
 leaving it a one-off exception.
 
 ---
@@ -238,8 +238,8 @@ well-cased code, without being required for this RFC's correctness.
 ## 4. `Pattern::None`'s special case becomes redundant
 
 Once this ships, `Pattern::None(Span)` (`src/ast/mod.rs`) — hardcoded to recognize bare
-`None` as specifically `Perhaps::None` — is subsumed by the general mechanism: a bare
-`None` in a match arm over a `Perhaps<T>` scrutinee resolves via the same §1.1 path any
+`None` as specifically `Option::None` — is subsumed by the general mechanism: a bare
+`None` in a match arm over an `Option<T>` scrutinee resolves via the same §1.1 path any
 other no-field variant does. Removing the dedicated AST node, its grammar production,
 and its three-or-more call sites (`src/evaluator/pattern.rs`, `construction.rs`'s
 `pattern_covers_variant` and `is_catch_all_pattern`, `Literal::None`'s pattern-context
@@ -328,7 +328,7 @@ not questions:
   nothing to reconcile.
 - **`Pattern::None` removal is purely additive, not breaking.** Confirmed directly: the
   qualified grammar production (`ident ~ "::" ~ ident ~ ...`) and the bare-identifier
-  path (§1.1) are both unchanged by §4's removal — `Perhaps::None` keeps parsing exactly
+  path (§1.1) are both unchanged by §4's removal — `Option::None` keeps parsing exactly
   as before, and bare `None` keeps working via the general mechanism instead of the
   dedicated node. No spelling a user could write today stops working; only the internal
   representation (one dedicated AST node vs. one general rewrite) changes. No version

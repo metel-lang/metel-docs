@@ -39,7 +39,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 
 ##### Requirement {#arch.evaluation.requirement-3}
 
-`Perhaps` and `Result` are ordinary `Value::Enum { name, variant, fields, .. }` values with no dedicated `Value` variants; name-specific handling is confined to `display.rs`, the built-in constructors, and the `for`-loop's end check on `Perhaps::None`.
+`Option` and `Result` are ordinary `Value::Enum { name, variant, fields, .. }` values with no dedicated `Value` variants; name-specific handling is confined to `display.rs`, the built-in constructors, and the `for`-loop's end check on `Option::None`.
 
 | Field | Value |
 |---|---|
