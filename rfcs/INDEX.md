@@ -807,7 +807,7 @@ number, a backwards RFC-0067a split direction).
   bare allocation expression with no concrete type to filter by — stays a hard
   compile error, matching how Kotlin's own context parameters resolve a genuine
   same-type collision (loudly, not by nesting depth), not a new silent tiebreak.
-- **RFC-0066** *(accepted)* — Allocated Value Extraction — individual drop/move-out; the
+- **RFC-0066** *(under review — amended 2026-10-26 by RFC-0185: extraction is `*ptr`)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
 - **RFC-0067** *(under review — reverted from accepted 2026-08-02)* — Lifetime Anchors — the narrowed remainder after RFC-0067a
@@ -1435,10 +1435,10 @@ implementation).
 ## Small, mostly standalone syntax/ergonomics items
 
 - **RFC-0004** — `main()` return type — should it return `Result`?
-- **RFC-0185** — Remove type-directed dereference. Retires the implicit read-copy out of a
+- **RFC-0185** *(implemented, v0.15.0)* — Remove type-directed dereference. Retires the implicit read-copy out of a
   reference (RFC-0067a §3a): reading through a reference is always `*r`; selector auto-deref
-  stays. It is RFC-0112's declined "Strict Go" alternative, so accepting it supersedes
-  RFC-0112 and vice versa. Tracked by metel-core#1596.
+  stays. It is RFC-0112's declined "Strict Go" alternative and supersedes it. Tracked by
+  metel-core#1596; implemented by metel-core#1631.
 - **RFC-0183** — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
@@ -1558,7 +1558,7 @@ implementation).
   read-side extensions split into RFC-0112. Also corrects its own earlier claim that
   index-path write-through was "kept unchanged" — it does not work through a reference
   today, so it is an addition with real cost.
-- **RFC-0112** *(draft, opened 2026-07-21)* — Auto-Deref Scope and Expected-Type
+- **RFC-0112** *(superseded by RFC-0185, 2026-10-26; opened 2026-07-21)* — Auto-Deref Scope and Expected-Type
   Provenance — **the auto-deref half.** Where implicit read-copy fires, and how that
   boundary is *enforced* rather than emergent. Rule: it fires only when the expected type
   was authored in the declaration the expression is lexically inside — not a callee's

@@ -8,11 +8,11 @@ coverage:
   "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
   "4": { kind: untestable, reason: "records resolved design questions; each resolution is stated as a rule in section 1" }
   "5": { kind: untestable, reason: "a cross-check against other rules; it states no new rule" }
-status: integrated
+status: implemented
 updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1596'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1631'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
@@ -20,6 +20,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-26).** Open questions resolved 2026-10-26
 
 > **Status — integrated (2026-10-26).** Spec integrated; implementation tracked in #1631
+
+> **Status — implemented (2026-10-26).** Implemented by metel-core#1631
 
 ## Summary
 
@@ -259,8 +261,9 @@ Worked against the integrated spec and the implemented RFCs it touches:
   through a reference but keeps dyn erasure, `[T; N]` → `[T]` and singleton coercions (RFC-0078).
 - **RFC-0066** — its type-directed extraction is made explicit (`*ptr`) in the same change; it is
   unimplemented and returns to `1-under-review`.
-- **T0024** — kept for an explicit `*r` of a non-`Copy` referent at the former read-copy sites, so
-  the always-on rejection from #649 is not lost; the implicit forms are `T0001`.
+- **T0024** — retired. It only existed to reject the implicit read-copy of a non-`Copy` referent;
+  with the implicit read gone, the implicit forms are `T0001` and an explicit `*r` of a non-`Copy`
+  referent is `T0019` from the move checker (`--move-check`), as it already was.
 
 ## References
 

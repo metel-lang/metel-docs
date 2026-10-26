@@ -20,6 +20,17 @@ title: "Metel Language Changelog"
   module or block declaration like `Result` and `List`. Diagnostics that print the type now print
   `Option<String>`. The specification, tutorials and getting-started pages say `Option`; dated posts
   are left as published.
+- A reference is no longer read out implicitly as its referent (RFC-0185, `metel-core#1631`).
+  Reading the value a reference points to is always `*r`; one `*` per layer of a chain. These now
+  fail with `T0001`, "expected `i64`, found `&i64`", and the help line "read the value out with
+  `*r` (copies a Copy referent)": `let y: i64 := r;`, a call argument `take(r)`, `return r`, a
+  tail expression, `break r`, and an ascription `(r: i64)`. Write `let y: i64 := *r;`,
+  `take(*r)`, `return *r`, `*r` as the tail, `break *r`, and `(*r: i64)`; use `**rr` for
+  `rr: &&i64`. Field access, indexing and method calls still auto-dereference, `&var T` still
+  coerces to `&T`, and ascription still performs `dyn` and `[T; N]` to `[T]` coercions. Error code
+  `T0024` (read-copy of a non-`Copy` value) is retired: a non-`Copy` read is `T0001` when
+  implicit and `T0019` under `--move-check` when written `*r`. The specification and tutorials
+  are updated.
 
 ## v0.14.1
 
