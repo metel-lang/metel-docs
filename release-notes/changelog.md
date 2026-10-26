@@ -6,7 +6,10 @@ title: "Metel Language Changelog"
 
 ## v0.14.1
 
-**In progress on `develop` — not yet released.**
+**Released 2026-10-26.** A patch release of diagnostics, block-local types, name resolution and
+tooling. It is the first patch to carry language-visible fixes; the milestone records each one as an
+exception to "no accepted programs change" (the rejected-to-accepted list, the accepted-to-rejected
+list `T0037`, `T0038`, `T0034`, and the `--move-check`-only identity fixes). No syntax changes.
 
 **Diagnostics:**
 
@@ -22,13 +25,16 @@ title: "Metel Language Changelog"
   narrowed type, and that narrowing happens through an explicit move or projection
   (`value.{ a, c }`), not at a call or binding. The program was already rejected; only the
   wording changes (`metel-core#1458`).
-- A record that does not fit a record type (an argument, an annotated `let`, a field
-  initializer) now reports the difference as a record diff instead of the raw types: ``the record
+- A record that does not fit a structurally written record type (`{ x: i64, y: i64 }`; an argument,
+  an annotated `let`, a field initializer) now reports the difference as a record diff instead of the
+  raw types: ``the record
   is missing field `y` (expected `{ x: i64, y: i64 }`, found `{ x: integer }`)``, ``field `z` is not
   part of `{ x: i64, y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``. Before, it was
   `cannot unify { x: ?1 } with { x: i64, y: i64 }`, with an internal inference variable and no
   hint which field was wrong. The code stays `T0001`; the same mismatch through a row bound is
-  `T0012` in the same words (`metel-core#1483`).
+  `T0012` in the same words (`metel-core#1483`). A record checked against a *named* `record` still
+  prints the raw types, with an inference variable (`cannot unify { x: ?1 } with P`); that is
+  `metel-core#1618`.
 - `T0032` for an anonymous open record (`{ x: T, .. }`) in a return type no longer advises naming a
   row parameter alone, which a function with no row input cannot do. It lists what works in that
   position. A private function: omit the return type so the exact record is inferred, write the
@@ -106,8 +112,10 @@ title: "Metel Language Changelog"
   and method calls on a value now use the type the value actually has, so shadowing a core type behaves
   the same as shadowing any other (`metel-core#1585`).
 - A qualified path to a `std::core` type in a type position (`std::core::Perhaps<i64>`) was rejected
-  as `unknown type`, although the same path already worked in an expression. It now resolves, so the
-  core type can be named when a module shadows its name (`metel-core#1587`).
+  as `unknown type`, although the same path already worked in an expression where nothing shadows the
+  name. It now resolves, so the core type can be named in a type position when a module shadows its
+  name. In an expression, `std::core::Result::Ok { .. }` still resolves to the module's own `Result`
+  when it declares one (`metel-core#1587`, `metel-core#1616`).
 - A variant of an aliased core enum could not be built against an annotation that uses the alias:
   `import std::core::Result as CR;` with `let r: CR<i64, String> := CR::Ok { value = 1 }` failed with
   `T0002`, because the type parameter the variant does not fix (`E`) was not taken from the
@@ -115,6 +123,18 @@ title: "Metel Language Changelog"
 - A method defined twice in one aspect impl (`extend S: Tag { fun t ... fun t ... }`), or declared
   twice in one `aspect`, was accepted and the later definition silently won. It is now `T0034`,
   as it already was for inherent `extend` blocks (`metel-core#1229`).
+
+**Known issues (tracked, none new in this release):**
+
+- A `struct`, `record` or `enum` declared inside a function does not shadow a same-named module-level,
+  imported or `std::core` type; the outer type is still the one the name resolves to
+  (`metel-core#1615`).
+- `std::core::Result::Ok { .. }` in an expression names the module's own `Result` when the module
+  declares one (`metel-core#1616`).
+- A record checked against a named `record` reports `cannot unify { x: ?1 } with P`
+  (`metel-core#1618`).
+- `T0030` rejects a `[&x]` borrow of a local that shadows an enclosing closure's by-value capture of
+  the same name (`metel-core#1613`).
 
 ## v0.14.0
 

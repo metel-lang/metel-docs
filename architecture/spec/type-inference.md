@@ -77,7 +77,7 @@ Inference and construction are separate passes: inference solves constraints and
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
 | `related` | ADR-0002, `arch.type-construction.requirement-1` |
 
 ##### Requirement {#arch.type-inference.requirement-5}
@@ -91,7 +91,7 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
+| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
 | `related` | ADR-0011, ADR-0010 |
 
 ##### Requirement {#arch.type-inference.requirement-6}

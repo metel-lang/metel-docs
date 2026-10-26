@@ -516,7 +516,7 @@ of unresolved or generic type is held until its type is known. Narrowing is
 path-sensitive, joined conservatively at merge points and loop fixpoints, matching move
 tracking.
 
-<!-- rfc.py:last_reviewed 17d5dadfd0dfe9ff1ad066cb15fa247db5f4eb2a -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -660,7 +660,7 @@ state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
 
-<!-- rfc.py:last_reviewed a0a20f994b1b -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
