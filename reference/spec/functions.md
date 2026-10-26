@@ -1383,7 +1383,7 @@ Evaluating `Some { value }?` produces `value`; evaluating `None?` immediately re
 from the enclosing function or closure body, dropping every live binding as an ordinary
 `return` does.
 
-<!-- rfc.py:last_reviewed 5f3249bae5a064979991b08cdc83dee14e2716c6 -->
+<!-- rfc.py:last_reviewed 50875ef529fdbf39df5fd51694ec61559d603c63 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
