@@ -2,12 +2,14 @@
 id: rfc-0185
 title: "Remove Type-Directed Dereference"
 date: '2026-10-24'
-status: under-review
-updated: '2026-10-24'
+status: accepted
+updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1596'
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
+
+> **Status — accepted (2026-10-26).** Open questions resolved 2026-10-26
 
 ## Summary
 
@@ -205,24 +207,27 @@ corpus should hold only one.
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-26
 
-1. **RFC-0066 §3a, extraction of an allocated value.** RFC-0067a §3a was explicitly modelled
-   on it ("the same pattern RFC-0066 §3a already established"). RFC-0066 is `2-accepted`, not
-   implemented, and says extraction is never implicit at a plain-parameter call site. Does the
-   same objection apply to the type-directed extraction it *does* allow? This RFC covers
-   references only; the answer should be decided together with it, not by default, so that
-   the two type-directed mechanisms do not diverge.
-2. **Corpus measurement first?** Recommendation: land the diagnostic (old behaviour as an
-   error with a suggestion) behind a flag, run the corpus, and put the count in this RFC
-   before it is accepted, as RFC-0136's migration surface could not be.
-3. **Hard cut or deprecation window.** As in RFC-0183: hard cut by precedent, or one release
-   with a warning. A warning here is cheap because the old behaviour is already implemented.
-4. **`break (p: i64)`.** The ascription expression `(p: i64)` in a `break` value is how the
-   current fixture drives the old rule. Without it the form is just an ordinary ascription
-   (RFC-0021); confirm nothing else relied on ascription as a coercion.
-5. **Release timing.** v0.14.1 is bug-fix only; this belongs to a feature milestone with a
-   migration note in the changelog.
+1. **RFC-0066 §3a, extraction of an allocated value.** *Resolved: extraction is explicit
+   too.* RFC-0066 is amended in the same change: `*ptr` is the only way to move a value out
+   of an `@a T` pointer, and the type-directed forms (`let node: Node := ptr;`, `ptr: Node`,
+   `process(ptr: Node)`) are removed. RFC-0066 returns to `1-under-review` with the amendment
+   (it is not implemented, so nothing regresses) and is re-accepted on its own track.
+2. **Corpus measurement first?** *Resolved: measured.* With the read-copy disabled, 22 of
+   1541 integration fixtures fail (6 negative `evaluator/references/neg_14..19_read_copy_*`
+   and 16 positive: references 01, 02, 03, 05, 07, 13; functions 66-70; closures 74; types
+   14; structs 70, 94; move_check `abstract_read_copy_boundaries`), 4 of 427 unit tests
+   (`move_check::tests`), and 4 of 215 documentation examples (`expressions.md`, three in
+   `types.md`). README, getting-started, tutorials and the blog: none. Every site is migrated
+   in the implementing change.
+3. **Hard cut or deprecation window.** *Resolved: hard cut*, with a diagnostic help line:
+   `= help: read the value out with `*r` (copies a Copy referent)`.
+4. **`break (p: i64)` and ascription.** *Resolved.* Ascription stops performing the
+   read-copy. It keeps its dyn-erasure and singleton coercions (RFC-0078), which are
+   unrelated to references. `spec.types.type-ascription.legality-1` is reworded to say so;
+   it previously claimed "no runtime conversion", which was already untrue.
+5. **Release timing.** *Resolved: v0.15.0*, with a changelog migration note.
 
 ---
 
@@ -242,4 +247,10 @@ corpus should hold only one.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** accepted (2026-10-26).
+
+Reading through a reference is always `*r`. The type-directed read-copy is removed at every
+site (`let` annotation, call argument, `return`, tail, `break`, ascription) as a hard cut
+in v0.15.0 with a `*r` help line and a changelog migration note. Ascription keeps its
+dyn/singleton coercions. RFC-0066's type-directed extraction is made explicit (`*ptr`) in
+the same change. Supersedes RFC-0112.

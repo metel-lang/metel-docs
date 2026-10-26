@@ -20,6 +20,8 @@ coverage:
   "8": { kind: untestable, reason: "This section only records excluded future design work and does not specify behavior for the implemented dereference operator." }
 ---
 
+> **Amended 2026-10-26 (RFC-0185):** the "selectors only" split now also covers the former read-copy sites; `*r` is the sole way to read a value out of a reference.
+
 > **Status — under review (2026-07-20).** Thorough draft; open questions (&*p borrow-checker interaction, redundant-deref lint, Eq/Ne peeling) are all non-blocking or implementation-time. Reviewing with the enum/reference cluster.
 
 > **Status — accepted (2026-07-20).** Design settled; extend auto-deref read-copy to call args/binops, retire bare-identifier write-through for explicit *p=v, add unary * for reads and writes. Open questions non-blocking/impl-time.
@@ -502,7 +504,7 @@ resolution runs on the *pattern* side against the scrutinee's enum; `*` is expre
 only (§8). `match *c { Red => .. }` composes both with no ordering question, because the
 peel happens before variant resolution either way.
 
-**RFC-0112 (Auto-Deref Scope, draft) — the coupling is one-directional and safe.** RFC-0112
+**RFC-0112 (Auto-Deref Scope, superseded by RFC-0185) — the coupling is one-directional and safe.** RFC-0112
 may narrow or widen where *implicit* read-copy fires. Every position it could touch remains
 spellable with an explicit `*` regardless, so no outcome of RFC-0112 can invalidate anything
 here. The reverse is also true: this RFC adds no new implicit read-copy site. Confirmed the
@@ -553,7 +555,7 @@ of reference type where §5 needs a *place*.
 - RFC-0071 (Ownership and Move Semantics, accepted, 0% implemented) — the eventual
   home for exclusivity *enforcement*; this RFC only extends/restores notation, same
   posture RFC-0067a itself took.
-- RFC-0112 (Auto-Deref Scope and Expected-Type Provenance, draft) — split out of this
+- RFC-0112 (Auto-Deref Scope and Expected-Type Provenance, superseded by RFC-0185) — split out of this
   RFC. Owns the read side: where implicit copy-out fires, and the two extensions this RFC
   originally proposed (call arguments, binary operands), declined there under a
   provenance-based rule. Neither RFC depends on the other's outcome.

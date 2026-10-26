@@ -386,7 +386,7 @@ existing behaviour rather than changing it.
 for code that violates the PascalCase convention, and the shadowing example above does
 violate it and still behaves correctly. This RFC does not depend on RFC-0101 landing.
 
-**RFC-0112 (Auto-Deref Scope, draft) — coupling removed, see §4 Q1.** RFC-0112's Motivation
+**RFC-0112 (Auto-Deref Scope, superseded by RFC-0185) — coupling removed, see §4 Q1.** RFC-0112's Motivation
 §2 was written on the assumption that this RFC would widen `param_hints`. It will not, so
 the two are independent and either may land first.
 
