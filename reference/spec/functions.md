@@ -586,7 +586,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed ef278ea1 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1210,7 +1210,7 @@ bounds (e.g. `T: Display`).
 The call's arguments must unify with their pinned types exactly as they would with an
 inferred one.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>

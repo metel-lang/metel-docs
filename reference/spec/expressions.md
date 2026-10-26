@@ -79,7 +79,7 @@ fun main() -> i64 {
 A match arm body may be either a single expression or a block, and both forms may appear in
 the same `match` expression.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
@@ -98,7 +98,7 @@ the same `match` expression.
 A block arm evaluates its statements and then its tail expression, if any; that tail is the
 arm's result, while a block with no tail produces `()`.
 
-<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
@@ -117,7 +117,7 @@ arm's result, while a block with no tail produces `()`.
 
 Bindings introduced by an arm's pattern are in scope throughout that arm's block body.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
@@ -258,7 +258,7 @@ rather than degrading to T0003.
 A bare no-field or fieldful enum variant is valid in expression position when the
 expected type determines its enum and no binding or declaration of that name is in scope.
 
-<!-- rfc.py:last_reviewed 25e71d8966dfb6e54799ec22be9247609654a833 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -277,7 +277,7 @@ expected type determines its enum and no binding or declaration of that name is 
 An in-scope binding of the same name takes precedence over a bare enum variant in
 expression position.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -293,7 +293,7 @@ expression position.
 Expected types from an annotation, return type, monomorphic call parameter, or
 struct-literal field may direct bare-variant resolution.
 
-<!-- rfc.py:last_reviewed 25e71d8966dfb6e54799ec22be9247609654a833 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -458,7 +458,7 @@ match (value) { // value : { token: Token, extra: i64, ..Rest }
 A record rest pattern's named fields must be entailed present, and its row facts must
 determine the remainder type after removing those labels; otherwise it is rejected.
 
-<!-- rfc.py:last_reviewed 121ecd0d -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 ### Matching through a reference
 
@@ -539,7 +539,7 @@ fun name(c: &Colour) -> String {
 A no-field enum variant may be written as a bare match pattern when it is a variant of
 the scrutinee's known enum type.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -557,7 +557,7 @@ the scrutinee's known enum type.
 
 A fieldful enum variant may likewise omit its enum prefix in a match pattern.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -573,7 +573,7 @@ A fieldful enum variant may likewise omit its enum prefix in a match pattern.
 Bare-variant pattern resolution is directed only by the scrutinee's concrete enum type;
 when that type is not a known enum, the identifier remains an ordinary binding.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -605,7 +605,7 @@ exhaustiveness for the enum's other variants.
 When a bare identifier exactly names a no-field variant of the scrutinee enum, it is the
 variant rather than a fresh binding; `_` or another name is required for a catch-all.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -621,7 +621,7 @@ variant rather than a fresh binding; `_` or another name is required for a catch
 The fully qualified enum-variant pattern remains valid wherever its bare spelling is
 valid.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -633,7 +633,7 @@ valid.
 `None` in pattern position is resolved by the ordinary unqualified-variant rule for a
 `Option<T>` scrutinee.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0107](../../rfcs/4-implemented/rfc-0107-unqualified-enum-variants-in-match-patterns.md)_</span>
@@ -649,7 +649,7 @@ valid.
 A `&T`, `&var T`, or nested-reference scrutinee is accepted against the ordinary
 patterns of its referent type `T`.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -665,7 +665,7 @@ patterns of its referent type `T`.
 Type checking a match uses the reference-peeled scrutinee type when checking its
 patterns.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -680,7 +680,7 @@ patterns.
 
 Exhaustiveness checking a match uses the reference-peeled scrutinee type.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -696,7 +696,7 @@ Exhaustiveness checking a match uses the reference-peeled scrutinee type.
 At runtime, matching through a reference compares the patterns with the fully dereferenced
 scrutinee value.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -712,7 +712,7 @@ scrutinee value.
 Bindings introduced while matching through a reference copy values from the peeled
 referent under the ordinary type-directed copy rule.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -744,7 +744,7 @@ against the same referent value.
 Reference peeling happens before unqualified-variant resolution, so a bare variant is
 resolved against the referent's enum type.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>

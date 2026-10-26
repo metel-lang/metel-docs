@@ -143,7 +143,7 @@ aspect Display {
 `i64`, `f64`, `boolean`, `String`, and `Char` have built-in `Display` implementations whose
 `to_string` methods return their canonical string representations.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -174,7 +174,7 @@ Arrays, lists, and ranges implement `Iterable<T>`; a user-defined type is usable
 `for-in` only when it implements that aspect. A list's iterator cursor belongs to the
 loop's copied value, so nested loops over one list do not share iteration position.
 
-<!-- rfc.py:last_reviewed 642b817f -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -370,7 +370,7 @@ The listed `Option<T>` and `Result<T, E>` combinators operate on their correspon
 variants: transforms preserve the non-selected variant, and predicates report which variant
 is present.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
