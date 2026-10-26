@@ -230,6 +230,10 @@ The type checker cannot infer a type without an explicit annotation.
 
 **Fix:** annotate the binding: `let x: i64 = ...`.
 
+A closure parameter written without a type is T0002 only when nothing determines it: the message
+is "closure parameter `x` has no determined type; add an annotation or give the closure an
+expected function type". An expected function type or the body normally fixes it.
+
 The same code also covers dereferencing (`*expr`) an operand that isn't a reference type at
 all — not an inference gap, but sharing the code with the annotation case above since both
 are "the checker has nothing to work with here":

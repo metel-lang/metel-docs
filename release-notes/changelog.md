@@ -34,6 +34,10 @@ title: "Metel Language Changelog"
 
 **Language:**
 
+- A closure parameter may be written without a type (`|x| { x * 2 }`), as RFC-0154 always said.
+  It takes its type from the expected function type (an argument, an annotated `let`, a struct
+  field) or from the body; `T0002` remains for a parameter nothing determines, with a message that
+  says what would (`metel-core#1624`).
 - `?` now works on `Option<T>` (RFC-0182, `metel-core#1635`). In a function or closure that returns
   `Option<U>`, `e?` with `e: Option<T>` is the `Some` value, or returns `None`. The operand's
   type constructor must match the enclosing return type's; mixed use stays an error
