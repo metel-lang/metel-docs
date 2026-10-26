@@ -91,7 +91,7 @@ the curated thematic map.
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
-- **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-24)
+- **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-26)
 - **RFC-0186** — Rows as an Operator on Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-24)
 - **RFC-0187** — Anonymous record delimiters (`1-under-review` ; rfcs/1-under-review/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-10-26)
 
