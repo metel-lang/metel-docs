@@ -2090,7 +2090,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed d1f40994 -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0181](../../rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md)_</span>

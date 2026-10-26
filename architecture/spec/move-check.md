@@ -241,7 +241,7 @@ Closure capture legality holds with move checking off: type checking rejects unl
 | `specified by` | `#move-check` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/calls.rs::construct_call`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/calls.rs#L30); [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::verify_capture_specs`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L156); [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::verify_closure_capture_list`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L20) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_capture_list_required.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_capture_list_required.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_required_for_consuming_body.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_once_required_for_consuming_body.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_call_through_shared_ref.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_call_through_shared_ref.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_required_for_mutating_body.toml`](https://github.com/metel-lang/metel-core/blob/2aa2c5729e26ccba73bcc69fe338f0941ffc4966/metel-interpreter/tests/integration/sources/evaluator/closures/v0_13_0_neg_var_required_for_mutating_body.toml#L1) |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
 | `related` | ADR-0052, RFC-0050, RFC-0134, RFC-0153 |
 
 ##### Requirement {#arch.move-check.requirement-4}
@@ -255,7 +255,7 @@ Definition-time checking retains an abstract signature and typed body for every 
 | `specified by` | `#move-check` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/handoff/abstract_signature/body.rs::prepare_abstract_body`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/handoff/abstract_signature/body.rs#L40) |
 | `verified by` | [`metel-frontend/src/pipeline/move_check/tests.rs::let_polymorphic_closures_are_analyzed_from_retained_bodies`](https://github.com/metel-lang/metel-core/blob/58657b2d6f228d493fb7e0d6a3ece3f5aff22213/metel-frontend/src/pipeline/move_check/tests.rs#L5304); [`metel-interpreter/tests/unit/move_check_completeness_tests.rs::every_generic_body_in_the_corpus_is_analyzed`](https://github.com/metel-lang/metel-core/blob/9a472e9538ad11a18f2f7f5a8dc3d6123967493d/metel-interpreter/tests/unit/move_check_completeness_tests.rs#L96) |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
 | `related` | `ADR-0063`, `#273` |
 
 ##### Requirement {#arch.move-check.requirement-5}
@@ -269,7 +269,7 @@ A let-bound polymorphic closure is a generic definition: it retains an abstract 
 | `specified by` | `#move-check` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/declarations.rs::closure_definition`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/declarations.rs#L38) |
 | `verified by` | [`metel-frontend/src/pipeline/move_check/tests.rs::let_polymorphic_closures_are_analyzed_from_retained_bodies`](https://github.com/metel-lang/metel-core/blob/58657b2d6f228d493fb7e0d6a3ece3f5aff22213/metel-frontend/src/pipeline/move_check/tests.rs#L5304); [`metel-interpreter/tests/integration/sources/evaluator/move_check/abstract_let_polymorphic_closure.toml`](https://github.com/metel-lang/metel-core/blob/b5e31f5afc1d13391ece5c9a3e156d5cb4b22e61/metel-interpreter/tests/integration/sources/evaluator/move_check/abstract_let_polymorphic_closure.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/move_check/neg_abstract_let_polymorphic_closure_double_move.toml`](https://github.com/metel-lang/metel-core/blob/b5e31f5afc1d13391ece5c9a3e156d5cb4b22e61/metel-interpreter/tests/integration/sources/evaluator/move_check/neg_abstract_let_polymorphic_closure_double_move.toml#L1) |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
 | `related` | `ADR-0063`, `#273` |
 
 ##### Requirement {#arch.move-check.requirement-6}

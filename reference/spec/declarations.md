@@ -511,7 +511,7 @@ Top-level `extend` blocks follow the same declaration-order rule as the types th
 Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
 declaration, and the outer declaration is not visible outside its own scope.
 
-<!-- rfc.py:last_reviewed bdfd52c5a48a2d2f39d52bb4a3b208440bb4fc06 -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -549,10 +549,10 @@ inner block.
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-4}
 
 Top-level struct and enum declarations are visible throughout the program regardless of
-source order. A type declared inside a function is visible only from its declaration through
-that function body.
+source order. A type declared inside a block is visible only from its declaration to the end
+of that block.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -568,7 +568,7 @@ declared twice in one namespace of one module is rejected with
 name are an overload set instead (identical parameter types are rejected as `T0011`), and
 `let _ := ...` binds no name, so it may be repeated.
 
-<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-6}
 
@@ -586,7 +586,7 @@ no value of that name, in the type namespace (a zero-field struct used as a valu
 binding of the same name shadows both: the name then refers to the local for the rest of its
 scope, and a call through it calls the local.
 
-<!-- rfc.py:last_reviewed bdfd52c5a48a2d2f39d52bb4a3b208440bb4fc06 -->
+<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-8}
 
