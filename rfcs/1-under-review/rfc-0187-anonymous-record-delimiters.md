@@ -120,6 +120,342 @@ The rule "a block wins in a block-admitting position" and the parenthesization w
 
 ---
 
+## Worked examples
+
+Three programs of 40 to 55 lines, each shown as it is written today and with this RFC applied. Only
+the outer delimiters of anonymous records change. Everything else (`:=` reassignment, `<row R>`,
+`Req<..R>`, named-struct and variant literals such as `Req { data = … }` and `Event::Click { x = 3 }`)
+is deliberately left as it is; RFC-0183 and RFC-0188 change those separately.
+
+The "today" programs compile and run on `develop` (with and without `--move-check`). None of this
+RFC is implemented, so each "with this RFC" program is checked only by a mechanical round trip:
+rewriting `{| ` to `{ `, ` |}` to ` }` and `{| |}` to `{}` reproduces the compiled program exactly.
+
+### Order pricing
+
+Open rows (`<row R>`), a spread-free rebuild with a rest pattern, record arrays and a running summary. Every record is anonymous.
+
+Today:
+
+```metel
+// Order pricing: anonymous records, open rows, spread updates and a running total.
+fun line_total<row R>(line: { price: i64, qty: i64, ..R }) -> i64 {
+    line.price * line.qty
+}
+
+fun discounted<row R: !{ price }>(line: { price: i64, ..R }, pct: i64) -> { price: i64, ..R } {
+    let { price, ..rest } := line;
+    { price = price * (100 - pct) / 100, ..rest }
+}
+
+fun summarize(lines: [{ id: i64, price: i64, qty: i64 }; 3]) -> { count: i64, total: i64, max_line: i64 } {
+    var summary := { count = 0, total = 0, max_line = 0 };
+    for (line in lines) {
+        let t := line_total(line);
+        summary.count := summary.count + 1;
+        summary.total := summary.total + t;
+        if (t > summary.max_line) {
+            summary.max_line := t;
+        }
+    }
+    summary
+}
+
+fun main() {
+    var lines := [
+        { id = 1, price = 120, qty = 10 },
+        { id = 2, price = 450, qty = 2 },
+        { id = 3, price = 300, qty = 4 },
+    ];
+    lines[0] := discounted(lines[0], 10);
+
+    let { count, total, .. } := summarize(lines);
+    let { max_line, ..rest } := summarize(lines);
+
+    assert(count == 3);
+    assert(total == 1080 + 900 + 1200);
+    assert(max_line == 1200);
+    assert(rest.count == 3);
+    assert(discounted({ id = 9, price = 200, qty = 1, note = 5 }, 50).note == 5);
+    println("order ok");
+}
+```
+
+With this RFC:
+
+```metel
+// Order pricing: anonymous records, open rows, spread updates and a running total.
+fun line_total<row R>(line: {| price: i64, qty: i64, ..R |}) -> i64 {
+    line.price * line.qty
+}
+
+fun discounted<row R: !{| price |}>(line: {| price: i64, ..R |}, pct: i64) -> {| price: i64, ..R |} {
+    let {| price, ..rest |} := line;
+    {| price = price * (100 - pct) / 100, ..rest |}
+}
+
+fun summarize(lines: [{| id: i64, price: i64, qty: i64 |}; 3]) -> {| count: i64, total: i64, max_line: i64 |} {
+    var summary := {| count = 0, total = 0, max_line = 0 |};
+    for (line in lines) {
+        let t := line_total(line);
+        summary.count := summary.count + 1;
+        summary.total := summary.total + t;
+        if (t > summary.max_line) {
+            summary.max_line := t;
+        }
+    }
+    summary
+}
+
+fun main() {
+    var lines := [
+        {| id = 1, price = 120, qty = 10 |},
+        {| id = 2, price = 450, qty = 2 |},
+        {| id = 3, price = 300, qty = 4 |},
+    ];
+    lines[0] := discounted(lines[0], 10);
+
+    let {| count, total, .. |} := summarize(lines);
+    let {| max_line, ..rest |} := summarize(lines);
+
+    assert(count == 3);
+    assert(total == 1080 + 900 + 1200);
+    assert(max_line == 1200);
+    assert(rest.count == 3);
+    assert(discounted({| id = 9, price = 200, qty = 1, note = 5 |}, 50).note == 5);
+    println("order ok");
+}
+```
+
+### Typed request builder
+
+`record Req<row R>`, row-conditional `extend` blocks and a row equation. Record types appear as arguments, bounds and equations.
+
+Today:
+
+```metel
+// A typed request builder: each step changes the row, and methods exist only once the
+// fields they need are present.
+record Req<row R> { data: { ..R } }
+
+fun empty() -> Req<..{}> { Req { data = {} } }
+
+fun add_host<row R: !{ host }>(r: Req<..R>, h: i64) -> Req<..{ host: i64, ..R }> {
+    Req { data = { host = h, ..r.data } }
+}
+
+fun add_token<row R: !{ token }>(r: Req<..R>, t: i64) -> Req<..{ token: i64, ..R }> {
+    Req { data = { token = t, ..r.data } }
+}
+
+extend<row R: { host: i64, .. }> Req<..R> {
+    fun route(self) -> i64 { self.data.host * 10 }
+}
+
+extend<row R: { host: i64, token: i64, .. }> Req<..R> {
+    fun signed(self) -> i64 { self.data.host * 1000 + self.data.token }
+}
+
+fun strip_token<row R, row Rest>(r: Req<..R>) -> (i64, Req<..Rest>)
+where R = { token: i64, ..Rest }
+{
+    let { token, ..rest } := r.data;
+    (token, Req { data = rest })
+}
+
+fun main() {
+    let base := add_host(empty(), 7);
+    assert(base.route() == 70);
+
+    let full := add_token(base, 42);
+    assert(full.signed() == 7042);
+
+    let stripped := strip_token(full);
+    assert(stripped.0 == 42);
+    assert(stripped.1.route() == 70);
+    println("request ok");
+}
+```
+
+With this RFC:
+
+```metel
+// A typed request builder: each step changes the row, and methods exist only once the
+// fields they need are present.
+record Req<row R> { data: {| ..R |} }
+
+fun empty() -> Req<..{| |}> { Req { data = {| |} } }
+
+fun add_host<row R: !{| host |}>(r: Req<..R>, h: i64) -> Req<..{| host: i64, ..R |}> {
+    Req { data = {| host = h, ..r.data |} }
+}
+
+fun add_token<row R: !{| token |}>(r: Req<..R>, t: i64) -> Req<..{| token: i64, ..R |}> {
+    Req { data = {| token = t, ..r.data |} }
+}
+
+extend<row R: {| host: i64, .. |}> Req<..R> {
+    fun route(self) -> i64 { self.data.host * 10 }
+}
+
+extend<row R: {| host: i64, token: i64, .. |}> Req<..R> {
+    fun signed(self) -> i64 { self.data.host * 1000 + self.data.token }
+}
+
+fun strip_token<row R, row Rest>(r: Req<..R>) -> (i64, Req<..Rest>)
+where R = {| token: i64, ..Rest |}
+{
+    let {| token, ..rest |} := r.data;
+    (token, Req { data = rest })
+}
+
+fun main() {
+    let base := add_host(empty(), 7);
+    assert(base.route() == 70);
+
+    let full := add_token(base, 42);
+    assert(full.signed() == 7042);
+
+    let stripped := strip_token(full);
+    assert(stripped.0 == 42);
+    assert(stripped.1.route() == 70);
+    println("request ok");
+}
+```
+
+### Event reducer
+
+A `type` alias for a nested record, field updates through a `&var` parameter, and record literals inside enum-driven `match` arms.
+
+Today:
+
+```metel
+// An event reducer: one record of counters updated in place through a `&var` parameter,
+// and a second record accumulated through a helper.
+enum Event { Click { x: i64, y: i64 }, Key { code: i64 }, Tick }
+
+type Stats := { clicks: i64, keys: i64, last_key: i64, ticks: i64, last: { x: i64, y: i64 } };
+
+fun apply(s: &var Stats, e: Event) {
+    match (e) {
+        Event::Click { x, y } => {
+            s.clicks := s.clicks + 1;
+            s.last := { x = x, y = y };
+        },
+        Event::Key { code } => {
+            s.keys := s.keys + 1;
+            s.last_key := code;
+        },
+        Event::Tick => {
+            s.ticks := s.ticks + 1;
+        },
+    }
+}
+
+fun note(seen: &var { n: i64, sum: i64 }, v: i64) {
+    seen.n := seen.n + 1;
+    seen.sum := seen.sum + v;
+}
+
+fun main() {
+    var state: Stats := { clicks = 0, keys = 0, last_key = 0, ticks = 0, last = { x = 0, y = 0 } };
+    var events: List<Event> := List::new();
+    events.push(Event::Click { x = 3, y = 4 });
+    events.push(Event::Key { code = 65 });
+    events.push(Event::Tick);
+    events.push(Event::Click { x = 9, y = 1 });
+
+    var i := 0;
+    while (i < events.len()) {
+        apply(&var state, events.get(i).unwrap_or(Event::Tick));
+        i := i + 1;
+    }
+
+    var seen := { n = 0, sum = 0 };
+    note(&var seen, state.last.x);
+    note(&var seen, state.last.y);
+
+    assert(state.clicks == 2);
+    assert(state.keys == 1);
+    assert(state.last_key == 65);
+    assert(state.ticks == 1);
+    assert(state.last.x == 9);
+    assert(seen.n == 2 && seen.sum == 10);
+    println("events ok");
+}
+```
+
+With this RFC:
+
+```metel
+// An event reducer: one record of counters updated in place through a `&var` parameter,
+// and a second record accumulated through a helper.
+enum Event { Click { x: i64, y: i64 }, Key { code: i64 }, Tick }
+
+type Stats := {| clicks: i64, keys: i64, last_key: i64, ticks: i64, last: {| x: i64, y: i64 |} |};
+
+fun apply(s: &var Stats, e: Event) {
+    match (e) {
+        Event::Click { x, y } => {
+            s.clicks := s.clicks + 1;
+            s.last := {| x = x, y = y |};
+        },
+        Event::Key { code } => {
+            s.keys := s.keys + 1;
+            s.last_key := code;
+        },
+        Event::Tick => {
+            s.ticks := s.ticks + 1;
+        },
+    }
+}
+
+fun note(seen: &var {| n: i64, sum: i64 |}, v: i64) {
+    seen.n := seen.n + 1;
+    seen.sum := seen.sum + v;
+}
+
+fun main() {
+    var state: Stats := {| clicks = 0, keys = 0, last_key = 0, ticks = 0, last = {| x = 0, y = 0 |} |};
+    var events: List<Event> := List::new();
+    events.push(Event::Click { x = 3, y = 4 });
+    events.push(Event::Key { code = 65 });
+    events.push(Event::Tick);
+    events.push(Event::Click { x = 9, y = 1 });
+
+    var i := 0;
+    while (i < events.len()) {
+        apply(&var state, events.get(i).unwrap_or(Event::Tick));
+        i := i + 1;
+    }
+
+    var seen := {| n = 0, sum = 0 |};
+    note(&var seen, state.last.x);
+    note(&var seen, state.last.y);
+
+    assert(state.clicks == 2);
+    assert(state.keys == 1);
+    assert(state.last_key == 65);
+    assert(state.ticks == 1);
+    assert(state.last.x == 9);
+    assert(seen.n == 2 && seen.sum == 10);
+    println("events ok");
+}
+```
+
+What the examples show:
+
+- Every record literal, pattern, type, bound and equation gains two delimiter characters; 35 groups
+  across the three programs. Blocks, named literals and variant literals do not change.
+- The empty record is `{| |}` where `{}` is today; `Req<..{}>` becomes `Req<..{| |}>`.
+- Nested record types (`last: {| x: i64, y: i64 |}`) stay readable because the bars distinguish them
+  from blocks at every depth.
+- No example needed the `({ x = 1 })` parenthesization workaround today, because each record sits in a
+  pure-expression position or has more than one field. The single-field cases the workaround exists for
+  are the ones RFC-0183 would otherwise make ambiguous (`{ x = 1 }` as an assignment tail).
+
+---
+
 ## Alternatives Considered
 
 ### Delimiters
