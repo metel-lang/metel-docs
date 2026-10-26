@@ -1443,12 +1443,15 @@ implementation).
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
   RFC-0136 incidentally removed, RFC-0100). Tracked by metel-core#1594.
-- **RFC-0184** — Rename `Perhaps` to `Option`. Pure rename; `Some`/`None` and the methods
-  unchanged. Reverses the "deliberate identity" rationale recorded in RFC-0098; the
-  decision is whether identity or familiarity wins. Tracked by metel-core#1595.
-- **RFC-0182** — `?` on `Perhaps`. Early-return `None` from a `Perhaps`-returning function;
+- **RFC-0184** *(accepted 2026-10-26 — metel-core#1595)* — Rename `Perhaps` to `Option`. Pure
+  rename; `Some`/`None` and the methods unchanged. Reverses the "deliberate identity" rationale
+  recorded in RFC-0098; familiarity won. Hard cut with a `T0003` hint ("`Perhaps` is now
+  `Option`"), no alias; `Option` stays shadowable like `Result` and `List`; RFC-0182 was
+  rewritten to say `Option`; dated posts stay as records.
+- **RFC-0182** — `?` on `Option` (written as `Perhaps`; named `Option` since RFC-0184).
+  Early-return `None` from an `Option`-returning function;
   the operand and return type constructors must match, and the mixed cases stay errors
-  (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Perhaps` rejection in
+  (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Option` rejection in
   `functions.md`; supersedes the unresolved parts of refused RFC-0079 §6 and its Open
   Question 4. Tracked by metel-core#1593 (report: #1589).
 - **RFC-0186** — Rows as an operator on record parameters. Removes the `row` generic kind
