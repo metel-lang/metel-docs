@@ -80,10 +80,10 @@ This does not survive the worked-example pass this RFC's own draft called for. A
 has, in expression position (not an import statement, where a keyword already disambiguates):
 
 ```metel
-let x := std::core::Perhaps::Some { value = 42 };
+let x := std::core::Option::Some { value = 42 };
 ```
 
-Under the dot rename this is `std.core.Perhaps.Some { ... }` — leading segment `std` is lowercase. A
+Under the dot rename this is `std.core.Option.Some { ... }` — leading segment `std` is lowercase. A
 leading-segment-only check misreads this as ordinary value/field access on a (nonexistent) local `std`.
 This isn't a contrived edge case — the RFC's own §2 example (`root.parser.Ast.new()`) has the identical
 shape: two lowercase segments (`root`, `parser`) before reaching the PascalCase type. Repairing the rule
@@ -166,7 +166,7 @@ about when each is required, is untouched; only turbofish's own token changes.
 
 ## Alternatives Considered
 
-- **Capitalization-based disambiguation (§3 Option A).** Considered as the RFC's original recommendation; rejected once checked against real fixture code (`std::core::Perhaps::Some` and the RFC's own `root.parser.Ast.new()` example both have lowercase segments before the type) — see §3 for the full finding.
+- **Capitalization-based disambiguation (§3 Option A).** Considered as the RFC's original recommendation; rejected once checked against real fixture code (`std::core::Option::Some` and the RFC's own `root.parser.Ast.new()` example both have lowercase segments before the type) — see §3 for the full finding.
 - **Context-limited dots: `.` only in import/export/module-declaration contexts, keep `::` in expression and type paths.** New alternative, added on reconsideration (2026-07-14). Example shape: `import std.math;` and `export ast.Ast;`, while expression/type-level paths remain `List::new()`, `Colour::Blue`, `root::parser::Ast`, and `f::<T>()`. This removes most of the readability risk that reopened the RFC — readers can still tell from syntax when a path is a type/module qualification rather than value-level member access — while still modernizing the most obviously "module-like" surface forms. The cost is asymmetry: import/export syntax would no longer match expression/type syntax exactly, so the language would stop having one universal path spelling.
 - **Hybrid: keep `::` for type-level paths (modules, enum variants), `.` only for value-level field/method access.** Smaller change, zero new ambiguity — §3's disambiguation problem becomes unnecessary. Rejected as the default proposal here because it keeps the strongest Rust tell (`::`) fully intact for exactly the paths most visible in everyday code (imports, static calls); recorded here as the fallback should Option B's forward-reference/hoisting-order check (§3) turn up a real blocker during implementation.
 - **`.` everywhere, ambiguity resolved by making static/module paths a distinct token requiring a capital-letter grammar rule enforced universally (not just for disambiguation, but as a new naming-convention requirement).** Rejected as out of scope — this RFC disambiguates a token, it doesn't newly mandate a naming convention across the whole language.

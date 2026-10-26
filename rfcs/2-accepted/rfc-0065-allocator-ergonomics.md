@@ -418,14 +418,14 @@ struct Header<&a> {                                                  │  struct
                                                                      │                                                               │
 fun parse_header(@a: BumpAlloc,                                      │  fun parse_header(@a: BumpAlloc,                              │
     line: String,                                                    │      line: String,                                            │
-) -> Perhaps<@a Header> {                                            │  ) -> Perhaps<@Header> {                                      │
+) -> Option<@a Header> {                                            │  ) -> Option<@Header> {                                      │
     @a Header { name: ..., value: ... }                              │      @Header { name: ..., value: ... }                        │
 }                                                                    │  }                                                            │
                                                                      │                                                               │
 fun find_header<&a>(@a: BumpAlloc,                                   │  fun find_header(@a: BumpAlloc,                               │
     req:  &a Request,                                                │      req:  &Request,                                          │
     name: String,                                                    │      name: String,                                            │
-) -> Perhaps<&a String> { ... }                                      │  ) -> Perhaps<&String> { ... }                                │
+) -> Option<&a String> { ... }                                      │  ) -> Option<&String> { ... }                                │
 ```
 
 The allocator parameter is still declared — that is the decision point where an

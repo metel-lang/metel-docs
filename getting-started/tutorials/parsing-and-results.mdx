@@ -86,7 +86,7 @@ line 2: not a digit: x
 
 `s.chars()` is an array of `Char`. `c as u32` is the Unicode code point; subtracting
 `'0'` gives the digit's numeric value, and `> 9u32` catches anything that isn't a
-digit. `.yolo()` unwraps a `Result`/`Perhaps` and panics if it isn't `Ok`/`Some` —
+digit. `.yolo()` unwraps a `Result`/`Option` and panics if it isn't `Ok`/`Some` —
 fine here because the literal is known good; never reach for it on real input.
 
 ## By the end you'll have

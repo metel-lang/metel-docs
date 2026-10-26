@@ -12,7 +12,7 @@ review: null
 ## Limitation
 
 `SymbolTable::new` pre-seeds exactly 21 `std::core` names as `Builtin` ids: 18 types
-(`boolean`, `String`, `Char`, the sized integers and floats, `List`, `Perhaps`,
+(`boolean`, `String`, `Char`, the sized integers and floats, `List`, `Option`,
 `Result`, `Range`, `RangeInclusive`) and 3 aspects (`Display`, `Iterable`,
 `From`). The list is the `Builtin` enum, declared once by a macro (variant, `std::core` name,
 kind); the `SYM_TYPE_*` and `SYM_ASPECT_*` constants are aliases of its variants. There are no

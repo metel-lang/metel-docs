@@ -155,7 +155,7 @@ extend<A: Alloc> Cache<A> {
         Cache { data = @a HashMap::new() }
     }
 
-    fun get<&s>(&s self, key: &Key) -> Perhaps<&s Value> {
+    fun get<&s>(&s self, key: &Key) -> Option<&s Value> {
         self.data.get(key)
     }
 }

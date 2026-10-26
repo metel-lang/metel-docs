@@ -56,7 +56,7 @@ The current spec says:
 That is workable for plain value-style APIs, but it breaks down for stateful protocols such as iterators. `Iterable<T>::next` is currently written as:
 
 ```metel
-fun next(&var self) -> Perhaps<T>;
+fun next(&var self) -> Option<T>;
 ```
 
 but a real iterator needs mutation of the underlying receiver state across calls. A local mutable copy is not enough.
@@ -206,7 +206,7 @@ This keeps the pointer RFC and receiver RFC aligned:
 
 ```metel
 aspect Iterable<T> {
-    fun next(&var self) -> Perhaps<T>;
+    fun next(&var self) -> Option<T>;
 }
 ```
 
@@ -228,7 +228,7 @@ aspect Display {
 }
 
 aspect Iterable<T> {
-    fun next(&var self) -> Perhaps<T>;
+    fun next(&var self) -> Option<T>;
 }
 ```
 
@@ -280,7 +280,7 @@ This RFC implies the following rewrites:
 | Old form | New form |
 |---|---|
 | `fun f(var self) { ... }` used only for local mutation | either `fun f(self) -> Self` or `fun f(&var self)`, depending on intent |
-| `fun next(var self) -> Perhaps<T>` | `fun next(&var self) -> Perhaps<T>` |
+| `fun next(var self) -> Option<T>` | `fun next(&var self) -> Option<T>` |
 | read-only methods using `self` only for observation | `fun f(&self) -> R` |
 
 The important migration decision is semantic, not mechanical: existing `var self` methods must be classified as either:
@@ -303,7 +303,7 @@ Rejected. That would silently change the meaning of existing code and keep the r
 Example:
 
 ```metel
-fun next(self) -> (Perhaps<T>, Self)
+fun next(self) -> (Option<T>, Self)
 ```
 
 Rejected for mainstream APIs such as iterators. It is verbose, infects every caller, and makes method-based protocols harder to use than necessary.

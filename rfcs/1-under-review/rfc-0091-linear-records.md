@@ -337,7 +337,7 @@ fun take_fd(h: &var FileHandle) -> (RawFd, &var { path: String }) {
 
 fun log_path(view: &{ path: String }) {
     println("still open at: ${view.path}");
-    // view.fd doesn't typecheck here at all. Compare to fd being declared Perhaps<RawFd>
+    // view.fd doesn't typecheck here at all. Compare to fd being declared Option<RawFd>
     // instead: every read site would need a match/unwrap to find out it's gone. Here
     // the caller's own parameter type already says so — checked once, at compile time.
 }

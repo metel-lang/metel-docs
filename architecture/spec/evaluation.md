@@ -39,7 +39,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 
 ##### Requirement {#arch.evaluation.requirement-3}
 
-`Perhaps` and `Result` are ordinary `Value::Enum { name, variant, fields, .. }` values with no dedicated `Value` variants; name-specific handling is confined to `display.rs`, the built-in constructors, and the `for`-loop's end check on `Perhaps::None`.
+`Option` and `Result` are ordinary `Value::Enum { name, variant, fields, .. }` values with no dedicated `Value` variants; name-specific handling is confined to `display.rs`, the built-in constructors, and the `for`-loop's end check on `Option::None`.
 
 | Field | Value |
 |---|---|
@@ -47,7 +47,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `owner` | `metel-interpreter` |
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/pattern/mod.rs::match_pattern`](https://github.com/metel-lang/metel-core/blob/fa9d787ff51e4383f6b09366a6b987da6add9b91/metel-interpreter/src/evaluator/pattern/mod.rs#L24) |
-| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::perhaps_and_result_have_no_dedicated_value_variants`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L5010); [`metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml#L1) |
+| `verified by` | [`metel-interpreter/src/evaluator/mod.rs::option_and_result_have_no_dedicated_value_variants`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L5010); [`metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml#L1) |
 | `last_reviewed` | fa9d787ff51e4383f6b09366a6b987da6add9b91 |
 | `related` | ADR-0028, `arch.evaluation.requirement-2` |
 

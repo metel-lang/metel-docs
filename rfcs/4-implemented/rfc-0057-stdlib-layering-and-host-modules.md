@@ -45,10 +45,10 @@ release. It supersedes the broader module list in the original draft.
 Metel is at the point where small scripting tasks are desirable, but the
 runtime surface still needs a clear layering between:
 
-1. Language primitives (`Perhaps`, `Result`, `Display`, `From`, `Iterable`,
+1. Language primitives (`Option`, `Result`, `Display`, `From`, `Iterable`,
    `List<T>`)
 2. In-language ergonomics over those primitives (collection/iteration helpers,
-   `Perhaps`/`Result` combinators)
+   `Option`/`Result` combinators)
 3. Convenience runtime functions (`print`, `println`, `dbg`, `assert`)
 4. Host integration (environment, files, processes; networking later)
 
@@ -76,7 +76,7 @@ not a virtual injection. It is not a general-purpose kitchen-sink.
 
 The following items belong in `std::core`:
 
-- `Perhaps<T>`
+- `Option<T>`
 - `Result<T, E>`
 - `List<T>` (core collection type, with its ergonomic method surface — see
   Decision 3)
@@ -93,20 +93,20 @@ The following items belong in `std::core`:
 These items are allowed to remain implemented through native host support
 rather than ordinary user-level library code.
 
-User code writes `Perhaps`, `Result`, and `List` unqualified; the
-fully-qualified paths remain `std::core::Perhaps`, `std::core::Result`, and
+User code writes `Option`, `Result`, and `List` unqualified; the
+fully-qualified paths remain `std::core::Option`, `std::core::Result`, and
 `std::core::List`. This RFC explicitly rejects moving these names to
-`std::Perhaps` / `std::Result`. `std` is a namespace root; `core` is the home
+`std::Option` / `std::Result`. `std` is a namespace root; `core` is the home
 for language-adjacent primitives.
 
-### 2. `Perhaps` / `Result` utilities live on the core sum types
+### 2. `Option` / `Result` utilities live on the core sum types
 
-`Perhaps<T>` and `Result<T, E>` gain a small method surface so they are usable
+`Option<T>` and `Result<T, E>` gain a small method surface so they are usable
 in ordinary pipelines, in `std::core` itself.
 
 Initial API direction:
 
-- `Perhaps<T>`: `map`, `and_then`, `unwrap_or`, `unwrap_or_else`, `is_some`,
+- `Option<T>`: `map`, `and_then`, `unwrap_or`, `unwrap_or_else`, `is_some`,
   `is_none`
 - `Result<T, E>`: `map`, `and_then`, `unwrap_or`, `unwrap_or_else`, `is_ok`,
   `is_err`
@@ -123,7 +123,7 @@ in satellite modules.
 Initial API direction (methods on `List<T>`):
 
 - Collection ergonomics: `append`/`concat`, `contains` (where equality is
-  available), `find(pred: (T) -> boolean) -> Perhaps<T>`
+  available), `find(pred: (T) -> boolean) -> Option<T>`
 - Iteration transforms: `map`, `filter`, `fold`
 
 Whether each helper is an inherent method on `List<T>` or eventually rides an
@@ -142,7 +142,7 @@ are host-backed (native), computed by the runtime string value.
 
 Indexing is by **Unicode scalar value**, consistent with `String::len` (which
 counts scalars, not bytes); byte-level and grapheme-level APIs are deferred.
-Operations are total — out-of-range indices clamp or yield `Perhaps::None`
+Operations are total — out-of-range indices clamp or yield `Option::None`
 rather than panicking.
 
 Initial API direction (methods on `String`):
@@ -150,11 +150,11 @@ Initial API direction (methods on `String`):
 - **Case & trim:** `to_upper`, `to_lower`, `trim`, `trim_start`, `trim_end`,
   `is_empty` (the last derivable as `self.len() == 0`).
 - **Search & test:** `contains(needle)`, `starts_with(prefix)`,
-  `ends_with(suffix)`, `index_of(needle) -> Perhaps<i64>`.
+  `ends_with(suffix)`, `index_of(needle) -> Option<i64>`.
 - **Split, join, replace:** `split(sep) -> String[]`, `replace(from, to)`,
   `repeat(n)`, and the associated `String::join(parts: String[], sep: String) ->
   String`.
-- **Chars & slicing:** `chars() -> Char[]`, `char_at(i) -> Perhaps<Char>`,
+- **Chars & slicing:** `chars() -> Char[]`, `char_at(i) -> Option<Char>`,
   `substring(start, end) -> String` (scalar-indexed, clamped).
 
 Regex, formatting/interpolation, Unicode normalization, and encoding conversions
@@ -199,7 +199,7 @@ not auto-imported. Programs must import them explicitly.
 
 Initial API direction:
 
-- `var(name: String) -> Perhaps<String>`
+- `var(name: String) -> Option<String>`
 - `vars() -> List<(String, String)>` or `[(String, String)]`
 
 Read-only APIs are in scope for the first release. Mutating the host process
@@ -311,7 +311,7 @@ The standard library follows this rule:
 
 Examples:
 
-- `Perhaps`, `Result`, `Display`, `From`, `Iterable`, `List<T>` (with its
+- `Option`, `Result`, `Display`, `From`, `Iterable`, `List<T>` (with its
   collection/iteration methods), and the `String` utility methods belong in
   `std::core`
 - numeric helpers (`abs`/`min`/`max`/`clamp`) belong in `std::math`
@@ -329,7 +329,7 @@ post-elaboration architecture, as the original draft required.
 
 Recommended implementation order:
 
-1. `Perhaps` / `Result` utility methods in `std::core`
+1. `Option` / `Result` utility methods in `std::core`
 2. `List<T>` collection + iteration ergonomics in `std::core`
 3. `String` utility methods in `std::core`
 4. `OsError` host error type

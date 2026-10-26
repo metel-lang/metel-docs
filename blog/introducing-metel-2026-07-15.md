@@ -15,6 +15,7 @@ explicit allocation — to ask how they can be combined into a single coherent s
 
 Here is a small taste of the language:
 
+<!-- doc-example: skip reason="dated post, kept as published: written when the type was Perhaps (RFC-0184 renamed it Option)" -->
 ```metel
 fun main() {
     let name := "Metel";

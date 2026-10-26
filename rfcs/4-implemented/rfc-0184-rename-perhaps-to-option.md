@@ -3,13 +3,13 @@ id: rfc-0184
 title: "Rename Perhaps to Option"
 date: '2026-10-24'
 coverage:
-  "1": { kind: blocked, reason: "the rename is integrated into spec.types.perhaps-t.legality-2 but not implemented; its fixtures land with the implementation", ref: "metel-core#1625" }
+  "1": { spec: "spec.types.perhaps-t.legality-2" }
   "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
-status: integrated
+status: implemented
 updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1595'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1625'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
@@ -17,6 +17,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-26).** Rename accepted by the language owner; hard cut, shadowable, RFC-0182 rewritten, dated posts left as records
 
 > **Status — integrated (2026-10-26).** Spec section renamed with a new rule for the removed name; cross-checked against the integrated spec and the sibling RFCs
+
+> **Status — implemented (2026-10-26).** Implemented in metel-core#1625: the type is Option, the removed name is T0003 with a hint
 
 ## Summary
 

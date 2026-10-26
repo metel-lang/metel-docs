@@ -26,7 +26,7 @@ coverage:
 
 > **Status — accepted (2026-07-21).** Design settled: type-directed resolution against the expected type, binding wins over variant in expression position (the deliberate asymmetry with RFC-0107), no reverse-index fallback when no expected type exists. Scope import weighed and declined for consistency with RFC-0107. No open questions remain and no RFC dependency.
 
-> **Status — integrated (2026-07-21).** Merged into expressions.md (Unqualified variant constructors) and types.md (Perhaps<T> reframed: None/Some are ordinary variants, not literals). Worked examples cross-checked against RFC-0106/0107/0101/0112; turned up that a unit struct may share a name with a variant, resolved by reading SS1.1's third condition as covering unit-struct constructors -- a bare variant is a last resort, never a shadowing mechanism.
+> **Status — integrated (2026-07-21).** Merged into expressions.md (Unqualified variant constructors) and types.md (Option<T> reframed: None/Some are ordinary variants, not literals). Worked examples cross-checked against RFC-0106/0107/0101/0112; turned up that a unit struct may share a name with a variant, resolved by reading SS1.1's third condition as covering unit-struct constructors -- a bare variant is a last resort, never a shadowing mechanism.
 
 > **Status — implemented (2026-07-21).** Pass 1 defers a bare identifier only when `has_variant_named` says some enum declares it, never using that index to pick an enum; Pass 2 resolves against `expected_ty` at two hooks, both placed after the binding lookup and the struct-literal branch so §1.2's binding-wins and the integrate-stage unit-struct-wins rule hold. `Literal::None` and `none_lit` are gone entirely — zero occurrences remain — and `None`/`Some`/`Ok`/`Err` all route through the general mechanism. 797 tests green, including the 51 existing fixtures using `None`. Fixtures: `evaluator/enums/41_unqualified_variant_constructors.mtl` plus negatives for no-expected-type and unit-struct-wins.
 
@@ -39,7 +39,7 @@ Allow a bare variant name in expression position — `let c: Colour = Red;`,
 that position, mirroring RFC-0107's type-directed resolution in pattern position.
 
 The concrete payoff is that `None` stops being a language special case. Today
-`Literal::None` is a dedicated AST node with hardcoded `Perhaps` semantics in the
+`Literal::None` is a dedicated AST node with hardcoded `Option` semantics in the
 parser, both type-checker passes, and the evaluator; RFC-0107 already retired its
 pattern-position twin (`Pattern::None`). This RFC retires the expression-position half,
 after which `None` is an ordinary variant of an ordinary enum that happens to be
@@ -56,13 +56,13 @@ general bare-variant mechanism against the scrutinee's enum. Its expression-posi
 counterpart survives untouched:
 
 - `src/parser/mod.rs` — `Rule::none_lit => Literal::None`
-- `src/typechecker/inference.rs:2977` — `Literal::None => InferType::Named("Perhaps", [fresh])`
+- `src/typechecker/inference.rs:2977` — `Literal::None => InferType::Named("Option", [fresh])`
 - `src/typechecker/construction.rs:3914` — `Literal::None => expected_ty.cloned().ok_or(T0002)`
 - `src/evaluator/mod.rs:2474` — `Literal::None => Value::Enum { .. }`
 
-So `Perhaps` is privileged in a way no user-defined enum can be. A user writing
+So `Option` is privileged in a way no user-defined enum can be. A user writing
 `enum Colour { Red, Green, Blue }` must write `Colour::Red` in every expression, while
-the builtin `Perhaps` gets `None` for free. That asymmetry is the motivation; the
+the builtin `Option` gets `None` for free. That asymmetry is the motivation; the
 ergonomic win on user enums is a consequence, not the primary goal.
 
 ### The mechanism already exists — it is just wired to one hardcoded name
@@ -119,8 +119,8 @@ fun favourite() -> Colour { Green }      // return type supplies E
 fun paint(c: Colour) { }
 paint(Blue);                             // parameter type supplies E (§1.3 caveat)
 
-let p: Perhaps<i64> := Some { value = 5 };
-let q: Perhaps<i64> := None;              // `None` via the general mechanism
+let p: Option<i64> := Some { value = 5 };
+let q: Option<i64> := None;              // `None` via the general mechanism
 ```
 
 If any of the three conditions fails, nothing changes: the identifier is resolved exactly
@@ -173,7 +173,7 @@ is worth stating plainly rather than quietly editing.
   `construct_expr(arg, None, ctx)` at `construction.rs:1552` is the *array-builtin* branch,
   not the general method path. The general path goes through `construct_method_args`
   (`construction.rs:275`), which skips `params[0]` (the receiver) and threads each remaining
-  parameter's declared type as a hint. Verified: a method taking `Perhaps<i64>` accepts a
+  parameter's declared type as a hint. Verified: a method taking `Option<i64>` accepts a
   bare `None` argument today, which is only possible if the hint reaches it.
 
 Struct-literal fields likewise get hints (`field_hints`), also verified with a bare `None`.
@@ -282,7 +282,7 @@ bare variant into the qualified form before the existing `construct_enum_literal
 
 Pass 1 (`inference.rs`) is the problem: `infer_expr(expr, ctx, fun_generalizations)` has
 **no expected-type parameter at all**. `Literal::None` gets away with
-`InferType::Named("Perhaps", [fresh_var])` only because it hardcodes its enum. A bare `Red`
+`InferType::Named("Option", [fresh_var])` only because it hardcodes its enum. A bare `Red`
 cannot do that.
 
 Three options, and the recommendation is the third:

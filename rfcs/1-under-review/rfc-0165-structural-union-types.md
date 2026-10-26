@@ -47,7 +47,7 @@ type Json = Null | Bool | Number | String | Json[] | { String: Json };   // RFC-
 Every mainstream structural type system has this — TypeScript `A | B`, Flow, Scala 3
 `A | B`, Python `A | B` (PEP 604), Kotlin's planned union return types. It is also what a
 `Result`-free error-return style needs (`T | ParseError`), and the natural target for a
-future `Perhaps<T>` / `Result<T, E>` desugaring question (Open Question 6).
+future `Option<T>` / `Result<T, E>` desugaring question (Open Question 6).
 
 RFC-0154 forces the spelling question now: after it lands, `|` means "closure/function
 delimiter" in type position. If a union is ever wanted, its spelling has to be settled
@@ -154,7 +154,7 @@ its payloads — they are different types with different identity rules. A `type
 
 ### 6. The never type and option/result shapes
 
-`!` is the identity element (§3). This RFC does **not** propose redefining `Perhaps<T>` or
+`!` is the identity element (§3). This RFC does **not** propose redefining `Option<T>` or
 `Result<T, E>` as `T | None` / `T | E` — those are nominal today and carry methods
 (`?`, `.map`, …). Whether a future RFC re-expresses them structurally is Open Question 6;
 this RFC only needs to not *preclude* it.
@@ -240,7 +240,7 @@ benefit, another special form. Rejected.
 5. **Ordering vs `->` and `&`.** Rule 2 sets union looser than `->`. Where does it sit
    relative to `&T` / reference types, `T[]`, and generic application `F<T>`? Full
    precedence table pending.
-6. **`Perhaps` / `Result`.** Does this RFC's landing create pressure to re-express them as
+6. **`Option` / `Result`.** Does this RFC's landing create pressure to re-express them as
    `T | None` / `T | E`, and should it pre-empt that by saying explicitly it does not?
 7. **Exhaustiveness and `_`.** Is a wildcard arm allowed on a structural-union `match`, or
    is it always fully enumerated (the member list is right there in the type)?

@@ -38,7 +38,7 @@ The current implementation conflates two distinct concepts that warrant separate
 
 What Metel is missing is the *other* operator: a way to annotate an expression's type for inference purposes, without any conversion. That is type ascription, and `:` is the established form (Scala uses `expr: Type` in expression position).
 
-The practical gap: without expression-level ascription, there is no way to write an empty array or empty `Perhaps` literal unless the binding already has a type annotation:
+The practical gap: without expression-level ascription, there is no way to write an empty array or empty `Option` literal unless the binding already has a type annotation:
 
 ```metel
 // This works — annotation is on the binding

@@ -1443,7 +1443,7 @@ implementation).
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
   RFC-0136 incidentally removed, RFC-0100). Tracked by metel-core#1594.
-- **RFC-0184** *(integrated 2026-10-26 — metel-core#1595; implementation metel-core#1625)* — Rename `Perhaps` to `Option`. Pure
+- **RFC-0184** *(implemented 2026-10-26 — metel-core#1595, #1625)* — Rename `Perhaps` to `Option`. Pure
   rename; `Some`/`None` and the methods unchanged. Reverses the "deliberate identity" rationale
   recorded in RFC-0098; familiarity won. Hard cut with a `T0003` hint ("`Perhaps` is now
   `Option`"), no alias; `Option` stays shadowable like `Result` and `List`; RFC-0182 was
@@ -1470,7 +1470,7 @@ implementation).
   between them — every language treats a zero divisor as strictly worse than
   overflow, because wrapping/saturating are coherent total answers for overflow that
   simply don't exist for division by zero. Lays out six options for division (status
-  quo, a Perhaps-returning checked_div, a NonZero<T> wrapper type making division
+  quo, an Option-returning checked_div, a NonZero<T> wrapper type making division
   total by construction, a fully Result-returning /, deferring to RFC-0014, or a
   lint) and seven for overflow (status quo, checked_*, wrapping_* and saturating_*
   — both already total functions, no wrapper type needed — overflowing_*, a
@@ -1526,7 +1526,7 @@ implementation).
 - **RFC-0107** *(implemented 2026-07-21 — issue #559)* — Unqualified Enum Variants in Match
   Patterns — `Red` instead of `Colour::Red` in a match arm, resolved type-directed
   against the scrutinee's known enum (not a lexical-scope import, so no cross-enum
-  collision risk). Generalizes the existing `Perhaps::None`-only special case
+  collision risk). Generalizes the existing `Option::None`-only special case
   (`Pattern::None`) into a real mechanism; answers RFC-0101's Unresolved Question 1.
 - **RFC-0108** *(implemented 2026-07-21 — issue #559)* — Reference-Transparent Match Scrutinees —
   matching a `&T`/`&var T` value directly (`match c { Colour::Red => .., .. }` for
@@ -1570,7 +1570,7 @@ implementation).
   two positions (struct fields, match arms) it does not actually cover. Its §4.2 records
   where RFC-0110's "what does `&i64 == &i64` do?" open question actually led: nowhere near
   auto-deref — `==` has no operand check at all, so it typechecks and then aborts at runtime
-  for references, structs, enums (including `Perhaps`), arrays, tuples and unit. Filed as
+  for references, structs, enums (including `Option`), arrays, tuples and unit. Filed as
   issue #561; aspect-dispatch design fix at #259 / RFC-0062.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
@@ -1585,7 +1585,7 @@ implementation).
   rename: `.` already means field/method access (RFC-0045), so this RFC has to settle a
   real disambiguation rule before the grammar change is well-formed. Capitalization-
   based disambiguation (Option A) was reviewed and rejected — it fails on real fixture
-  code (`std::core::Perhaps::Some`, and the RFC's own worked example) since module path
+  code (`std::core::Option::Some`, and the RFC's own worked example) since module path
   segments are lowercase, same as values; resolved at name-resolution time instead
   (Option B), reusing the existing `Expr::ResolvedPath` pattern already in the codebase.
   Turbofish (RFC-0023), found as a third, separate use of `::` this RFC also addresses,
@@ -1807,7 +1807,7 @@ RFC-0064 (structured fork-join `||`, retracted 2026-07-07 — its one guarantee,
 cannot be silently abandoned, relocated onto `JoinHandle<T>` from `spawn`), plus
 RFC-0084 (refused 2026-07-10 — reverted in place to reaffirm RFC-0053's
 `[T; N]`/`[expr; N]` exactly, with nothing left of its own to propose), plus RFC-0079
-(refused 2026-07-10 — most of `Perhaps<T>`/`Result<T, E>` was already implemented and
+(refused 2026-07-10 — most of `Option<T>`/`Result<T, E>` was already implemented and
 spec'd by the time it was written, and its `?`-operator section was factually wrong
 relative to already-shipped `From`-based coercion; real remaining gaps tracked at
 https://app.clickup.com/t/86cap1wzb).

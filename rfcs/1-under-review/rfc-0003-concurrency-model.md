@@ -60,7 +60,7 @@ Metel's existing surface syntax desugars to aspect method calls: `?` desugars to
 |--------|-------------|
 | `spawn { expr }` | `Spawnable::spawn(|| expr) -> Fiber<T>` |
 | `ch <- value` | `Sendable::send(&ch, value)` |
-| `<- ch` | `Receivable::recv(&ch) -> Perhaps<T>` |
+| `<- ch` | `Receivable::recv(&ch) -> Option<T>` |
 | `select { ... }` | `Selectable::select(...)` |
 
 Any type implementing the relevant aspect participates in the syntax. This means user-defined channels, mock channels in tests, and alternative spawning strategies are all first-class without special-casing in the compiler.
@@ -108,8 +108,8 @@ aspect Sendable<T> {
 }
 
 aspect Receivable<T> {
-    fun recv(self: &Self) -> Perhaps<T>;       // blocking: waits until a value is available or channel closes
-    fun try_recv(self: &Self) -> Perhaps<T>;   // non-blocking: returns nope immediately if no value is ready
+    fun recv(self: &Self) -> Option<T>;       // blocking: waits until a value is available or channel closes
+    fun try_recv(self: &Self) -> Option<T>;   // non-blocking: returns nope immediately if no value is ready
 }
 
 aspect Selectable {
@@ -196,16 +196,16 @@ Send moves `value` into the channel. `value` is no longer accessible in the send
 **Receive** — `<- ch`:
 
 ```metel
-let x = <- ch;   // desugars to Receivable::recv(&ch) -> Perhaps<Int>
+let x = <- ch;   // desugars to Receivable::recv(&ch) -> Option<Int>
                  // blocks until a value is available or channel closes
 ```
 
-`<- ch` returns `Perhaps<T>`:
-- `Perhaps::Some { value }` — a value was received
+`<- ch` returns `Option<T>`:
+- `Option::Some { value }` — a value was received
 - `nope` — the channel is closed and drained
 
 ```metel
-while let Perhaps::Some { value: x } = <- ch {
+while let Option::Some { value: x } = <- ch {
     process(x);
 }
 ```
@@ -213,7 +213,7 @@ while let Perhaps::Some { value: x } = <- ch {
 **Non-blocking receive** — `ch.try_recv()`:
 
 ```metel
-let x := ch.try_recv();   // desugars to Receivable::try_recv(&ch) -> Perhaps<Int>
+let x := ch.try_recv();   // desugars to Receivable::try_recv(&ch) -> Option<Int>
                          // returns nope immediately if no value is ready
 ```
 
@@ -241,7 +241,7 @@ let result = select {
 
 ```metel
 let result = select {
-    v <- data_ch             => Perhaps::Some { value = v },
+    v <- data_ch             => Option::Some { value = v },
     _ <- Chan::timeout(5_s)  => nope,
 }
 ```
@@ -284,7 +284,7 @@ aspect Send {}
 | `Int`, `Float`, `boolean`, `String` | yes | primitives — copied |
 | Structs with all-`Send` fields | yes | automatic |
 | Enums with all-`Send` variants | yes | automatic |
-| `Perhaps<T>` where `T: Send` | yes | automatic |
+| `Option<T>` where `T: Send` | yes | automatic |
 | `Chan<T>` where `T: Send` | yes | channels cross fiber boundaries by design |
 | `Fiber<T>` where `T: Send` | yes | handles are `Send` |
 | `&T`, `&var T` | **no** | references are never sendable, regardless of anchor (RFC-0067) |
@@ -438,7 +438,7 @@ Futexes, semaphores, `pthread_t`, and similar OS-level constructs are used insid
 The original version of this section resolved `*T`/`*mut T`'s `Send` status against RFC-0043, which is now superseded by RFC-0067a's `&T`/`&var T`. Restated against the current model:
 
 1. **`&T` and `&var T` are not `Send`** — references are never sendable, regardless of anchor (RFC-0067 §1, once accepted; the rule is unconditional today regardless). A reference is a local-fiber tool; allowing it to cross fiber boundaries would create data races or dangle past its anchor's scope.
-2. **`Perhaps<&T>` is not `Send`** — wrapping a non-`Send` type in `Perhaps` does not make it `Send`.
+2. **`Option<&T>` is not `Send`** — wrapping a non-`Send` type in `Option` does not make it `Send`.
 3. **`@a T`'s sendability is the allocator-tag rule** (RFC-0063 §7), not a blanket reference rule: `@Heap T` is `Send` when `T: Send`; every scoped or custom allocator's `@a T` is not.
 4. **Auto-deref** (RFC-0067a §3) applies to field access, method dispatch, and function calls through `@a T` — unaffected by `Send`.
 

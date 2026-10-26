@@ -49,9 +49,9 @@ List::from(arr)      // construct from T[] — copies elements
 | `new` | `() -> List<T>` | Create an empty list |
 | `from` | `(T[]) -> List<T>` | Construct from a dynamic array |
 | `push` | `(self: *mut List<T>, value: T) -> ()` | Append an element |
-| `pop` | `(self: *mut List<T>) -> Perhaps<T>` | Remove and return the last element |
+| `pop` | `(self: *mut List<T>) -> Option<T>` | Remove and return the last element |
 | `len` | `(self: *List<T>) -> i64` | Number of elements |
-| `get` | `(self: *List<T>, index: i64) -> Perhaps<T>` | Bounds-checked access; returns `Perhaps::None` on out-of-bounds |
+| `get` | `(self: *List<T>, index: i64) -> Option<T>` | Bounds-checked access; returns `Option::None` on out-of-bounds |
 | `as_slice` | `(self: *List<T>) -> T[]` | View as an immutable dynamic array (no copy) |
 
 ### Coercion
@@ -86,7 +86,7 @@ All open questions are resolved or explicitly deferred.
 |----------|--------|
 | `Display` impl for `List<T>` where `T: Display` | **Deferred** — needs derived aspects or a manual impl; not blocking |
 | `List::with_capacity(n: i64)` constructor | **Deferred** — irrelevant for the tree-walking interpreter; relevant for compiled output |
-| Index operator `list[i]` | **Moved to RFC-0011** — design of the `Index` aspect (panic vs `Perhaps<T>`) tracked there |
+| Index operator `list[i]` | **Moved to RFC-0011** — design of the `Index` aspect (panic vs `Option<T>`) tracked there |
 
 ## Coverage Checklist (added 2026-08-19, not part of the original RFC)
 
@@ -106,7 +106,7 @@ RFC's own prose, not here.
 ### 2. List mutation
 
 `push` appends an element to a mutable list. `pop` removes and returns its last
-element as `Perhaps<T>`, returning `Perhaps::None` when the list is empty.
+element as `Option<T>`, returning `Option::None` when the list is empty.
 
 ### 3. List length
 
@@ -115,8 +115,8 @@ made by `push` and `pop`.
 
 ### 4. Bounds-checked list access
 
-`get(index)` returns `Perhaps::Some` for an in-bounds element and
-`Perhaps::None` for an out-of-bounds index.
+`get(index)` returns `Option::Some` for an in-bounds element and
+`Option::None` for an out-of-bounds index.
 
 ### 5. Explicit array views
 

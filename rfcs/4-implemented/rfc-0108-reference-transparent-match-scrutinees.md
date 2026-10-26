@@ -158,7 +158,7 @@ wrapped value once this runs.
 
 A pattern like `Colour::Red` introduces no bindings, so §1.1-1.3 alone fully cover
 this RFC's motivating example. For a fieldful variant matched through a reference
-(`match r { Perhaps::Some { value } => .. }` where `r: &Perhaps<i64>`), `value` binds
+(`match r { Option::Some { value } => .. }` where `r: &Option<i64>`), `value` binds
 to a *copy* of the field — the same "type-directed copy" semantics RFC-0066 §3a /
 RFC-0067a already established for reading a field through a reference generally, not a
 new rule invented here. Metel has no move/borrow-checking yet (RFC-0071 is accepted,
