@@ -216,7 +216,7 @@ fun main() {
 }
 ```
 
-`?` can only be used inside a function whose return type is `Result<_, E>`. If the error types differ, the inner error type must implement `From<InnerError>` for the outer error type — see the next section.
+`?` can only be used inside a function whose return type is `Result<_, E>` or `Option<_>`, and the operand must be the same kind: an `Option` operand needs an `Option`-returning function (it returns `None` early), a `Result` operand a `Result`-returning one. To cross over, write `.ok_or(error)?` or `.ok()?`. If the error types differ, the inner error type must implement `From<InnerError>` for the outer error type — see the next section.
 
 :::tip
 Reach For `?` After The Result Shape Is Stable

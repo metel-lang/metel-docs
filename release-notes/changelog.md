@@ -32,6 +32,16 @@ title: "Metel Language Changelog"
   implicit and `T0019` under `--move-check` when written `*r`. The specification and tutorials
   are updated.
 
+**Language:**
+
+- `?` now works on `Option<T>` (RFC-0182, `metel-core#1635`). In a function or closure that returns
+  `Option<U>`, `e?` with `e: Option<T>` is the `Some` value, or returns `None`. The operand's
+  type constructor must match the enclosing return type's; mixed use stays an error
+  (`T0001`) whose help line names the bridge, `.ok_or(...)` or `.ok()`, and the message no
+  longer shows inference variables. `?` recognises the core `Result`/`Option` by declaration
+  identity, so a module that declares its own `Result` or `Option` no longer breaks `?` on
+  standard-library values.
+
 ## v0.14.1
 
 **Released 2026-10-26.** A patch release of diagnostics, block-local types, name resolution and
