@@ -192,7 +192,7 @@ let full := "hello" + ", " + "world";   // "hello, world"
 A string literal may contain `${expr}` placeholders; each placeholder's expression is
 rendered to text and the result is a `String`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
@@ -223,7 +223,7 @@ Placeholder expressions are evaluated once each, in source order.
 Interpolation combines literal fragments and rendered placeholder values using ordinary
 string-concatenation semantics.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>
@@ -238,7 +238,7 @@ string-concatenation semantics.
 
 Within a string literal, `\${` produces the literal characters `${`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0010](../../rfcs/4-implemented/rfc-0010-string-interpolation.md)_</span>

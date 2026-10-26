@@ -402,7 +402,7 @@ You can still write `import std::core::Option;` or `import std::core::*;` explic
 Every module has the `std::core` names available without an import; the same names may also
 be named through their explicit `std::core::` paths.
 
-<!-- rfc.py:last_reviewed 33d4a37696e073c0581e3e0a4a08a119a20677bd -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>

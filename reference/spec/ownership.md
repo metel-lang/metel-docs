@@ -43,7 +43,7 @@ Primitive types and any type implementing `Copy` are exempt — they are duplica
 Using a non-`Copy` value in assignment, argument, or return position moves it; a later use
 of the source binding is rejected.
 
-<!-- rfc.py:last_reviewed 0a067998 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -737,7 +737,7 @@ value (`T0019`), with or without `--move-check`.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed a0a20f994b1b -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

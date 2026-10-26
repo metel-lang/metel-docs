@@ -222,7 +222,7 @@ fun main() -> i64 {
 An expression in `return` position is typechecked against the enclosing function or
 method's declared return type, which supplies its expected type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
@@ -238,7 +238,7 @@ method's declared return type, which supplies its expected type.
 An expression in `break` position is typechecked against its enclosing `loop`'s value
 type, independently of the enclosing function's return type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
@@ -685,7 +685,7 @@ See the note under "Arrays" above — this split is not considered final.
 An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
-<!-- rfc.py:last_reviewed 0a067998 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
@@ -1089,7 +1089,7 @@ lifetime, not only the call itself.
 `List::new()` creates an empty list, and `List::from(source)` creates a list containing
 the elements of `source`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -1105,7 +1105,7 @@ the elements of `source`.
 `push` appends an element; `pop` removes and returns the last element, or `None` for an
 empty list.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -1121,7 +1121,7 @@ empty list.
 `len` reports the list's current number of elements, including changes made by `push`
 and `pop`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -1136,7 +1136,7 @@ and `pop`.
 
 `get(i)` returns `Some` for an in-bounds element and `None` when `i` is out of bounds.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -1152,7 +1152,7 @@ and `pop`.
 A `List<T>` is distinct from `[T]`; obtaining its array view requires an explicit
 `.as_slice()` call.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0054](../../rfcs/4-implemented/rfc-0054-list-type.md)_</span>
@@ -1201,7 +1201,7 @@ fun main() -> i64 {
 `expr : T` constrains `expr` to type `T` and supplies `T` as its expected type; it performs
 no runtime conversion.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
@@ -1408,7 +1408,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed ef278ea1 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2168,7 +2168,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed d7f6b13a -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
@@ -2781,7 +2781,7 @@ is exhaustive.
 `Option<!>` has only its zero-field `None` variant inhabited; it does not coerce to a
 field type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -2898,7 +2898,7 @@ fun main() -> i64 {
 `None` is the empty variant of `Option<T>` and is valid only where the expected type
 determines `T`; `Option::None` is valid wherever the qualified variant is named.
 
-<!-- rfc.py:last_reviewed c062052463f05ba40316d189b7281920f4ab98df -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md), [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -2923,7 +2923,7 @@ or pattern name, and in an import. A module that declares its own `Perhaps` is u
 `Option` may be shadowed like `Result` and `List`
 ([scoping-and-shadowing legality-9](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-9)).
 
-<!-- rfc.py:last_reviewed c062052463f05ba40316d189b7281920f4ab98df -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0184](../../rfcs/4-implemented/rfc-0184-rename-perhaps-to-option.md)_</span>

@@ -114,7 +114,7 @@ plain `=` spelling is a parse error (RFC-0136).
 A conditional aspect implementation may state its bounds inline on its type parameters or
 in a `where` clause; the two spellings are equivalent.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -511,7 +511,7 @@ Top-level `extend` blocks follow the same declaration-order rule as the types th
 Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
 declaration, and the outer declaration is not visible outside its own scope.
 
-<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -666,7 +666,7 @@ value that std produced keeps the type std declared: a `match` on it names the v
 type, and a method called on it is found on that type, whichever type the name now means in the
 caller.
 
-<!-- rfc.py:last_reviewed 0bacac7eb32d5fd0a1477618f47fae501e1c5d71 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1025,7 +1025,7 @@ do not supply a distinct receiver-mode syntax.
 An `Iterable<T>` implementation declares `next` with an `&var self` receiver so repeated
 calls can advance the same iterator value.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1055,7 +1055,7 @@ An `&var self` method may be called through an `&var T` reference.
 
 An aspect method may declare an `&var self` receiver, including `Iterable<T>::next`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1435,7 +1435,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed ef278ea1 -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -2045,7 +2045,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed 35c66dea -->
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
