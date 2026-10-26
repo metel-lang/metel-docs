@@ -441,6 +441,12 @@ annotation, and a body block. It may appear wherever an expression is accepted. 
 before v0.13.0 the parameter list was parenthesized and `->` was written before every
 body; `|…|` self-disambiguates, so `->` now appears only with a return type.)
 
+A parameter's type annotation is optional. An unannotated parameter takes its type from the
+expected function type (an argument position, an annotated `let`, a struct field with a written
+function type) or, failing that, from the body, exactly as an omitted return type does. A
+closure whose parameter stays fully generic is polymorphic (`let id := |x| { x }`). A parameter
+that nothing determines is [T0002](../error-codes.md#t0002--annotation-required).
+
 <!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
 
 <!-- rfc.py:origins:start -->
