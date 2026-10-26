@@ -2,12 +2,14 @@
 id: rfc-0184
 title: "Rename Perhaps to Option"
 date: '2026-10-24'
-status: under-review
-updated: '2026-10-24'
+status: accepted
+updated: '2026-10-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1595'
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
+
+> **Status — accepted (2026-10-26).** Rename accepted by the language owner; hard cut, shadowable, RFC-0182 rewritten, dated posts left as records
 
 ## Summary
 
@@ -155,20 +157,41 @@ a hard cut, or one release in which `Perhaps` remains as a deprecated alias.
    taste decision with a recorded precedent on each side (`nope` → `None` for familiarity,
    `Perhaps` kept for identity). The RFC's job is to make the trade explicit; the decision
    is the language owner's.
+
+   **Decided (2026-10-26): rename.** Familiarity outweighs the identity argument for this name.
+   RFC-0098's "costs nothing" premise does not hold here: the cost of keeping `Perhaps` is paid by
+   every reader who knows `Some`/`None` as the variants of `Option`.
 2. **Hard cut or transitional alias?** A one-release `type Perhaps<T> := Option<T>` would
    carry type positions, but qualified construction through an alias
    (`Perhaps::Some { … }`) needs checking, and the shadow rules (metel-core#1585) mean an
    alias in `std::core` can itself be shadowed. If the alias cannot keep construction paths
    working, the choice is a hard cut with a precise diagnostic ("`Perhaps` is now `Option`").
+
+   **Decided (2026-10-26): hard cut, no alias.** After this lands `std::core` declares no
+   `Perhaps`. Naming it where a type, a path, a pattern or an expression is expected is the existing
+   `T0003` (unknown type, unresolved path, undefined name), and the message adds that `Perhaps` is now
+   `Option`. The hint applies only while the name resolves to nothing: a module that declares its own
+   `Perhaps` is unaffected. Pre-1.0 and a small user base make a one-release alias not worth its
+   shadow-rule edge cases (metel-core#1585).
 3. **Reserved or shadowable?** `Option` joins `Result` and `List` as a `std::core` type that
    a module may shadow (`spec.declarations.variables.scoping-and-shadowing.legality-9`).
    Is that acceptable for the most-used type, or should it be reserved like the intrinsic
    types (`legality-8`)? Not specific to this RFC; the rename just makes it likelier that a
    user declares a type with that name.
+
+   **Decided (2026-10-26): shadowable**, like `Result` and `List` (`legality-9`). No new
+   reserved-name rule; `int_03_generic_option_chain` and the shadowing fixtures keep working.
 4. **Timing relative to `?` on `Option`.** If RFC-0182 is accepted, should it be rewritten
    to say `Option` first so the new rule never ships under the old name?
+
+   **Decided (2026-10-26): yes.** RFC-0182's prose and examples were rewritten to `Option` with this
+   RFC's acceptance. RFC-0182 stays under review; only its wording changed.
 5. **Documentation and blog.** The v0.14.0 records post and getting-started pages show
    `Perhaps`. Are published posts rewritten, or left as dated records with a note?
+
+   **Decided (2026-10-26): left as dated records**, with no note added. The specification, the
+   tutorials, the getting-started pages and the README change to `Option` with the implementation;
+   the v0.14.0 records post and other dated posts stay as published.
 
 ---
 
@@ -185,4 +208,15 @@ a hard cut, or one release in which `Perhaps` remains as a deprecated alias.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** accepted, 2026-10-26, by the language owner.
+
+`Perhaps<T>` is renamed `Option<T>`. Variants (`Some { value }`, `None`) and methods are unchanged,
+and so are semantics, AST shape and type checking.
+
+- **Hard cut.** `std::core` declares no `Perhaps` once this lands, and there is no alias. Using the
+  name where nothing declares it is `T0003` with a message saying `Perhaps` is now `Option`.
+- **Shadowable.** `Option` may be shadowed by a module-level or block-local declaration, exactly as
+  `Result` and `List` may.
+- **RFC-0182** is rewritten to say `Option` (done with this acceptance).
+- **Dated posts** are left as records; live pages change with the implementation.
+- **Spec anchors** such as `spec.types.perhaps-t.*` keep their ids; prose and headings change.
