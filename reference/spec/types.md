@@ -1925,7 +1925,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 213a7735dd916ae5bae9f099e40ce2424cab47b0 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0180](../../rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md)_</span>
@@ -2172,7 +2172,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 213a7735dd916ae5bae9f099e40ce2424cab47b0 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
