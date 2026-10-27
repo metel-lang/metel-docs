@@ -66,7 +66,7 @@ when the initializer is consumed. A `let` declaration introduces immutable
 bindings; `var` and `let var` introduce mutable bindings. The pattern must be
 well-typed under the record-pattern rules.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <details>
 <summary>Formal rules</summary>
@@ -1115,7 +1115,6 @@ separate designs.
 A `record` may take a `record`-kinded parameter, spliced as `..R` wherever the type is named; the
 parameter stands for extra fields the user of the type supplies:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Builder<record R> { name: String, data: { ..R } }
 
@@ -1144,7 +1143,7 @@ parameter list (including a `record` type parameter used as a row, RFC-0121, RFC
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1174,7 +1173,7 @@ either mechanism, regardless of width — projecting every field a `struct` decl
 not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
 §3's worked example).
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1226,7 +1225,7 @@ and points an author who wanted a private field at a `struct`. There is no way t
 record field private. The rule applies to every `record`, generic or not, and never to a
 `struct`.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1436,7 +1435,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1492,7 +1491,7 @@ import (`import m::{A};`), a renamed import (`import m::A as B;`), a glob
 from outside its declaring module, directly or through an `export`, is a visibility
 error.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2046,7 +2045,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
@@ -2257,7 +2256,7 @@ orphan rule does not apply because there is no authored impl site.
 An authored `extend Type: Aspect` is rejected with `T0014` when neither the aspect nor
 the target type's outermost constructor is local to the implementing module.
 
-<!-- rfc.py:last_reviewed 2dfbafb9 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
@@ -2756,7 +2755,7 @@ this language version.
 An associated type declared with `type Name;` is part of the aspect interface and must
 be defined by each implementation of that aspect.
 
-<!-- rfc.py:last_reviewed faefa18b -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -3668,7 +3667,7 @@ A bodyless positive `extend Type: Aspect;` is legal exactly when the correspondi
 braced implementation is legal: the aspect has no required methods and no associated type
 requiring a binding.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>

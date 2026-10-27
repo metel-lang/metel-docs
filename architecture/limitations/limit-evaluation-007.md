@@ -20,7 +20,7 @@ the brand of the record it came from, and brand-exact impl dispatch runs first
 aspect Describe { fun describe(&self) -> String; }
 record Point { x: i64, y: i64 }
 extend Point: Describe { fun describe(&self) -> String { "point".to_string() } }
-extend<row R> { ..R }: Describe where all R: Copy { fun describe(&self) -> String { "copy-row".to_string() } }
+extend<record R> { ..R }: Describe where each R: Copy { fun describe(&self) -> String { "copy-row".to_string() } }
 fun erase(p: Point) -> {} {
     let { x: _, y: _, ..rest } := p;
     rest

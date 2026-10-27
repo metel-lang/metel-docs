@@ -14,13 +14,13 @@ review: null
 RFC-0121 is implemented in installments (metel-core#1306), and what is left is the part
 the Language Spec still states as design.
 
-Implemented: the `row` generic-parameter kind; `..R` in a record type's tail, a struct's
+Implemented: row parameters (`record R` used as `..R`; the separate `row` kind was removed by RFC-0186); `..R` in a record type's tail, a struct's
 residual-projection tail, generic-argument position and reusable nested/return/field
 type positions; a `where R = { label: Type,
 ..Rest }` decomposition, which bounds `R` and derives `Rest` at each call; by-value width
 subtyping when the row's fields are concretely known at the narrowing site; and
-row-conditional impls (`extend<row R: { .. }> Session<..R>`, inherent and aspect) on a
-nominal target, and aspect impls on a record target (`extend<row R: { .. }> { ..R }: A`,
+row-conditional impls (`extend<record R: { .. }> Session<..R>`, inherent and aspect) on a
+nominal target, and aspect impls on a record target (`extend<record R: { .. }> { ..R }: A`,
 `extend { x: f64 }: A`; anonymous and nominal records), with row-versus-row coherence
 and runtime dispatch.
 

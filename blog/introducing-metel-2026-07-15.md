@@ -15,11 +15,10 @@ explicit allocation — to ask how they can be combined into a single coherent s
 
 Here is a small taste of the language:
 
-<!-- doc-example: skip reason="dated post, kept as published: written when the type was Perhaps (RFC-0184 renamed it Option)" -->
 ```metel
 fun main() {
     let name := "Metel";
-    let answer: Perhaps<i64> := Some { value = 42 };
+    let answer: Option<i64> := Some { value = 42 };
     println("${name} says the answer is ${answer.yolo()}");
 }
 ```

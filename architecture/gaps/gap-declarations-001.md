@@ -17,7 +17,7 @@ aspect cannot be implemented for a tuple target (`extend (i64, i64): MyAspect { 
 does not work). Arrays are the exception, through the orphan-rule carve-out for
 structural type constructors, and anonymous records now are too: a local aspect
 can be implemented for a record target, closed or row-tailed (`extend { w: i64 }: MyAspect`,
-`extend<row R: { w: i64, .. }> { ..R }: MyAspect`; RFC-0121 §3, metel-core#1306 item 8).
+`extend<record R: { w: i64, .. }> { ..R }: MyAspect`; RFC-0121 §3, metel-core#1306 item 8).
 The Language Spec defers tuples pending a decision between per-arity boilerplate
 and variadic generics.
 

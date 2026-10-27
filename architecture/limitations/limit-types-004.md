@@ -14,7 +14,7 @@ review: null
 RFC-0173 makes the definition-time check the contract for a generic body: each declared
 parameter is rigid, and a use is allowed only if the declared bounds entail it. The completed
 implementation (metel-core#1364) keeps row decompositions as symbolic facts through generic
-calls and generalized schemes; checks direct and `where all` bound forwarding; makes
+calls and generalized schemes; checks direct and `where each` bound forwarding; makes
 conditional-impl visibility depend on declared entailment; and records solver provenance so a
 rigidity mismatch (`T0001`) points at the causal expression. A construction disagreement is
 `I0010`, never a call-site type error. Operators on bare parameters remain the separate

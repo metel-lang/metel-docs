@@ -458,7 +458,7 @@ match (value) { // value : { token: Token, extra: i64, ..Rest }
 A record rest pattern's named fields must be entailed present, and its row facts must
 determine the remainder type after removing those labels; otherwise it is rejected.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 ### Matching through a reference
 
@@ -1108,7 +1108,7 @@ shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-t
 Evaluating `&var value.field` creates an exclusive reference to that field. A write through
 the reference updates the corresponding field in `value`.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
@@ -1124,7 +1124,7 @@ the reference updates the corresponding field in `value`.
 Evaluating `&var value.n` creates an exclusive reference to tuple element `n`. A write
 through the reference updates that element and leaves the other tuple elements unchanged.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
@@ -1140,7 +1140,7 @@ through the reference updates that element and leaves the other tuple elements u
 Evaluating `&var values[index]` creates an exclusive reference to the selected array
 element. A write through the reference is observable through subsequent indexing.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
@@ -1156,7 +1156,7 @@ element. A write through the reference is observable through subsequent indexing
 Evaluating `&var` over a chain of addressable projections creates an exclusive reference
 to the chain's leaf storage. A write through the reference updates that original leaf.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0045](../../rfcs/4-implemented/rfc-0045-mut-address-of-lvalue-paths.md)_</span>
@@ -1303,7 +1303,7 @@ Evaluating `&place` or `&var place` produces, respectively, a shared or exclusiv
 reference to the addressed storage; an exclusive reference can write through to that
 same storage.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
@@ -1322,7 +1322,7 @@ same storage.
 Field access, field assignment, method dispatch, and calls through a reference
 auto-dereference through every reference layer necessary to reach their receiver.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>

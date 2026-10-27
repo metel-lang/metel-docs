@@ -4,7 +4,7 @@ title: "Record `Display` is a runtime built-in, not Metel code"
 summary: "`Display` for a record of `Display` fields is a built-in in the evaluator, a stand-in for RFC-0174's `comptime for`; no user aspect, and no `Eq`/`Hash`, can walk a record's fields; `Clone` is likewise a built-in."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
-discovered_by: "metel-core#1338: implementing `Display` for records after RFC-0123's `where all R: Display` landed"
+discovered_by: "metel-core#1338: implementing `Display` for records after RFC-0123's `where each R: Display` landed"
 disposition: planned
 tracked_by: metel-core#1340
 rfc: RFC-0174
@@ -13,7 +13,7 @@ review: null
 
 ## Limitation
 
-`std::core` declares `extend<row R> { ..R }: Display where all R: Display`, so every record
+`std::core` declares `extend<record R> { ..R }: Display where each R: Display`, so every record
 whose fields are all `Display` is `Display`: anonymous and nominal records, nested records,
 and records with fields whose types have a `Display` impl of their own. The impl's body is
 not Metel code. Nothing in the language can iterate a row's fields, so the method is a
@@ -26,7 +26,7 @@ let p := { x = 1, y = 2.5, s = "hi" };
 println("${p}");        // { s: hi, x: 1, y: 2.5 }
 ```
 
-The condition is checked statically (`where all R: Display`; a field without `Display` is
+The condition is checked statically (`where each R: Display`; a field without `Display` is
 `T0012` naming the field). Only the *body* is built in. Consequences:
 
 - **The format and the aspect are fixed in the evaluator.** There is no way to write a

@@ -30,7 +30,7 @@ with a clear message ("cannot `extend` an anonymous record type"). This
 generic, row-bounded form slips through the same class of check.
 
 This is a different case from `GAP-DECLARATIONS-001` (no local aspect impl for
-a tuple or anonymous record target) and `GAP-TYPES-004` (`extend<row R>` does
+a tuple or anonymous record target) and `GAP-TYPES-004` (`extend<record R>` does
 not parse at all): here the `extend` uses the ordinary, already-supported
 `record T: { .. }` bound and is accepted, then silently does nothing.
 

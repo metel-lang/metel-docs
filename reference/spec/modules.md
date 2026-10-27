@@ -214,7 +214,7 @@ Import forms:
 A module may use its own declarations and public declarations brought into scope by an
 import. Loading another module alone does not make that module's names available.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -233,7 +233,7 @@ import. Loading another module alone does not make that module's names available
 An aliased import binds only its alias locally. The alias may be used wherever the
 imported declaration's kind permits, including as a value, type, or constructor.
 
-<!-- rfc.py:last_reviewed 33d4a37696e073c0581e3e0a4a08a119a20677bd -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -618,7 +618,7 @@ projecting it (`t.{ offset }`), or writing it in a residual type (`Token.{ offse
 outside the declaring module is the same `T0009`. A residual of public fields only
 (`Token.{ kind }`) is unrestricted.
 
-<!-- rfc.py:last_reviewed d1f40994 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
@@ -721,7 +721,7 @@ methods (which take their visibility from the aspect), and residuals that name o
 `public` fields are unrestricted. Naming a private field of *another* module's struct is
 already rejected by [legality-3](#spec.modules.visibility.legality-3).
 
-<!-- rfc.py:last_reviewed d1f40994 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

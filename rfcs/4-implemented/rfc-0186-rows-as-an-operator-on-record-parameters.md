@@ -7,11 +7,11 @@ coverage:
   "2": { kind: untestable, reason: "an alternatives analysis; it states no rule a program can exhibit" }
   "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
   "4": { kind: untestable, reason: "records review findings and resolved design questions; each resolution is stated as a rule in section 1" }
-status: integrated
+status: implemented
 updated: '2026-10-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1597'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1644'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
@@ -21,6 +21,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-27).** Open questions resolved 2026-10-27; keyword each
 
 > **Status — integrated (2026-10-27).** Spec integrated with Pending markers; implementation tracked in #1644
+
+> **Status — implemented (2026-10-27).** Implemented by metel-core#1644
 
 ## Summary
 

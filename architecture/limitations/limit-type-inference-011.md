@@ -1,7 +1,7 @@
 ---
 id: LIMIT-TYPE-INFERENCE-011
 title: "A field-wise Clone grant does not entail Clone for an open-row record"
-summary: "An owned generic row with `where all R: Clone` cannot clone the entire open-row value inside its body."
+summary: "An owned generic row with `where each R: Clone` cannot clone the entire open-row value inside its body."
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "v0.14.0 sensitive release-matrix probe; metel-core#1420"
@@ -12,7 +12,7 @@ review: null
 ## Limitation
 
 A generic function with an owned parameter `{ id: i64, ..R }` and
-`where all R: Clone` was rejected with `T0035` when its body called
+`where each R: Clone` was rejected with `T0035` when its body called
 `value.clone()`. Generic method entailment now accounts for the fixed row fields
 and carries the declared field-wise requirement to the open tail. The regression
 `evaluator/records/release_matrix_bounded_clone_residual_callback.mtl` passes

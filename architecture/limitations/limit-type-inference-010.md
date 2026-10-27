@@ -36,6 +36,6 @@ Alias dependency preservation was implemented in metel-core commit
 `5f038b189cb67c5ec40e51d16a3e11a831a4535e` (PR #1422). Exit evidence for
 metel-core#1414 includes `module_semantics/release_matrix_row_callback`,
 `module_semantics/imported_nominal_alias_definition_scope` (renames, re-exports,
-row and ordinary generic aliases, consumer name collisions), and
+record and ordinary generic aliases, consumer name collisions), and
 `module_semantics/alias_rhs_constructor_not_imported` (the original constructor
 remains unavailable).
