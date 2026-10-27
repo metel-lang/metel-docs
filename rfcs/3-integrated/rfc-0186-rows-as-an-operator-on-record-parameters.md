@@ -2,14 +2,25 @@
 id: rfc-0186
 title: "Rows as an Operator on Record Parameters"
 date: '2026-10-24'
-status: under-review
+coverage:
+  "1": { spec: "spec.types.generics.open-rows.legality-1" }
+  "2": { kind: untestable, reason: "an alternatives analysis; it states no rule a program can exhibit" }
+  "3": { kind: untestable, reason: "a cost analysis; it states no rule a program can exhibit" }
+  "4": { kind: untestable, reason: "records review findings and resolved design questions; each resolution is stated as a rule in section 1" }
+status: integrated
 updated: '2026-10-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1597'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1644'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
 
 > **Revised (2026-10-27).** An earlier draft replaced `where all R: A` with `where ..R: A`. That is dropped: `..` stays an unpacking operator everywhere, and the field-wise constraint keeps a keyword, renamed `all` to `each`. Row declarations are this RFC's alone (RFC-0187 and RFC-0188 no longer touch them).
+
+> **Status — accepted (2026-10-27).** Open questions resolved 2026-10-27; keyword each
+
+> **Status — integrated (2026-10-27).** Spec integrated with Pending markers; implementation tracked in #1644
 
 ## Summary
 
