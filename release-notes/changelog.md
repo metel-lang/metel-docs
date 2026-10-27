@@ -47,6 +47,11 @@ title: "Metel Language Changelog"
   It takes its type from the expected function type (an argument, an annotated `let`, a struct
   field) or from the body; `T0002` remains for a parameter nothing determines, with a message that
   says what would (`metel-core#1624`).
+- Explicit type arguments on a function with an open-record (row) parameter are now a clear error instead of a
+  miscount or a mis-bound argument: `get_x::<{ name: i64 }>(…)` was "expected 2 type argument(s), got 1", and a
+  second argument bound to the wrong variable. The message says to remove the `::<…>`; the row is inferred from
+  the arguments. Pinning a row parameter is a known gap (`GAP-FUNCTIONS-005`, `metel-core#1647`). Functions
+  without a row parameter pin their generics in declaration order, unchanged (`metel-core#1646`).
 - `?` now works on `Option<T>` (RFC-0182, `metel-core#1635`). In a function or closure that returns
   `Option<U>`, `e?` with `e: Option<T>` is the `Some` value, or returns `None`. The operand's
   type constructor must match the enclosing return type's; mixed use stays an error

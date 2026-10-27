@@ -1167,6 +1167,8 @@ never mutates. The coercion is one-way — there is no automatic re-narrowing ba
 
 > **Availability:** Since v0.8.0.
 
+> **Gap** GAP-FUNCTIONS-005
+
 When a generic function's type parameters cannot be inferred from the arguments, they [can be specified explicitly with turbofish syntax: `name::<T, U>(args)`](#spec.functions.turbofish.legality-1).
 
 ```metel
@@ -1204,7 +1206,7 @@ A generic call may supply explicit type arguments with `name::<T, U>(arguments)`
 each named parameter to the given type. A pinned type must satisfy that parameter's own
 bounds (e.g. `T: Display`).
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed a4d8d2ae2fd61a35a05845e8c7c359c6a5437856 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
