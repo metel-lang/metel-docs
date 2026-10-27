@@ -16,7 +16,7 @@ impl_status: implemented
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
 
-> **Revised (2026-10-27).** An earlier draft replaced `where all R: A` with `where ..R: A`. That is dropped: `..` stays an unpacking operator everywhere, and the field-wise constraint keeps a keyword, renamed `all` to `each`. Row declarations are this RFC's alone (RFC-0187 and RFC-0188 no longer touch them).
+> **Revised (2026-10-27; restored by the #1653 amendment below).** An earlier draft replaced `where all R: A` with `where ..R: A`. That is dropped: `..` stays an unpacking operator everywhere, and the field-wise constraint keeps a keyword, renamed `all` to `each`. Row declarations are this RFC's alone (RFC-0187 and RFC-0188 no longer touch them).
 
 > **Status — accepted (2026-10-27).** Open questions resolved 2026-10-27; keyword each
 
@@ -24,30 +24,29 @@ impl_status: implemented
 
 > **Status — implemented (2026-10-27).** Implemented by metel-core#1644
 
-> **Amended (2026-10-27, metel-core#1653, pending review).** The field-wise bound takes the unpacked operand: `where each ..R: A`, not `where each R: A`. `each` is unreleased, so the old operand is simply removed. Sections 1 and 2 and the examples below use the amended spelling; the decision and its rationale are Motivation §4 and Review finding 5. Implementation is tracked in #1653 and waits for this amendment to be accepted.
+> **Amended (2026-10-27, metel-core#1653, pending review).** The field-wise bound is written `where ..R: A`, with no keyword: `all` and the interim `each` are both removed. `..R` is "the members of R's row" exactly as it is everywhere else, so `..R: A` reads "every member of R's row is `A`". An earlier draft of this RFC proposed this and it was dropped; it is restored for the reasons in Motivation §4. `each` was only ever unreleased, so there is no user-facing migration. Implementation is tracked in #1653 and waits for this amendment to be accepted.
 
 ## Summary
 
-Remove the `row` generic-parameter kind and rename the field-wise constraint keyword `all` to
-`each` and give it the unpacked operand, `each ..R`. A generic parameter that stands for a record is declared `record R` (as `record T`
+Remove the `row` generic-parameter kind and replace the field-wise constraint `where all R: A` with
+`where ..R: A`. A generic parameter that stands for a record is declared `record R` (as `record T`
 already is), and the existing `..` spread is the one way to get at a record's row: `..R` yields
 **R's row**. `..` stays an unpacking operator everywhere (record tails, row arguments, spreads,
-rest patterns, pack splices); the field-wise bound is the keyword `each` applied to an
-unpacked operand, and `..` never acts as the quantifier.
+rest patterns, pack splices); in a bound, `..R: A` says every member of that unpacked row is `A`.
 
 ```metel
 // before                                              // after
 fun get_x<row R>(p: { x: f64, ..R }) -> f64            fun get_x<record R>(p: { x: f64, ..R }) -> f64
-fun consume<row R>(r: { ..R }) where all R: Copy       fun consume<record R>(r: { ..R }) where each ..R: Copy
-extend<row R> { ..R }: Display where all R: Display    extend<record R> { ..R }: Display where each ..R: Display
+fun consume<row R>(r: { ..R }) where all R: Copy       fun consume<record R>(r: { ..R }) where ..R: Copy
+extend<row R> { ..R }: Display where all R: Display    extend<record R> { ..R }: Display where ..R: Display
 record Packet<row R> { data: { ..R } }                 record Packet<record R> { data: { ..R } }
 fun f<row R>(p: Packet<..R>) -> ...                    fun f<record R>(p: Packet<..R>) -> ...
 ```
 
 Two mechanical rewrites cover existing code: `row` becomes `record` at the binder, and `all R`
-becomes `each ..R` in a field-wise bound (for rows and, in RFC-0125, `each ..Ts` for packs). Every use of `..R`
-is unchanged. `row` stops being a reserved word, and `each` replaces `all` as the contextual
-keyword.
+becomes `..R` in a field-wise bound (for rows and, in RFC-0125, `..Ts` for packs). Every use of `..R`
+is unchanged. `row` stops being a reserved word, and the contextual keyword `all` is removed with
+no replacement.
 
 This amends RFC-0121 (open rows) and RFC-0123 (field-wise constraints), both implemented, and
 renames the quantifier RFC-0125 reuses for packs. It is a breaking change to shipped syntax and
@@ -94,27 +93,30 @@ If `..` is an operator on a record, the value level and the type level say the s
 `row` is a reserved word (`grammar.pest`'s reserved list) used in exactly one place, the binder.
 Once a `record R` parameter can stand for the rest of a record, the word has nothing left to do.
 
-### 4. The constraint keeps a keyword, and its operand is the unpacked row
+### 4. The constraint is written with the row operator
 
 The field-wise constraint (`where all R: A`) bounds `R` differently from `where R: A`: the record
-as a whole versus each of its fields. The difference is carried by the keyword in front of the
-name, and it should stay there. This RFC renames `all` to `each`: `where each ..R: Display` says
-what is quantified (each field's type), and for a pack in RFC-0125 `where each ..Ts: Copy` says each
-member.
+as a whole versus each of its fields. With `record R` and `..R` in place, that difference is
+already carried by the operator: `R: A` bounds the record, `..R: A` bounds the members of its row.
+A separate quantifier word adds nothing a reader cannot already see (amended, #1653; the interim
+spelling was `each R` / `each ..R`).
 
-**The operand is written `..R`, not `R`** (amended, #1653). In `each R: Display` the name `R` is the
-record parameter, which reads as "R is `Display`" and hides what is enumerated; the checker already
-requires `R` to be used as a row for the bound to be well formed (`T0012`), so the operand is the
-row, not the record. Writing `each ..R` states that operand, in the same notation `..R` has
-everywhere else in this RFC ("R's row"). `..` still means "unpack" in every position, and `each`
-still alone means "for every member": the quantifier is not the token `..`. The form also carries
-over unchanged to packs (`each ..Ts`), to tuples read as numeric-label rows (RFC-0151) and to the
-planned loop `comptime for member in ..self` (RFC-0174).
+- **`..` keeps one meaning, "the members of".** `{ ..R }` splices R's members into a record,
+  `comptime for member in ..self` (RFC-0174) iterates them, `..R: A` constrains them. The bound is
+  not a second job for the token; it is the same job applied to a constraint.
+- **A keyword would only make sense next to the `row` kind.** If `<row R>` still existed, `R` would
+  be a row and `each R: A` would need a word to say "per member". With `record R`, the name is the
+  record and `..R` is already how the row is named, so a keyword would repeat it. (Keeping `row`
+  was rejected in §1; it is two kinds for one idea.)
+- **It carries over unchanged** to packs (`..Ts: A`), to tuples read as numeric-label rows
+  (RFC-0151) and to a pack-or-row-generic `extend<record R> { ..R }: A where ..R: A`.
+- **One keyword fewer.** `all` was contextual; `each` is unreleased and is dropped before it ships.
 
-It deliberately does **not** write the bound as `..R: A`. `..` means "unpack" in every other
-position the language gives it (a record tail, a row argument, a spread, a rest pattern, a pack
-splice); in bound position without `each` it would be a quantifier, a second job for the same
-token.
+The risk is that `..R: Display` could be read as "the row as a whole is `Display`". It cannot be
+satisfied that way: a row is not a type and implements no aspect, so the only reading with a
+meaning is per member, and the checker rejects `..R: A` when `R` is not a `record` parameter
+(`T0012`). The remaining cost is that a bound looks like a spread; the `where` position and the
+`: Aspect` suffix disambiguate it, and spreads never take a bound.
 
 ---
 
@@ -150,22 +152,20 @@ with a row, and `..R` is the "row" half of that pair.
 
 ### The field-wise constraint
 
-`where each ..R: A` holds when every field type in `R`'s row satisfies `A`, vacuously on an empty
-row. It is `where all R: A` with the keyword renamed and the operand written as the unpacked row;
-the meaning, the walkable positions (an open-record tail, a `where` decomposition's remainder, the
+`where ..R: A` holds when every field type in `R`'s row satisfies `A`, vacuously on an empty
+row. It is `where all R: A` with the operand written as the unpacked row and no keyword; the
+meaning, the walkable positions (an open-record tail, a `where` decomposition's remainder, the
 tail of an `extend` target, a row argument of a nominal type) and the forwarding rule (it is
-forwarded only to another `each ..R: A`) are unchanged. The operand must be `..` followed by the
-name of a `record` parameter; `each R: A` (no `..`) and an operand that is not a bare parameter name are errors.
+forwarded only to another `..R: A`) are unchanged. The operand must be `..` followed by the
+name of a `record` parameter.
 
 `R: A` keeps its present meaning, a bound on the record as a whole. The two are distinct forms of
 one bound list:
 
 ```metel
-fun show<record R>(r: { ..R }) -> String where each ..R: Display { … }   // each field is Display
-fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                      // the record is Copy
+fun show<record R>(r: { ..R }) -> String where ..R: Display { … }   // each field is Display
+fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                  // the record is Copy
 ```
-
-`each` is a contextual keyword, recognised only at the start of a `where` bound as `all` is, and it is always followed by `..` and a name.
 
 ### What does not change
 
@@ -173,7 +173,7 @@ fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                      // the r
   (`where R = { token: Token, ..Rest }`). Equation sides are record types, so `Rest` is now
   declared `record Rest`.
 - Disjointness: a label written next to `..R` must be absent from `R`, as for rows today.
-- The field-wise constraint's meaning, positions and forwarding rule (RFC-0123); only the keyword and the written operand change.
+- The field-wise constraint's meaning, positions and forwarding rule (RFC-0123); only the spelling changes.
 - Rest patterns and record spreads at the value level (RFC-0178).
 - Literal rows in row arguments (RFC-0180), `Req<..{ host: String, ..R }>`.
 - Anonymous tails and where they are accepted (RFC-0181).
@@ -183,10 +183,10 @@ fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                      // the r
 ### Diagnostics
 
 `row R` becomes a targeted error ("the `row` kind was removed; declare `record R`"), and
-`where all R: A` likewise ("`all` was renamed; write `where each ..R: A`"). `where each R: A` is a
-targeted error too ("the operand of `each` is the unpacked row; write `where each ..R: A`").
-`each ..R` where `R` is not a `record` parameter reports `T0012` as `..R` does. `..R` on a non-`record`
-parameter says "`..R` takes the row of a record parameter; declare `record R`".
+`where all R: A` likewise ("`all` was removed; write `where ..R: A`"), and so does the interim
+`where each R: A` / `where each ..R: A`. `..R: A` where `R` is not a `record` parameter reports
+`T0012` as `..R` does. `..R` on a non-`record` parameter says "`..R` takes the row of a record
+parameter; declare `record R`".
 
 ---
 
@@ -194,26 +194,22 @@ parameter says "`..R` takes the row of a record parameter; declare `record R`".
 
 1. **Status quo.** Two kinds, one reserved word, one contextual keyword. Nothing breaks. The cost is
    the vocabulary in Motivation §§1 and 3.
-2. **Remove only `row`, keep `all`.** Fewer rewrites (no constraint rename). Declined: `each` states
-   the distribution, and the rename is cheapest done in the same parser-based pass as
-   `row` to `record`; a later standalone rename would be a second migration over the same
-   declarations.
-3. **`where ..R: A` for the constraint (the earlier draft of this RFC).** Removes a keyword by
-   reusing `..`. Declined: it gives `..` a second job, a quantifier in bound position, where
-   everywhere else it unpacks. A reader may also take `..R: Display` to mean the row as a whole is
-   `Display`. (`each ..R: A` below keeps the keyword, so `..` is still only an unpacker.)
-4. **A different keyword or token**, e.g. `where R.*: A`. A new token for what a word says plainly.
+2. **Remove only `row`, keep `all`.** Fewer rewrites (no constraint rename). Declined: with `record R`
+   the bound is already distinguished by `..R`, so the keyword is redundant (Motivation §4), and
+   the rewrite is cheapest done in the same parser-based pass as `row` to `record`.
+3. **A keyword with the bare name, `where each R: A` (the interim form of this RFC, 2026-10-27).**
+   Keeps `..` away from bounds. Declined (#1653): it makes sense only if the `row` kind is kept
+   (`<row R> where each R: A`, where `R` is the row and the word says "per member"), and §1 removes
+   that kind. With `record R`, `R` is the record, so `each R: A` reads "R is A" and hides that the
+   row is enumerated.
+4. **A different keyword or token**, e.g. `where R.*: A`. A new token for what `..R` already says.
 5. **Keep `row` as a deprecated alias for one release.** A transitional option, not a design
    alternative: see Open Question 3.
-6. **`each R: A` with the bare record name as the operand (this RFC's first accepted form).** No
-   extra token and no further rewrite. Declined (#1653): `R` is a record parameter that also stands
-   for the record, so the bound reads as "R is A"; the checker already treats the operand as the
-   row (`T0012`); and the form does not extend to packs or tuples-as-rows without a second rule
-   for what a bare name quantifies. Costs one more rewrite, but only while `each` is unreleased.
-7. **`each R` vs `each ..R` left to the unified records/rows/packs design.** Declined: `each ..R` is
-   the spelling under every candidate in that design (records and rows, a pack kind, a
-   type-level array, or tuples as records), so waiting gains nothing and the rename becomes a
-   breaking change after v0.15.0 ships.
+6. **Keep the `row` kind and `each R`** (`<row R> where each R: A`). Two kinds for one idea
+   (Motivation §1); this is the pre-RFC state with a renamed keyword.
+7. **`each ..R: A`** (this amendment's first draft, 2026-10-27). Keeps the keyword and adds the
+   unpack operand. Declined: once the operand is `..R`, `each` repeats it. Costs a keyword, a
+   contextual-keyword rule and a longer bound for no information the operator does not carry.
 
 ---
 
@@ -229,10 +225,10 @@ parameter says "`..R` takes the row of a record parameter; declare `record R`".
   adds the operator check; it removes a parallel code path, but it touches every site that
   distinguishes the kinds. The constraint rename is a keyword change in `field_wise_constraint`.
 - **The #1653 amendment.** About 45 fixtures (65 sites), 6 standard-library sites, the spec,
-  tutorial, dated blog posts, the changelog, and the diagnostics that say `each` (six sites).
-  One parser-based pass like the `row`/`all` rewrite; `each` is unreleased so there is no
-  user-facing migration.
-- **Churn in pending RFCs.** RFC-0125 (`all Ts: Copy` becomes `each ..Ts: Copy`), RFC-0146 (`Self.R`
+  tutorial, dated blog posts, the changelog, and the diagnostics that say `each` (six sites);
+  `each_kw` is removed from the grammar. One parser-based pass like the `row`/`all` rewrite;
+  `each` is unreleased so there is no user-facing migration.
+- **Churn in pending RFCs.** RFC-0125 (`all Ts: Copy` becomes `..Ts: Copy`), RFC-0146 (`Self.R`
   with `row R`), RFC-0174 (`fields(R)` examples) and RFC-0175 (draft) use `row R` or `all`.
 
 ---
@@ -253,11 +249,12 @@ parameter says "`..R` takes the row of a record parameter; declare `record R`".
    `R`).
 4. **The constraint keyword (revised 2026-10-27).** The first draft replaced `all` with `..R: A`.
    Reviewed and changed: `..` stays an unpacking operator, and the keyword is renamed `all` to
-   `each` in this RFC. RFC-0125's pack bounds follow (`each ..Ts: A`).
-5. **The operand (amended 2026-10-27, #1653).** `each R: A` was shipped as the first form. Reviewed
-   against the unified records/rows/packs design: `each ..R: A`. It keeps `..` an unpacker and
-   `each` the quantifier, states what is enumerated, and extends unchanged to packs and
-   tuples-as-rows. Open Question 4.
+   `each` in this RFC. RFC-0125's pack bounds follow (`each Ts: A` in that interim; see finding 5).
+5. **No keyword (amended 2026-10-27, #1653).** `each R: A` was shipped as the keyword form. On
+   review, `each` is redundant once the operand is `..R`: `R: A` bounds the record and `..R: A`
+   bounds its members. The bound is written `where ..R: A`; `each` is dropped before it ships. The
+   earlier objection (a quantifier in bound position is a second job for `..`) is answered in
+   Motivation §4. Open Question 4.
 
 ---
 
@@ -269,7 +266,7 @@ parameter says "`..R` takes the row of a record parameter; declare `record R`".
    dropping literal-row arguments) would change brand behaviour at the argument and is not part of
    this RFC.
 2. **Variadic packs (RFC-0125).** *Resolved:* packs share the quantifier with rows, now spelled
-   `each`: `each ..Ts: Copy`. RFC-0125 is under review and unimplemented, so it changes spelling only.
+   `..Ts: Copy`. RFC-0125 is under review and unimplemented, so it changes spelling only.
 3. **Deprecation window or hard cut?** *Resolved: hard cut*, as RFC-0136 and RFC-0098 were. `row R`
    and `where all R: A` become targeted errors (see Diagnostics), and one parser-based rewrite
    migrates the corpus.
@@ -305,6 +302,6 @@ parameter says "`..R` takes the row of a record parameter; declare `record R`".
 ## Decision
 
 **Outcome:** *(pending)*
-4. **Bare `each R` or unpacked `each ..R`?** *Resolved (pending review): `each ..R`* (Motivation
-   §4, Alternative 6). Hard cut, no deprecation window: `each` is unreleased. Implementation is
-   metel-core#1653 and waits for this amendment to be accepted.
+4. **Keyword form, or the bare row operand?** *Resolved (pending review): `where ..R: A`, no
+   keyword* (Motivation §4, Alternatives 3, 6, 7). Hard cut, no deprecation window: `each` is
+   unreleased. Implementation is metel-core#1653 and waits for this amendment to be accepted.

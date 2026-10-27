@@ -7,7 +7,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/794'
 updated: '2026-08-23'
 ---
 
-> **Amended 2026-10-27 (RFC-0186):** the quantifier shared with rows is renamed `all` to `each` and takes the unpacked operand, so pack bounds read `where each ..Ts: Copy`. The examples below use that spelling. Under RFC-0186's amendment for metel-core#1653 the pack operand is `..Ts` exactly as the row operand is `..R`; the bound quantifies the members of the unpacked pack.
+> **Amended 2026-10-27 (RFC-0186, then #1653):** the quantifier shared with rows has no keyword: pack bounds read `where ..Ts: Copy`, as row bounds read `where ..R: Copy`. The examples below use that spelling; `all` is removed and the interim `each` never shipped.
 
 > **Status — under review (2026-08-23).** Committed to v0.21.1, tracking issue #794 filed 2026-08-22
 
@@ -16,7 +16,7 @@ updated: '2026-08-23'
 A **type-parameter pack** — `<..Ts>` — so one impl can cover tuples of every arity:
 
 ```metel
-extend<..Ts> (..Ts): Copy where each ..Ts: Copy;
+extend<..Ts> (..Ts): Copy where ..Ts: Copy;
 ```
 
 This replaces the per-arity boilerplate RFC-0061 §6 deferred, and closes a gap three RFCs
@@ -24,7 +24,7 @@ already record: RFC-0061 §6 ("variadic generics: no design exists; deferred"), 
 open question 1, and RFC-0096 §7, which "inherits that gap rather than" solving it.
 
 **Bounds on a pack reuse RFC-0123's `all` quantifier rather than inventing a second one.**
-`each ..Ts: Copy` is the same construct as `each ..R: Copy`, quantified over an ordered list of
+`..Ts: Copy` is the same construct as `..R: Copy`, quantified over an ordered list of
 types instead of a row's field types.
 
 The RFC proposes a **staged** design, because the driving use case needs far less than the
@@ -125,7 +125,7 @@ lang team records a critical blocker: Rust gives no layout guarantees for tuple 
 limits *subsetting* operations on tuple references. That blocker is specific to head-tail
 recursion — `(Head, ...Tail)`, the EddyB and Cramertj model — because taking `Tail` by
 reference requires knowing where it starts. **This RFC therefore does not adopt head-tail
-recursion.** `each ..Ts: A` quantifies over the whole pack without ever forming a sub-tuple, so
+recursion.** `..Ts: A` quantifies over the whole pack without ever forming a sub-tuple, so
 the question never arises. Metel would inherit the same blocker the moment it took the
 recursive route, and it is avoidable by construction.
 
@@ -164,7 +164,7 @@ Rust the same spelling would have been a fresh collision.
 types, ordered:
 
 ```metel
-extend<..Ts> (..Ts): Copy where each ..Ts: Copy;
+extend<..Ts> (..Ts): Copy where ..Ts: Copy;
 fun arity<..Ts>(t: (..Ts)) -> i64 { … }
 ```
 
@@ -187,15 +187,15 @@ degenerate case is therefore already meaningful, not a special case.
 A bound over every member of a pack is written with RFC-0123's quantifier:
 
 ```metel
-extend<..Ts> (..Ts): Copy    where each ..Ts: Copy;
-extend<..Ts> (..Ts): Display where each ..Ts: Display { … }
+extend<..Ts> (..Ts): Copy    where ..Ts: Copy;
+extend<..Ts> (..Ts): Display where ..Ts: Display { … }
 ```
 
-`each ..Ts: A` holds when every type in the pack satisfies `A`, and holds **vacuously on the
-empty pack** — matching `each ..R: A` on the empty row.
+`..Ts: A` holds when every type in the pack satisfies `A`, and holds **vacuously on the
+empty pack** — matching `..R: A` on the empty row.
 
-**This is a deliberate unification, not a coincidence of spelling.** RFC-0123's `each ..R: A`
-quantifies an aspect over a row's field types; `each ..Ts: A` quantifies the same aspect over a
+**This is a deliberate unification, not a coincidence of spelling.** RFC-0123's `..R: A`
+quantifies an aspect over a row's field types; `..Ts: A` quantifies the same aspect over a
 pack's members. The two differ only in what they range over — an unordered label→type map
 versus an ordered list. Specifying one quantifier that ranges over both is cheaper than two,
 and it means a reader who has learned `all` once has learned it everywhere.
@@ -225,7 +225,7 @@ The aspects that need tuple impls split cleanly, and the split should drive scop
 
 **Stage 1 — packs, `(..Ts)`, and `all` bounds. No body expansion.**
 
-This is enough for `extend<..Ts> (..Ts): Copy where each ..Ts: Copy;` and the same for
+This is enough for `extend<..Ts> (..Ts): Copy where ..Ts: Copy;` and the same for
 `Send`/`Sync`/`Linear` — which is precisely what #263 and RFC-0096 are blocked on. It needs
 no way to *iterate* a pack, only to constrain it, and it is where the whole design's risk is
 lowest.
@@ -261,7 +261,7 @@ Arguments against, and why this RFC exists anyway:
   RFC-0123 §2 makes exactly this argument against comptime derive for rows: it "produces one
   impl per concrete record shape encountered, whereas this produces one impl covering all".
   The same argument transfers, and the difference matters most for a *bound* —
-  `fun f<..Ts>(t: (..Ts)) where each ..Ts: Copy` is a constraint on callers, which no amount of
+  `fun f<..Ts>(t: (..Ts)) where ..Ts: Copy` is a constraint on callers, which no amount of
   generated impls expresses.
 - **Comptime cannot help stage 1.** `Copy` on tuples is a bound question, not a codegen
   question.
