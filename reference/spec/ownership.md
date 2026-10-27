@@ -824,7 +824,7 @@ A struct implementing `Drop` whose destructor needs a field that has since been 
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
 impl's required field set is the residual row its `drop` method's receiver is declared
 with — the fields named in a projected receiver (`fun drop(&var self: Self.{ fd })`) or
-in its `where` clause (`fun drop<row R>(&var self: Self.R) where R: { fd, .. }`). A `drop`
+in its `where` clause (`fun drop<record R>(&var self: Self.R) where R: { fd, .. }`). A `drop`
 method whose receiver is the bare `&var self` requires the struct's whole row, and no
 partial move of such a type is permitted. The destructor fires against any residual of
 the correct brand whose current row is a superset of that declared set, regardless of
@@ -882,7 +882,7 @@ value's current row does not satisfy that type's `Drop` impl's required field se
 
 A `Drop` impl's `drop` method may declare its `&var self` receiver as a residual type of
 `Self` — a field projection (`&var self: Self.{ a, b }`) or a row parameter constrained
-by an open lower bound (`fun drop<row R>(&var self: Self.R) where R: { a, b, .. }`). The
+by an open lower bound (`fun drop<record R>(&var self: Self.R) where R: { a, b, .. }`). The
 fields named by that declaration are the impl's required field set (legality-1). A bare
 `&var self` names every field.
 

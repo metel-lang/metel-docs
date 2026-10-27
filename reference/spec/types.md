@@ -313,6 +313,8 @@ only for an element in the tuple's declared arity.
 
 ## Records and Rows at a Glance
 
+> **Pending** metel-core#1644 RFC-0186: the `row` kind is still accepted and `record R` is not yet a row parameter; `where all` is still spelled `all`.
+
 > **Availability:** Since v0.14.0. This section is a map; the rules are stated where each
 > topic is specified, linked below.
 
@@ -325,10 +327,10 @@ what generic code can talk about structurally, in three increasingly general way
 |---|---|---|
 | "a record with *at least* these fields" | `<record T: { x: f64, .. }>` | [Row bounds](#row-bounds) |
 | "a record with *no* such field" | `<record T: !{ token }>` | [Row bounds](#row-bounds) |
-| "…and name *the rest*, so a signature can carry it" | `<row R>` with `{ x: f64, ..R }` | [Open rows](#open-rows) |
+| "…and name *the rest*, so a signature can carry it" | `<record R>` with `{ x: f64, ..R }` | [Open rows](#open-rows) |
 | "…the rest is this field plus a remainder" | `where R = { token: Token, ..Rest }` | [Open rows](#open-rows) |
-| "every field's *type* satisfies an aspect" | `where all R: Copy` | [Field-wise row constraints](#field-wise-row-constraints) |
-| "this impl applies to every record of this shape" | `extend<row R: { x, .. }> { ..R }: A` | [Implementing an aspect for a record](#implementing-an-aspect-for-a-record) |
+| "every field's *type* satisfies an aspect" | `where each R: Copy` | [Field-wise row constraints](#field-wise-row-constraints) |
+| "this impl applies to every record of this shape" | `extend<record R: { x, .. }> { ..R }: A` | [Implementing an aspect for a record](#implementing-an-aspect-for-a-record) |
 
 Which types a row bound or row-conditional impl can match is decided by the declaration
 kind, not by the fields written:
@@ -348,20 +350,21 @@ non-`Copy` field would be forgotten ([Open rows](#open-rows)).
 
 The example below uses each piece once:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-record Session<row R> { id: i64, data: { ..R } }
+record Session<record R> { id: i64, data: { ..R } }
 
 // A bound: any record carrying `user: i64`.
 fun user_of<record T: { user: i64, .. }>(e: T) -> i64 { e.user }
 
 // A row variable: carry the rest through unchanged.
-fun keep<row R>(p: { user: i64, ..R }) -> { user: i64, ..R } { p }
+fun keep<record R>(p: { user: i64, ..R }) -> { user: i64, ..R } { p }
 
 // Row-conditional methods: which exist depends on the session's row.
-extend<row R: { token: String, .. }> Session<..R> {
+extend<record R: { token: String, .. }> Session<..R> {
     fun send(self) -> i64 { self.id * 10 }
 }
-extend<row R: !{ token }> Session<..R> {
+extend<record R: !{ token }> Session<..R> {
     fun login(self) -> i64 { self.id }
 }
 
@@ -1400,8 +1403,8 @@ the definition otherwise.
 
 ##### Legality Rule {#spec.types.generics.rigid-type-parameters.legality-1}
 
-Inside a generic function or method, each declared type parameter, including `row`
-parameters and the parameters of the enclosing `extend`, is equal only to itself or to a
+Inside a generic function or method, each declared type parameter, including `record`
+parameters used as a row (`..R`) and the parameters of the enclosing `extend`, is equal only to itself or to a
 type that the definition's declared bounds state is equal to it. Unifying it with a
 concrete type, or with another declared parameter, in any other way is a type error
 (`T0001`) at the definition. The declared bounds state equalities in exactly two places:
@@ -1447,8 +1450,8 @@ declares `m`; a field access `x.label` on a row-bounded parameter iff a row boun
 names `label`, at the type that bound declares; a method of a conditional impl on a
 type built from `T` iff the impl's conditions are entailed by `Γ`. A use not granted by
 `Γ` is `T0035`. Passing `x` where a callee requires `U: A` is entailed iff `A ∈ Γ(T)`,
-and otherwise is `T0012`. `where all R: A` grants `A` to the fields of `R`, not to `R`,
-and is forwarded only to another `where all R: A` bound. `T::Assoc` is an opaque
+and otherwise is `T0012`. `where each R: A` grants `A` to the fields of `R`, not to `R`,
+and is forwarded only to another `where each R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
@@ -1672,19 +1675,21 @@ rather than declared.
 
 ### Open rows {#open-rows}
 
+> **Pending** metel-core#1644 RFC-0186: a row parameter is still declared `row R`; `record R` is not yet accepted for it.
+
 > **Available in v0.14.0.** RFC-0121 open rows support row extension, decomposition,
 > reusable type positions, and row-conditional implementations.
 
 > **Gap** GAP-TYPES-008
 
-A `row`-kinded generic parameter abstracts over "the rest of a row" rather than a
-concrete shape. The binder is `row R`; every *use* of the variable is written `..R`,
-distinguishing it from a bare type variable in every position a row can appear —
+A `record`-kinded generic parameter used as `..R` abstracts over "the rest of a row" rather than a
+concrete shape. The binder is `record R`; every use of its *row* is written `..R`,
+distinguishing it from the record type `R` itself in every position a row can appear —
 a record type's tail (`{ x: f64, ..R }`), a struct's own residual projection
 (`Handle.{ ..R }`), and a generic argument (`Session<..R>`):
 
 ```metel
-fun get_x<row R>(p: { x: f64, ..R }) -> f64 { p.x }
+fun get_x<record R>(p: { x: f64, ..R }) -> f64 { p.x }
 ```
 
 **Extension needs no operator** — the new label goes directly in the row literal:
@@ -1698,7 +1703,7 @@ and states how they compose, which simultaneously subsumes a row bound (`R = { t
 already implies `R: { token, .. }`) and names the remainder:
 
 ```metel
-extend<row R, row Rest> Session<..R>
+extend<record R, record Rest> Session<..R>
 where R = { token: Token, ..Rest }
 {
     fun authenticate(self) -> Session<..Rest> { ... }
@@ -1712,8 +1717,9 @@ limit are specified below.
 
 Reading a field the equation promises is:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-fun split<row R, row Rest>(p: { token: i64, ..R }) -> i64
+fun split<record R, record Rest>(p: { token: i64, ..R }) -> i64
 where R = { extra: i64, ..Rest }
 {
     p.token + p.extra
@@ -1752,14 +1758,15 @@ evaluate left-to-right, while the resulting record layout is determined by its r
 
 <!-- rfc.py:last_reviewed d1f40994 -->
 
-A row variable may also be the argument of a nominal type's own row parameter, written
+A row may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
 checked at each use:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-record Builder<row R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: { ..R } }
 
-fun auth_of<row R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
+fun auth_of<record R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
     b.data.auth
 }
 
@@ -1773,9 +1780,9 @@ An argument whose row lacks a required label is rejected with `T0012`:
 
 <!-- doc-example: expect-fail reason="the argument's row has no `auth` field -- T0012 is the point" -->
 ```metel
-record Builder<row R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: { ..R } }
 
-fun auth_of<row R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
+fun auth_of<record R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
     b.data.auth
 }
 
@@ -1794,8 +1801,9 @@ only some of them (`{ x: f64, ..R }`); the extras bind to `R`. By value the para
 the **whole** record: the callee owns the extra fields and may move, return or drop them, so
 they need not be `Copy`:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
     let wide := { x = 1, name = "ada".to_string() };
@@ -1805,8 +1813,9 @@ fun main() {
 
 Taking the record by reference does not move it, so the caller keeps every field:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-fun get_x<row R>(p: &{ x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: &{ x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
     let wide := { x = 1, name = "ada" };
@@ -1816,13 +1825,14 @@ fun main() {
 ```
 
 Inside a generic body the extras are abstract, and the body owns them too, so it can pass
-the parameter on by value with no bound. `where all R: Copy` is only needed to *use* the row
+the parameter on by value with no bound. `where each R: Copy` is only needed to *use* the row
 more than once:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-fun consume<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+fun consume<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
-fun outer<row R>(s: { x: i64, ..R }) -> i64 {
+fun outer<record R>(s: { x: i64, ..R }) -> i64 {
     consume(s) + 1
 }
 
@@ -1879,11 +1889,12 @@ a row parameter instead.
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-1}
 
-A generic parameter may be declared `row R` (parallel to `record T`); every use of a
-row variable outside its own binder is written `..R` (or anonymous `..`) — in a record
-type's tail, a struct's own residual-projection tail, or generic-argument position. A
-bare identifier in any of these type positions is a type variable, never a row; row and
-type variables are therefore never ambiguous with each other.
+A generic parameter that stands for a record is declared `record R`; the *row* of such a
+parameter is written `..R` (or anonymous `..`) — in a record type's tail, a struct's own
+residual-projection tail, or generic-argument position. A bare identifier in any of these
+type positions is the record type `R` itself, never its row; `R` and `..R` are therefore never
+ambiguous with each other. The `row` kind and keyword do not exist (RFC-0186). `..R` on a parameter
+that is not `record`-kinded is a type error.
 
 An open record type may occur in a reusable type position, including a function or
 instance-method parameter, a return type, a local annotation, or a nominal field.
@@ -1903,19 +1914,20 @@ extended with `host`; `Req<..{ host: String }>` is `Req` at exactly that one fie
 `Req<..{}>` at the empty row. A literal row is the same type the checker infers for a record
 literal with a spread, so a written return type and an inferred one agree. The labels it
 adds must be provably absent from the tail, exactly as for a spread (`R: !{ host }`), and it is
-accepted only where the generic parameter is declared `row`. An anonymous tail inside a literal
+accepted only where the generic parameter is declared `record`. An anonymous tail inside a literal
 follows the positions in [legality-5](#spec.types.generics.open-rows.legality-5).
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-record Req<row R> { data: { ..R } }
+record Req<record R> { data: { ..R } }
 
 fun empty() -> Req<..{}> { Req { data = {} } }
 
-fun add_host<row R: !{ host }>(r: Req<..R>, h: String) -> Req<..{ host: String, ..R }> {
+fun add_host<record R: !{ host }>(r: Req<..R>, h: String) -> Req<..{ host: String, ..R }> {
     Req { data = { host = h, ..r.data } }
 }
 
-extend<row R: { host: String, .. }> Req<..R> {
+extend<record R: { host: String, .. }> Req<..R> {
     fun build(self) -> String { "GET " + self.data.host }
 }
 
@@ -2005,7 +2017,7 @@ A by-value parameter whose type has an open row tail (`{ x: Type, ..R }`, or
 `Handle.{ fd, ..R }`) takes its argument **whole**. The call needs only that the argument has
 the named fields at the declared types; the fields the parameter does not name are the
 callee's to move, return or drop, so they need not be `Copy`, and a generic body that
-forwards such a parameter to another by-value open-row function needs no `where all R: Copy`.
+forwards such a parameter to another by-value open-row function needs no `where each R: Copy`.
 A parameter taken through a reference (`&{ x: Type, ..R }`, `&var`) never moves the value
 and forgets nothing.
 
@@ -2079,7 +2091,7 @@ fun main() {
 An open record with an anonymous tail is rejected with `T0032` as a **return type**, inside a
 **written function type**, and as a **record or struct field**. In a return type or function type
 the tail has no construct that solves it, and a field's type would differ between values of one
-nominal type. A named tail (`{ x: T, ..R }`, `R` declared `row`) is not affected by this rule
+nominal type. A named tail (`{ x: T, ..R }`, `R` declared `record`) is not affected by this rule
 and is accepted wherever `R` is in scope.
 
 <!-- doc-example: expect-fail reason="an anonymous open record has no solver in a return type -- T0032 is the point" -->
@@ -2122,35 +2134,38 @@ fun main() {
 
 ### Field-wise row constraints
 
+> **Pending** metel-core#1644 RFC-0186: the bound is still spelled `where all R: A`; `each` is not yet accepted.
+
 A constraint applies an aspect bound to **every field** of a row, rather than to the
 row's own type as a whole — distinct from a row *bound* (`R: { x: f64, .. }`), which
 constrains the row's shape (which labels it has), not its contents (what the field
 types can do):
 
 ```metel
-extend<row R> { ..R }: Display where all R: Display { … }
-fun consume<row R>(r: { ..R })  where all R: Copy     { … }
+extend<record R> { ..R }: Display where each R: Display { … }
+fun consume<record R>(r: { ..R })  where each R: Copy     { … }
 ```
 
-`all R: A` holds when every field type in `R` satisfies `A`; it holds vacuously on an
+`each R: A` holds when every field type in `R` satisfies `A`; it holds vacuously on an
 empty row. A per-field exception composes through ordinary row decomposition (`where R
-= { x: T, ..Rest } where T: SomeOtherBound, all Rest: A`) rather than needing a
+= { x: T, ..Rest } where T: SomeOtherBound, each Rest: A`) rather than needing a
 heterogeneous form of its own.
 
 `R` must be a row the declaration can walk: the tail of an open-row parameter
 (`{ ..R }`), the remainder of a `where` decomposition, the tail of an `extend` target
-(`extend<row R> { ..R }`), or a declared `row` generic used as the row argument of a
+(`extend<record R> { ..R }`), or a declared `record` generic used as the row argument of a
 named type (`Packet<..R>`), in a function signature or an `extend` target. A row that
 none of these positions mentions has no fields to constrain and is rejected.
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 aspect Mark { fun mark(&self) -> i64; }
-record Packet<row R> { data: { ..R } }
-fun duplicate<row R>(p: Packet<..R>) -> ({ ..R }, { ..R }) where all R: Copy {
+record Packet<record R> { data: { ..R } }
+fun duplicate<record R>(p: Packet<..R>) -> ({ ..R }, { ..R }) where each R: Copy {
     let d := p.data;
     (d, d)
 }
-extend<row R> Packet<..R>: Mark where all R: Copy { fun mark(&self) -> i64 { 1 } }
+extend<record R> Packet<..R>: Mark where each R: Copy { fun mark(&self) -> i64 { 1 } }
 
 fun main() {
     let p := Packet { data = { a = 1 } };
@@ -2165,7 +2180,7 @@ fun main() {
 
 ##### Legality Rule {#spec.types.generics.field-wise-row-constraints.legality-1}
 
-`where all R: Aspect` is a `WhereConstraint` alternative, sibling to an ordinary bound
+`where each R: Aspect` is a `WhereConstraint` alternative, sibling to an ordinary bound
 (`ident : BoundList`) and a row equation (`ident = Type`, [Open rows](#open-rows)
 above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
@@ -2220,8 +2235,8 @@ Three forms, with different rules:
 
 ```metel
 extend { x: f64, y: f64 }: MyAspect { … }                    // one concrete row
-extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }         // every row of a given shape
-extend<row R> { ..R }: MyAspect { … }                         // every row
+extend<record R: { x: f64, .. }> { ..R }: MyAspect { … }         // every row of a given shape
+extend<record R> { ..R }: MyAspect { … }                         // every row
 ```
 
 All three are permitted once the aspect is local to the implementing module: the first is
@@ -2237,20 +2252,21 @@ The second also needs overlap checking between row bounds — two shape-conditio
 implementations can be *incomparable* rather than one being more specific, so they must
 be disjoint, which is specified below. The third is most useful with a way to require an
 aspect of every field in the row ([Field-wise row
-constraints](#field-wise-row-constraints) above, `all R: Aspect`), which a record-target
-impl accepts as `where all R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
+constraints](#field-wise-row-constraints) above, `each R: Aspect`), which a record-target
+impl accepts as `where each R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
 (its body is a built-in, `LIMIT-TYPES-003`) and `Copy` for every record of `Copy` fields (a
 bodyless impl): such a record is copied, not moved.
 
 Two shape-conditional impls are disjoint when some label one requires the other forbids:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
-extend<row R: { name: String, .. }> { ..R }: Describe {
+extend<record R: { name: String, .. }> { ..R }: Describe {
     fun describe(&self) -> String { "named ${self.name}" }
 }
-extend<row R: !{ name }> { ..R }: Describe {
+extend<record R: !{ name }> { ..R }: Describe {
     fun describe(&self) -> String { "anonymous" }
 }
 
@@ -2262,15 +2278,16 @@ fun main() {
 
 The impl is chosen from the value's *current* row, so a partial move changes it:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Handle { id: i64, name: String }
 
 aspect Describe { fun state(&self) -> String; }
 
-extend<row R: !{ name }> { ..R }: Describe {
+extend<record R: !{ name }> { ..R }: Describe {
     fun state(&self) -> String { "no name" }
 }
-extend<row R: { name: String, .. }> { ..R }: Describe {
+extend<record R: { name: String, .. }> { ..R }: Describe {
     fun state(&self) -> String { "has name" }
 }
 
@@ -2290,10 +2307,10 @@ Two impls whose conditions do not exclude each other overlap and are rejected wi
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
-extend<row R: { name: String, .. }> { ..R }: Describe {
+extend<record R: { name: String, .. }> { ..R }: Describe {
     fun describe(&self) -> String { "a" }
 }
-extend<row R: { id: i64, .. }> { ..R }: Describe {
+extend<record R: { id: i64, .. }> { ..R }: Describe {
     fun describe(&self) -> String { "b" }
 }
 ```
@@ -2303,7 +2320,7 @@ extend<row R: { id: i64, .. }> { ..R }: Describe {
 
 ##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-1}
 
-A row-conditional impl (`extend<row R: { ... }> { ..R }: Aspect` or `extend<row R>
+A row-conditional impl (`extend<record R: { ... }> { ..R }: Aspect` or `extend<record R>
 { ..R }: Aspect`) resolves against a value's **current** row, not only its widest
 possible one — for a struct, that is the row of its current residual (narrower after a
 partial move, wider again after the moved field is restored), exactly the same
@@ -2361,7 +2378,7 @@ conditions mention is required present by one and absent (or incompatibly typed)
 other — rows being open means no other fact can correlate two row conditions, so this
 is the only way two of them can be proven disjoint. Any other pair of row-conditional
 impls of the same aspect overlaps, and is rejected exactly as two overlapping ordinary
-impls are. Inside a generic body over an unconstrained `<row R>`, a row-conditional
+impls are. Inside a generic body over an unconstrained `<record R>`, a row-conditional
 method is not visible unless `R`'s own bound entails the impl's condition.
 
 <!-- rfc.py:last_reviewed adb446a7 -->

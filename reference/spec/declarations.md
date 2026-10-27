@@ -37,7 +37,7 @@ every introduced field and remainder binding mutable. Other pattern forms
 continue to use `match`.
 
 ```metel
-fun take_id<row R, row Rest>(r: { id: i64, ..R }) -> i64
+fun take_id<record R, record Rest>(r: { id: i64, ..R }) -> i64
 where R = { extra: i64, ..Rest }
 {
     let var { id, ..rest } := r;
@@ -1112,13 +1112,14 @@ The implementation recursively clones each field and preserves the record's type
 This does not add `Eq`, `Ord`, or `Hash`; those aspects remain governed by their
 separate designs.
 
-A `record` may take a `row` parameter, spliced as `..R` wherever the type is named; the
+A `record` may take a `record`-kinded parameter, spliced as `..R` wherever the type is named; the
 parameter stands for extra fields the user of the type supplies:
 
+<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
-record Builder<row R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: { ..R } }
 
-fun describe<row R>(b: Builder<..R>) -> String { b.name }
+fun describe<record R>(b: Builder<..R>) -> String { b.name }
 
 fun main() {
     let a := Builder { name = "a", data = { retries = 3 } };
@@ -1139,7 +1140,7 @@ constraints](types.md#field-wise-row-constraints)).
 
 `record X { field: Type, ... }` is legal everywhere `struct X { field: Type, ... }` is,
 with an identical declaration body grammar: the same field list, the same generic
-parameter list (including a `row` type parameter, RFC-0121), the same construction
+parameter list (including a `record` type parameter used as a row, RFC-0121, RFC-0186), the same construction
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 

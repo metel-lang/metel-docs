@@ -9,8 +9,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 
 > **Status — under review (2026-10-26).** Moved to review and scheduled for v0.15.0
 
-> **Scope (2026-10-26).** This RFC originally also proposed label syntax (`.name`, `.[L]`) and rows as
-> record types. Those two parts are now RFC-0188; this RFC keeps only the record delimiters.
+> **Scope (2026-10-26, revised 2026-10-27).** This RFC originally also proposed label syntax (`.name`,
+> `.[L]`) and rows as record types. The label spelling is now RFC-0188; the row declaration change is
+> RFC-0186. This RFC keeps only the record delimiters.
 
 ## Summary
 
@@ -18,7 +19,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 block. A record is written the same way in every position: no parentheses, no "the block wins".
 
 The semantics of records (RFC-0116, RFC-0120) are not changed. This RFC is a syntax change to the
-outer delimiters only; label spelling and the row kind are RFC-0188.
+outer delimiters only; label spelling is RFC-0188 and the row kind is RFC-0186.
 
 RFC-0183 makes plain assignment `=`, which gives `{ x = 1 }` a third reading (a block whose tail is
 an assignment). With this RFC accepted, RFC-0183 needs no statement-only or `;` rule to keep
@@ -125,7 +126,7 @@ The rule "a block wins in a block-admitting position" and the parenthesization w
 Three programs of 40 to 55 lines, each shown as it is written today and with this RFC applied. Only
 the outer delimiters of anonymous records change. Everything else (`:=` reassignment, `<row R>`,
 `Req<..R>`, named-struct and variant literals such as `Req { data = … }` and `Event::Click { x = 3 }`)
-is deliberately left as it is; RFC-0183 and RFC-0188 change those separately.
+is deliberately left as it is; RFC-0183 and RFC-0186 change those separately.
 
 The "today" programs compile and run on `develop` (with and without `--move-check`). None of this
 RFC is implemented, so each "with this RFC" program is checked only by a mechanical round trip:
@@ -497,12 +498,12 @@ What the examples show:
   Only the surface of their examples changes. `record T` and `Point { … }` keep their forms.
 - **RFC-0121 (Open Rows), RFC-0178 (Row Remainder Construction), RFC-0180 (Literal rows in row
   arguments):** row bounds, equations, `..R` tails, spreads and rest patterns change delimiters only.
-  The row kind and `Name<..R>` argument forms stay until RFC-0188.
+  The row kind and `Name<..R>` argument forms are RFC-0186's.
 - **RFC-0183 (Initialization-only `:=`):** plain assignment becomes `=`. This RFC removes the
   `{ x = 1 }` record-versus-block collision that would otherwise need RFC-0183 to forbid an
   assignment as a block's tail. RFC-0183 does not depend on this RFC, but is simpler with it.
-- **RFC-0188 (Label syntax and rows as record types):** builds on these delimiters; independent in
-  meaning.
+- **RFC-0186 (Rows as an operator on record parameters) and RFC-0188 (Label syntax):** both build on
+  these delimiters and are independent in meaning.
 - **RFC-0099 (dot-separated paths) and RFC-0100 (keyword-argument construction):** a record in
   `{| |}` never starts a path or a call argument; RFC-0100 is the reason parenthesized labeled
   tuples were declined.
@@ -577,7 +578,7 @@ Before this leaves draft:
 - RFC-0121 — Open Rows; RFC-0137 — Branded rows.
 - RFC-0178 — Row Remainder Construction; RFC-0180 — Literal rows in row arguments.
 - RFC-0183 — Initialization-Only Walrus (plain assignment on `=`).
-- RFC-0188 — Label syntax and rows as record types (split out of this RFC).
+- RFC-0186 — Rows as an operator on record parameters; RFC-0188 — Label syntax (split out of this RFC).
 - RFC-0099 — Dot-separated module paths; RFC-0100 — Constructor-call construction.
 
 ---
