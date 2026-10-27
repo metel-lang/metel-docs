@@ -19,9 +19,9 @@ The source text does not match the Metel grammar.
 
 **Fix:** correct the syntax at the indicated position.
 
-Two removed spellings get their own message (RFC-0186): the `row` generic-parameter kind
-("the `row` kind was removed; declare `record R`") and the `all` field-wise constraint keyword
-("`all` was renamed; write `where each R: A`").
+Removed spellings get targeted messages (RFC-0186, metel-core#1653): the `row`
+generic-parameter kind asks for `record R`; the `all` and unreleased `each` field-wise
+bound spellings ask for `where ..R: A`.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

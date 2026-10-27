@@ -10,15 +10,16 @@ title: "Metel Language Changelog"
 
 **Breaking changes:**
 
-- The `row` generic-parameter kind is removed and the field-wise constraint keyword `all` is
-  renamed `each` (RFC-0186, `metel-core#1644`). A parameter that stands for a record, or for the
+- The `row` generic-parameter kind and the field-wise constraint keyword `all` are removed
+  (RFC-0186, `metel-core#1644`, `metel-core#1653`). A parameter that stands for a record, or for the
   rest of one, is declared `record R`; `..R` is still how its row is written (a record tail, a row
   argument such as `Packet<..R>`, a residual projection). A bound over every field is
-  `where each R: Aspect`, and for packs `each Ts: Aspect`. Rewrite `<row R>` as `<record R>` and
-  `where all R: A` as `where each R: A`; nothing else changes. `row` is no longer a reserved word.
+  `where ..R: Aspect`, and for packs `..Ts: Aspect`. Rewrite `<row R>` as `<record R>` and
+  `where all R: A` as `where ..R: A`; nothing else changes. `row` is no longer a reserved word.
   The old spellings are errors that name the replacement: "the `row` kind was removed; declare
-  `record R`" and "`all` was renamed; write `where each R: A`". `R` and `{ ..R }` are both valid
-  in a generic body. The specification and tutorials are updated; dated posts are left as published.
+  `record R`" and "`all` was removed; write `where ..R: A`". The interim `each` spelling never
+  shipped and is rejected with the same hint. `R` and `{ ..R }` are both valid in a generic body.
+  The specification, tutorials, and checked code in dated posts are updated.
 - `Perhaps<T>` is renamed `Option<T>` (RFC-0184, `metel-core#1625`). Only the name changes: the variants
   `Some { value }` and `None`, every method (`is_some`, `unwrap_or`, `and_then`, `ok_or`, `yolo`, ...),
   and all type-checking behaviour are as before. Write `Option<T>` in annotations, `Option::None` and
