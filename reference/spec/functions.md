@@ -1167,6 +1167,8 @@ never mutates. The coercion is one-way — there is no automatic re-narrowing ba
 
 > **Availability:** Since v0.8.0.
 
+> **Gap** GAP-FUNCTIONS-005
+
 When a generic function's type parameters cannot be inferred from the arguments, they [can be specified explicitly with turbofish syntax: `name::<T, U>(args)`](#spec.functions.turbofish.legality-1).
 
 ```metel
