@@ -458,7 +458,7 @@ match (value) { // value : { token: Token, extra: i64, ..Rest }
 A record rest pattern's named fields must be entailed present, and its row facts must
 determine the remainder type after removing those labels; otherwise it is rejected.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
 
 ### Matching through a reference
 

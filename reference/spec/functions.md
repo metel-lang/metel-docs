@@ -592,7 +592,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -988,7 +988,7 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>

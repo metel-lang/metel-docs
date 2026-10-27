@@ -660,7 +660,7 @@ state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
