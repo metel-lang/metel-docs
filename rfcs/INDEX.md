@@ -1455,10 +1455,11 @@ implementation).
   (bridged by `.ok_or`/`.ok`). Replaces the `?`-on-`Option` rejection in
   `functions.md`; supersedes the unresolved parts of refused RFC-0079 §6 and its Open
   Question 4. Tracked by metel-core#1593 (report: #1589).
-- **RFC-0186** *(implemented, v0.15.0)* — Rows as an operator on record parameters. Removes the `row` generic kind and renames
-  `where all` to `where each`: a parameter is `record R`, `..R` is its row (`..` stays an unpacking
-  operator), and the field-wise constraint is `where each R: A`. Amends RFC-0121 and RFC-0123 and
-  renames the quantifier RFC-0125 reuses for packs; RFC-0146, RFC-0174 and RFC-0175 use the syntax it
+- **RFC-0186** *(implemented, v0.15.0)* — Rows as an operator on record parameters. Removes the `row` generic kind and replaces
+  `where all R: A` with `where ..R: A`: a parameter is `record R`, `..R` is its row (`..` stays an
+  unpacking operator), and the field-wise constraint is `where ..R: A`, with no keyword (amended
+  2026-10-27, metel-core#1653; the interim `each` never shipped). Amends RFC-0121 and RFC-0123 and
+  respells the quantifier RFC-0125 reuses for packs; RFC-0146, RFC-0174 and RFC-0175 use the syntax it
   replaces. The single change to row declarations (RFC-0187 and RFC-0188 do not touch them). Tracked by
   metel-core#1597.
 - **RFC-0187** *(under review, v0.15.0; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
