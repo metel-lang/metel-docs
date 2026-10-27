@@ -76,7 +76,7 @@ WhereConstraint     → RowEquation
                     | FieldWiseConstraint
                     | "record"? IDENTIFIER ":" BoundList
 RowEquation         → IDENTIFIER "=" ( OpenRecordType | Type )
-FieldWiseConstraint → "all" IDENTIFIER ":" BoundList
+FieldWiseConstraint → ( "each" | "all" ) IDENTIFIER ":" BoundList
 
 Statement           → WhileStatement
                     | ForStatement
