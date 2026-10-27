@@ -1462,13 +1462,12 @@ implementation).
 - **RFC-0187** *(under review, v0.15.0; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
   written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
   the `({ x = 1 })` workaround). Syntax only: the semantics of records are unchanged. With RFC-0183's `=` assignment
-  it also removes the `{ x = 1 }` record-versus-block collision. Label syntax and rows as record types were split
-  out to RFC-0188. Open: whether types and bounds also take `{| |}`, the transition policy, the empty-record spelling.
-- **RFC-0188** *(draft, split from RFC-0187 2026-10-26)* — Label syntax and rows as record types — labels as compile-time
-  values written `.name` and label variables `.[L]` (spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric
-  labels and RFC-0174); and rows as record types, with `..` the operator that takes a record type's row, so there is no
-  `row` kind or keyword (`<row R>` becomes `<R>`, a row argument is a record type, RFC-0180's `..{ … }` argument form goes).
-  Syntax layer only: the semantics of rows, records and label polymorphism are unchanged.
+  it also removes the `{ x = 1 }` record-versus-block collision. Label spelling is RFC-0188 and the row declaration
+  change is RFC-0186. Open: whether types and bounds also take `{| |}`, the transition policy, the empty-record spelling.
+- **RFC-0188** *(draft, split from RFC-0187 2026-10-26)* — Label syntax — labels as compile-time values written `.name`
+  and label variables `.[L]` (spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and RFC-0174).
+  Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
+  in favour of RFC-0186.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.

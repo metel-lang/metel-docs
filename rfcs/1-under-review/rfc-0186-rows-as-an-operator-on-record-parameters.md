@@ -3,7 +3,7 @@ id: rfc-0186
 title: "Rows as an Operator on Record Parameters"
 date: '2026-10-24'
 status: under-review
-updated: '2026-10-24'
+updated: '2026-10-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1597'
 ---
 
@@ -189,9 +189,31 @@ fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                  // the recor
 
 ---
 
+## Review findings (2026-10-27)
+
+1. **Claims checked against the build and the corpus.** `fun get_x<record R>(p: { x: i64, ..R })` is
+   rejected today with `T0012`, "`R` is not a row parameter; declare it `<row R>`", as stated.
+   192 fixtures bind a `row` parameter (410 sites), 45 use `all` (73 sites), 46 Markdown files
+   mention either form (25 of them RFC examples). The cost estimates in §3 stand.
+2. **The standard library is missing from the costs.** `metel-frontend/stdlib/core.mtl` has 6
+   `row`/`all` sites that the rewrite must cover.
+3. **Overlap with RFC-0188 and RFC-0187, resolved.** RFC-0187 originally also proposed removing the
+   row kind (`<row R>` to `<R>`, `Packet<R>`, no kind keyword). That part was dropped: **this RFC is
+   the single change to row declarations**. RFC-0187 keeps only the `{| … |}` delimiters and
+   RFC-0188 keeps only the label spelling. Both use this RFC's `record R` and `..R` in their
+   examples. This avoids rewriting the same declarations twice (`row R`, then `record R`, then bare
+   `R`).
+4. **Open questions 2 and 4 are linked to other work.** If `all` goes for rows, RFC-0125's packs
+   (`all Ts: Copy`) must adopt `..Ts: Copy` or keep `all`. Keeping `R` and `{ ..R }` as two
+   spellings of one type needs a rule.
+
+---
+
 ## Open Questions
 
-1. **Row arguments: keep `Packet<..R>` or write `Packet<R>`?** This draft keeps
+1. **Row arguments: keep `Packet<..R>` or write `Packet<R>`?** *Resolved 2026-10-27: keep
+   `Packet<..R>`.* This RFC is the single rows change (review finding 3), so the argument forms do
+   not change here. The original discussion follows. This draft keeps
    `Packet<..R>` and defines it as `Packet<{ ..R }>`, so no argument position changes. The
    alternative is that a `record`-kinded parameter of a nominal type takes a record type,
    so `Packet<R>` replaces `Packet<..R>`, which would also remove literal-row arguments
