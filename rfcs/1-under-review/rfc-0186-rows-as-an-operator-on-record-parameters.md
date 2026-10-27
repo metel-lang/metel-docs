@@ -213,31 +213,29 @@ parameter says "`..R` takes the row of a record parameter; declare `record R`".
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-27
 
-1. **Row arguments: keep `Packet<..R>` or write `Packet<R>`?** *Resolved 2026-10-27: keep
-   `Packet<..R>`.* This RFC is the single rows change (review finding 3), so the argument forms do
-   not change here. The original discussion follows. This draft keeps
-   `Packet<..R>` and defines it as `Packet<{ ..R }>`, so no argument position changes. The
-   alternative is that a `record`-kinded parameter of a nominal type takes a record type,
-   so `Packet<R>` replaces `Packet<..R>`, which would also remove literal-row arguments
-   (RFC-0180) in favour of ordinary record types. That is simpler but changes brand
-   behaviour at the argument (§1: `R` keeps its brand, `{ ..R }` does not) and so should be
-   decided separately.
-2. **Variadic packs (RFC-0125).** *Resolved 2026-10-27.* Packs keep their one quantifier shared with
-   rows, now spelled `each`: `each Ts: Copy`. RFC-0125 is under review and unimplemented, so it
-   changes spelling only.
-3. **Deprecation window or hard cut?** `row R` and `where all R: A` (now `where each R: A`) could still parse for one
-   release with a warning and an automated rewrite, or be removed at once as RFC-0136 and
-   RFC-0098 were.
-4. **Can a generic body name `R` as a type when `R` is an anonymous remainder?** Today
-   `{ ..R }` is the only spelling. With `record R`, a body can write `R`, which is the same
-   type. Is the second spelling acceptable, or should the checker steer to one?
-5. **`record R` instantiated by a branded `record`.** `..R` forgets the brand. Confirm that
-   the places where today's row inference always yields an anonymous remainder (a call
-   `get_x({ x = 1, name = "a" })` infers `R = { name: String }`) are unchanged, and that no
-   rule relied on `row R` never being instantiated with a branded record.
-6. **Release timing.** A language-visible, breaking change to generic declarations.
+1. **Row arguments: keep `Packet<..R>` or write `Packet<R>`?** *Resolved: keep `Packet<..R>`,*
+   defined as `Packet<{ ..R }>`. This RFC is the single rows change (review finding 3), so no
+   argument position changes. Making a `record`-kinded parameter take a record type (`Packet<R>`,
+   dropping literal-row arguments) would change brand behaviour at the argument and is not part of
+   this RFC.
+2. **Variadic packs (RFC-0125).** *Resolved:* packs share the quantifier with rows, now spelled
+   `each`: `each Ts: Copy`. RFC-0125 is under review and unimplemented, so it changes spelling only.
+3. **Deprecation window or hard cut?** *Resolved: hard cut*, as RFC-0136 and RFC-0098 were. `row R`
+   and `where all R: A` become targeted errors (see Diagnostics), and one parser-based rewrite
+   migrates the corpus.
+4. **Can a generic body name `R` as a type when `R` is an anonymous remainder?** *Resolved: yes, both
+   spellings are allowed.* `R` is a type and `{ ..R }` is its anonymous record; they are the same
+   type when `R` is anonymous. They differ only when `R` is a branded `record` (`R` keeps the brand,
+   `{ ..R }` drops it), which is a difference in meaning, not style, so no lint steers between them.
+5. **`record R` instantiated by a branded `record`.** *Confirmed.* A branded record already goes
+   through a `row R` parameter today (`get_x(p)` with `p: P` compiles), and `R` is inferred as the
+   anonymous remainder, so inference is unchanged. `..R` forgets the brand where one is supplied
+   explicitly. A fixture for the explicit-instantiation case is part of the implementation.
+6. **Release timing.** *Resolved: v0.15.0*, the milestone already on the tracking issue, so the
+   release's explicit-syntax changes migrate once. The rewrites are sequenced as separate reviewable
+   changes.
 
 ---
 
