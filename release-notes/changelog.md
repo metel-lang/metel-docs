@@ -44,6 +44,9 @@ title: "Metel Language Changelog"
 
 **Language:**
 
+- A closure may borrow a local that shadows an enclosing closure's by-value capture.
+  The interim T0030 restriction still applies when the borrow names the captured binding
+  itself (`metel-core#1613`).
 - A closure parameter may be written without a type (`|x| { x * 2 }`), as RFC-0154 always said.
   It takes its type from the expected function type (an argument, an annotated `let`, a struct
   field) or from the body; `T0002` remains for a parameter nothing determines, with a message that

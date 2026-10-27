@@ -941,17 +941,13 @@ A `var` closure is called through a shared reference.
 
 ### T0030 — Inner closure borrows an outer by-value capture
 
-An inner closure borrows an enclosing closure's by-value capture.
-
-<!-- rfc.py:exemption kind="blocked" ref="RFC-0122" reason="requires RFC-0122's borrow analysis, not yet implemented" -->
+An inner closure borrows a binding held by value in an enclosing closure's capture
+environment. A local that shadows the captured binding is a different binding and may
+be borrowed.
 
 **Fix:** restructure the code until RFC-0122 supplies the necessary borrow analysis.
 
 ---
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on RFC-0122: requires RFC-0122's borrow analysis, not yet implemented_</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ### T0031 — Invalid program entry point
 
