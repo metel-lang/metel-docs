@@ -233,7 +233,7 @@ import. Loading another module alone does not make that module's names available
 An aliased import binds only its alias locally. The alias may be used wherever the
 imported declaration's kind permits, including as a value, type, or constructor.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
