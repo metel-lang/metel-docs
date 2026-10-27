@@ -743,7 +743,7 @@ of an enclosing closure. It may capture such a binding by value (`[s]`, which mo
 of the enclosing closure's environment). This restriction is lifted when the borrow
 checker lands.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed 04d75e59d2e66297fa20463529dc62e73a6e919f -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
