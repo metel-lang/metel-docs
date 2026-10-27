@@ -14,7 +14,7 @@ impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1302'
 impl_status: implemented
 ---
 
-> **Amended 2026-10-27 (RFC-0186, under review):** the field-wise constraint keyword `all` is renamed `each` (`where each R: A`); meaning, positions and the forwarding rule are unchanged.
+> **Amended 2026-10-27 (RFC-0186, then #1653):** the field-wise constraint keyword `all` is renamed `each`, and its operand is the unpacked row: `where each ..R: A`. Meaning, positions and the forwarding rule are unchanged. The body of this RFC keeps the originally ratified spelling `where all R: A` as history; read it as `where each ..R: A`.
 
 > **Opened 2026-07-24, unifying three questions the corpus was carrying separately without
 > noticing they were the same one.** RFC-0121's open question 1 needs "every field in row
