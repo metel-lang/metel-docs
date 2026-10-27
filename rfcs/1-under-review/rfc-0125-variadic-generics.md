@@ -7,6 +7,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/794'
 updated: '2026-08-23'
 ---
 
+> **Amended 2026-10-27 (RFC-0186, under review):** the quantifier shared with rows is renamed `all` to `each`, so pack bounds read `where each Ts: Copy`. Examples below still show `all` until RFC-0186 is accepted.
+
 > **Status — under review (2026-08-23).** Committed to v0.21.1, tracking issue #794 filed 2026-08-22
 
 ## Summary
