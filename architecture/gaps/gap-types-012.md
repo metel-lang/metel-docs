@@ -19,7 +19,7 @@ The same applies to the anonymous splice (`record W { s: Session<..> }`).
 ## Impact
 
 A field cannot hold an arbitrary wider record. The use is covered by a row parameter on the
-record, `record W<row R> { d: { x: i64, ..R } }`, at the cost of making `W` generic over the row.
+record, `record W<record R> { d: { x: i64, ..R } }`, at the cost of making `W` generic over the row.
 
 ## Affects
 

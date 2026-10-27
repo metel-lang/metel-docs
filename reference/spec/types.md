@@ -313,8 +313,6 @@ only for an element in the tuple's declared arity.
 
 ## Records and Rows at a Glance
 
-> **Pending** metel-core#1644 RFC-0186: the `row` kind is still accepted and `record R` is not yet a row parameter; `where all` is still spelled `all`.
-
 > **Availability:** Since v0.14.0. This section is a map; the rules are stated where each
 > topic is specified, linked below.
 
@@ -350,7 +348,6 @@ non-`Copy` field would be forgotten ([Open rows](#open-rows)).
 
 The example below uses each piece once:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Session<record R> { id: i64, data: { ..R } }
 
@@ -1675,8 +1672,6 @@ rather than declared.
 
 ### Open rows {#open-rows}
 
-> **Pending** metel-core#1644 RFC-0186: a row parameter is still declared `row R`; `record R` is not yet accepted for it.
-
 > **Available in v0.14.0.** RFC-0121 open rows support row extension, decomposition,
 > reusable type positions, and row-conditional implementations.
 
@@ -1717,7 +1712,6 @@ limit are specified below.
 
 Reading a field the equation promises is:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 fun split<record R, record Rest>(p: { token: i64, ..R }) -> i64
 where R = { extra: i64, ..Rest }
@@ -1762,7 +1756,6 @@ A row may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
 checked at each use:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Builder<record R> { name: String, data: { ..R } }
 
@@ -1801,7 +1794,6 @@ only some of them (`{ x: f64, ..R }`); the extras bind to `R`. By value the para
 the **whole** record: the callee owns the extra fields and may move, return or drop them, so
 they need not be `Copy`:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 fun get_x<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
@@ -1813,7 +1805,6 @@ fun main() {
 
 Taking the record by reference does not move it, so the caller keeps every field:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 fun get_x<record R>(p: &{ x: i64, ..R }) -> i64 { p.x }
 
@@ -1828,7 +1819,6 @@ Inside a generic body the extras are abstract, and the body owns them too, so it
 the parameter on by value with no bound. `where each R: Copy` is only needed to *use* the row
 more than once:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 fun consume<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
@@ -1917,7 +1907,6 @@ adds must be provably absent from the tail, exactly as for a spread (`R: !{ host
 accepted only where the generic parameter is declared `record`. An anonymous tail inside a literal
 follows the positions in [legality-5](#spec.types.generics.open-rows.legality-5).
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Req<record R> { data: { ..R } }
 
@@ -2134,8 +2123,6 @@ fun main() {
 
 ### Field-wise row constraints
 
-> **Pending** metel-core#1644 RFC-0186: the bound is still spelled `where all R: A`; `each` is not yet accepted.
-
 A constraint applies an aspect bound to **every field** of a row, rather than to the
 row's own type as a whole — distinct from a row *bound* (`R: { x: f64, .. }`), which
 constrains the row's shape (which labels it has), not its contents (what the field
@@ -2157,7 +2144,6 @@ heterogeneous form of its own.
 named type (`Packet<..R>`), in a function signature or an `extend` target. A row that
 none of these positions mentions has no fields to constrain and is rejected.
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 aspect Mark { fun mark(&self) -> i64; }
 record Packet<record R> { data: { ..R } }
@@ -2259,7 +2245,6 @@ bodyless impl): such a record is copied, not moved.
 
 Two shape-conditional impls are disjoint when some label one requires the other forbids:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
@@ -2278,7 +2263,6 @@ fun main() {
 
 The impl is chosen from the value's *current* row, so a partial move changes it:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Handle { id: i64, name: String }
 

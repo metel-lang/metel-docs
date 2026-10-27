@@ -18,7 +18,7 @@ worked-example version.
 | anonymous record | `{ x = 1, y = 2 }` | no | yes | no (aspect impls only, for a local aspect) |
 | `record` declaration | `record Point { x: i64, … }` | yes | **yes** | yes |
 | `struct` | `struct Point { x: i64, … }` | yes | **no** | yes |
-| row variable | `row R`, used as `..R` | — | stands for "the rest" | — |
+| row variable | `record R`, used as `..R` | — | stands for "the rest" | — |
 
 The **row** of a type is its set of labelled fields. An anonymous record *is* its row.
 A `struct` or `record` is a name (its **brand**) plus a row. The only difference between
@@ -127,9 +127,9 @@ A row bound names which fields you need. A **row variable** names *everything el
 the rest can appear in the signature:
 
 ```metel
-fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
-fun keep<row R>(p: { x: i64, ..R }) -> { x: i64, ..R } { p }   // the rest flows through
+fun keep<record R>(p: { x: i64, ..R }) -> { x: i64, ..R } { p }   // the rest flows through
 
 fun main() {
     let wide := { x = 1, y = 20, flag = true };
@@ -144,7 +144,7 @@ fun main() {
 7
 ```
 
-`row R` is the binder; every use is written `..R`. `keep` returns a record with the same
+`record R` is the binder; every use of its row is written `..R`. `keep` returns a record with the same
 extra fields it was given — the caller keeps `tag`, with its type, though `keep` never
 mentions it.
 
@@ -156,7 +156,7 @@ and may return it, destructure it, or let it drop at the end of its scope. The e
 need not be `Copy`:
 
 ```metel
-fun get_x<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
     let wide := { x = 1, name = "ada" };   // `name` is a String: not Copy, and that is fine
@@ -171,7 +171,7 @@ fun main() {
 Borrow it instead and the caller keeps every field:
 
 ```metel
-fun get_x<row R>(p: &{ x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: &{ x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
     let wide := { x = 1, name = "ada" };
@@ -190,9 +190,9 @@ parameter on by value with no bound. A [field-wise constraint](#field-wise-const
 only needed to *use* the row more than once:
 
 ```metel
-fun consume<row R>(p: { x: i64, ..R }) -> i64 { p.x }
+fun consume<record R>(p: { x: i64, ..R }) -> i64 { p.x }
 
-fun outer<row R>(s: { x: i64, ..R }) -> i64 {
+fun outer<record R>(s: { x: i64, ..R }) -> i64 {
     consume(s) + 1
 }
 
@@ -211,7 +211,7 @@ A `where` equation splits a row variable into a named field and the remainder. I
 implies the bound, and names the remainder (`Rest`) so a signature can mention it:
 
 ```metel
-fun split<row R, row Rest>(p: { token: i64, ..R }) -> i64
+fun split<record R, record Rest>(p: { token: i64, ..R }) -> i64
 where R = { extra: i64, ..Rest }
 {
     p.token + p.extra          // `extra` is readable: the equation promised it
@@ -229,7 +229,7 @@ fun main() {
 The equation also lets the body consume the named field and return its remainder:
 
 ```metel
-fun strip<row R, row Rest>(p: { ..R }) -> { ..Rest }
+fun strip<record R, record Rest>(p: { ..R }) -> { ..Rest }
 where R = { token: String, ..Rest } {
     let { token: _, ..rest } := p;
     rest
@@ -250,11 +250,11 @@ A `struct` or `record` can take a row parameter, spliced as `..R` in the type's 
 argument list. That is how a type carries "whatever else the caller put in here":
 
 ```metel
-record Builder<row R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: { ..R } }
 
-fun describe<row R>(b: Builder<..R>) -> String { b.name }
+fun describe<record R>(b: Builder<..R>) -> String { b.name }
 
-fun auth_of<row R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
+fun auth_of<record R>(b: Builder<..R>) -> String where R = { auth: String, .. } {
     b.data.auth
 }
 
@@ -281,13 +281,13 @@ An `extend` block may carry a row condition, and its methods exist only for rece
 whose row meets it. Disjoint conditions may reuse a method name:
 
 ```metel
-record Session<row R> { id: i64, data: { ..R } }
+record Session<record R> { id: i64, data: { ..R } }
 
-extend<row R: { token: String, .. }> Session<..R> {
+extend<record R: { token: String, .. }> Session<..R> {
     fun send(self) -> i64 { self.id * 10 }          // only once a token is present
 }
 
-extend<row R: !{ token }> Session<..R> {
+extend<record R: !{ token }> Session<..R> {
     fun login(self) -> i64 { self.id }              // only while there is none
 }
 
@@ -310,7 +310,7 @@ machine whose states are rows.
 
 ## Field-wise constraints
 
-A row *bound* constrains which labels exist. A **field-wise constraint**, `where all R:
+A row *bound* constrains which labels exist. A **field-wise constraint**, `where each R:
 Aspect`, constrains what every field's *type* can do. It holds when each field of `R`
 satisfies `Aspect`, and vacuously for an empty row:
 
@@ -321,7 +321,7 @@ extend f64: Mark { fun mark(&self) -> i64 { 2 } }
 
 aspect Label { fun label(&self) -> String; }
 
-extend<row R> { ..R }: Label where all R: Mark {
+extend<record R> { ..R }: Label where each R: Mark {
     fun label(&self) -> String { "all marked".to_string() }
 }
 
@@ -346,8 +346,8 @@ An aspect local to your module may be implemented three ways, from narrowest to 
 
 ```metel
 // extend { x: f64, y: f64 }: MyAspect { … }                  one concrete row
-// extend<row R: { x: f64, .. }> { ..R }: MyAspect { … }      every row with an `x: f64`
-// extend<row R> { ..R }: MyAspect { … }                      every row
+// extend<record R: { x: f64, .. }> { ..R }: MyAspect { … }      every row with an `x: f64`
+// extend<record R> { ..R }: MyAspect { … }                      every row
 ```
 
 Two row-conditional impls of the same aspect must be provably disjoint — some label
@@ -356,10 +356,10 @@ that one requires and the other forbids. Overlapping ones are `T0015`:
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
-extend<row R: { name: String, .. }> { ..R }: Describe {
+extend<record R: { name: String, .. }> { ..R }: Describe {
     fun describe(&self) -> String { "named ${self.name}" }
 }
-extend<row R: !{ name }> { ..R }: Describe {
+extend<record R: !{ name }> { ..R }: Describe {
     fun describe(&self) -> String { "anonymous" }
 }
 
@@ -382,10 +382,10 @@ record Handle { id: i64, name: String }
 
 aspect Describe { fun state(&self) -> String; }
 
-extend<row R: !{ name }> { ..R }: Describe {
+extend<record R: !{ name }> { ..R }: Describe {
     fun state(&self) -> String { "no name" }
 }
-extend<row R: { name: String, .. }> { ..R }: Describe {
+extend<record R: { name: String, .. }> { ..R }: Describe {
     fun state(&self) -> String { "has name" }
 }
 
@@ -439,7 +439,7 @@ does not widen. See [Move a slice, don't copy it](moving-not-copying) for both.
 
 | code | what happened |
 |---|---|
-| `T0012` | a struct was given to a row bound; a record lacks a required label; a field lacks the aspect `where all R: …` needs |
+| `T0012` | a struct was given to a row bound; a record lacks a required label; a field lacks the aspect `where each R: …` needs |
 | `T0015` | two row-conditional impls of one aspect overlap |
 | `T0032` | an anonymous row (`Builder<..>`) or a fixed-field open record used where it is not accepted |
 | `T0033` | a record spread through a reference needs every field `Copy`; clone it or spread an owned record |

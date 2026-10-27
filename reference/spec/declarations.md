@@ -1115,7 +1115,6 @@ separate designs.
 A `record` may take a `record`-kinded parameter, spliced as `..R` wherever the type is named; the
 parameter stands for extra fields the user of the type supplies:
 
-<!-- doc-example: skip reason="uses RFC-0186 syntax (record R, each); pending metel-core#1644" -->
 ```metel
 record Builder<record R> { name: String, data: { ..R } }
 

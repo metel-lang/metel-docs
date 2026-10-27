@@ -19,6 +19,10 @@ The source text does not match the Metel grammar.
 
 **Fix:** correct the syntax at the indicated position.
 
+Two removed spellings get their own message (RFC-0186): the `row` generic-parameter kind
+("the `row` kind was removed; declare `record R`") and the `all` field-wise constraint keyword
+("`all` was renamed; write `where each R: A`").
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (30)</summary>
@@ -979,22 +983,22 @@ function type.
 
 It is `T0032` in a record or struct field, and an open record `{ x: T, .. }` is `T0032` in a
 return type and in a written function type, positions whose meaning is not settled
-(RFC-0181). A named splice (`Builder<..R>`, `R` declared `row`) and a
+(RFC-0181). A named splice (`Builder<..R>`, `R` declared `record`) and a
 tail-only `{ ..R }` are supported everywhere. An undeclared row variable is `T0003`, and a
-`..R` argument for a non-`row` parameter (or a non-record argument for a `row`
-one) is `T0012`
+`..R` argument for a non-`record` parameter (or a non-record argument for a row
+parameter) is `T0012`
 ([metel-core#1310](https://github.com/metel-lang/metel-core/issues/1310),
 [#1478](https://github.com/metel-lang/metel-core/issues/1478)).
 
-**Fix:** name the row with a `row`-kinded generic parameter and splice it as `..R`, or take the
+**Fix:** name the row with a `record`-kinded generic parameter and splice it as `..R`, or take the
 open record as a parameter, a `let` annotation or a closure parameter. What works instead depends on the position, and the message says so:
 
 - a **free function's return type**: omit the return type so the exact record is inferred
   (private functions only; a `public` function needs an explicit type, `T0010`), write the record
-  in full (`-> { x: i64, y: i64 }`), or name a `row` parameter when the row comes from an
+  in full (`-> { x: i64, y: i64 }`), or name a `record` row parameter when the row comes from an
   argument (`-> { x: i64, ..R }`);
 - a **method's return type**, or an **aspect method declaration's**: write the record in full or
-  name a `row` parameter. Leaving the type out does not infer it there: the method returns `()`;
+  name a `record` row parameter. Leaving the type out does not infer it there: the method returns `()`;
 - a **closure's return annotation**: omit the annotation, and the exact record is inferred, or
   write the record in full. A closure cannot name a row parameter;
 - a **written function type**: share one `R` between the parameter and the result when the
@@ -1038,7 +1042,7 @@ overloaded, so different parameter types do not make two same-named methods dist
 
 Blocks whose coverage is provably disjoint may reuse a name — `extend W<i64>` and
 `extend W<String>`, bounds that contradict (`T: Tag` and `T: !Tag`), or row bounds that
-contradict on a shared label (`row R: { token, .. }` and `row R: !{ token }`) — and a call
+contradict on a shared label (`record R: { token, .. }` and `record R: !{ token }`) — and a call
 dispatches to the block the receiver satisfies. The overlap test is the one
 [T0015](#t0015--conflicting-implementation) applies to aspect impls.
 
@@ -1094,7 +1098,7 @@ parameter, is [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed).
 ### T0036 — By-value open-row parameter over a `Drop` brand
 
 A by-value open-row parameter over a nominal type that has a `Drop` impl
-(`fun f<row R>(h: Handle.{ fd, ..R })` given a `Handle`) would drop a narrowed
+(`fun f<record R>(h: Handle.{ fd, ..R })` given a `Handle`) would drop a narrowed
 `Handle.{ fd }` in the callee. Drop dispatch against a narrowed residual is not
 implemented (RFC-0137 §5, #949), so the call is rejected (RFC-0179 §1.5). A plain record
 that only contains a `Drop` value is not affected.
