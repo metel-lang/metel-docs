@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**187 RFCs total.** 29 draft, 44 under review, 8 accepted, 5 integrated (86 live), 73 implemented, 14 superseded, 14 refused (101 settled).
+**187 RFCs total.** 29 draft, 44 under review, 8 accepted, 4 integrated (85 live), 74 implemented, 14 superseded, 14 refused (102 settled).
 
 ## Draft (29)
 
@@ -105,15 +105,14 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (5)
+## Integrated (4)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0177** — Coercion-Aware Structural Aspect Lookup (`3-integrated` ; rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md ; date 2026-10-06 ; updated 2026-10-06 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1296)
 - **RFC-0181** — Anonymous open rows in return and function types (`3-integrated` ; rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-20 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1480)
-- **RFC-0186** — Rows as an Operator on Record Parameters (`3-integrated` ; rfcs/3-integrated/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-27 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1644)
 
-## Implemented (73)
+## Implemented (74)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -188,6 +187,7 @@ the curated thematic map.
 - **RFC-0182** — Question Mark on Option (`4-implemented` ; rfcs/4-implemented/rfc-0182-question-mark-on-option.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1635)
 - **RFC-0184** — Rename Perhaps to Option (`4-implemented` ; rfcs/4-implemented/rfc-0184-rename-perhaps-to-option.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1625)
 - **RFC-0185** — Remove Type-Directed Dereference (`4-implemented` ; rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1631)
+- **RFC-0186** — Rows as an Operator on Record Parameters (`4-implemented` ; rfcs/4-implemented/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1644)
 
 ## Superseded (14)
 
