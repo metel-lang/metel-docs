@@ -592,7 +592,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -948,7 +948,7 @@ Closures that capture the same binding by `[&x]` / `[&var x]`, or that capture t
 reference value, observe the same referent; a write through an exclusive reference by one
 closure is visible through the others.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -970,7 +970,7 @@ that value alive; the environment travels with the closure value. A closure hold
 captured *reference* cannot outlive the referent (checked by the borrow checker when it
 lands; unenforced before then).
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -988,7 +988,7 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
@@ -1206,7 +1206,7 @@ A generic call may supply explicit type arguments with `name::<T, U>(arguments)`
 each named parameter to the given type. A pinned type must satisfy that parameter's own
 bounds (e.g. `T: Display`).
 
-<!-- rfc.py:last_reviewed a4d8d2ae2fd61a35a05845e8c7c359c6a5437856 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
@@ -1330,7 +1330,7 @@ constructor equals that of the enclosing function or closure's return type; any 
 operand, or any other pairing, is a type error. When the return type is not yet known, the
 operand's constructor fixes it.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0182](../../rfcs/4-implemented/rfc-0182-question-mark-on-option.md)_</span>

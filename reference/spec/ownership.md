@@ -43,7 +43,7 @@ Primitive types and any type implementing `Copy` are exempt — they are duplica
 Using a non-`Copy` value in assignment, argument, or return position moves it; a later use
 of the source binding is rejected.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -660,7 +660,7 @@ state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
 
-<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -737,7 +737,7 @@ value (`T0019`), with or without `--move-check`.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -982,7 +982,7 @@ a binding that was moved as a whole.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
 
-<!-- rfc.py:last_reviewed a0a20f994b1b -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>

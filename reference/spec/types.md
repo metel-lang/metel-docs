@@ -685,7 +685,7 @@ See the note under "Arrays" above — this split is not considered final.
 An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
@@ -780,7 +780,7 @@ produce all `N` elements.
 Where `[T; N]` is expected, an array literal is accepted only when it contains exactly
 `N` elements of type `T`.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
@@ -941,7 +941,7 @@ fun main() -> i64 {
 An `&var T` reference may be used where `&T` is expected; an `&T` reference may not be
 used where `&var T` is expected.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
@@ -1015,7 +1015,7 @@ A reference-typed expression is never implicitly converted to its referent type.
 non-reference type is expected, a reference-typed expression is a type error; `*r` reads
 the referent out, one `*` per reference layer, and only a `Copy` referent can be read out.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md), [rfc-0185](../../rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md)_</span>
@@ -1203,7 +1203,7 @@ fun main() -> i64 {
 reads a value out of a reference; it may apply the unsizing coercions that an expected type
 already drives (`dyn` erasure, `[T; N]` to `[T]`, singleton types).
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
@@ -1411,7 +1411,7 @@ and lacks the named labels, so `R` never equals `Rest`) and an associated-type b
 function inside the body sees the enclosing parameters as rigid; a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1452,7 +1452,7 @@ and is forwarded only to another `where each R: A` bound. `T::Assoc` is an opaqu
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1750,7 +1750,7 @@ the result and consumes the source. Spreading through a reference copies the fie
 when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
 evaluate left-to-right, while the resulting record layout is determined by its row/type.
 
-<!-- rfc.py:last_reviewed d1f40994 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 A row may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
@@ -1925,7 +1925,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed 95f8b824 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0180](../../rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md)_</span>
@@ -1976,7 +1976,7 @@ to carry at least that field (equivalent to `R: { label: Type, .. }`).
 
 
 
-<!-- rfc.py:last_reviewed ef278ea1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -2015,7 +2015,7 @@ callee needs drop dispatch against a narrowed residual (RFC-0137 §5, #949), whi
 implemented, so passing it to an open-row parameter is rejected with `T0036`. A plain record
 that only *contains* a `Drop` value is unaffected.
 
-<!-- rfc.py:last_reviewed d1f40994 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0179](../../rfcs/4-implemented/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md)_</span>
@@ -2094,7 +2094,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0181](../../rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md)_</span>
@@ -2172,7 +2172,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
@@ -2312,7 +2312,7 @@ current-row behavior [Named Records](declarations.md#records) states for `record
 row-bound satisfaction.
 
 
-<!-- rfc.py:last_reviewed fa9d787f -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -2345,7 +2345,7 @@ satisfies a row-conditional impl of the same aspect, the brand-keyed impl is sel
 brand-exact dispatch is checked first, and a match there short-circuits row-conditional
 resolution entirely rather than conflicting with it.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -2365,7 +2365,7 @@ impls of the same aspect overlaps, and is rejected exactly as two overlapping or
 impls are. Inside a generic body over an unconstrained `<record R>`, a row-conditional
 method is not visible unless `R`'s own bound entails the impl's condition.
 
-<!-- rfc.py:last_reviewed adb446a7 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2406,7 +2406,7 @@ or in a `where` constraint; `record` without a row bound is also a legal any-rec
 A negative row bound is satisfied only when none of its named fields match; it accepts no
 trailing `..` and a negative bound in a `where` clause is enforced like an inline one.
 
-<!-- rfc.py:last_reviewed d57f9458 -->
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
