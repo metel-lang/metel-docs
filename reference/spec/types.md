@@ -327,7 +327,7 @@ what generic code can talk about structurally, in three increasingly general way
 | "a record with *no* such field" | `<record T: !{ token }>` | [Row bounds](#row-bounds) |
 | "…and name *the rest*, so a signature can carry it" | `<record R>` with `{ x: f64, ..R }` | [Open rows](#open-rows) |
 | "…the rest is this field plus a remainder" | `where R = { token: Token, ..Rest }` | [Open rows](#open-rows) |
-| "every field's *type* satisfies an aspect" | `where each R: Copy` | [Field-wise row constraints](#field-wise-row-constraints) |
+| "every field's *type* satisfies an aspect" | `where ..R: Copy` | [Field-wise row constraints](#field-wise-row-constraints) |
 | "this impl applies to every record of this shape" | `extend<record R: { x, .. }> { ..R }: A` | [Implementing an aspect for a record](#implementing-an-aspect-for-a-record) |
 
 Which types a row bound or row-conditional impl can match is decided by the declaration
@@ -1447,8 +1447,8 @@ declares `m`; a field access `x.label` on a row-bounded parameter iff a row boun
 names `label`, at the type that bound declares; a method of a conditional impl on a
 type built from `T` iff the impl's conditions are entailed by `Γ`. A use not granted by
 `Γ` is `T0035`. Passing `x` where a callee requires `U: A` is entailed iff `A ∈ Γ(T)`,
-and otherwise is `T0012`. `where each R: A` grants `A` to the fields of `R`, not to `R`,
-and is forwarded only to another `where each R: A` bound. `T::Assoc` is an opaque
+and otherwise is `T0012`. `where ..R: A` grants `A` to the fields of `R`, not to `R`,
+and is forwarded only to another `where ..R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
@@ -1816,7 +1816,7 @@ fun main() {
 ```
 
 Inside a generic body the extras are abstract, and the body owns them too, so it can pass
-the parameter on by value with no bound. `where each R: Copy` is only needed to *use* the row
+the parameter on by value with no bound. `where ..R: Copy` is only needed to *use* the row
 more than once:
 
 ```metel
@@ -2006,7 +2006,7 @@ A by-value parameter whose type has an open row tail (`{ x: Type, ..R }`, or
 `Handle.{ fd, ..R }`) takes its argument **whole**. The call needs only that the argument has
 the named fields at the declared types; the fields the parameter does not name are the
 callee's to move, return or drop, so they need not be `Copy`, and a generic body that
-forwards such a parameter to another by-value open-row function needs no `where each R: Copy`.
+forwards such a parameter to another by-value open-row function needs no `where ..R: Copy`.
 A parameter taken through a reference (`&{ x: Type, ..R }`, `&var`) never moves the value
 and forgets nothing.
 
@@ -2129,14 +2129,18 @@ constrains the row's shape (which labels it has), not its contents (what the fie
 types can do):
 
 ```metel
-extend<record R> { ..R }: Display where each R: Display { … }
-fun consume<record R>(r: { ..R })  where each R: Copy     { … }
+extend<record R> { ..R }: Display where ..R: Display { … }
+fun consume<record R>(r: { ..R })  where ..R: Copy     { … }
 ```
 
-`each R: A` holds when every field type in `R` satisfies `A`; it holds vacuously on an
+`..R: A` holds when every field type in `R`'s row satisfies `A`; it holds vacuously on an
 empty row. A per-field exception composes through ordinary row decomposition (`where R
-= { x: T, ..Rest } where T: SomeOtherBound, each Rest: A`) rather than needing a
+= { x: T, ..Rest }, T: SomeOtherBound, ..Rest: A`) rather than needing a
 heterogeneous form of its own.
+
+The operand is `..` followed by the name of a `record` parameter. `R: A` instead
+bounds the record as a whole. A type or literal row after `..` in a bound is a
+parse error; a parameter without the `record` kind is rejected with `T0012`.
 
 `R` must be a row the declaration can walk: the tail of an open-row parameter
 (`{ ..R }`), the remainder of a `where` decomposition, the tail of an `extend` target
@@ -2147,11 +2151,11 @@ none of these positions mentions has no fields to constrain and is rejected.
 ```metel
 aspect Mark { fun mark(&self) -> i64; }
 record Packet<record R> { data: { ..R } }
-fun duplicate<record R>(p: Packet<..R>) -> ({ ..R }, { ..R }) where each R: Copy {
+fun duplicate<record R>(p: Packet<..R>) -> ({ ..R }, { ..R }) where ..R: Copy {
     let d := p.data;
     (d, d)
 }
-extend<record R> Packet<..R>: Mark where each R: Copy { fun mark(&self) -> i64 { 1 } }
+extend<record R> Packet<..R>: Mark where ..R: Copy { fun mark(&self) -> i64 { 1 } }
 
 fun main() {
     let p := Packet { data = { a = 1 } };
@@ -2166,7 +2170,7 @@ fun main() {
 
 ##### Legality Rule {#spec.types.generics.field-wise-row-constraints.legality-1}
 
-`where each R: Aspect` is a `WhereConstraint` alternative, sibling to an ordinary bound
+`where ..R: Aspect` is a `WhereConstraint` alternative, sibling to an ordinary bound
 (`ident : BoundList`) and a row equation (`ident = Type`, [Open rows](#open-rows)
 above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
@@ -2238,8 +2242,8 @@ The second also needs overlap checking between row bounds — two shape-conditio
 implementations can be *incomparable* rather than one being more specific, so they must
 be disjoint, which is specified below. The third is most useful with a way to require an
 aspect of every field in the row ([Field-wise row
-constraints](#field-wise-row-constraints) above, `each R: Aspect`), which a record-target
-impl accepts as `where each R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
+constraints](#field-wise-row-constraints) above, `..R: Aspect`), which a record-target
+impl accepts as `where ..R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
 (its body is a built-in, `LIMIT-TYPES-003`) and `Copy` for every record of `Copy` fields (a
 bodyless impl): such a record is copied, not moved.
 

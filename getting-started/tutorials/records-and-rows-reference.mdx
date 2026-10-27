@@ -310,7 +310,7 @@ machine whose states are rows.
 
 ## Field-wise constraints
 
-A row *bound* constrains which labels exist. A **field-wise constraint**, `where each R:
+A row *bound* constrains which labels exist. A **field-wise constraint**, `where ..R:
 Aspect`, constrains what every field's *type* can do. It holds when each field of `R`
 satisfies `Aspect`, and vacuously for an empty row:
 
@@ -321,7 +321,7 @@ extend f64: Mark { fun mark(&self) -> i64 { 2 } }
 
 aspect Label { fun label(&self) -> String; }
 
-extend<record R> { ..R }: Label where each R: Mark {
+extend<record R> { ..R }: Label where ..R: Mark {
     fun label(&self) -> String { "all marked".to_string() }
 }
 
@@ -439,7 +439,7 @@ does not widen. See [Move a slice, don't copy it](moving-not-copying) for both.
 
 | code | what happened |
 |---|---|
-| `T0012` | a struct was given to a row bound; a record lacks a required label; a field lacks the aspect `where each R: …` needs |
+| `T0012` | a struct was given to a row bound; a record lacks a required label; a field lacks the aspect `where ..R: …` needs |
 | `T0015` | two row-conditional impls of one aspect overlap |
 | `T0032` | an anonymous row (`Builder<..>`) or a fixed-field open record used where it is not accepted |
 | `T0033` | a record spread through a reference needs every field `Copy`; clone it or spread an owned record |

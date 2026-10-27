@@ -1129,8 +1129,8 @@ fun main() {
 ```
 
 Records of `Copy` fields are `Copy`, and records of `Display` fields are `Display`, through
-`std::core` impls over `{ ..R }` ([Field-wise row
-constraints](types.md#field-wise-row-constraints)).
+`std::core` impls over `{ ..R }` with `where ..R: Copy` and `where ..R: Display`
+respectively ([Field-wise row constraints](types.md#field-wise-row-constraints)).
 
 <details>
 <summary>Formal rules</summary>
