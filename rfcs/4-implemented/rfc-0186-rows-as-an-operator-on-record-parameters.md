@@ -24,7 +24,7 @@ impl_status: implemented
 
 > **Status — implemented (2026-10-27).** Implemented by metel-core#1644
 
-> **Amended (2026-10-27, metel-core#1653, pending review).** The field-wise bound is written `where ..R: A`, with no keyword: `all` and the interim `each` are both removed. `..R` is "the members of R's row" exactly as it is everywhere else, so `..R: A` reads "every member of R's row is `A`". An earlier draft of this RFC proposed this and it was dropped; it is restored for the reasons in Motivation §4. `each` was only ever unreleased, so there is no user-facing migration. Implementation is tracked in #1653 and waits for this amendment to be accepted.
+> **Amended (2026-10-27, metel-core#1653, accepted 2026-10-27).** The field-wise bound is written `where ..R: A`, with no keyword: `all` and the interim `each` are both removed. `..R` is "the members of R's row" exactly as it is everywhere else, so `..R: A` reads "every member of R's row is `A`". An earlier draft of this RFC proposed this and it was dropped; it is restored for the reasons in Motivation §4. `each` was only ever unreleased, so there is no user-facing migration. Implementation is tracked in #1653 and waits for this amendment to be accepted.
 
 ## Summary
 
@@ -302,6 +302,6 @@ parameter; declare `record R`".
 ## Decision
 
 **Outcome:** *(pending)*
-4. **Keyword form, or the bare row operand?** *Resolved (pending review): `where ..R: A`, no
+4. **Keyword form, or the bare row operand?** *Resolved (accepted 2026-10-27): `where ..R: A`, no
    keyword* (Motivation §4, Alternatives 3, 6, 7). Hard cut, no deprecation window: `each` is
    unreleased. Implementation is metel-core#1653 and waits for this amendment to be accepted.
