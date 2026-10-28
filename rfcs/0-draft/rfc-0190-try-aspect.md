@@ -84,7 +84,9 @@ aspect FromResidual<R> {
 }
 ```
 
-(`ControlFlow` is a plain generic enum in `std::core`; it is not special to the checker.)
+(`Try`, `FromResidual` and `ControlFlow` live in `std::core` and are **not** in the prelude:
+ordinary `?` use names none of them, and only code that implements the aspects or writes generic
+bounds imports them. `ControlFlow` is a plain generic enum; it is not special to the checker.)
 
 `Try` is about the operand: `Output` is what `e?` evaluates to when execution continues,
 `Residual` is the value carried out when it does not. `FromResidual<R>` is about the function:
@@ -114,6 +116,12 @@ The residual of a core type is the type itself with the success payload erased t
 new nominal types. The `From` conversion for `Result` is the `E2: From<E1>` bound on its
 `FromResidual` impl, so RFC-0182's error-conversion row is now an impl, not a clause of the
 operator.
+
+**The same-type case uses a reflexive `From`.** Today's checker skips the conversion when
+`E1 == E2`. The impl above needs `E2: From<E1>` to hold then too, so core gains
+`extend<T> T: From<T>` (the identity). It is additive and overlaps no existing impl: the numeric
+`From` impls convert between *different* types. After this the checker no longer special-cases
+equal error types.
 
 ---
 
@@ -157,8 +165,8 @@ cannot do this (`Result<U, E2>` absorbs any `Result<!, E1>` with `E2: From<E1>`,
 not determined). The rule is therefore kept as a **defaulting step for the core types only**: if
 the operand type is unresolved and the return type's constructor is `Result` or `Option`, the
 operand defaults to that constructor applied to fresh variables, as today; likewise for an
-unresolved return type and a known `Result`/`Option` operand. A user-defined `Try` type needs its
-operand and return type to be known when `?` is checked; otherwise the error is `T0002`, asking
+unresolved return type and a known `Result`/`Option` operand. A user-defined `Try` type is **not** defaulted: its
+operand and return type must be known when `?` is checked; otherwise the error is `T0002`, asking
 for an annotation. No program accepted today is affected.
 
 ### Generic code
@@ -207,29 +215,6 @@ projection the spec already defines for aspects. This RFC adds no bound syntax.
   itself, which already parses.
 - **Method on the return type only** (`Ret::from_operand(e)`). Loses the distinction between
   "keep going" and "leave", so the operator cannot produce the `Output` value.
-
----
-
-## Open Questions
-
-1. **How is the same-type case of `E2: From<E1>` expressed?** RFC-0182 and the spec say "when
-   `E1 == E2` no conversion is performed", which the checker special-cases today. The impl in §1
-   needs `E2: From<E1>` to hold when `E1 == E2`, i.e. a reflexive `From<T> for T` in core. If that
-   impl does not exist it must be added (additive; it overlaps no numeric `From` impl, since those
-   convert between *different* types); if it cannot be, §1 needs two impls that are made
-   non-overlapping. **Leaning: add the reflexive impl.**
-
-2. **Which of the three names are in the prelude?** `Try` and `FromResidual` are needed only by
-   code that implements them or writes generic bounds; `ControlFlow` is needed by anyone writing
-   `branch`. **Leaning: all three in `std::core`, none in the prelude**, since ordinary `?` use
-   names none of them.
-
-3. **Does the inference defaulting step cover user-defined `Try` types?** As written it does not
-   (§2, Inference). A user-defined family would need a way to say which `Try` type a `FromResidual`
-   return type defaults to; the obvious candidate, "the return type itself, when it implements
-   `Try`", would make `let r := make()?` in a `Lookup` function default `r` to `Lookup<_>`, which
-   is right for `Lookup` and wrong for any function that wants a `Result` operand in a `Lookup`
-   function. **Leaning: no defaulting for user types**; require known types, as stated.
 
 ---
 
