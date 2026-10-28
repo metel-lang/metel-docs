@@ -161,6 +161,27 @@ literals or patterns.
 
 ---
 
+## Open Questions
+
+1. **May the negation sit before the type (`x: !T`) as well as before the label?** The two
+   placements differ in meaning:
+
+   | spelling | holds when |
+   |---|---|
+   | `!x: u8` | there is no `x` of type `u8` (an `x` of another type, or no `x`, is fine) |
+   | `x: !u8` | there is an `x`, and its type is not `u8` |
+
+   The second is not spelled by this RFC's entries; it is `{ x, !x: u8, .. }`. Adding it would
+   be sugar for that, and would need `!T` to be accepted after the colon in a row bound, which
+   is neither a type nor a bound today (a list such as `x: !u8, u16` also meets the
+   comma-as-separator problem in §1). **For:** it reads as "`x`, but not a `u8`", and mirrors
+   `T: !Aspect`. **Against:** one `!` moved across the colon flips the behaviour for a missing
+   `x`, which is easy to overlook; polarity would have two sites instead of one; nothing
+   becomes expressible that is not already. **Leaning: no**, and if it is added, as documented
+   sugar with the "present and not `T`" meaning, never as another spelling of `!x: T`.
+
+---
+
 ## Changes on Acceptance
 
 - `reference/spec/types.md`, *Row bounds*: the entry table, the openness rule, and the
