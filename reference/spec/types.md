@@ -1890,6 +1890,13 @@ An open record type may occur in a reusable type position, including a function 
 instance-method parameter, a return type, a local annotation, or a nominal field.
 Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
+For a branded `record` type `R`, `{ ..R }` is the anonymous record with the same
+fields; `R` itself retains its brand. Converting an owned branded record to its
+anonymous row consumes the branded value and transfers its fields. This conversion
+is rejected if the branded type implements `Drop`, because it would bypass its
+destructor. A borrowed open-row view does not consume or alter the borrowed value;
+its brand remains available through the original value.
+
 A struct's residual-projection tail (`Handle.{ fd, ..R }`, `Handle.{ ..R }`) is narrower: it is
 accepted only as the type of a function parameter, and anywhere else (a return type, an
 annotation, a field, under `&`) it is a parse error naming that restriction. A row argument
