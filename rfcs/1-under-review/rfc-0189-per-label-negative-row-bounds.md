@@ -98,7 +98,8 @@ fun c<record R: { !token, .. }>(r: R)           // ok: only a negative entry, st
 ```
 
 The sugar form needs no `..` because `!{ … }` is open by definition: it is the complement per
-entry, never a closed shape (RFC-0118 §2).
+entry, never a closed shape (RFC-0118 §2). It still accepts no trailing `..`: `!{ a, .. }` stays
+a parse error, as RFC-0118 §2 specifies.
 
 ### The same label more than once
 
@@ -109,9 +110,14 @@ A label may appear **once positively** and **any number of times negatively**:
 { !x: u8, !x: u16, .. }       // no u8 `x` and no u16 `x`
 ```
 
-It is an error if the entries cannot all hold: `{ x, !x }`, and `{ x: T, !x: T }`. Two positive
-entries for one label stay a duplicate-field error. `{ x: f64, !x: u8 }` is satisfiable, merely
-redundant, and is accepted without diagnostics.
+It is an error if the entries cannot all hold: `{ x, !x, .. }`, and `{ x: T, !x: T, .. }`. Two
+positive entries for one label stay a duplicate-field error. `{ x: f64, !x: u8, .. }` is
+satisfiable, merely redundant, and is accepted without diagnostics.
+
+"Of type `T`" means the same type after substitution, with no widening, exactly as for a positive
+`x: T`. The contradiction check compares the written types, so it fires only when they are the
+same type as written; entries whose types are generic parameters (`{ x: A, !x: B, .. }`) are
+checked when the bound is instantiated, like any other bound on a type parameter.
 
 ### Typed negative entries
 
