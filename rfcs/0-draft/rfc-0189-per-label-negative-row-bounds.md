@@ -109,6 +109,18 @@ It is an error if the entries cannot all hold: `{ x, !x }`, and `{ x: T, !x: T }
 entries for one label stay a duplicate-field error. `{ x: f64, !x: u8 }` is satisfiable, merely
 redundant, and is accepted without diagnostics.
 
+### Typed negative entries
+
+`!x: T` is allowed, for parity with the shipped `!{ id: String }`. It holds when there is no `x`
+of type `T`, so a record with no `x`, or with an `x` of another type, satisfies it. It is the only
+way to say "an `x`, but not this type" (`{ x, !x: u8, .. }`).
+
+Several types for one label are written by **repeating the entry** (`{ !x: u8, !x: u16, .. }`).
+There is no list form in the type position: the comma already separates entries, so
+`{ x: u8, u16 }` is an entry followed by a label-only entry. A union shorthand (`!x: u8 | u16`)
+can be added later as sugar for the repeated form if structural unions (RFC-0165) land; it needs
+no change to the semantics here.
+
 ### Where it may be written
 
 Wherever a row bound is accepted: at the parameter (`<record R: { … }>`), in a `where`
@@ -122,6 +134,9 @@ literals or patterns.
 
 - **Sugar, not replacement.** `!{ a, b }` ≡ `{ !a, !b, .. }`. Neither is deprecated. The prefix
   form stays the short spelling when the whole bound is "none of these".
+- **No nested negation.** The outer `!` of `!{ … }` takes only unprefixed entries; `!{ !a, b }` is
+  an error whose fix-it is the positive spelling (`{ a, !b, .. }`). The outer `!` keeps one meaning,
+  "none of these", and a double negation is never the clearest statement of a row's shape.
 - **Coherence (RFC-0060, RFC-0121 §3).** Two row-conditional impls are disjoint when some label
   has contradictory entries across them (`x` against `!x`, or `x: T` against `!x: T`). A typed
   negative alone proves nothing against a positive entry of another type (`!x: T` and `x: U`
@@ -146,47 +161,13 @@ literals or patterns.
 
 ---
 
-## Open Questions
-
-1. **May an outer negative row bound contain negative entries (`!{ !a, b }`)?** Under the
-   per-entry complement, `!{ e1, e2 }` holds when *no* entry holds, so `!{ !a }` would hold when
-   `a` is **present**, and `!{ !a, b }` means "has `a`, lacks `b`". That is coherent but is
-   `{ a, !b, .. }` written backwards. **Leaning: reject it** with a diagnostic pointing at the
-   positive spelling. The outer `!` keeps one meaning, "none of these labels", and a double
-   negation is never the clearest way to say a row's shape.
-
-2. **May a negative entry carry a type (`!x: T`)?** The outer form already allows it
-   (`!{ id: String }`), so removing it from the entry form would make the two spellings differ.
-   The cost is that it reads like "x is not T" yet is satisfied by a record with no `x`, and
-   by one whose `x` is another type; the spec already warns about this. **Leaning: allow**, for
-   parity with the shipped form, with the same documented reading. It is the only way to say
-   "`x`, but not this type" (`{ x, !x: u8, .. }`).
-
-3. **Several typed negatives for one label: repeated entries, or a list?**
-   - **A. Repeat the entry:** `{ !x: u8, !x: u16, .. }`. No new syntax; falls out of §1 since
-     negatives conjoin. Verbose beyond two or three types.
-   - **B. One negative over a union:** `!x: u8 | u16`, read as "no `x` that is a `u8` or a
-     `u16`", the same meaning as A by De Morgan. Needs structural unions in type position
-     (RFC-0165, `1-under-review`, unscheduled).
-   - **C. A mixed-polarity list in the type position:** `x: !u8, u16, !u32`. **Not
-     recommended.** The comma is already the entry separator, so `{ x: u8, u16 }` is an entry `x: u8`
-     followed by a label-only entry `u16`; a type list would need a second separator and a
-     rule for the ambiguity. And a positive list member (`u16`) is a *disjunction* ("`x` is
-     `u16`"), a feature of its own, which makes the negatives next to it redundant (an `x` that
-     is a `u16` is already neither a `u8` nor a `u32`).
-
-   **Leaning: A now; B when unions exist, as sugar for A; not C.** Nothing is lost by shipping
-   A first, since B only abbreviates it.
-
----
-
 ## Changes on Acceptance
 
 - `reference/spec/types.md`, *Row bounds*: the entry table, the openness rule, and the
   repeated-label rule, with rigor blocks and fixtures.
 - Grammar: `row_entry` takes an optional `!`; `row_field` is renamed accordingly.
 - Diagnostics: closed row with a negative entry; contradictory entries for one label;
-  negative entry inside an outer `!{ }` (if Open Question 1 is settled as above).
+  negative entry inside an outer `!{ }`.
 - RFC-0118 gains an amendment note pointing here.
 
 ## References
@@ -197,7 +178,7 @@ literals or patterns.
 - RFC-0186 (Rows as an Operator on Record Parameters): `record R` and `..R`; the tail-extension
   example uses both.
 - RFC-0072 (Negative Bounds): the `!Aspect` form, whose `!` this reuses.
-- RFC-0165 (Structural Union Types): needed only for Open Question 3, option B.
+- RFC-0165 (Structural Union Types): only for the later `!x: A | B` shorthand.
 - RFC-0187, RFC-0188: record delimiters and label spelling, independent of this RFC.
 
 ---
