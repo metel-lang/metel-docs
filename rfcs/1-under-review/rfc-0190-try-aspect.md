@@ -2,8 +2,12 @@
 id: rfc-0190
 title: "Try Aspect"
 date: '2026-10-28'
-status: draft
+status: under-review
+updated: '2026-10-28'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1637'
 ---
+
+> **Status — under review (2026-10-28).** design settled; open questions resolved; committed to v0.15.0 via metel-core#1637
 
 ## Summary
 
