@@ -1471,7 +1471,7 @@ implementation).
   and label variables `.[L]` (spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and RFC-0174).
   Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
   in favour of RFC-0186.
-- **RFC-0189** *(draft, opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
+- **RFC-0189** *(under-review 2026-10-28, #1661; opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
   (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
   an all-negative open row. Amends RFC-0118 and is additive. Settled 2026-10-28: no nested negation, typed negatives allowed, repeat the entry
   for several types. Open: whether the negation may also precede the type (`x: !T`).

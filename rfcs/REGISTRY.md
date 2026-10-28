@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**189 RFCs total.** 30 draft, 45 under review, 8 accepted, 4 integrated (87 live), 74 implemented, 14 superseded, 14 refused (102 settled).
+**189 RFCs total.** 29 draft, 46 under review, 8 accepted, 4 integrated (87 live), 74 implemented, 14 superseded, 14 refused (102 settled).
 
-## Draft (30)
+## Draft (29)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -46,9 +46,8 @@ the curated thematic map.
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
-- **RFC-0189** — Per-Label Negative Row Bounds (`0-draft` ; rfcs/0-draft/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28)
 
-## Under Review (45)
+## Under Review (46)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -94,6 +93,7 @@ the curated thematic map.
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
 - **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-26)
 - **RFC-0187** — Anonymous record delimiters (`1-under-review` ; rfcs/1-under-review/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-10-26)
+- **RFC-0189** — Per-Label Negative Row Bounds (`1-under-review` ; rfcs/1-under-review/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
 
 ## Accepted (8)

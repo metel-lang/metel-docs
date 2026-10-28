@@ -2,8 +2,12 @@
 id: rfc-0189
 title: "Per-Label Negative Row Bounds"
 date: '2026-10-28'
-status: draft
+status: under-review
+updated: '2026-10-28'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
 ---
+
+> **Status — under review (2026-10-28).** design drafted; tracked by metel-core#1661 (Records and surface syntax); one open question (negation before the type)
 
 ## Summary
 
