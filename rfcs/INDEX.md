@@ -1475,7 +1475,7 @@ implementation).
   (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
   an all-negative open row. Amends RFC-0118 and is additive. Settled 2026-10-28: no nested negation, typed negatives allowed, repeat the entry
   for several types. Open: whether the negation may also precede the type (`x: !T`).
-- **RFC-0190** *(draft, opened 2026-10-28; metel-core#1637)* — Try aspect — `?` defined over `Try` (operand: `Output`,
+- **RFC-0190** *(under-review 2026-10-28, #1637; opened 2026-10-28)* — Try aspect — `?` defined over `Try` (operand: `Output`,
   `Residual`, `branch`) and `FromResidual<R>` (return type), with `Result` and `Option` as the first two impls, so RFC-0182's
   closed rule generalises additively and user types can take part. The `From` error conversion becomes a bound on the core
   `Result` impl. Closes GAP-FUNCTIONS-004. Settled 2026-10-28: reflexive `From<T> for T` added to core, nothing in the prelude, no inference
