@@ -1091,13 +1091,17 @@ parameter, is [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed).
 </details>
 <!-- rfc.py:fixtures:end -->
 
-### T0036 — By-value open-row parameter over a `Drop` brand
+### T0036 — Open-row use of a `Drop` brand
 
 A by-value open-row parameter over a nominal type that has a `Drop` impl
 (`fun f<record R>(h: Handle.{ fd, ..R })` given a `Handle`) would drop a narrowed
 `Handle.{ fd }` in the callee. Drop dispatch against a narrowed residual is not
 implemented (RFC-0137 §5, #949), so the call is rejected (RFC-0179 §1.5). A plain record
 that only contains a `Drop` value is not affected.
+
+An owned conversion from a branded `record` to its anonymous row is also rejected when
+the brand implements `Drop`: transferring its fields would bypass its destructor. A
+borrowed open-row view does not consume the record.
 
 **Fix:** take the value by reference, or give the parameter the whole type.
 

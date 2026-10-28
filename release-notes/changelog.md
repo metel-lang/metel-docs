@@ -20,6 +20,10 @@ title: "Metel Language Changelog"
   `record R`" and "`all` was removed; write `where ..R: A`". The interim `each` spelling never
   shipped and is rejected with the same hint. `R` and `{ ..R }` are both valid in a generic body.
   The specification, tutorials, and checked code in dated posts are updated.
+- A branded record's row view `{ ..R }` is anonymous, so methods and aspect implementations
+  belonging to its brand do not carry over. Converting an owned branded record to its row
+  transfers the fields and is rejected for types implementing `Drop`; borrowed open-row views
+  leave the original value intact (`metel-core#1650`).
 - `Perhaps<T>` is renamed `Option<T>` (RFC-0184, `metel-core#1625`). Only the name changes: the variants
   `Some { value }` and `None`, every method (`is_some`, `unwrap_or`, `and_then`, `ok_or`, `yolo`, ...),
   and all type-checking behaviour are as before. Write `Option<T>` in annotations, `Option::None` and
