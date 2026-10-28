@@ -1473,8 +1473,8 @@ implementation).
   in favour of RFC-0186.
 - **RFC-0189** *(draft, opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
   (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
-  an all-negative open row. Amends RFC-0118 and is additive. Questions settled 2026-10-28: no nested negation, typed negatives allowed,
-  repeat the entry for several types.
+  an all-negative open row. Amends RFC-0118 and is additive. Settled 2026-10-28: no nested negation, typed negatives allowed, repeat the entry
+  for several types. Open: whether the negation may also precede the type (`x: !T`).
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
