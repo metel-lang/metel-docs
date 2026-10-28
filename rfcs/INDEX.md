@@ -1474,7 +1474,7 @@ implementation).
 - **RFC-0189** *(under-review 2026-10-28, #1661; opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
   (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
   an all-negative open row. Amends RFC-0118 and is additive. Settled 2026-10-28: no nested negation, typed negatives allowed, repeat the entry
-  for several types. Open: whether the negation may also precede the type (`x: !T`).
+  for several types. Negation before the type (`x: !T`) rejected 2026-10-28.
 - **RFC-0190** *(under-review 2026-10-28, #1637; opened 2026-10-28)* — Try aspect — `?` defined over `Try` (operand: `Output`,
   `Residual`, `branch`) and `FromResidual<R>` (return type), with `Result` and `Option` as the first two impls, so RFC-0182's
   closed rule generalises additively and user types can take part. The `From` error conversion becomes a bound on the core

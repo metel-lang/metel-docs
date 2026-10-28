@@ -164,31 +164,18 @@ literals or patterns.
 - **Keep `+` (status quo).** Works today (see Motivation). Rejected as the end state only
   because it cannot hold a per-label typed negative next to its positive and splits one shape
   over several bounds. It stays legal.
+- **Negation before the type (`x: !T`).** It would mean "present and not `T`", which this RFC
+  already spells `{ x, !x: T, .. }`. The two placements differ in meaning for a missing `x`
+  (`!x: T` holds, `x: !T` does not), so allowing both gives two similar-looking spellings with
+  opposite behaviour in the case that is easiest to overlook. It would also need `!T` accepted
+  after the colon, which is neither a type nor a bound today, and a separator for a list of
+  types, since the comma already separates entries. Rejected; polarity stays at the start of the
+  entry. It can be added later as documented sugar if real code asks, with no change to the
+  semantics here.
 - **A keyword (`without token`).** Adds a reserved word to say what `!` already says in every
   other bound position (`!Copy`, `!{ … }`).
 - **A different sigil on the label (`-token`, `~token`).** `-` and `~` are operators in
   expressions; `!` is already the bound grammar's negation.
-
----
-
-## Open Questions
-
-1. **May the negation sit before the type (`x: !T`) as well as before the label?** The two
-   placements differ in meaning:
-
-   | spelling | holds when |
-   |---|---|
-   | `!x: u8` | there is no `x` of type `u8` (an `x` of another type, or no `x`, is fine) |
-   | `x: !u8` | there is an `x`, and its type is not `u8` |
-
-   The second is not spelled by this RFC's entries; it is `{ x, !x: u8, .. }`. Adding it would
-   be sugar for that, and would need `!T` to be accepted after the colon in a row bound, which
-   is neither a type nor a bound today (a list such as `x: !u8, u16` also meets the
-   comma-as-separator problem in §1). **For:** it reads as "`x`, but not a `u8`", and mirrors
-   `T: !Aspect`. **Against:** one `!` moved across the colon flips the behaviour for a missing
-   `x`, which is easy to overlook; polarity would have two sites instead of one; nothing
-   becomes expressible that is not already. **Leaning: no**, and if it is added, as documented
-   sugar with the "present and not `T`" meaning, never as another spelling of `!x: T`.
 
 ---
 
