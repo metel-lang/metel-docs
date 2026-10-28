@@ -99,7 +99,12 @@ fun c<record R: { !token, .. }>(r: R)           // ok: only a negative entry, st
 
 The sugar form needs no `..` because `!{ … }` is open by definition: it is the complement per
 entry, never a closed shape (RFC-0118 §2). It still accepts no trailing `..`: `!{ a, .. }` stays
-a parse error, as RFC-0118 §2 specifies.
+a parse error, as RFC-0118 §2 specifies, and the diagnostic names both fixes (drop the `..`, since
+`!{ … }` is open already, or write the entry form `{ !a, .. }`). The form is **reserved**: the
+natural reading of `!{ a, b, .. }` is the complement of the whole open bound `{ a, b, .. }`, "lacks
+at least one of them", which no spelling expresses today. Accepting `..` as a redundant no-op
+would use up that spelling and invite reading `!{ a, b, .. }` as "lacks both", so a later RFC may
+give it that meaning without a break.
 
 ### The same label more than once
 
