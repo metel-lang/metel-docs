@@ -1471,6 +1471,10 @@ implementation).
   and label variables `.[L]` (spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and RFC-0174).
   Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
   in favour of RFC-0186.
+- **RFC-0189** *(draft, opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
+  (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
+  an all-negative open row. Amends RFC-0118 and is additive. Open: nested negation in an outer `!{ }`, typed negative
+  entries, and several typed negatives per label (repeat, or a union once RFC-0165 exists).
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
