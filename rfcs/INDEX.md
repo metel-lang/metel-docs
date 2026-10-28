@@ -1475,6 +1475,10 @@ implementation).
   (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
   an all-negative open row. Amends RFC-0118 and is additive. Settled 2026-10-28: no nested negation, typed negatives allowed, repeat the entry
   for several types. Open: whether the negation may also precede the type (`x: !T`).
+- **RFC-0190** *(draft, opened 2026-10-28; metel-core#1637)* — Try aspect — `?` defined over `Try` (operand: `Output`,
+  `Residual`, `branch`) and `FromResidual<R>` (return type), with `Result` and `Option` as the first two impls, so RFC-0182's
+  closed rule generalises additively and user types can take part. The `From` error conversion becomes a bound on the core
+  `Result` impl. Closes GAP-FUNCTIONS-004. Open: the reflexive `From`, prelude exposure, inference defaulting for user types.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
