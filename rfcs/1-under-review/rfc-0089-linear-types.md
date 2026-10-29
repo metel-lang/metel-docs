@@ -427,7 +427,7 @@ and its open aliasing question remain explicitly not required for the deadline.
 - RFC-0081 (Negative Impls) — `extend X: !Linear;` opt-out
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
 - RFC-0039 (`aspect` Alias Syntax, `1-under-review`) — vehicle for the `Affine` alias (§2.1)
-- RFC-0049 (Linear Function Type System, draft) — documents the generic-`drop`-discharges-
+- RFC-0049 (Linear Function Type System, superseded by RFC-0194) — documents the generic-`drop`-discharges-
   linearity hazard this RFC's `drop<T: !Linear>` avoids
 - RFC-0063 (Allocator Handles, accepted) — §9 item 5's deadline this RFC's §3
   satisfies, together with RFC-0090

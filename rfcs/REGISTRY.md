@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**192 RFCs total.** 29 draft, 49 under review, 8 accepted, 4 integrated (90 live), 74 implemented, 14 superseded, 14 refused (102 settled).
+**193 RFCs total.** 28 draft, 50 under review, 8 accepted, 4 integrated (90 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
-## Draft (29)
+## Draft (28)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -27,7 +27,6 @@ the curated thematic map.
 - **RFC-0027** — C FFI (`0-draft` ; rfcs/0-draft/rfc-0027-c-ffi.md ; date 2026-05-24)
 - **RFC-0033** — Field-Level Mutability (`0-draft` ; rfcs/0-draft/rfc-0033-field-level-mutability.md ; date 2026-05-30)
 - **RFC-0038** — impl Aspect in Struct Fields and Existential Types (`0-draft` ; rfcs/0-draft/rfc-0038-impl-aspect-struct-fields.md ; date 2026-06-01)
-- **RFC-0049** — `linear fun` Type System (`0-draft` ; rfcs/0-draft/rfc-0049-linear-fun-type-system.md ; date 2026-06-04)
 - **RFC-0062** — Ord / Eq Comparison Aspects (`0-draft` ; rfcs/0-draft/rfc-0062-ord-comparison-aspect.md ; date 2026-06-11 ; updated 2026-07-21)
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
 - **RFC-0075** — Region Inference — Local AutoRegion (`0-draft` ; rfcs/0-draft/rfc-0075-region-inference.md ; date 2026-07-01)
@@ -47,7 +46,7 @@ the curated thematic map.
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
 
-## Under Review (49)
+## Under Review (50)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -98,6 +97,7 @@ the curated thematic map.
 - **RFC-0191** — One-Field Record Update (`1-under-review` ; rfcs/1-under-review/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0193** — Named Declarations Do Not Infer Their Return Type (`1-under-review` ; rfcs/1-under-review/rfc-0193-named-declarations-do-not-infer-return-types.md ; date 2026-10-29 ; updated 2026-10-29)
+- **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 
 ## Accepted (8)
 
@@ -194,7 +194,7 @@ the curated thematic map.
 - **RFC-0185** — Remove Type-Directed Dereference (`4-implemented` ; rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1631)
 - **RFC-0186** — Rows as an Operator on Record Parameters (`4-implemented` ; rfcs/4-implemented/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1644)
 
-## Superseded (14)
+## Superseded (15)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -205,6 +205,7 @@ the curated thematic map.
 - **RFC-0024** — Linear Types (`5-superseded` ; rfcs/5-superseded/rfc-0024-linear-types.md ; date 2026-05-24)
 - **RFC-0029** — Module System — Gaps and Clarifications (`5-superseded` ; rfcs/5-superseded/rfc-0029-module-system-gaps.md ; date 2026-05-27)
 - **RFC-0043** — Regular Pointers and Mutable Pointers (`5-superseded` ; rfcs/5-superseded/rfc-0043-regular-pointers.md ; date 2026-06-02)
+- **RFC-0049** — `linear fun` Type System (`5-superseded` ; rfcs/5-superseded/rfc-0049-linear-fun-type-system.md ; date 2026-06-04 ; updated 2026-10-29)
 - **RFC-0052** — Lifetime System (`5-superseded` ; rfcs/5-superseded/rfc-0052-lifetime-system.md ; date 2026-06-05 ; updated 2026-07-17)
 - **RFC-0055** — Comptime (`5-superseded` ; rfcs/5-superseded/rfc-0055-comptime.md ; date 2026-06-05 ; updated 2026-07-09)
 - **RFC-0083** — Public Value Exports (`5-superseded` ; rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/539)
