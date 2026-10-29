@@ -294,6 +294,10 @@ written type and is not recoverable downstream.
 
 ## Closures
 
+> **Gap** GAP-FUNCTIONS-006
+
+> **Gap** GAP-FUNCTIONS-007
+
 Anonymous functions are [written with the `[captures]? once? var? |params| (-> ret)? { body }` form](#spec.functions.closures.legality-1):
 
 ```metel
