@@ -67,6 +67,12 @@ title: "Metel Language Changelog"
   longer shows inference variables. `?` recognises the core `Result`/`Option` by declaration
   identity, so a module that declares its own `Result` or `Option` no longer breaks `?` on
   standard-library values.
+- A `struct`, `record` or `enum` declared in a block now shadows a type of the same name from an
+  outer scope: a module-level type, an imported one, or a `std::core` type, as the scoping rules
+  and `modules.md` always said. The innermost declaration wins inside its block and the outer type
+  is back in scope after it. Before, the declaration was accepted but later uses of the name
+  resolved to the outer type, so `struct P { y: i64 }` in a function body next to a module-level
+  `struct P { x: i64 }` failed with "no field `y` on `P`" (`metel-core#1615`).
 
 ## v0.14.1
 
