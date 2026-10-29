@@ -81,6 +81,13 @@ title: "Metel Language Changelog"
   is back in scope after it. Before, the declaration was accepted but later uses of the name
   resolved to the outer type, so `struct P { y: i64 }` in a function body next to a module-level
   `struct P { x: i64 }` failed with "no field `y` on `P`" (`metel-core#1615`).
+- A module-qualified variant literal names the enum its prefix names, even when the current module
+  declares an enum of the same name: `std::core::Option::Some { value = 1 }` builds the core
+  `Option` where the module has its own `enum Option { .. }`. Before, the literal resolved to the
+  module's enum by its bare name and failed with "no variant `Some` on enum `Option`". A type that
+  `E` or `T` cannot be inferred for still needs an annotation, as without shadowing. A module-qualified
+  *unit* variant used as an expression (`std::core::Option::None`) is a separate gap
+  (`metel-core#1680`) (`metel-core#1616`).
 
 ## v0.14.1
 
