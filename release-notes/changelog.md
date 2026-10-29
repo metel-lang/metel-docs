@@ -94,6 +94,13 @@ title: "Metel Language Changelog"
   now names the enum its module prefix names, so the core `None` can be written even where a module
   declares its own `Option`. A path to a fieldful or unknown variant is still an unresolved name,
   and a qualified variant in a pattern is not part of the grammar (`metel-core#1680`).
+- A module-qualified path to a static method is a value or a call: `lib::Counter::new()`,
+  `lib::Counter::with(5)`, `std::core::List::new()`, or the method as a value
+  (`let make := lib::Counter::with;`). It was `undefined name` in an expression. The path names the
+  type its module prefix names, so it works without importing the type and where the module declares
+  its own type of that name; `std::core::List::new()` is the core `List` even beside a local
+  `struct List`. A path naming no member of the type is still an unresolved name, reported as written
+  (`metel-core#1683`).
 
 ## v0.14.1
 
