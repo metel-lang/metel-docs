@@ -1480,6 +1480,12 @@ implementation).
   closed rule generalises additively and user types can take part. The `From` error conversion becomes a bound on the core
   `Result` impl. Closes GAP-FUNCTIONS-004. Settled 2026-10-28: reflexive `From<T> for T` added to core, nothing in the prelude, no inference
   defaulting for user types, residuals are `Result<!, E>` / `Option<!>`.
+- **RFC-0191** *(under-review 2026-10-29, #1663; opened 2026-10-29)* — One-field record update — `{ ..s, a = e }` replaces a
+  field the checker can see is present, with a value of the field's type; an absent label stays an addition and an undetermined
+  one stays `T0012`. Amends RFC-0178 §2 ("no override"); no new syntax. Open: whether a replacement needs a marker at the site.
+- **RFC-0192** *(under-review 2026-10-29, #1664; opened 2026-10-29)* — Explicit type arguments for record parameters —
+  a turbofish argument for `record R` is the record `R` (the remainder `..R` splices), pinned in declaration order alongside
+  ordinary parameters. Amends RFC-0023's turbofish rule and closes GAP-FUNCTIONS-005 on implementation. `_` placeholders out of scope.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
