@@ -409,6 +409,8 @@ keep `=`. The bare `=` spelling for a `var` initializer or reassignment is a par
 
 ### Scoping and Shadowing
 
+> **Gap** GAP-DECLARATIONS-004
+
 Variables are [lexically scoped](#spec.declarations.variables.scoping-and-shadowing.legality-1). Each block `{ }` introduces a new scope. Inner scopes can shadow outer variables.
 
 `let` and `var` declarations are [sequential](#spec.declarations.variables.scoping-and-shadowing.legality-2) — a binding is visible only from its declaration point to the end of its containing block.

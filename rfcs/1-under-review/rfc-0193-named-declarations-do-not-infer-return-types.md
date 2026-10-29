@@ -140,17 +140,17 @@ when the rewrite keeps the program's meaning, which means the function must sati
 1. **It is private and a free function.** A method has a receiver and belongs to a type; a closure
    cannot replace it. A `public` declaration needs its type written (`T0010`).
 2. **It has no generic parameter list, `where` clause or bounds.** A closure has no generics list, so
-   it cannot name a type parameter, a bound or a row fact. (A closure does generalize over
+   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007). (A closure does generalize over
    parameters that are unannotated, and takes an anonymous open record as a parameter; neither
    needs a list.)
 3. **It does not call itself, directly or through other functions.** A closure cannot refer to its
-   own name inside its body, so a recursive function must write its type.
+   own name inside its body (GAP-FUNCTIONS-006), so a recursive function must write its type.
 4. **Every use follows the declaration.** Functions are hoisted and `let` bindings are not: a
    function declared after a call to it is fine, a `let`-bound closure used before its `let` is
-   an undefined name.
+   an undefined name (GAP-DECLARATIONS-004, RFC-0131).
 5. **Its body does not extend a parameter's record.** A body such as `{ ..r, host = "h" }` needs
    the fact that `r` lacks `host`, which a function states with a row bound and a closure cannot;
-   the closure form is rejected with `T0012`. Such a function must write its type.
+   the closure form is rejected with `T0012` (GAP-FUNCTIONS-007). Such a function must write its type.
 
 If any condition fails, the diagnostic gives the written type only. When they hold, it shows the
 function rewritten with its own parameters and body, as in the Summary. The conditions are
@@ -278,6 +278,9 @@ Implementation detail goes in an ADR at `3-integrated`. The constraints:
 - RFC-0181 (Anonymous open rows in return and function types) §1.1, metel-core#1484.
 - RFC-0031 (Topological Per-Module Typechecking): the `T0010` rationale.
 - RFC-0037 (Return-Position `impl Aspect`), RFC-0160 (type aliases), ADR-0039 (native bindings).
+- GAP-FUNCTIONS-006 (a closure cannot call itself, metel-core#1667), GAP-FUNCTIONS-007 (a closure cannot
+  name a type parameter, bound or row fact, metel-core#1668), GAP-DECLARATIONS-004 (`let` is not hoisted,
+  RFC-0131): the existing limits that bound where the closure suggestion applies. None is changed here.
 
 ---
 
