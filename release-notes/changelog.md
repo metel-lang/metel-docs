@@ -105,6 +105,11 @@ title: "Metel Language Changelog"
   its own type of that name; `std::core::List::new()` is the core `List` even beside a local
   `struct List`. A path naming no member of the type is still an unresolved name, reported as written
   (`metel-core#1683`).
+- A closure bound with `let` inside a generic function may return, or be built from, a value whose
+  type is the function's own type parameter: `let f := || { x }; f()` with `x: T`. The first call of
+  the function used to report an internal error (`I0010`), because the closure was treated as
+  polymorphic in `T`, which belongs to the enclosing function. A closure that does not depend on the
+  surrounding code is still polymorphic (`metel-core#1688`).
 
 ## v0.14.1
 
