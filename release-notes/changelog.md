@@ -86,9 +86,13 @@ title: "Metel Language Changelog"
   `Option` where the module has its own `enum Option { .. }`. Before, the literal resolved to the
   module's enum by its bare name and failed with "no variant `Some` on enum `Option`". A type
   parameter the literal does not determine (the `E` of `Result::Ok { value = 1 }`) still needs an
-  annotation, as without shadowing. A module-qualified
-  *unit* variant used as an expression (`std::core::Option::None`) is a separate gap
-  (`metel-core#1680`) (`metel-core#1616`).
+  annotation, as without shadowing (`metel-core#1616`).
+- A module-qualified path to a unit variant is a value: `lib::Kind::A`, or `std::core::Option::None`
+  by its full path. It was `undefined name` in an expression, and the type-qualified `Kind::A` it
+  stands for needs `Kind` in scope and names the module's own enum when it declares one. The path
+  now names the enum its module prefix names, so the core `None` can be written even where a module
+  declares its own `Option`. A path to a fieldful or unknown variant is still an unresolved name,
+  and a qualified variant in a pattern is not part of the grammar (`metel-core#1680`).
 
 ## v0.14.1
 
