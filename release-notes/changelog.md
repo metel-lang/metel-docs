@@ -84,8 +84,9 @@ title: "Metel Language Changelog"
 - A module-qualified variant literal names the enum its prefix names, even when the current module
   declares an enum of the same name: `std::core::Option::Some { value = 1 }` builds the core
   `Option` where the module has its own `enum Option { .. }`. Before, the literal resolved to the
-  module's enum by its bare name and failed with "no variant `Some` on enum `Option`". A type that
-  `E` or `T` cannot be inferred for still needs an annotation, as without shadowing. A module-qualified
+  module's enum by its bare name and failed with "no variant `Some` on enum `Option`". A type
+  parameter the literal does not determine (the `E` of `Result::Ok { value = 1 }`) still needs an
+  annotation, as without shadowing. A module-qualified
   *unit* variant used as an expression (`std::core::Option::None`) is a separate gap
   (`metel-core#1680`) (`metel-core#1616`).
 
