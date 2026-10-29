@@ -53,7 +53,11 @@ title: "Metel Language Changelog"
   calls), stop mutating, or share the binding with `[&var x]`. `&var x` on a listed by-value
   capture is rejected the same way. Calling a `&var self` method on a capture
   is a write to it too, so `[s] || { s.inc(); }` and `|| { s.inc(); }` need `var` (`metel-core#1676`);
-  that is not yet checked when the receiver has a generic type (`metel-core#1684`).
+  that includes a receiver whose type is a generic parameter (`metel-core#1684`). The check is made
+  where a generic function is written, so a generic function that is never called is rejected too,
+  and the first call no longer reports an internal error. It applies to a closure bound with `let`
+  or `var` and no annotation; a closure passed where a function type is expected is still judged
+  against that type.
 
 **Language:**
 
