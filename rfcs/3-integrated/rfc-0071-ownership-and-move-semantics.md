@@ -668,7 +668,7 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
 
 - RFC-0024 (Linear Types, superseded) — prior exploration of linear/affine ownership in
   Metel; this RFC is the settled formulation of the same core idea.
-- RFC-0049 (Linear Function Type System, draft) — function-level linearity constraints;
+- RFC-0049 (Linear Function Type System, superseded by RFC-0194) — function-level linearity constraints;
   orthogonal to but compatible with the value-level move semantics specified here.
 - RFC-0063 (Allocator Handles) — depends on affine ownership of `@a T`; §2 states the
   non-`Copy` property of allocator-tagged pointers without grounding it in a prior RFC.

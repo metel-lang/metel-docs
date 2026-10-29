@@ -2,7 +2,12 @@
 id: rfc-0049
 title: "`linear fun` Type System"
 date: '2026-06-04'
+status: superseded
+updated: '2026-10-29'
+superseded_by: rfc-0194
 ---
+
+> **Status — superseded (2026-10-29).** replaced by RFC-0194: the linear fun type was built on the refused RFC-0046; linear closures are now derived from captures
 
 ## Summary
 

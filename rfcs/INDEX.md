@@ -1166,15 +1166,8 @@ implementation).
   needs re-checking against RFC-0119's actual accepted shape rather than the
   superseded RFC-0090 draft this RFC was originally written against. Re-promoted
   alongside RFC-0089 (companion issue), same v0.21.1 lane, same reasoning.
-- **RFC-0049** *(draft — needs a full rewrite before it can be re-reviewed)* —
-  `linear fun` Type System — unconsumed-scope-exit, `Drop` interaction, subtyping vs.
-  plain `fun`. Sits on **RFC-0046, which is `6-refused`** (its `move`-capture idea was
-  carried by RFC-0050 for a while, then dropped there 2026-08-31 — not a live
-  successor); predates the `status`/`target`/`tracking` frontmatter fields entirely.
-  Not milestoned: its foundation needs reconciling against the closure model that has
-  since shipped (RFC-0050's capture lists, RFC-0134's call capability, RFC-0153's
-  mutation axis) before a design-settlement review is even meaningful. Flagged
-  2026-09-03 as needing this rewrite rather than left silently stale.
+- **RFC-0049** *(superseded 2026-10-29 by RFC-0194)* — `linear fun` Type System. Built on the refused RFC-0046; its
+  questions (unconsumed closures, captured linear values, subtyping) are answered by RFC-0194 against the shipped closure model.
 - **RFC-0050** *(**integrated 2026-09-01**; v0.13.0, #803; impl metel-core#925)* —
   Closure Capture Lists — `[&var count, &config, buf, prefix.clone()]` prefix on a closure
   literal. Specifiers: `&var`/`&` by reference; **bare `ident` = by-value** (copy for
@@ -1491,6 +1484,9 @@ implementation).
   inference marker. For a private free function the compiler suggests a `let`-bound closure when it applies (not generic,
   recursive, used before its declaration, or extending a parameter's record). Function values in public signatures are written;
   there is no `public` closure binding. Amends `functions.md` dynamics-1, RFC-0181 §1.1 and the `T0032` advice. Open: hard cut or warning window.
+- **RFC-0194** *(under-review 2026-10-29, #1670; opened 2026-10-29)* — Linear closures and captures — a closure that captures a
+  `Linear` value (RFC-0089) is itself linear: called exactly once, never dropped, body consumes the capture. Derived from the
+  captures like `Copy`; no new syntax or type. Supersedes RFC-0049. Open: how "must-call" is written in a function type (with RFC-0163).
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
