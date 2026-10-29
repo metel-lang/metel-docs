@@ -51,8 +51,9 @@ title: "Metel Language Changelog"
   the closure mutated a private copy and the outer binding stayed unchanged. It is now `T0028`
   naming the capture and the fixes: write `var` (the closure keeps mutating its own copy across
   calls), stop mutating, or share the binding with `[&var x]`. `&var x` on a listed by-value
-  capture is rejected the same way. Calling a `&var self` method on a capture is still unchecked
-  (`metel-core#1676`).
+  capture is rejected the same way. Calling a `&var self` method on a capture
+  is a write to it too, so `[s] || { s.inc(); }` and `|| { s.inc(); }` need `var` (`metel-core#1676`);
+  that is not yet checked when the receiver has a generic type (`metel-core#1684`).
 
 **Language:**
 
