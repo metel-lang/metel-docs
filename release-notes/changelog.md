@@ -45,6 +45,14 @@ title: "Metel Language Changelog"
   `T0024` (read-copy of a non-`Copy` value) is retired: a non-`Copy` read is `T0001` when
   implicit and `T0019` under `--move-check` when written `*r`. The specification and tutorials
   are updated.
+- A closure with no capture list that writes an implicitly captured `Copy` binding now needs
+  `var`, as one with a capture list always did (`metel-core#1641`, `spec.functions.closures.legality-25`).
+  Assigning to it (including a field or index of it) or taking `&var` of it was accepted before;
+  the closure mutated a private copy and the outer binding stayed unchanged. It is now `T0028`
+  naming the capture and the fixes: write `var` (the closure keeps mutating its own copy across
+  calls), stop mutating, or share the binding with `[&var x]`. `&var x` on a listed by-value
+  capture is rejected the same way. Calling a `&var self` method on a capture is still unchecked
+  (`metel-core#1676`).
 
 **Language:**
 
