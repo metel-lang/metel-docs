@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**191 RFCs total.** 29 draft, 48 under review, 8 accepted, 4 integrated (89 live), 74 implemented, 14 superseded, 14 refused (102 settled).
+**192 RFCs total.** 29 draft, 49 under review, 8 accepted, 4 integrated (90 live), 74 implemented, 14 superseded, 14 refused (102 settled).
 
 ## Draft (29)
 
@@ -47,7 +47,7 @@ the curated thematic map.
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
 
-## Under Review (48)
+## Under Review (49)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -97,6 +97,7 @@ the curated thematic map.
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0191** — One-Field Record Update (`1-under-review` ; rfcs/1-under-review/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-10-29)
+- **RFC-0193** — Explicit Return-Type Inference (`1-under-review` ; rfcs/1-under-review/rfc-0193-explicit-return-type-inference.md ; date 2026-10-29 ; updated 2026-10-29)
 
 ## Accepted (8)
 
