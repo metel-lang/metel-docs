@@ -358,6 +358,8 @@ A closure parameter may be annotated with an open record whose tail is anonymous
 (`|p: { x: i64, .. }| { p.x }`); the closure is then polymorphic in that row and accepts
 records of different shapes ([open rows](types.md#spec.types.generics.open-rows.legality-5)).
 
+A closure has one type. [A `let`-bound closure is used at the one type its uses fix](#spec.functions.closures.legality-26), and [a closure bound by a top-level `let` is determined by its own initializer](#spec.functions.closures.legality-27). Polymorphism is written or declared: a generic `fun`, a reference to one ([First-Class Functions](#first-class-functions)), or the open-record parameter above.
+
 ### Capture lists
 
 A closure that reads an outer binding *captures* it. A **capture list** `[…]` before the
@@ -1211,6 +1213,28 @@ never mutates. The coercion is one-way — there is no automatic re-narrowing ba
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfcmVhZGluZ19zdG9yZWRfYXNfdmFyX29ic2VydmVkX3Zhci5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIGNsb3N1cmUgY2x1c3RlciAoUkZDIDAxNTIgZHluYW1pY3MtMTQpOiBzdG9yaW5nIGEgYHJlYWRpbmdgIGNsb3N1cmVcbi8vIGludG8gYSBgdmFyYC10eXBlZCBmaWVsZCBjb2VyY2VzIGl0IGludG8gdGhhdCBmaWVsZCdzIGRlY2xhcmVkIHR5cGUgLS0gYVxuLy8gb25lLXdheSBwcmVjaXNpb24gbG9zcy4gTGF0ZXIgcmVhZHMgb2YgdGhlIGZpZWxkIHlpZWxkIGEgYHZhcmAgdmFsdWU7IHRoZXJlXG4vLyBpcyBubyBhdXRvbWF0aWMgcmUtbmFycm93aW5nIGJhY2sgdG8gYHJlYWRpbmdgLlxuLy9cbnN0cnVjdCBCb3gge1xuICAgIHJ1bjogdmFyIHx8IC0+IGk2NCxcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHB1cmUgOj0gfHwgeyAzIH07IC8vIGByZWFkaW5nYFxuICAgIGxldCBiIDo9IEJveCB7IHJ1biA9IHB1cmUgfTsgIC8vIGNvZXJjZWQgaW50byB0aGUgYHZhcmAtdHlwZWQgZmllbGRcbiAgICBhc3NlcnQoKGIucnVuKSgpID09IDMpOyAgICAgICAvLyBgYi5ydW5gIGlzIG9ic2VydmVkIGFzIGB2YXIgKCkgLT4gaTY0YFxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE0LjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY2xvc3VyZXMvdjBfMTNfMF9yZWFkaW5nX3N0b3JlZF9hc192YXJfb2JzZXJ2ZWRfdmFyLm10bCIsIm5hbWUiOiJ2MF8xM18wX3JlYWRpbmdfc3RvcmVkX2FzX3Zhcl9vYnNlcnZlZF92YXIubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.functions.closures.legality-26}
+
+A `let`-bound closure has one type. The types of its parameters and result that its initializer
+leaves unresolved are not quantified: its uses fix them, and a use at a different type is a type
+error (`T0001`) that names the closure. Two forms stay polymorphic because the polymorphism is
+declared, not inferred: a `let` that binds a reference to an already-generic function
+([first-class-functions.legality-2](#spec.functions.first-class-functions.legality-2)), and a closure
+with a written open-record parameter, whose `..` is quantified (its other parameter types are not).
+Inside a generic function the parameters of a `let`-bound closure are written; leaving one out is
+`T0002` at the definition.
+
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+
+##### Legality Rule {#spec.functions.closures.legality-27}
+
+A closure bound by a top-level `let` is determined by its own initializer: its parameter and result
+types are written or follow from its body. Otherwise the `let` is `T0002`, "the type of `id` is not
+determined by its initializer; annotate its parameters". A `let` inside a function body is unaffected:
+the uses in the body that contains it fix its type.
+
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 </details>
 

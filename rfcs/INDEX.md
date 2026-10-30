@@ -1490,7 +1490,7 @@ implementation).
 - **RFC-0195** *(implemented 2026-10-30, #1709, impl #1714; opened 2026-10-30; rewritten 2026-10-30)* — Local functions do not capture — a `fun` declared in a body is an item: naming a local of
   the enclosing function (or its type parameters) is `T0003`, with the closure as the fix. Reverses the first draft (a capture list on `fun`). Amends RFC-0173 D1.
   Replacements: RFC-0197 (generic capturing helper), RFC-0198 (recursive capturing helper). Fixes the #1708 inconsistency. Open: error code, enclosing type parameters.
-- **RFC-0196** *(accepted 2026-10-30, #1710; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
+- **RFC-0196** *(implemented 2026-10-30, #1710, impl #1718; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
   invents type parameters. Kept: references to already-generic functions and written open-record closures. With RFC-0193, polymorphism is always written or declared.
   Open: keep the two forms (recommended), sequencing with RFC-0195 (capturing polymorphic helpers).
 - **RFC-0197** *(under-review 2026-10-30, #1711; opened 2026-10-30; revived 2026-10-30)* — Generic closures — a closure literal may carry a generic binder (type parameters, bounds, `where`,

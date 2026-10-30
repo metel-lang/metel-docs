@@ -2,9 +2,14 @@
 id: rfc-0196
 title: "Remove Inferred Let-Polymorphism"
 date: '2026-10-30'
-status: accepted
+coverage:
+  "1": { spec: "spec.functions.closures.legality-26" }
+  "2": { kind: untestable, reason: "lists what stays unchanged; it states no new rule a program can exhibit" }
+status: implemented
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1718'
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1710 (v0.15.0)
@@ -18,6 +23,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
 > note, the future-checks risk, a precise precedent, the rejected restrictions, and one open question.
 
 > **Status — accepted (2026-10-30).** open questions resolved 2026-10-30; no longer waits on RFC-0197
+
+> **Status — integrated (2026-10-30).** spec integrated; implementation tracked in #1718
+
+> **Status — implemented (2026-10-30).** implemented by metel-core#1718
 
 ## Summary
 
@@ -264,6 +273,35 @@ error code is proposed; the mismatch is `T0001`.
 - `let dup := |x| { (x, x) };` used at `i64` passes `--move-check` (monomorphic), and `let dup := |x| { (x, x) };` used at `i64` and `boolean` is the one-type mismatch.
 - A top-level `let id := |x| x;` is the module-level error; `let id := |x: i64| x;` passes.
 - #1691's repro no longer reaches `I0011`, and the #1688 shapes still pass as monomorphic closures.
+
+## Integration cross-check (2026-10-30)
+
+Worked against the integrated spec, the implemented RFCs it touches, and the sibling RFCs (RFC-0197, RFC-0198):
+
+- **`let dup := |x| { (x, x) };` used at `i64`** passes `--move-check` (the parameter is `Copy`); the same closure used at
+  `i64` and `boolean` is `T0001` naming `dup`. Before this RFC the generalized parameter was an unbounded type parameter and
+  was rejected under `--move-check`.
+- **Kept forms.** `let f := identity;` stays polymorphic (`first-class-functions.legality-2`, RFC-0138): an imported generic
+  function used as a value is `T0003` and an associated function is monomorphic, as the spec already says. `|p: { x: i64, .. }|
+  p.x` accepts records of several shapes (metel-core#1478). A closure with such a parameter and another, unwritten one
+  quantifies only the written row.
+- **Top-level closures.** `let id := |x| { x };` is `T0002` ("not determined by its initializer"), whether or not it is used;
+  `let inc := |x| { x + 1 };` is fine (the literal defaults to `i64`); `let id := |x: i64| { x };` is fine. A local `let` is
+  fixed by the uses in its body.
+- **Generic function bodies.** A `let`-bound closure parameter is written there (`T0002` at the definition). This is the existing
+  limit on reconstructing a generic body without Pass 1 facts (LIMIT-EVALUATION-001, metel-core#1704); before this RFC a
+  generalized closure avoided it, and the first call reported `I0010` for a non-generalized one. #1704 lifts it.
+- **RFC-0193.** A function that was polymorphic by inference is `fun f<T>`; the closure suggestion for a function without
+  generics produces a closure with written parameters, which satisfies the top-level rule.
+- **RFC-0195.** A polymorphic helper with no state is a `fun<T>`; one with state takes the state as a parameter, since a `fun`
+  does not capture. RFC-0197 (generic closures) would add a closure spelling and is under review, deprioritised.
+- **RFC-0198.** A recursive closure would be monomorphic, consistent with one type per closure.
+- **RFC-0173 D1 / #1688 / #1691.** The `#1688` shapes (a `let`-bound closure built from a generic value) pass as monomorphic
+  closures; the `#1691` gap is gone because no `let`-bound closure is polymorphic.
+- **Separate, pre-existing:** an integer literal binding added to a float literal is `I0001` at runtime without any closure
+  (metel-core#1719).
+
+No contradiction with the integrated spec or the sibling RFCs was found.
 
 ## References
 
