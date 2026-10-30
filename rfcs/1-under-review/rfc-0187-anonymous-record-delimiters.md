@@ -3,7 +3,7 @@ id: rfc-0187
 title: "Anonymous record delimiters"
 date: '2026-10-21'
 status: under-review
-updated: '2026-10-26'
+updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 ---
 
@@ -22,8 +22,9 @@ The semantics of records (RFC-0116, RFC-0120) are not changed. This RFC is a syn
 outer delimiters only; label spelling is RFC-0188 and the row kind is RFC-0186.
 
 RFC-0183 makes plain assignment `=`, which gives `{ x = 1 }` a third reading (a block whose tail is
-an assignment). With this RFC accepted, RFC-0183 needs no statement-only or `;` rule to keep
-records and blocks apart.
+an assignment). With this RFC accepted, RFC-0183 needs no `;` or statement-only rule to keep
+records and blocks apart. Its statement-only rule is still the only thing that removes the
+`f(x = 1)` and `if (x = 1)` expression hazards (RFC-0183 §2, §5).
 
 This is a design draft. Nothing here is accepted, and the grammar is unchanged until it is.
 
@@ -554,9 +555,10 @@ a post-freeze break.
    today, so a deprecation would be an error with a suggested rewrite.
 3. **Empty-record spelling:** `{| |}` only, or also `{||}`? Recommended `{| |}` as canonical, with
    `{||}` a parse error to keep the closure edge case quiet.
-4. **Sequencing with RFC-0183:** implement this RFC first, so that `=` assignment can stay an
-   ordinary expression with no statement-only rule; or let RFC-0183 ship first with its strict rule
-   and relax it when this lands. Recommended: this RFC first.
+4. **Sequencing with RFC-0183:** implement this RFC first, so that RFC-0183 needs no rule to keep
+   records and blocks apart (its statement-only rule then rests on the `f(x = 1)` and
+   `if (x = 1)` hazards alone, RFC-0183 §5); or let RFC-0183 ship first with its tail-assignment
+   rules and relax them when this lands. Recommended: this RFC first.
 
 ---
 
