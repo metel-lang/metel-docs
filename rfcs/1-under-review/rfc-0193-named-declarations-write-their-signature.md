@@ -168,7 +168,7 @@ when the rewrite keeps the program's meaning, which means the function must sati
 1. **It is private and a free function.** A method has a receiver and belongs to a type; a closure
    cannot replace it. A `public` declaration needs its type written (`T0010`).
 2. **It has no generic parameter list, `where` clause or bounds.** A closure has no generics list, so
-   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007; RFC-0197 proposes a binder).
+   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007: closures stay bound-free, and a bounded or generic helper is a local `fun`, RFC-0195).
 3. **It does not call itself, directly or through other functions.** A closure cannot refer to its
    own name inside its body (GAP-FUNCTIONS-006), so a recursive function must write its type.
 4. **Every use follows the declaration.** Functions are hoisted and `let` bindings are not: a

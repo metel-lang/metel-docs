@@ -2,12 +2,18 @@
 id: rfc-0197
 title: "Generic Closures"
 date: '2026-10-30'
-status: under-review
+status: draft
 updated: '2026-10-30'
-tracking: 'https://github.com/metel-lang/metel-core/issues/1711'
 ---
 
-> **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1711 (v0.15.0)
+> **Status — under review (2026-10-30).** design drafted; was tracked by metel-core#1711 (closed on deferral)
+
+> **Deferred (2026-10-30).** Not pursued while RFC-0195 covers the case: a capturing, generic, bounded
+> helper is a local `fun` (RFC-0195), which also recurses. Closures stay bound-free
+> (GAP-FUNCTIONS-007, accepted). This RFC is kept as the alternative, with its binder order settled
+> (binder first), and can be revived if the terse inferred-signature form proves worth new closure grammar.
+
+> **Status — draft (2026-10-30).** deferred: RFC-0195 covers a capturing, generic, bounded helper; closures stay bound-free (GAP-FUNCTIONS-007)
 
 ## Summary
 
@@ -78,7 +84,7 @@ A closure literal may begin its parameter part with a generic binder, using the 
 function's `generic_params` and `where_clause`:
 
 ```
-closure_expr = { capture_list? once_kw? var_kw? generic_params? "|" param_list? "|"
+closure_expr = { generic_params? capture_list? once_kw? var_kw? "|" param_list? "|"
                  ("->" type_expr)? where_clause? block }
 ```
 
@@ -106,15 +112,14 @@ closure_expr = { capture_list? once_kw? var_kw? generic_params? "|" param_list? 
 ### Where the binder goes
 
 The closure literal's prefix order is fixed (`[captures] once? var?`, legality-23), and a leading `<`
-cannot otherwise start an expression, so every position is unambiguous. Proposed: **directly before
-the first `|`**, after the qualifiers, so it sits next to the parameters it types:
+cannot otherwise start an expression, so every position is unambiguous. **The binder comes first,
+before the capture list**, as a `fun` writes it (RFC-0195: `fun name<T>[caps] once? var? (params)`):
 
 ```metel
-[&var n] once var <T>|x: T| -> T { n += 1; x }
+<T>[&var n] once var |x: T| -> T { n += 1; x }
 ```
 
-`fun` writes generics *before* the capture list (RFC-0195, resolved:
-`fun name<T>[caps] once? var? (params)`), so the two orders differ. See Open Question 1.
+Both forms then read generics, captures, qualifiers, parameters.
 
 ### Diagnostics
 
@@ -179,12 +184,9 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 
 ## Open Questions
 
-1. **Order against the capture list.** Closure literal: `[caps] once var <T>|…|` (binder next to the
-   parameters). `fun` (RFC-0195): `name<T>[caps] once var (…)` (binder next to the name). Make them agree,
-   or accept that each follows its own form. RFC-0195 resolved (2026-10-30) that a `fun`'s binder
-   precedes its capture list, so the two forms differ unless the closure's binder is moved before the list too
-   (`<T>[caps] once var |…|`, which does not start with a token an expression can begin with today).
-   Recommendation: after the qualifiers, next to the parameters, accepting the difference.
+1. **Order against the capture list.** *Resolved (2026-10-30): binder first*, `<T>[caps] once var |…|`,
+   matching `fun name<T>[caps] once? var? (params)` (RFC-0195). A leading `<` cannot start an expression
+   today, so the parse is unambiguous.
 2. **Scope of the first version.** Type parameters and bounds first, row facts later? The `T0012`
    example needs row facts. Recommendation: include row facts; they are a bound on a row parameter and cost
    nothing extra to parse.

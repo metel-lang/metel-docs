@@ -1493,8 +1493,8 @@ implementation).
 - **RFC-0196** *(under-review 2026-10-30, #1710; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
   invents type parameters. Kept: references to already-generic functions and written open-record closures. With RFC-0193, polymorphism is always written or declared.
   Open: keep the two forms (recommended), sequencing with RFC-0195 (capturing polymorphic helpers).
-- **RFC-0197** *(under-review 2026-10-30, #1711; opened 2026-10-30)* — Generic closures — a closure literal may carry a generic binder (type parameters, bounds, `where`,
-  row facts) like a `fun`; written binders quantify, inference never does. Closes GAP-FUNCTIONS-007 (#1668). Open: binder position against the capture list, row facts in v1.
+- **RFC-0197** *(draft, deferred 2026-10-30; opened 2026-10-30; was #1711)* — Generic closures — a closure literal may carry a generic binder (type parameters, bounds, `where`,
+  row facts) like a `fun`; written binders quantify, inference never does. Closes GAP-FUNCTIONS-007 (#1668). Deferred: RFC-0195 covers a capturing, generic, bounded helper; closures stay bound-free (GAP-FUNCTIONS-007). Binder order settled (binder first).
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
