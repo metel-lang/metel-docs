@@ -14,7 +14,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1711'
 > **Revived (2026-10-30).** RFC-0195 was reversed: a local `fun` does not capture, so a generic, bounded or
 > row-fact helper that captures state has no spelling except a closure with a binder. That is this RFC. It was
 > deferred earlier the same day on the opposite premise (that a capturing local `fun` covered the case).
-> The binder order (binder first) is settled.
+> The binder sits immediately before the parameters, as a `fun`'s generics do (revised 2026-10-30; see Open Questions, 1).
 
 > **Status — under review (2026-10-30).** revived: RFC-0195 reversed (local functions do not capture); tracked by metel-core#1711 (v0.15.0)
 
@@ -38,7 +38,7 @@ A generic closure also captures, which a local `fun` no longer does (RFC-0195):
 
 ```metel
 var n := 0;
-let bump := <T>[&var n] var |x: T| -> T { n += 1; x };
+let bump := [&var n] var <T>|x: T| -> T { n += 1; x };
 bump(1);
 bump(true);                   // n counts both calls
 ```
@@ -96,7 +96,7 @@ A closure literal may begin its parameter part with a generic binder, using the 
 function's `generic_params` and `where_clause`:
 
 ```
-closure_expr = { generic_params? capture_list? once_kw? var_kw? "|" param_list? "|"
+closure_expr = { capture_list? once_kw? var_kw? generic_params? "|" param_list? "|"
                  ("->" type_expr)? where_clause? block }
 ```
 
@@ -124,14 +124,16 @@ closure_expr = { generic_params? capture_list? once_kw? var_kw? "|" param_list? 
 ### Where the binder goes
 
 The closure literal's prefix order is fixed (`[captures] once? var?`, legality-23), and a leading `<`
-cannot otherwise start an expression, so every position is unambiguous. **The binder comes first,
-before the capture list**, where a `fun` writes its generics (`fun name<T>(params)`):
+cannot otherwise start an expression, so every position is unambiguous. **The binder goes
+immediately before the first `|`**, after the capture list and the qualifiers, next to the parameters it types:
 
 ```metel
-<T>[&var n] once var |x: T| -> T { n += 1; x }
+[&var n] once var <T>|x: T| -> T { n += 1; x }
 ```
 
-Both forms then read generics, captures, qualifiers, parameters.
+A `fun` writes its generics in the same place relative to its parameters (`fun name<T>(params)`), and
+since RFC-0195 a `fun` has no capture list or qualifiers between them. Both forms read captures and
+qualifiers (closure only), then generics, then parameters.
 
 ### Diagnostics
 
@@ -166,8 +168,10 @@ Both forms then read generics, captures, qualifiers, parameters.
    needed a capture list on a declaration and a hoisting exception (RFC-0195 Alternative 1).
 3. **Infer bounds from the body** (a closure that does `a + b` gets `T: Add`). Rejected: it invents an
    interface from a body, which is what RFC-0193 and RFC-0196 remove.
-4. **A different position for the binder** (a leading `<T>[caps] …`, or after the parameters). Section 1 and
-   Open Question 1.
+4. **A different position for the binder.** A leading binder (`<T>[caps] once var |x|`) separates the generics from
+   the parameters they type with the capture list and the qualifiers; one after the parameters would follow the types
+   it names. Rejected for the position in section 1, next to the parameters, where a `fun` also puts its generics
+   (Open Question 1).
 5. **Higher-rank written function types** so a generic closure can be stored and passed polymorphically.
    Larger (RFC-0163's surface), out of scope; rule 4 keeps rank-1.
 
@@ -198,8 +202,11 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 
 ## Open Questions — resolved 2026-10-30
 
-1. **Order against the capture list.** *Resolved: binder first*, `<T>[caps] once var |…|`: generics, captures,
-   qualifiers, parameters. A leading `<` cannot start an expression today, so the parse is unambiguous.
+1. **Order against the capture list.** *Resolved (2026-10-30, revised): immediately before the parameters*,
+   `[caps] once var <T>|…|`: captures, qualifiers, generics, parameters. This is the same place a `fun` puts its generics
+   (`fun name<T>(params)`). A `<` cannot start an expression today, so the parse is unambiguous. (An earlier revision put the
+   binder first, to match a capture list on `fun` that RFC-0195 has since dropped; with no such list the reason is gone and
+   the binder reads better next to the parameters it types.)
 2. **Scope of the first version.** *Resolved: type parameters, bounds, `where` clauses and row facts together.* The
    `T0012` row-extension case that motivated GAP-FUNCTIONS-007 needs the row fact. A row parameter and its bound use
    the `generic_params` and `where_clause` grammar a `fun` already has (RFC-0121, RFC-0178, RFC-0186), so splitting

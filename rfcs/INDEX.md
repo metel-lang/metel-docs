@@ -1494,7 +1494,7 @@ implementation).
   invents type parameters. Kept: references to already-generic functions and written open-record closures. With RFC-0193, polymorphism is always written or declared.
   Open: keep the two forms (recommended), sequencing with RFC-0195 (capturing polymorphic helpers).
 - **RFC-0197** *(under-review 2026-10-30, #1711; opened 2026-10-30; revived 2026-10-30)* — Generic closures — a closure literal may carry a generic binder (type parameters, bounds, `where`,
-  row facts), binder first: `<T>[caps] once var |x|`. Written binders quantify, inference never does. The spelling of a generic or bounded helper that captures state, now that a `fun` does not
+  row facts), binder next to the parameters: `[caps] once var <T>|x|`. Written binders quantify, inference never does. The spelling of a generic or bounded helper that captures state, now that a `fun` does not
   (RFC-0195). Resolves GAP-FUNCTIONS-007 (#1668). Open: scope of the first version, captures that mention binder variables, monomorphization.
 - **RFC-0198** *(under-review 2026-10-30, #1667; opened 2026-10-30)* — Recursive closures — `let rec name := closure`: the name inside the body is the closure being called (call dispatch), not a captured
   reference, so the closure stays movable. Return type written, no `once`, no mutual recursion. Resolves GAP-FUNCTIONS-006 (#1667). Open: spelling, return type, dispatch confirmation.
