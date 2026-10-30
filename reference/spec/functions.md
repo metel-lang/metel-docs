@@ -627,7 +627,7 @@ or passes it by value to something that takes ownership — written without `onc
 compile error naming the offending capture and the fix (add `once`, or stop moving the
 capture).
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
@@ -647,7 +647,7 @@ binding `[&var …]`, regardless of what the body does through it — written wi
 is a compile error naming the offending capture and the fix (add `var`, stop the mutation,
 or capture `[&x]` instead).
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -669,7 +669,7 @@ slot requiring `m'`, `u'`, `c'` when `m` is at least as permissive as `m'` (*man
 permissive as `c'` (`Copy` ≥ non-`Copy`). The reverse — a less permissive value into a
 more permissive slot — is rejected.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md), [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
@@ -729,7 +729,7 @@ receiver rule. An owned but non-`var` (`let`) binding, or any shared-`&` callee 
 compile error. This holds for every `mutating` closure, whether it mutates its own
 by-value captures or only drives mutation through a captured `&var`.
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -818,8 +818,8 @@ consumes nothing.
 ##### Legality Rule {#spec.functions.closures.legality-18}
 
 An unqualified closure literal in a position with an expected function type — a `let` or
-parameter ascription, a struct-field initializer, a return, or the tail expression of a
-typed block — is checked against that type's `once` / `var` qualifiers rather than taking
+parameter ascription, an argument to a call or a method, a struct-field initializer, a return,
+or the tail expression of a typed block — is checked against that type's `once` / `var` qualifiers rather than taking
 the *many* / *reading* default and then failing. When the expected type does not fix a
 qualifier (an unresolved inference variable, or a bare generic parameter), the literal
 takes the default and [legality-9](#spec.functions.closures.legality-9) widening resolves
@@ -918,7 +918,7 @@ listless closure, each free `Copy` variable) is placed into the closure's enviro
 according to its specifier: `[x]` moves a non-`Copy` value / copies a `Copy` value,
 `[x.clone()]` stores an independent copy, `[&x]` / `[&var x]` store a reference.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -935,7 +935,7 @@ A `reading` closure does not modify its environment; a `mutating` closure modifi
 place. In neither case does a write inside the closure body affect an *outer* binding that
 was captured by value — the closure operates on its own environment copy.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
