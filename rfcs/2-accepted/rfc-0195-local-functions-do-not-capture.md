@@ -2,7 +2,7 @@
 id: rfc-0195
 title: "Local Functions Do Not Capture"
 date: '2026-10-30'
-status: under-review
+status: accepted
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1709'
 ---
@@ -17,6 +17,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1709'
 > reversed: a `fun` is an item and never captures, a closure is the form that has an environment, and the
 > two gaps that left (a generic helper that captures, a recursive one) are filled on the closure side by
 > RFC-0197 and RFC-0198. The first design is kept as Alternative 1.
+
+> **Status — accepted (2026-10-30).** open questions resolved 2026-10-30
 
 ## Summary
 

@@ -1487,7 +1487,7 @@ implementation).
 - **RFC-0194** *(under-review 2026-10-29, #1670; opened 2026-10-29)* — Linear closures and captures — a closure that captures a
   `Linear` value (RFC-0089) is itself linear: called exactly once, never dropped, body consumes the capture. Derived from the
   captures like `Copy`; no new syntax or type. Supersedes RFC-0049. Open: how "must-call" is written in a function type (with RFC-0163).
-- **RFC-0195** *(under-review 2026-10-30, #1709; opened 2026-10-30; rewritten 2026-10-30)* — Local functions do not capture — a `fun` declared in a body is an item: naming a local of
+- **RFC-0195** *(accepted 2026-10-30, #1709; opened 2026-10-30; rewritten 2026-10-30)* — Local functions do not capture — a `fun` declared in a body is an item: naming a local of
   the enclosing function (or its type parameters) is `T0003`, with the closure as the fix. Reverses the first draft (a capture list on `fun`). Amends RFC-0173 D1.
   Replacements: RFC-0197 (generic capturing helper), RFC-0198 (recursive capturing helper). Fixes the #1708 inconsistency. Open: error code, enclosing type parameters.
 - **RFC-0196** *(under-review 2026-10-30, #1710; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
