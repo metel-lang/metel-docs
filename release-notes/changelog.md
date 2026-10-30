@@ -110,6 +110,14 @@ title: "Metel Language Changelog"
   the function used to report an internal error (`I0010`), because the closure was treated as
   polymorphic in `T`, which belongs to the enclosing function. A closure that does not depend on the
   surrounding code is still polymorphic (`metel-core#1688`).
+- Two more closure diagnostics are made where a generic function is written, so it is rejected even
+  if it is never called, instead of reporting an internal error (`I0010`) at its first call:
+  returning a by-value capture of a generic type that is not `Copy` from a closure not written
+  `once` (`T0027`, `closure consumes captured x; write once`), and calling a `var` closure through a
+  shared reference, whether the callee is a `&` to one or a field, element or index of a `&` binding
+  (`T0029`). Both apply to a closure bound with `let` or `var` and no annotation for `T0027`, and to
+  any call for `T0029`. A closure passed as an argument is still judged when the function is
+  instantiated (`metel-core#1684`).
 
 ## v0.14.1
 
