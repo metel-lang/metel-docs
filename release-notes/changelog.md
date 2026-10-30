@@ -116,8 +116,10 @@ title: "Metel Language Changelog"
   `once` (`T0027`, `closure consumes captured x; write once`), and calling a `var` closure through a
   shared reference, whether the callee is a `&` to one or a field, element or index of a `&` binding
   (`T0029`). Both apply to a closure bound with `let` or `var` and no annotation for `T0027`, and to
-  any call for `T0029`. A closure passed as an argument is still judged when the function is
-  instantiated (`metel-core#1684`).
+  any call for `T0029`. A closure passed as an argument to a function or to a method on a struct
+  or enum is judged the same way, against its parameter: a `once` or `var` parameter supplies the
+  qualifier, a plain one does not, and a generic parameter leaves the closure as written
+  (`metel-core#1684`).
 
 ## v0.14.1
 
