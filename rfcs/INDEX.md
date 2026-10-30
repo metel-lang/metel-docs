@@ -808,7 +808,7 @@ number, a backwards RFC-0067a split direction).
   bare allocation expression with no concrete type to filter by — stays a hard
   compile error, matching how Kotlin's own context parameters resolve a genuine
   same-type collision (loudly, not by nesting depth), not a new silent tiebreak.
-- **RFC-0066** *(under review — amended 2026-10-26 by RFC-0185: extraction is `*ptr`)* — Allocated Value Extraction — individual drop/move-out; the
+- **RFC-0066** *(accepted — amended 2026-10-26 by RFC-0185: extraction is `*ptr`; re-accepted 2026-10-30)* — Allocated Value Extraction — individual drop/move-out; the
   RFC that triggered the whole cluster-wide split. Renamed from "Region Pointer
   Extraction" 2026-07-10 to match how every other RFC already referred to it.
 - **RFC-0067** *(under review — reverted from accepted 2026-08-02)* — Lifetime Anchors — the narrowed remainder after RFC-0067a

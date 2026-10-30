@@ -550,16 +550,17 @@ An allocator may opt into per-allocation destructor tracking and thereby support
 move-out for `T: Drop`, at the cost of bookkeeping. Caller-driven manual destruction
 does not make move-out safe and is not part of the safe surface.
 
-### 7.4 Explicit and binding-directed extraction
+### 7.4 Explicit extraction
 
-The two forms are:
+Extraction is written `*ptr` and nothing else drives it (RFC-0066 §3, amended by RFC-0185):
 
 ```metel
-let node := ptr: Node;
-let node: Node := ptr;
+let node: Node := *ptr;
+process(*ptr);
 ```
 
-Both obey the selected handle family's extraction capability and the rules above.
+It obeys the selected handle family's extraction capability and the rules above. The
+binding-directed forms `let node: Node := ptr;` and `ptr: Node` are rejected.
 
 ### 7.5 No hidden extraction across calls
 
