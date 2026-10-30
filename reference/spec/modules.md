@@ -147,7 +147,7 @@ public struct Token {
 contexts. A qualified path is valid wherever its resolved name is valid; `super` is
 invalid in the root module.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
@@ -167,7 +167,7 @@ current module declares a type also named `T`. The type must be `public` unless 
 current module. A path that names no such member is an unresolved name (`T0003`); a variant
 with fields has no bare-value form and is built with `m::T::x { … }`.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
 
 </details>
 
@@ -413,7 +413,7 @@ You can still write `import std::core::Option;` or `import std::core::*;` explic
 Every module has the `std::core` names available without an import; the same names may also
 be named through their explicit `std::core::` paths.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -433,7 +433,7 @@ likewise shadows a module-level, imported or `std::core` type of that name for t
 block. The core item stays nameable by its explicit `std::core::` path
 ([legality-1](#spec.modules.std-core-auto-import.legality-1)).
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
 
 </details>
 <!-- rfc.py:fixtures:end -->
