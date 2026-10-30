@@ -71,6 +71,46 @@ A function with no return annotation and no `return expr;` returns `()`.
 
 </details>
 
+## Local Functions
+
+> **Limitation** LIMIT-TYPE-INFERENCE-014
+
+A `fun` declared inside a function body is a local function. It is an item, not a value with an environment: [its body sees its own parameters, locals and type parameters, module-level items, and the items declared in enclosing blocks, and does not see the locals or type parameters of the enclosing function](#spec.functions.local-functions.legality-1). What needs an environment is a closure ([Closures](#closures)): it names what it captures and the closure rules check it.
+
+The rule is stated first and the example second: until the checker enforces it, the rejected form below is still accepted.
+
+<!-- doc-example: skip reason="rejected form; still accepted until metel-core#1714 lands" -->
+```metel
+fun main() {
+    var n := 0;
+    fun bump() { n += 1; }                      // error[T0003]: `bump` is a function and cannot use `n`, a local of `main`
+    let bump_closure := [&var n] var || { n += 1; };   // a closure captures
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.functions.local-functions.legality-1}
+
+The body of a function declared in a block sees: its own parameters, locals and type parameters;
+module-level items, types, aspects and constants; and the items declared in enclosing blocks, such
+as sibling local functions and local types. It does not see the locals of an enclosing function,
+meaning its parameters, its `let` and `var` bindings, the receiver `self` and a closure's
+captures, nor the enclosing function's type parameters. Naming one of these from the body is
+[T0003](../error-codes.md#t0003--undefined-name), with a note that the name is a local of the
+enclosing function and the two fixes, binding a closure or passing the value as a parameter; for a
+type parameter the note says to declare it on the local function. Local functions are hoisted
+like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1714" reason="RFC-0195: a non-generic local function still reads and mutates enclosing locals and a generic one is I0010, so the T0003 rejection cannot be observed until implementation issue #1714 lands." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1714: RFC-0195: a non-generic local function still reads and mutates enclosing locals and a generic one is I0010, so the T0003 rejection cannot be observed until implementation issue #1714 lands._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ## Program Entry Point
 
 > **Changed in v0.14.0 (RFC-0167):** the program's `main` function is checked during

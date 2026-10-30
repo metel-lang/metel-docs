@@ -2,9 +2,14 @@
 id: rfc-0195
 title: "Local Functions Do Not Capture"
 date: '2026-10-30'
-status: accepted
+coverage:
+  "1": { kind: blocked, reason: "the T0003 rejection cannot be observed yet: a non-generic local function still reads and mutates enclosing locals and a generic one is I0010 (spec.functions.local-functions.legality-1 is exempt for the same reason)", ref: "metel-core#1714" }
+  "2": { spec: "spec.types.generics.rigid-type-parameters.legality-1" }
+status: integrated
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1709'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1714'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1709 (v0.15.0)
@@ -19,6 +24,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1709'
 > RFC-0197 and RFC-0198. The first design is kept as Alternative 1.
 
 > **Status — accepted (2026-10-30).** open questions resolved 2026-10-30
+
+> **Status — integrated (2026-10-30).** spec integrated; implementation tracked in #1714
 
 ## Summary
 
@@ -196,6 +203,31 @@ nested generic functions is amended. No new error code is proposed.
 - A sibling local `fun`, a local `record`, a module-level item and the function's own locals are visible.
 - An enclosing type parameter used in a local `fun` is `T0003` with the "declare `<T>`" note.
 - The two affected fixtures are rewritten; the forward-reference cases of #712 still pass.
+
+## Integration cross-check (2026-10-30)
+
+Worked against the integrated spec, the implemented RFCs it touches, and the sibling RFCs still under review
+(RFC-0193, RFC-0196, RFC-0197, RFC-0198):
+
+- **The #1708 repro, both forms**: `fun bump() { n += 1; }` and `fun bump<T>(x: T) -> T { n += 1; x }` each name `n`, a
+  local of `main`, so each is one `T0003` with the closure rewrite and the pass-as-parameter fix; the generic and
+  non-generic forms agree, which `I0010` and the silent capture did not.
+- **Visible names**: a sibling local `fun`, a local `record` and a module-level item are visible (checked against the
+  checker 2026-10-30), so mutual recursion among non-capturing local functions (`is_even`/`is_odd`) is unchanged.
+- **Scoping** (`scoping-and-shadowing`): the spec said inner blocks see outer declarations; a local `fun` body is now the
+  stated exception, in `declarations.md` and in the new rule. `let`/`var` stay sequential and `fun` stays hoisted.
+- **RFC-0173 D1** (`rigid-type-parameters.legality-1`): "a closure or nested generic function sees the enclosing
+  parameters as rigid" is amended to a closure only; a nested function declares its own `<T>`, which is what the
+  checker already requires.
+- **RFC-0193**: a local `fun` writes its signature like any named declaration; the closure rewrite RFC-0193 suggests
+  never moves a capturing body into a `fun`.
+- **RFC-0196, RFC-0197, RFC-0198**: a polymorphic helper with state is a generic closure (0197), a recursive one is
+  `let rec` (0198); until those are accepted such a helper passes its state as a parameter, as in the Summary.
+- **Known discrepancy, tracked**: the rule text states the design while the checker still lets a local `fun` see
+  enclosing locals. This is `LIMIT-TYPE-INFERENCE-014` (#1714); the two affected fixtures are rewritten by the
+  implementation change.
+
+No contradiction with the integrated spec or the sibling RFCs was found.
 
 ## References
 

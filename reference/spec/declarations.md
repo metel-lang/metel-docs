@@ -417,7 +417,7 @@ Variables are [lexically scoped](#spec.declarations.variables.scoping-and-shadow
 
 `fun` declarations are [hoisted to the top of their containing block](#spec.declarations.variables.scoping-and-shadowing.legality-3). All `fun` declarations in a block are mutually visible to each other and to all other statements in that block, regardless of declaration order. This enables forward references and mutual recursion at any nesting level.
 
-Hoisting is block-local: a `fun` declared in an inner block is not visible in the outer block. Normal lexical scoping applies across block boundaries — inner blocks see outer declarations, outer blocks do not see inner declarations.
+Hoisting is block-local: a `fun` declared in an inner block is not visible in the outer block. Normal lexical scoping applies across block boundaries — inner blocks see outer declarations, outer blocks do not see inner declarations. The body of a local `fun` is the exception: it does not see the locals of the enclosing function, only items ([Functions — Local Functions](functions.md#local-functions)).
 
 ```metel
 fun is_even(n: i64) -> boolean {
