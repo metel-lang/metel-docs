@@ -12,7 +12,11 @@ fun main() -> i64 {
 
 ## Named Function Declarations
 
-[Parameter type annotations are optional when types can be inferred from context](#spec.functions.named-function-declarations.legality-2). The return type follows `->` and is also optional — [a function with no return annotation and no `return expr;` returns `()`](#spec.functions.named-function-declarations.dynamics-1). `return expr;` and bare `return;` are both valid.
+> **Limitation** LIMIT-TYPE-INFERENCE-013
+
+[Every parameter of a named function is written with its type](#spec.functions.named-function-declarations.legality-2) (a receiver excepted), and the checker never infers a named declaration's signature from its body or its callers. The return type follows `->`; [a function with no return annotation and no `return expr;` returns `()`](#spec.functions.named-function-declarations.dynamics-1). `return expr;` and bare `return;` are both valid. A closure, by contrast, infers its parameter and return types ([Closures](#closures)).
+
+A body whose value is not `()` under a signature with no `->` is an ordinary type mismatch, [T0001](../error-codes.md#t0001--type-mismatch), whose help line names the fix: write `-> T`, or, for a private function that captures nothing, calls no other function recursively and needs no generics, bind a closure instead.
 
 <details>
 <summary>Formal rules</summary>
@@ -35,10 +39,19 @@ expression introducer.
 
 ##### Legality Rule {#spec.functions.named-function-declarations.legality-2}
 
-Function parameter and return-type annotations may be omitted when their types can be
-inferred from context.
+A named function declaration writes the type of each of its parameters, a receiver (`self`,
+`&self`, `&var self`) excepted; an omitted parameter type is
+[T0010](../error-codes.md#t0010--unannotated-declaration). Its return type is written after
+`->`, or is `()` when there is none: the checker does not infer a named declaration's
+signature from its body or from its callers. This holds for free functions (private or
+`public`), methods and aspect-method declarations. `native` functions are unchanged. A
+closure's parameter and return types are not subject to this rule.
 
 <!-- rfc.py:last_reviewed bcb923c94347470c02ab6b0d6b1dac44f923fad4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/3-integrated/rfc-0193-named-declarations-write-their-signature.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

@@ -108,6 +108,13 @@ function to return `Option<_>`, but it returns `Result<Config, ConfigError>`" an
 naming the bridge: `.ok_or(...)` for an `Option` in a `Result` function, `.ok()` for a `Result`
 in an `Option` function (RFC-0182).
 
+A named function with no return type returns `()`, so a body whose value is not `()` is this code (RFC-0193):
+"`triple` has no return type, so it returns `()`, but its body evaluates to `i64`". The help line names the
+fix, `-> i64` (omitted when the body's type has an unsolved part), and, for a private function that has
+typed parameters, no generics list, does not call itself, is used only after its declaration and does not
+extend a parameter's record, the equivalent closure (`let triple := |x: i64| { x * 3 };`). The closure is
+advice only; the checker does not type-check the rewrite.
+
 When the expected type is the referent of a reference-typed expression (`&T` found where `T`
 is expected), the error carries `= help: read the value out with `*r` (copies a Copy
 referent)` (RFC-0185). A reference is never converted to its referent implicitly.
@@ -412,6 +419,16 @@ A `match` expression does not cover all possible values of the scrutinee type.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA4IiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjUiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTNfbmVnXzA5X3NpemVkX2FycmF5X3BhdHRlcm5fdW5kZXJjb3VudC5tdGwiLCJzb3VyY2UiOiIvLyBFeGFjdC1jb3VudCBwYXR0ZXJuIFthLCBiXSBvbiBhIFtpNjQ7IDNdIHNjcnV0aW5lZSBoYXMgdGhlIHdyb25nIGVsZW1lbnQgY291bnQuXG4vLyBUaGUgY29uc3RyYWludCBbaTY0OyAzXSB+IFtpNjQ7IDJdIGZhaWxzLCBsZWF2aW5nIHRoZSBtYXRjaCBub24tZXhoYXVzdGl2ZS5cbmZ1biBtYWluKCkge1xuICAgIGxldCBzaXplZDogW2k2NDsgM10gOj0gWzEsIDIsIDNdO1xuICAgIGxldCBfIDo9IG1hdGNoIChzaXplZCkgeyBbYSwgYl0gPT4gYSArIGIsIH07ICAvLyBFUlJPUltUMDAwOF1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNC4xL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3R5cGVzL3N0YWdlM19uZWdfMDlfc2l6ZWRfYXJyYXlfcGF0dGVybl91bmRlcmNvdW50Lm10bCIsIm5hbWUiOiJzdGFnZTNfbmVnXzA5X3NpemVkX2FycmF5X3BhdHRlcm5fdW5kZXJjb3VudC5tdGwiLCJzcGVjTGlua3MiOlt7ImhyZWYiOiJzcGVjL3R5cGVzLm1kI3NwZWMudHlwZXMuZml4ZWQtc2l6ZS1hcnJheXMubGVnYWxpdHktNyIsImlkIjoic3BlYy50eXBlcy5maXhlZC1zaXplLWFycmF5cy5sZWdhbGl0eS03IiwibGFiZWwiOiJGaXhlZCBzaXplIGFycmF5cyBMNyJ9XX0="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+### T0010 — Unannotated declaration
+
+A named declaration does not write its signature (RFC-0193). An omitted parameter type is this code on
+every named declaration: a private or `public` free function, a method, or an aspect-method declaration
+(a receiver is exempt). A `public` function must also write its return type, and a `public` signature's
+function types are written in full.
+
+**Fix:** write the type. If the parameter is used at several types, make the function generic
+(`fun id<T>(x: T) -> T`). No closure is suggested, since a closure has one type.
 
 ### T0012 — Aspect bound not satisfied
 
@@ -989,12 +1006,11 @@ parameter) is `T0012`
 **Fix:** name the row with a `record`-kinded generic parameter and splice it as `..R`, or take the
 open record as a parameter, a `let` annotation or a closure parameter. What works instead depends on the position, and the message says so:
 
-- a **free function's return type**: omit the return type so the exact record is inferred
-  (private functions only; a `public` function needs an explicit type, `T0010`), write the record
-  in full (`-> { x: i64, y: i64 }`), or name a `record` row parameter when the row comes from an
-  argument (`-> { x: i64, ..R }`);
-- a **method's return type**, or an **aspect method declaration's**: write the record in full or
-  name a `record` row parameter. Leaving the type out does not infer it there: the method returns `()`;
+- a **named function's, method's or aspect method declaration's return type**: write the record in full
+  (`-> { x: i64, y: i64 }`), name a `record` or a type alias for it (RFC-0160), or name a `record` row
+  parameter when the row comes from an argument (`-> { x: i64, ..R }`). Leaving the type out never infers it:
+  the function returns `()` (RFC-0193). For a private function with typed parameters and no generics, a
+  closure that infers its return type is the other spelling;
 - a **closure's return annotation**: omit the annotation, and the exact record is inferred, or
   write the record in full. A closure cannot name a row parameter;
 - a **written function type**: share one `R` between the parameter and the result when the

@@ -614,7 +614,9 @@ struct type itself).
 ##### Legality Rule {#spec.modules.visibility.legality-2}
 
 A public function declaration must carry the explicit type annotations required for its
-public API; an omitted required annotation is `T0010`.
+public API; an omitted required annotation is `T0010`. A function type that appears in a
+public signature, or as the type of a public struct's field, is written in full, parameter
+and return types included.
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
@@ -775,6 +777,23 @@ shadows it. A name the module provides publicly in no namespace is rejected at t
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA5IiwiY29sIjpudWxsLCJjb250YWlucyI6ImBGb29gIGlzIG5vdCBwdWJsaWMgaW4gbW9kdWxlIGBsaWJgIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiIvLyBUaGUgaW1wb3J0IGlzIGZpbmUgKHRoZSB0eXBlIGlzIHB1YmxpYyksIGJ1dCBjYWxsaW5nIGBGb29gIG5lZWRzIHRoZSBwcml2YXRlIGZ1bmN0aW9uOiB0aGF0IGlzIGFcbi8vIHZpc2liaWxpdHkgZXJyb3IsIG5vdCBhbiB1bmRlZmluZWQgbmFtZS5cbmltcG9ydCBsaWI6OkZvbztcblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGEgOj0gRm9vKCk7XG59XG4ifSx7Im5hbWUiOiJsaWIubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNTc1OiBgRm9vYCBpcyBhIHB1YmxpYyB0eXBlIGFuZCBhIHByaXZhdGUgZnVuY3Rpb24uXG5wdWJsaWMgc3RydWN0IEZvbyB7XG4gICAgcHVibGljIHg6IGk2NCxcbn1cblxuZnVuIEZvbygpIC0+IGk2NCB7XG4gICAgNVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE0LjEvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmVnX3ByaXZhdGVfZnVuY3Rpb25fYmVzaWRlX2FuX2ltcG9ydGVkX3B1YmxpY190eXBlX2lzX3QwMDA5IiwibmFtZSI6Im5lZ19wcml2YXRlX2Z1bmN0aW9uX2Jlc2lkZV9hbl9pbXBvcnRlZF9wdWJsaWNfdHlwZV9pc190MDAwOSJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.visibility.legality-10}
+
+`public` is not valid on a top-level `let` or `var`: such a binding is rejected with a message
+that names the fix, writing a `public fun` with its parameter and return types. A closure bound
+by a top-level `let` is therefore never part of a module's public API, and no inferred type
+crosses a module boundary.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1713" reason="RFC-0193: today `public let` is a parse error; the targeted message that names the fix is not implemented yet (implementation issue #1713)." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/3-integrated/rfc-0193-named-declarations-write-their-signature.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1713: RFC-0193: today `public let` is a parse error; the targeted message that names the fix is not implemented yet (implementation issue #1713)._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
