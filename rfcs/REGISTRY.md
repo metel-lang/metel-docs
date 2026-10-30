@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**195 RFCs total.** 28 draft, 51 under review, 9 accepted, 4 integrated (92 live), 74 implemented, 15 superseded, 14 refused (103 settled).
+**196 RFCs total.** 29 draft, 51 under review, 9 accepted, 4 integrated (93 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
-## Draft (28)
+## Draft (29)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -45,6 +45,7 @@ the curated thematic map.
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
+- **RFC-0197** — Generic Closures (`0-draft` ; rfcs/0-draft/rfc-0197-generic-closures.md ; date 2026-10-30)
 
 ## Under Review (51)
 
