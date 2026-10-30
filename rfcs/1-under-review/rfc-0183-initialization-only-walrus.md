@@ -201,9 +201,56 @@ The proposal does not leave that to the type checker. See Open Question 1.
 
 ---
 
+## 5. Interaction with RFC-0187 (anonymous record delimiters)
+
+RFC-0187 gives anonymous records their own delimiters, `{| … |}`, so a record is never the same
+text as a block. Most of the record problems in this RFC exist only because `{ … }` is both.
+**Recommendation: accept and implement RFC-0187 first** (it makes the same recommendation, its
+Open Question 4).
+
+**What RFC-0187 removes.**
+
+| This RFC's problem | With RFC-0187 first |
+|---|---|
+| Review finding 1: `{ x = 1 }` is a record or a block whose tail is `x = 1`; "block wins" would turn a record tail into a unit block | Gone. A record is `{| x = 1 |}`; `{ x = 1 }` is only ever a block |
+| Review finding 5: a block ending in an assignment with no `;` becomes a record in match-arm, closure and function bodies | Gone. No block can fall back to a record |
+| §1 *Tail assignments*: the `;` rule, the migration rewrite that appends `;`, the record-versus-block hint and its fixtures | Not needed for records. See below for what remains |
+| RFC-0116's position-dependent behaviour (`if (c) { x = 1 }` is a parse error, `|v| { x = 1 }` a record) | Gone. A block is a block in every position |
+| Open Question 1's reason for making assignment a statement, as far as it protected `{ x = 1 }` | Gone |
+
+**What RFC-0187 does not remove.** Both of these are independent of records:
+
+- **The expression hazards of §2.** `f(x = 1)` is both a keyword argument (RFC-0100) and an
+  assignment passed as an argument; `if (x = 1)` is a type error only because `()` is not
+  `boolean`. Making assignment a statement is still the only thing that removes them.
+- **The migration cost** (§4). The reassignment rewrite is still mechanical and still touches the
+  same 287 fixture sites.
+
+So with RFC-0187 first, Open Question 1 narrows to a single question: is the statement-only rule
+worth having *for §2 alone*? Option (a) (assignment stays an expression of type `()`) becomes
+viable again, at the price of the §2 hazards, which RFC-0100 will have to resolve with a
+`call_arg` ordering rule. Option (b) stays the recommendation, now on one stated reason instead of
+two. A block ending in `x = 1` with no `;` is then a parse error with the hint "add `;`" under
+(b), or a unit block under (a); in neither case a record.
+
+**Sequencing and migration order.**
+
+1. RFC-0187 lands first. Its rewrite converts every anonymous record literal, pattern and type to
+   `{| … |}`, so afterwards no brace group is ambiguous.
+2. This RFC's rewrite (`target := e;` to `target = e;`) then runs over unambiguous text. If the two
+   rewrites ran in the other order, the `:=` to `=` swap would be applied to `{ x := 1 }` blocks
+   that a later pass must tell apart from records, which is the finding 5 hazard in the rewriter.
+3. If this RFC must ship first, the §1 *Tail assignments* rules are required, not optional: the
+   `;` append, the hint and the fixtures.
+
+Both RFCs target v0.15.0, so they migrate in one release. This RFC does not depend on RFC-0187,
+but its record handling is strictly simpler after it.
+
+---
+
 ## Review findings (2026-10-26)
 
-A review against the grammar and the corpus found four things this RFC did not say.
+A review against the grammar and the corpus found four things this RFC did not say; a fifth was added 2026-10-30. Findings 1 and 5 both come from `{ … }` being a record and a block, and §5 shows RFC-0187 removing them.
 
 1. **`{ x = 1 }` becomes ambiguous.** With plain assignment on `=` and assignment an expression,
    `{ x = 1 }` is both an anonymous record (RFC-0116) and a block whose tail is the assignment
@@ -262,6 +309,7 @@ A review against the grammar and the corpus found four things this RFC did not s
 ## References
 
 - RFC-0136 — Walrus for Kept Bindings (implemented). Amended by this RFC.
+- RFC-0187 — Anonymous Record Delimiters (`{| … |}`); §5. Recommended to land first.
 - RFC-0100 — keyword arguments (`method(param1 = 4)`), interacts via §2.
 - RFC-0098 — surface keyword renames (precedent for pre-1.0 lexical migrations).
 - RFC-0020 — rebranding (no-edition-gating breaking-change precedent).
