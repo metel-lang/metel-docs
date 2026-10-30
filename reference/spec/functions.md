@@ -73,13 +73,9 @@ A function with no return annotation and no `return expr;` returns `()`.
 
 ## Local Functions
 
-> **Limitation** LIMIT-TYPE-INFERENCE-014
-
 A `fun` declared inside a function body is a local function. It is an item, not a value with an environment: [its body sees its own parameters, locals and type parameters, module-level items, and the items declared in enclosing blocks, and does not see the locals or type parameters of the enclosing function](#spec.functions.local-functions.legality-1). What needs an environment is a closure ([Closures](#closures)): it names what it captures and the closure rules check it.
 
-The rule is stated first and the example second: until the checker enforces it, the rejected form below is still accepted.
-
-<!-- doc-example: skip reason="rejected form; still accepted until metel-core#1714 lands" -->
+<!-- doc-example: expect-fail reason="rejected form: a local function does not capture (the first statement is the error)" -->
 ```metel
 fun main() {
     var n := 0;
@@ -103,11 +99,11 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1714" reason="RFC-0195: a non-generic local function still reads and mutates enclosing locals and a generic one is I0010, so the T0003 rejection cannot be observed until implementation issue #1714 lands." -->
+<!-- rfc.py:last_reviewed a6bb8459f32bfa0c8037030c5e833b151eebda81 -->
 
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1714: RFC-0195: a non-generic local function still reads and mutates enclosing locals and a generic one is I0010, so the T0003 rejection cannot be observed until implementation issue #1714 lands._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
+<!-- rfc.py:origins:end -->
 
 </details>
 
