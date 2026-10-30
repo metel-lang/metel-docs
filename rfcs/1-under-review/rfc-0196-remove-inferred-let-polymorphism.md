@@ -2,8 +2,12 @@
 id: rfc-0196
 title: "Remove Inferred Let-Polymorphism"
 date: '2026-10-30'
-status: draft
+status: under-review
+updated: '2026-10-30'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
 ---
+
+> **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1710 (v0.15.0)
 
 ## Summary
 

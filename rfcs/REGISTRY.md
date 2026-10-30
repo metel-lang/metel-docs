@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**195 RFCs total.** 30 draft, 49 under review, 9 accepted, 4 integrated (92 live), 74 implemented, 15 superseded, 14 refused (103 settled).
+**195 RFCs total.** 28 draft, 51 under review, 9 accepted, 4 integrated (92 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
-## Draft (30)
+## Draft (28)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -45,10 +45,8 @@ the curated thematic map.
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
-- **RFC-0195** — Local Functions Follow the Closure Capture Rules (`0-draft` ; rfcs/0-draft/rfc-0195-local-functions-follow-the-closure-capture-rules.md ; date 2026-10-30)
-- **RFC-0196** — Remove Inferred Let-Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30)
 
-## Under Review (49)
+## Under Review (51)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -99,6 +97,8 @@ the curated thematic map.
 - **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0193** — Named Declarations Do Not Infer Their Return Type (`1-under-review` ; rfcs/1-under-review/rfc-0193-named-declarations-do-not-infer-return-types.md ; date 2026-10-29 ; updated 2026-10-30)
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
+- **RFC-0195** — Local Functions Follow the Closure Capture Rules (`1-under-review` ; rfcs/1-under-review/rfc-0195-local-functions-follow-the-closure-capture-rules.md ; date 2026-10-30 ; updated 2026-10-30)
+- **RFC-0196** — Remove Inferred Let-Polymorphism (`1-under-review` ; rfcs/1-under-review/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30)
 
 ## Accepted (9)
 
