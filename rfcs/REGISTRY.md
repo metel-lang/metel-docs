@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-10-29'
+generated_on: '2026-10-30'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**193 RFCs total.** 28 draft, 50 under review, 8 accepted, 4 integrated (90 live), 74 implemented, 15 superseded, 14 refused (103 settled).
+**193 RFCs total.** 28 draft, 49 under review, 9 accepted, 4 integrated (90 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
 ## Draft (28)
 
@@ -46,11 +46,10 @@ the curated thematic map.
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
 
-## Under Review (50)
+## Under Review (49)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
-- **RFC-0066** — Allocated Value Extraction (`1-under-review` ; rfcs/1-under-review/rfc-0066-allocated-value-extraction.md ; date 2026-06-27 ; updated 2026-10-26)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
 - **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-08-23)
@@ -99,10 +98,11 @@ the curated thematic map.
 - **RFC-0193** — Named Declarations Do Not Infer Their Return Type (`1-under-review` ; rfcs/1-under-review/rfc-0193-named-declarations-do-not-infer-return-types.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 
-## Accepted (8)
+## Accepted (9)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
+- **RFC-0066** — Allocated Value Extraction (`2-accepted` ; rfcs/2-accepted/rfc-0066-allocated-value-extraction.md ; date 2026-06-27 ; updated 2026-10-30)
 - **RFC-0068** — Struct-Owned Allocators (`2-accepted` ; rfcs/2-accepted/rfc-0068-struct-owned-allocators.md ; date 2026-06-28 ; updated 2026-07-10)
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)

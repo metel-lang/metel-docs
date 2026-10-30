@@ -55,7 +55,7 @@ fun read_pair(p: &Pair) {
 
 fun heap_move_out_example() {
     let ptr = @Heap FileHandle { fd: 3 };
-    let handle: FileHandle = ptr;   // type-directed move-out; heap slot freed
+    let handle: FileHandle = *ptr;   // explicit move-out; heap slot freed
                                      // without calling drop; `handle` now
                                      // owns the value and will drop it later
     process_handle(handle);         // ownership moves into process_handle
@@ -73,7 +73,7 @@ fun process_handle(h: FileHandle) {
 fun copy_extraction_example() {
     let a = BumpAlloc::new();
     let ptr = @a Point { x: 1, y: 2 };
-    let p: Point = ptr;    // T: Copy -> copies out; ptr (and its slot) still valid
+    let p: Point = *ptr;    // T: Copy -> copies out; ptr (and its slot) still valid
     let q = ptr;           // ptr can be read again — it was never consumed
     println("p=(${p.x},${p.y}) q=(${q.x},${q.y})");
     drop(a);
@@ -86,7 +86,7 @@ fun copy_extraction_example() {
 fun bump_move_out_example() {
     let a = BumpAlloc::new();
     let ptr = @a Pair { a: 1, b: 2 };   // Pair: !Drop
-    let pair: Pair = ptr;                // move-out ok; slot orphaned, but the
+    let pair: Pair = *ptr;                // move-out ok; slot orphaned, but the
                                           // arena frees raw memory without
                                           // calling any destructor
     read_pair(&pair);
@@ -99,7 +99,7 @@ fun bump_move_out_example() {
 //
 //   fun rejected(@a: BumpAlloc) {
 //       let ptr = @a FileHandle { fd: 3 };
-//       let handle: FileHandle = ptr;
+//       let handle: FileHandle = *ptr;
 //       // error: `FileHandle: Drop` — move-out from `BumpAlloc` requires
 //       // `T: !Drop`. Use `@Heap FileHandle { ... }` instead.
 //   }

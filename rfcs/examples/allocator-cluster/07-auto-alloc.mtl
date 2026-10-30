@@ -96,7 +96,7 @@ impl Drop for FileHandle {
 fun move_out_always_safe() {
     AutoAlloc::scoped((@a) -> {
         let ptr = @a FileHandle { fd: 3 };
-        let handle: FileHandle = ptr;   // legal even though FileHandle: Drop
+        let handle: FileHandle = *ptr;   // legal even though FileHandle: Drop
         println("moved out fd ${handle.fd}");
         // FileHandle::drop runs here, at end of this closure's scope
     });

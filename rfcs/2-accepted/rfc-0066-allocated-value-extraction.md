@@ -2,8 +2,8 @@
 id: rfc-0066
 title: "Allocated Value Extraction"
 date: '2026-06-27'
-updated: '2026-10-26'
-status: under-review
+updated: '2026-10-30'
+status: accepted
 tracking: 'https://github.com/metel-lang/metel-core/issues/1630'
 ---
 
@@ -35,6 +35,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1630'
 > **Status — accepted (2026-07-10).** Phase 0 ratification sweep: split model consistency-checked (RFC-0063 sec9 items 1/2/5 synced with roadmap-2026-07-07 Phase 0 decision; RFC-0066/0068 stale titles fixed); sweeping the cluster from under-review to accepted per reports/implementation/roadmap-2026-07-07.md Phase 0.
 
 > **Status — under review (2026-10-26).** RFC-0185 amendment: extraction made explicit (*ptr)
+
+> **Status — accepted (2026-10-30).** RFC-0185 amendment reviewed: extraction is explicit (*ptr); dependent RFC-0067/0143 text and examples aligned
 
 ## Summary
 

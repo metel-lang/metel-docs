@@ -352,22 +352,13 @@ paying extraction's cost — see that section for the counterpart to this one.
 ## 3. Move-out from `@a T`
 
 Move-out is the consuming operation that extracts `T` from `@a T`, destroying the allocator
-pointer. Since there is no `*ptr` any more (RFC-0067a removed the explicit dereference
-operator), move-out is expressed via type context:
-
-**Type-directed** — when a `let` binding or return position declares type `T` and the source
-is `@a T`, the compiler performs move-out implicitly:
+pointer. Move-out is spelled `*ptr` and nothing else drives it (RFC-0066 §3, amended by
+RFC-0185): a `let` annotation, an ascription or a plain `T` parameter never extracts on its own.
 
 ```metel
-let ptr = @a Node { val = 1 };
-let node: Node = ptr;    // move-out: ptr consumed, Node returned
-```
-
-**Type ascription** — drives move-out in any expression position:
-
-```metel
-let node := ptr: Node;       // ascription in let — ptr consumed
-process(ptr: Node);         // ascription at call site — ptr consumed
+let ptr := @a Node { val = 1 };
+let node: Node := *ptr;     // move-out: ptr consumed, Node returned
+process(*ptr);              // extraction at a call site — ptr consumed
 ```
 
 Move-out semantics and constraints (heap always safe, scoped allocators require `T: !Drop` for
