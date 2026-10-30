@@ -90,7 +90,7 @@ the curated thematic map.
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
 - **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-30)
-- **RFC-0187** — Anonymous record delimiters (`1-under-review` ; rfcs/1-under-review/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-10-26)
+- **RFC-0187** — Anonymous record delimiters (`1-under-review` ; rfcs/1-under-review/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-10-30)
 - **RFC-0189** — Per-Label Negative Row Bounds (`1-under-review` ; rfcs/1-under-review/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0191** — One-Field Record Update (`1-under-review` ; rfcs/1-under-review/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-10-29)
