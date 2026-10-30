@@ -9,6 +9,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1709'
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1709 (v0.15.0)
 
+> **Prepared for acceptance (2026-10-30).** Both open questions are resolved. The replacements for the two gaps
+> this leaves (RFC-0197, RFC-0198) are separate RFCs and are not preconditions.
+>
 > **Rewritten (2026-10-30).** This RFC first proposed the opposite: that a local `fun` follow the closure
 > capture rules (a capture list on the declaration, a capturing `fun` not hoisted). On review the rule was
 > reversed: a `fun` is an item and never captures, a closure is the form that has an environment, and the
@@ -165,12 +168,17 @@ cut, as the project has no warning channel (RFC-0187).
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-30
 
-1. **Error code.** `T0003` with an enriched message (recommended), or a new code. A new code adds a spec row for
-   a message that reads the same.
-2. **Enclosing type parameters.** Out of scope, as in Rust (recommended), or visible and rigid (RFC-0173 D1 as
-   written). Out of scope matches what the checker does today and makes a local generic helper self-contained.
+1. **Error code.** *Resolved: `T0003` with an enriched message.* The name is not visible from inside the function,
+   which is the condition `T0003` already reports. The message says the name is a local of the enclosing function and
+   gives the two fixes. A new code would add a spec row, a coverage fixture and a registry entry for a message that
+   reads the same; it can be split out later if a tool needs to tell the two cases apart.
+2. **Enclosing type parameters.** *Resolved: out of scope* (as in Rust, `E0401`). A local generic helper declares
+   its own `<T>`. The checker already rejects the use, with a misleading `T0001: expected T, found type parameter T`;
+   this keeps the behaviour and fixes the message. It makes the helper self-contained, matches the rule for enclosing
+   values, and avoids a nested definition that mentions an outer type variable (the abstract-body shape of
+   metel-core#1691). Closures still see the enclosing parameters as rigid (RFC-0173 D1).
 
 ---
 
