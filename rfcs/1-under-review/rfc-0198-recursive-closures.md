@@ -78,7 +78,13 @@ declares the variable first (`var f func(int) int; f = func…`). C++23 gives a 
 5. **A `once` closure cannot be `rec`.** It is consumed by its first call, so a recursive call would be a use after
    move. The error names the `once` qualifier.
 6. **Qualifiers and captures** are unchanged and checked on the closure as written. A recursive call in a `var`
-   closure re-borrows `&var self`; in a `many` closure it reads `&self`.
+   closure re-borrows the `&var self` that the outer call already holds; in a `many` closure it reads `&self`.
+   **This amends RFC-0153 §3a.** The runtime guard that raises `R0015` ("re-entrant call to a mutating closure")
+   fires on any second call to a mutating closure that is still executing, because §3a assumes "a closure cannot
+   name its own `let` binding, so never directly". A direct self-call through the `rec` name is not reentrancy
+   through an alias; it is a reborrow, sound for the same reason a `&var self` method may call itself. The guard
+   keeps catching reentrancy through any other path (a stored handler, an aliasing `&var` binding), and RFC-0122
+   rejects those statically.
 7. **No mutual recursion.** `let rec a := …` cannot refer to a later `b`. Two closures that call each other pass
    one to the other as a parameter. (A declaration group is a later RFC.)
 
@@ -126,8 +132,12 @@ declares the variable first (`var f func(int) int; f = func…`). C++23 gives a 
 - **RFC-0193:** the closure suggestion can drop its "does not call itself" condition for a function whose
   recursion `let rec` expresses, if both are accepted.
 - **RFC-0196:** a recursive closure is monomorphic, consistent with one type per closure.
-- **RFC-0153 (call dispatch on `&self` / `&var self`):** rule 2 relies on it. This must be confirmed against the
-  implemented dispatch before acceptance.
+- **RFC-0153 (call dispatch on `&self` / `&var self`):** rule 2 relies on it. Confirmed against the
+  implementation 2026-10-30 (`evaluator/call.rs`, `call_runtime_callable`): the call receives the closure value
+  (`RuntimeCallable::Closure(rc)`) and builds the body's environment from it, so the name can be bound in the
+  call's environment without entering the captured one, and no cycle forms. **§3a is amended** (rule 6): its
+  in-call guard (`call.rs`, `rc.in_call.replace(true)` then `R0015`) would otherwise reject the first recursive call
+  of a `var` closure.
 - **RFC-0131 (hoist `let`/`var`):** unrelated; `rec` is about the initializer's scope, not the block's.
 
 ---
@@ -143,23 +153,29 @@ Additive. `let rec` is a new form; no existing program changes.
 1. **Spelling.** `let rec` (ML) is the recommendation; alternatives are `let name := rec |n| …` or a named closure
    expression. Whether `var rec` is needed for a `var` binding.
 2. **Return type required.** Recommended (rule 3). Allow inference later?
-3. **Self-reference semantics.** Rule 2 depends on the closure's call dispatch passing the callee. Confirm it against the
-   implementation, including a `var` closure and a closure that owns captures, before acceptance.
-4. **Mutual recursion** (rule 7): forbid for now, as proposed, or add a group form.
+3. **Self-reference semantics.** *Resolved (2026-10-30), with one required amendment.* The callee is available at
+   the call (see Interactions), so rule 2 holds for a `many` closure and for one that owns captures. A `var` closure
+   conflicts with RFC-0153 §3a's in-call guard (rule 6).
+4. **How a self-call passes the guard.** The evaluator gives the recursive name a call path that neither checks nor
+   sets the in-call flag, since the outer call holds it (recommended); or the flag becomes a depth counter
+   distinguishing a self-call from a call through another path. The first is smaller and keeps the guard's
+   meaning ("another path into a live mutating call") exact.
+5. **Mutual recursion** (rule 7): forbid for now, as proposed, or add a group form.
 
 ---
 
 ## Specification impact
 
 Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Closures*, a rule for `let rec`; the
-declaration scoping rule (`scoping-and-shadowing.legality-2`) gains the `rec` exception. GAP-FUNCTIONS-006 is
+declaration scoping rule (`scoping-and-shadowing.legality-2`) gains the `rec` exception. RFC-0153 §3a and the `R0015` text in `runtime.md` are amended to exempt a direct self-call. GAP-FUNCTIONS-006 is
 resolved. No new error code is proposed.
 
 ## Acceptance criteria for a prototype
 
 - The tree-walk example type-checks with `--move-check` and runs; moved into another function it still works.
 - A recursive closure without a written return type, with `once`, or on a non-closure is the stated error.
-- A `var` recursive closure mutates its capture across calls; the same body without `var` is `T0028`.
+- A `var` recursive closure mutates its capture across calls and does not raise `R0015`; the same body without `var` is `T0028`.
+- A mutating closure reached through an alias or a stored handler while it is executing still raises `R0015`.
 - `let fact := |n| … fact(n - 1)` is still `T0003`, now with the `let rec` help.
 
 ## References
