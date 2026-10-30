@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**197 RFCs total.** 28 draft, 50 under review, 10 accepted, 4 integrated (92 live), 76 implemented, 15 superseded, 14 refused (105 settled).
+**197 RFCs total.** 28 draft, 50 under review, 9 accepted, 4 integrated (91 live), 77 implemented, 15 superseded, 14 refused (106 settled).
 
 ## Draft (28)
 
@@ -99,7 +99,7 @@ the curated thematic map.
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 
-## Accepted (10)
+## Accepted (9)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -110,7 +110,6 @@ the curated thematic map.
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
-- **RFC-0196** — Remove Inferred Let-Polymorphism (`2-accepted` ; rfcs/2-accepted/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30)
 
 ## Integrated (4)
 
@@ -119,7 +118,7 @@ the curated thematic map.
 - **RFC-0177** — Coercion-Aware Structural Aspect Lookup (`3-integrated` ; rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md ; date 2026-10-06 ; updated 2026-10-06 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1296)
 - **RFC-0181** — Anonymous open rows in return and function types (`3-integrated` ; rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-20 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1480)
 
-## Implemented (76)
+## Implemented (77)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -197,6 +196,7 @@ the curated thematic map.
 - **RFC-0186** — Rows as an Operator on Record Parameters (`4-implemented` ; rfcs/4-implemented/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1644)
 - **RFC-0193** — Named Declarations Write Their Signature (`4-implemented` ; rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md ; date 2026-10-29 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1713)
 - **RFC-0195** — Local Functions Do Not Capture (`4-implemented` ; rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md ; date 2026-10-30 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1714)
+- **RFC-0196** — Remove Inferred Let-Polymorphism (`4-implemented` ; rfcs/4-implemented/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1718)
 
 ## Superseded (15)
 

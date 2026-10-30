@@ -189,7 +189,7 @@ Unicode scalar value.
 
 > **Gap** GAP-TYPES-001
 
-Types are inferred using the Hindley-Milner algorithm with let-polymorphism. Annotations are optional for local bindings and for closure parameters and return types. A named declaration is the exception: it writes the type of every parameter and its return type, or returns `()` ([Functions — Named Function Declarations](functions.md#named-function-declarations)). Annotations may be written explicitly for documentation or to restrict a binding to a less general type.
+Types are inferred by unification within a declaration (Hindley-Milner, with no inferred polymorphism). A closure has one type, fixed by its uses ([Functions — Closures](functions.md#closures)); polymorphism is written or declared: a generic `fun`, a reference to one, or a closure with a written open-record parameter. Annotations are optional for local bindings and for closure parameters and return types. A named declaration is the exception: it writes the type of every parameter and its return type, or returns `()` ([Functions — Named Function Declarations](functions.md#named-function-declarations)). Annotations may be written explicitly for documentation or to restrict a binding to a less general type.
 
 Annotations are required only where there is no expression to infer from:
 - Struct and enum field types

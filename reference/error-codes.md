@@ -108,6 +108,8 @@ function to return `Option<_>`, but it returns `Result<Config, ConfigError>`" an
 naming the bridge: `.ok_or(...)` for an `Option` in a `Result` function, `.ok()` for a `Result`
 in an `Option` function (RFC-0182).
 
+A `let`-bound closure has one type (RFC-0196), so using it at a second type is this code and names the closure: "`id` has one type, fixed by its first use, so it cannot also be used here: cannot unify an integer literal with `boolean`". When the closure captures nothing, the help line suggests a generic function (`fun id<T>(..) -> .. { .. }`).
+
 A named function with no return type returns `()`, so a body whose value is not `()` is this code (RFC-0193):
 "`triple` has no return type, so it returns `()`, but its body evaluates to `i64`". The help line names the
 fix, `-> i64` (omitted when the body's type has an unsolved part), and, for a private function that has
@@ -240,6 +242,8 @@ where one exists.
 The type checker cannot infer a type without an explicit annotation.
 
 **Fix:** annotate the binding: `let x: i64 = ...`.
+
+A closure bound by a top-level `let` that its own initializer does not determine is also this code: "the type of `id` is not determined by its initializer; annotate its parameters" (RFC-0196). So is an unannotated parameter of a `let`-bound closure inside a generic function: "closure parameter `y` of `id` has no written type; inside a generic function a closure parameter must be annotated".
 
 A closure parameter written without a type is T0002 only when nothing determines it: the message
 is "closure parameter `x` has no determined type; add an annotation or give the closure an

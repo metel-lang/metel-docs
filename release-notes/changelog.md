@@ -10,6 +10,16 @@ title: "Metel Language Changelog"
 
 **Breaking changes:**
 
+- An unannotated `let`-bound closure has one type (RFC-0196, `metel-core#1718`). Inference no longer
+  invents type parameters for it: `let id := |x| { x }; id(1); id(true);` is `T0001`, "`id` has one type, fixed by
+  its first use", and the polymorphic helper is a generic `fun id<T>(x: T) -> T { x }`. Two forms stay
+  polymorphic because the polymorphism is declared: `let f := identity;` for a generic function (RFC-0138), and
+  a closure with a written open-record parameter (`|p: { x: i64, .. }| p.x`). A closure bound by a top-level
+  `let` must be determined by its own initializer (`T0002`), so its type no longer depends on which function is
+  checked first. Inside a generic function the parameters of a `let`-bound closure are written (`T0002` at the
+  definition, where the first call used to report `I0010`; `metel-core#1704`). A closure over a `Copy` value such
+  as `|x| (x, x)` now passes `--move-check`, and the `#1691` move-check gap no longer exists. In the repository,
+  16 fixtures that used a closure at several types were rewritten; no documentation example needed a change.
 - A `fun` declared inside a function body no longer sees the enclosing function's locals or type
   parameters (RFC-0195, `metel-core#1714`). Naming a parameter, a `let` or `var`, `self` or a closure's
   capture from a local `fun` is `T0003`, with the closure rewrite and "pass it as a parameter" as the fixes;
