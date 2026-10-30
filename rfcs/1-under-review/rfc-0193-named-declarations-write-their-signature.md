@@ -143,8 +143,8 @@ declarations already required both (`T0010`, `modules.md`), so this makes privat
 match them. An unannotated parameter on a named declaration is `T0010`, as on a `public` one.
 Closures keep omitting parameter types, below.
 
-**Closures are unchanged.** A closure's parameter and return types are inferred from the body and
-context, or taken from what is written. A closure has no signature to protect: it is a value, not a
+**Closures are unchanged.** A closure's parameter and return types are inferred within the declaration that
+contains it (and fixed by their uses, RFC-0196), or taken from what is written. A closure has no signature to protect: it is a value, not a
 name that other code is checked against.
 
 ### Diagnostics
@@ -153,7 +153,7 @@ name that other code is checked against.
 |---|---|
 | no return type, body has type `T ≠ ()` | `` `get` has no return type, so it returns `()`, but its body evaluates to `i64` ``; help: write `-> i64` (omitted when the body's type has an unsolved part) |
 | as above, and the closure form applies (§2) | adds the closure rewrite of the same declaration |
-| a named declaration's parameter has no type | `T0010`, now for every named declaration and not only a `public` one; help: write the type, or bind a closure (§2) |
+| a named declaration's parameter has no type | `T0010`, now for every named declaration and not only a `public` one; help: write the type, and if the parameter is used at several types make the function generic (`fun id<T>(x: T) -> T`). No closure is suggested: a closure has one type (RFC-0196) |
 | `T0010` on a `public` declaration | unchanged; names the body's type where it can be computed |
 | `T0010` and `T0032` where the type is an anonymous record | also point at a named `record` or a type alias (RFC-0160) as the short spelling |
 
@@ -191,7 +191,8 @@ module-level function, which captures nothing. The closure it produces is theref
 under `--move-check`; a fixture is required, Open Question 2). A closure that owns a non-`Copy` capture
 moves on its first by-value use, but the suggestion never produces one.
 
-A closure bound at module level is private, as every top-level `let` is. This is why the
+A closure bound at module level is private, as every top-level `let` is, and must be determined by its own
+initializer (RFC-0196); the closure the suggestion produces writes its parameters, so it is. This is why the
 suggestion is limited to private functions: it cannot be offered as a way to export a function
 without writing its type.
 
@@ -252,7 +253,10 @@ Every named, non-`native` declaration whose return type is currently inferred an
 needs its type written or becomes a closure. The compiler already knows the body's type when it
 reports the mismatch, so the help line is the edit. Measured on a lower bound (the project corpus, spec and tutorial only): about 22 fixture files
 for return types and 8 for parameter types, with two documentation examples and one spec example; none in the
-standard library. Methods that relied on `()` are unaffected.
+standard library. Methods that relied on `()` are unaffected. The fixtures are counted once with RFC-0196: `typechecking/functions/06_let_polymorphism`
+(a named function) is this RFC's, `generics/52_let_polymorphism` (a closure) is RFC-0196's, and one instrumented
+pass over the corpus serves both. Both amend the `types.md` *Type Inference* section, so the spec rewrite is one
+change. A function that was polymorphic by inference becomes `fun f<T>`, not a closure.
 
 This lands as a hard cut (Open Questions, 1).
 
@@ -320,6 +324,7 @@ the existing `T0010`, now for every named declaration; the new messages are help
 - `fun triple(x: i64) { x * 3 }` reports the missing return type with the `-> i64` help and, when the five
   conditions hold, the closure rewrite; each condition that fails withholds the rewrite (one fixture per condition).
 - A module-level closure produced by the rewrite is passed by value to two calls and called (Open Question 2).
+- An unannotated parameter's `T0010` suggests the generic form and never a closure.
 - `main` resolving to `!` is not reported (the one false positive in the measurement).
 - The fixtures and documentation examples listed under *Migration* are rewritten first.
 
