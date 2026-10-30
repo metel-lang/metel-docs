@@ -627,7 +627,7 @@ or passes it by value to something that takes ownership — written without `onc
 compile error naming the offending capture and the fix (add `once`, or stop moving the
 capture).
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
@@ -647,7 +647,7 @@ binding `[&var …]`, regardless of what the body does through it — written wi
 is a compile error naming the offending capture and the fix (add `var`, stop the mutation,
 or capture `[&x]` instead).
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
