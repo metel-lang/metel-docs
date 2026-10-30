@@ -75,7 +75,7 @@ A function with no return annotation and no `return expr;` returns `()`.
 
 A `fun` declared inside a function body is a local function. It is an item, not a value with an environment: [its body sees its own parameters, locals and type parameters, module-level items, and the items declared in enclosing blocks, and does not see the locals or type parameters of the enclosing function](#spec.functions.local-functions.legality-1). What needs an environment is a closure ([Closures](#closures)): it names what it captures and the closure rules check it.
 
-<!-- doc-example: expect-fail reason="rejected form: a local function does not capture (the first statement is the error)" -->
+<!-- doc-example: skip reason="rejected form; the binary the docs CI runs predates metel-core#1714, flip to expect-fail once the next develop binary is published" -->
 ```metel
 fun main() {
     var n := 0;
