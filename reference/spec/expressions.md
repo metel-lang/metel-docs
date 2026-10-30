@@ -258,7 +258,7 @@ rather than degrading to T0003.
 A bare no-field or fieldful enum variant is valid in expression position when the
 expected type determines its enum and no binding or declaration of that name is in scope.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -293,7 +293,7 @@ expression position.
 Expected types from an annotation, return type, monomorphic call parameter, or
 struct-literal field may direct bare-variant resolution.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>

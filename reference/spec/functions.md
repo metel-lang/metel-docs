@@ -500,7 +500,7 @@ function type) or, failing that, from the body, exactly as an omitted return typ
 closure whose parameter stays fully generic is polymorphic (`let id := |x| { x }`). A parameter
 that nothing determines is [T0002](../error-codes.md#t0002--annotation-required).
 
-<!-- rfc.py:last_reviewed 32dd1e571867b7a596654542717267143c325406 -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -620,7 +620,7 @@ binding, or captures any binding by `&` or `&var`. Referencing a free non-`Copy`
 with no capture list is a compile error. A closure whose only free variables are `Copy`
 bindings used by value, or which has no free variables, may omit the list.
 
-<!-- rfc.py:last_reviewed b5e31f5afc1d13391ece5c9a3e156d5cb4b22e61 -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -1041,7 +1041,7 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
@@ -1225,7 +1225,7 @@ with a written open-record parameter, whose `..` is quantified (its other parame
 Inside a generic function the parameters of a `let`-bound closure are written; leaving one out is
 `T0002` at the definition.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 ##### Legality Rule {#spec.functions.closures.legality-27}
 
@@ -1234,7 +1234,7 @@ types are written or follow from its body. Otherwise the `let` is `T0002`, "the 
 determined by its initializer; annotate its parameters". A `let` inside a function body is unaffected:
 the uses in the body that contains it fix its type.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 </details>
 
