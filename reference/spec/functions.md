@@ -45,7 +45,7 @@ signature from its body or from its callers. This holds for free functions (priv
 `public`), methods and aspect-method declarations. `native` functions are unchanged. A
 closure's parameter and return types are not subject to this rule.
 
-<!-- rfc.py:last_reviewed bcb923c94347470c02ab6b0d6b1dac44f923fad4 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md)_</span>
@@ -60,7 +60,7 @@ closure's parameter and return types are not subject to this rule.
 
 A function with no return annotation and no `return expr;` returns `()`.
 
-<!-- rfc.py:last_reviewed c5619cae663b522b9c41aaa04f5a82788394dbbe -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -73,7 +73,7 @@ A function with no return annotation and no `return expr;` returns `()`.
 
 A `fun` declared inside a function body is a local function. It is an item, not a value with an environment: [its body sees its own parameters, locals and type parameters, module-level items, and the items declared in enclosing blocks, and does not see the locals or type parameters of the enclosing function](#spec.functions.local-functions.legality-1). What needs an environment is a closure ([Closures](#closures)): it names what it captures and the closure rules check it.
 
-<!-- doc-example: skip reason="rejected form; the binary the docs CI runs predates metel-core#1714, flip to expect-fail once the next develop binary is published" -->
+<!-- doc-example: expect-fail reason="rejected form: a local function does not capture (the first statement is the error)" -->
 ```metel
 fun main() {
     var n := 0;
@@ -97,7 +97,7 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:last_reviewed a6bb8459f32bfa0c8037030c5e833b151eebda81 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
@@ -999,7 +999,7 @@ Closures that capture the same binding by `[&x]` / `[&var x]`, or that capture t
 reference value, observe the same referent; a write through an exclusive reference by one
 closure is visible through the others.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -1021,7 +1021,7 @@ that value alive; the environment travels with the closure value. A closure hold
 captured *reference* cannot outlive the referent (checked by the borrow checker when it
 lands; unenforced before then).
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>

@@ -785,7 +785,7 @@ that names the fix, writing a `public fun` with its parameter and return types. 
 by a top-level `let` is therefore never part of a module's public API, and no inferred type
 crosses a module boundary.
 
-<!-- rfc.py:last_reviewed a6bb8459f32bfa0c8037030c5e833b151eebda81 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md)_</span>
