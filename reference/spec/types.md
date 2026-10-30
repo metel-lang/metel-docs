@@ -204,12 +204,12 @@ types; every other unknown name is error `T0003`.
 
 ```metel
 fun add_annotated(a: i64, b: i64) -> i64 { a + b }
-fun add_inferred(a, b) { a + b }
 
 fun main() -> i64 {
     let x := 42;           // inferred: i64
     let name := "Vlad";    // inferred: String
     let y: f64 := 3.14;  // explicit annotation (optional here)
+    let add_inferred := |a, b| { a + b };   // a closure infers its parameter types
     let total := add_annotated(x, 1) + add_inferred(2, 3);
     if (name == "Vlad") { total + (y as i64) } else { 0 }
 }

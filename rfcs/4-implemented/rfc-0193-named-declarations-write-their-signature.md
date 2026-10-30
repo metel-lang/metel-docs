@@ -5,13 +5,13 @@ date: '2026-10-29'
 coverage:
   "1": { spec: "spec.functions.named-function-declarations.legality-2" }
   "2": { kind: untestable, reason: "compiler help text that is advice only: the checker does not type-check the closure rewrite, so the five conditions state when a suggestion is offered, not a rule a program can exhibit" }
-  "3": { kind: blocked, reason: "the targeted error for `public let` is not implemented yet: today it is a parse error, so no fixture can observe the message that names the fix; the rest of the section restates T0010 (spec.modules.visibility.legality-2, which has fixtures)", ref: "metel-core#1713" }
+  "3": { spec: "spec.modules.visibility.legality-10" }
   "4": { kind: untestable, reason: "a cross-check against other RFCs; it states no new rule" }
-status: integrated
+status: implemented
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1713'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1665 (v0.15.0); migration policy resolved 2026-10-30
@@ -27,6 +27,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-30).** open questions resolved 2026-10-30
 
 > **Status — integrated (2026-10-30).** spec integrated; implementation tracked in #1713
+
+> **Status — implemented (2026-10-30).** implemented by metel-core#1713
 
 ## Summary
 
