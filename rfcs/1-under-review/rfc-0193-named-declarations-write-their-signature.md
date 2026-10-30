@@ -15,7 +15,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 > **Revised (2026-10-30).** Review: the rule now covers parameter types as well as the return type, so
 > `named-function-declarations.legality-2` is amended (it was listed as unchanged); the cost of
 > returning closures from named functions is stated; the closure suggestion records a value-semantics
-> caveat; the transition recommendation is strengthened; two open questions are added.
+> caveat; the transition recommendation is strengthened; two open questions were added and are now resolved.
 
 ## Summary
 
@@ -254,7 +254,7 @@ reports the mismatch, so the help line is the edit. Measured on a lower bound (t
 for return types and 8 for parameter types, with two documentation examples and one spec example; none in the
 standard library. Methods that relied on `()` are unaffected.
 
-Open question below: whether this lands as a hard cut or behind a warning.
+This lands as a hard cut (Open Questions, 1).
 
 ---
 
@@ -335,7 +335,7 @@ Implementation detail goes in an ADR at `3-integrated`. The constraints:
   is removed. The function and method paths then share one rule.
 - The help line needs the body's type at the mismatch; where it contains an unsolved variable the
   type is omitted rather than printed.
-- The closure suggestion is syntactic over the declaration and its uses (conditions 1 to 4); it
+- The closure suggestion is syntactic over the declaration and its uses (conditions 1 to 5); it
   does not run the checker on the rewrite.
 - The fixtures and documentation examples are rewritten before the check is on.
 
