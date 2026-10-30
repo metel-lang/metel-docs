@@ -5,9 +5,10 @@ summary: "A closure has no generics list, so it cannot declare a type parameter,
 scope: "reference/spec/functions.md#spec.functions.closures.legality-1"
 owner: language
 discovered_by: "metel-core#1544 §2 (closure row binders), extended by the RFC-0193 review (metel-core#1665)"
-disposition: accepted
-rfc: RFC-0195
-review: "revisit if a bounded helper that is not worth a named local fun proves common (RFC-0197 is the recorded alternative)"
+disposition: planned
+tracked_by: metel-core#1668
+rfc: RFC-0197
+review: null
 ---
 
 ## Gap
@@ -23,7 +24,8 @@ A function that needs a bound, a `where` clause or a row fact cannot be written 
 - `spec.functions.closures.legality-1`
 - `RFC-0193`
 - `RFC-0195`
+- `RFC-0197`
 
 ## Resolution
 
-Accepted (2026-10-30): closures stay bound-free. A helper that needs a type parameter, a bound, a `where` clause or a row fact, a capturing one included, is a local `fun` (RFC-0195), which also recurses. RFC-0197 (a generic binder on a closure) is the recorded alternative, deferred because the local `fun` covers the case and the binder's remaining value is the terse form that infers its signature. Reopen if that form proves worth new closure grammar.
+Planned, tracked as metel-core#1668: a generic binder on a closure (RFC-0197), now the replacement for the capturing generic helper that a local `fun` no longer provides (RFC-0195: a `fun` does not capture). Needs the RFC accepted and integrated before any implementation.

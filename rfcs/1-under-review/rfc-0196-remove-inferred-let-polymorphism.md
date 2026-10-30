@@ -10,7 +10,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1710 (v0.15.0)
 
 > **Prepared for acceptance (2026-10-30).** All five open questions are resolved. Acceptance follows RFC-0193 and
-> RFC-0195.
+> RFC-0197 (generic closures), which gives a polymorphic helper that captures state its spelling.
 >
 > **Revised (2026-10-30).** Review: adds the ownership-checking evidence (a generalized closure is rejected
 > by `--move-check` where the monomorphic one passes), the module-level closure rule, a corrected backend
@@ -147,8 +147,8 @@ suggests in place of a function are annotated, so they satisfy the rule.
 | a top-level `let` closure whose type its initializer does not determine | the module-level message above, with the written parameters as the fix |
 
 The generic-function suggestion is made only for a closure that captures nothing. A capturing
-polymorphic helper cannot be a module-level `fun`; its spelling is a local function with captures,
-which is RFC-0195.
+polymorphic helper cannot be a `fun` (a `fun` does not capture, RFC-0195); its spelling is a generic
+closure, RFC-0197.
 
 ---
 
@@ -190,12 +190,11 @@ which is RFC-0195.
 - **RFC-0193 (named declarations write their signature):** the pair removes inferred polymorphism. The
   closure suggestion in RFC-0193 section 2 already excludes generic functions, so every function it
   rewrites to a closure is monomorphic and unaffected.
-- **RFC-0197 (generic closures), deferred 2026-10-30:** would have given a closure the binder
-  (`<T: Copy>|x| (x, x)`) that states the bound the move check needs. With it deferred, the helper `dup`
-  above is written as `fun dup<T: Copy>(x: T) -> (T, T)`, a nested local `fun` where it should stay local
-  (RFC-0195), and closures stay bound-free (GAP-FUNCTIONS-007).
-- **RFC-0195 (local functions follow the closure capture rules):** the spelling of a polymorphic
-  helper that captures state. Without it, such a helper has no form and the diagnostic above says so.
+- **RFC-0197 (generic closures):** the ergonomic path and the precondition. `<T: Copy>|x| (x, x)` states the
+  bound the move check needs, so the helper `dup` above is written, not inferred, and a polymorphic helper
+  that captures state has a spelling. Accepting this RFC without RFC-0197 leaves such a helper with none.
+- **RFC-0195 (local functions do not capture):** a `fun` never captures, so a bounded or generic helper
+  with no state is a `fun<T>` and one with state is a generic closure.
 - **RFC-0138 (generic function references), metel-core#1478:** the two kept forms.
 - **RFC-0050, RFC-0153, RFC-0157, RFC-0194:** closure rules are untouched; the closures they describe
   just have a single type.
@@ -224,9 +223,9 @@ and documentation examples is not measured; see below.
    own `..`, so it passes the test "only what is written quantifies", and it is the only way a closure
    accepts records of different shapes (metel-core#1478). The body is checked once and states no bound it
    cannot state, so it does not have the `dup` problem.
-3. **When is this RFC accepted?** *Resolved: after RFC-0193 and RFC-0195.* A polymorphic helper that
-   captures state is the one case with no spelling once inferred generalization is gone; RFC-0195
-   (capturing local functions) provides it. RFC-0197 (generic closures) is deferred and is not a
+3. **When is this RFC accepted?** *Resolved: after RFC-0193 and RFC-0197.* A polymorphic helper that
+   captures state is the one case with no spelling once inferred generalization is gone; RFC-0197
+   (generic closures) provides it, because a `fun` does not capture (RFC-0195). RFC-0195 is not a
    precondition.
 4. **Which references count as an "already-generic function"?** *Resolved: exactly what the spec already
    allows; this RFC neither widens nor narrows it.* `first-class-functions.legality-2` admits a generic
@@ -265,8 +264,8 @@ error code is proposed; the mismatch is `T0001`.
 
 - `inference/declarations.rs`, the let-polymorphism branch (closure literal or generic-function reference).
 - metel-core#736 (RFC-0138), #1478, #1684, #1688, #1691, #1693, #288.
-- RFC-0193 (named declarations do not infer), RFC-0195 (local functions follow the closure capture
-  rules), RFC-0187 (no warning channel), RFC-0138.
+- RFC-0193 (named declarations do not infer), RFC-0195 (local functions do not capture), RFC-0197 (generic
+  closures), RFC-0187 (no warning channel), RFC-0138.
 - GAP-FUNCTIONS-006, GAP-FUNCTIONS-007, GAP-TYPES-001.
 - `reference/spec/types.md` (Type Inference); fixtures `generics/52_let_polymorphism`,
   `generics/102_generic_fn_reference_reused_at_multiple_types`, `move_check/abstract_let_polymorphic_closure`.

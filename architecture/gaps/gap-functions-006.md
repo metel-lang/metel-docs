@@ -7,7 +7,7 @@ owner: language
 discovered_by: "RFC-0193 review (metel-core#1665): checking when a let-bound closure can replace a private function"
 disposition: planned
 tracked_by: metel-core#1667
-rfc: RFC-0193
+rfc: RFC-0198
 review: null
 ---
 
@@ -23,9 +23,8 @@ A recursive helper must be a `fun`, and a `fun` writes its return type (RFC-0193
 
 - `spec.functions.closures.legality-1`
 - `RFC-0193`
+- `RFC-0198`
 
 ## Resolution
 
-A capturing, recursive helper has a spelling from RFC-0195: a local `fun` (a closure still cannot name itself).
-
-Planned, tracked as metel-core#1667: either a recursive binding form or a documented decision to keep recursion to named functions. Needs an RFC before any implementation; RFC-0193 does not change it.
+Planned, tracked as metel-core#1667: a recursive binding form (`let rec`, RFC-0198) or a documented decision to keep recursion to named functions. A recursive helper that captures state has no spelling once a local `fun` stops capturing (RFC-0195), so RFC-0198 is its replacement. Needs the RFC accepted and integrated before any implementation.

@@ -2,18 +2,17 @@
 id: rfc-0197
 title: "Generic Closures"
 date: '2026-10-30'
-status: draft
+status: under-review
 updated: '2026-10-30'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1711'
 ---
 
-> **Status — under review (2026-10-30).** design drafted; was tracked by metel-core#1711 (closed on deferral)
+> **Revived (2026-10-30).** RFC-0195 was reversed: a local `fun` does not capture, so a generic, bounded or
+> row-fact helper that captures state has no spelling except a closure with a binder. That is this RFC. It was
+> deferred earlier the same day on the opposite premise (that a capturing local `fun` covered the case).
+> The binder order (binder first) is settled.
 
-> **Deferred (2026-10-30).** Not pursued while RFC-0195 covers the case: a capturing, generic, bounded
-> helper is a local `fun` (RFC-0195), which also recurses. Closures stay bound-free
-> (GAP-FUNCTIONS-007, accepted). This RFC is kept as the alternative, with its binder order settled
-> (binder first), and can be revived if the terse inferred-signature form proves worth new closure grammar.
-
-> **Status — draft (2026-10-30).** deferred: RFC-0195 covers a capturing, generic, bounded helper; closures stay bound-free (GAP-FUNCTIONS-007)
+> **Status — under review (2026-10-30).** revived: RFC-0195 reversed (local functions do not capture); tracked by metel-core#1711 (v0.15.0)
 
 ## Summary
 
@@ -29,6 +28,15 @@ first_or(["a"], "z");         // T = String
 let add_host := <record R: !{ host }>|r: { ..R }| -> { ..R, host: String } {
     { ..r, host = "h" }
 };
+```
+
+A generic closure also captures, which a local `fun` no longer does (RFC-0195):
+
+```metel
+var n := 0;
+let bump := <T>[&var n] var |x: T| -> T { n += 1; x };
+bump(1);
+bump(true);                   // n counts both calls
 ```
 
 The binder is the only way a closure becomes polymorphic by something other than a written open
@@ -63,9 +71,9 @@ or a row fact (GAP-FUNCTIONS-007). The measured consequences:
   generics list, a bound, a `where` clause or a row-extending body (RFC-0193 section 2). A binder would
   widen it.
 - **RFC-0196** removes inference-invented polymorphism from closures. After it, a closure is
-  polymorphic only through a written open record. A polymorphic helper that needs anything else has
-  to be a `fun`, and one that also captures state has no spelling unless RFC-0195 (capturing local
-  functions) or this RFC provides one.
+  polymorphic only through a written open record. A polymorphic helper that needs a bound is a `fun`
+  when it needs no state; one that also captures state has no spelling except this RFC, because a local
+  `fun` does not capture (RFC-0195).
 - **#1691 and #1693** show the move check failing on closures inside generic bodies. A written binder
   gives those analyses a declared set of quantified variables to work from.
 
@@ -113,7 +121,7 @@ closure_expr = { generic_params? capture_list? once_kw? var_kw? "|" param_list? 
 
 The closure literal's prefix order is fixed (`[captures] once? var?`, legality-23), and a leading `<`
 cannot otherwise start an expression, so every position is unambiguous. **The binder comes first,
-before the capture list**, as a `fun` writes it (RFC-0195: `fun name<T>[caps] once? var? (params)`):
+before the capture list**, where a `fun` writes its generics (`fun name<T>(params)`):
 
 ```metel
 <T>[&var n] once var |x: T| -> T { n += 1; x }
@@ -137,8 +145,8 @@ Both forms then read generics, captures, qualifiers, parameters.
 - Closures without a binder: monomorphic, except through a written open record (RFC-0196).
 - Capture lists, qualifiers, multiplicity, `Copy` derivation, linearity (RFC-0050, RFC-0153, RFC-0157,
   RFC-0194).
-- Recursion: a closure still cannot name itself (GAP-FUNCTIONS-006). A generic *and* recursive helper
-  is a `fun`.
+- Recursion: a closure still cannot name itself (GAP-FUNCTIONS-006) until RFC-0198. A generic *and*
+  recursive helper that needs no state is a `fun`.
 - Written function types: no polymorphic function type is added (rank-1, rule 4).
 
 ---
@@ -146,11 +154,12 @@ Both forms then read generics, captures, qualifiers, parameters.
 ## Alternatives Considered
 
 1. **Keep closures bound-free (decide and document).** The other resolution GAP-FUNCTIONS-007 names.
-   Smallest; a polymorphic helper with a bound is a `fun`, one that captures needs RFC-0195. Costs the
+   Smallest; a polymorphic helper with a bound is a `fun`, and one that captures state takes it as a
+   parameter (RFC-0195 forbids capture on a `fun`). Costs the
    `T0012` row-extension case a closure spelling and leaves RFC-0193's closure suggestion narrow.
-2. **Capturing local functions only (RFC-0195).** Covers the capturing polymorphic helper, and recursion,
-   with no new closure syntax. Needs a name, and is not hoisted when it captures. Compatible with this
-   RFC; the two answer different shapes.
+2. **Capturing local functions (RFC-0195 as first drafted).** Covers the capturing polymorphic helper, and
+   recursion, with no new closure syntax. Rejected 2026-10-30 in favour of a `fun` that never captures: it
+   needed a capture list on a declaration and a hoisting exception (RFC-0195 Alternative 1).
 3. **Infer bounds from the body** (a closure that does `a + b` gets `T: Add`). Rejected: it invents an
    interface from a body, which is what RFC-0193 and RFC-0196 remove.
 4. **A different position for the binder** (a leading `<T>[caps] …`, or after the parameters). Section 1 and
@@ -165,8 +174,9 @@ Both forms then read generics, captures, qualifiers, parameters.
 - **RFC-0196 (remove inferred let-polymorphism):** this is the written route to what it removes. Its
   test ("a variable quantifies if it came from something written") is exactly rule 1. They are independent;
   this RFC does not need RFC-0196, but is its natural complement.
-- **RFC-0195 (local functions follow the closure capture rules):** overlap on a polymorphic closure that
-  captures state. Either covers it; a recursive one needs RFC-0195.
+- **RFC-0195 (local functions do not capture):** a `fun` is an item and never captures, so a generic or
+  bounded helper that captures state is a generic closure. This RFC is the replacement it names.
+- **RFC-0198 (recursive closures):** a generic closure cannot recurse without `let rec`.
 - **RFC-0193:** a generic closure has a written signature in part (the binder) and inferred parameters in
   part. Closures stay exempt from RFC-0193's rule, which applies to named declarations.
 - **RFC-0154 (pipe notation), RFC-0050 (capture lists), RFC-0121, RFC-0178, RFC-0186, RFC-0192:** syntax and
@@ -184,9 +194,9 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 
 ## Open Questions
 
-1. **Order against the capture list.** *Resolved (2026-10-30): binder first*, `<T>[caps] once var |…|`,
-   matching `fun name<T>[caps] once? var? (params)` (RFC-0195). A leading `<` cannot start an expression
-   today, so the parse is unambiguous.
+1. **Order against the capture list.** *Resolved (2026-10-30): binder first*, `<T>[caps] once var |…|`:
+   generics, captures, qualifiers, parameters. A leading `<` cannot start an expression today, so the
+   parse is unambiguous.
 2. **Scope of the first version.** Type parameters and bounds first, row facts later? The `T0012`
    example needs row facts. Recommendation: include row facts; they are a bound on a row parameter and cost
    nothing extra to parse.
@@ -211,13 +221,14 @@ Error codes: none proposed; a missing bound is the function error.
 - `first_or` and `add_host` above type-check and run; `add_host` without the binder is `T0012` with the binder named as the fix.
 - A generic closure used at two types in the same body, and passed as an argument, instantiate separately.
 - A binder variable in a capture's type is the stated error.
+- The `bump` example above (the shape that is `I0010` as a local `fun`, metel-core#1708) type-checks and counts both calls.
 - `--move-check` analyses a generic closure inside a generic function (the #1691 shape) without `I0011`.
 - A closure without a binder is unchanged; the corpus passes with the grammar change.
 
 ## References
 
 - GAP-FUNCTIONS-007 (metel-core#1668); GAP-FUNCTIONS-006.
-- RFC-0193, RFC-0195, RFC-0196, RFC-0154, RFC-0050, RFC-0121, RFC-0178, RFC-0186, RFC-0192, RFC-0163.
+- RFC-0193, RFC-0195, RFC-0196, RFC-0198, RFC-0154, RFC-0050, RFC-0121, RFC-0178, RFC-0186, RFC-0192, RFC-0163.
 - metel-core#1544, #1691, #1693, #288.
 - `grammar.pest` (`closure_expr`, `generic_params`, `where_clause`); `reference/spec/functions.md` (Closures, legality 1 and 23).
 - Scala 3 polymorphic function literals.

@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**196 RFCs total.** 29 draft, 51 under review, 9 accepted, 4 integrated (93 live), 74 implemented, 15 superseded, 14 refused (103 settled).
+**197 RFCs total.** 29 draft, 52 under review, 9 accepted, 4 integrated (94 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
 ## Draft (29)
 
@@ -45,9 +45,9 @@ the curated thematic map.
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
-- **RFC-0197** — Generic Closures (`0-draft` ; rfcs/0-draft/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
+- **RFC-0198** — Recursive Closures (`0-draft` ; rfcs/0-draft/rfc-0198-recursive-closures.md ; date 2026-10-30)
 
-## Under Review (51)
+## Under Review (52)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -98,8 +98,9 @@ the curated thematic map.
 - **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0193** — Named Declarations Write Their Signature (`1-under-review` ; rfcs/1-under-review/rfc-0193-named-declarations-write-their-signature.md ; date 2026-10-29 ; updated 2026-10-30)
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
-- **RFC-0195** — Local Functions Follow the Closure Capture Rules (`1-under-review` ; rfcs/1-under-review/rfc-0195-local-functions-follow-the-closure-capture-rules.md ; date 2026-10-30 ; updated 2026-10-30)
+- **RFC-0195** — Local Functions Do Not Capture (`1-under-review` ; rfcs/1-under-review/rfc-0195-local-functions-do-not-capture.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0196** — Remove Inferred Let-Polymorphism (`1-under-review` ; rfcs/1-under-review/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30)
+- **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 
 ## Accepted (9)
 
