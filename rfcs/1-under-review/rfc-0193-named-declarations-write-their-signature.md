@@ -168,7 +168,7 @@ when the rewrite keeps the program's meaning, which means the function must sati
 1. **It is private and a free function.** A method has a receiver and belongs to a type; a closure
    cannot replace it. A `public` declaration needs its type written (`T0010`).
 2. **It has no generic parameter list, `where` clause or bounds.** A closure has no generics list, so
-   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007: closures stay bound-free, and a bounded or generic helper is a local `fun`, RFC-0195).
+   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007; RFC-0197 proposes a binder, and the suggestion is revisited if it is accepted).
 3. **It does not call itself, directly or through other functions.** A closure cannot refer to its
    own name inside its body (GAP-FUNCTIONS-006), so a recursive function must write its type.
 4. **Every use follows the declaration.** Functions are hoisted and `let` bindings are not: a
@@ -236,9 +236,9 @@ stated so that it keeps holding. Items 1 and 3 restate `T0010` and constrain a f
 - **Unqualified variant constructors.** A named function body now always has an expected type, its
   written return type or `()`, so `Some { value = a }` resolves when the type is written. A
   closure with no annotation still has none and needs the qualified form.
-- **RFC-0195 (local functions follow the closure capture rules).** A local `fun` is a named declaration
-  and writes its signature like any other; a capturing local function adds a capture list, which is not part of
-  the written signature's types.
+- **RFC-0195 (local functions do not capture).** A local `fun` is a named declaration and writes its
+  signature like any other, and it does not capture, so a closure that captures cannot be rewritten as one.
+- **RFC-0198 (recursive closures).** Condition 3 (the function does not call itself) is revisited if it is accepted.
 - **RFC-0196 (remove inferred let-polymorphism):** the pair removes inferred polymorphism. This RFC
   does not depend on it: the closure suggestion applies only to functions with no generics list and typed
   parameters, so the closure it produces is monomorphic whichever way RFC-0196 is decided.

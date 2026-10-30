@@ -1487,14 +1487,17 @@ implementation).
 - **RFC-0194** *(under-review 2026-10-29, #1670; opened 2026-10-29)* — Linear closures and captures — a closure that captures a
   `Linear` value (RFC-0089) is itself linear: called exactly once, never dropped, body consumes the capture. Derived from the
   captures like `Copy`; no new syntax or type. Supersedes RFC-0049. Open: how "must-call" is written in a function type (with RFC-0163).
-- **RFC-0195** *(under-review 2026-10-30, #1709; opened 2026-10-30)* — Local functions follow the closure capture rules — a `fun` declared in a body may reference
-  the enclosing function's locals under the closure capture-list, `Copy`/move, `once` and `var` rules; a capturing local function is not hoisted.
-  Today's behaviour is unspecified (#1708). Open: where the list goes, how a `var` local function is called, mutual recursion, and whether to forbid capture instead (Rust).
+- **RFC-0195** *(under-review 2026-10-30, #1709; opened 2026-10-30; rewritten 2026-10-30)* — Local functions do not capture — a `fun` declared in a body is an item: naming a local of
+  the enclosing function (or its type parameters) is `T0003`, with the closure as the fix. Reverses the first draft (a capture list on `fun`). Amends RFC-0173 D1.
+  Replacements: RFC-0197 (generic capturing helper), RFC-0198 (recursive capturing helper). Fixes the #1708 inconsistency. Open: error code, enclosing type parameters.
 - **RFC-0196** *(under-review 2026-10-30, #1710; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
   invents type parameters. Kept: references to already-generic functions and written open-record closures. With RFC-0193, polymorphism is always written or declared.
   Open: keep the two forms (recommended), sequencing with RFC-0195 (capturing polymorphic helpers).
-- **RFC-0197** *(draft, deferred 2026-10-30; opened 2026-10-30; was #1711)* — Generic closures — a closure literal may carry a generic binder (type parameters, bounds, `where`,
-  row facts) like a `fun`; written binders quantify, inference never does. Closes GAP-FUNCTIONS-007 (#1668). Deferred: RFC-0195 covers a capturing, generic, bounded helper; closures stay bound-free (GAP-FUNCTIONS-007). Binder order settled (binder first).
+- **RFC-0197** *(under-review 2026-10-30, #1711; opened 2026-10-30; revived 2026-10-30)* — Generic closures — a closure literal may carry a generic binder (type parameters, bounds, `where`,
+  row facts), binder first: `<T>[caps] once var |x|`. Written binders quantify, inference never does. The spelling of a generic or bounded helper that captures state, now that a `fun` does not
+  (RFC-0195). Resolves GAP-FUNCTIONS-007 (#1668). Open: scope of the first version, captures that mention binder variables, monomorphization.
+- **RFC-0198** *(draft 2026-10-30; opened 2026-10-30)* — Recursive closures — `let rec name := closure`: the name inside the body is the closure being called (call dispatch), not a captured
+  reference, so the closure stays movable. Return type written, no `once`, no mutual recursion. Resolves GAP-FUNCTIONS-006 (#1667). Open: spelling, return type, dispatch confirmation.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
 - **RFC-0014** — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
