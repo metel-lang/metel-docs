@@ -2,19 +2,22 @@
 id: rfc-0196
 title: "Remove Inferred Let-Polymorphism"
 date: '2026-10-30'
-status: under-review
+status: accepted
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
 ---
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1710 (v0.15.0)
 
-> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. Acceptance follows RFC-0193 and
-> RFC-0197 (generic closures), which gives a polymorphic helper that captures state its spelling.
+> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. Acceptance follows RFC-0193. It no longer
+> waits on RFC-0197 (generic closures), whose tracker moved out of v0.15.0 (2026-10-30); a polymorphic helper that captures
+> state takes the state as a parameter until that RFC is taken up.
 >
 > **Revised (2026-10-30).** Review: adds the ownership-checking evidence (a generalized closure is rejected
 > by `--move-check` where the monomorphic one passes), the module-level closure rule, a corrected backend
 > note, the future-checks risk, a precise precedent, the rejected restrictions, and one open question.
+
+> **Status — accepted (2026-10-30).** open questions resolved 2026-10-30; no longer waits on RFC-0197
 
 ## Summary
 
@@ -147,8 +150,9 @@ suggests in place of a function are annotated, so they satisfy the rule.
 | a top-level `let` closure whose type its initializer does not determine | the module-level message above, with the written parameters as the fix |
 
 The generic-function suggestion is made only for a closure that captures nothing. A capturing
-polymorphic helper cannot be a `fun` (a `fun` does not capture, RFC-0195); its spelling is a generic
-closure, RFC-0197.
+polymorphic helper cannot be a `fun` (a `fun` does not capture, RFC-0195); it takes the state it
+captures as a parameter of a `fun<T>`, as in Rust. RFC-0197 (a generic binder on a closure) would
+give it a closure spelling and is under review.
 
 ---
 
@@ -190,11 +194,11 @@ closure, RFC-0197.
 - **RFC-0193 (named declarations write their signature):** the pair removes inferred polymorphism. The
   closure suggestion in RFC-0193 section 2 already excludes generic functions, so every function it
   rewrites to a closure is monomorphic and unaffected.
-- **RFC-0197 (generic closures):** the ergonomic path and the precondition. `<T: Copy>|x| (x, x)` states the
-  bound the move check needs, so the helper `dup` above is written, not inferred, and a polymorphic helper
-  that captures state has a spelling. Accepting this RFC without RFC-0197 leaves such a helper with none.
+- **RFC-0197 (generic closures):** an optional ergonomic path, not a precondition. `<T: Copy>|x| (x, x)` would
+  state the bound the move check needs on a closure; without it, `dup` is written `fun dup<T: Copy>(x: T) -> (T, T)`.
+  A polymorphic helper that captures state would get a closure spelling; without it, the state is a parameter.
 - **RFC-0195 (local functions do not capture):** a `fun` never captures, so a bounded or generic helper
-  with no state is a `fun<T>` and one with state is a generic closure.
+  with no state is a `fun<T>` and one with state takes that state as a parameter.
 - **RFC-0138 (generic function references), metel-core#1478:** the two kept forms.
 - **RFC-0050, RFC-0153, RFC-0157, RFC-0194:** closure rules are untouched; the closures they describe
   just have a single type.
@@ -223,10 +227,11 @@ and documentation examples is not measured; see below.
    own `..`, so it passes the test "only what is written quantifies", and it is the only way a closure
    accepts records of different shapes (metel-core#1478). The body is checked once and states no bound it
    cannot state, so it does not have the `dup` problem.
-3. **When is this RFC accepted?** *Resolved: after RFC-0193 and RFC-0197.* A polymorphic helper that
-   captures state is the one case with no spelling once inferred generalization is gone; RFC-0197
-   (generic closures) provides it, because a `fun` does not capture (RFC-0195). RFC-0195 is not a
-   precondition.
+3. **When is this RFC accepted?** *Resolved (revised 2026-10-30): after RFC-0193, without waiting on RFC-0197.*
+   A polymorphic helper that captures state is the one case with no closure spelling once inferred
+   generalization is gone. Rust has neither generic closures nor recursive closures and takes the state as a
+   parameter; so does Metel until RFC-0197 is taken up, which is a separate and lower-priority decision (its
+   tracker moved to the Records and surface syntax theme). RFC-0195 is not a precondition.
 4. **Which references count as an "already-generic function"?** *Resolved: exactly what the spec already
    allows; this RFC neither widens nor narrows it.* `first-class-functions.legality-2` admits a generic
    function bound with a bare unannotated `let`. Checked 2026-10-30: an imported generic function
