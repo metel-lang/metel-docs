@@ -10,6 +10,14 @@ title: "Metel Language Changelog"
 
 **Breaking changes:**
 
+- A `fun` declared inside a function body no longer sees the enclosing function's locals or type
+  parameters (RFC-0195, `metel-core#1714`). Naming a parameter, a `let` or `var`, `self` or a closure's
+  capture from a local `fun` is `T0003`, with the closure rewrite and "pass it as a parameter" as the fixes;
+  using the enclosing function's type parameter says to declare `<T>` on the local function. The generic and
+  non-generic forms now agree (the generic one was an internal error, `I0010`). Sibling local functions, local
+  types and module-level bindings are still visible, and local functions are still hoisted. A body that
+  captures state is a closure: `let bump := [&var n] var || { n += 1; };`. A nested function can no longer
+  reach the enclosing function's type parameters, as before, with a clearer message.
 - The `row` generic-parameter kind and the field-wise constraint keyword `all` are removed
   (RFC-0186, `metel-core#1644`, `metel-core#1653`). A parameter that stands for a record, or for the
   rest of one, is declared `record R`; `..R` is still how its row is written (a record tail, a row

@@ -3,13 +3,13 @@ id: rfc-0195
 title: "Local Functions Do Not Capture"
 date: '2026-10-30'
 coverage:
-  "1": { kind: blocked, reason: "the T0003 rejection cannot be observed yet: a non-generic local function still reads and mutates enclosing locals and a generic one is I0010 (spec.functions.local-functions.legality-1 is exempt for the same reason)", ref: "metel-core#1714" }
+  "1": { spec: "spec.functions.local-functions.legality-1" }
   "2": { spec: "spec.types.generics.rigid-type-parameters.legality-1" }
-status: integrated
+status: implemented
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1709'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1714'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1709 (v0.15.0)
@@ -26,6 +26,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-30).** open questions resolved 2026-10-30
 
 > **Status — integrated (2026-10-30).** spec integrated; implementation tracked in #1714
+
+> **Status — implemented (2026-10-30).** implemented by metel-core#1714
 
 ## Summary
 

@@ -5,9 +5,7 @@ summary: "A non-generic local `fun` reads and mutates enclosing locals with no c
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#1708"
-disposition: planned
-tracked_by: metel-core#1714
-rfc: RFC-0195
+disposition: resolved
 review: null
 ---
 
@@ -48,4 +46,4 @@ Both are rewritten by the implementation change.
 
 ## Resolution
 
-Planned: tracked as metel-core#1714 (RFC-0195).
+Resolved by RFC-0195 (`4-implemented`): the checker rejects a local function that names an enclosing local or type parameter with `T0003`, for the generic and non-generic form alike. Evidence: `evaluator/functions/v0_15_0_neg_local_fun_uses_enclosing_var`, `v0_15_0_neg_generic_local_fun_uses_enclosing_var`, `v0_15_0_neg_local_fun_uses_enclosing_parameter`, `v0_15_0_neg_local_fun_uses_enclosing_type_parameter` and `typechecking/generics/nested_function_cannot_use_enclosing_parameter`; `v0_15_0_local_fun_sees_items_not_locals` keeps the visible names working.

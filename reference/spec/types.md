@@ -1416,7 +1416,7 @@ instantiates the callee's parameters afresh.
 <!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/3-integrated/rfc-0195-local-functions-do-not-capture.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
