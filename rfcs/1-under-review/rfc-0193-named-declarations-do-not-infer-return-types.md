@@ -3,17 +3,23 @@ id: rfc-0193
 title: "Named Declarations Do Not Infer Their Return Type"
 date: '2026-10-29'
 status: under-review
-updated: '2026-10-29'
+updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 ---
 
 > **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1665 (v0.15.0); one open question (migration policy)
 
+> **Revised (2026-10-30).** Review: the rule now covers parameter types as well as the return type, so
+> `named-function-declarations.legality-2` is amended (it was listed as unchanged); the cost of
+> returning closures from named functions is stated; the closure suggestion records a value-semantics
+> caveat; the transition recommendation is strengthened; two open questions are added.
+
 ## Summary
 
-A named declaration states its return type or returns `()`. This holds for **every** named
-declaration: free functions (private or `public`), methods, and aspect-method declarations. The
-checker never infers a named declaration's return type from its body.
+A named declaration writes the type of each of its parameters and states its return type or
+returns `()`. This holds for **every** named declaration: free functions (private or `public`),
+methods, and aspect-method declarations. The checker never infers a named declaration's signature
+from its body or from its callers. (This is Rust's rule for `fn` items.)
 
 ```metel
 fun double(x: i64) -> i64 { x * 2 }          // written
@@ -36,7 +42,8 @@ The other half is a guard on the module boundary: a function value that crosses 
 future public binding, has a **written** function type (§3).
 
 This amends `spec.functions.named-function-declarations.dynamics-1` (which the implementation
-contradicts today), RFC-0181 §1.1 (the factory answer and the `T0032` advice), and the
+contradicts today), `named-function-declarations.legality-2` (which lets parameter and return-type
+annotations be omitted), RFC-0181 §1.1 (the factory answer and the `T0032` advice), and the
 visibility rules in `modules.md`.
 
 ---
@@ -94,6 +101,20 @@ website showcases.
 | negative-bound tests | 9 | annotated |
 | false positive (`main` resolves to `!`) | 1 | none |
 
+Parameter types (measured 2026-10-30, same corpus plus the spec and tutorial): 9 named
+declarations in 8 files have an unannotated parameter: 6 files are tests of inference itself
+(`named_function_inferred_signature`, `abstract_inferred_operand_*`, `limit_01`, `limit_03`), one is
+a let-polymorphism test (`06_let_polymorphism`: `identity(x)` becomes `identity<T>(x: T) -> T`), and
+one is a spec example (`types.md`, `add_inferred`). None is in the embedded standard library.
+
+**Returning a closure now means writing its function type.** The 11 closure-returning helpers
+above can no longer leave the type unwritten. A written function type carries its parameter and
+return types and its `once`/`var` qualifiers, and is move-only (RFC-0166). There is no
+`-> impl Callable` to avoid writing it: RFC-0161 (`dyn Callable`) is `1-under-review` and
+RFC-0037's `-> impl Aspect` applies to aspects. A factory that returns a capturing closure with a
+non-trivial type therefore has no unwritten form until RFC-0161 lands. This is a deliberate cost of
+treating the signature as the interface, and it should be revisited when RFC-0161 is accepted.
+
 ### Cause of the split
 
 A free function with an omitted return type gets a fresh type variable and is inferred in
@@ -113,8 +134,12 @@ the methods of an aspect `impl`. `native` functions are unchanged. The body is t
 that type exactly as against any written one: a body whose value is not `()` and a signature with
 no `->` is an ordinary mismatch.
 
-Private free functions no longer infer. Their parameters may still omit types when they can be
-inferred from context (`named-function-declarations.legality-2` is unchanged).
+Private free functions no longer infer, and a named declaration writes every parameter's type
+(the receiver `self` excepted). `named-function-declarations.legality-2` changes from "annotations
+may be omitted when their types can be inferred from context" to the rule above; `public`
+declarations already required both (`T0010`, `modules.md`), so this makes private declarations
+match them. An unannotated parameter on a named declaration is `T0010`, as on a `public` one.
+Closures keep omitting parameter types, below.
 
 **Closures are unchanged.** A closure's parameter and return types are inferred from the body and
 context, or taken from what is written. A closure has no signature to protect: it is a value, not a
@@ -126,6 +151,7 @@ name that other code is checked against.
 |---|---|
 | no return type, body has type `T ≠ ()` | `` `get` has no return type, so it returns `()`, but its body evaluates to `i64` ``; help: write `-> i64` (omitted when the body's type has an unsolved part) |
 | as above, and the closure form applies (§2) | adds the closure rewrite of the same declaration |
+| a named declaration's parameter has no type | `T0010`, now for every named declaration and not only a `public` one; help: write the type, or bind a closure (§2) |
 | `T0010` on a `public` declaration | unchanged; names the body's type where it can be computed |
 | `T0010` and `T0032` where the type is an anonymous record | also point at a named `record` or a type alias (RFC-0160) as the short spelling |
 
@@ -159,6 +185,11 @@ guarantee: a body that depends on some other fact the signature carried can stil
 closure. The rewrite shows the parameter annotations the function wrote, so an error in the
 rewrite points at the same code.
 
+**Value semantics differ from a function.** A closure is a value, not a hoisted item. It may be
+non-`Copy`, so a top-level closure passed by value more than once may move on the first use, where
+the function it replaces could be passed any number of times. The five conditions do not cover
+this, so the suggestion is advice only (Open Question 2).
+
 A closure bound at module level is private, as every top-level `let` is. This is why the
 suggestion is limited to private functions: it cannot be offered as a way to export a function
 without writing its type.
@@ -168,7 +199,8 @@ without writing its type.
 ## 3. Public function values are written
 
 Nothing here makes it possible for an inferred type to cross a module boundary. The rule is
-stated so that it keeps holding:
+stated so that it keeps holding. Items 1 and 3 restate `T0010` and constrain a future RFC; item 2
+(a targeted error for `public let`) is separable polish and can land on its own:
 
 1. **In a public signature, a function type is written in full.** A `public fun` already annotates
    every parameter and its return type (`T0010`), and a function-typed parameter or return type
@@ -211,8 +243,9 @@ stated so that it keeps holding:
 
 Every named, non-`native` declaration whose return type is currently inferred and is not `()`
 needs its type written or becomes a closure. The compiler already knows the body's type when it
-reports the mismatch, so the help line is the edit. Measured: about 22 fixture files and two
-documentation examples; none in the standard library. Methods that relied on `()` are unaffected.
+reports the mismatch, so the help line is the edit. Measured on a lower bound (the project corpus, spec and tutorial only): about 22 fixture files
+for return types and 8 for parameter types, with two documentation examples and one spec example; none in the
+standard library. Methods that relied on `()` are unaffected.
 
 Open question below: whether this lands as a hard cut or behind a warning.
 
@@ -240,12 +273,25 @@ Open question below: whether this lands as a hard cut or behind a warning.
 
 ---
 
-## Open question
+## Open questions
 
-**Transition: hard cut or warning window?** The rewrite is mechanical and small, and v0.15.0 is
+**1. Transition: hard cut or warning window?** The rewrite is mechanical and small, and v0.15.0 is
 already a language-visible release with other renames (`Perhaps` to `Option`). A hard cut with the
 help line above is the simplest. A one-release warning (`omitted return type inferred; write
--> T`) costs a diagnostic and a second code path. Recommendation: hard cut.
+-> T`) costs a diagnostic and a second code path, and the project has no warning channel (RFC-0187
+notes the same), so a "warning" would be an error with a suggested rewrite anyway. Recommendation:
+hard cut.
+
+**2. Does the closure suggestion survive by-value reuse?** A closure replacing a private function
+may be non-`Copy` and move when passed by value twice (§2). Decide whether a capture-free
+top-level closure is `Copy`, or whether the suggestion needs a sixth condition or a caveat. A
+prototype fixture that passes a replaced helper to two calls settles it.
+
+**3. Do closures keep generalizing?** The closure suggestion leans on a closure's let-polymorphism:
+`|x| x` used at two types. Rust's closures do not generalize (it has no let-polymorphism); Metel's
+do, and the interactions with the move check and qualifier checks have produced bugs
+(metel-core#1688, #1691). If generalization is dropped or restricted, the suggestion shrinks to
+monomorphic closures and nothing else in this RFC changes. To be settled in its own discussion.
 
 ---
 
