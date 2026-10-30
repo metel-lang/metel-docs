@@ -9,6 +9,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1667'
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1667 (v0.15.0)
 
+> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. The one cross-RFC dependency is
+> the amendment to RFC-0153 §3a (rule 6), and the guard's removal is tracked in metel-core#1712.
+
 ## Summary
 
 A closure bound with `let rec` may call itself by its own name. The name inside the body refers to the closure
@@ -149,19 +152,26 @@ Additive. `let rec` is a new form; no existing program changes.
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-30
 
-1. **Spelling.** `let rec` (ML) is the recommendation; alternatives are `let name := rec |n| …` or a named closure
-   expression. Whether `var rec` is needed for a `var` binding.
-2. **Return type required.** Recommended (rule 3). Allow inference later?
+1. **Spelling.** *Resolved: `let rec`.* It is the ML form, states at the binding that the name is in scope in its own
+   body, and adds the least grammar. A marker on the closure (`let name := rec |…|`) and a named closure
+   expression (`|…| as name`) are Alternatives. `var rec` is **not** added: the name denotes the callee, not the
+   binding (rule 2), so reassigning a `var` binding changes nothing a recursive call can see. It can be added later.
+2. **Return type required.** *Resolved: required* (rule 3). It keeps inference inside one body and gives a clear
+   error. Inference through a recursive call is possible (monomorphic recursion), and relaxing a requirement later
+   is compatible, where adding one later is not.
 3. **Self-reference semantics.** *Resolved (2026-10-30), with one required amendment.* The callee is available at
    the call (see Interactions), so rule 2 holds for a `many` closure and for one that owns captures. A `var` closure
    conflicts with RFC-0153 §3a's in-call guard (rule 6).
-4. **How a self-call passes the guard.** The evaluator gives the recursive name a call path that neither checks nor
-   sets the in-call flag, since the outer call holds it (recommended); or the flag becomes a depth counter
-   distinguishing a self-call from a call through another path. The first is smaller and keeps the guard's
-   meaning ("another path into a live mutating call") exact.
-5. **Mutual recursion** (rule 7): forbid for now, as proposed, or add a group form.
+4. **How a self-call passes the guard.** *Resolved: a separate call path.* The evaluator gives the recursive name a
+   call path that neither checks nor sets the in-call flag, since the outer call already holds it. This keeps the
+   guard's meaning ("another path into a live mutating call") exact and is the smallest change; it is discarded with
+   the guard (metel-core#1712). A depth counter was rejected as more machinery for a flag that is being removed.
+5. **Mutual recursion.** *Resolved: forbidden* (rule 7). The first closure would use the second before its
+   declaration; a pair that calls each other passes one to the other as a parameter. Non-capturing local `fun`s are
+   hoisted and may be mutually recursive already. A declaration group (`let rec a := … and b := …`) needs a
+   shared-environment and ownership story and is a later RFC.
 
 ---
 
