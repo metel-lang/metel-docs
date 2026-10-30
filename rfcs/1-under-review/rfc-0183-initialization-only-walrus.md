@@ -3,7 +3,7 @@ id: rfc-0183
 title: "Initialization-Only Walrus"
 date: '2026-10-24'
 status: under-review
-updated: '2026-10-26'
+updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1594'
 ---
 
@@ -132,6 +132,20 @@ xs[0] := 5;                                xs[0] = 5;
 Point { x = 1.0 };                         Point { x = 1.0 };      // unchanged
 ```
 
+### Tail assignments
+
+An assignment is a statement and needs its `;`. A block whose last item is an assignment
+therefore ends with `;` (`{ x = 1; }`), and a single-field `{ label = expr }` with no `;` is
+always an anonymous record, in every position that admits one (finding 5).
+
+- **Migration.** The reassignment rewrite is not a bare `:=` to `=` swap: where the assignment
+  is the last item of a block it also appends `;`.
+- **Hint.** In a match-arm, closure or function body, a single-field record literal whose
+  label is an assignable place in scope and whose expected type is `()` or unconstrained
+  reports "did you mean the block `{ x = 1; }`?" alongside the type error.
+- **Fixtures.** One per case: `{ x = 1 }` is a record; `{ x = 1; }` is a unit block;
+  `{ x = 1, y = 2 }` is a record; the closure and match-arm positions behave the same.
+
 ### Diagnostics
 
 Both old spellings become targeted errors rather than a bare parse failure:
@@ -209,6 +223,19 @@ A review against the grammar and the corpus found four things this RFC did not s
 4. **Tokenisation.** The plain operator is `"=" ~ !"="`. Match arms are written `pat => expr`, and
    `=>` begins with `=`; pest backtracks correctly, but the rule should read `"=" ~ !("=" | ">")`
    so a guard such as `n if n > 0 => ...` never attempts an assignment parse.
+
+5. **A block ending in an assignment with no `;` becomes a record.** Resolution 1 keeps
+   `{ x = 1 }` an anonymous record, but RFC-0116 admits `(block | expr)` in match-arm, closure
+   and function bodies, and a record is the fallback there. Today `|v| { total := v }` is a unit
+   block that mutates `total`; after a bare `:=` to `=` rewrite the same text builds the record
+   `{ total: v }` and mutates nothing. Where the context expects `()` this is a type error
+   (`expected (), found { total: i64 }`); where the return type is generic, as in
+   `xs.map(|v| { total = v })`, it type-checks and drops the side effect. It also differs by
+   position: `if (c) { total = v }` takes a `block` only and is a parse error. A corpus search
+   of fixtures, the standard library, the spec and RFC examples finds no such tail (consistent
+   with finding 3), so the exposure is user code and the migration rewrite. Resolved in §1
+   (*Tail assignments*): the rule is stated, the rewrite appends `;`, and the hint and fixtures
+   are required. Letting an assignment be a block's tail is rejected: it reopens finding 1.
 
 ---
 
