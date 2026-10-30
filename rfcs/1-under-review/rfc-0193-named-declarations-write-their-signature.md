@@ -7,8 +7,11 @@ updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 ---
 
-> **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1665 (v0.15.0); one open question (migration policy)
+> **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1665 (v0.15.0); migration policy resolved 2026-10-30
 
+> **Prepared for acceptance (2026-10-30).** Open questions resolved (hard cut; the by-value reuse of the
+> suggested closure was checked; independent of RFC-0196); acceptance criteria added.
+>
 > **Revised (2026-10-30).** Review: the rule now covers parameter types as well as the return type, so
 > `named-function-declarations.legality-2` is amended (it was listed as unchanged); the cost of
 > returning closures from named functions is stated; the closure suggestion records a value-semantics
@@ -84,8 +87,7 @@ difference is the kind of declaration the author happens to be writing.
   conservative fix, but it asks a reader to learn a third form of return type for something the
   language already has a place for: the closure.
 - **The language already infers where it is cheap.** A closure's omitted return type is
-  inferred; it generalizes over its parameters (let-polymorphism), and takes open-record
-  parameters. A private helper that wants everything inferred has a spelling.
+  inferred, and so are its parameters. A private helper that wants everything inferred has a spelling.
 
 ### What it costs
 
@@ -166,9 +168,7 @@ when the rewrite keeps the program's meaning, which means the function must sati
 1. **It is private and a free function.** A method has a receiver and belongs to a type; a closure
    cannot replace it. A `public` declaration needs its type written (`T0010`).
 2. **It has no generic parameter list, `where` clause or bounds.** A closure has no generics list, so
-   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007). (A closure does generalize over
-   parameters that are unannotated, and takes an anonymous open record as a parameter; neither
-   needs a list.)
+   it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007; RFC-0197 proposes a binder).
 3. **It does not call itself, directly or through other functions.** A closure cannot refer to its
    own name inside its body (GAP-FUNCTIONS-006), so a recursive function must write its type.
 4. **Every use follows the declaration.** Functions are hoisted and `let` bindings are not: a
@@ -185,10 +185,11 @@ guarantee: a body that depends on some other fact the signature carried can stil
 closure. The rewrite shows the parameter annotations the function wrote, so an error in the
 rewrite points at the same code.
 
-**Value semantics differ from a function.** A closure is a value, not a hoisted item. It may be
-non-`Copy`, so a top-level closure passed by value more than once may move on the first use, where
-the function it replaces could be passed any number of times. The five conditions do not cover
-this, so the suggestion is advice only (Open Question 2).
+**Value semantics.** A closure is a value, not a hoisted item, but the suggestion only applies to a
+module-level function, which captures nothing. The closure it produces is therefore capture-free and
+`Copy` (`closures.legality-20`), and can be passed by value any number of times (checked 2026-10-30
+under `--move-check`; a fixture is required, Open Question 2). A closure that owns a non-`Copy` capture
+moves on its first by-value use, but the suggestion never produces one.
 
 A closure bound at module level is private, as every top-level `let` is. This is why the
 suggestion is limited to private functions: it cannot be offered as a way to export a function
@@ -234,6 +235,12 @@ stated so that it keeps holding. Items 1 and 3 restate `T0010` and constrain a f
 - **Unqualified variant constructors.** A named function body now always has an expected type, its
   written return type or `()`, so `Some { value = a }` resolves when the type is written. A
   closure with no annotation still has none and needs the qualified form.
+- **RFC-0195 (local functions follow the closure capture rules).** A local `fun` is a named declaration
+  and writes its signature like any other; a capturing local function adds a capture list, which is not part of
+  the written signature's types.
+- **RFC-0196 (remove inferred let-polymorphism):** the pair removes inferred polymorphism. This RFC
+  does not depend on it: the closure suggestion applies only to functions with no generics list and typed
+  parameters, so the closure it produces is monomorphic whichever way RFC-0196 is decided.
 - **RFC-0031 and `T0010`.** Unchanged: its three reasons (API stability, local errors, module
   independence) now cover all named declarations, not only exported ones.
 
@@ -273,25 +280,22 @@ Open question below: whether this lands as a hard cut or behind a warning.
 
 ---
 
-## Open questions
+## Open Questions — resolved 2026-10-30
 
-**1. Transition: hard cut or warning window?** The rewrite is mechanical and small, and v0.15.0 is
-already a language-visible release with other renames (`Perhaps` to `Option`). A hard cut with the
-help line above is the simplest. A one-release warning (`omitted return type inferred; write
--> T`) costs a diagnostic and a second code path, and the project has no warning channel (RFC-0187
-notes the same), so a "warning" would be an error with a suggested rewrite anyway. Recommendation:
-hard cut.
-
-**2. Does the closure suggestion survive by-value reuse?** A closure replacing a private function
-may be non-`Copy` and move when passed by value twice (§2). Decide whether a capture-free
-top-level closure is `Copy`, or whether the suggestion needs a sixth condition or a caveat. A
-prototype fixture that passes a replaced helper to two calls settles it.
-
-**3. Do closures keep generalizing?** The closure suggestion leans on a closure's let-polymorphism:
-`|x| x` used at two types. Rust's closures do not generalize (it has no let-polymorphism); Metel's
-do, and the interactions with the move check and qualifier checks have produced bugs
-(metel-core#1688, #1691). If generalization is dropped or restricted, the suggestion shrinks to
-monomorphic closures and nothing else in this RFC changes. To be settled in its own discussion.
+1. **Transition: hard cut or warning window?** *Resolved: hard cut.* The rewrite is mechanical and small
+   (about 22 fixture files for return types, 8 for parameter types, none in the standard library), and
+   v0.15.0 is already a language-visible release with other renames (`Perhaps` to `Option`). The project
+   has no warning channel (RFC-0187 notes the same), so a "warning" would be an error with a suggested
+   rewrite anyway. The help line is the edit.
+2. **Does the closure suggestion survive by-value reuse?** *Resolved: yes, no sixth condition.* The suggestion
+   applies only to a module-level function, which captures nothing; the closure it produces is capture-free and
+   `Copy`. Checked under `--move-check`: a module-level `let triple := |x: i64| -> i64 { x * 3 }` passed by value
+   to two calls and called directly all run. A closure with only `Copy` captures also reuses; only a closure
+   owning a non-`Copy` capture moves, and the suggestion never produces one. A prototype fixture that
+   passes a replaced helper to two calls is an acceptance criterion.
+3. **Do closures keep generalizing?** *Resolved: independent of this RFC.* The suggestion is withheld for any
+   function with a generics list, bounds or a `where` clause and requires typed parameters, so the closure it
+   produces has no type variable to generalize. Whether closures keep generalizing is RFC-0196.
 
 ---
 
@@ -308,6 +312,16 @@ narrowed to local bindings, closure parameters and closure return types, with na
 written (RFC-0196 narrows the let-polymorphism half further). The open-rows text updates the `T0032`
 advice. No new error code is proposed: an omitted return type is `T0001`, an omitted parameter type is
 the existing `T0010`, now for every named declaration; the new messages are help text.
+
+## Acceptance criteria for a prototype
+
+- An unannotated parameter on a private free function, a method and an aspect-method declaration is `T0010`; a
+  `public` one is unchanged.
+- `fun triple(x: i64) { x * 3 }` reports the missing return type with the `-> i64` help and, when the five
+  conditions hold, the closure rewrite; each condition that fails withholds the rewrite (one fixture per condition).
+- A module-level closure produced by the rewrite is passed by value to two calls and called (Open Question 2).
+- `main` resolving to `!` is not reported (the one false positive in the measurement).
+- The fixtures and documentation examples listed under *Migration* are rewritten first.
 
 ## Implementation notes
 

@@ -113,8 +113,8 @@ the first `|`**, after the qualifiers, so it sits next to the parameters it type
 [&var n] once var <T>|x: T| -> T { n += 1; x }
 ```
 
-`fun` writes generics *before* the capture list in RFC-0195's proposal
-(`fun name<T>[caps] once? var? (params)`), so the two orders differ. See Open Question 1.
+`fun` writes generics *before* the capture list (RFC-0195, resolved:
+`fun name<T>[caps] once? var? (params)`), so the two orders differ. See Open Question 1.
 
 ### Diagnostics
 
@@ -181,8 +181,10 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 
 1. **Order against the capture list.** Closure literal: `[caps] once var <T>|…|` (binder next to the
    parameters). `fun` (RFC-0195): `name<T>[caps] once var (…)` (binder next to the name). Make them agree,
-   or accept that each follows its own form. Recommendation: after the qualifiers, and revisit
-   RFC-0195's order so a local function's binder also follows its capture list.
+   or accept that each follows its own form. RFC-0195 resolved (2026-10-30) that a `fun`'s binder
+   precedes its capture list, so the two forms differ unless the closure's binder is moved before the list too
+   (`<T>[caps] once var |…|`, which does not start with a token an expression can begin with today).
+   Recommendation: after the qualifiers, next to the parameters, accepting the difference.
 2. **Scope of the first version.** Type parameters and bounds first, row facts later? The `T0012`
    example needs row facts. Recommendation: include row facts; they are a bound on a row parameter and cost
    nothing extra to parse.

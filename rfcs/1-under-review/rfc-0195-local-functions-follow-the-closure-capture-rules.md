@@ -34,6 +34,9 @@ Today the behaviour is unspecified and inconsistent (metel-core#1708): a non-gen
 silently reads and mutates enclosing locals with no capture list, and a generic one is `I0010`.
 This RFC replaces both with one stated rule.
 
+> **Prepared for acceptance (2026-10-30).** All five open questions are resolved; the rules for a `var` local
+> function and for mutual recursion are added as rules 8 and 9.
+
 This is a design draft. Nothing here is accepted, and the grammar is unchanged until it is.
 
 ---
@@ -113,6 +116,14 @@ references. Module-level items, types and aspects are not free locals (as for cl
    before its declaration**: a use earlier in the block is a compile error naming the first free
    local, where a non-capturing local function remains hoisted. This is the one place a local `fun`
    stops being hoisted.
+8. **A `var` local function.** Writing `var` on the declaration makes the function's name a `var` binding
+   for the purposes of RFC-0153's mutating-callee rule; no further syntax is needed. (The current
+   implementation does not yet require a `var` binding for any closure call; this rule states what the
+   end-state check will require, and adds nothing the closure rules do not.)
+9. **Recursion is self-recursion only.** A capturing local function may call itself and any function
+   declared before it. Two capturing local functions that call each other are an error, because the first
+   would be used before the second's declaration (rule 7); one takes the other as a parameter instead.
+   Non-capturing local functions are hoisted and may be mutually recursive as today.
 
 ### Diagnostics
 
@@ -162,6 +173,9 @@ references. Module-level items, types and aspects are not free locals (as for cl
   RFC-0163 (function-type multiplicity), RFC-0166 (written function types):** reused unchanged.
 - **RFC-0194 (linear closures):** a capturing local function that captures a `Linear` value is linear,
   by the same derivation. Nothing local to this RFC.
+- **RFC-0196 and RFC-0197:** RFC-0196 removes inferred polymorphism from closures; a polymorphic helper that
+  captures state is spelled as a capturing local `fun<T>` (this RFC) or, if RFC-0197 is accepted, a generic closure.
+  They overlap and are compatible; recursion needs this RFC.
 - **RFC-0131 (hoist `let`/`var`):** if accepted, a captured binding is hoisted for name resolution but
   still initialised in order; rule 7 still holds, because the environment is formed at the declaration.
 - **RFC-0193:** see section 2. Together they let a closure suggestion be replaced by a local `fun`
@@ -182,24 +196,21 @@ knows the free locals at the error and can print the list to write.
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-30
 
-1. **Where the list goes.** `fun name<T>[caps] once? var? (params)` follows the closure literal's
-   `[captures] once? var?` order, with the list after the name. Alternative: a leading list,
-   `fun [caps] name(…)`, which mirrors a closure literally. Recommendation: after the name.
-2. **How a `var` local function is called.** A closure that mutates is called through a `var` binding
-   (RFC-0153). A `fun` declaration has no `let`/`var`. Options: the declaration itself introduces the
-   binding as `var` when `var` is written; or require `var fun`. Recommendation: writing the qualifier
-   makes the name a `var` binding.
-3. **Mutual recursion.** Two capturing local functions that call each other: the first is used
-   before the second's declaration. Options: allow a mutually recursive group declared together, one
-   shared environment; or forbid and require one to take the other as a parameter. Recommendation:
-   forbid in this RFC.
-4. **Hoisting.** Rule 7 un-hoists capturing local functions. Alternative: hoist the declaration but
-   reject any call that precedes initialisation of a free local. More permissive, harder to explain.
-   Recommendation: rule 7.
-5. **Should this be done at all (Alternative 1)?** The recursive accumulator is the case that needs
-   it. If it is judged rare enough, Rust's rule plus a clean diagnostic (the #1708 fix) is enough.
+1. **Where the list goes.** *Resolved: after the name and generics.* `fun name<T>[caps] once? var? (params)`:
+   the name stays first, and the list sits next to the qualifiers and parameters in the closure literal's
+   `[captures] once? var?` order. The closure literal's own binder position (`[caps] once var <T>|…|`) is
+   RFC-0197's open question 1; it does not affect this form.
+2. **How a `var` local function is called.** *Resolved: writing `var` makes the name a `var` binding* (rule 8).
+   No `var fun` form. The wording of this question previously said a mutating closure must be called through a
+   `var` binding; that is RFC-0153's end state, not what the implementation enforces today, and rule 8 now says so.
+3. **Mutual recursion.** *Resolved: forbidden between capturing local functions* (rule 9); a later RFC can add
+   declaration groups with a shared environment.
+4. **Hoisting.** *Resolved: a capturing local function is not hoisted* (rule 7). Hoisting with an
+   initialisation check was rejected as harder to explain and as interacting with RFC-0131.
+5. **Should this be done at all?** *Resolved: yes* (language owner, 2026-10-30: local functions follow the same
+   capture rules as closures). Rust's rule (Alternative 1) stays recorded as the considered alternative.
 
 ---
 
@@ -212,6 +223,8 @@ than restating them; the *hoisting* statement gains the capturing-local-function
 
 ## Acceptance criteria for a prototype
 
+- A capturing local function that calls a later capturing local function is the stated error; the same pair, non-capturing, still compiles.
+- A `var` local function mutates its capture when called, and the same body without `var` is `T0028`.
 - The Summary example type-checks with `--move-check` and runs; the same body without `[&var n] var`
   is `T0028`.
 - A generic capturing local function instantiated at two types (the #1708 shape) compiles; none gives `I0010`.
