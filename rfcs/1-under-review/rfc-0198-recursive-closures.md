@@ -12,6 +12,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1667'
 > **Prepared for acceptance (2026-10-30).** All five open questions are resolved. The one cross-RFC dependency is
 > the amendment to RFC-0153 §3a (rule 6), and the guard's removal is tracked in metel-core#1712.
 
+> **Deprioritised (2026-10-30).** The tracker moved out of v0.15.0 to the Records and surface syntax theme; the RFC stays
+> under review. Rust has no recursive closures; a recursive helper that captures state takes the state as a `&var`
+> parameter.
+
 ## Summary
 
 A closure bound with `let rec` may call itself by its own name. The name inside the body refers to the closure

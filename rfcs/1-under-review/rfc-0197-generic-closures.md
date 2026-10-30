@@ -7,8 +7,9 @@ updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1711'
 ---
 
-> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. RFC-0196's acceptance waits on this
-> RFC.
+> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. **Deprioritised (2026-10-30):** RFC-0196
+> no longer waits on this RFC, and its tracker moved out of v0.15.0 to the Records and surface syntax theme. The RFC stays
+> under review. Rust has no generic closures; a generic helper that captures state takes the state as a parameter.
 >
 > **Revived (2026-10-30).** RFC-0195 was reversed: a local `fun` does not capture, so a generic, bounded or
 > row-fact helper that captures state has no spelling except a closure with a binder. That is this RFC. It was
@@ -211,8 +212,8 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 4. **Monomorphization.** *Resolved: not a concern.* Because of question 3 the environment is identical for every
    instantiation, so a monomorphizing backend (metel-core#288) specializes only the body and shares one environment.
    #288 confirms it when it is built.
-5. **Should this land with RFC-0196?** *Resolved: accepted separately, in order.* RFC-0196's acceptance waits on this
-   RFC, which gives a polymorphic helper that captures state its spelling; this RFC does not depend on RFC-0196.
+5. **Should this land with RFC-0196?** *Resolved: accepted separately, in order.* RFC-0196's acceptance does not wait on this
+   RFC (revised 2026-10-30); this RFC does not depend on RFC-0196 either.
 
 ---
 
