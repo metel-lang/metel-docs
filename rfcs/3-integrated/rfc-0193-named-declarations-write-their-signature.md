@@ -2,9 +2,16 @@
 id: rfc-0193
 title: "Named Declarations Write Their Signature"
 date: '2026-10-29'
-status: accepted
+coverage:
+  "1": { spec: "spec.functions.named-function-declarations.legality-2" }
+  "2": { kind: untestable, reason: "compiler help text that is advice only: the checker does not type-check the closure rewrite, so the five conditions state when a suggestion is offered, not a rule a program can exhibit" }
+  "3": { kind: blocked, reason: "the targeted error for `public let` is not implemented yet: today it is a parse error, so no fixture can observe the message that names the fix; the rest of the section restates T0010 (spec.modules.visibility.legality-2, which has fixtures)", ref: "metel-core#1713" }
+  "4": { kind: untestable, reason: "a cross-check against other RFCs; it states no new rule" }
+status: integrated
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1713'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1665 (v0.15.0); migration policy resolved 2026-10-30
@@ -18,6 +25,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 > caveat; the transition recommendation is strengthened; two open questions were added and are now resolved.
 
 > **Status — accepted (2026-10-30).** open questions resolved 2026-10-30
+
+> **Status — integrated (2026-10-30).** spec integrated; implementation tracked in #1713
 
 ## Summary
 
@@ -345,6 +354,36 @@ Implementation detail goes in an ADR at `3-integrated`. The constraints:
 - The closure suggestion is syntactic over the declaration and its uses (conditions 1 to 5); it
   does not run the checker on the rewrite.
 - The fixtures and documentation examples are rewritten before the check is on.
+
+## Integration cross-check (2026-10-30)
+
+Worked against the integrated spec, the implemented RFCs it touches, and the sibling RFCs still under review
+(RFC-0195, RFC-0196, RFC-0197, RFC-0198):
+
+- **`fun triple(x: i64) { x * 3 }`**: `T0001` at the body with the `-> i64` help and, because all five conditions
+  hold (private, typed parameters, no generics, no recursion, used after its declaration, no record extension), the
+  closure rewrite. The rewrite is a module-level closure whose parameters are written, so it satisfies RFC-0196's
+  rule that a module-level closure is determined by its own initializer, and it is capture-free and `Copy`, so it
+  can be passed by value any number of times (checked under `--move-check`).
+- **`fun identity(x) { x }`** (used at several types): `T0010` on the parameter, help `fun id<T>(x: T) -> T`. No
+  closure is offered, so the advice never leads to RFC-0196's one-type mismatch; there is no ping-pong between the
+  two diagnostics.
+- **A method or aspect-method declaration with no return type** returns `()`, as before; the free-function and
+  method paths now agree, which is the inconsistency the RFC was opened for.
+- **`public fun`**: still requires its return type written (`T0010`, `modules.visibility.legality-2`), including `()`;
+  a private function may omit it. The asymmetry is existing behaviour and is kept.
+- **`native` functions** are unchanged (ADR-0039).
+- **RFC-0195**: a local `fun` is a named declaration and writes its signature; it does not capture, so the
+  closure rewrite never moves a capturing body into a `fun`.
+- **RFC-0197 / RFC-0198**: condition 2 (no generics list) and condition 3 (no recursion) of the suggestion stay until
+  those RFCs are accepted; a generic binder or `let rec` would widen the suggestion.
+- **RFC-0173 D1, RFC-0031**: unaffected; RFC-0031's three reasons for `T0010` now cover all named declarations.
+- **Known discrepancy, tracked**: the rule text states the design, while the checker still infers; the fixtures that test
+  inference of a named signature cite `legality-2` and pass today. This is `LIMIT-TYPE-INFERENCE-013` (#1713); the
+  implementation change rewrites them. The spec's `types.md` example `add_inferred(a, b)` keeps the old spelling for
+  the same reason.
+
+No contradiction with the integrated spec or the sibling RFCs was found.
 
 ## References
 
