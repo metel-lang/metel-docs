@@ -1938,7 +1938,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0180](../../rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md)_</span>
@@ -2028,7 +2028,7 @@ callee needs drop dispatch against a narrowed residual (RFC-0137 §5, #949), whi
 implemented, so passing it to an open-row parameter is rejected with `T0036`. A plain record
 that only *contains* a `Drop` value is unaffected.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0179](../../rfcs/4-implemented/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md)_</span>
