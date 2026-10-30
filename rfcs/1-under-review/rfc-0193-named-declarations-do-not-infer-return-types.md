@@ -298,17 +298,24 @@ monomorphic closures and nothing else in this RFC changes. To be settled in its 
 ## Specification impact
 
 Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Named Function
-Declarations* (`dynamics-1` now correct; a legality rule that a named declaration does not infer
-its return type), *Closures* (inference unchanged; the known limit that a stand-alone closure
+Declarations* (`dynamics-1` now correct; `legality-2` rewritten so a named declaration writes every
+parameter's type and its return type, or returns `()`), *Closures* (inference unchanged; the known limit that a stand-alone closure
 cannot name a row parameter in a written return annotation). `reference/spec/modules.md`
 visibility: the targeted error for `public let`, and the written-function-type rule (§3).
-`reference/spec/types.md` (open rows) updates the `T0032` advice. No new error code is proposed:
-the omission is `T0001`; the new messages are help text.
+`reference/spec/types.md`: *Type Inference* (GAP-TYPES-001) says "Hindley-Milner with let-polymorphism.
+Annotations are optional for all bindings, including function parameters and return types"; it is
+narrowed to local bindings, closure parameters and closure return types, with named declarations
+written (RFC-0196 narrows the let-polymorphism half further). The open-rows text updates the `T0032`
+advice. No new error code is proposed: an omitted return type is `T0001`, an omitted parameter type is
+the existing `T0010`, now for every named declaration; the new messages are help text.
 
 ## Implementation notes
 
 Implementation detail goes in an ADR at `3-integrated`. The constraints:
 
+- Checker, parameters: an unannotated parameter on a named declaration is `T0010` at every declaration
+  kind (today only `public` ones). The fresh-variable path that gives a private free function's
+  unannotated parameters a type variable is removed with the return-type one; closures keep it.
 - Checker: absent return type means the unit type at every declaration kind, in `registry.rs`, the
   function-signature path and the method path; the fresh-variable path for private free functions
   is removed. The function and method paths then share one rule.
