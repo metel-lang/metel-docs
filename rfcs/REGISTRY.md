@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**194 RFCs total.** 29 draft, 49 under review, 9 accepted, 4 integrated (91 live), 74 implemented, 15 superseded, 14 refused (103 settled).
+**195 RFCs total.** 30 draft, 49 under review, 9 accepted, 4 integrated (92 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
-## Draft (29)
+## Draft (30)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -46,6 +46,7 @@ the curated thematic map.
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
 - **RFC-0195** — Local Functions Follow the Closure Capture Rules (`0-draft` ; rfcs/0-draft/rfc-0195-local-functions-follow-the-closure-capture-rules.md ; date 2026-10-30)
+- **RFC-0196** — Remove Inferred Let-Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30)
 
 ## Under Review (49)
 
