@@ -1,6 +1,6 @@
 ---
 id: rfc-0193
-title: "Named Declarations Do Not Infer Their Return Type"
+title: "Named Declarations Write Their Signature"
 date: '2026-10-29'
 status: under-review
 updated: '2026-10-30'
