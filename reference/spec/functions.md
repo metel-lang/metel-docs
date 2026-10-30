@@ -12,8 +12,6 @@ fun main() -> i64 {
 
 ## Named Function Declarations
 
-> **Limitation** LIMIT-TYPE-INFERENCE-013
-
 [Every parameter of a named function is written with its type](#spec.functions.named-function-declarations.legality-2) (a receiver excepted), and the checker never infers a named declaration's signature from its body or its callers. The return type follows `->`; [a function with no return annotation and no `return expr;` returns `()`](#spec.functions.named-function-declarations.dynamics-1). `return expr;` and bare `return;` are both valid. A closure, by contrast, infers its parameter and return types ([Closures](#closures)).
 
 A body whose value is not `()` under a signature with no `->` is an ordinary type mismatch, [T0001](../error-codes.md#t0001--type-mismatch), whose help line names the fix: write `-> T`, or, for a private function that captures nothing, calls no other function recursively and needs no generics, bind a closure instead.
@@ -50,7 +48,7 @@ closure's parameter and return types are not subject to this rule.
 <!-- rfc.py:last_reviewed bcb923c94347470c02ab6b0d6b1dac44f923fad4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/3-integrated/rfc-0193-named-declarations-write-their-signature.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

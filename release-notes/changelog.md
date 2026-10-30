@@ -18,6 +18,17 @@ title: "Metel Language Changelog"
   types and module-level bindings are still visible, and local functions are still hoisted. A body that
   captures state is a closure: `let bump := [&var n] var || { n += 1; };`. A nested function can no longer
   reach the enclosing function's type parameters, as before, with a clearer message.
+- A named function, method or local function writes its signature (RFC-0193, `metel-core#1713`). A parameter
+  with no type is `T0010`, as it already was on a `public` function: "parameter `x` of `identity` has no type;
+  write `x: <Type>`, or, if it is used at several types, make `identity` generic". An omitted return type means
+  `()` at every declaration kind (a private free function used to infer it from its body), so a non-unit body is
+  `T0001`: "`triple` has no return type, so it returns `()`, but its body evaluates to `i64`", with `-> i64` as the
+  help and, for a private function with typed parameters that needs no generics, calls nothing recursively and is
+  only used after its declaration, the equivalent closure (`let triple := |x: i64| { x * 3 };`). Closures are
+  unchanged and still infer their parameter and return types. `public let` and `public var` are rejected with a
+  message that names the fix (write a `public fun`). The `T0032` advice no longer suggests omitting a return
+  type. The standard library needed no change; in the repository, 24 fixtures and two documentation examples
+  were rewritten.
 - The `row` generic-parameter kind and the field-wise constraint keyword `all` are removed
   (RFC-0186, `metel-core#1644`, `metel-core#1653`). A parameter that stands for a record, or for the
   rest of one, is declared `record R`; `..R` is still how its row is written (a record tail, a row

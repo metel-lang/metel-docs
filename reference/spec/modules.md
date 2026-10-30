@@ -785,15 +785,11 @@ that names the fix, writing a `public fun` with its parameter and return types. 
 by a top-level `let` is therefore never part of a module's public API, and no inferred type
 crosses a module boundary.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1713" reason="RFC-0193: today `public let` is a parse error; the targeted message that names the fix is not implemented yet (implementation issue #1713)." -->
+<!-- rfc.py:last_reviewed a6bb8459f32bfa0c8037030c5e833b151eebda81 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/3-integrated/rfc-0193-named-declarations-write-their-signature.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md)_</span>
 <!-- rfc.py:origins:end -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1713: RFC-0193: today `public let` is a parse error; the targeted message that names the fix is not implemented yet (implementation issue #1713)._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 

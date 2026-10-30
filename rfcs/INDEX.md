@@ -1479,7 +1479,7 @@ implementation).
 - **RFC-0192** *(under-review 2026-10-29, #1664; opened 2026-10-29)* — Explicit type arguments for record parameters —
   a turbofish argument for `record R` is the record `R` (the remainder `..R` splices), pinned in declaration order alongside
   ordinary parameters. Amends RFC-0023's turbofish rule and closes GAP-FUNCTIONS-005 on implementation. `_` placeholders out of scope.
-- **RFC-0193** *(integrated 2026-10-30, #1665, impl #1713; opened 2026-10-29)* — Named declarations write their signature — every parameter
+- **RFC-0193** *(implemented 2026-10-30, #1665, impl #1713; opened 2026-10-29)* — Named declarations write their signature — every parameter
   type is written and an omitted return type means `()` for every named declaration (free functions, methods, aspect-method declarations); there is no
   inference marker. For a private free function the compiler suggests a `let`-bound closure when it applies (not generic,
   recursive, used before its declaration, or extending a parameter's record). Function values in public signatures are written;

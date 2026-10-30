@@ -5,9 +5,7 @@ summary: "A private free function infers its parameter and return types from its
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#1544 (the measurement behind RFC-0193)"
-disposition: planned
-tracked_by: metel-core#1713
-rfc: RFC-0193
+disposition: resolved
 review: null
 ---
 
@@ -44,4 +42,4 @@ asks for a targeted message that names the fix.
 
 ## Resolution
 
-Planned: tracked as metel-core#1713 (RFC-0193).
+Resolved by RFC-0193 (`4-implemented`): a parameter of a named function or method with no type is `T0010`; an omitted return type means `()` at every declaration kind, so a non-unit body is a `T0001` that names the omitted annotation; `public let` is a targeted parse error. Evidence: `evaluator/functions/v0_15_0_neg_named_function_no_return_type_offers_closure`, `v0_15_0_neg_named_function_no_return_type_names_the_type`, `v0_15_0_neg_named_function_literal_body_no_return_type`, `v0_15_0_neg_method_no_return_type`, `v0_15_0_neg_named_function_unannotated_parameter`, `v0_15_0_neg_method_unannotated_parameter`, `v0_15_0_neg_public_let_is_not_valid` and the positive `v0_15_0_named_function_signature_written_or_unit`.
