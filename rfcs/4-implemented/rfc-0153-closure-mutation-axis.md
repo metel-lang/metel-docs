@@ -303,6 +303,11 @@ across the call, and **two `mutating` calls on the same place cannot overlap**.
 
 ### 3a. Reentrancy
 
+> **Amended 2026-10-30.** The in-call flag below is interim. It is removed when RFC-0122 is default-on and
+> rejects both reentrancy forms statically (metel-core#1712); the text that kept it "as a defence-in-depth
+> backstop" is reversed. A direct self-call of a closure bound with `let rec` (RFC-0198) is a reborrow, not
+> reentrancy, and is exempt from the flag while it exists.
+
 A second `mutating` call reached from *inside* a still-live one re-enters
 the exclusive borrow. RFC-0122 rejects **every** form statically (`T0020`-shaped "already
 borrowed exclusively"). Before RFC-0122, v0.13.0 splits into two cases:
@@ -317,8 +322,8 @@ borrowed exclusively"). Before RFC-0122, v0.13.0 splits into two cases:
   process-terminating error (`"re-entrant call to a mutating closure"`) — the same
   uncatchable class as a failed `assert` (`spec/runtime.md`), chosen deliberately as the
   pre-RFC-0122 reject mechanism. One bit per closure value, one branch per
-  `mutating` call — the `RefCell`-style guard. Kept after RFC-0122 lands as a
-  defence-in-depth backstop (in a `--borrow-check`-clean program it can never fire).
+  `mutating` call — the `RefCell`-style guard. Removed after RFC-0122
+  lands and is default-on (metel-core#1712): in a `--borrow-check`-clean program it can never fire.
 - **Distinct closure values aliasing one place** — two different `mutating` closures, or a
   `Copy` closure and its copy, each holding `[&var x]` to the same `x`; one calls the
   other while its own call is live, so both mutate `x` at once. The in-call flag is

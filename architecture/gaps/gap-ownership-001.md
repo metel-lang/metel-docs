@@ -105,7 +105,7 @@ type system claims about `local`'s own scope.
 The one place exclusivity is enforced today is dynamic and narrow: a second
 `mutating` call on the same closure value while the first is still running is a
 runtime error (`R0015`), which `spec.functions.closures.dynamics-9` states as the
-interim rule until the borrow checker lands. It follows one closure value's own
+interim rule until the borrow checker lands; its removal is tracked in metel-core#1712. It follows one closure value's own
 in-call flag, so it does not catch two different closure values that capture the
 same place by `&var` (the aliased-capture case left open by RFC-0050).
 
