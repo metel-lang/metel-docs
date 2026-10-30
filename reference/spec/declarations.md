@@ -151,7 +151,7 @@ satisfy every bound stated by that implementation.
 Conditional implementation bounds are checked whenever the aspect is required, including
 method dispatch, bound satisfaction, and implementation selection.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -546,7 +546,7 @@ Function declarations are visible throughout their containing block regardless o
 order, including to other functions in that block; this hoisting does not extend out of an
 inner block.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -3502,7 +3502,7 @@ implementations of the negated aspect.
 A generic type parameter does not satisfy a negative bound unless that bound is stated
 and its eventual instantiation satisfies it.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
@@ -3550,7 +3550,7 @@ implement `Drop`.
 Negative bounds are permitted in `where` clauses and are equivalent there to inline
 negative bounds.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
