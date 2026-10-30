@@ -96,7 +96,7 @@ the curated thematic map.
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0191** — One-Field Record Update (`1-under-review` ; rfcs/1-under-review/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-10-29)
-- **RFC-0193** — Named Declarations Do Not Infer Their Return Type (`1-under-review` ; rfcs/1-under-review/rfc-0193-named-declarations-do-not-infer-return-types.md ; date 2026-10-29 ; updated 2026-10-30)
+- **RFC-0193** — Named Declarations Write Their Signature (`1-under-review` ; rfcs/1-under-review/rfc-0193-named-declarations-write-their-signature.md ; date 2026-10-29 ; updated 2026-10-30)
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0195** — Local Functions Follow the Closure Capture Rules (`1-under-review` ; rfcs/1-under-review/rfc-0195-local-functions-follow-the-closure-capture-rules.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0196** — Remove Inferred Let-Polymorphism (`1-under-review` ; rfcs/1-under-review/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30)
