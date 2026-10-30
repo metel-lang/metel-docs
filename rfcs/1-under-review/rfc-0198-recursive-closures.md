@@ -84,7 +84,8 @@ declares the variable first (`var f func(int) int; f = func…`). C++23 gives a 
    name its own `let` binding, so never directly". A direct self-call through the `rec` name is not reentrancy
    through an alias; it is a reborrow, sound for the same reason a `&var self` method may call itself. The guard
    keeps catching reentrancy through any other path (a stored handler, an aliasing `&var` binding), and RFC-0122
-   rejects those statically.
+   rejects those statically. The guard itself is scheduled for removal once RFC-0122 is default-on
+   (metel-core#1712), at which point this exemption is moot.
 7. **No mutual recursion.** `let rec a := …` cannot refer to a later `b`. Two closures that call each other pass
    one to the other as a parameter. (A declaration group is a later RFC.)
 

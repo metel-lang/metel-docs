@@ -88,7 +88,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/847'
 > `T[]` `Copy`-view interaction (§2b.6). §2b.1 is already dissolved by §2.2's move to NLL.
 > **On implementation, §2e's interim rules (RFC-0071 §9 Q5, RFC-0050 RQ1/RQ3, RFC-0153
 > §3's static half) are torn down and their deferred fixtures added; RFC-0153's runtime
-> in-call flag is kept.**
+> in-call flag is removed once the check is default-on (metel-core#1712).**
 >
 > **Tracking and implementation ownership:** metel-core#847 carries design settlement
 > and the opt-in implementation checklist. Reaching acceptance/integration remains a
@@ -637,7 +637,7 @@ Enforcement in v0.13.0 varies: most entries are unenforced at runtime (the evalu
 still deep-clones, §2 question 4); one — **same-closure-value** reentrancy, item 3 — is
 enforced by a runtime flag and is *not* in the gap. Landing `--borrow-check` **must**
 remove each stopgap's own front-end check and let the general rule take over (the runtime
-flag stays as defence-in-depth).
+flag is removed too, once the check is default-on and its fixtures pass; metel-core#1712).
 
 ### 1. `&var T` reborrow-in-argument-position — RFC-0071 §9 question 5 *(shipped v0.12.0)*
 
@@ -688,15 +688,18 @@ rule is stated in RFC-0153 §3 and matched by §2f below. Two v0.13.0 stopgaps:
   "Common shape" above: the interim rule never rejects what §2f accepts (no false
   positives), but it *does* accept some programs §2f rejects — those become `T0020` on
   landing. Deleted on landing.
-- **Runtime in-call flag (not a stopgap — permanent).** Every `mutating` closure value
+- **Runtime in-call flag (interim — removed once this RFC is default-on, metel-core#1712).** Every `mutating` closure value
   carries a one-bit "in-call" flag, set on entry to a `mutating` call, checked on entry,
   cleared on exit/unwind; a reentrant call panics. It enforces **same-closure-value**
   reentrancy only — that case is **not** in the "accepted-but-ill-formed" gap. It does
   **not** catch *aliased-capture* reentrancy (two distinct `mutating` closures, or a
   `Copy` closure and its copy, each holding `[&var x]` to one `x`, one calling the other
   mid-call) — that is **in the gap**, the same unenforced `[&var x]` freeze as item 2,
-  and this RFC closes it statically (§2f). The flag is **kept** after this RFC lands as
-  defence-in-depth.
+  and this RFC closes it statically (§2f). The flag is **removed** when this RFC is
+  default-on and the fixtures that expect `R0015` today pass as static `T0020`: the static rule
+  rejects both forms (§2f item 3), so the flag has nothing left to catch and costs a bit and a
+  branch per `mutating` call. Until then it stays. Earlier text called it permanent
+  defence-in-depth; that is reversed (2026-10-30).
 
 ### 4. `mutating` closure is `!Sync` — RFC-0153 §3 *(rule owned by RFC-0153 now; migrates to RFC-0096)*
 
