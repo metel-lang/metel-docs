@@ -9,6 +9,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1710 (v0.15.0)
 
+> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. Acceptance follows RFC-0193 and
+> RFC-0195.
+>
 > **Revised (2026-10-30).** Review: adds the ownership-checking evidence (a generalized closure is rejected
 > by `--move-check` where the monomorphic one passes), the module-level closure rule, a corrected backend
 > note, the future-checks risk, a precise precedent, the rejected restrictions, and one open question.
@@ -210,20 +213,29 @@ and documentation examples is not measured; see below.
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-30
 
-1. **Keep references to generic functions generalized?** Recommendation: yes (Alternative 3).
-2. **Keep written open-record closures row-polymorphic?** Recommendation: yes.
-3. **Order with RFC-0193 and RFC-0195.** RFC-0193 and this RFC are independent and could land in one
-   release. A polymorphic helper that captures state needs RFC-0195; if that is rejected, this RFC
-   removes a form that has no replacement for that case. Decide whether this RFC waits for RFC-0195's
-   outcome.
-4. **Which references count as "already-generic function"?** Rule 1 names a bare identifier
-   (`let f := identity;`). Whether a qualified path (`m::identity`) or an associated function
-   (`Type::new`) counts is unspecified, and untested. Recommendation: any path expression that names a
-   generic function, since the scheme comes from its declaration, not from inference.
-5. **Hard cut or a window.** There is no warning channel (RFC-0187 notes the same). Recommendation: hard
-   cut with the targeted diagnostic.
+1. **Keep references to generic functions generalized?** *Resolved: keep.* The polymorphism comes from the
+   `<T>` the function's author wrote, not from inference, and it is already specified and implemented
+   (`first-class-functions.legality-2`, RFC-0138, metel-core#736). Removing it would pin the alias to its
+   first use and narrow an implemented RFC for no checker gain.
+2. **Keep written open-record closures row-polymorphic?** *Resolved: keep.* The row variable is the user's
+   own `..`, so it passes the test "only what is written quantifies", and it is the only way a closure
+   accepts records of different shapes (metel-core#1478). The body is checked once and states no bound it
+   cannot state, so it does not have the `dup` problem.
+3. **When is this RFC accepted?** *Resolved: after RFC-0193 and RFC-0195.* A polymorphic helper that
+   captures state is the one case with no spelling once inferred generalization is gone; RFC-0195
+   (capturing local functions) provides it. RFC-0197 (generic closures) follows independently and is not a
+   precondition.
+4. **Which references count as an "already-generic function"?** *Resolved: exactly what the spec already
+   allows; this RFC neither widens nor narrows it.* `first-class-functions.legality-2` admits a generic
+   function bound with a bare unannotated `let`. Checked 2026-10-30: an imported generic function
+   referenced as a value is `T0003` ("not yet a first-class value", RFC-0138), and an associated function
+   (`let m := Box::make;`) is monomorphic. Extending first-class references to paths is RFC-0138's
+   matter, not this RFC's.
+5. **Hard cut or a window.** *Resolved: hard cut.* There is no warning channel (RFC-0187 notes the same), so a
+   window would be an error with a different message. The diagnostic names the first use and prints the
+   generic function, as RFC-0193 does for signatures.
 
 ---
 
