@@ -2919,7 +2919,7 @@ fun main() -> i64 {
 `None` is the empty variant of `Option<T>` and is valid only where the expected type
 determines `T`; `Option::None` is valid wherever the qualified variant is named.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md), [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
