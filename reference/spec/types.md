@@ -1408,11 +1408,16 @@ concrete type, or with another declared parameter, in any other way is a type er
 (`T0001`) at the definition. The declared bounds state equalities in exactly two places:
 a row equation (`where R = { label: Type, ..Rest }`, in which `Rest` is derived from `R`
 and lacks the named labels, so `R` never equals `Rest`) and an associated-type binding
-(`T: Iterable<Item = X>` makes `T::Item` equal to `X`). A closure or nested generic
-function inside the body sees the enclosing parameters as rigid; a recursive generic call
+(`T: Iterable<Item = X>` makes `T::Item` equal to `X`). A closure inside the body
+sees the enclosing parameters as rigid; a nested function does not see them and declares its own
+([Functions — Local Functions](functions.md#local-functions)); a recursive generic call
 instantiates the callee's parameters afresh.
 
 <!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/3-integrated/rfc-0195-local-functions-do-not-capture.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

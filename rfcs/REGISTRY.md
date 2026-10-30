@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**197 RFCs total.** 28 draft, 51 under review, 10 accepted, 5 integrated (94 live), 74 implemented, 15 superseded, 14 refused (103 settled).
+**197 RFCs total.** 28 draft, 51 under review, 9 accepted, 6 integrated (94 live), 74 implemented, 15 superseded, 14 refused (103 settled).
 
 ## Draft (28)
 
@@ -100,7 +100,7 @@ the curated thematic map.
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 
-## Accepted (10)
+## Accepted (9)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -111,15 +111,15 @@ the curated thematic map.
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
-- **RFC-0195** — Local Functions Do Not Capture (`2-accepted` ; rfcs/2-accepted/rfc-0195-local-functions-do-not-capture.md ; date 2026-10-30 ; updated 2026-10-30)
 
-## Integrated (5)
+## Integrated (6)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-07-26 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0177** — Coercion-Aware Structural Aspect Lookup (`3-integrated` ; rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md ; date 2026-10-06 ; updated 2026-10-06 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1296)
 - **RFC-0181** — Anonymous open rows in return and function types (`3-integrated` ; rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-10-20 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1480)
 - **RFC-0193** — Named Declarations Write Their Signature (`3-integrated` ; rfcs/3-integrated/rfc-0193-named-declarations-write-their-signature.md ; date 2026-10-29 ; updated 2026-10-30 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1713)
+- **RFC-0195** — Local Functions Do Not Capture (`3-integrated` ; rfcs/3-integrated/rfc-0195-local-functions-do-not-capture.md ; date 2026-10-30 ; updated 2026-10-30 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1714)
 
 ## Implemented (74)
 

@@ -267,6 +267,8 @@ Naming `Perhaps`, the former name of the optional type, where nothing declares i
 
 **Fix:** define the variable or function before use, or correct the spelling.
 
+A local `fun` that names a local of its enclosing function (a parameter, a `let` or `var`, `self`, or a closure's capture) is also this code, because a local function is an item and does not capture (RFC-0195): "`bump` is a function and cannot use `n`, a local of `main`", with the two fixes, binding a closure (the rewrite with its capture list) or passing the value as a parameter. Using the enclosing function's type parameter gets "`T` is a type parameter of `outer`; declare `<T>` on `inner`".
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (62)</summary>
