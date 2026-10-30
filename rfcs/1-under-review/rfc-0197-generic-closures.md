@@ -7,6 +7,9 @@ updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1711'
 ---
 
+> **Prepared for acceptance (2026-10-30).** All five open questions are resolved. RFC-0196's acceptance waits on this
+> RFC.
+>
 > **Revived (2026-10-30).** RFC-0195 was reversed: a local `fun` does not capture, so a generic, bounded or
 > row-fact helper that captures state has no spelling except a closure with a binder. That is this RFC. It was
 > deferred earlier the same day on the opposite premise (that a capturing local `fun` covered the case).
@@ -115,7 +118,7 @@ closure_expr = { generic_params? capture_list? once_kw? var_kw? "|" param_list? 
    (RFC-0192 covers named record parameters).
 6. **Evaluation.** One closure value, one environment, one body: instantiation is a typing
    operation. A monomorphizing backend specializes the body per instantiation and shares the
-   environment (see Open Questions).
+   environment, which is identical for every instantiation (rule 3).
 
 ### Where the binder goes
 
@@ -192,20 +195,24 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 
 ---
 
-## Open Questions
+## Open Questions — resolved 2026-10-30
 
-1. **Order against the capture list.** *Resolved (2026-10-30): binder first*, `<T>[caps] once var |…|`:
-   generics, captures, qualifiers, parameters. A leading `<` cannot start an expression today, so the
-   parse is unambiguous.
-2. **Scope of the first version.** Type parameters and bounds first, row facts later? The `T0012`
-   example needs row facts. Recommendation: include row facts; they are a bound on a row parameter and cost
-   nothing extra to parse.
-3. **Captures that mention binder variables** (rule 3): reject, as proposed, or allow a capture whose type is
-   the enclosing function's parameter only. Recommendation: as proposed.
-4. **Monomorphization.** One environment shared across instantiations of one body is the hard part of the
-   backend (metel-core#288). Confirm it before acceptance.
-5. **Should this land with RFC-0196?** RFC-0196 leaves a polymorphic helper that needs a bound as a `fun`;
-   this RFC would give it a closure spelling. They can be accepted separately.
+1. **Order against the capture list.** *Resolved: binder first*, `<T>[caps] once var |…|`: generics, captures,
+   qualifiers, parameters. A leading `<` cannot start an expression today, so the parse is unambiguous.
+2. **Scope of the first version.** *Resolved: type parameters, bounds, `where` clauses and row facts together.* The
+   `T0012` row-extension case that motivated GAP-FUNCTIONS-007 needs the row fact. A row parameter and its bound use
+   the `generic_params` and `where_clause` grammar a `fun` already has (RFC-0121, RFC-0178, RFC-0186), so splitting
+   them off would mean parsing the full grammar and rejecting part of it.
+3. **Captures that mention binder variables.** *Resolved: rejected, and this is a forced rule, not a choice* (rule 3).
+   The environment is built once, before any instantiation of the binder, so a capture typed by the closure's own binder
+   variable would have no single type. It is the rule behind metel-core#1688: a quantified variable cannot occur in the
+   environment. A capture whose type mentions a type parameter of the *enclosing* function is allowed, where that
+   parameter is rigid.
+4. **Monomorphization.** *Resolved: not a concern.* Because of question 3 the environment is identical for every
+   instantiation, so a monomorphizing backend (metel-core#288) specializes only the body and shares one environment.
+   #288 confirms it when it is built.
+5. **Should this land with RFC-0196?** *Resolved: accepted separately, in order.* RFC-0196's acceptance waits on this
+   RFC, which gives a polymorphic helper that captures state its spelling; this RFC does not depend on RFC-0196.
 
 ---
 
