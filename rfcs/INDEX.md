@@ -1487,10 +1487,10 @@ implementation).
 - **RFC-0194** *(under-review 2026-10-29, #1670; opened 2026-10-29)* — Linear closures and captures — a closure that captures a
   `Linear` value (RFC-0089) is itself linear: called exactly once, never dropped, body consumes the capture. Derived from the
   captures like `Copy`; no new syntax or type. Supersedes RFC-0049. Open: how "must-call" is written in a function type (with RFC-0163).
-- **RFC-0195** *(draft 2026-10-30; opened 2026-10-30)* — Local functions follow the closure capture rules — a `fun` declared in a body may reference
+- **RFC-0195** *(under-review 2026-10-30, #1709; opened 2026-10-30)* — Local functions follow the closure capture rules — a `fun` declared in a body may reference
   the enclosing function's locals under the closure capture-list, `Copy`/move, `once` and `var` rules; a capturing local function is not hoisted.
   Today's behaviour is unspecified (#1708). Open: where the list goes, how a `var` local function is called, mutual recursion, and whether to forbid capture instead (Rust).
-- **RFC-0196** *(draft 2026-10-30; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
+- **RFC-0196** *(under-review 2026-10-30, #1710; opened 2026-10-30)* — Remove inferred let-polymorphism — an unannotated `let`-bound closure has one type; inference never
   invents type parameters. Kept: references to already-generic functions and written open-record closures. With RFC-0193, polymorphism is always written or declared.
   Open: keep the two forms (recommended), sequencing with RFC-0195 (capturing polymorphic helpers).
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
