@@ -2,7 +2,7 @@
 id: rfc-0193
 title: "Named Declarations Write Their Signature"
 date: '2026-10-29'
-status: under-review
+status: accepted
 updated: '2026-10-30'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 ---
@@ -16,6 +16,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1665'
 > `named-function-declarations.legality-2` is amended (it was listed as unchanged); the cost of
 > returning closures from named functions is stated; the closure suggestion records a value-semantics
 > caveat; the transition recommendation is strengthened; two open questions were added and are now resolved.
+
+> **Status — accepted (2026-10-30).** open questions resolved 2026-10-30
 
 ## Summary
 
