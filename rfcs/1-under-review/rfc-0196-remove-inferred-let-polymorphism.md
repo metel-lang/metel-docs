@@ -9,6 +9,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1710'
 
 > **Status — under review (2026-10-30).** design drafted; tracked by metel-core#1710 (v0.15.0)
 
+> **Revised (2026-10-30).** Review: adds the ownership-checking evidence (a generalized closure is rejected
+> by `--move-check` where the monomorphic one passes), the module-level closure rule, a corrected backend
+> note, the future-checks risk, a precise precedent, the rejected restrictions, and one open question.
+
 ## Summary
 
 An unannotated `let`-bound closure has **one type**. Inference no longer turns its unresolved type
@@ -55,6 +59,8 @@ Measured against the fixtures and spec, not against real programs:
   Only **unconstrained** polymorphism is reachable, because a closure cannot name a bound or a row fact
   (GAP-FUNCTIONS-007), and it cannot recurse (GAP-FUNCTIONS-006).
 - Every case has a `fun f<T>` spelling. Nothing is expressible *only* through generalization.
+- **Only pass-through and consume-once helpers survive ownership checking** (next section). The ergonomic
+  benefit is therefore smaller than the unchecked examples suggest.
 - The fixtures that exercise it are tests of the feature (`generics/52_let_polymorphism`,
   `limit_02_let_closure_mono`, `move_check/abstract_let_polymorphic_closure`, and two added for #1688).
   The standard library and the website showcases were not measured for use of this feature; the
@@ -72,14 +78,30 @@ Measured against the fixtures and spec, not against real programs:
   (#1684, #1700).
 - **An explanation burden.** `let id := |x| x` is polymorphic and `let v := Vec::new()` is not. The
   rule is a syntactic one (closure literal or generic-function reference), not a typing one.
-- **A forward cost.** A monomorphizing backend (metel-core#288) would specialize one closure value's body
-  per use type while sharing its environment. A monomorphic closure has one body and one environment.
+- **Ownership checking rejects what monomorphism accepts.** `let dup := |x| { (x, x) };` used only at `i64`
+  runs, and `--move-check` rejects it with `T0019` (`x` moved): generalization makes `x` an unbounded `T`, which is
+  non-`Copy` for every instantiation, and a closure cannot write `T: Copy` (GAP-FUNCTIONS-007). The same closure
+  annotated `|x: i64|` passes, and so does `fun dup<T: Copy>`. With borrow checking on by default (RFC-0122), this
+  is the normal behaviour, not an opt-in corner: an inferred-polymorphic closure is checked as a generic body
+  that cannot state a bound.
+- **Risk to future checks.** The borrow checker (RFC-0122), abstract regions (RFC-0159), effect rows (RFC-0140)
+  and linear closures (RFC-0194) each quantify variables. An implicitly generalized closure would need a rule
+  for each: is it polymorphic in its regions, its effect row, its multiplicity? This is a design risk, not a
+  known failure. No mainstream language combines ownership checking with inferred let-polymorphism for closures.
+- **Not a cost: the backend.** A quantified variable cannot occur in the type of anything a closure captures
+  (the environment rule behind #1688), so the environment does not vary with the instantiation. A monomorphizing
+  backend (metel-core#288) specializes the body and shares the environment, which is not hard. This RFC does
+  not rest on it.
 
 ### Precedent
 
 Rust has no let-polymorphism for any value. A closure has one signature (a unique anonymous type
 implementing `Fn*` once) and is inferred in a forward pass with expected types. Rust reaches the same
-uses with generic `fn` items, which can be nested.
+uses with generic `fn` items, which can be nested. Swift's closures cannot be generic (its local functions
+can), and Scala 3's polymorphic function literals name their type variable (`[T] => (x: T) => x`). The
+ML family generalizes `let`-bound functions, and GHC turns that off (`MonoLocalBinds`) when GADTs or type
+families are enabled, because it interacts badly with local constraints. The precedent splits along the
+languages that have rich constraints or ownership and those that do not; it is evidence of risk, not proof.
 
 ---
 
@@ -101,6 +123,17 @@ Generalization is kept, unchanged, for the two forms whose polymorphism is not i
 So the test for quantification is **where the variable came from**: a written parameter, a written `..`,
 or a generic declaration quantify; a type variable created by inference does not.
 
+### Module-level closures
+
+A closure bound by a top-level `let` must be **fully determined by its own initializer**: its parameter and
+return types are written or follow from its body. Otherwise the `let` is an error, "the type of `id` is not
+determined by its initializer; annotate its parameters". Without this rule a module-level monomorphic closure
+would take its type from whichever function the checker reaches first, a signature read off other
+declarations, which RFC-0193 removes for named declarations. Today a top-level `let id := |x| x;` is
+generalized and works at `i64` in one function and `boolean` in another; an unused one is accepted. Local
+`let`s are unaffected: their inference never leaves the body that contains them. The closures RFC-0193
+suggests in place of a function are annotated, so they satisfy the rule.
+
 ### Diagnostics
 
 | situation | message |
@@ -108,6 +141,7 @@ or a generic declaration quantify; a type variable created by inference does not
 | a monomorphic closure used at a second type | the mismatch, and `` `id` has one type, `(i64) -> i64`, fixed by its first use `` with the first use's span |
 | as above, and the closure form is unconstrained | adds the written generic function (`fun id<T>(x: T) -> T { x }`), only when the closure does not capture (rule below) |
 | a closure parameter nothing determines | unchanged (`unannotated_closure_param_nothing_determines_it`) |
+| a top-level `let` closure whose type its initializer does not determine | the module-level message above, with the written parameters as the fix |
 
 The generic-function suggestion is made only for a closure that captures nothing. A capturing
 polymorphic helper cannot be a module-level `fun`; its spelling is a local function with captures,
@@ -137,7 +171,12 @@ which is RFC-0195.
    The simplest statement ("a `let` is monomorphic"), at a cost: `let f := identity;` is pinned to its
    first use, and a closure cannot be row-polymorphic at all. Recommended against: neither is
    polymorphism invented by inference, and removing them gains nothing in the checker.
-4. **Written generic closures instead** (`<T>|x: T| …`). Keeps the feature, makes it explicit. It
+4. **Keep generalization and fix #1691.** Keeps the ergonomics for pass-through helpers. Rejected: the helper
+   that duplicates a value is rejected under ownership checking with no way to state `T: Copy`, and each
+   planned check (regions, effects, linearity) needs a rule for implicit generalization. See *What it costs*.
+5. **Generalize only inside non-generic function bodies.** Avoids #1691 by cutting the case. Rejected: it is
+   polymorphic here and not there, and it leaves the ownership-checking cost above.
+6. **Written generic closures instead** (`<T>|x: T| …`). Keeps the feature, makes it explicit. It
    is a larger feature (GAP-FUNCTIONS-007), brings back generalization inside generic bodies, and is
    compatible with this RFC as a later addition.
 
@@ -148,6 +187,9 @@ which is RFC-0195.
 - **RFC-0193 (named declarations write their signature):** the pair removes inferred polymorphism. The
   closure suggestion in RFC-0193 section 2 already excludes generic functions, so every function it
   rewrites to a closure is monomorphic and unaffected.
+- **RFC-0197 (generic closures):** the ergonomic path. `<T: Copy>|x| (x, x)` states the bound the
+  move check needs, so the helper `dup` above is written, not inferred. Accepting this RFC without RFC-0197
+  leaves a bounded polymorphic helper as a `fun` only.
 - **RFC-0195 (local functions follow the closure capture rules):** the spelling of a polymorphic
   helper that captures state. Without it, such a helper has no form and the diagnostic above says so.
 - **RFC-0138 (generic function references), metel-core#1478:** the two kept forms.
@@ -176,7 +218,11 @@ and documentation examples is not measured; see below.
    release. A polymorphic helper that captures state needs RFC-0195; if that is rejected, this RFC
    removes a form that has no replacement for that case. Decide whether this RFC waits for RFC-0195's
    outcome.
-4. **Hard cut or a window.** There is no warning channel (RFC-0187 notes the same). Recommendation: hard
+4. **Which references count as "already-generic function"?** Rule 1 names a bare identifier
+   (`let f := identity;`). Whether a qualified path (`m::identity`) or an associated function
+   (`Type::new`) counts is unspecified, and untested. Recommendation: any path expression that names a
+   generic function, since the scheme comes from its declaration, not from inference.
+5. **Hard cut or a window.** There is no warning channel (RFC-0187 notes the same). Recommendation: hard
    cut with the targeted diagnostic.
 
 ---
@@ -198,6 +244,8 @@ error code is proposed; the mismatch is `T0001`.
 - `let f := identity;` still works at several types; `|p: { x: i64, .. }| p.x` still accepts
   several shapes.
 - The diagnostic above is produced for `id(42); id(true);`.
+- `let dup := |x| { (x, x) };` used at `i64` passes `--move-check` (monomorphic), and `let dup := |x| { (x, x) };` used at `i64` and `boolean` is the one-type mismatch.
+- A top-level `let id := |x| x;` is the module-level error; `let id := |x: i64| x;` passes.
 - #1691's repro no longer reaches `I0011`, and the #1688 shapes still pass as monomorphic closures.
 
 ## References
