@@ -62,9 +62,10 @@ non-generic local `fun` is a way around all of them.
 A **recursive** helper that accumulates into an enclosing `var` (the Summary example) cannot be a
 closure: a closure cannot refer to its own name (GAP-FUNCTIONS-006). It can be a module-level `fun`
 only by passing the accumulator through every call. Likewise a **generic** helper that closes over
-state cannot be a closure, which has no type-parameter list (GAP-FUNCTIONS-007). The local `fun` is
-the only form that has a name, can recurse and can be generic, so it is where a capturing helper of
-that shape belongs.
+state cannot be a closure, which has no type-parameter list (GAP-FUNCTIONS-007, accepted: closures stay
+bound-free). The local `fun` is the form that has a name, can recurse and can be generic, so it is where a
+capturing helper of that shape belongs. This RFC is the resolution path for GAP-FUNCTIONS-007: a helper
+that needs a type parameter, a bound or a row fact, a capturing one included, is a local `fun`.
 
 This also bounds what RFC-0193 and any restriction of closure let-polymorphism can ask of users: if
 a polymorphic closure becomes a written `fun f<T>`, a polymorphic closure that captured state needs
@@ -105,8 +106,15 @@ references. Module-level items, types and aspects are not free locals (as for cl
 4. **Recursion is not a capture.** The function's own name refers to the function. A capturing local
    function may call itself; it does not list itself.
 5. **Generics.** Type parameters of the local function and of the enclosing function are usable in
-   the signature and body. The capture analysis runs once, on the definition, and instantiation reuses
-   it (this is what #1708's `I0010` fails to do).
+   the signature and body, and the local function carries bounds, a `where` clause and row facts as any
+   `fun` does. The capture analysis runs once, on the definition, and instantiation reuses it (this is
+   what #1708's `I0010` fails to do). A captured binding's type cannot mention the local function's
+   **own** type parameters (the environment exists before any instantiation); a capture whose type mentions
+   a type parameter of the *enclosing* function is allowed. A violation is one error: "a capture is formed
+   before the function is instantiated; its type cannot mention `T`".
+   A generic local function is referenced as `first-class-functions.legality-2` (RFC-0138) allows: called,
+   bound with a bare unannotated `let`, or passed where the receiving parameter is concrete. Polymorphism
+   is rank-1.
 6. **The name's type.** A capturing local function is a value with an environment: its type is the
    function type with the multiplicity and mutation its captures and qualifiers give (RFC-0152,
    RFC-0153, RFC-0163), it is `Copy` exactly when all its captures are (legality-20), and written
@@ -159,8 +167,10 @@ references. Module-level items, types and aspects are not free locals (as for cl
 2. **Implicit capture (today's non-generic behaviour), made uniform.** Make the generic form work
    the same way. Rejected: it makes a local `fun` the way to mutate or move a local with none of
    the closure checks, which contradicts the reason closures write their captures (RFC-0050).
-3. **Generic closures** (`<T>|x: T| …`) instead of capture on `fun`. Solves the generic half, not
-   recursion (GAP-FUNCTIONS-006), and is a larger, separate feature (GAP-FUNCTIONS-007).
+3. **Generic closures** (`<T>|x: T| …`, RFC-0197) instead of capture on `fun`. Solves the generic half, not
+   recursion (GAP-FUNCTIONS-006), and is a larger feature with new closure grammar. Considered alongside
+   this RFC and deferred (2026-10-30): the local `fun` already covers a generic, bounded, capturing helper, and
+   the generic closure's remaining value is the terse form that infers its signature.
 4. **Capture list on every local function, even with no free locals.** Rejected: an empty list on
    a pure helper is noise, and the rule above already makes the list required only when a closure's
    would be.
@@ -174,8 +184,9 @@ references. Module-level items, types and aspects are not free locals (as for cl
 - **RFC-0194 (linear closures):** a capturing local function that captures a `Linear` value is linear,
   by the same derivation. Nothing local to this RFC.
 - **RFC-0196 and RFC-0197:** RFC-0196 removes inferred polymorphism from closures; a polymorphic helper that
-  captures state is spelled as a capturing local `fun<T>` (this RFC) or, if RFC-0197 is accepted, a generic closure.
-  They overlap and are compatible; recursion needs this RFC.
+  captures state is spelled as a capturing local `fun<T>` (this RFC). RFC-0197 (generic closures) would have
+  added a closure spelling and is deferred; it is compatible with this RFC and records the closure binder order (binder
+  first, matching this RFC's).
 - **RFC-0131 (hoist `let`/`var`):** if accepted, a captured binding is hoisted for name resolution but
   still initialised in order; rule 7 still holds, because the environment is formed at the declaration.
 - **RFC-0193:** see section 2. Together they let a closure suggestion be replaced by a local `fun`
@@ -200,8 +211,8 @@ knows the free locals at the error and can print the list to write.
 
 1. **Where the list goes.** *Resolved: after the name and generics.* `fun name<T>[caps] once? var? (params)`:
    the name stays first, and the list sits next to the qualifiers and parameters in the closure literal's
-   `[captures] once? var?` order. The closure literal's own binder position (`[caps] once var <T>|…|`) is
-   RFC-0197's open question 1; it does not affect this form.
+   `[captures] once? var?` order. The closure literal, if RFC-0197 is ever revived, puts its binder first
+   too (`<T>[caps] once var |…|`), so the two forms agree.
 2. **How a `var` local function is called.** *Resolved: writing `var` makes the name a `var` binding* (rule 8).
    No `var fun` form. The wording of this question previously said a mutating closure must be called through a
    `var` binding; that is RFC-0153's end state, not what the implementation enforces today, and rule 8 now says so.

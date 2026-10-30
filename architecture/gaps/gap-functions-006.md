@@ -26,4 +26,6 @@ A recursive helper must be a `fun`, and a `fun` writes its return type (RFC-0193
 
 ## Resolution
 
+A capturing, recursive helper has a spelling from RFC-0195: a local `fun` (a closure still cannot name itself).
+
 Planned, tracked as metel-core#1667: either a recursive binding form or a documented decision to keep recursion to named functions. Needs an RFC before any implementation; RFC-0193 does not change it.

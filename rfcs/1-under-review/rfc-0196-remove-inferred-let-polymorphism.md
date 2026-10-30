@@ -190,9 +190,10 @@ which is RFC-0195.
 - **RFC-0193 (named declarations write their signature):** the pair removes inferred polymorphism. The
   closure suggestion in RFC-0193 section 2 already excludes generic functions, so every function it
   rewrites to a closure is monomorphic and unaffected.
-- **RFC-0197 (generic closures):** the ergonomic path. `<T: Copy>|x| (x, x)` states the bound the
-  move check needs, so the helper `dup` above is written, not inferred. Accepting this RFC without RFC-0197
-  leaves a bounded polymorphic helper as a `fun` only.
+- **RFC-0197 (generic closures), deferred 2026-10-30:** would have given a closure the binder
+  (`<T: Copy>|x| (x, x)`) that states the bound the move check needs. With it deferred, the helper `dup`
+  above is written as `fun dup<T: Copy>(x: T) -> (T, T)`, a nested local `fun` where it should stay local
+  (RFC-0195), and closures stay bound-free (GAP-FUNCTIONS-007).
 - **RFC-0195 (local functions follow the closure capture rules):** the spelling of a polymorphic
   helper that captures state. Without it, such a helper has no form and the diagnostic above says so.
 - **RFC-0138 (generic function references), metel-core#1478:** the two kept forms.
@@ -225,7 +226,7 @@ and documentation examples is not measured; see below.
    cannot state, so it does not have the `dup` problem.
 3. **When is this RFC accepted?** *Resolved: after RFC-0193 and RFC-0195.* A polymorphic helper that
    captures state is the one case with no spelling once inferred generalization is gone; RFC-0195
-   (capturing local functions) provides it. RFC-0197 (generic closures) follows independently and is not a
+   (capturing local functions) provides it. RFC-0197 (generic closures) is deferred and is not a
    precondition.
 4. **Which references count as an "already-generic function"?** *Resolved: exactly what the spec already
    allows; this RFC neither widens nor narrows it.* `first-class-functions.legality-2` admits a generic
