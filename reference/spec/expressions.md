@@ -1095,14 +1095,14 @@ The target of an assignment is a name, a field access `x.f`, a tuple element `x.
 `x[i]`, or a dereference `*p`. The object of a field access, tuple element or index is itself such
 a target.
 
-<!-- rfc.py:last_reviewed d6d35a1cedb3c6b06a074c7948f98534ff248bbc -->
+<!-- rfc.py:last_reviewed c0e50418b88b8e99431ed2dc87090333af3c5414 -->
 
 ##### Legality Rule {#spec.expressions.assignment.legality-2}
 
 An assignment whose target is any other kind of expression is a syntax error
 ([P0001](../error-codes.md#p0001--syntax-error)).
 
-<!-- rfc.py:last_reviewed d6d35a1cedb3c6b06a074c7948f98534ff248bbc -->
+<!-- rfc.py:last_reviewed c0e50418b88b8e99431ed2dc87090333af3c5414 -->
 
 </details>
 
