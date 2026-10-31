@@ -61,9 +61,9 @@ bound spellings ask for `where ..R: A`.
 
 ### P0002 — Invalid integer literal
 
-An integer literal is out of range for `i64` (−9,223,372,036,854,775,808 to 9,223,372,036,854,775,807).
+An integer literal is out of range: for `i64` (−9,223,372,036,854,775,808 to 9,223,372,036,854,775,807), for the width its suffix names (`300u8`), or for the integer type it adopts from its context (`let a: u8 := 300;`, `let a: u8 := -1;`). The message names the literal, the type and its range.
 
-**Fix:** use a value that fits in `i64`, or split the computation.
+**Fix:** use a value that fits, pick a wider type, or cast on purpose (`300 as u8` wraps).
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

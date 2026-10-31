@@ -81,6 +81,9 @@ struct Pixel { r: u8, g: u8, b: u8 }
 let p := Pixel { r = 255, g = 128, b = 0 };  // fields are u8
 ```
 
+An unsuffixed literal [must fit the type it adopts](#spec.lexical.literals.legality-6): `let a: u8 := 300;`
+and `let a: u8 := -1;` are errors, not wrapped values. To wrap on purpose, cast: `300 as u8` is `44`.
+
 Arithmetic and comparison operators propagate the type from a sized operand to an unsuffixed sibling:
 
 ```metel
@@ -275,6 +278,15 @@ types.
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSBpNjQgd2l0aCBmNjQiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTNfbmVnXzEyX3N1ZmZpeGVkX2ludGVnZXJfbm90X2Zsb2F0Lm10bCIsInNvdXJjZSI6ImZ1biBtYWluKCkge1xuICAgIC8vIEFuIHVuc3VmZml4ZWQgYDVgIGNvdWxkIGFkb3B0IGY2NCBoZXJlOyB0aGUgaTY0IHN1ZmZpeCBtYWtlcyB0aGlzIGxpdGVyYWwgY29uY3JldGUuXG4gICAgbGV0IF92YWx1ZTogZjY0IDo9IDVpNjQ7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTQuMS9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy90eXBlcy9zdGFnZTNfbmVnXzEyX3N1ZmZpeGVkX2ludGVnZXJfbm90X2Zsb2F0Lm10bCIsIm5hbWUiOiJzdGFnZTNfbmVnXzEyX3N1ZmZpeGVkX2ludGVnZXJfbm90X2Zsb2F0Lm10bCJ9"></details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.lexical.literals.legality-6}
+
+An unsuffixed integer literal fits the integer type it adopts; a literal outside that type's
+range, including a negative literal for an unsigned type, is
+[P0002](../error-codes.md#p0002--invalid-integer-literal). A negative literal is judged as the
+negative value it writes, so `-128` fits `i8`.
+
+<!-- rfc.py:last_reviewed 3efb873664321dada0d7bf69db34a296ea604b71 -->
 
 ##### Legality Rule {#spec.lexical.literals.legality-5}
 
