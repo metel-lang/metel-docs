@@ -1046,6 +1046,66 @@ does not write the replacement value back into the iterated source.
 
 </details>
 
+### Assignment
+
+An assignment writes a new value into an existing place. Plain assignment is `target := value`;
+compound assignment is `target += value`, and likewise `-=`, `*=`, `/=` and `%=`.
+
+```metel
+struct Point { x: i64, y: i64 }
+
+fun main() {
+    var n := 1;
+    var p := Point { x = 1, y = 2 };
+    var t := (1, 2);
+    var a := [1, 2, 3];
+
+    n := 4;          // a name
+    p.x := 5;        // a field
+    t.0 := 6;        // a tuple element
+    a[1] := 7;       // an array element
+    p.y += 1;        // compound assignment
+    let r: &var i64 := &var n;
+    *r := 8;         // through a `&var` reference
+    assert(n == 8);
+    assert(p.x == 5);
+    assert(p.y == 3);
+    assert(t.0 == 6);
+    assert(a[1] == 7);
+}
+```
+
+[The target is a name, a field, a tuple element, an index, or a dereference](#spec.expressions.assignment.legality-1):
+`x`, `x.f`, `x.0`, `x[i]`, `*p`. A field, tuple element or index may itself be taken from
+another such target, so `s.pair.0` and `a[i].f` are targets too. The name must be a `var` binding
+and a shared `&` grants no write access (both are
+[T0006](../error-codes.md#t0006--assignment-to-immutable-binding)); writing through a reference is
+covered under [References](#references).
+
+[Any other expression on the left of an assignment is a syntax error](#spec.expressions.assignment.legality-2):
+a literal, a call, a method call, or a tuple or array of names. There is no destructuring
+assignment, so `(a, b) := (b, a)` is rejected; assign the elements one at a time.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.expressions.assignment.legality-1}
+
+The target of an assignment is a name, a field access `x.f`, a tuple element `x.n`, an index
+`x[i]`, or a dereference `*p`. The object of a field access, tuple element or index is itself such
+a target.
+
+<!-- rfc.py:last_reviewed d6d35a1cedb3c6b06a074c7948f98534ff248bbc -->
+
+##### Legality Rule {#spec.expressions.assignment.legality-2}
+
+An assignment whose target is any other kind of expression is a syntax error
+([P0001](../error-codes.md#p0001--syntax-error)).
+
+<!-- rfc.py:last_reviewed d6d35a1cedb3c6b06a074c7948f98534ff248bbc -->
+
+</details>
+
 ### References
 
 > **Availability:** Since v0.10.0.
@@ -1066,12 +1126,12 @@ Rules:
 - `&expr` creates a shared reference `&T` where `expr` is an addressable lvalue
 - `&var x` creates an exclusive reference `&var T` where `x` is a `var` addressable lvalue
 - `*p` dereferences a reference — reading the referent, or, as an assignment target
-  (`*p = v`), writing through to it (see "Dereference" below)
+  (`*p := v`), writing through to it (see "Dereference" below)
 - reading a plain value out of a reference is always `*p` (see
   [Types — Reading a value out of a reference](types.md#reading-a-value-out-of-a-reference));
   field access, index, and method dispatch go through auto-deref (below)
-- assigning to a reference-typed binding (`p = v`) **rebinds** it, like any other type;
-  `*p = v` is the spelling that writes through
+- assigning to a reference-typed binding (`p := v`) **rebinds** it, like any other type;
+  `*p := v` is the spelling that writes through
 
 Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`).
 
@@ -1095,7 +1155,7 @@ nothing outside the expression can alias that cell.
 
 `&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path ([a struct field](#spec.expressions.references.dynamics-1), [tuple element](#spec.expressions.references.dynamics-2), [array element](#spec.expressions.references.dynamics-3), or [chain of projections](#spec.expressions.references.dynamics-4)) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
 
-Tuple elements are assignable like struct fields and array elements — `t.0 = v`, `t.0 += v`,
+Tuple elements are assignable like struct fields and array elements — `t.0 := v`, `t.0 += v`,
 and nested or chained forms (`s.pair.0`, `t.1.0`), including through a `&var` reference. An
 out-of-range index is a type error ([T0003](../error-codes.md#t0003--undefined-name)), and a
 shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)).
@@ -1171,10 +1231,10 @@ to the chain's leaf storage. A write through the reference updates that original
 
 #### Dereference
 
-> **Changed in v0.11.0 (RFC-0110): `*p` added; assignment to a reference-typed binding now rebinds it, use `*p = v` to write through.**
+> **Changed in v0.11.0 (RFC-0110): `*p` added; assignment to a reference-typed binding now rebinds it, use `*p := v` to write through.**
 
 `*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; as an
-assignment target, `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
+assignment target, `*p := v` writes through a `&var T`. Applying `*` to a non-reference is
 a type error ([T0002](../error-codes.md#t0002--annotation-required)).
 
 Auto-deref covers **selectors only** — field access, indexing, and method dispatch, where
@@ -1207,8 +1267,8 @@ fun main() -> i64 {
 }
 ```
 
-Field- and index-path targets keep writing through with no `*` needed — `s.field = v` and
-`arr[i] = v` have no competing "rebind" reading, so they are unambiguous as they stand:
+Field- and index-path targets keep writing through with no `*` needed — `s.field := v` and
+`arr[i] := v` have no competing "rebind" reading, so they are unambiguous as they stand:
 
 ```metel
 struct Point { x: i64, y: i64 }
@@ -1224,7 +1284,7 @@ fun main() -> i64 {
 }
 ```
 
-`*(obj.field) = v` and `obj.field = v` are synonyms; for a bare identifier target, `*p = v`
+`*(obj.field) := v` and `obj.field := v` are synonyms; for a bare identifier target, `*p := v`
 is the only spelling that writes through.
 
 Field access, field assignment, indexing, and method dispatch auto-dereference through a
@@ -1432,7 +1492,7 @@ reference binding is rebound, a later dereference writes the new referent.
 ##### Dynamic Semantics {#spec.expressions.references.dynamics-10}
 
 Field and index assignment through a reference remains implicit because those targets
-are unambiguous selectors; `*(object.field) = value` and `object.field = value` have the
+are unambiguous selectors; `*(object.field) := value` and `object.field := value` have the
 same write effect.
 
 <!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->

@@ -22,7 +22,7 @@ fun main() -> i64 {
 `let` bindings [cannot be reassigned and must always be initialized](#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
 - `x := newValue` is rejected (reassignment)
-- `x.field = value` is rejected (field assignment through an immutable binding)
+- `x.field := value` is rejected (field assignment through an immutable binding)
 - `&var x` is rejected (taking a mutable reference to an immutable binding)
 
 All three forms require `var`.
