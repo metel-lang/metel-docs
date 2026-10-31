@@ -12,7 +12,8 @@ review: null
 ## Gap
 
 A circular import is a compile error (`circular module dependency`, with the
-full import chain). Two modules therefore cannot call each other's functions:
+full import chain), and so is a `root::` or `super::` path to an item of a module that depends on the
+current one. Two modules therefore cannot call each other's functions:
 mutual recursion across a module boundary is not expressible, and a cycle
 must be broken by moving the shared definitions into a third module.
 

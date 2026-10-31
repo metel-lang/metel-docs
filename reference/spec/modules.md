@@ -798,6 +798,12 @@ crosses a module boundary.
 [Circular imports are a compile error](#spec.modules.module-graph-loading.legality-2). The
 error message includes the full import chain.
 
+A qualified path closes a cycle the same way an import does. A `root::` or `super::` path that
+names an item of a module that depends on the current module, such as `root::helper` written in a
+module the root imports, is the same error, reported at the path (`P0001`). The parent module
+cannot be named from a child it imports, and a cycle is broken by moving the shared definitions
+into a third module.
+
 ## Module Graph Loading
 
 The module graph is built from both `import` and `export` declarations — a re-export
