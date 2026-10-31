@@ -2,9 +2,9 @@
 id: adr-0067
 title: "A Written Type Name Resolves to an Identity, Not a Spelling"
 date: '2026-10-31'
-status: proposed
+status: accepted
 relates: adr-0054, adr-0065, adr-0066
-implements: metel-core#1612
+implements: metel-core#1612, metel-core#1735
 ---
 
 ## Context
@@ -69,6 +69,11 @@ unknown type); it does not fall back to a spelling lookup after the freeze.
 
 ### 3. Block-local type declarations resolve the same way
 
+> **Outcome (2026-10-31).** Not done under #1612; see [Implementation outcome](#implementation-outcome).
+> The sketch below assumed the identity pass could give a block-local type a `SymbolId`. Those ids
+> are minted by the registry, so a written name resolves to a *declaration span* and construction
+> maps the span to the registry's id.
+
 A block-local `struct` or `enum` already has a `SymbolId`. The identity pass resolves a written name
 that denotes one to `TypeRes::Item(symbol)` at its span, so `written_type_id` reads the table and
 `local_struct_ids` is deleted. The annotation converter takes the resolution table in place of
@@ -126,3 +131,40 @@ a name by nature, and `FieldId` already keys by owner plus name).
 - **`impl`-header parameters.** An `impl<T> Trait for Wrapper<T>` binds `T` for its methods. This ADR keys
   it to the `impl` as owner; if the registry already interns impls under a different identity, that
   identity is the owner.
+
+## Implementation outcome
+
+Steps 1 and 2 landed under metel-core#1612, in seven changes, each green on its own and none changing
+behaviour:
+
+- `TypeExpr::Named` carries the span of the written name (#1728), wrapped in `NameSpan` whose `Debug`
+  prints no position, because row-bound entailment compares annotations by their rendering.
+- The identity pass resolves a written generic-parameter name to a `TypeParamId` (#1729), keyed by the
+  owning declaration, the list the parameter was written in (`Container`, `Own`, or `Synthesised` for the
+  parameter lowering adds for an `impl Aspect` parameter type) and its position.
+- A `TypeScheme` carries `param_ids`, index-aligned with `param_names` (#1730). This is the one place a
+  parameter's spelling is paired with its identity. Lowering's `_ImplT{n}` names now count per function so
+  the identity pass can declare the same parameter by the same name.
+- Construction resolves a written generic name through a `GenericScope` (#1731); the bound checks read
+  their arguments through an id-keyed `GenericArgs`.
+- A `struct`'s or `enum`'s parameters (#1733) and an aspect's (#1734) have identities, keyed by the type's
+  `SymbolId` or the method's declaration span.
+
+The type-parameter tables ride on `BindingSpans`, so no `FrozenIdentity`, `TypeCtx` or evaluator
+signature changed. No generic-parameter spelling lookup is left in `construction/`.
+
+### Step 3 is deferred (metel-core#1735)
+
+The sketch in decision 3 is not a change confined to construction. Block-local type ids are minted by the
+registry (`archived_local_type_id_declared_at`), and a type that names a block-local type often carries no
+nominal id: the registry converts struct field templates and enum info with no block-local scope. Construction's
+by-name scope compensates. With the block-local branch of `written_type_id` removed, 13 tests fail and about 700
+lookups in the suite reach it, through eight name-only wrappers.
+
+The prerequisite is on the inference side: stamp block-local ids where inference and the registry create the
+types, so the id travels on the type as it does for a module-level one. Then the identity pass's resolution
+of a written name to its declaration span (prototyped; reusable) covers the sites that write a name, and
+`local_struct_ids` and the last exemption can go. That is tracked in metel-core#1735.
+
+The by-name scope mirrors the block structure, so the innermost declaration wins as lexical scope requires:
+this is design debt, not a known misresolution.
