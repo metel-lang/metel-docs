@@ -1083,8 +1083,10 @@ and a shared `&` grants no write access (both are
 covered under [References](#references).
 
 [Any other expression on the left of an assignment is a syntax error](#spec.expressions.assignment.legality-2):
-a literal, a call, a method call, or a tuple or array of names. There is no destructuring
-assignment, so `(a, b) := (b, a)` is rejected; assign the elements one at a time.
+a literal, a call, a method call, or a tuple or array of names. So is a field, tuple element or
+index of a value that is not itself a target, such as `make().f := 1` or `[1, 2][0] := 3`.
+There is no destructuring assignment, so `(a, b) := (b, a)` is rejected; assign the elements one at
+a time.
 
 <details>
 <summary>Formal rules</summary>
@@ -1095,14 +1097,15 @@ The target of an assignment is a name, a field access `x.f`, a tuple element `x.
 `x[i]`, or a dereference `*p`. The object of a field access, tuple element or index is itself such
 a target.
 
-<!-- rfc.py:last_reviewed c0e50418b88b8e99431ed2dc87090333af3c5414 -->
+<!-- rfc.py:last_reviewed 8401d77a0a28e6607b134186ff862efb626fb2aa -->
 
 ##### Legality Rule {#spec.expressions.assignment.legality-2}
 
-An assignment whose target is any other kind of expression is a syntax error
+An assignment whose target is any other kind of expression, or whose field access, tuple element
+or index has an object that is not a target, is a syntax error
 ([P0001](../error-codes.md#p0001--syntax-error)).
 
-<!-- rfc.py:last_reviewed c0e50418b88b8e99431ed2dc87090333af3c5414 -->
+<!-- rfc.py:last_reviewed 8401d77a0a28e6607b134186ff862efb626fb2aa -->
 
 </details>
 
