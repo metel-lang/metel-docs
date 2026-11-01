@@ -151,7 +151,7 @@ satisfy every bound stated by that implementation.
 Conditional implementation bounds are checked whenever the aspect is required, including
 method dispatch, bound satisfaction, and implementation selection.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -753,7 +753,7 @@ expr` is present, `ident` names the field and `expr` its value. When omitted, `i
 name both the field and a local binding in scope at the literal (shorthand/punning field
 init). Shorthand and explicit fields may be freely mixed within one struct literal.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>

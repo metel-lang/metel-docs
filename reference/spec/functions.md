@@ -97,7 +97,7 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
@@ -676,7 +676,7 @@ or passes it by value to something that takes ownership — written without `onc
 compile error naming the offending capture and the fix (add `once`, or stop moving the
 capture).
 
-<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md)_</span>
@@ -778,7 +778,7 @@ receiver rule. An owned but non-`var` (`let`) binding, or any shared-`&` callee 
 compile error. This holds for every `mutating` closure, whether it mutates its own
 by-value captures or only drives mutation through a captured `&var`.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -874,7 +874,7 @@ qualifier (an unresolved inference variable, or a bare generic parameter), the l
 takes the default and [legality-9](#spec.functions.closures.legality-9) widening resolves
 any remaining gap at the concrete site.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1041,7 +1041,7 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
 
-<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>

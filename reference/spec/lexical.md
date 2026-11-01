@@ -272,7 +272,7 @@ literal with a float suffix has the suffix's sized float type.
 An integer literal and a float literal do not implicitly coerce between integer and float
 types.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
