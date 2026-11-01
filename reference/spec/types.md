@@ -1756,7 +1756,7 @@ the result and consumes the source. Spreading through a reference copies the fie
 when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
 evaluate left-to-right, while the resulting record layout is determined by its row/type.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
 
 A row may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = { auth: String, .. }`) is
