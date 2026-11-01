@@ -213,6 +213,28 @@ title: "Metel Language Changelog"
   functions, which are analysed as definitions of their own, or declares block-local structs and enums
   (`metel-core#1732`, ADR-0068). An assignment's right-hand side is checked before its target, as it runs, so
   `a[slot(&s)] := take(s);` is a use of a moved value (`metel-core#1431`).
+- A literal takes the type inference gave it wherever it is stored, not only where its position names the type.
+  `s.g := 7` for a `u8` field, `a[0] := 9` for a `[u8; 2]`, a literal in an enum variant field
+  (`Option::Some { value = 255 }` for `Option<u8>`), a tuple element, a nested array element and an `f32`
+  field were stored as an `i64` or `f64`, so the next operation on the value was an internal error
+  (`metel-core#1761`).
+- A closure with a capture list may call a function declared in the enclosing block. The function is an
+  item, not a captured value, so it needs no entry in the list; `T0026` named it as unlisted, and a call
+  through it failed at run time, including inside a generic function and through a nested closure
+  (`metel-core#1762`).
+- `root::`, `self::` and `super::` work before a type name in a qualified path: `root::Counter::new()`,
+  `root::Counter::new` as a value, `root::Counter { n = 1 }`, `root::Kind::A` and `super::shared::Kind::B { .. }`.
+  They were `T0003`. A type path into a module that imports the current one is the circular-dependency error
+  `P0001`, as a `root::` path to a function already was (`metel-core#1763`).
+- A local binding shadows an outer generic function of the same name when a call is typed. With
+  `fun f<T>(x: T) -> T` at module level and `let f := |x: i64| -> i64 { x + 1 };` in a body, `f("a")` was
+  checked against the outer generic and failed at run time with an internal error; it is now `T0001`, "`f` has
+  one type" (`metel-core#1766`).
+- `--move-check` analyses `?` on `Option` and on `Result` in a generic body (the failure is built from the
+  bound error; a `Result` whose error type needs a `From` conversion is still `I0011`, `metel-core#1770`), a
+  module-qualified static method such as `lib::Counter::with(1)`, a `Copy` field read out of a temporary
+  (`make().inner.n`), and a call to a polymorphic local callee: a nested generic function or a closure with an
+  open-record parameter (`metel-core#1764`, `#1767`, `#1766`, `#1749`).
 
 ## v0.14.1
 
