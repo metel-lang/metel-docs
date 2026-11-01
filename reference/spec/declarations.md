@@ -2483,7 +2483,7 @@ generic structural target is registered and dispatched subject to its stated bou
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0177](../../rfcs/3-integrated/rfc-0177-coercion-aware-structural-aspect-lookup.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0177](../../rfcs/4-implemented/rfc-0177-coercion-aware-structural-aspect-lookup.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

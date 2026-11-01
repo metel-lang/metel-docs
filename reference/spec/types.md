@@ -1839,7 +1839,7 @@ fun main() {
 
 An open record with an anonymous tail (`{ x: T, .. }`) is not accepted everywhere; see
 [legality-5](#spec.types.generics.open-rows.legality-5), as decided by
-[RFC-0181](../../rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md). Three limits are recorded as gaps.
+[RFC-0181](../../rfcs/4-implemented/rfc-0181-open-rows-in-every-type-position.md). Three limits are recorded as gaps.
 
 > **Gap** GAP-TYPES-010
 
@@ -2110,7 +2110,7 @@ fun main() {
 <!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0181](../../rfcs/3-integrated/rfc-0181-open-rows-in-every-type-position.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0181](../../rfcs/4-implemented/rfc-0181-open-rows-in-every-type-position.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
