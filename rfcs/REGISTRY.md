@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**204 RFCs total.** 35 draft, 50 under review, 9 accepted, 4 integrated (98 live), 77 implemented, 15 superseded, 14 refused (106 settled).
+**204 RFCs total.** 34 draft, 51 under review, 9 accepted, 4 integrated (98 live), 77 implemented, 15 superseded, 14 refused (106 settled).
 
-## Draft (35)
+## Draft (34)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -50,10 +50,9 @@ the curated thematic map.
 - **RFC-0201** — Pattern Synonyms (`0-draft` ; rfcs/0-draft/rfc-0201-pattern-synonyms.md ; date 2026-11-01)
 - **RFC-0202** — Refinement and Smart-Constructor Types (`0-draft` ; rfcs/0-draft/rfc-0202-refinement-types.md ; date 2026-11-01)
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
-- **RFC-0204** — Pipelines and Function Composition (`0-draft` ; rfcs/0-draft/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 
-## Under Review (50)
+## Under Review (51)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -105,6 +104,7 @@ the curated thematic map.
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
+- **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 
 ## Accepted (9)
 

@@ -1821,7 +1821,7 @@ implementation).
   a distinct nominal type whose only way in is a checked construction. Builds on RFC-0200.
 - **RFC-0203** *(draft 2026-11-01)* — List comprehensions: sugar over iterator adapters and `collect`.
   Depends on RFC-0190 and RFC-0124.
-- **RFC-0204** *(draft 2026-11-01)* — Pipelines and function composition: `x |> f(a)` and `f.then(g)`.
+- **RFC-0204** *(under-review 2026-11-01, #1754)* — Pipelines and function composition: `x |> f(a)` and `f.then(g)`.
   The composition operator is deferred (`>->` / `>=>` preferred, after RFC-0190). Independent of RFC-0205.
 - **RFC-0205** *(draft 2026-11-01)* — Hole sections (`(_ * 10)`) and operator functions (`ops::add`).
   Independent of RFC-0204.

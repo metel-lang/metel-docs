@@ -2,8 +2,12 @@
 id: rfc-0204
 title: "Pipelines and Function Composition"
 date: '2026-11-01'
-status: draft
+status: under-review
+updated: '2026-11-01'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1754'
 ---
+
+> **Status — under review (2026-11-01).** Scheduled in Records and surface syntax as a pre-freeze surface addition; no blockers for |> and .then().
 
 ## Summary
 
