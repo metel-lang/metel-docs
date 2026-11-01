@@ -147,7 +147,7 @@ public struct Token {
 contexts. A qualified path is valid wherever its resolved name is valid; `super` is
 invalid in the root module.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
