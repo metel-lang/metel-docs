@@ -97,7 +97,7 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
+<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
@@ -526,7 +526,7 @@ function type) or, failing that, from the body, exactly as an omitted return typ
 closure whose parameter stays fully generic is polymorphic (`let id := |x| { x }`). A parameter
 that nothing determines is [T0002](../error-codes.md#t0002--annotation-required).
 
-<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
+<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -1251,7 +1251,7 @@ with a written open-record parameter, whose `..` is quantified (its other parame
 Inside a generic function the parameters of a `let`-bound closure are written; leaving one out is
 `T0002` at the definition.
 
-<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
+<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
 
 ##### Legality Rule {#spec.functions.closures.legality-27}
 
@@ -1479,7 +1479,7 @@ function.
 Evaluating `Err { error }?` immediately returns `Err { error }` from the enclosing
 function; when the error types differ, the returned error is `E2::from(error)`.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
