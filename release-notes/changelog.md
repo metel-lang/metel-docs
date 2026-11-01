@@ -87,6 +87,22 @@ title: "Metel Language Changelog"
   and the first call no longer reports an internal error. It applies to a closure bound with `let`
   or `var` and no annotation; a closure passed where a function type is expected is still judged
   against that type.
+- An unsuffixed integer literal must fit the integer type it takes from its context (`metel-core#1482`).
+  `let a: u8 := 300;` printed `44` and `let a: u8 := -1;` kept `-1`; both are now `P0002`, "integer literal
+  `300` does not fit `u8` (0..=255)", at the literal. The check reaches a literal through an annotation, a
+  parameter, a return type, a struct field, an array element and a sibling operand (`x + 300` with
+  `x: u8`). A negative literal is judged as the value it writes, so `-128` fits `i8` and `-129` does not.
+  A cast still wraps on purpose (`300 as u8` is `44`). `P0002` was already the code for a literal outside
+  `i64` and for a suffixed literal outside its width. No fixture, documentation example or standard-library
+  source relied on a literal wrapping.
+- A closure that moves a non-`Copy` capture out of its environment needs `once` however it does so
+  (`metel-core#1721`, `spec.functions.closures.legality-8`). Only returning the capture as the closure's
+  tail was `T0027` before. Binding it (`let t := s;`), passing it by value to a call or method call,
+  assigning it, returning it with `return` or `break`, or storing it in a tuple, array, record or struct
+  literal was accepted, so `[s] || { take(s); }` could be called twice on an environment it had already
+  moved out of. All of these are now `T0027`, in a generic function at the place it is written. A closure
+  passed to a parameter that is not `once` is judged against that parameter; one fixture passed a consuming
+  closure to a plain parameter and now declares the parameter `once`.
 
 **Language:**
 
@@ -149,6 +165,54 @@ title: "Metel Language Changelog"
   or enum is judged the same way, against its parameter: a `once` or `var` parameter supplies the
   qualifier, a plain one does not, and a generic parameter leaves the closure as written
   (`metel-core#1684`).
+- A closure passed to a method of a struct or enum takes its `once` and `var` from the parameter it is
+  passed to, as it does for a function call (`metel-core#1699`). The method's whole function type was
+  unified with the closure's, so an unqualified closure had to match the parameter's written qualifier
+  exactly; the receiver, each argument and the result are now related separately. A mutating closure passed
+  to a reading parameter is still `T0028`.
+- A generic struct imported from another module can be built with different types for different
+  parameters: `Pair { first = 5, second = "hello" }` for an imported `Pair<A, B>` was "cannot unify an
+  integer literal with String" (`metel-core#1715`). The importing module's fresh type variables could
+  collide with the struct's declared ones and collapse two parameters into one; they no longer can.
+- An integer literal and a float literal that end up with one type are a type error where they meet:
+  `let k := 10; k + 1.5` is `T0001`, "cannot apply `+` to an integer literal and a float literal". It type-checked
+  and failed at run time with an internal error. Separate literal bindings still default independently
+  (`metel-core#1719`).
+- The check that rejects calling a `var` closure through a shared reference (`T0029`) looks at every step of
+  the callee, not only its root: a field or tuple element that holds a `&` in the middle of the chain
+  (`(h.cell.go)()` with `h.cell: &Cell`) is rejected, and an exclusive `&var` step is accepted
+  (`metel-core#1703`).
+- Assigning to something that is not a place is a syntax error, not an internal error. `(a, b) := (b, a)`,
+  `f() := 2`, and a field, tuple element or index of a call result or a literal (`make().f := 1`,
+  `[1, 2][0] := 3`) are `P0001`, which names the supported targets: a name, a field, a tuple element, an
+  index or a dereference. There is no destructuring assignment (`metel-core#1591`, `metel-core#1740`). The
+  specification now states the assignment targets and the order of evaluation, the right-hand side first
+  (`spec.expressions.assignment`).
+- A bare reference to an overloaded function says it is overloaded (`T0003`) instead of "undefined name":
+  `let g := f;` and `apply(f)` where `f` has several definitions. Whether a function value should select a
+  definition from its expected type is not decided (`metel-core#1230`, `GAP-FUNCTIONS-001`).
+- `root::name` in the root module, and `root::` or `super::` paths to an item of a module that does not depend
+  on the current one, resolve to the item they name; `root::util::g()` works without importing `util` where
+  another import reaches it. A path that names an item of a module that imports the current one is a circular
+  module dependency (`P0001`), reported at the path as an import cycle is, where it used to be "undefined
+  name" (`metel-core#1221`).
+- A `dyn` type written with an aspect imported under an alias names the declared aspect: with
+  `import shapes::Shape as Sh;`, `&dyn Sh` finds `Shape`'s methods (`metel-core#1223`).
+- A `record` after a field was moved out can be spread. `{ ..b }` and `{ extra = 1, ..b }` after
+  `let a := b.value;` build an anonymous record of the remaining fields, as spreading the whole record does.
+  A written label that collides reports the field ("record spread already contains field") instead of "cannot
+  prove field absent" (`metel-core#1459`).
+- A bound forwarded through a nominal's row argument is rejected where the function is written. Passing
+  `r: Req<..R>` to a function that requires `where ..R: Copy`, without declaring the bound, is `T0012` at the
+  definition; it used to be accepted and to fail with `I0010` at the first call. The same holds for
+  `Req<..{ id: i64, ..R }>`. The field-wise bound is printed `every field: Copy`, not the removed
+  `all: Copy` (`metel-core#1495`).
+- `--move-check` analyses more generic bodies instead of reporting `I0011`: a body that dereferences a call
+  result (`metel-core#1632`), passes a widened function value (`metel-core#1690`), builds a `many` closure
+  that owns a capture (`metel-core#1693`) or borrows a closure (`metel-core#1696`), declares nested
+  functions, which are analysed as definitions of their own, or declares block-local structs and enums
+  (`metel-core#1732`, ADR-0068). An assignment's right-hand side is checked before its target, as it runs, so
+  `a[slot(&s)] := take(s);` is a use of a moved value (`metel-core#1431`).
 
 ## v0.14.1
 
