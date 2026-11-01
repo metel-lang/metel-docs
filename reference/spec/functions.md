@@ -387,8 +387,9 @@ A closure has one type. [A `let`-bound closure is used at the one type its uses 
 
 ### Capture lists
 
-A closure that reads an outer binding *captures* it. A **capture list** `[…]` before the
-parameter list names each captured binding with a specifier:
+A closure that reads an outer binding *captures* it. A function declared in an enclosing block is an
+item, not a binding, so a closure may call it without listing it, with or without a capture list. A
+**capture list** `[…]` before the parameter list names each captured binding with a specifier:
 
 <!-- doc-example: skip reason="illustrative handler types and helpers are deliberately elided" -->
 ```metel
