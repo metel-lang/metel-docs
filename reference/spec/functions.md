@@ -358,6 +358,31 @@ A closure parameter may be annotated with an open record whose tail is anonymous
 (`|p: { x: i64, .. }| { p.x }`); the closure is then polymorphic in that row and accepts
 records of different shapes ([open rows](types.md#spec.types.generics.open-rows.legality-5)).
 
+A stand-alone closure has no generics list, so it cannot declare a row parameter, and a written
+return annotation cannot name one: `|p: { x: i64, ..R }| -> { x: i64, ..R } { p }` is rejected
+(`T0003`, undefined row variable `R`). Inside a generic function the closure uses the enclosing
+function's `R`. When the return type is omitted it is inferred, and keeps the row of the argument:
+
+<!-- doc-example: expect-fail reason="a stand-alone closure cannot name a row parameter" -->
+```metel
+fun main() {
+    let f := |p: { x: i64, ..R }| -> { x: i64, ..R } { p };
+}
+```
+
+```metel
+fun keep<record R>(r: { x: i64, ..R }) -> i64 {
+    let f := |p: { x: i64, ..R }| -> { x: i64, ..R } { p };
+    return f(r).x;
+}
+
+fun main() {
+    let f := |p: { x: i64, .. }| { p };
+    assert(f({ x = 1, y = 2 }).y == 2);
+    assert(keep({ x = 1, y = 2 }) == 1);
+}
+```
+
 A closure has one type. [A `let`-bound closure is used at the one type its uses fix](#spec.functions.closures.legality-26), and [a closure bound by a top-level `let` is determined by its own initializer](#spec.functions.closures.legality-27). Polymorphism is written or declared: a generic `fun`, a reference to one ([First-Class Functions](#first-class-functions)), or the open-record parameter above.
 
 ### Capture lists
