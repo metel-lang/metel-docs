@@ -1082,6 +1082,12 @@ and a shared `&` grants no write access (both are
 [T0006](../error-codes.md#t0006--assignment-to-immutable-binding)); writing through a reference is
 covered under [References](#references).
 
+The right-hand side is evaluated before the target's own sub-expressions
+([dynamics-1](#spec.expressions.assignment.dynamics-1)), so `a[i] := f()` runs `f()` before it reads
+`i`, and does not read `i` at all if `f()` returns. A value the right-hand side moves is therefore gone
+when the target's index reads it, which the move check reports as a use of a moved value
+([T0019](../error-codes.md#t0019--use-of-moved-value)).
+
 [Any other expression on the left of an assignment is a syntax error](#spec.expressions.assignment.legality-2):
 a literal, a call, a method call, or a tuple or array of names. So is a field, tuple element or
 index of a value that is not itself a target, such as `make().f := 1` or `[1, 2][0] := 3`.
@@ -1106,6 +1112,14 @@ or index has an object that is not a target, is a syntax error
 ([P0001](../error-codes.md#p0001--syntax-error)).
 
 <!-- rfc.py:last_reviewed 8401d77a0a28e6607b134186ff862efb626fb2aa -->
+
+##### Dynamic Semantics {#spec.expressions.assignment.dynamics-1}
+
+An assignment evaluates its right-hand side first, then the sub-expressions of its target (an index,
+the object of a field or element access). If the right-hand side exits control flow, the target's
+sub-expressions are not evaluated.
+
+<!-- rfc.py:last_reviewed 89e03a7460a664b0431f1919c346082aac0c4ea9 -->
 
 </details>
 
