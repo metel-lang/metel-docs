@@ -97,7 +97,7 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
@@ -803,7 +803,7 @@ receiver rule. An owned but non-`var` (`let`) binding, or any shared-`&` callee 
 compile error. This holds for every `mutating` closure, whether it mutates its own
 by-value captures or only drives mutation through a captured `&var`.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
