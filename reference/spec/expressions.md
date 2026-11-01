@@ -241,14 +241,18 @@ fun demo(Red: i64) -> i64 {
 }
 ```
 
-**Where no expected type exists, the bare form does not resolve** and the name is reported
-as undefined ([T0003](../error-codes.md#t0003--undefined-name)) — there is deliberately no
-search for "some enum, somewhere, declaring `Red`". Qualify (`Colour::Red`) or ascribe
+**Where no expected type exists, the bare form does not resolve.** There is deliberately no
+search for "some enum, somewhere, declaring `Red`". A name that some enum declares as a
+variant is reported as [T0002](../error-codes.md#t0002--annotation-required) ("cannot tell
+which enum `Red` belongs to here"); a name no enum declares stays
+[T0003](../error-codes.md#t0003--undefined-name). Qualify (`Colour::Red`) or ascribe
 (`Red: Colour`). This affects an unannotated `let x = Red;`, an argument to a *generic*
 callee (whose parameter types are not known until the arguments are), and the body of a
-closure with no declared return type. `None` without a determinable type keeps its existing
-[T0002](../error-codes.md#t0002--annotation-required) "add a type annotation" diagnostic
-rather than degrading to T0003.
+closure with no declared return type. The last is the only closure case: a closure whose
+return type is known resolves its body's bare variants, whether it is written
+(`|a: i64| -> Option<i64> { Some { value = a } }`), taken from a function-typed binding
+(`let f: |i64| -> Option<i64> := |a: i64| { Some { value = a } }`) or from a function-typed
+parameter. `None` without a determinable type is reported the same way.
 
 <details>
 <summary>Formal rules</summary>
