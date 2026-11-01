@@ -1811,6 +1811,20 @@ implementation).
   construct a legitimate repro for any of the six across two rounds, and found a
   real related bug (metel-core#989, aspect dispatch resolution keyed by bare
   name) instead of one.
+- **RFC-0199** *(draft 2026-11-01)* — `Lazy<T>`: a std type owning a `once` closure and a result slot, so
+  "evaluated at most once" is an ownership fact. No syntax. Builds on RFC-0134; read with RFC-0203.
+- **RFC-0200** *(draft 2026-11-01)* — `newtype`: a one-field nominal type with explicit aspect forwarding.
+  The nominal alias RFC-0160 rejected and left room for. Read with RFC-0202.
+- **RFC-0201** *(draft 2026-11-01)* — Pattern synonyms: named, user-defined patterns exposing a matching
+  interface that differs from the representation. Adjacent to RFC-0109 and RFC-0170.
+- **RFC-0202** *(draft 2026-11-01)* — Refinement and smart-constructor types: `type T := U satisfying (…)`,
+  a distinct nominal type whose only way in is a checked construction. Builds on RFC-0200.
+- **RFC-0203** *(draft 2026-11-01)* — List comprehensions: sugar over iterator adapters and `collect`.
+  Depends on RFC-0190 and RFC-0124.
+- **RFC-0204** *(draft 2026-11-01)* — Pipelines and function composition: `x |> f(a)` and `f.then(g)`.
+  The composition operator is deferred (`>->` / `>=>` preferred, after RFC-0190). Independent of RFC-0205.
+- **RFC-0205** *(draft 2026-11-01)* — Hole sections (`(_ * 10)`) and operator functions (`ops::add`).
+  Independent of RFC-0204.
 
 ---
 

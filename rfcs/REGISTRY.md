@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-10-30'
+generated_on: '2026-11-01'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**197 RFCs total.** 28 draft, 50 under review, 9 accepted, 4 integrated (91 live), 77 implemented, 15 superseded, 14 refused (106 settled).
+**204 RFCs total.** 35 draft, 50 under review, 9 accepted, 4 integrated (98 live), 77 implemented, 15 superseded, 14 refused (106 settled).
 
-## Draft (28)
+## Draft (35)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -45,6 +45,13 @@ the curated thematic map.
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
+- **RFC-0199** — Lazy<T> — Deferred, Once-Evaluated Values (`0-draft` ; rfcs/0-draft/rfc-0199-lazy-t.md ; date 2026-11-01)
+- **RFC-0200** — Newtypes with Aspect Forwarding (`0-draft` ; rfcs/0-draft/rfc-0200-newtypes.md ; date 2026-11-01)
+- **RFC-0201** — Pattern Synonyms (`0-draft` ; rfcs/0-draft/rfc-0201-pattern-synonyms.md ; date 2026-11-01)
+- **RFC-0202** — Refinement and Smart-Constructor Types (`0-draft` ; rfcs/0-draft/rfc-0202-refinement-types.md ; date 2026-11-01)
+- **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
+- **RFC-0204** — Pipelines and Function Composition (`0-draft` ; rfcs/0-draft/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01)
+- **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 
 ## Under Review (50)
 
