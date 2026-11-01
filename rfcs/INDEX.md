@@ -287,7 +287,7 @@ above it are.
   initial state can be named. Opened from metel-core#1473; unblocks typestate builders written as
   methods; no open questions remain.
 
-- **RFC-0181** *(under-review 2026-10-16, #1480; opened 2026-10-16)* — Anonymous open rows in
+- **RFC-0181** *(implemented 2026-11-01; #1480, #1484)* — Anonymous open rows in
   return and function types — records the decision that an open record with an anonymous tail,
   accepted since metel-core#1478 as a parameter, `let`/`var` annotation and closure parameter,
   stays unsupported (`T0032`) in a return type and a written function type: a private factory
@@ -717,7 +717,7 @@ part of the same records/views substrate review):
 - **RFC-0176** *(draft, opened 2026-10-06)* — Hash Aspect and Structural Hashing —
   defines the public `Hash` aspect, equality-consistent hashing, and conditional
   structural hashing without deciding the unresolved equality or ordering APIs.
-- **RFC-0177** *(integrated, 2026-10-06; implementation tracked by #1296)* — Coercion-Aware Structural Aspect Lookup —
+- **RFC-0177** *(implemented 2026-11-01; #1296)* — Coercion-Aware Structural Aspect Lookup —
   lets structural aspect-bound lookup consider existing implicit coercions, so an
   owning `[T; N]` literal can satisfy an aspect implemented for the borrowed `[T]`
   view without changing the literal's intrinsic type.

@@ -2,13 +2,13 @@
 id: rfc-0177
 title: "Coercion-Aware Structural Aspect Lookup"
 date: '2026-10-06'
-status: integrated
+status: implemented
 coverage:
   "1": { spec: "spec.declarations.structural-aspect-bounds.legality-2" }
-updated: '2026-10-06'
+updated: '2026-11-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1296'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1296'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-06).** The fixed-size array model is settled; review now covers coercion-aware structural lookup.
@@ -16,6 +16,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-06).** The initial array coercion relation and lookup behavior are settled; user-defined coercions remain out of scope.
 
 > **Status — integrated (2026-10-06).** Integrated the coercion-aware structural lookup contract into the structural aspect specification.
+
+> **Status — implemented (2026-11-01).** Implemented in metel-core#1296 (closed 2026-10-06); sized-array coercion in structural lookup verified on the current binary and covered by the legality-2 fixtures.
 
 ## Summary
 

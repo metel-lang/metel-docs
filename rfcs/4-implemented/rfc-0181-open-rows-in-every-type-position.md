@@ -2,7 +2,7 @@
 id: rfc-0181
 title: "Anonymous open rows in return and function types"
 date: '2026-10-16'
-status: integrated
+status: implemented
 coverage:
   "1": { spec: "spec.types.generics.open-rows.legality-5" }
   "1.1": { spec: "spec.types.generics.open-rows.legality-5" }
@@ -12,10 +12,10 @@ coverage:
   "2": { kind: untestable, reason: "What reversing a decision would take; a cost analysis, no behaviour to observe." }
   "3": { kind: untestable, reason: "Triggers for reopening the question; not a behaviour." }
   "4": { kind: untestable, reason: "Lists the documents changed on acceptance; the rule and fixtures it names are covered by section 1." }
-updated: '2026-10-20'
+updated: '2026-11-01'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1480'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1480'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-16).** Opened for review; split out of RFC-0179 open question 3.
@@ -23,6 +23,8 @@ impl_status: not-started
 > **Status — accepted (2026-10-20).** Accepted: the decisions in section 1 stand; the three deferred features are recorded as GAP-TYPES-010..012
 
 > **Status — integrated (2026-10-20).** Integrated: spec legality-5 and GAP-TYPES-010..012 already state the supported and unsupported positions; the T0032 message change is tracked in #1484
+
+> **Status — implemented (2026-11-01).** Only implementation item was #1484 (T0032 message), shipped in metel-core#1543; the rule is spec.types.generics.open-rows.legality-5.
 
 ## Summary
 
