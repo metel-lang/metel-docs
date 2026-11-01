@@ -262,7 +262,7 @@ parameter. `None` without a determinable type is reported the same way.
 A bare no-field or fieldful enum variant is valid in expression position when the
 expected type determines its enum and no binding or declaration of that name is in scope.
 
-<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -316,7 +316,7 @@ struct-literal field may direct bare-variant resolution.
 Without an expected enum type, a bare variant does not resolve by searching other enums;
 the program must qualify or ascribe it.
 
-<!-- rfc.py:last_reviewed a7b8151cc37f56e7485b2fc48062ed4ba2925b14 -->
+<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
