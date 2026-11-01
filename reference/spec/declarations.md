@@ -513,7 +513,7 @@ Top-level `extend` blocks follow the same declaration-order rule as the types th
 Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
 declaration, and the outer declaration is not visible outside its own scope.
 
-<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
+<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
