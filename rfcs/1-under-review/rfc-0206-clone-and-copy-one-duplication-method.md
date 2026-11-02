@@ -176,6 +176,7 @@ are open and are not settled here.
 - **RFC-0158** — `Share`, the aliasing duplication that `Clone` is narrowed away from.
 - **RFC-0071 §2** — defines `Copy`; its "bitwise-copyable" wording is what §2 here sharpens.
 - **RFC-0097** — the orphan rule that admits the blanket's bare-parameter target.
+- **RFC-0207** — the header-grant mechanism that §4(c) (`struct P: Clone`) uses.
 - **RFC-0093 / RFC-0092** — the derive mechanism and comptime core §4(b) waits on.
 - **metel-core#270, #741, #263, #794** — the std impls, the `Copy` decisions, tuple `Copy`
   and variadic generics.
