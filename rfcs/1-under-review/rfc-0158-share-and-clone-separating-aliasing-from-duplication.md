@@ -153,9 +153,9 @@ use sites; `Drop` rules; `Send`/`Sync` (`Rc: !Send` so `Rc::share` stays thread-
   clause becomes the definition of `Rc::share`; the brand machinery itself is unchanged.
 - **RFC-0039 (aspect Alias Syntax, `1-under-review`)** — *not* related despite the name;
   RFC-0039 names compound aspect *bounds*. Noted to prevent a mix-up.
-- **RFC-0135 (Multiplicity for Ordinary Types, `1-under-review`)** — independent. If
-  RFC-0135's `Copy`→`many` rename does not proceed (RFC-0157's recommendation), `Share` is
-  unaffected; if it does, `Share` sits beside `many` the same way it sits beside `Copy`.
+- **RFC-0135 (Multiplicity for Ordinary Types, `refused`)** — independent. Its `Copy`→`many`
+  rename did not proceed (RFC-0157's recommendation), so `Share` sits beside `Copy` and is
+  unaffected.
 - **RFC-0071 (Ownership and Move Semantics, `3-integrated`)** — unaffected.
 
 ---
