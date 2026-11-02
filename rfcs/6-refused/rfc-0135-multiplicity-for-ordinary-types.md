@@ -33,7 +33,25 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/892'
 
 > **Status — under review (2026-08-29).** Concrete primary proposal (declaration-site once/many qualifier replacing extend: Copy, §1-4) with blocking open questions (migration strategy). Companion to RFC-0134 (#269) -- shared closure representation should be reviewed as a pair. Committed to v0.14.2. Tracking: metel-core#892.
 
-> **Status — refused (2026-11-02).** Refused 2026-11-02. The proposal is, in its own words, a vocabulary and mechanism-location change and not a soundness fix: it renames Copy to many and moves the spelling onto the type declaration (many struct), with no change to which types are Copy and no new capability. That is a grammar change and a corpus-wide rewrite (every extend T: Copy;, the spec, the tutorials) for a name that has an established meaning, and it leaves the actual defect of Copy untouched: that the predicate is defined by four mechanisms that disagree (metel-core#741). Closure call capability (RFC-0134) already carries once/many for calls, so no second vocabulary is needed to make closures consistent. Reopen if the regular-value model is reopened (RFC-0162) or a compiler backend makes by-value multiplicity load-bearing.
+> **Status — refused (2026-11-02).** Refused as a package, with its two halves answered
+> separately by the `Copy`/`Clone` settlement (RFC-0162, RFC-0207, RFC-0206).
+>
+> - **The mechanism-location half was taken, under a different spelling.** This RFC asked that
+>   a named type's copyness be written on its declaration instead of an `extend T: Copy;`
+>   elsewhere. RFC-0162 adopts that position as a marker entry in the declaration header
+>   (`struct Point: Copy { … }`), and RFC-0207 owns the mechanism. A `many struct` qualifier
+>   was weighed against it (RFC-0162's C2, `copy struct`) and kept only as the alternative.
+> - **The rename was declined.** `Copy` to `many` changes a name with an established meaning
+>   for newcomers, needs a grammar change, and rewrites every `extend … : Copy;` in the spec,
+>   the tutorials and the corpus, with no new capability and no soundness fix. It also tells a
+>   reader nothing the existing names do not once `Copy` is defined as `Clone` that the
+>   compiler calls (RFC-0206 §2). Closure call capability (RFC-0134) already carries
+>   `once`/`many` for calls, so closures need no second vocabulary.
+> - **The defect it did not touch** is that `Copy` was defined by four mechanisms that
+>   disagree (metel-core#741); RFC-0071 §2 now states one predicate (#1780).
+>
+> Reopen if the regular-value model is reopened again or a compiler backend makes by-value
+> multiplicity load-bearing.
 
 ## Summary
 
