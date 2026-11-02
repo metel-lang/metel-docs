@@ -286,7 +286,7 @@ range, including a negative literal for an unsigned type, is
 [P0002](../error-codes.md#p0002--invalid-integer-literal). A negative literal is judged as the
 negative value it writes, so `-128` fits `i8`.
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 -->
 
 ##### Legality Rule {#spec.lexical.literals.legality-5}
 

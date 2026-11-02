@@ -97,7 +97,7 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
