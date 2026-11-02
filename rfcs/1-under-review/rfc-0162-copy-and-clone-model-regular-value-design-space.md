@@ -46,6 +46,8 @@ P4 renames nothing (OQ4).
 
 1. **The value model's semantics do not change.** `Copy` is implicit and cheap, `Clone` is
    explicit; no P1, P2 or P3. This is the Recommended direction's conclusion, and it stands.
+   The two aspects share one method: `Copy` is `Clone` whose body the compiler seals as a
+   bitwise copy and calls for you (B1s), so a type needs only `: Copy`.
 2. **Named types state copyness in the declaration header** as a marker fact (C4), reusing
    RFC-0105's aspect-list grammar for markers: `struct Point: Copy { x: i64, y: i64 }`,
    `struct Token: Copy, !Send { … }`. `Copy` stays an aspect and a bound; the grant is the
@@ -69,8 +71,7 @@ P4 renames nothing (OQ4).
    type, behaviour is implemented in `extend`*, which C5 would turn into declared grant modes.
    RFC-0135's mechanism-location half is taken; its rename to `many` is not.
 5. **Not decided here.** The names (`Copy`, `Clone`, and `Share` from RFC-0158); whether
-   `Copy` implies `Clone` (RFC-0080 §1.2 specifies the blanket impl and it is not
-   implemented; tuples have no `Clone`); the spelling of the marker on a written type (a trailing `: Copy`
+   how a non-`Copy` named type gets `Clone` (question 8; tuples also have none); the spelling of the marker on a written type (a trailing `: Copy`
    against a `where` clause on the function; the expression form is settled as
    `: extends Copy`);
    R1 against R2; and whether a named `record`, which is `Copy` by its fields today, needs a
@@ -256,12 +257,32 @@ Two orthogonal axes.
 
 - **B1. Two aspects (today).** `Copy` (implicit, cheap) and `Clone` (explicit, any cost),
   linked by blanket impl.
+- **B1s. Two aspects, one method, `Copy` sealed (proposed 2026-11-02).** `Clone` is the
+  explicit duplication method (`fun clone(&self) -> Self`). `Copy` refines it: for a `Copy`
+  type the compiler supplies `clone`, and its body is **sealed**, always a bitwise copy,
+  never user-written; the compiler inserts the call at a by-value use. So `let b := a` for a
+  `Copy` type is `let b := a.clone()` with the call inserted, and `Copy` is `Clone` that
+  the compiler calls for you. This is RFC-0080 §1.2's blanket
+  (`extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }`), stated as the
+  definition of `Copy`. The body is sealed because a user-written `clone` invoked implicitly
+  would run arbitrary code at every copy (hidden cost, hidden panics and effects, an
+  awkward interaction with `Drop`), which is D1 in its worst form. It follows that a `Copy`
+  type cannot have a custom `Clone` (the impls would overlap), and that a type needs only
+  `: Copy` to be both: no `derive(Clone, Copy)` pair. The interpreter already deep-clones at
+  every by-value use, so `Copy`, `Clone` and move are observationally identical at runtime;
+  B1s is that behaviour made the definition, with move checking as the restriction.
 - **B2. One aspect, cost is a type property.** A single `Dup`/duplication capability;
   whether a given `.dup()` is cheap is documented by the type, not by aspect identity.
   Implicitness (Axis A) becomes a separate marker, not a separate aspect.
 - **B3. One axis via RFC-0135's `many`/`once`.** `many` = implicit duplication allowed,
   `once` = move-only; an explicit `dup()` bridges `once` → owned copy. `Clone`
   disappears into "`dup()` on a `once` type."
+
+**Proposed (language owner's lean, 2026-11-02): B1s.** The two aspects stay, and the
+relationship is made the definition: one method, `Copy` sealed. It answers the second
+concern (a `Copy` type no longer writes both) and gives the names an explanation in place of
+a rename: *`Copy` is `Clone` that the compiler calls for you, and whose body is always a
+bitwise copy.* How a non-`Copy` named type gets `Clone` is separate (question 8).
 
 ### Axis B, second cut — duplication vs. aliasing (→ RFC-0158)
 
@@ -1265,6 +1286,22 @@ trait that gates nothing implicit is an unobjectionable trait.
    mechanism behind it; either would decide whether RFC-0105 is advanced in a narrowed form
    and whether RFC-0096's list becomes declared properties. *Advancing
    condition:* a conditional-grant spelling that survives the worked examples.
+
+8. **`Clone` for the types that are not `Copy`.** Added 2026-11-02; Axis B has its position
+   (B1s). The sealed blanket of RFC-0080 §1.2 covers `Copy` types; the rest needs an
+   answer. *Measured:* records, arrays, primitives and `String` clone; tuples, a named
+   `struct`, `Option` and `List` do not. Std types are plain work (`extend<T: Clone>
+   Option<T>: Clone`, metel-core#270). A tuple arm is a hardcoded rule like tuple `Copy` until
+   variadic generics. For a user `struct` or `enum`: (a) hand-written, as today; (b)
+   RFC-0080 §1.3's `#derive(Clone)`, blocked on RFC-0093 and comptime and reopening the
+   hidden-derive worry; (c) a header entry with a derived field-wise body, `struct P: Clone`,
+   the first use of the direction that headers later accept aspects with methods, needing the
+   field-wise machinery (a native hook as records use, comptime later); (d) automatic
+   availability as for records, at the cost of the API-stability hazard (adding a field with
+   no `Clone` removes the method). **Process:** RFC-0080 is `1-under-review` and its §1.3
+   waits on RFC-0093, so §1.2 needs splitting from it (an amendment here or a narrowed
+   RFC-0080) before `Copy ⟹ Clone` can be implemented. *Advancing condition:* a choice
+   among (a) to (d) and the split.
 
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
 split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
