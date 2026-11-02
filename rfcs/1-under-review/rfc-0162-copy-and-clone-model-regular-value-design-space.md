@@ -301,7 +301,7 @@ Everything else it buys (locality, a keyword that looks like a language rule) is
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
 
-**Position taken (2026-11-02, language owner): C2, spelled `copy` (P4), for now; C4 is under exploration and may supersede it; C5 is the mechanism both would be instances of.** The grant
+**Position taken (2026-11-02, language owner): C2, spelled `copy` (P4), for now. Leaning (same day): C4, the header list, with refinable header grants, and not yet adopted; C5 is the mechanism both would be instances of.** The grant
 moves onto the type's declaration, `copy struct Point { x: i64, y: i64 }`; `Copy` stays as the
 bound; `extend T: Copy;` becomes an error with a fix-it. The word is the one RFC-0163 already
 reserves, and RFC-0135's rename to `many` is not taken. "For now" means the spelling and the
@@ -380,6 +380,43 @@ be RFC-0105's obligation model, which this proposal does not take.
   marker-only subset. The obligation check and the registry-injection question RFC-0105 raises do
   not arise for markers, because there is no `extend` to find.
 
+**Refinable header grants (added 2026-11-02).** A pure header list cannot express a
+condition the compiler cannot derive, and gives std's own grants (primitives, the record
+rule) no place to live. The restriction can be relaxed without losing its invariant, which
+is: **a type is `Copy`-capable only if its header says so.** An `extend` of the aspect is
+legal in exactly three situations and an error otherwise (with a fix-it):
+
+1. *It refines a header grant.* The header already names the aspect (`struct W<T>: Copy`),
+   and the `extend` supplies the condition: `extend<T: Marker> W<T>: Copy;`. Without an
+   `extend`, the condition is derived from the fields (R1: every type parameter that occurs
+   in a field must be `Copy`; R2, the weakest sufficient condition, is the exact alternative
+   and needs a solver). With one, the `extend` wins, and must still satisfy the aspect's
+   eligibility check, exactly as `check_copy_impl_eligibility` does today.
+2. *The target has no header.* std's `extend i64: Copy;` and
+   `extend<record R> { ..R }: Copy where ..R: Copy;` have structural or builtin targets;
+   no exemption needs inventing.
+3. *It is a negative impl.* `extend<T> W<T>: !Copy where T: Marker;` denies and grants
+   nothing.
+
+An `extend T: Copy;` for a type whose header does not name `Copy` is rejected, so neither a
+deriver nor a distant `extend` can make a type `Copy` silently. This is RFC-0105's obligation
+model, header as promise and `extend` as detail, applied to markers only. The check is
+module-local, not whole-graph: `Copy` is a std aspect, so the orphan rule (`T0014`) already
+puts the grant in the type's own module, which is where the header is. The cost is that a
+conditional type can have two places, the header and an optional refining `extend`, and that
+a deriver may emit the refining `extend`, though only for a type whose header already names
+`Copy`. In C5's terms this is a `header` aspect that is *refinable*.
+
+**Structural types under C4 (under discussion, not decided).** A header list has no
+site on a tuple or an anonymous record. A type alias is a declaration that does
+(`type Pt := { x: i64, y: i64 };` works today, generic ones too, and an alias is
+transparent), so `type Origin: Copy := { x: i64, y: i64 };` would assert, not grant, that
+the aliased type is `Copy`, and `type Token: !Copy := (i64, i64);` would make it
+move-only. A signature that names `Origin` is then protected from a silent flip, and the
+`T0010`/`T0032` advice to "name a `record` or a type alias" already points users there. This
+would replace Axis S's `copy`/`once` qualifier with the header vocabulary, at the price of
+`: Copy` meaning a grant on a named type and an assertion on an alias.
+
 **Worked examples** (C1 run against today's behaviour; C2 and C4 reasoned):
 
 1. *Adding a field* (`name: String` to a `Copy` struct): C1 errors at the `extend` line, C2
@@ -392,7 +429,13 @@ be RFC-0105's obligation model, which this proposal does not take.
    it, unconditionally, with no `extend`.
 5. *`Drop`:* `struct H: Copy` with `extend H: Drop { … }` is rejected at the declaration under
    both, with the same message as C2's.
-6. *A derive:* closed by construction under C2, by the written rule under C4.
+6. *A derive:* closed by construction under C2, by the written rule under C4, and by the
+   header requirement for the refining `extend` (above).
+7. *A condition on another aspect* (`extend<T: Marker> Witness<T>: Copy`, used by a
+   coherence fixture): inexpressible under C2 and under a pure header list; under refinable
+   header grants it is `struct Witness<T>: Copy { … }` plus that `extend`.
+8. *std's own grants:* `extend i64: Copy;` and the record rule stay as `extend`, by case 2,
+   with no exemption to invent.
 
 **What would decide it.** If the only grant ever moved is `Copy`, C2 is smaller and closes
 the derive hazard by construction. If the language wants one place for all marker facts
@@ -1130,10 +1173,11 @@ trait that gates nothing implicit is an unobjectionable trait.
    spike for (a), a check of (b) against the implementation.
 
 7. **Residuals of C2.** Added 2026-11-02; Axis C has its position (C2, `copy`). Four things
-   remain. (a) *Conditional grants:* `extend<T: Copy> W<T>: Copy;` needs a declaration form;
-   candidates are `copy struct W<T: Copy>` read as "`Copy` when its parameters are", or
-   `copy struct W<T> where T: Copy`, and the likeliest fallback is keeping an
-   `extend`-shaped form for the conditional case alone, which reopens D6.2 in that corner.
+   remain. (a) *Conditional grants:* `extend<T: Copy> W<T>: Copy;` needs a declaration form. The
+   bound and the `where` on a declaration are out (`struct W<T: Copy>` and
+   `struct W<T> where T: Copy` already restrict instantiation); the answer is the condition
+   derived from the fields (R1 or R2), with an `extend` allowed only to refine a header grant
+   ("Refinable header grants" under C4).
    (b) *The stop rule (D6.3):* why `Copy` moves to a keyword while `Drop`, `Send` and `Sync`
    stay aspects; it must be stated as a principle or accepted as a special case. (c) *One
    word, two roles:* `copy` on a declaration asserts and is checked, `copy` on a function or
