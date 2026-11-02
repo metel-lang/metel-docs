@@ -201,8 +201,8 @@ are open and are not settled here.
    owning fields, and a field type without `Clone` makes the header entry an error at the
    declaration. An enum's body matches the active variant.
 9. **Generic types.** Proposed: reuse RFC-0162's R1, so `Clone` is conditional on every type
-   parameter that occurs in a field being `Clone`; the alternative is R2, the weakest
-   sufficient condition. Whichever RFC-0162 settles for `Copy` should apply here.
+   parameter that occurs in a field being `Clone`, with an `extend` allowed to widen it.
+   Decided 2026-11-02, following RFC-0162's R1 for `Copy`; R2 is not taken.
 
 ---
 
