@@ -57,8 +57,9 @@ P4 renames nothing (OQ4).
    parameter that occurs in a field must be `Copy`; an `extend` widens it where R1 is too
    strict, as for `struct W<T> { r: &T }`; R2, the weakest sufficient condition, was the
    alternative and is not taken). An `extend … : Copy;` is rejected except where it **refines** a
-   header grant (a condition the compiler cannot derive) or where it is a **negative impl**;
-   there is no exception for a target with no header (RFC-0207).
+   header grant (a condition the compiler cannot derive), where it is a **negative impl**, or
+   where the target has no declaration (a primitive, a tuple, an array, an anonymous record)
+   and the `extend` is in the aspect's defining module (RFC-0207).
 3. **Structural types stay inferred from their parts, and may carry a marker on the written
    type** (S6): `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
    `let pair: (i64, boolean): Copy := …`, with `!Copy` and other markers accepted the same
@@ -394,13 +395,15 @@ What this RFC relies on from RFC-0207:
 
 - A named type states `Copy` in its header (`struct Point: Copy { … }`), and the grant is a
   marker fact, not an obligation met elsewhere. `Copy` stays an aspect and a bound.
-- An `extend … : Copy;` is legal only to **refine** a header grant or as a **negative impl**;
-  std's `extend`s for primitives and the record rule are transitional (primitives get
-  declarations with headers; the structural kinds are covered by the aspect's field-wise rule,
-  RFC-0207). Without a
+- An `extend … : Copy;` is legal only to **refine** a header grant, as a **negative impl**, or
+  for a target with no declaration, in std (RFC-0207): the primitives (until they get
+  declarations with headers) and the structural kinds, which are impls such as
+  `extend<record R> { ..R }: Copy where ..R: Copy;` (RFC-0123), an array impl over a
+  compile-time `N` (RFC-0132 §3) and a tuple impl (variadic generics, #794), hardcoded until
+  those land. Without a
   refinement the condition for a generic type is derived from the fields (R1, decided
   2026-11-02: every type parameter occurring in a field must be `Copy`).
-- Structural types have no header and never get one; they are `Copy` by the field-wise rule on their parts (Axis S's S1), and Axis S gives them a marker on the written type (S6).
+- Structural types have no header and never get one; they are `Copy` by those written std impls over their parts (Axis S's S1), and Axis S gives them a marker on the written type (S6).
 - If RFC-0207 is not accepted, the alternative kept here is C2 (`copy struct`).
 
 The earlier worked examples comparing C1, C2 and C4, the stop-rule argument (D6.3), the derive
