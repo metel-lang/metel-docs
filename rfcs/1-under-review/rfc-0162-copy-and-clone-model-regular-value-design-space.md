@@ -25,7 +25,7 @@ about the *mechanism* of the grant, not its content.
 
 **Proposed direction (2026-11-02, language owner's lean):** keep the value model's
 semantics, and change where copyness is *stated*: a marker fact in the declaration header
-for named types, a marker ascription at the expression for structural ones. See "Proposed
+for named types, a marker on the written type for structural ones. See "Proposed
 direction" below.
 
 **Recommendation (carried from RFC-0157, on the value model):** on regular values, *keep Rust's model* — no
@@ -54,11 +54,12 @@ P4 renames nothing (OQ4).
    the exact alternative). An `extend … : Copy;` is rejected except where it **refines** a
    header grant (a condition the compiler cannot derive), where the **target has no header**
    (std's primitives and the record rule), or where it is a **negative impl**.
-3. **Structural types stay inferred from their parts, and may be asserted at the
-   expression** (S5): `({ x = 0, y = 0 }: Copy)` is an erased check that the value's type is
-   `Copy`, with `!Copy` and other markers accepted the same way. It is an assertion that
-   protects the author at the construction site, not a contract on a signature. A value
-   made move-only on purpose (a token) is a named type.
+3. **Structural types stay inferred from their parts, and may carry a marker on the written
+   type** (S5): `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
+   `let pair: (i64, boolean): Copy := …`, with `!Copy` and other markers accepted the same
+   way. It is an erased check at the definition, a guarantee on a signature, and a
+   parameter's marker also constrains callers. A value made move-only on purpose (a token)
+   is a named type. An expression-position form was considered and dropped for now.
 4. **What this answers.** The grant is visible at the declaration (D6.1); a derive cannot hide
    it, by a written rule (OQ5) since the header entry is as short as a derive would be (D6.2);
    the stop rule (D6.3) is a class and not an exception: *marker facts are declared on the
@@ -66,8 +67,8 @@ P4 renames nothing (OQ4).
    RFC-0135's mechanism-location half is taken; its rename to `many` is not.
 5. **Not decided here.** The names (`Copy`, `Clone`, and `Share` from RFC-0158); whether
    `Copy` implies `Clone` (RFC-0080 §1.2 specifies the blanket impl and it is not
-   implemented; tuples have no `Clone`); the spelling of the ascription (`(e: Copy)` can be
-   read as a type ascription or an `impl`/`dyn` form, so a distinct spelling may be needed);
+   implemented; tuples have no `Clone`); the spelling of the marker on a written type (a trailing `: Copy`
+   against a `where` clause on the function);
    R1 against R2; and whether a named `record`, which is `Copy` by its fields today, needs a
    header entry like a `struct`.
 
@@ -420,8 +421,8 @@ a deriver may emit the refining `extend`, though only for a type whose header al
 `Copy`. In C5's terms this is a `header` aspect that is *refinable*.
 
 **Structural types under C4.** A header list has no site on a tuple or an anonymous record.
-Axis S proposes S5 for them, a marker ascription at the expression, which uses the same
-items as the header.
+Axis S proposes S5 for them, a marker on the written type, which uses the same items as the
+header.
 
 **Worked examples** (C1 run against today's behaviour; C2 and C4 reasoned):
 
@@ -550,14 +551,24 @@ every use site downstream changes meaning.
   a body everything stays inferred. The boundary is where a change of copyness reaches other
   people's code, so the cost of writing it is paid exactly there.
 
-- **S5. Inferred, with a marker ascription.** Inference stays, and an expression may be
-  ascribed a bound list of markers, using the header list's own items: `({ x = 0 }: Copy)`,
-  `(pair: Copy, !Send)`. The check is erased, as a type ascription is, so no multiplicity is
-  carried on tuples and records. It protects the author at the construction site (the API
-  example fails at that expression when `label: String` is added), and it cannot make a
-  `Copy` value move-only: `!Copy` on a `(i64, i64)` asserts something false. A token is a
-  named type. Markers only (aspects with no required methods); allowing any aspect would turn
-  it into a general "assert implements" expression.
+- **S5. Inferred, with a marker on the written type.** Inference stays, and a type written
+  in a signature or an annotation may carry a bound list of markers, using the header list's
+  own items: `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
+  `let pair: (i64, boolean): Copy := …`, `: !Copy`. It is a refinement of the written type,
+  erased, and checked at the definition: for a concrete type it is true or false the moment
+  it is written, and for a generic one it follows the derived condition (`(T, T): Copy`
+  holds when `T: Copy`). On a result it is a guarantee the author makes and the caller
+  reads; on a parameter it also constrains callers. For an open row,
+  `{ x: i64, ..R }: Copy` is the field-wise bound `where ..R: Copy` (RFC-0123), so one
+  spelling covers both. No multiplicity is carried on tuples and records. It cannot make a
+  `Copy` value move-only (`!Copy` on a `(i64, i64)` asserts something false); a token is a
+  named type. Markers only (aspects with no required methods). The positions are returns,
+  parameters and `let` annotations; a struct field or a type argument is left out at
+  first. The alternative spelling is a `where` clause on the function, with the type as its
+  subject (`where { x: i64, y: i64 }: Copy`), which already accepts subjects that are not
+  parameters. **An expression-position form** (`({ x = 0 }: Copy)`) was considered and
+  dropped for now: it protects only the construction site and is not part of the signature
+  a caller reads.
 
 S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
 the structural type (as `use_multiplicity` is of the function type, RFC-0134 §4), so
@@ -565,10 +576,10 @@ unification and the widening rule (a `copy` value satisfies a `once` slot, not t
 extend to tuples and records, and width subtyping for records (RFC-0117) must carry it.
 S3 and S3p use the multiplicity vocabulary of closures (`copy`, `once`); S5 uses the header
 list's, so one vocabulary (`: Copy`, `!Send`) covers named types and structural values, and
-the division is principled: a type with a declaration states an aspect there, a value without
-one is asserted where it is built. Axis S composes with every A/B/C position.
+the division is principled: a type with a declaration states an aspect there, a structural
+type states it where it is written. Axis S composes with every A/B/C position.
 
-**Proposed (language owner's lean, 2026-11-02): S5.** S3p, which was the position earlier the
+**Proposed (language owner's lean, 2026-11-02): S5, the marker on the written type, with no expression form.** S3p, which was the position earlier the
 same day, is the alternative: it gives a signature-level contract and can express `once`, at
 the price of a multiplicity in the structural types and a second vocabulary. An alias
 header (`type Origin: Copy := …`) was considered as a third route and not taken, since
@@ -1175,11 +1186,12 @@ trait that gates nothing implicit is an unobjectionable trait.
    condition:* a concrete case where hand-writing the grant is genuinely onerous, which
    for a marker aspect with a one-line spelling is hard to construct.
 
-6. **Residuals of S5.** Added 2026-11-02; Axis S proposes S5, the marker ascription. Three
-   things remain. (a) *Spelling:* `(e: Copy)` reads as a type ascription, and `impl Copy`
-   and `dyn Copy` already mean different things in Metel, so a distinct form
-   (`(e is Copy)`, or a prefix) may be needed; the parser can tell an aspect from a type by
-   name resolution, but a reader cannot at a glance. (b) *Duplicating a non-`Copy`
+6. **Residuals of S5.** Added 2026-11-02; Axis S proposes S5, the marker on the written type. Three
+   things remain. (a) *Spelling:* a trailing `: Copy` after a written type (`p: (i64, boolean): Copy`,
+   `-> { x: i64 }: Copy`) is unusual next to a parameter's own `:`, and a `where` clause on
+   the function is the alternative; neither has been tried against the grammar. Which
+   positions are allowed (returns, parameters, `let`; not fields or type arguments) and
+   whether a parameter's marker is a requirement as well as documentation are also open. (b) *Duplicating a non-`Copy`
    structural value:* records (anonymous and named) have a `Clone`, `extend<record R> { ..R }:
    Clone where ..R: Clone` in `std::core` (RFC-0123), as do arrays, primitives and
    `String`; **tuples have none** (`T: Clone` rejects `(i64, i64)`, and `.clone()` on one
