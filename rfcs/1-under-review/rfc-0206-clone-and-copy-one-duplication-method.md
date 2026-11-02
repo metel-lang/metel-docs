@@ -183,14 +183,14 @@ are open and are not settled here.
 
 1. **`Clone` for user types** (§4): (a) to (d); the proposed direction is (c) with (a) kept,
    its rules being questions 6 to 9.
-2. **How sealing is enforced.** Either a coherence rule that rejects a second `Clone` for a
-   `Copy` type, or the `Copy` aspect declared as granting a sealed `clone` (RFC-0162's C5 grant
-   modes). The first is smaller; the second is the principled version.
-3. **Bound entailment.** `T: Copy ⟹ T: Clone` in the checker's bound reasoning and in the
-   abstract analysis of generic bodies.
-4. **Allocators** (§5).
-5. **Tuples before variadic generics**: a hardcoded arm, with the same migration problem as
-   tuple `Copy`.
+2. **How sealing is enforced.** Decided 2026-11-02: a coherence rule that rejects a second
+   `Clone` for a `Copy` type. The alternative, the `Copy` aspect declared as granting a sealed
+   `clone` (RFC-0162's C5 grant modes), stays a possible follow-up RFC and blocks nothing here.
+3. **Bound entailment.** Not a design choice: `T: Copy ⟹ T: Clone` must hold in the checker's
+   bound reasoning and in the abstract analysis of generic bodies. It is implementation scope.
+4. **Allocators** (§5). Not settled here; nothing in v0.16.0 depends on it.
+5. **Tuples before variadic generics.** Decided 2026-11-02: a hardcoded arm, with the same
+   migration problem as tuple `Copy` (metel-core#263, #794).
 6. **`: Copy, Clone` in one header.** `Copy` already gives `Clone` through the sealed blanket
    (§2), so the pair is redundant. Proposed: an error, to keep one spelling; the alternative
    is a warning.
