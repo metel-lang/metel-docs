@@ -53,9 +53,10 @@ P4 renames nothing (OQ4).
    `struct Token: Copy, !Send { … }`. `Copy` stays an aspect and a bound; the grant is the
    header entry. The `: Copy` spelling is chosen because it mirrors `extend T: Copy`, and
    because header aspects may later accept aspects with methods, which would make a header
-   behave nearly identically to an `extend` block. For a generic type the condition is derived from the fields (R1: every type
-   parameter that occurs in a field must be `Copy`; R2, the weakest sufficient condition, is
-   the exact alternative). An `extend … : Copy;` is rejected except where it **refines** a
+   behave nearly identically to an `extend` block. For a generic type the condition is derived from the fields (R1, decided 2026-11-02: every type
+   parameter that occurs in a field must be `Copy`; an `extend` widens it where R1 is too
+   strict, as for `struct W<T> { r: &T }`; R2, the weakest sufficient condition, was the
+   alternative and is not taken). An `extend … : Copy;` is rejected except where it **refines** a
    header grant (a condition the compiler cannot derive), where the **target has no header**
    (std's primitives and the record rule), or where it is a **negative impl**.
 3. **Structural types stay inferred from their parts, and may carry a marker on the written
@@ -74,8 +75,11 @@ P4 renames nothing (OQ4).
    how a non-`Copy` named type gets `Clone` (question 8; tuples also have none); the spelling of the marker on a written type (a trailing `: Copy`
    against a `where` clause on the function; the expression form is settled as
    `: extends Copy`);
-   R1 against R2; and whether a named `record`, which is `Copy` by its fields today, needs a
-   header entry like a `struct`.
+   and whether a named `record`, which is `Copy` by its fields today, needs a
+   header entry like a `struct`. **Decided 2026-11-02:** R1 against R2 (R1, refinable); the
+   names stay (`Copy` and `Clone` are kept, and the `Copy` to `many` rename is declined; the
+   B1s sentence carries the difference); `: extends Copy` in `let` (S5) stays optional and
+   nothing in v0.16.0 needs it.
 
 The earlier positions are kept as alternatives: C2 (the `copy` declaration keyword, P4) and
 S3p (`copy`/`once` qualifiers in public signatures). They are smaller to specify and close
@@ -433,9 +437,9 @@ legal in exactly three situations and an error otherwise (with a fix-it):
 
 1. *It refines a header grant.* The header already names the aspect (`struct W<T>: Copy`),
    and the `extend` supplies the condition: `extend<T: Marker> W<T>: Copy;`. Without an
-   `extend`, the condition is derived from the fields (R1: every type parameter that occurs
-   in a field must be `Copy`; R2, the weakest sufficient condition, is the exact alternative
-   and needs a solver). With one, the `extend` wins, and must still satisfy the aspect's
+   `extend`, the condition is derived from the fields (R1, decided 2026-11-02: every type parameter that occurs
+   in a field must be `Copy`; R2, the weakest sufficient condition, needs a solver and is not
+   taken; where R1 is too strict, as for `struct W<T> { r: &T }`, this `extend` widens it). With one, the `extend` wins, and must still satisfy the aspect's
    eligibility check, exactly as `check_copy_impl_eligibility` does today.
 2. *The target has no header.* std's `extend i64: Copy;` and
    `extend<record R> { ..R }: Copy where ..R: Copy;` have structural or builtin targets;
