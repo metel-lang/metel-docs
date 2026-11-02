@@ -16,7 +16,7 @@ satisfies, and the implementation answers inconsistently. This RFC sets the rule
 > **hand-written** impl applies to the full type only.
 
 ```metel
-struct Doc: Clone { title: String, n: i64 }       // header entry: the Clone template applies
+struct Doc derives Clone { title: String, n: i64 }   // derives entry: the Clone template applies
 struct Point: Copy { x: i64, y: i64 }
 
 let q := d.{ title };        // q : Doc.{ title }
@@ -64,7 +64,7 @@ header entry derives behaviour from the type's row, and a residual is that row n
    `T: A` on a residual is satisfied only through rule 1; otherwise it is `T0012`.
 3. `Self` in a template denotes the matched type, here the residual. A template method that returns
    `Self` returns the residual.
-4. A residual of a type whose header grants nothing satisfies nothing for header aspects, as the
+4. A residual of a type whose header grants nothing satisfies nothing for marker and derivable aspects, as the
    brand does.
 5. A residual is a value of the same brand, so the brand's `Drop` rule is unchanged: a destructor
    is dispatched by the row-bounded rule of RFC-0137 §5 and is outside this RFC.
@@ -81,11 +81,11 @@ read, so the result is well defined at every width.
 
 ## 2. Worked examples
 
-1. **A derived clone of a residual.** `Doc: Clone`, `q := d.{ title }`: `q.clone()` is
+1. **A derived clone of a residual.** `Doc derives Clone`, `q := d.{ title }`: `q.clone()` is
    `Doc.{ title }`, built from the present field.
 2. **A written clone.** `extend Doc: Clone { fun clone(&self) -> Doc { … self.n … } }`: the
    residual does not satisfy `Clone`. The program of metel-core#1788 is `T0012` at the call.
-3. **Copy of a projection.** `Point: Copy`, `p.{ x }` used twice: accepted, as today, now by
+3. **Copy of a projection.** `Point: Copy` (a marker entry), `p.{ x }` used twice: accepted, as today, now by
    rule 1 and not by looking through the brand.
 4. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `Copy`;
    `H.{ fd }` is not `Copy` although `fd` is. A `Copy` projection of it needs a separate type.
@@ -131,7 +131,7 @@ read, so the result is well defined at every width.
 
 ## Open questions
 
-1. **Whether a user header aspect with a template** (RFC-0209 Open Question 5) gets the same
+1. **Whether a user derivable aspect with a template** (RFC-0209 Open Question 5) gets the same
    residual behaviour; presumably yes.
 2. **Residuals of generic types** and of types with row parameters: whether the template's
    condition is evaluated before or after narrowing.

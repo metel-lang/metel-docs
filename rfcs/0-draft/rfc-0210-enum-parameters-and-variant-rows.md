@@ -26,8 +26,8 @@ extend<enum E> E: Clone where ..E: Clone {
     }
 }
 
-enum Shape: Clone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // header entry, RFC-0207
-enum Option<T>: Clone { None, Some { value: T } }
+enum Shape derives Clone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // derives entry, RFC-0207
+enum Option<T> derives Clone { None, Some { value: T } }
 ```
 
 `Copy` needs no body. Its sealed `clone` is a bitwise copy (RFC-0206 §2), so a `Copy` enum needs
@@ -89,7 +89,7 @@ one level down: the members of `..E` are rows, and a row satisfies the bound whe
 for it. A unit variant satisfies it vacuously.
 
 ```metel
-enum Shape: Copy { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // holds: f64 is Copy
+enum Shape: Copy { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // marker entry; holds: f64 is Copy
 enum Bad: Copy { A { s: String } }                                // rejected at the declaration, next to `s`
 ```
 
@@ -118,7 +118,7 @@ behaviour is the same; only the source of the body differs.
 ## 4. Alternatives considered
 
 1. **Native only.** The compiler keeps its enum rules and no template exists. Declined as the end
-   state: it is the stage-1 plan, but a user header aspect could never derive for an enum, and
+   state: it is the stage-1 plan, but a user derivable aspect could never derive for an enum, and
    enums would be the one exception in an otherwise uniform mechanism.
 2. **Anonymous sum types** (`enum { A { x: i64 }, B }`), the mirror of anonymous records, so
    RFC-0209's approach carries over unchanged. Declined: it is the largest option and opens open
@@ -152,7 +152,7 @@ behaviour is the same; only the source of the body differs.
 - **RFC-0150** — nested narrowing, which treats enums as atomic; unchanged.
 - **RFC-0078** — the bottom type; an enum with no inhabited variant satisfies every `..E: A`
   vacuously.
-- **metel-core#270** — std `Clone` impls, which this RFC would express as `enum Option<T>: Clone`.
+- **metel-core#270** — std `Clone` impls, which this RFC would express as `enum Option<T> derives Clone`.
 
 ## Open questions
 
