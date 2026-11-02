@@ -315,16 +315,60 @@ every use site downstream changes meaning.
   tuple with a non-`Copy` part writes `once`. Fully explicit, and noisy at every literal:
   structural values are far commoner than closures.
 
-S3 and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
+- **S3p. S3, required in public signatures.** S3, with one addition: a structural type that
+  appears in a `public` item's signature (a parameter, a return type, a field of a `public`
+  type) must state its copyness, `many` or `once`, just as such a signature must already
+  write its function types in full (`T0010`, `spec.modules.visibility.legality-2`). Inside
+  a body everything stays inferred. The boundary is where a change of copyness reaches other
+  people's code, so the cost of writing it is paid exactly there.
+
+S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
 the structural type (as `use_multiplicity` is of the function type, RFC-0134 §4), so
 unification and the widening rule (a `many` value satisfies a `once` slot, not the reverse)
 extend to tuples and records, and width subtyping for records (RFC-0117) must carry it.
-S3 is also the one position in which the vocabulary is the same across named types (P3,
-`many struct`), structural types and closures. Axis S composes with every A/B/C position
+S3 and S3p are also the positions in which the vocabulary is the same across named types
+(P3, `many struct`), structural types and closures. Axis S composes with every A/B/C position
 except that P3 and P4 force a choice of spelling for the named half.
 
-This axis is **undecided**; the recommended direction below covers regular named values and
-does not cover it.
+**Position taken (2026-11-02, language owner): S3p.** Structural types stay inferred inside
+bodies and state their copyness in public signatures. The recommended direction below covers
+regular named values; the worked examples that follow are why S3p, and not S1, S2 or S4.
+What is still open is the cost of carrying a multiplicity on tuples and records (to be
+measured by an implementation spike, not argued), how a non-`Copy` structural value is
+duplicated when one needs a copy (question 6), and the exact spelling in each position.
+
+#### Worked examples
+
+Each was run against the implementation for S1 (today). The other positions are reasoned,
+the syntax not existing.
+
+1. **API evolution.** `lib.mtl`: `public fun origin() -> { x: i64, y: i64 }`; `main.mtl`
+   calls `show(o)` twice on its result. Someone adds `label: String`. *S1:* the edit is in
+   `lib.mtl`; the error is in `main.mtl`, `use of moved value 'o'`, and does not say the
+   new field is the cause. *S2:* nothing breaks, because the double use never compiled; the
+   caller needs another way to duplicate (see question 6). *S3:* if the author wrote
+   `-> many { x: i64, y: i64 }`, adding `label: String` fails in `lib.mtl` at the signature;
+   if not, it behaves as S1. *S3p:* the author had to write it, so it fails there. *S4:*
+   as S3p, and also inside bodies.
+2. **A tuple used twice** (`let p := (1, 2); f(p); f(p)`). S1, S3, S3p accept. S2 rejects.
+   S4 rejects with a `once` default and accepts with a `many` default.
+3. **A tuple with a `String`, used twice.** S1: `use of moved value 'p'`, with no reason.
+   Under every position the diagnostic should say *why*: "`(i64, String)` is not `Copy`
+   because `String` is not". That change is independent of this axis and should be made
+   whichever position is taken.
+4. **An open record in generic code.** `fun dup<record R>(r: { x: i64, ..R })` using `r`
+   twice is rejected today; `where ..R: Copy` fixes it. Under S3 and S3p
+   `many { x: i64, ..R }` is a second spelling of that same bound, not a new capability.
+5. **A transitive flip.** `record Outer { i: Inner, n: i64 }` is `Copy` while `Inner` is;
+   adding `name: String` to `Inner` makes `Outer` move-only, and the error is wherever
+   `Outer` is used twice, far from `Inner`. A named type is covered by the declaration-site
+   spelling of Axis C (`many record Outer { … }`), which fails at the declaration.
+6. **Generic code over a tuple.** `twice<T: Copy>((1, true))`, and with an anonymous record,
+   pass today. S2 breaks both, since a tuple could no longer satisfy `T: Copy`.
+
+The pattern across the six: the hazard concentrates at API boundaries and in named types,
+where S3p pays; local code (examples 2 and 6) is correct under inference and only loses under
+S2 and S4.
 
 ### Combined positions worth naming
 
@@ -884,14 +928,17 @@ trait that gates nothing implicit is an unobjectionable trait.
    condition:* a concrete case where hand-writing the grant is genuinely onerous, which
    for a marker aspect with a one-line spelling is hard to construct.
 
-6. **How are structural types made visible, if at all?** Added 2026-11-02 with Axis S.
-   S1 leaves the silent flip; S2 removes the behaviour; S3 adds an optional, checked
-   `many`/`once`; S4 makes it mandatory. The deciding facts are how often a structural
-   value's copyness changes under an edit in the corpus (not measured), and whether the
-   type-system cost of carrying a multiplicity on tuples and records is acceptable.
-   *Advancing condition:* a worked example set (an API that adds a field to a record
-   returned from a `public fun`; a tuple passed twice; an open record with `..R`) written
-   against S1 and S3. *Reopening condition:* none; this is a live question.
+6. **Residuals of S3p.** Added 2026-11-02; Axis S has its position (S3p). Three things
+   remain. (a) *Cost:* how much carrying a multiplicity on `Tuple`, `Record` and open-row
+   types changes unification, widening and width subtyping (RFC-0117); an implementation
+   spike answers it, and a cost judged too high reopens the axis toward S1 plus the
+   diagnostic of example 3. (b) *Duplicating a non-`Copy` structural value:* with S3p a
+   `once` or `String`-holding tuple or record can no longer be copied implicitly; whether
+   it has a `Clone` (the corpus has no aspect impls for tuples or anonymous records, to be
+   verified) decides how a caller gets a second copy. (c) *Spelling* in type and in
+   expression position (`many (a, b)` against ascription only), and whether a `public`
+   field of a named `public` type is a signature position. *Advancing condition:* the
+   spike for (a), a check of (b) against the implementation.
 
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
 split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
