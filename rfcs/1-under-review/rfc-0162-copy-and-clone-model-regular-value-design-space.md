@@ -846,7 +846,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
 - **RFC-0206 (Clone and Copy, one duplication method, `1-under-review`)** — owns the `Clone` aspect (extracted from RFC-0080 §1).
-- **RFC-0207 (Header and Auto Aspects, `0-draft`)** — owns the header-grant mechanism and the aspect grant modes (this RFC's C4 and C5); `Copy`'s position C4 depends on it.
+- **RFC-0207 (Header and Auto Aspects, `1-under-review`)** — owns the header-grant mechanism and the aspect grant modes (this RFC's C4 and C5); `Copy`'s position C4 depends on it.
   RFC-0158 amends its §1 (tighten `Clone` to independent-duplication-only; add `Share`).
   This RFC's recommended direction leaves `Clone` otherwise untouched.
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
