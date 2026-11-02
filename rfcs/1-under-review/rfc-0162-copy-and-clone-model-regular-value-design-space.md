@@ -286,6 +286,41 @@ Everything else it buys (locality, a keyword that looks like a language rule) is
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
 
+**Position taken (2026-11-02, language owner): C2, spelled `copy` (P4), for now.** The grant
+moves onto the type's declaration, `copy struct Point { x: i64, y: i64 }`; `Copy` stays as the
+bound; `extend T: Copy;` becomes an error with a fix-it. The word is the one RFC-0163 already
+reserves, and RFC-0135's rename to `many` is not taken. "For now" means the spelling and the
+conditional-copy form (question 7) are the parts expected to move; the principle, the grant on
+the declaration, is the decision. Axis S is spelled with the same word.
+
+#### Worked examples
+
+Run against the implementation for C1 (today); C2 is reasoned.
+
+1. **Adding a field.** `struct P { n: i64, name: String }` with `extend P: Copy;` is
+   rejected: "cannot implement `Copy` for `P`: field `name` has type `String` which is not
+   `Copy`", pointing at the `extend` line. C2 reports the same error at the field, on the
+   declaration.
+2. **Reading the declaration.** `struct P { n: i64 }` is `Copy` when an `extend P: Copy;`
+   appears elsewhere in the module; a reader of the struct cannot tell. Under C2 the header
+   says `copy struct P`.
+3. **A foreign type.** `extend P: Copy;` for a `P` from another module is `T0014`
+   (orphan): "neither `Copy` nor the target type is local to this module". The grant must
+   already live in the type's own module, so C2 removes no capability.
+4. **A conditional grant.** `struct W<T> { v: T }` with `extend<T: Copy> W<T>: Copy;` makes
+   `W<i64>` copy and `W<String>` move. `copy struct W<T>` has no obvious meaning for "when
+   `T` is `Copy`" (question 7).
+5. **Copy and Drop.** `extend H: Copy;` with `extend H: Drop { … }` is rejected at the `Drop`
+   impl. Under C2 it is rejected at the declaration, where both the `copy` and the `Drop`
+   are visible.
+6. **A derive.** There is none (`#derive` is unimplemented). Under C2 a `Copy` derive cannot
+   be written, because there is no impl to emit; the hazard is closed by the mechanism and
+   not by a rule someone has to remember.
+
+The pattern: C2 improves where an error lands (1, 5), what a reader can see (2) and closes
+the derive hazard (6); it costs the conditional-grant answer (4) and a mechanical migration
+of every `extend … : Copy;`. Grants for foreign types (3) are unaffected.
+
 ### Axis S — Structural types (added 2026-11-02)
 
 Axes A to C are mostly about named types, where a declaration exists to hold a grant. The
@@ -303,34 +338,33 @@ every use site downstream changes meaning.
   names the type (`struct`, `record`) and declares it. Explicit and stable, but tuples and
   anonymous records become awkward to pass around, and it removes behaviour that works
   today (a tuple of `i64` copies), so it is a breaking change.
-- **S3. Inferred, with an optional assertion.** Inference stays, and `many` / `once` can be
+- **S3. Inferred, with an optional assertion.** Inference stays, and `copy` / `once` can be
   written on a structural type and, in expression position, at the construction site:
-  `-> many { x: i64 }`, `let p: many (i64, boolean) := (1, true)`, `many (a, b)`. `many` is
+  `-> copy { x: i64 }`, `let p: copy (i64, boolean) := (1, true)`, `copy (a, b)`. `copy` is
   checked against the parts and is an error if one is not `Copy`; `once` forbids copying
-  even when every part is `Copy` (a token). A signature that writes `many` is stable: adding
+  even when every part is `Copy` (a token). A signature that writes `copy` is stable: adding
   a `String` field breaks that signature and not its callers. For an open record,
-  `many { x: i64, ..R }` is the existing field-wise bound `where ..R: Copy` (RFC-0123).
+  `copy { x: i64, ..R }` is the existing field-wise bound `where ..R: Copy` (RFC-0123).
 - **S4. Required qualifier.** Either the default is `once` and every `Copy` tuple writes
-  `many`, or the default is `many`, verified at construction as for closures, and every
+  `copy`, or the default is `copy`, verified at construction as for closures, and every
   tuple with a non-`Copy` part writes `once`. Fully explicit, and noisy at every literal:
   structural values are far commoner than closures.
 
 - **S3p. S3, required in public signatures.** S3, with one addition: a structural type that
   appears in a `public` item's signature (a parameter, a return type, a field of a `public`
-  type) must state its copyness, `many` or `once`, just as such a signature must already
+  type) must state its copyness, `copy` or `once`, just as such a signature must already
   write its function types in full (`T0010`, `spec.modules.visibility.legality-2`). Inside
   a body everything stays inferred. The boundary is where a change of copyness reaches other
   people's code, so the cost of writing it is paid exactly there.
 
 S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
 the structural type (as `use_multiplicity` is of the function type, RFC-0134 §4), so
-unification and the widening rule (a `many` value satisfies a `once` slot, not the reverse)
+unification and the widening rule (a `copy` value satisfies a `once` slot, not the reverse)
 extend to tuples and records, and width subtyping for records (RFC-0117) must carry it.
 S3 and S3p are also the positions in which the vocabulary is the same across named types
-(P3, `many struct`), structural types and closures. Axis S composes with every A/B/C position
-except that P3 and P4 force a choice of spelling for the named half.
+(C2, `copy struct`), structural types and closures. Axis S composes with every A/B/C position; with C2 chosen, the word is `copy` on both halves.
 
-**Position taken (2026-11-02, language owner): S3p.** Structural types stay inferred inside
+**Position taken (2026-11-02, language owner): S3p, spelled `copy` / `once`** (the earlier text spelled the assertion `many`; it follows Axis C's word). Structural types stay inferred inside
 bodies and state their copyness in public signatures. The recommended direction below covers
 regular named values; the worked examples that follow are why S3p, and not S1, S2 or S4.
 What is still open is the cost of carrying a multiplicity on tuples and records (to be
@@ -347,22 +381,22 @@ the syntax not existing.
    `lib.mtl`; the error is in `main.mtl`, `use of moved value 'o'`, and does not say the
    new field is the cause. *S2:* nothing breaks, because the double use never compiled; the
    caller needs another way to duplicate (see question 6). *S3:* if the author wrote
-   `-> many { x: i64, y: i64 }`, adding `label: String` fails in `lib.mtl` at the signature;
+   `-> copy { x: i64, y: i64 }`, adding `label: String` fails in `lib.mtl` at the signature;
    if not, it behaves as S1. *S3p:* the author had to write it, so it fails there. *S4:*
    as S3p, and also inside bodies.
 2. **A tuple used twice** (`let p := (1, 2); f(p); f(p)`). S1, S3, S3p accept. S2 rejects.
-   S4 rejects with a `once` default and accepts with a `many` default.
+   S4 rejects with a `once` default and accepts with a `copy` default.
 3. **A tuple with a `String`, used twice.** S1: `use of moved value 'p'`, with no reason.
    Under every position the diagnostic should say *why*: "`(i64, String)` is not `Copy`
    because `String` is not". That change is independent of this axis and should be made
    whichever position is taken.
 4. **An open record in generic code.** `fun dup<record R>(r: { x: i64, ..R })` using `r`
    twice is rejected today; `where ..R: Copy` fixes it. Under S3 and S3p
-   `many { x: i64, ..R }` is a second spelling of that same bound, not a new capability.
+   `copy { x: i64, ..R }` is a second spelling of that same bound, not a new capability.
 5. **A transitive flip.** `record Outer { i: Inner, n: i64 }` is `Copy` while `Inner` is;
    adding `name: String` to `Inner` makes `Outer` move-only, and the error is wherever
    `Outer` is used twice, far from `Inner`. A named type is covered by the declaration-site
-   spelling of Axis C (`many record Outer { … }`), which fails at the declaration.
+   spelling of Axis C (`copy record Outer { … }`), which fails at the declaration.
 6. **Generic code over a tuple.** `twice<T: Copy>((1, true))`, and with an anonymous record,
    pass today. S2 breaks both, since a tuple could no longer satisfy `T: Copy`.
 
@@ -900,7 +934,9 @@ trait that gates nothing implicit is an unobjectionable trait.
 3. **Disposition of RFC-0135.** The Recommended direction says the `Copy` → `many` rename
    should not proceed. Does RFC-0135 get refused, narrowed to a de-cruft-only cleanup (the
    `#derive` coupling, generic-`Copy` tidy), or folded into RFC-0158? A call for
-   RFC-0135's own review, informed by this one.
+   RFC-0135's own review, informed by this one. *Disposition (2026-11-02):* RFC-0135's
+   mechanism-location half is taken as C2 / P4 with the word `copy`; its rename to `many` is
+   not. RFC-0135 is refused on that basis (metel-lang/metel-docs#544, held).
 
 4. **Should the copyability grant be a keyword rather than an aspect (Axis C / P4)?**
    Added 2026-09-02 with D6. The narrow question is whether `extend Foo: Copy;` should
@@ -917,6 +953,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    honesty — in which case OQ5 becomes the whole of D6's mitigation.
    **Coupled to OQ3:** P4 and RFC-0135 are competing answers; adopting P4 means
    RFC-0135 is narrowed away entirely, and adopting RFC-0135 forecloses P4's spelling.
+   *Position taken (2026-11-02): yes for `Copy`, for now;* the stop rule (D6.3) is still owed
+   (question 7).
 5. **May `Copy` ever be derived?** Added 2026-09-02 with D6.2. Today the question is
    moot — `#derive` is unimplemented (RFC-0093) and `Copy` has no deriver — which makes
    this the cheapest decision in the RFC and the one with a deadline: it stops being
@@ -943,9 +981,22 @@ trait that gates nothing implicit is an unobjectionable trait.
    `clone` either, and `Copy` does not imply `Clone` for a declared `Copy` struct (RFC-0080
    §1.2 specifies the blanket impl; it is not implemented). So the gap that S3p exposes is
    tuples, and the underlying one is the missing `Copy ⟹ Clone`. (c) *Spelling* in type and in
-   expression position (`many (a, b)` against ascription only), and whether a `public`
+   expression position (`copy (a, b)` against ascription only), and whether a `public`
    field of a named `public` type is a signature position. *Advancing condition:* the
    spike for (a), a check of (b) against the implementation.
+
+7. **Residuals of C2.** Added 2026-11-02; Axis C has its position (C2, `copy`). Four things
+   remain. (a) *Conditional grants:* `extend<T: Copy> W<T>: Copy;` needs a declaration form;
+   candidates are `copy struct W<T: Copy>` read as "`Copy` when its parameters are", or
+   `copy struct W<T> where T: Copy`, and the likeliest fallback is keeping an
+   `extend`-shaped form for the conditional case alone, which reopens D6.2 in that corner.
+   (b) *The stop rule (D6.3):* why `Copy` moves to a keyword while `Drop`, `Send` and `Sync`
+   stay aspects; it must be stated as a principle or accepted as a special case. (c) *One
+   word, two roles:* `copy` on a declaration asserts and is checked, `copy` on a function or
+   structural type requires and is matched; RFC-0163's disjointness sentence needs amending
+   (P4 sub-question 3). (d) *Coherence:* confirm against `coherence.rs` that no capability is
+   removed (P4 sub-question 4; the foreign-type case was confirmed above). *Advancing
+   condition:* a conditional-grant spelling that survives the worked examples.
 
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
 split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
