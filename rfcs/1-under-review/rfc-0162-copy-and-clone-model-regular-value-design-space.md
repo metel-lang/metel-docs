@@ -281,12 +281,20 @@ today's answer (C1) was inherited without being chosen.
   *supposed* to be removable without changing meaning. Listed for completeness; the
   weakest of the three.
 
+- **C4. A marker fact in the declaration header.** `struct Point: Copy { x: i64, y: i64 }`,
+  `enum Direction: Copy { … }`, `struct Token: Copy, !Send { … }`: the declaration's own
+  aspect list (the draft RFC-0105, adopting its grammar and its `!Aspect` items), where, for
+  an aspect with **no required methods** (a marker), a positive item is the grant itself and
+  not an obligation that an `extend` elsewhere must meet. `Copy` stays an aspect, uniform
+  with the rest, and the grant is in the one place a reader looks. Added 2026-11-02; see
+  "C4 in detail".
+
 C2 has one property C1 cannot have: it makes the grant unforgeable by metaprogramming.
 Everything else it buys (locality, a keyword that looks like a language rule) is a matter
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
 
-**Position taken (2026-11-02, language owner): C2, spelled `copy` (P4), for now.** The grant
+**Position taken (2026-11-02, language owner): C2, spelled `copy` (P4), for now; C4 is under exploration and may supersede it.** The grant
 moves onto the type's declaration, `copy struct Point { x: i64, y: i64 }`; `Copy` stays as the
 bound; `extend T: Copy;` becomes an error with a fix-it. The word is the one RFC-0163 already
 reserves, and RFC-0135's rename to `many` is not taken. "For now" means the spelling and the
@@ -320,6 +328,70 @@ Run against the implementation for C1 (today); C2 is reasoned.
 The pattern: C2 improves where an error lands (1, 5), what a reader can see (2) and closes
 the derive hazard (6); it costs the conditional-grant answer (4) and a mechanical migration
 of every `extend … : Copy;`. Grants for foreign types (3) are unaffected.
+
+#### C4 in detail
+
+> Added 2026-11-02 at the language owner's request, as a competitor to C2. It is the shape
+> the draft RFC-0105 (`struct Token: Copy2, Serializable, !Send { … }`) proposed for aspect
+> lists in general, restricted to the case `Copy` needs.
+
+**The idea.** A type declaration may list marker aspects after its name. For an aspect that
+declares no required methods, `Copy` among them, a positive item is a grant, the same fact a
+bodyless `extend T: Copy;` states today. A negative item (`!Send`) denies, exactly as a
+bodyless negative `extend` does (RFC-0102, RFC-0081). Aspects with methods (`Drop`,
+`Display`, a user's own) are still implemented in `extend`; naming one in the header would
+be RFC-0105's obligation model, which this proposal does not take.
+
+**What it changes against C2.**
+
+- **The stop rule (D6.3) has a principled answer.** C2 moves `Copy` to a keyword and leaves
+  `Drop`, `Send` and `Sync` as aspects, and has to say why. C4's boundary is a class: *marker
+  facts about a type are declared on the type; behaviour is implemented in `extend`*. `Copy`
+  is a marker; `Drop` is not (it has a method); `Send`/`Sync`/`Linear` are markers, and RFC-0096
+  already treats them as structural, with `!Send` the opt-out. No aspect is special-cased.
+- **`Copy` stays an aspect and a bound.** Nothing about `T: Copy`, `Copy ⇒ Clone`, the
+  conditional rules or coherence changes. The grant's location moves, as in C2.
+- **The derive hazard is not closed by the mechanism.** C2 has no impl to emit; C4 has a
+  header entry a deriver could add. In practice `#derive(Copy)` would be no shorter than
+  `: Copy`, so it would add nothing, and OQ5's written rule ("`Copy` has no deriver")
+  covers it. This is closed by policy and not by construction, which is a real difference.
+- **Visibility.** `copy struct P` puts a modifier before the keyword; `struct P: Copy` puts
+  the fact after the name, before any generics' `where`. Both are in the header. A modifier is
+  harder to miss; a list scales to several facts (`: Copy, !Send`) where a keyword does not.
+- **Conditional grants.** The derived condition of K4 is a rule of `Copy`'s eligibility
+  check (every field must be `Copy`), not of marker aspects in general: for a plain user
+  marker `struct W<T>: Marker`, there is no field-wise rule to derive from. So under C4 the
+  derived-condition rule would belong to a named class, the aspects with a structural
+  eligibility rule (`Copy`, and RFC-0096's `Send`/`Sync`/`Linear`), and any other marker
+  grant is unconditional or keeps `extend<T: X> W<T>: Marker;`.
+- **Vocabulary.** Axis S spells copyness on structural types as a qualifier (`copy`,
+  `once`); C4 spells it on named types as an aspect (`: Copy`). Two forms of one fact. C2
+  has one word throughout.
+- **Cost and dependency.** It adds a clause to type-declaration grammar, and depends on
+  RFC-0105 (a `0-draft` that was deferred as "a materially larger surface-language
+  commitment") being narrowed to markers and moved forward, or on this RFC absorbing the
+  marker-only subset. The obligation check and the registry-injection question RFC-0105 raises do
+  not arise for markers, because there is no `extend` to find.
+
+**Worked examples** (C1 run against today's behaviour; C2 and C4 reasoned):
+
+1. *Adding a field* (`name: String` to a `Copy` struct): C1 errors at the `extend` line, C2
+   and C4 at the declaration, next to the field.
+2. *Reading the declaration:* C2 `copy struct P`, C4 `struct P: Copy`; both visible. C4 also
+   shows `struct P: Copy, !Send` in one place.
+3. *Conditional grant, `Holder<T>`, phantom `Witness<T>`:* both derive the condition from the
+   fields, C2 by the keyword and C4 by `Copy`'s eligibility rule.
+4. *A user marker* (`aspect Marker {}`; `struct Token: Marker`): C2 does not apply; C4 grants
+   it, unconditionally, with no `extend`.
+5. *`Drop`:* `struct H: Copy` with `extend H: Drop { … }` is rejected at the declaration under
+   both, with the same message as C2's.
+6. *A derive:* closed by construction under C2, by the written rule under C4.
+
+**What would decide it.** If the only grant ever moved is `Copy`, C2 is smaller and closes
+the derive hazard by construction. If the language wants one place for all marker facts
+(including `!Send`, and any future marker), C4 generalises and answers D6.3 without an
+exception, at the price of a larger grammar change, an RFC-0105 dependency and two forms of
+copyness across named and structural types.
 
 ### Axis S — Structural types (added 2026-11-02)
 
@@ -995,7 +1067,9 @@ trait that gates nothing implicit is an unobjectionable trait.
    word, two roles:* `copy` on a declaration asserts and is checked, `copy` on a function or
    structural type requires and is matched; RFC-0163's disjointness sentence needs amending
    (P4 sub-question 3). (d) *Coherence:* confirm against `coherence.rs` that no capability is
-   removed (P4 sub-question 4; the foreign-type case was confirmed above). *Advancing
+   removed (P4 sub-question 4; the foreign-type case was confirmed above). (e) *C4 against C2:* the choice between a `copy` modifier and a marker fact in the
+   header ("C4 in detail"); C4 would also decide whether RFC-0105 is advanced in a narrowed
+   form. *Advancing
    condition:* a conditional-grant spelling that survives the worked examples.
 
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
