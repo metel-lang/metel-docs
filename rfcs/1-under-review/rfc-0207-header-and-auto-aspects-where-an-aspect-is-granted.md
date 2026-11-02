@@ -294,6 +294,43 @@ smaller change.
 
 ---
 
+## Blanket impls, derivation and comptime
+
+**Where a blanket impl over a type's fields stands.**
+
+| Target | A blanket conditional on the fields | How |
+|---|---|---|
+| anonymous record | yes, automatic | `extend<record R> { ..R }: A where ..R: A` (RFC-0123); a record has no declaration to opt in with |
+| `struct`, `enum`, named `record` | no blanket, only an opt-in | a header entry (this RFC) makes the type's row visible to the aspect's template (RFC-0209, RFC-0210) |
+| a generic type, conditional on its parameters | yes | an ordinary conditional impl, `extend<T: Foo> Wrapper<T>: Foo` |
+
+There is deliberately no blanket impl over every struct. A type would gain behaviour it never
+declared, which is the invisible effect that RFC-0137 and RFC-0162 object to. A user who wants one
+anyway has the opt-in: name the aspect in the header. A blanket with no opt-in exists only as an
+`auto` aspect, which is std's.
+
+**What comptime adds.** A header entry runs the aspect's derivation. For an aspect that has one
+`{ ..R }` template (or one `enum E` template, RFC-0210), that is the template. Comptime (RFC-0092
+`typeinfo` and `emit`, RFC-0093 derive registration, RFC-0174 `comptime for`) covers the rest:
+
+1. **Template bodies.** The field-wise body of a template is a loop over the fields or variants, a
+   native hook until RFC-0174 lands.
+2. **Aspects with methods.** A header aspect that has methods (the direction in "Spelling and
+   direction") supplies a comptime derivation in place of a single template: it can generate
+   several methods, read field names and types, and emit extra items. `Display` and `Debug` are the
+   typical cases.
+3. **Conditions a template cannot state.** A derivation can generate an impl whose condition is
+   not a field-wise bound, for example one that depends on a field's attribute. The gate stays: the
+   type names the aspect in its header.
+
+**The `#derive` attribute.** RFC-0093 specifies `#derive(Aspect)` as both a request on a
+struct or enum and a registration on the comptime function that implements the derive. A header
+entry (`struct P: Clone`) is the request in this RFC, so the two cannot both be the surface for
+the same thing. The proposal is that the header entry replaces the request half and RFC-0093 keeps
+the registration half: the attribute on the comptime function, which tells the compiler what a
+header entry for that aspect runs. RFC-0093 would be amended when comptime is accepted; until
+then std's derivations are native.
+
 ## Relationship to existing RFCs
 
 - **RFC-0162** — the `Copy`/`Clone` model; its position C4 is a `header` aspect in this RFC's
@@ -303,6 +340,9 @@ smaller change.
   only, with no obligation check.
 - **RFC-0096** — the auto-impl set (`Send`, `Sync`, `Linear`) that `auto` mode would turn into
   a declared property.
+- **RFC-0209 / RFC-0210** — the templates a header entry runs, for products and for enums.
+- **RFC-0092 / RFC-0093 / RFC-0174** — comptime, derive registration and compile-time iteration; see
+  "Blanket impls, derivation and comptime".
 - **RFC-0102 / RFC-0081** — bodyless and negative `extend`, which remain the form of a
   refinement and of std's own grants.
 - **RFC-0060** — the coherence pass that would enforce modes; **RFC-0097** — the orphan rule
@@ -330,7 +370,10 @@ smaller change.
 7. **Auto against written structural impls for `Copy`.** The structural kinds' `Copy` is
    written impls (RFC-0123, RFC-0132 §3), not RFC-0096-style auto-impl; whether RFC-0096's
    machinery should also recognise them is left to that RFC.
-8. **Process.** RFC-0105 is narrowed or absorbed, and RFC-0096's recognized-set text is
+8. **The `#derive` request.** Whether the header entry replaces the request half of RFC-0093's
+   `#derive(Aspect)` (proposed), or the two coexist, and what an attribute on a comptime function
+   registers once header aspects can have methods.
+9. **Process.** RFC-0105 is narrowed or absorbed, and RFC-0096's recognized-set text is
    updated; decided when this RFC is reviewed.
 
 ---
