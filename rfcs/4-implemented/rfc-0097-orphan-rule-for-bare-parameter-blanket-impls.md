@@ -37,7 +37,7 @@ impl_status: implemented
 
 `extend<T: Bound> T: Aspect` — a **bare-parameter blanket impl**, where the target is
 literally the impl's own generic parameter, not a named struct or enum wrapping it —
-appears throughout the accepted RFC corpus (RFC-0080 §1.2's `impl<T: Copy> Clone for
+appears throughout the accepted RFC corpus (RFC-0206 §2 (formerly RFC-0080 §1.2)'s `impl<T: Copy> Clone for
 T`; RFC-0060 §3/§5's own `extend<T: Foo> T: Bar` example, used repeatedly to explain
 closed-world discharge and negative-impl priority) with no RFC ever specifying two
 things:
@@ -61,7 +61,7 @@ overlap detection (§3) that requires no new machinery.
 
 RFC-0060 §3 ("Closed-World Assumption") and §5 ("Negative Impl Priority") both use
 `extend<T: Foo> T: Bar` as their running example for how blanket impls interact with
-negative bounds and negative impls — the *exact* bare-parameter form. RFC-0080 §1.2
+negative bounds and negative impls — the *exact* bare-parameter form. RFC-0206 §2 (formerly RFC-0080 §1.2)
 ships a concrete instance of it as `Clone`'s canonical blanket:
 
 ```metel
@@ -136,7 +136,7 @@ parenthetical carve-out. It is never permitted on the strength of the target, be
 the target side of the check is permanently unsatisfiable for this shape of impl.
 
 ```metel
-// std::core, RFC-0080 §1.2 — permitted: Clone is local to std::core
+// std::core, RFC-0206 §2 (formerly RFC-0080 §1.2) — permitted: Clone is local to std::core
 extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }
 
 // hypothetical user module — permitted: MyAspect is local here
@@ -179,7 +179,7 @@ Concretely: `extend<T: Copy> T: Clone` in `std::core` cannot be contested by a s
 competing bare-parameter `Clone` blanket from any user module, because no user module
 can ever pass §2's orphan check for `Clone` (a foreign aspect to them). The only way a
 concrete type's `Clone` could still conflict with the blanket is the ordinary case
-RFC-0080 §1.2 already describes in prose — a type separately implementing `Clone`
+RFC-0206 §2 (formerly RFC-0080 §1.2) already describes in prose — a type separately implementing `Clone`
 directly while also being `Copy` — which is caught by the *existing*, general overlap
 rule (a concrete impl and an applicable blanket for the same type always overlap),
 with no bare-parameter-specific handling needed.
@@ -223,7 +223,7 @@ with no bare-parameter-specific handling needed.
   RFC extends to bare-parameter targets; §3/§5's own examples are what exposed the gap.
 - RFC-0036 (Conditional Impl Blocks, implemented) — the syntax this RFC's target form
   is an instance of; never shows the bare-parameter case in its own examples.
-- RFC-0080 (Standard Library Aspects, under review) — §1.2's `Clone` blanket, the
+- RFC-0206 (Clone and Copy, under review) — §2's `Clone` blanket (formerly RFC-0080 §1.2), the
   concrete motivating example.
 - RFC-0061 (Structural Aspect Bounds, implemented) — §1's "structural constructors are
   owned by `std::core`" fix, the closest existing precedent, contrasted in §2.

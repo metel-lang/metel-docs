@@ -125,7 +125,7 @@ change required when that lands.
 | `Eq` | Field-by-field equality |
 | `Ord` / `Comparable` | Lexicographic field ordering |
 | `Display` | Structural `to_string` (see Open Question 4) |
-| `Clone` | Deep field-by-field clone (RFC-0080 §1.3) |
+| `Clone` | Deep field-by-field clone (RFC-0206 §4 (formerly RFC-0080 §1.3)) |
 | `Hash` | Structural hash combining all fields |
 
 **`Linear` does not belong on this list.** An earlier revision of this thread's design
@@ -243,7 +243,7 @@ checked and set aside.
 ## Timing Recommendation
 
 Deferred to **v0.5+**, alongside RFC-0092. `#derive(Clone)`'s registration function
-(RFC-0080's `derive_clone`) cannot be written until RFC-0092's `type`-as-value and
+(RFC-0206's `derive_clone`) cannot be written until RFC-0092's `type`-as-value and
 `typeinfo` exist.
 
 ---
@@ -252,7 +252,7 @@ Deferred to **v0.5+**, alongside RFC-0092. `#derive(Clone)`'s registration funct
 
 - RFC-0092 (Comptime Core) — `type`-as-value, `typeinfo`, single-declaration `emit`
   this RFC's registration mechanism is built from
-- RFC-0080 (Standard Library Aspects) — `Clone`'s derive is the concrete first test
+- RFC-0206 (Clone and Copy) — `Clone`'s derive is the concrete first test
   case; its `#derive(Clone)` example depends on this RFC
 - RFC-0089 (Linear Types) — §2's correction (`Linear` is auto-impl, not derive-as-
   codegen)
