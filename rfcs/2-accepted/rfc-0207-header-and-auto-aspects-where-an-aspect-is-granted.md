@@ -2,7 +2,7 @@
 id: rfc-0207
 title: "Header and Auto Aspects — Where an Aspect Is Granted"
 date: '2026-11-02'
-status: under-review
+status: accepted
 updated: '2026-11-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 ---
@@ -11,10 +11,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 > was extracted from RFC-0080. RFC-0162 keeps the `Copy`/`Clone` model and its position that a
 > named type states copyness in its declaration; this RFC owns the *mechanism* that position
 > uses, which is not specific to `Copy`: a type's header listing marker facts, an `extend`
-> that may only refine such a grant, and aspects that declare how they are granted. Nothing here
-> is decided.
+> that may only refine such a grant, and aspects that declare how they are granted.
 
-> **Status — under review (2026-11-02).**
+> **Status — accepted (2026-11-02).** Accepted with RFC-0162 and RFC-0206 as one set; tracking metel-core#1786. The first implementation (v0.16.0) covers the declaration kinds, the colon list for markers, the `derives` clause with native derivations, and the coherence rules; the templates of RFC-0209 to RFC-0211 and the later stage are separate.
 
 ## Summary
 
@@ -40,8 +39,7 @@ grants an aspect depends on what the aspect is:
 
 The colon says what the type *is* (marker facts); `derives` says what the compiler *writes* for
 it. RFC-0162 uses a marker aspect for `Copy` (its position C4); RFC-0206 uses `derives` for
-`Clone` on a user type (its §4, option (c)). Neither is decided, and both depend on this RFC
-being accepted before the spelling is implemented.
+`Clone` on a user type (its §4, option (c)). Both are accepted with this RFC.
 
 ## Motivation
 
@@ -120,7 +118,7 @@ fix-it):
 
 1. *It refines a header grant.* The header already names the aspect (`struct W<T>: Copy`),
    and the `extend` supplies the condition: `extend<T: Marker> W<T>: Copy;`. Without an
-   `extend`, the condition is derived from the fields (R1, decided 2026-11-02 and reopened by RFC-0209: every type parameter that occurs
+   `extend`, the condition is derived from the fields (R1, accepted for the first implementation; RFC-0209's exact condition R2 is the intended outcome and accepts everything R1 accepts: every type parameter that occurs
    in a field must be `Copy`; R2, the weakest sufficient condition, needs a solver and is not
    taken; where R1 is too strict, as for `struct W<T> { r: &T }`, this `extend` widens it). With one, the `extend` wins, and must still satisfy the aspect's
    eligibility check, exactly as `check_copy_impl_eligibility` does today.
@@ -388,41 +386,44 @@ then std's derivations are native.
 - **RFC-0060** — the coherence pass that would enforce modes; **RFC-0097** — the orphan rule
   the header grant satisfies trivially.
 
-## Open questions
+## Spellings and deferrals fixed at acceptance
 
-1. **Spelling of the declaration kinds**: `marker aspect`, `derivable aspect` and `auto aspect`
-   are sketches, as are `derives` against `derive` and the clause order when both appear
-   (colon first).
-2. **User aspects.** Decided 2026-11-02: `marker` and `derivable` are user-declarable, `auto`
-   stays std's. See "User-declared marker aspects".
-3. **The later stage: method-bearing aspects after the colon.** The colon list would carry every
-   aspect the type implements, with the methods written in the body and qualified by aspect
-   (`fun Display::fmt`), and `derives` marking the derived ones. It is RFC-0105's model. Open:
-   conditional written impls (a per-aspect `where`), associated items of an aspect, and whether a
-   large impl such as `Iterator` is better as a block than as qualified methods.
-4. **Whether `auto` is wanted at all** for anything beyond RFC-0096's existing set, given the
-   invisible-behaviour objection above.
-5. **A checked user marker.** Whether a marker aspect's declaration can state a field-wise
-   check by reusing RFC-0123's bound (for example `marker aspect Pod where ..F: Pod;`, with
-   `..F` the struct's fields; the spelling is a sketch), or whether the check waits for the later
-   stage of question 3 and comptime.
-6. **Inference only for non-public types.** Swift infers `Sendable` for a non-public type and
-   requires a declaration for a public one. Whether a std aspect with a recognised rule could
-   infer for a module's non-public named types, so the header entry is needed only at the
-   module boundary, is open; RFC-0162's principle (inference is acceptable where a change cannot
-   reach other people's code) points the same way, and the cost is a second rule to explain.
-7. **Auto against written structural impls for `Copy`.** The structural kinds' `Copy` is
-   written impls (RFC-0123, RFC-0132 §3), not RFC-0096-style auto-impl; whether RFC-0096's
-   machinery should also recognise them is left to that RFC.
-8. **The `#derive` request.** The `derives` clause replaces the request half of RFC-0093's
-   `#derive(Aspect)` and the `derivable` declaration replaces its registration half (proposed);
-   whether RFC-0093 survives for anything, and what the derivation is named in the declaration,
-   are open.
-9. **Process.** RFC-0105 is narrowed or absorbed, and RFC-0096's recognized-set text is
-   updated; decided when this RFC is reviewed.
+1. **Spelling.** `marker aspect`, `derivable aspect`, `auto aspect`, the `derives` clause, and the
+   clause order (the colon list first, then `derives`) are the accepted spellings.
+2. **User aspects.** `marker` and `derivable` are user-declarable; `auto` stays std's, the closed
+   set of RFC-0096 (`Send`, `Sync`, `Linear`).
+3. **`#derive`.** The `derives` clause replaces the request half of RFC-0093's
+   `#derive(Aspect)` and the `derivable` declaration replaces its registration half. RFC-0093 is
+   narrowed to what a comptime derivation needs when it is integrated.
+4. **RFC-0096 and RFC-0105.** RFC-0096's recognised-set text is updated for declared `auto`
+   aspects, and RFC-0105 is narrowed to the later stage below, at integration. Both carry a
+   pointer note to this RFC.
+5. **`Copy`'s structural cases** are written impls in the aspect's module (RFC-0123 records, a
+   compile-time `N` for arrays, variadic generics for tuples; hardcoded until then), not
+   auto-impls.
+
+**Deferred, with homes.**
+
+- *Method-bearing aspects after the colon*, conditional written impls, associated items: RFC-0105.
+- *A checked user marker*, a field check stated in the declaration: RFC-0209.
+- *Inference for non-public types* (Swift's `Sendable` rule): RFC-0096, which owns when inference
+  is allowed.
+- *Markers on structural types*: RFC-0212.
+- *The exact generic condition* (R2), residual and enum templates: RFC-0209, RFC-0210, RFC-0211.
+
+---
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** accepted 2026-11-02 (language owner), with RFC-0162 and RFC-0206 as one set.
+
+**Accepted:** the four declaration kinds; the colon list for marker facts (`Copy`, `!Send`, user
+markers) and the `derives` clause for derivations; derivation always explicit; user marker
+aspects as promises; structural coverage as written impls in the aspect's module; the refinement
+and negative-impl rules; the coherence rules (including sealing); the spellings above.
+
+**Deferred, with homes:** see the previous section.
+
+**Target:** v0.16.0 (metel-core#1786).

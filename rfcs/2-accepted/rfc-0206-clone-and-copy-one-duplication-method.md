@@ -2,7 +2,7 @@
 id: rfc-0206
 title: "Clone and Copy — One Duplication Method"
 date: '2026-11-02'
-status: under-review
+status: accepted
 updated: '2026-11-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
 ---
@@ -13,9 +13,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
 > a whole was blocked on the derive mechanism (RFC-0093) and so could not be integrated, which
 > left `Clone` unimplementable for the types that most need it. The wider questions about the
 > `Copy`/`Clone` model, where a `Copy` grant is written and how structural types are
-> asserted, are RFC-0162's. Nothing here is decided.
+> asserted, are RFC-0162's and RFC-0207's.
 
-> **Status — under review (2026-11-02).** Committed to v0.16.0 as the Clone half of the Copy/Clone settlement; extracted from RFC-0080 §1.
+> **Status — accepted (2026-11-02).** The `Clone` half of the Copy/Clone settlement, v0.16.0 (metel-core#1785), accepted together with RFC-0162 and RFC-0207; extracted from RFC-0080 §1.
 
 ## Summary
 
@@ -130,11 +130,11 @@ question 8:
   `Clone`. No use-site behaviour changes. The cost is the API-stability hazard: adding a field
   with no `Clone` removes the method from the type.
 
-### Proposed direction: (c), with (a) kept (language owner's lean, 2026-11-02)
+### Accepted direction: (c), with (a) kept (2026-11-02)
 
 A named `struct` or `enum` states that it is cloneable with a `derives` clause in its header, and
 the compiler supplies a field-wise body; a type with no such entry is not `Clone` unless the user writes
-the impl by hand. Not yet decided.
+the impl by hand.
 
 ```metel
 struct Doc derives Clone { title: String, tags: List<String> }   // field-wise clone, derived
@@ -158,7 +158,7 @@ Why (c) rather than the others:
   field-wise body is native (as it already is for records). When comptime lands the same clause
   can use a library-written body.
 
-The rules (c) would need are open questions 6 to 9 below.
+The rules (c) needs are fixed under "Rules fixed at acceptance" below.
 
 ## 5. Pointers into allocators
 
@@ -166,7 +166,8 @@ RFC-0080 §1.4 said a region pointer `@[r] T` is not `Clone` by default, because
 would need a fresh allocation. That text predates the refusal of the region cluster
 (RFC-0025 and others) and its replacement by the allocator system (RFC-0063). The matching
 statement for an allocator-placed value, and whether `Clone` carries an allocator parameter,
-are open and are not settled here.
+belong to the allocator RFCs (RFC-0063, RFC-0139) and are out of scope here; nothing in the
+first implementation depends on them.
 
 ---
 
@@ -183,34 +184,38 @@ are open and are not settled here.
 - **metel-core#270, #741, #263, #794** — the std impls, the `Copy` decisions, tuple `Copy`
   and variadic generics.
 
-## Open questions
+## Rules fixed at acceptance
 
-1. **`Clone` for user types** (§4): (a) to (d); the proposed direction is (c) with (a) kept,
-   its rules being questions 6 to 9.
-2. **How sealing is enforced.** Decided 2026-11-02: a coherence rule that rejects a second
-   `Clone` for a `Copy` type. The alternative, the `Copy` aspect declared as granting a sealed
-   `clone` (RFC-0162's C5 grant modes), stays a possible follow-up RFC and blocks nothing here.
-3. **Bound entailment.** Not a design choice: `T: Copy ⟹ T: Clone` must hold in the checker's
-   bound reasoning and in the abstract analysis of generic bodies. It is implementation scope.
-4. **Allocators** (§5). Not settled here; nothing in v0.16.0 depends on it.
-5. **Tuples before variadic generics.** Decided 2026-11-02: a hardcoded arm, with the same
-   migration problem as tuple `Copy` (metel-core#263, #794).
-6. **`: Copy` with `derives Clone` in one header.** `Copy` already gives `Clone` through the
-   sealed blanket (§2), so the pair is redundant. Proposed: an error, to keep one spelling; the alternative
-   is a warning.
-7. **`derives Clone` against a hand-written impl.** Proposed: they conflict (a coherence
-   overlap). A hand-written `extend P: Clone` (to skip a cache field, say) is for a type with no
-   `derives Clone` entry.
-8. **What the derived body does.** Proposed: it calls `clone` on each field, so it is deep for
-   owning fields, and a field type without `Clone` makes the `derives` entry an error at the
-   declaration. An enum's body matches the active variant.
-9. **Generic types.** Following RFC-0162's R1 for `Copy` (decided 2026-11-02, reopened by
-   RFC-0209), `Clone` is conditional on every type parameter that occurs in a field being
-   `Clone`. RFC-0209 shows R2 (the exact condition, evaluated on the instantiated fields) falls
-   out of the template; the choice is open and applies to `Copy` and `Clone` alike.
+1. **`Clone` for user types** (§4): option (c) with (a) kept: `struct P derives Clone`, or a
+   hand-written `extend P: Clone` for a type with no `derives Clone` entry. `derives Clone` needs
+   `Clone` declared a `derivable aspect` (RFC-0207).
+2. **Sealing** is a coherence rule that rejects a second `Clone` for a `Copy` type. A `Copy`
+   grant alongside `derives Clone` is therefore an error, with no separate rule. The grant-mode
+   alternative (RFC-0207) blocks nothing here.
+3. **Bound entailment.** `T: Copy ⟹ T: Clone` holds in the checker's bound reasoning and in the
+   abstract analysis of generic bodies. Implementation scope, not a design choice.
+4. **Allocators** (§5): out of scope.
+5. **Tuples before variadic generics:** a hardcoded arm, with the same migration problem as tuple
+   `Copy` (metel-core#263, #794).
+6. **`derives Clone` against a hand-written impl:** a coherence overlap error.
+7. **What the derived body does:** it calls `clone` on each field, so it is deep for owning
+   fields, and a field type without `Clone` makes the `derives` entry an error at the declaration.
+   An enum's body matches the active variant.
+8. **Generic types:** `Clone` is conditional on every type parameter that occurs in a field being
+   `Clone` (RFC-0162's R1), with an `extend` allowed to widen it. R2, the exact condition, is the
+   intended outcome of RFC-0209 and accepts everything R1 accepts, so moving to it is compatible.
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** accepted 2026-11-02 (language owner), with RFC-0162 and RFC-0207 as one set.
+
+**Accepted:** `Copy` is `Clone` that the compiler calls, with a sealed bitwise body; the standard
+`Clone` impls of §3; `derives Clone` for user types with hand-written `extend` kept; the rules
+above.
+
+**Deferred, with homes:** the exact generic condition (RFC-0209), enum bodies by comptime
+(RFC-0210, RFC-0174), allocator-placed values (RFC-0063, RFC-0139).
+
+**Target:** v0.16.0 (metel-core#1785).

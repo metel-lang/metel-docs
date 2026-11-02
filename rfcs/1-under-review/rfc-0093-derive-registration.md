@@ -7,6 +7,11 @@ updated: '2026-08-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/799'
 ---
 
+> **Note, 2026-11-02 (RFC-0207, accepted).** The `derives` clause (`struct P derives Clone`) is the
+> request half of this RFC's `#derive(Aspect)`, and a `derivable aspect` declaration is its
+> registration half. This RFC is narrowed to what a comptime derivation needs when it is
+> integrated; until then std's derivations are native.
+
 > **New RFC, split out 2026-07-09** from RFC-0012 (Attributes, Metadata, Macros, and
 > Derived Aspects), as part of decomposing that RFC into smaller, independently
 > reviewable pieces. Depends on RFC-0092 (Comptime Core) for `type`-as-value, `typeinfo`,

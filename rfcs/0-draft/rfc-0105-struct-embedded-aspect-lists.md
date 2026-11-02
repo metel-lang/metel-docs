@@ -6,6 +6,12 @@ status: draft
 updated: '2026-07-14'
 ---
 
+> **Note, 2026-11-02 (RFC-0207, accepted).** The marker subset of aspect lists in declarations is
+> taken by RFC-0207 (`struct Point: Copy`, `struct Token: !Send`), with a separate `derives` clause
+> for derivations. This RFC keeps the later stage: method-bearing aspects after the colon, with
+> their methods written in the body and qualified by aspect, conditional written impls, and
+> associated items.
+
 > **Status — draft (2026-07-14).** Split out of RFC-0103 when the smaller bodyless-aspect-declaration feature was accepted independently and the `struct Type: Aspect { ... }` / `enum Type: Aspect { ... }` syntax was deferred for separate evaluation.
 
 ## Summary

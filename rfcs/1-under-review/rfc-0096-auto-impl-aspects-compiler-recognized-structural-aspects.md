@@ -7,6 +7,11 @@ updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 ---
 
+> **Note, 2026-11-02 (RFC-0207, accepted).** `Send`, `Sync` and `Linear` are declared `auto aspect`
+> (std only) and opted out of with a negative colon entry (`struct Token: !Send`); the recognised
+> set stays this RFC's. When inference may apply to a module's non-public types (Swift's
+> `Sendable` rule) is a question for this RFC. The text below is updated at integration.
+
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0080, 0061,
 > 0093, 0060, and 0081 — checked each first. None of them own this mechanism: RFC-0080
 > §3.2/§4.2 and the draft RFC-0089 §2 each independently invoke "the auto-impl pattern"

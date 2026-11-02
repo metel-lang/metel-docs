@@ -84,7 +84,7 @@ follow-ups (RFC-0158 `Clone`/`Share`, the D3 relaxation, an RFC-0135 disposition
 
 ## Relationship to existing RFCs
 
-- **RFC-0162 (Copy and Clone Model — Regular-Value Design Space, `1-under-review`)** — the
+- **RFC-0162 (Copy and Clone Model — Regular-Value Design Space, `2-accepted`)** — the
   extracted sibling. Carries D1–D4, the P0–P3 design space, the prior-art survey, and the
   "keep Rust's regular-value model" recommendation with its open questions. No v0.13.0
   consumer.

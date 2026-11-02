@@ -247,7 +247,7 @@ not interact with RFC-0162's regular-value model at all. Duplicating a callback
 is expressed by writing `copy |T| -> U` — the function type itself — never by an
 `F: Copy` constraint on a type parameter.
 
-> **Relationship to RFC-0162 (`1-under-review`, v0.18.1).** This disjointness is a
+> **Relationship to RFC-0162 (`2-accepted`, v0.18.1).** This disjointness is a
 > *scoping* choice for a v0.13.0 RFC, not a claim that the two concepts are
 > permanently separate. RFC-0162's **P4 / Axis C / OQ4** is the position under
 > which the value-side `copy` (a declaration keyword, `copy struct Foo`) and this

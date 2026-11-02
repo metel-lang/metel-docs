@@ -164,9 +164,12 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 4. **Field privacy**: a template in the aspect's module reads fields the type's module may
    keep private (RFC-0116's rule for record fields); whether visibility overrides privacy for
    the granted aspect.
-5. **Which aspects have templates.** Whether a user derivable aspect may provide one, and what
-   makes a template's `where` bound the check of the entry.
-6. **R1 or R2**: R2 follows from this rule (section 1); RFC-0162's R1 decision is reopened.
+5. **Which aspects have templates, and a checked user marker (deferred from RFC-0207).**
+   Whether a user derivable aspect may provide one, whether a marker aspect's declaration can
+   state a field-wise check by reusing the bound (`marker aspect Pod where ..F: Pod;` is a
+   sketch), and what makes a template's `where` bound the check of the entry.
+6. **R1 or R2**: R2 follows from this rule (section 1). RFC-0162 accepted R1 for the first
+   implementation; moving to R2 later accepts everything R1 accepts.
 7. **Coherence**: a header-visible template overlapping an explicit `extend` of the same aspect
    (RFC-0207's refining `extend`), and the order of resolution.
 
