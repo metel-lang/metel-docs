@@ -151,7 +151,8 @@ has not been independently justified for Metel's model.
 **D4 — The model is already non-uniform.** Measured on 2026-11-02 against the implementation,
 by move checking and by a `T: Copy` bound: named `struct`, `enum` and the std enums
 (`Option`, `Result`) are `Copy` only by explicit `extend`; an
-anonymous record is `Copy` exactly when, and a named `record` is today (it takes a header entry under the proposed direction, point 5), every field is (RFC-0123's field-wise constraints
+anonymous record and, today, a named `record` are `Copy` exactly when every field is (a named
+`record` takes a header entry under the proposed direction, point 5; RFC-0123's field-wise constraints
 are implemented); tuples and `[T; N]` are `Copy` when their elements are (a hardcoded arm,
 `metel-core#263`); `&T` is `Copy` and `&var T` is not; the `[T]` view is `Copy`
 (RFC-0126); function types and closures are `Copy` by their use multiplicity (RFC-0134 §1),
