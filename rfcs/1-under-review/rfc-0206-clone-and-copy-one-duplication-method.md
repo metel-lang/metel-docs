@@ -104,7 +104,7 @@ Measured on 2026-11-02:
 | Primitives, `String` | yes | unchanged |
 | `[T; N]` | yes (including `[String; 2]`) | unchanged |
 | Anonymous records | yes, field-wise: `extend<record R> { ..R }: Clone where ..R: Clone` (RFC-0123) | unchanged |
-| Named `record` | yes today, the same field-wise impl | takes a header entry like a `struct` (§4 and RFC-0162): `record P: Clone`; a plain `record P` is not cloneable |
+| Named `record` | yes today, the same field-wise impl | takes a `derives` entry like a `struct` (§4 and RFC-0162): `record P derives Clone`; a plain `record P` is not cloneable |
 | Tuples | **no** (`T: Clone` rejects `(i64, i64)`; `.clone()` reports "cannot infer receiver type") | a structural arm, hardcoded like tuple `Copy` (metel-core#263), until variadic generics (metel-core#794) |
 | `Option`, `Result`, `List` | **no** | `extend<T: Clone> Option<T>: Clone`, and the same for the others (metel-core#270) |
 | A named `struct` or `enum` | only if the user writes one | §4 |
@@ -122,22 +122,22 @@ question 8:
   and assembles the result; for an enum it matches the active variant. Blocked on RFC-0093 and
   reopens the worry about copyness-like behaviour hidden behind a derive, though `Clone` is an
   explicit call and hides no use-site behaviour.
-- **(c) A header entry with a derived body**: `struct P: Clone { … }`, field-wise. It reuses
-  the header RFC-0162 proposes for `Copy`, and is the first use of its direction that header
-  aspects later accept aspects with methods. It needs the field-wise machinery (a native hook,
-  as records use now, and comptime later).
+- **(c) A `derives` entry with a derived body**: `struct P derives Clone { … }`, field-wise.
+  `Clone` has methods, so it is a `derivable aspect` requested by `derives`, not a marker listed
+  after the colon (RFC-0207). It needs the field-wise machinery (a native hook, as records use
+  now, and comptime later).
 - **(d) Automatic availability**, as for records and arrays: `Clone` whenever every field is
   `Clone`. No use-site behaviour changes. The cost is the API-stability hazard: adding a field
   with no `Clone` removes the method from the type.
 
 ### Proposed direction: (c), with (a) kept (language owner's lean, 2026-11-02)
 
-A named `struct` or `enum` states that it is cloneable in its header, and the compiler
-supplies a field-wise body; a type with no such entry is not `Clone` unless the user writes
+A named `struct` or `enum` states that it is cloneable with a `derives` clause in its header, and
+the compiler supplies a field-wise body; a type with no such entry is not `Clone` unless the user writes
 the impl by hand. Not yet decided.
 
 ```metel
-struct Doc: Clone { title: String, tags: List<String> }   // field-wise clone, derived
+struct Doc derives Clone { title: String, tags: List<String> }   // field-wise clone, derived
 struct Handle { fd: i64 }                                 // not Clone: nothing says it may be
 ```
 
@@ -149,12 +149,14 @@ Why (c) rather than the others:
   remove `.clone()` for callers, a break that shows up in their code, not at the declaration.
   Records and arrays can be automatic because they are structural and carry no declared
   identity.
-- **Not (b).** It puts the fact in an attribute away from the header, the indirection
-  RFC-0162 declines for `Copy`, and it waits on RFC-0093 and RFC-0092.
+- **Not (b).** It puts the request in an attribute away from the header, the indirection
+  RFC-0162 declines for `Copy`, and it waits on RFC-0093 and RFC-0092. The `derives` clause
+  replaces the request half of `#derive` (RFC-0207).
 - **(c) is opt-in and local.** A missing `Clone` on a field is an error at the declaration.
-  It mirrors `extend P: Clone`, follows the position taken for `Copy`, and can ship before
-  comptime because the field-wise body is native (as it already is for records). When comptime
-  lands the same header entry can use a library-written body.
+  It follows the position taken for `Copy` (the declaration states the fact), keeps derived
+  distinct from written (`derives` against `extend`), and can ship before comptime because the
+  field-wise body is native (as it already is for records). When comptime lands the same clause
+  can use a library-written body.
 
 The rules (c) would need are open questions 6 to 9 below.
 
@@ -176,7 +178,7 @@ are open and are not settled here.
 - **RFC-0158** — `Share`, the aliasing duplication that `Clone` is narrowed away from.
 - **RFC-0071 §2** — defines `Copy`; its "bitwise-copyable" wording is what §2 here sharpens.
 - **RFC-0097** — the orphan rule that admits the blanket's bare-parameter target.
-- **RFC-0207** — the header-grant mechanism that §4(c) (`struct P: Clone`) uses.
+- **RFC-0207** — the declaration kinds and the `derives` clause that §4(c) (`struct P derives Clone`) uses.
 - **RFC-0093 / RFC-0092** — the derive mechanism and comptime core §4(b) waits on.
 - **metel-core#270, #741, #263, #794** — the std impls, the `Copy` decisions, tuple `Copy`
   and variadic generics.
@@ -193,18 +195,19 @@ are open and are not settled here.
 4. **Allocators** (§5). Not settled here; nothing in v0.16.0 depends on it.
 5. **Tuples before variadic generics.** Decided 2026-11-02: a hardcoded arm, with the same
    migration problem as tuple `Copy` (metel-core#263, #794).
-6. **`: Copy, Clone` in one header.** `Copy` already gives `Clone` through the sealed blanket
-   (§2), so the pair is redundant. Proposed: an error, to keep one spelling; the alternative
+6. **`: Copy` with `derives Clone` in one header.** `Copy` already gives `Clone` through the
+   sealed blanket (§2), so the pair is redundant. Proposed: an error, to keep one spelling; the alternative
    is a warning.
-7. **Header `: Clone` against a hand-written impl.** Proposed: they conflict, as a header
-   `Copy` grant and a second `Copy` impl do in RFC-0162. A hand-written `extend P: Clone`
-   (to skip a cache field, say) is for a type with no `: Clone` entry.
+7. **`derives Clone` against a hand-written impl.** Proposed: they conflict (a coherence
+   overlap). A hand-written `extend P: Clone` (to skip a cache field, say) is for a type with no
+   `derives Clone` entry.
 8. **What the derived body does.** Proposed: it calls `clone` on each field, so it is deep for
-   owning fields, and a field type without `Clone` makes the header entry an error at the
+   owning fields, and a field type without `Clone` makes the `derives` entry an error at the
    declaration. An enum's body matches the active variant.
-9. **Generic types.** Proposed: reuse RFC-0162's R1, so `Clone` is conditional on every type
-   parameter that occurs in a field being `Clone`, with an `extend` allowed to widen it.
-   Decided 2026-11-02, following RFC-0162's R1 for `Copy`; R2 is not taken.
+9. **Generic types.** Following RFC-0162's R1 for `Copy` (decided 2026-11-02, reopened by
+   RFC-0209), `Clone` is conditional on every type parameter that occurs in a field being
+   `Clone`. RFC-0209 shows R2 (the exact condition, evaluated on the instantiated fields) falls
+   out of the template; the choice is open and applies to `Copy` and `Clone` alike.
 
 ---
 
