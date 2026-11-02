@@ -31,7 +31,7 @@ Every top-level declaration gets a `SymbolId` from one `SymbolTable` keyed by (m
 | `specified by` | `#name-resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | METEL-185, ADR-0041 |
 
 ##### Requirement {#arch.name-resolution.requirement-2}
@@ -45,7 +45,7 @@ An explicit `import` beats a glob, and two explicit imports of one local name in
 | `specified by` | `#name-resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | `T0011`, ADR-0026 |
 
 ##### Requirement {#arch.name-resolution.requirement-3}

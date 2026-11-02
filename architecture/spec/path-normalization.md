@@ -10,7 +10,7 @@ stages, producing the boundary type that proves the rewrite has run. Owning crat
 
 ##### Requirement {#arch.path-normalization.requirement-1}
 
-Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`) rewrite to `Expr::ResolvedPath` carrying the resolved `SymbolId`, producing a `NormalizedModuleGraph` whose fields are `pub(crate)`, so only `path_normalizer::normalize` can construct one.
+Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`) rewrite to `Expr::ResolvedPath` carrying the resolved `SymbolId` (a path through a type, such as `lib::Counter::new` or `root::Kind::A`, instead names the type its module prefix names, where a `root`, `self` or `super` prefix is resolved against the current module), producing a `NormalizedModuleGraph` whose fields are `pub(crate)`, so only `path_normalizer::normalize` can construct one.
 
 | Field | Value |
 |---|---|
@@ -19,7 +19,7 @@ Multi-segment qualified paths (`Expr::Path`, e.g. `math::sin`) rewrite to `Expr:
 | `specified by` | `#path-normalization` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0021, ADR-0031 |
 
 </details>

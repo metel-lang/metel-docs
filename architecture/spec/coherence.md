@@ -29,7 +29,7 @@ The orphan rule (`T0014`): an aspect impl must be local to the aspect's declarin
 | `specified by` | `#coherence` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | RFC-0060, `#238`, ADR-0042, RFC-0036 |
 
 ##### Requirement {#arch.coherence.requirement-2}
