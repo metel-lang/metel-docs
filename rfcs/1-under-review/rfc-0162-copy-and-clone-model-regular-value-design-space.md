@@ -606,7 +606,9 @@ every use site downstream changes meaning.
   spellings are therefore a grammar change: the suffix as a restricted production
   (`type_expr` followed by `":" ~ !"=" ~ bound_list`, used only in parameters, returns and
   `let` annotations, with the `!"="` keeping it apart from `:=`), the `where` form as a
-  generalised subject.
+  generalised subject. **Spelling chosen (language owner, 2026-11-02): the suffix.** It is local,
+  mirrors the header's `: Copy`, and does not restate the type; the `where` form stays
+  recorded as the alternative.
 
 
 S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
@@ -1234,8 +1236,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    things remain. (a) *Spelling:* the expression form is `: extends Copy` (decided 2026-11-02), and whether
    it is allowed in a `let` annotation is open. For a written type, a trailing `: Copy`
    (`p: (i64, boolean): Copy`, `-> { x: i64 }: Copy`) is unusual next to a parameter's own
-   `:`, and a `where` clause on the function is the alternative; tried against the parser,
-   neither parses today and both need a grammar change (S6). Which positions are allowed (returns, parameters, `let`; not fields or
+   `:`; the suffix is chosen (2026-11-02) over a `where` clause on the function. Tried against
+   the parser, neither parses today and both need a grammar change (S6). Which positions are allowed (returns, parameters, `let`; not fields or
    type arguments) and whether a parameter's marker is a requirement as well as documentation
    are also open. (b) *Duplicating a non-`Copy`
    structural value:* records (anonymous and named) have a `Clone`, `extend<record R> { ..R }:
