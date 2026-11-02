@@ -672,7 +672,7 @@ part of the same records/views substrate review):
   reached its shape. Still the dependency root of 0093/0094; now itself depends on
   RFC-0128.
 - **RFC-0093** — Derive Registration — `#derive(Aspect)` as request + registration.
-  Depends on RFC-0092. RFC-0080's `Clone` derive depends on this. Answers RFC-0055's
+  Depends on RFC-0092. RFC-0206's `Clone` derive depends on this. Answers RFC-0055's
   aspect-inspection open question. Deliberately excludes auto-impl aspects
   (`Send`/`Sync`/`Linear`) from its scope — see RFC-0096.
 - **RFC-0096** — Auto-Impl Aspects — owns the auto-impl mechanism: formalizes the
@@ -1035,7 +1035,7 @@ implementation).
 - **RFC-0097** *(implemented, confirmed 2026-07-20)* — Orphan Rule for
   Bare-Parameter Blanket Impls. RFC-0060 §1's orphan rule assumes every impl target
   has an outermost type constructor to check — but a bare-parameter blanket
-  (`extend<T: Bound> T: Aspect`, the exact form RFC-0060 §3/§5 and RFC-0080 §1.2 all
+  (`extend<T: Bound> T: Aspect`, the exact form RFC-0060 §3/§5 and RFC-0206 §2 (formerly RFC-0080 §1.2) all
   use as their own running example) has none. Formalizes that target-locality is
   vacuously unsatisfiable for this shape, so such an impl is permitted only via the
   aspect side; no new syntax, no new error code (reuses T0014), no new
@@ -1262,14 +1262,14 @@ implementation).
   soundness, RFC-0135 disposition, P4/keyword-vs-aspect, may `Copy` ever be derived).
 - **RFC-0158** *(under review, opened 2026-08-31; **v0.14.2**, #919)* — Share and Clone: Separating Aliasing from
   Duplication — split out of RFC-0157's "Axis B, second cut," then narrowed to **purely
-  additive**. `.clone()` is specified two ways: RFC-0080 §1.1 ("independent owned value")
+  additive**. `.clone()` is specified two ways: RFC-0206 §1 (formerly RFC-0080 §1.1) ("independent owned value")
   vs. §1.2 ("incrementing a reference count") — and `rc.clone()` (RFC-0076 brand-preserving,
   same cell) is the latter. Keeps `Copy` and `Clone` unchanged; tightens `Clone` to mean
   independent duplication only; adds a new **`Share`** aspect (`fun share(self: &Self) ->
   Self`, another handle to the same state; handle-category types only — `Rc`/`Arc`, never
   blanket, never implied). `vec.clone()` untouched; `rc.clone()` → `rc.share()` (plain
   cutover — `Rc` is `0-draft`). No rename, no implicit-copy change, no `#derive` change.
-  Amends RFC-0080 §1; RFC-0074/0076 `Rc`/`Arc` implement `Share`. Mirrors Rust's
+  Amends RFC-0206 §1 (formerly RFC-0080 §1); RFC-0074/0076 `Rc`/`Arc` implement `Share`. Mirrors Rust's
   `Claim`/`Share` direction; one of the two value-side changes RFC-0157 endorses.
 - **RFC-0152** *(**integrated 2026-09-01** with RFC-0134; v0.13.0, #901; impl metel-core#925)* —
   Function-Type Multiplicity Widening — a one-directional coercion: a function value is
@@ -1825,6 +1825,7 @@ implementation).
   The composition operator is deferred (`>->` / `>=>` preferred, after RFC-0190). Independent of RFC-0205.
 - **RFC-0205** *(draft 2026-11-01)* — Hole sections (`(_ * 10)`) and operator functions (`ops::add`).
   Independent of RFC-0204.
+- **RFC-0206** *(under-review 2026-11-02, #1785)* — Clone and Copy, one duplication method. Extracted from RFC-0080 §1: `Clone` as explicit duplication, `Copy` as `Clone` whose call the compiler inserts and whose body is sealed bitwise (so a type needs only `: Copy`), the standard `Clone` impls, and `Clone` for user types. RFC-0162 owns the wider model; RFC-0158 `Share` is the aliasing half.
 
 ---
 

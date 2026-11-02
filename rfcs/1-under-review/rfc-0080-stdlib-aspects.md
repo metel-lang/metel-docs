@@ -1,8 +1,8 @@
 ---
 id: rfc-0080
-title: "Standard Library Aspects — Clone, Deref, Send, Sync"
+title: "Standard Library Aspects — Deref, Send, Sync"
 date: '2026-07-01'
-updated: '2026-08-23'
+updated: '2026-11-02'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/805'
 ---
@@ -13,126 +13,38 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/805'
 > derive foundation chain split out 2026-08-23). Also backfilled the missing `status`
 > frontmatter field itself, absent until now.
 
-> **Status — under review.** Moved back from accepted 2026-07-09: §1.3 specified
-> derive using `#[derive(Clone)]`, a syntax RFC-0012 (Attributes, Metadata, Macros, and
-> Derived Aspects, under review) explicitly rejects in its own Alternatives Considered
-> section in favour of either `@derive(...)` or the `derives` keyword. An accepted RFC
-> using a syntax the governing RFC rejects is an inconsistency, not a settled precedent.
-> §1.3 used `derives Clone` at this point; see the update immediately below for its
-> current, further-revised spelling.
->
-> **Update (same day, later):** RFC-0012 settled on Path D (comptime derive) as its
-> recommended mechanism, with `derives Clone` as Path D's stable surface syntax — so
-> §1.3's spelling was briefly confirmed rather than provisional. That confirmation did
-> not last the day: RFC-0012 §9 retired the `derives` keyword entirely in favour of
-> `@derive(Aspect, ...)`, an attribute on the struct/enum itself, reused (disambiguated
-> by attachment target) to also register the comptime function that implements a given
-> aspect's derive. §1.3 now uses `@derive(Clone)` — since revised again, see the
-> 2026-08-23 update below: the attribute sigil itself moved from `@` to `#`.
->
-> **Update (2026-07-09, later still):** RFC-0012 was itself split into four smaller
-> RFCs and superseded (`public/rfcs/5-superseded/rfc-0012-derived-aspects.md`). The
-> derive mechanism `Clone`'s §1.3 depends on now lives in **RFC-0093 (Derive
-> Registration)**. The *mechanism* underneath `@derive(Clone)` remains unaccepted:
-> RFC-0093 stays draft (its Open Questions 1-4 — `emit` soundness, registration
-> coherence, who may register for a given aspect, required function signature — are
-> load-bearing enough to block acceptance). Re-promote this RFC to accepted once
-> RFC-0093 reaches acceptance, or sooner if RFC-0093's blocking open questions turn out
-> not to affect `Clone`'s specific derive (they concern the general mechanism, not this
-> RFC's four aspects, which do not depend on which path implements derive). Depends on
-> RFC-0071 (Ownership and Move Semantics) and RFC-0060 (Aspect Impl Coherence).
->
-> **Status update, 2026-08-23:** RFC-0093 moved `0-draft` → `1-under-review`, tracking
-> issue `#799` filed for its design settlement (its own dependency on RFC-0092's
-> `type`-as-value/`typeinfo`/`emit`, still `0-draft`, is the deeper blocker). Still
-> unaccepted — this doesn't change the re-promotion condition above, just its status
-> label.
->
-> **Sigil update, 2026-08-23, later the same day:** the attribute mechanism's sigil
-> itself moved from `@` to `#` (RFC-0095, found to collide with the accepted allocator
-> cluster's own `@`). §1.3 below now uses `#derive(Clone)`; the dated notes above are
-> left as written, recording what was true on their own dates.
-> Formally specifies four aspects that are assumed pre-existing across the
-> accepted and under-review region RFC cluster (RFC-0063–0079) but have never been
-> defined. The sendability aspects (`Send`, `Sync`) rely on closed-world coherence from
-> RFC-0060 and on the auto-impl mechanism owned by RFC-0096.
+> **Narrowed 2026-11-02: `Clone` moved to RFC-0206.** §1 (`Clone`, its relationship to
+> `Copy`, the derive of §1.3 and the region-pointer note of §1.4) is now RFC-0206, so that
+> `Clone` and the `Copy ⟹ Clone` blanket are no longer held behind the derive mechanism
+> (RFC-0093) this RFC's §1.3 waited on. What remains here, `Deref`/`DerefMut`, `Send` and
+> `Sync`, does not depend on derive; the section numbers 2 to 6 are unchanged so existing
+> citations (`§3.2`, `§4.2`) still point at the same text. Citations of §1 now read RFC-0206.
+
+> **Status — under review.** It was moved back from accepted on 2026-07-09 because §1.3 (now
+> RFC-0206 §4) specified a derive spelling the then-governing RFC rejected, and it stayed
+> there while the derive mechanism (RFC-0093) was unsettled. That derive moved with `Clone`,
+> so what is left here no longer depends on it. It still depends on RFC-0060 (coherence) and,
+> for the auto-impl rule of §3.2 and §4.2, on RFC-0096.
 
 ## Summary
 
-Four aspects are referenced as pre-existing throughout the region RFC cluster without
-formal definition:
+Three aspects are referenced as pre-existing throughout the cluster without formal definition:
 
-- **`Clone`** — explicit duplication of an owned value.
 - **`Deref` / `DerefMut`** — dereference coercion; allows smart pointers to be used as references.
 - **`Send`** — marker aspect: a value is safe to transfer across fiber boundaries.
 - **`Sync`** — marker aspect: a shared reference to a value is safe across fiber boundaries.
 
-This RFC provides the formal specification for each.
+This RFC provides the formal specification for each. `Clone`, which this RFC first
+defined, is RFC-0206.
 
 ---
 
 ## 1. Clone
 
-### 1.1 Definition
-
-`Clone` is the aspect for types that support explicit duplication. Calling `.clone()`
-on a `T: Clone` produces a new independent owned value of type `T`; the original value
-remains valid.
-
-```metel
-aspect Clone {
-    fun clone(self: &Self) -> Self;
-}
-```
-
-`clone` takes a shared reference and returns a new owned value. The caller retains the
-original; no move occurs.
-
-### 1.2 Relationship to Copy
-
-Every `Copy` type is also `Clone`. The blanket impl clones by bitwise copy:
-
-```metel
-extend<T: Copy> T: Clone {
-    fun clone(self: &T) -> T { *self }
-}
-```
-
-`Clone` types that are not `Copy` run user-defined logic — allocating a new backing
-buffer, deep-copying a list, incrementing a reference count. The distinction between
-`Copy` (implicit, free) and `Clone` (explicit, potentially expensive) is preserved.
-
-> **Note (2026-07-11):** this blanket's target is the impl's own bare parameter `T`,
-> not a named type wrapping it — a form RFC-0036 (Conditional Impl Blocks) never
-> shows in its own examples, and one the orphan rule (RFC-0060 §1) has no stated
-> answer for either, since `T` has no outermost type constructor to check. RFC-0097
-> (draft) formalizes both: no new syntax needed, and this impl is permitted here only
-> because `Clone` itself is local to `std::core` — never on the strength of `T`.
-
-### 1.3 Derive
-
-`Clone` may be derived for any struct or enum whose fields all implement `Clone`. The
-derived impl calls `.clone()` on each field and assembles the result:
-
-```metel
-#derive(Clone)
-struct Point { x: f64, y: f64 }
-
-// Generated:
-extend Point: Clone {
-    fun clone(self: &Point) -> Point {
-        Point { x = self.x.clone(), y = self.y.clone() }
-    }
-}
-```
-
-For enums, the derived impl matches the active variant and clones its fields.
-
-### 1.4 Clone and region pointers
-
-`@[r] T` — a region pointer — does not implement `Clone` by default. Cloning a region
-pointer would require a fresh allocation into the same or another region; the caller
-must make that explicit. No blanket `extend @[r] T: Clone` is provided.
+Moved to **RFC-0206 (Clone and Copy — One Duplication Method)** on 2026-11-02: the `Clone`
+aspect (formerly §1.1), `Copy` as `Clone` with a sealed bitwise body (formerly §1.2), the
+derive (formerly §1.3, now RFC-0206 §4) and the allocator note (formerly §1.4, now
+RFC-0206 §5).
 
 ---
 
@@ -309,7 +221,7 @@ Both conditions are required: `Sync` of `T` because any fiber may read through `
 
 | Relationship | Rule |
 |---|---|
-| `Copy` implies `Clone` | Blanket impl: clone by bitwise copy |
+| `Copy` implies `Clone` | RFC-0206 §2 (sealed blanket: clone by bitwise copy) |
 | `Copy` and `Drop` are mutually exclusive | RFC-0071 |
 | `DerefMut` requires `Deref` | Supertrait |
 | `T: Sync` iff `&T: Send` | Definition of `Sync` |
@@ -328,11 +240,7 @@ does not depend on RFC-0003 and may be accepted independently.
 
 ## Unresolved Questions
 
-1. **Region-parameterised `Clone`.** Whether `Clone` should carry a region parameter —
-   `fun clone[r](self: &Self) -> @[r] Self` — to allow deep cloning into a
-   caller-specified region is deferred. The current definition returns a value without
-   a region tag, which is appropriate for `Copy` and stack-local types but limiting for
-   heap-allocated types where the destination region matters.
+1. **Region-parameterised `Clone`.** Moved to RFC-0206 §5 with `Clone`.
 
 2. **`BumpRegion` / `AutoRegion` sendability.** The sendability of pointers into
    scoped regions depends on whether the region handle itself is transferred. The full
@@ -350,17 +258,18 @@ does not depend on RFC-0003 and may be accepted independently.
   auto-impl rules.
 - RFC-0096 (Auto-Impl Aspects, under review) — the general recognition rule and shared
   structural-composition algorithm §3.2/§4.2 are instances of.
-- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — §1.2's `Clone`
-  blanket is the motivating example for its orphan-rule formalization.
+- RFC-0097 (Orphan Rule for Bare-Parameter Blanket Impls, implemented) — the `Clone`
+  blanket, now RFC-0206 §2, is the motivating example for its orphan-rule formalization.
 - RFC-0081 (Negative Impls) — mechanism for overriding auto-impl when a type must not
   have `Send` or `Sync` despite its fields being `Send`/`Sync`.
 - RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; move
-  semantics; `Clone` as the explicit duplication primitive.
+  semantics.
+- RFC-0206 (Clone and Copy) — `Clone`, extracted from this RFC.
 - RFC-0074 (Shared Pointers) — `Rc<T>: !Send`, `!Sync`; `Arc<T>: Send + Sync`;
   `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
 - RFC-0003 (Concurrency Model, under review) — fiber boundary crossing; consumer of `Send`
   and `Sync` bounds.
 - RFC-0093 (Derive Registration, under-review as of 2026-08-23) — governs the derive
-  syntax/mechanism `Clone`'s §1.3 depends on; this RFC's move back to under-review
-  pending that resolution. (Superseded RFC-0012, which originally specified this, on
+  syntax/mechanism `Clone`'s derive depends on; that derive moved with `Clone` to RFC-0206,
+  so this RFC no longer waits on it. (Superseded RFC-0012, which originally specified this, on
   2026-07-09.)

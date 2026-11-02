@@ -313,7 +313,7 @@ This reuse is not free, and surfaces two gaps neither RFC currently resolves:
   struct's shape at comptime grants no *runtime* capability — it is compile-time only,
   in the same category RFC-0090 §7 already resolved for `HasField`-as-bound: implicit,
   available on any struct, regardless of tier. `typeinfo` must work on plain Tier-1
-  structs — RFC-0080's own `Point` (§1.3) is a plain struct, and its `Clone` derive
+  structs — RFC-0206's `Point` (§4) is a plain struct, and its `Clone` derive
   example requires reflecting it — even though Tier 1 structs never opt into
   `ToRecord`/`FromRecord` at runtime. Comptime reflection therefore should not be gated
   behind the tier-2/3 opt-in that governs runtime record conversion; the two mechanisms
@@ -419,7 +419,7 @@ specified (ordering, visibility, attributes).
 Deferred to **v0.5+**, after the core language (generics, aspects, concurrency, memory
 model) is stable. `type`-as-comptime-value and `typeinfo` reflection (with Open
 Question 1 resolved) must exist before any derive function can be written (RFC-0093) —
-RFC-0080's `Clone` derive is blocked on this.
+RFC-0206's `Clone` derive is blocked on this.
 
 Minimum action before v0.5: reserve `comptime` as a keyword.
 
@@ -465,7 +465,7 @@ or it sits unused exactly as long as this one did.
   preserving alongside comptime substitution
 - RFC-0060 (Aspect Impl Coherence) — coherence/orphan rules `emit` must respect (Open
   Question 2)
-- RFC-0080 (Standard Library Aspects) — `Clone`'s derive is the concrete first test
+- RFC-0206 (Clone and Copy) — `Clone`'s derive is the concrete first test
   case for this RFC's mechanism (via RFC-0093)
 - RFC-0093 (Derive Registration) — depends on this RFC
 - RFC-0094 (Comptime Metaprogramming) — depends on this RFC, generalizes `emit`

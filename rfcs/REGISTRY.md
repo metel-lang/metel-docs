@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**204 RFCs total.** 34 draft, 50 under review, 9 accepted, 2 integrated (95 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**205 RFCs total.** 34 draft, 51 under review, 9 accepted, 2 integrated (96 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
 ## Draft (34)
 
@@ -52,13 +52,13 @@ the curated thematic map.
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 
-## Under Review (50)
+## Under Review (51)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
-- **RFC-0080** — Standard Library Aspects — Clone, Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-08-23)
+- **RFC-0080** — Standard Library Aspects — Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-11-02)
 - **RFC-0089** — Linear Types (`1-under-review` ; rfcs/1-under-review/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-09-03)
 - **RFC-0091** — Linear Records (`1-under-review` ; rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-09-03)
 - **RFC-0092** — Comptime Core — Type-as-Value, Reflection, and Emit (`1-under-review` ; rfcs/1-under-review/rfc-0092-comptime-core.md ; date 2026-07-09 ; updated 2026-08-23)
@@ -104,6 +104,7 @@ the curated thematic map.
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
+- **RFC-0206** — Clone and Copy — One Duplication Method (`1-under-review` ; rfcs/1-under-review/rfc-0206-clone-and-copy-one-duplication-method.md ; date 2026-11-02 ; updated 2026-11-02)
 
 ## Accepted (9)
 
