@@ -103,7 +103,8 @@ Measured on 2026-11-02:
 |---|---|---|
 | Primitives, `String` | yes | unchanged |
 | `[T; N]` | yes (including `[String; 2]`) | unchanged |
-| Records, anonymous and named | yes, field-wise: `extend<record R> { ..R }: Clone where ..R: Clone` (RFC-0123) | unchanged |
+| Anonymous records | yes, field-wise: `extend<record R> { ..R }: Clone where ..R: Clone` (RFC-0123) | unchanged |
+| Named `record` | yes today, the same field-wise impl | takes a header entry like a `struct` (§4 and RFC-0162): `record P: Clone`; a plain `record P` is not cloneable |
 | Tuples | **no** (`T: Clone` rejects `(i64, i64)`; `.clone()` reports "cannot infer receiver type") | a structural arm, hardcoded like tuple `Copy` (metel-core#263), until variadic generics (metel-core#794) |
 | `Option`, `Result`, `List` | **no** | `extend<T: Clone> Option<T>: Clone`, and the same for the others (metel-core#270) |
 | A named `struct` or `enum` | only if the user writes one | §4 |
