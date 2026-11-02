@@ -411,8 +411,9 @@ a deriver may emit the refining `extend`, though only for a type whose header al
 site on a tuple or an anonymous record. A type alias is a declaration that does
 (`type Pt := { x: i64, y: i64 };` works today, generic ones too, and an alias is
 transparent), so `type Origin: Copy := { x: i64, y: i64 };` would assert, not grant, that
-the aliased type is `Copy`, and `type Token: !Copy := (i64, i64);` would make it
-move-only. A signature that names `Origin` is then protected from a silent flip, and the
+the aliased type is `Copy`. Because an alias is transparent, `!Copy` on an alias could
+only assert that the type is *not* `Copy`; it cannot make `(i64, i64)` move-only, which
+needs a nominal type. A signature that names `Origin` is then protected from a silent flip, and the
 `T0010`/`T0032` advice to "name a `record` or a type alias" already points users there. This
 would replace Axis S's `copy`/`once` qualifier with the header vocabulary, at the price of
 `: Copy` meaning a grant on a named type and an assertion on an alias.
