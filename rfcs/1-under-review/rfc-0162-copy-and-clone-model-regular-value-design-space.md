@@ -12,43 +12,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 > longer-horizon regular-value `Copy`/`Clone` model critique, design space, prior-art survey,
 > and open questions that D5 did not touch, so they remain trackable.
 
-> **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. **Milestoned v0.14.2** — the "decisions" release that gates the ownership core, alongside RFC-0135 (RFC-0155 follows in v0.18.1).
-
-> **Update (2026-09-02) — a further drawback (D6) and a fourth position (P4), raised in
-> review.** D1–D4 all argue about *what* the model grants. D6 argues about **where the
-> grant lives**: affine move semantics — the language's central ownership rule — is
-> switched off, per type, by an ordinary aspect impl (`extend Foo: Copy;`), spelled
-> exactly like `extend Foo: Display`; and once RFC-0093's derive mechanism exists,
-> nothing on the current path stops it being switched off by a metaprogramming
-> annotation (`#derive(Copy)`), as it routinely is in Rust. That critique is orthogonal
-> to D1–D4 and to Axis A/B, so it opens **Axis C** (aspect / declaration keyword /
-> attribute) and **P4** — keep Rust's model, both aspects, and the name, but move the
-> *grant* onto the type's own declaration as the `copy` keyword **RFC-0163 already
-> reserves** for function types. P4 is the one new position the Recommended direction's
-> own familiarity argument does not rule out — it renames nothing — so the
-> recommendation is left standing but no longer covers the whole space; P4's disposition
-> is **OQ4**, and whether `Copy` should be derivable at all is **OQ5**.
-
-## Summary
-
-Metel's **regular-value** duplication model — `Copy` (implicit, cheap, opt-in) plus
-`Clone` (explicit, possibly expensive), inherited from Rust essentially verbatim — was
-never argued for in an RFC. This RFC is the trade-off study: the drawbacks of that model,
-the design space for changing it, a prior-art survey across six language families, and a
-recommendation.
-
-**It is extracted from RFC-0157** (2026-09-01). RFC-0157 began as "Copy and Clone Model
-Re-analysis" covering both the regular-value model *and* the closure-capture default (its
-"D5"). D5 was decided — the closure-capture default is `move` — and RFC-0157 is now the
-record of that decision, `3-integrated` as part of the v0.13.0 closure cluster. The
-regular-value questions D5 did not touch — D1–D4, the P0–P3 design space, and the open
-questions about whether Rust's model is the right one for Metel — have no v0.13.0
-consumer and live here so they stay trackable. **Milestoned v0.14.2**, the "decisions" release that gates the ownership core, alongside **RFC-0135** (`Copy → many`) and
-**RFC-0155** — a reviewer opening that release's Copy-model work sees the analysis and
-the proposals together. Its actionable outcomes map onto that milestone: the D3
-relaxation (amends RFC-0071 §4, if OQ2's soundness argument holds), the RFC-0135
-disposition (OQ3 — RFC-0135's own v0.14.2 review), and D4 (structural-types Copy
-cleanup, #702, v0.16.0; #263, v0.15.0).
+> **Status — under review (2026-09-01).** Extracted from RFC-0157 on 2026-09-01: the regular-value Copy/Clone model critique, P0-P3 design space, prior-art survey, and open questions D5 did not touch. **Milestoned v0.16.0** (metel-core#924), the release that settles the shape of the `Copy`/`Clone`
+model, alongside RFC-0158 and the decisions split from metel-core#741. Its actionable
+outcomes: where the grant is stated (Axis C), the copyness of structural types (Axis S), the
+D3 relaxation (amends RFC-0071 §4, if OQ2's soundness argument holds), and D4's cleanup.
 
 **Added in review (2026-09-02):** **D6** — the grant that switches off affine semantics
 is an ordinary aspect impl, and would be a metaprogramming annotation once `#derive`
@@ -56,13 +23,58 @@ exists — with **Axis C** (where the grant lives) and **P4** (`copy` as a decla
 keyword, reusing RFC-0163's already-reserved word). D6 is orthogonal to D1–D4: it is
 about the *mechanism* of the grant, not its content.
 
-**Recommendation (carried from RFC-0157):** on regular values, *keep Rust's model* — no
+**Proposed direction (2026-11-02, language owner's lean):** keep the value model's
+semantics, and change where copyness is *stated*: a marker fact in the declaration header
+for named types, a marker ascription at the expression for structural ones. See "Proposed
+direction" below.
+
+**Recommendation (carried from RFC-0157, on the value model):** on regular values, *keep Rust's model* — no
 rename (not to `many`, not to `Dup`), no P1/P2/P3, accept D1 as Rust has it. The only
 endorsed value-side changes are **RFC-0158** (the `Clone`/`Share` split) and relaxing the
 `Copy` + `Drop` ban (D3) *if* a soundness argument holds. This is a recommendation for
 review to push on, not a decision. **It does not dispose of P4**, which was raised after
 it was written and which its central argument — familiarity cost — does not reach, since
 P4 renames nothing (OQ4).
+
+---
+
+## Proposed direction (2026-11-02)
+
+> The language owner's current leaning, written up as the main proposal. It is not decided.
+> It keeps the value model's semantics and changes where copyness is *stated*; the
+> alternatives it displaces stay in the design space below.
+
+1. **The value model's semantics do not change.** `Copy` is implicit and cheap, `Clone` is
+   explicit; no P1, P2 or P3. This is the Recommended direction's conclusion, and it stands.
+2. **Named types state copyness in the declaration header** as a marker fact (C4), reusing
+   RFC-0105's aspect-list grammar for markers: `struct Point: Copy { x: i64, y: i64 }`,
+   `struct Token: Copy, !Send { … }`. `Copy` stays an aspect and a bound; the grant is the
+   header entry. For a generic type the condition is derived from the fields (R1: every type
+   parameter that occurs in a field must be `Copy`; R2, the weakest sufficient condition, is
+   the exact alternative). An `extend … : Copy;` is rejected except where it **refines** a
+   header grant (a condition the compiler cannot derive), where the **target has no header**
+   (std's primitives and the record rule), or where it is a **negative impl**.
+3. **Structural types stay inferred from their parts, and may be asserted at the
+   expression** (S5): `({ x = 0, y = 0 }: Copy)` is an erased check that the value's type is
+   `Copy`, with `!Copy` and other markers accepted the same way. It is an assertion that
+   protects the author at the construction site, not a contract on a signature. A value
+   made move-only on purpose (a token) is a named type.
+4. **What this answers.** The grant is visible at the declaration (D6.1); a derive cannot hide
+   it, by a written rule (OQ5) since the header entry is as short as a derive would be (D6.2);
+   the stop rule (D6.3) is a class and not an exception: *marker facts are declared on the
+   type, behaviour is implemented in `extend`*, which C5 would turn into declared grant modes.
+   RFC-0135's mechanism-location half is taken; its rename to `many` is not.
+5. **Not decided here.** The names (`Copy`, `Clone`, and `Share` from RFC-0158); whether
+   `Copy` implies `Clone` (RFC-0080 §1.2 specifies the blanket impl and it is not
+   implemented; tuples have no `Clone`); the spelling of the ascription (`(e: Copy)` can be
+   read as a type ascription or an `impl`/`dyn` form, so a distinct spelling may be needed);
+   R1 against R2; and whether a named `record`, which is `Copy` by its fields today, needs a
+   header entry like a `struct`.
+
+The earlier positions are kept as alternatives: C2 (the `copy` declaration keyword, P4) and
+S3p (`copy`/`once` qualifiers in public signatures). They are smaller to specify and close
+the derive hazard by construction (C2), or give a signature-level contract (S3p), at the price
+of a second vocabulary, or of carrying a multiplicity on structural types.
 
 ---
 
@@ -301,12 +313,12 @@ Everything else it buys (locality, a keyword that looks like a language rule) is
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
 
-**Position taken (2026-11-02, language owner): C2, spelled `copy` (P4), for now. Leaning (same day): C4, the header list, with refinable header grants, and not yet adopted; C5 is the mechanism both would be instances of.** The grant
-moves onto the type's declaration, `copy struct Point { x: i64, y: i64 }`; `Copy` stays as the
-bound; `extend T: Copy;` becomes an error with a fix-it. The word is the one RFC-0163 already
-reserves, and RFC-0135's rename to `many` is not taken. "For now" means the spelling and the
-conditional-copy form (question 7) are the parts expected to move; the principle, the grant on
-the declaration, is the decision. Axis S is spelled with the same word.
+**Proposed (language owner's lean, 2026-11-02): C4, the header list, with refinable header
+grants.** It was preceded the same day by a position for C2, spelled `copy` (P4), which stays
+as the alternative: smaller to specify, and it closes the derive hazard by construction. The
+principle both share is that the grant moves onto the type's declaration, `Copy` stays the
+bound, and `extend T: Copy;` stops being the way to write it. The parts expected to move are
+the spelling, the derived-condition rule (R1 or R2) and the stop rule (question 7).
 
 #### Worked examples
 
@@ -407,16 +419,9 @@ conditional type can have two places, the header and an optional refining `exten
 a deriver may emit the refining `extend`, though only for a type whose header already names
 `Copy`. In C5's terms this is a `header` aspect that is *refinable*.
 
-**Structural types under C4 (under discussion, not decided).** A header list has no
-site on a tuple or an anonymous record. A type alias is a declaration that does
-(`type Pt := { x: i64, y: i64 };` works today, generic ones too, and an alias is
-transparent), so `type Origin: Copy := { x: i64, y: i64 };` would assert, not grant, that
-the aliased type is `Copy`. Because an alias is transparent, `!Copy` on an alias could
-only assert that the type is *not* `Copy`; it cannot make `(i64, i64)` move-only, which
-needs a nominal type. A signature that names `Origin` is then protected from a silent flip, and the
-`T0010`/`T0032` advice to "name a `record` or a type alias" already points users there. This
-would replace Axis S's `copy`/`once` qualifier with the header vocabulary, at the price of
-`: Copy` meaning a grant on a named type and an assertion on an alias.
+**Structural types under C4.** A header list has no site on a tuple or an anonymous record.
+Axis S proposes S5 for them, a marker ascription at the expression, which uses the same
+items as the header.
 
 **Worked examples** (C1 run against today's behaviour; C2 and C4 reasoned):
 
@@ -545,19 +550,31 @@ every use site downstream changes meaning.
   a body everything stays inferred. The boundary is where a change of copyness reaches other
   people's code, so the cost of writing it is paid exactly there.
 
+- **S5. Inferred, with a marker ascription.** Inference stays, and an expression may be
+  ascribed a bound list of markers, using the header list's own items: `({ x = 0 }: Copy)`,
+  `(pair: Copy, !Send)`. The check is erased, as a type ascription is, so no multiplicity is
+  carried on tuples and records. It protects the author at the construction site (the API
+  example fails at that expression when `label: String` is added), and it cannot make a
+  `Copy` value move-only: `!Copy` on a `(i64, i64)` asserts something false. A token is a
+  named type. Markers only (aspects with no required methods); allowing any aspect would turn
+  it into a general "assert implements" expression.
+
 S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
 the structural type (as `use_multiplicity` is of the function type, RFC-0134 §4), so
 unification and the widening rule (a `copy` value satisfies a `once` slot, not the reverse)
 extend to tuples and records, and width subtyping for records (RFC-0117) must carry it.
-S3 and S3p are also the positions in which the vocabulary is the same across named types
-(C2, `copy struct`), structural types and closures. Axis S composes with every A/B/C position; with C2 chosen, the word is `copy` on both halves.
+S3 and S3p use the multiplicity vocabulary of closures (`copy`, `once`); S5 uses the header
+list's, so one vocabulary (`: Copy`, `!Send`) covers named types and structural values, and
+the division is principled: a type with a declaration states an aspect there, a value without
+one is asserted where it is built. Axis S composes with every A/B/C position.
 
-**Position taken (2026-11-02, language owner): S3p, spelled `copy` / `once`** (the earlier text spelled the assertion `many`; it follows Axis C's word). Structural types stay inferred inside
-bodies and state their copyness in public signatures. The recommended direction below covers
-regular named values; the worked examples that follow are why S3p, and not S1, S2 or S4.
-What is still open is the cost of carrying a multiplicity on tuples and records (to be
-measured by an implementation spike, not argued), how a non-`Copy` structural value is
-duplicated when one needs a copy (question 6), and the exact spelling in each position.
+**Proposed (language owner's lean, 2026-11-02): S5.** S3p, which was the position earlier the
+same day, is the alternative: it gives a signature-level contract and can express `once`, at
+the price of a multiplicity in the structural types and a second vocabulary. An alias
+header (`type Origin: Copy := …`) was considered as a third route and not taken, since
+aliases are transparent: it could only assert, and `!Copy` could not make a type move-only,
+while `: Copy` would mean a grant on a struct and an assertion on an alias. What is still
+open is in questions 6 and 7.
 
 #### Worked examples
 
@@ -813,6 +830,10 @@ it directly, since choosing both is not possible.
 ---
 
 ## Recommended direction (regular values)
+
+> **Superseded in part, 2026-11-02.** Its conclusion on the value model (no P1, P2 or P3)
+> stands. It did not address where the grant is stated or how structural types are
+> asserted, which "Proposed direction" above does.
 
 Stated as a recommendation for review to push on, not a decision. The frame: **where
 should Metel spend divergence budget — the regular-value duplication model, or closures?**
@@ -1154,24 +1175,19 @@ trait that gates nothing implicit is an unobjectionable trait.
    condition:* a concrete case where hand-writing the grant is genuinely onerous, which
    for a marker aspect with a one-line spelling is hard to construct.
 
-6. **Residuals of S3p.** Added 2026-11-02; Axis S has its position (S3p). Three things
-   remain. (a) *Cost:* how much carrying a multiplicity on `Tuple`, `Record` and open-row
-   types changes unification, widening and width subtyping (RFC-0117); an implementation
-   spike answers it, and a cost judged too high reopens the axis toward S1 plus the
-   diagnostic of example 3. (b) *Duplicating a non-`Copy` structural value:* with S3p a `once` or
-   `String`-holding tuple or record can no longer be copied implicitly, so a caller needs a
-   `Clone`. Measured 2026-11-02: records (anonymous and named) have one, `extend<record R>
-   { ..R }: Clone where ..R: Clone` in `std::core` (RFC-0123), so a record with a `String`
-   field clones and one with a field that is not `Clone` (a `struct` without an impl, a
-   closure) does not; `[T; N]` clones; primitives and `String` clone. **Tuples have no
-   `Clone`**: `T: Clone` rejects `(i64, i64)`, and `.clone()` on a tuple reports "cannot
-   infer receiver type", which hides the cause. A named `struct`, `Option` and `List` have no
+6. **Residuals of S5.** Added 2026-11-02; Axis S proposes S5, the marker ascription. Three
+   things remain. (a) *Spelling:* `(e: Copy)` reads as a type ascription, and `impl Copy`
+   and `dyn Copy` already mean different things in Metel, so a distinct form
+   (`(e is Copy)`, or a prefix) may be needed; the parser can tell an aspect from a type by
+   name resolution, but a reader cannot at a glance. (b) *Duplicating a non-`Copy`
+   structural value:* records (anonymous and named) have a `Clone`, `extend<record R> { ..R }:
+   Clone where ..R: Clone` in `std::core` (RFC-0123), as do arrays, primitives and
+   `String`; **tuples have none** (`T: Clone` rejects `(i64, i64)`, and `.clone()` on one
+   reports "cannot infer receiver type"); a named `struct`, `Option` and `List` have no
    `clone` either, and `Copy` does not imply `Clone` for a declared `Copy` struct (RFC-0080
-   §1.2 specifies the blanket impl; it is not implemented). So the gap that S3p exposes is
-   tuples, and the underlying one is the missing `Copy ⟹ Clone`. (c) *Spelling* in type and in
-   expression position (`copy (a, b)` against ascription only), and whether a `public`
-   field of a named `public` type is a signature position. *Advancing condition:* the
-   spike for (a), a check of (b) against the implementation.
+   §1.2 specifies the blanket impl; it is not implemented). (c) *Scope:* markers only, and
+   no move-only structural value (S3p's `once`). *Advancing condition:* a spelling that
+   survives the worked examples, and a decision on tuples' `Clone`.
 
 7. **Residuals of C2.** Added 2026-11-02; Axis C has its position (C2, `copy`). Four things
    remain. (a) *Conditional grants:* `extend<T: Copy> W<T>: Copy;` needs a declaration form. The
