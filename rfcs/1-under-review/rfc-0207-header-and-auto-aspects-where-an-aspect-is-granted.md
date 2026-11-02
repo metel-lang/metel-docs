@@ -24,10 +24,12 @@ proposes two further positions and a way to state which an aspect uses:
 1. **Header aspects.** A type declaration lists marker aspects after its name
    (`struct Point: Copy { … }`, `struct Token: Copy, !Send { … }`). For an aspect with no
    required methods a positive item is the grant itself and a negative item (`!Send`) denies it.
-   An `extend` of the same aspect is legal only to refine a header grant or as a negative impl.
-   A header aspect may be declared in user code, as a marker whose header entry is the
-   author's promise. A compiler-recognised std aspect (`Copy`) also has a structural rule that
-   tuples, arrays and anonymous records satisfy by their parts, with no `extend`.
+   An `extend` of the same aspect is legal only to refine a header grant, as a negative impl,
+   or for a target with no declaration (a structural kind, or a primitive until it has one),
+   and then only in the module that defines the aspect. A header aspect may be declared in
+   user code, as a marker whose header entry is the author's promise; the author may also
+   write the impls for structural kinds, such as
+   `extend<record R> { ..R }: Pod where ..R: Pod;`.
 2. **Auto aspects.** An aspect granted structurally with no grant at all (`Send`, `Sync`,
    `Linear`, RFC-0096), which a type opts out of in its header (`!Send`).
 3. **Grant modes.** Each aspect declares which it is: `extend` (the default, as today), `header`
@@ -106,7 +108,7 @@ aspect's grant mode (C5) and not on markers being the only aspects a header can 
 **Refinable header grants (added 2026-11-02).** A pure header list cannot express a
 condition the compiler cannot derive. The restriction can be relaxed without losing its
 invariant, which is: **a named type is `Copy`-capable only if its header says so.** An
-`extend` of the aspect is legal in exactly two situations and an error otherwise (with a
+`extend` of the aspect is legal in exactly three situations and an error otherwise (with a
 fix-it):
 
 1. *It refines a header grant.* The header already names the aspect (`struct W<T>: Copy`),
@@ -117,6 +119,11 @@ fix-it):
    eligibility check, exactly as `check_copy_impl_eligibility` does today.
 2. *It is a negative impl.* `extend<T> W<T>: !Copy where T: Marker;` denies and grants
    nothing.
+3. *The target has no declaration, and the `extend` is in the aspect's defining module.* This
+   is the structural impl: std's `extend<record R> { ..R }: Copy where ..R: Copy;`
+   (RFC-0123), and for a user header aspect `extend<record R> { ..R }: Pod where ..R: Pod;`.
+   The orphan rule keeps it with the aspect's author, and a named type can never be granted
+   this way, because it has a header. See "Targets with no declaration".
 
 An `extend T: Copy;` for a type whose header does not name `Copy` is rejected, so neither a
 deriver nor a distant `extend` can make a type `Copy` silently. This is RFC-0105's obligation
@@ -127,30 +134,31 @@ conditional type can have two places, the header and an optional refining `exten
 a deriver may emit the refining `extend`, though only for a type whose header already names
 `Copy`. In C5's terms this is a `header` aspect that is *refinable*.
 
-**Targets with no header (decided 2026-11-02: no exception).** (This describes std aspects
-with a compiler-recognised rule, `Copy` first; user header aspects have no structural
-satisfaction.) An earlier draft let an
-`extend` grant the aspect to a target with no header. Two kinds of target were meant, and
-neither needs an exception to the rule:
+**Targets with no declaration (decided 2026-11-02).** The third situation above covers two
+kinds of target, and both are written impls, not a compiler rule and not inference:
 
-- *Primitives* (`i64`, `boolean`, `Char`, `()`, `String`). std grants them with `extend` today
-  only because they have no declaration. This is transitional: when std declares them as
-  primitive structs, they take a header entry like any named type, and the clause is not
-  needed. Until then std's `extend i64: Copy;` and the like are listed as migration notes, not
-  as a rule.
-- *Structural kinds* (tuples, `[T; N]`, anonymous records, `&T`, `&var T`, the `[T]` view,
-  function types, closures). They will never have a declaration, but their `Copy` answer is
-  not a grant someone writes: it is a rule applied to their parts (a tuple is `Copy` when its
-  elements are) or a built-in fact (`&T` always, `&var T` never, a closure by its use
-  multiplicity). A std aspect with a recognised field-wise rule (`Copy`; see "Grant modes")
-  applies it to the structural kinds natively, so they need no `extend`; a fact that is not field-wise
-  stays a compiler fact, as today. This also frees tuple and array `Copy` from waiting on
-  variadic and const generics (metel-core#794, #263), because the rule belongs to the aspect
-  and not to a per-arity impl.
+- *Primitives* (`i64`, `boolean`, `Char`, `()`, `String`). std grants them with `extend`
+  today because they have no declaration. This is transitional: when std declares them as
+  primitive structs they take a header entry like any named type and this case disappears
+  for them.
+- *Structural kinds* (tuples, `[T; N]`, anonymous records). They will never have a
+  declaration, and their grants are impls in the aspect's module, written with the field-wise
+  bound of RFC-0123 (`where ..R: Copy`) for records, a compile-time `N` for arrays (RFC-0132
+  §3, which RFC-0124 records as the answer to #263), and variadic generics for tuples (#794,
+  RFC-0061 §6). Until those prerequisites land the array and tuple arms stay hardcoded in the
+  checker, as today; this RFC does not remove that wait. `&T`, `&var T`, the `[T]` view,
+  function types and closures are built-in facts of the type system (`&T` always `Copy`,
+  `&var T` never, a closure by its use multiplicity), not grants anyone writes.
 
-The consequence is that a header aspect cannot be granted to a type you do not own, whether a
-library type (its header is closed) or a primitive or structural type (it has none). An aspect
-meant for such targets uses `extend` mode.
+A user header aspect can opt in to the same coverage by writing the structural impls itself,
+which keeps every grant explicit and in one module; nothing is inferred for it. The
+`comptime for` of RFC-0174 does not grant anything: it produces a body, such as the
+field-wise `clone` behind a header `struct P: Clone` (RFC-0206 §4(c)), which is a native hook
+today and a loop over the fields later.
+
+The consequence is that a header aspect cannot be granted to a named type you do not own (its
+header is closed), nor to a primitive or structural type from outside the aspect's module. An
+aspect meant to be granted by other people to such targets uses `extend` mode.
 
 **Worked examples** (reasoned; C1 is today's `extend`, C2 is the `copy` keyword alternative kept in RFC-0162):
 
@@ -195,12 +203,11 @@ it; a grant in the wrong position is an error with a fix-it.
 | `header` | only in the type's declaration; an `extend` of it is an error | `Copy` |
 | `auto` | structurally, with no grant; a type opts out in its header (`!A`) | `Send`, `Sync`, `Linear` (RFC-0096) |
 
-A `header` aspect has no methods (it is a marker). `Copy` additionally has a
-compiler-recognised eligibility rule, "every field must implement it", which is today's
-`check_copy_impl_eligibility`; the derived condition of a generic grant (R1) belongs to that
-rule, and so is available to the std aspects that have one (`Copy`, and RFC-0096's
-`Send`/`Sync`/`Linear`) and not to user aspects. The sketch is `header aspect Copy;` and
-`auto aspect Send;`; the spelling is open.
+A `header` aspect has no methods (it is a marker). `Copy` additionally has an eligibility
+check, "every field must implement it", which is today's `check_copy_impl_eligibility`; the
+derived condition of a generic grant (R1) belongs to that check, and is available to std
+aspects that have one (`Copy`, and RFC-0096's `Send`/`Sync`/`Linear`) and not to user aspects
+yet. The sketch is `header aspect Copy;` and `auto aspect Send;`; the spelling is open.
 
 **User-declared header aspects (decided 2026-11-02).** The `header` mode is not restricted to
 std. A user may declare a header aspect, under these rules:
@@ -210,15 +217,16 @@ std. A user may declare a header aspect, under these rules:
   (`fun f<T: Validated>(x: T)`). The compiler gives it no semantics beyond the position; the
   compiler-recognised aspects (`Copy`, `Send`, `Sync`, `Linear`) stay std's.
 - *The header entry is the author's promise.* The compiler does not check it against the
-  fields, and a user aspect has no inferred satisfaction: a structural type (tuple, array,
-  anonymous record) does not satisfy a user header aspect, and a generic type states its
-  condition in a refining `extend`. This matches how the surveyed languages treat user markers:
-  inference from parts is built into the compiler's own aspects (Rust's `Send`/`Sync`, Swift's
-  `Sendable`, Go's `comparable`), and a user marker's field check is library code in the
-  declaration (Scala `derives`, Haskell `deriving`, Rust `#[derive(Pod)]`) or an unchecked
-  promise (`unsafe impl`). The library-code route is the "header aspects with methods"
-  direction (question 3): a later user aspect could supply a check as a method that comptime or
-  derive implements (RFC-0092, RFC-0093).
+  fields, and a user aspect has no inferred satisfaction: a structural type satisfies it only
+  if the aspect's author wrote the impl for that kind (see "Targets with no declaration"), and
+  a generic type states its condition in a refining `extend`. This matches how the surveyed
+  languages treat user markers: inference from parts is built into the compiler's own aspects
+  (Rust's `Send`/`Sync`, Swift's `Sendable`, Go's `comparable`), and a user marker's field
+  check is library code in the declaration (Scala `derives`, Haskell `deriving`, Rust
+  `#[derive(Pod)]`) or an unchecked promise (`unsafe impl`). A checked user marker could reuse
+  RFC-0123's field-wise bound in the aspect's declaration (question 5), or be the
+  "header aspects with methods" direction (question 3), with the check as a method that
+  comptime or derive implements (RFC-0092, RFC-0093).
 - *Negative entries are for `auto` aspects.* For a header aspect, not granted is the default,
   so `!Validated` in a header says nothing and is an error. `!A` stays the opt-out of an
   `auto` aspect.
@@ -250,15 +258,18 @@ std. A user may declare a header aspect, under these rules:
    it `header`.
 5. *A user header aspect is a promise:* `struct Vec3: Pod { x: f64, y: f64, z: f64 }` is
    accepted without a field check, and `struct Id: Pod { s: String }` is accepted too (the
-   author's claim). `(Vec3, i64)` does not satisfy `Pod`, and `struct W<T>: Pod` needs a
-   refining `extend<T: Pod> W<T>: Pod;` to be conditional. `Copy`, by contrast, is checked
-   field by field and its structural kinds satisfy it by their parts.
+   author's claim). `(Vec3, i64)` does not satisfy `Pod` unless the author writes a tuple impl,
+   `extend<record R> { ..R }: Pod where ..R: Pod;` covers anonymous records, and
+   `struct W<T>: Pod` needs a refining `extend<T: Pod> W<T>: Pod;` to be conditional. `Copy`,
+   by contrast, is checked field by field.
 6. *A header aspect on a foreign type:* `extend lib::Point: Pod;` is an error, because the
    type's header is closed; the fix-it points at `extend` mode for the aspect.
 7. *`struct T: !Validated`* on a header aspect: an error ("`Validated` is not granted by
    default; remove the entry").
-8. *Std's primitives:* granted by `extend i64: Copy;` until std declares them as primitive
-   structs with headers; a migration note, not a rule.
+8. *Std's primitives and structural kinds:* `extend i64: Copy;` until std declares primitives
+   as structs with headers; `extend<record R> { ..R }: Copy where ..R: Copy;` for anonymous
+   records; the tuple and array arms hardcoded until variadic generics and a compile-time
+   `N`. All sit in the aspect's defining module, by the third situation.
 
 **Costs and risks**
 
@@ -307,15 +318,18 @@ smaller change.
    the marker case only; what the obligation model would add is RFC-0105's question.
 4. **Whether `auto` is wanted at all** for anything beyond RFC-0096's existing set, given the
    invisible-behaviour objection above.
-5. **Whether the recognised structural rule uses the same machinery as RFC-0096's
-   auto-impls**, or a new recogniser. The two should not be built separately.
+5. **A checked user marker.** Whether a header aspect's declaration can state a field-wise
+   check by reusing RFC-0123's bound (for example `header aspect Pod where ..F: Pod;`, with
+   `..F` the struct's fields; the spelling is a sketch), or whether the check waits for
+   header aspects with methods (question 3) and comptime.
 6. **Inference only for non-public types.** Swift infers `Sendable` for a non-public type and
    requires a declaration for a public one. Whether a std aspect with a recognised rule could
    infer for a module's non-public named types, so the header entry is needed only at the
    module boundary, is open; RFC-0162's principle (inference is acceptable where a change cannot
    reach other people's code) points the same way, and the cost is a second rule to explain.
-7. **A checked user marker.** Whether a user aspect can later supply its own field check as a
-   method (question 3), and what it needs from comptime or derive.
+7. **Auto against written structural impls for `Copy`.** The structural kinds' `Copy` is
+   written impls (RFC-0123, RFC-0132 §3), not RFC-0096-style auto-impl; whether RFC-0096's
+   machinery should also recognise them is left to that RFC.
 8. **Process.** RFC-0105 is narrowed or absorbed, and RFC-0096's recognized-set text is
    updated; decided when this RFC is reviewed.
 
