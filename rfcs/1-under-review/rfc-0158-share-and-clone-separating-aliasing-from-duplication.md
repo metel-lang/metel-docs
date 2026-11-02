@@ -7,6 +7,11 @@ updated: '2026-08-31'
 tracking: 'https://github.com/metel-lang/metel-core/issues/919'
 ---
 
+> **RFC-0080 §1 is now RFC-0206 (2026-11-02).** This RFC cites RFC-0080 §1.1 and §1.2 for the
+> `Clone` text it amends, as that text stood before `Clone` was extracted from RFC-0080 into
+> RFC-0206; §1.1 is RFC-0206 §1 and §1.2 is RFC-0206 §2, where the "incrementing a reference
+> count" reading is already gone (`Clone` there means independent duplication only).
+
 > **Split out of RFC-0157 (Copy and Clone Model Re-analysis), 2026-08-31, then narrowed
 > the same day.** RFC-0157's strategic conclusion is: don't spend divergence budget on the
 > regular-value model — keep `Copy`/`Clone` and their Rust-familiar ergonomics, minus a
