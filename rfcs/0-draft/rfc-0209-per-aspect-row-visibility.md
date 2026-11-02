@@ -149,6 +149,10 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 - **RFC-0123 / RFC-0186 / RFC-0208** — the field-wise bound `..R: A` and row parameters.
 - **RFC-0119** — the explicit conversions, unchanged.
 - **RFC-0174** — `comptime for`, which would write the template bodies.
+- **RFC-0092 / RFC-0093** — comptime and derive registration: a derivation that is not a single
+  template (an aspect with methods, a condition a template cannot state) is a comptime derive run
+  by the header entry. RFC-0207 ("Blanket impls, derivation and comptime") records the split and
+  the `#derive` question.
 
 ## Open questions
 
