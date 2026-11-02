@@ -2,7 +2,9 @@
 id: rfc-0207
 title: "Header and Auto Aspects — Where an Aspect Is Granted"
 date: '2026-11-02'
-status: draft
+status: under-review
+updated: '2026-11-02'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 ---
 
 > **Extracted from RFC-0162 on 2026-11-02**, at the language owner's request, the way RFC-0206
@@ -11,6 +13,8 @@ status: draft
 > uses, which is not specific to `Copy`: a type's header listing marker facts, an `extend`
 > that may only refine such a grant, and aspects that declare how they are granted. Nothing here
 > is decided.
+
+> **Status — under review (2026-11-02).**
 
 ## Summary
 

@@ -1877,4 +1877,4 @@ misleading. Do **not** duplicate stage counts, generated status summaries, or ot
 derivable facts here — those belong in `REGISTRY.md`, and `rfc.py check` treats that
 generated file as the exact source of truth.
 
-- **RFC-0207** *(draft 2026-11-02)* — Header and auto aspects, where an aspect is granted. Extracted from RFC-0162 Axis C: marker facts granted in a type's declaration header (`struct P: Copy`), an `extend` allowed only to refine one, and aspects that declare a grant mode (`extend`, `header`, `auto`). Used by RFC-0162 for `Copy` and RFC-0206 for `Clone`; narrows RFC-0105.
+- **RFC-0207** *(under-review 2026-11-02, #1786)* — Header and auto aspects, where an aspect is granted. Extracted from RFC-0162 Axis C: marker facts granted in a type's declaration header (`struct P: Copy`), an `extend` allowed only to refine one, and aspects that declare a grant mode (`extend`, `header`, `auto`). Used by RFC-0162 for `Copy` and RFC-0206 for `Clone`; narrows RFC-0105.
