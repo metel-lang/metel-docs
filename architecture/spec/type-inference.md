@@ -35,7 +35,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-2}
@@ -63,7 +63,7 @@ Type inference is Hindley-Milner with let-polymorphism: `instantiate` gives each
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | c6932074a86151f5faa1d265d6a761d574ded021 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0030 (`?` desugared in `path_normalizer` pre-pass), `#13` (full coercion for arbitrary type pairs) |
 
 ##### Requirement {#arch.type-inference.requirement-4}
@@ -91,7 +91,7 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0011, ADR-0010 |
 
 ##### Requirement {#arch.type-inference.requirement-6}
@@ -105,7 +105,7 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | b6da47e5a683a1327336beb135cc2febb45235fd |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-7}
@@ -119,7 +119,7 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-8}
@@ -135,7 +135,7 @@ one-way `[T; N]` → `[T]` coercion without changing the expression's type ident
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 8ed18533e08f605e0df6c188f1d30797fb72171f |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | RFC-0177; `spec.declarations.structural-aspect-bounds.legality-2` |
 
 </details>

@@ -65,7 +65,7 @@ Opaque return variables are validated at constraint-composition time, not only a
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::apply_constraint_with_coercion`](https://github.com/metel-lang/metel-core/blob/c48308d2af110d15cd94e078dd05455e2ccb540e/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L1665) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_03_return_impl_aspect_caller_cannot_name.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/generics/stage18_neg_03_return_impl_aspect_caller_cannot_name.toml#L1) |
-| `last_reviewed` | 945b99728c0dfff47ec0a42ae9d2a2ff4f6c1b72 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0044, RFC-0037 |
 
 ##### Requirement {#arch.type-construction.requirement-4}
@@ -79,7 +79,7 @@ The typechecker treats `[T]` as `Copy` unconditionally, as a deliberate `InferTy
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L4852) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
-| `last_reviewed` | 8ed18533e08f605e0df6c188f1d30797fb72171f |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0046, RFC-0126 |
 
 ##### Requirement {#arch.type-construction.requirement-5}
@@ -107,7 +107,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L393) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::typed_ir_has_no_ascription_node`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/type_checking/tests.rs#L17); [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
-| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
@@ -121,7 +121,7 @@ Operand legality is checked once operand types are resolved: arithmetic and unar
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_binop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1441); [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::construct_unaryop`](https://github.com/metel-lang/metel-core/blob/de72649a95a5c947ac985069b692008b76a82f7e/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L1768) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/literals/neg_05_generic_field_literal_add_string.toml#L1) |
-| `last_reviewed` | 945b99728c0dfff47ec0a42ae9d2a2ff4f6c1b72 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0017, `T0005` |
 
 ##### Requirement {#arch.type-construction.requirement-8}
@@ -135,7 +135,7 @@ Import visibility is diagnosed while building import schemes, where the full mod
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::build_import_schemes`](https://github.com/metel-lang/metel-core/blob/7605f111964ad23992af57dfc3f639852f73e451/metel-frontend/src/pipeline/type_checking/mod.rs#L669) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/module_semantics/importing_nonexistent_name_is_t0003/test.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/module_semantics/importing_nonexistent_name_is_t0003/test.toml#L1); [`metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml`](https://github.com/metel-lang/metel-core/blob/fee29158f82d543baecf5b42642ccebeff2cfde8/metel-interpreter/tests/integration/sources/module_semantics/importing_private_item_is_t0009/test.toml#L1) |
-| `last_reviewed` | ff5f034708f0d82a875011500bd1e974446b39fc |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0024, `T0003`, `T0009` |
 
 ##### Requirement {#arch.type-construction.requirement-9}
@@ -149,7 +149,7 @@ Aspect default methods are materialized as typed methods before evaluation: infe
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L22) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
-| `last_reviewed` | 40ca983f4a7eea614d14e11988cd4636f1705804 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0034 |
 
 ##### Requirement {#arch.type-construction.requirement-10}

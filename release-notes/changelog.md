@@ -6,7 +6,11 @@ title: "Metel Language Changelog"
 
 ## v0.15.0
 
-**In progress on `develop` — not yet released.**
+**Released 2026-11-02.** The first language-visible release after v0.14.1. It makes named declarations write
+their signature, gives a `let`-bound closure one type, stops a local `fun` from seeing its enclosing function's
+locals, renames `Perhaps` to `Option` with `?` working on it, removes the implicit read through a reference,
+replaces the `row` kind with `record`, and fixes the language-visible defects found along the way. It also widens
+what `--move-check` can analyse in a generic body.
 
 **Breaking changes:**
 
@@ -235,6 +239,11 @@ title: "Metel Language Changelog"
   module-qualified static method such as `lib::Counter::with(1)`, a `Copy` field read out of a temporary
   (`make().inner.n`), and a call to a polymorphic local callee: a nested generic function or a closure with an
   open-record parameter (`metel-core#1764`, `#1767`, `#1766`, `#1749`).
+- Two diagnostics say why. An aspect impl method that omits its return type, against an aspect that declares one,
+  is `T0012` saying the method returns `()` because it has no return type and the aspect declares one; it does not
+  take the aspect's (`metel-core#1756`). A `public` function whose body is a record literal and which has no
+  return type gets a `T0010` that points to writing the fields in full or naming a `record` or a type alias
+  (`metel-core#1666`).
 
 ## v0.14.1
 

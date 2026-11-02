@@ -88,7 +88,7 @@ Keyword disambiguation is a grammar invariant: `keyword` matches a whole word on
 | `specified by` | `#parsing` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 46f1f6a74b6a2dec071dd6511c82bd1bc668fd03 |
+| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
 | `related` | ADR-0015, ADR-0018 |
 
 ##### Requirement {#arch.parsing.requirement-6}
