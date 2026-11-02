@@ -553,7 +553,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 - **RFC-0157 (Closure Capture Default (Move), `3-integrated`)** — the parent. Carries D5
   (closure-capture default = `move`, decided) and the closure-cluster relationship; this
   RFC carries the regular-value model critique and design space it split off.
-- **RFC-0135 (Multiplicity for Ordinary Types, `1-under-review`, #892)** — overlaps most.
+- **RFC-0135 (Multiplicity for Ordinary Types, `refused` 2026-11-02, #892)** — overlaps most.
   RFC-0135 renames `Copy` → `many` on the type declaration, assuming the model; this RFC
   questions the model and concludes the rename should **not** proceed — it spends the
   regular-value familiarity budget for an internal-consistency gain (Recommended direction
