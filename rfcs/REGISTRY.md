@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-01'
+generated_on: '2026-11-02'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**204 RFCs total.** 34 draft, 51 under review, 9 accepted, 2 integrated (96 live), 79 implemented, 15 superseded, 14 refused (108 settled).
+**204 RFCs total.** 34 draft, 50 under review, 9 accepted, 2 integrated (95 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
 ## Draft (34)
 
@@ -52,7 +52,7 @@ the curated thematic map.
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 
-## Under Review (51)
+## Under Review (50)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -76,7 +76,6 @@ the curated thematic map.
 - **RFC-0127** — Associated Functions on Generic Types (`1-under-review` ; rfcs/1-under-review/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01 ; updated 2026-08-23)
 - **RFC-0131** — Hoist let/var Bindings to the Top of Their Containing Block (`1-under-review` ; rfcs/1-under-review/rfc-0131-hoist-let-var-bindings-to-the-top-of-their-containing-block.md ; date 2026-08-09 ; updated 2026-09-01)
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-10-01)
-- **RFC-0135** — Multiplicity for Ordinary Types (`1-under-review` ; rfcs/1-under-review/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-08-29)
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`1-under-review` ; rfcs/1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24 ; updated 2026-08-27)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
 - **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics (`1-under-review` ; rfcs/1-under-review/rfc-0142-division-by-zero-and-checked-arithmetic-ergonomics.md ; date 2026-08-25 ; updated 2026-08-27)
@@ -223,7 +222,7 @@ the curated thematic map.
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
 
-## Refused (14)
+## Refused (15)
 
 - **RFC-0025** — Region Allocation (`6-refused` ; rfcs/6-refused/rfc-0025-region-allocation.md ; date 2026-05-24)
 - **RFC-0028** — Memory and Reference Model (`6-refused` ; rfcs/6-refused/rfc-0028-memory-and-reference-model.md ; date 2026-05-24)
@@ -239,3 +238,4 @@ the curated thematic map.
 - **RFC-0085** — PhantomRegion (`6-refused` ; rfcs/6-refused/rfc-0085-phantom-region.md ; date 2026-07-02)
 - **RFC-0086** — Outlives-of-Bindings Sugar (`6-refused` ; rfcs/6-refused/rfc-0086-borrow-outlives-sugar.md ; date 2026-07-02)
 - **RFC-0087** — Universal Own Regions (`6-refused` ; rfcs/6-refused/rfc-0087-universal-own-regions.md ; date 2026-07-02)
+- **RFC-0135** — Multiplicity for Ordinary Types (`6-refused` ; rfcs/6-refused/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-11-02)

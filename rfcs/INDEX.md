@@ -1212,7 +1212,7 @@ implementation).
   and **RFC-0153 (mutation axis) now co-lands in v0.13.0** — `Type::Fun` ships with all
   three multiplicity fields (`call_multiplicity`, `use_multiplicity`, `call_mutation`) at
   once. Target v0.13.0 (metel-core#269).
-- **RFC-0135** *(under review 2026-08-29, opened 2026-08-13)* — Multiplicity for Ordinary Types — companion
+- **RFC-0135** *(refused 2026-11-02, opened 2026-08-13; metel-core#892)* — Multiplicity for Ordinary Types — companion
   to RFC-0134, not a dependency of it. Reframes `Copy` as `many` applied to a type's
   by-value-use operation rather than a closure's call operation — same axis RFC-0134
   already uses, named there (§5) but designed here. For named types (`struct`/`enum`)

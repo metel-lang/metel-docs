@@ -2,8 +2,8 @@
 id: rfc-0135
 title: "Multiplicity for Ordinary Types"
 date: '2026-08-13'
-status: under-review
-updated: '2026-08-29'
+status: refused
+updated: '2026-11-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/892'
 ---
 
@@ -32,6 +32,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/892'
 > inconsistency rather than a difference of framing.
 
 > **Status — under review (2026-08-29).** Concrete primary proposal (declaration-site once/many qualifier replacing extend: Copy, §1-4) with blocking open questions (migration strategy). Companion to RFC-0134 (#269) -- shared closure representation should be reviewed as a pair. Committed to v0.14.2. Tracking: metel-core#892.
+
+> **Status — refused (2026-11-02).** Refused 2026-11-02. The proposal is, in its own words, a vocabulary and mechanism-location change and not a soundness fix: it renames Copy to many and moves the spelling onto the type declaration (many struct), with no change to which types are Copy and no new capability. That is a grammar change and a corpus-wide rewrite (every extend T: Copy;, the spec, the tutorials) for a name that has an established meaning, and it leaves the actual defect of Copy untouched: that the predicate is defined by four mechanisms that disagree (metel-core#741). Closure call capability (RFC-0134) already carries once/many for calls, so no second vocabulary is needed to make closures consistent. Reopen if the regular-value model is reopened (RFC-0162) or a compiler backend makes by-value multiplicity load-bearing.
 
 ## Summary
 
