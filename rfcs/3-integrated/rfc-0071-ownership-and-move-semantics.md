@@ -3,7 +3,7 @@ id: rfc-0071
 title: "Ownership and Move Semantics"
 date: '2026-06-28'
 status: integrated
-updated: '2026-07-26'
+updated: '2026-11-02'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/795'
 impl_status: in-progress
 coverage:
@@ -187,33 +187,49 @@ let y := x;   // copy — x is still valid
 let z := x;   // copy again — x is still valid
 ```
 
-`Copy` is opt-in. The following are `Copy` by default:
+`Copy` is opt-in for named types and decided by its parts for the built-in structural kinds.
+There is one predicate, "is this type `Copy`", and both move checking and `T: Copy` bound
+satisfaction ask it. A second answer anywhere (a special case in either consumer) is a bug.
 
-- Primitive numeric types (`i8`–`i64`, `u8`–`u64`, `f32`, `f64`)
-- `boolean`, `Char`
-- Fixed-size arrays whose element type is `Copy`
-- Tuples whose element types are all `Copy`
+| Type | `Copy` when | Source |
+|---|---|---|
+| Primitive numeric types, `boolean`, `Char`, `()` | always | declared in `stdlib/` |
+| `struct`, `enum`, named `record` | declared with `extend T: Copy;`; for a named `record`, when every field is `Copy` | declared; fields checked |
+| Tuple, fixed-size array `[T; N]`, anonymous record | every element or field is `Copy` | structural |
+| `&T` | always | structural |
+| `&var T` | never: an exclusive reference stays unique | structural |
+| `[T]` (borrowed view, RFC-0126) | always | structural |
+| Function type, closure | its use multiplicity is `many` (RFC-0134): no moved-in capture and not a written `once`; a *written* function type is move-only (RFC-0166) | structural |
+| `Option<T>`, `Result<T, E>` and every other std enum | only if std declares it | declared |
 
-> **Corrected 2026-07-25:** this list said `bool` and `char`. Metel's primitives are named
-> `boolean` and `Char`; the earlier spelling names two types that do not exist.
+The structural kinds are listed because they cannot be declared: a tuple, an array and an
+anonymous record have no declaration to carry `extend`. Where each lives in the implementation
+is not part of this contract; today the structural rows are answered by the aspect resolver and
+the primitives by `stdlib/`, and relocating the structural rows into std is the Copy migration
+theme (#263, #893, #894), which waits on variadic generics and comptime.
 
-**Where each of these lives is not a free choice — measured against the implementation on
-2026-07-25:**
->
-> - **The primitives go in `stdlib/`**, one `extend i64: Copy;` per type. Verified: a
->   primitive is a valid `extend` target today.
-> - **Fixed-size arrays and tuples must be built into the checker for now**, and should carry
->   a comment saying so. `extend (A, B): Copy` on a concrete tuple raises an internal error
->   (#581), and the generic form `extend<A: Copy, B: Copy> (A, B): Copy;` is *accepted but
->   never satisfies* — a silent no-op, which is worse. `[T; N]` would need a const-generic
->   arity that does not exist; only literal arities parse. **The migration out of the
->   typechecker is tracked as #263**, which records what must exist first: #581 plus
->   RFC-0061 §6's deferred per-arity decision for tuples, and a const-generics RFC (none
->   exists; RFC-0053 defers to it) plus RFC-0124 for arrays.
-> - **Do not write `extend<T: Copy> T[]: Copy;`.** It works today and is *wrong*: `T[]` is
->   the dynamic, `Rc`-backed array, so a "copy" would duplicate the handle and silently alias
->   one buffer. Only fixed-size arrays are `Copy`, exactly as this section says. (Noted
->   because the one array form stdlib can express is the one that must not be written.)
+> **Amended 2026-11-02 (metel-core#1780, #1781); proposed, pending the language owner's
+> decision.** The table above replaces a list written when only primitives, arrays and tuples
+> were `Copy` by default. It records what the implementation does today, measured with
+> `--move-check` and with a `T: Copy` bound, and states the two rules that were implicit:
+> **one predicate**, and **declared for named types, structural for the built-in structural
+> kinds**. Two points differ from the earlier text. Anonymous records are `Copy` when their
+> fields are (RFC-0123's field-wise constraints are implemented; the earlier text, and #741,
+> called them permanently affine). And `()` is `Copy`, which the implementation answers
+> inconsistently today (a bound accepts it, move checking moves it); that is a defect against this
+> rule (metel-core#1784), not an exception to it.
+
+> **Direction, not yet in force (2026-11-02).** RFC-0162 (with the header mechanism of RFC-0207) proposes that a named type state its
+> copyness in the declaration header (`struct Point: Copy { … }`, `record P: Copy { … }`), that
+> the condition for a generic type be derived from its fields (every type parameter occurring in
+> a field must be `Copy`), and that `extend … : Copy;` remain only to refine a header grant. If
+> it is accepted, the "declared" rows of the table change their spelling and a named `record`
+> moves from structural to declared; the one-predicate rule above is unchanged. RFC-0206
+> proposes that `Copy` imply `Clone`, with a sealed bitwise body, which sharpens "bitwise-copyable"
+> above to "a copy the compiler makes by calling a `clone` whose body is a bitwise copy".
+
+- **Do not write `extend<T: Copy> [T]: Copy;`.** The borrowed view is `Copy` structurally; a
+  second declaration would be a second answer.
 
 Structs and enums are not `Copy` unless explicitly declared. A type may implement `Copy`
 only if all its fields (for structs) or all payload types (for enum variants) are `Copy`;
