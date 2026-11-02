@@ -71,15 +71,18 @@ P4 renames nothing (OQ4).
    the stop rule (D6.3) is a class and not an exception: *marker facts are declared on the
    type, behaviour is implemented in `extend`*, which C5 would turn into declared grant modes.
    RFC-0135's mechanism-location half is taken; its rename to `many` is not.
-5. **Not decided here.** The names (`Copy`, `Clone`, and `Share` from RFC-0158); whether
-   how a non-`Copy` named type gets `Clone` (question 8; tuples also have none); the spelling of the marker on a written type (a trailing `: Copy`
-   against a `where` clause on the function; the expression form is settled as
-   `: extends Copy`);
-   and whether a named `record`, which is `Copy` by its fields today, needs a
-   header entry like a `struct`. **Decided 2026-11-02:** R1 against R2 (R1, refinable); the
-   names stay (`Copy` and `Clone` are kept, and the `Copy` to `many` rename is declined; the
-   B1s sentence carries the difference); `: extends Copy` in `let` (S5) stays optional and
-   nothing in v0.16.0 needs it.
+5. **A named `record` takes a header entry like a `struct`** (decided 2026-11-02):
+   `record P: Copy { … }`, and a plain `record P` is move-only and not cloneable. A `record`
+   is `Copy` by its fields today, so existing declarations need `: Copy` added, a mechanical
+   migration. Anonymous records and tuples stay inferred.
+6. **Decided 2026-11-02:** R1 for generic conditions, refinable by `extend`; the names stay
+   (`Copy` and `Clone` are kept and the `Copy` to `many` rename is declined; the B1s sentence
+   carries the difference); `: extends Copy` in `let` (S5) stays optional and nothing in
+   v0.16.0 needs it.
+7. **Not decided here.** How a non-`Copy` named type gets `Clone` (question 8, now RFC-0206
+   §4; tuples also have none), and the spelling of the marker on a written type (a trailing
+   `: Copy` against a `where` clause on the function; the expression form is settled as
+   `: extends Copy`).
 
 The earlier positions are kept as alternatives: C2 (the `copy` declaration keyword, P4) and
 S3p (`copy`/`once` qualifiers in public signatures). They are smaller to specify and close
@@ -147,8 +150,8 @@ has not been independently justified for Metel's model.
 
 **D4 — The model is already non-uniform.** Measured on 2026-11-02 against the implementation,
 by move checking and by a `T: Copy` bound: named `struct`, `enum` and the std enums
-(`Option`, `Result`) are `Copy` only by explicit `extend`; a named `record` and an
-anonymous record are `Copy` exactly when every field is (RFC-0123's field-wise constraints
+(`Option`, `Result`) are `Copy` only by explicit `extend`; an
+anonymous record is `Copy` exactly when, and a named `record` is today (it takes a header entry under the proposed direction, point 5), every field is (RFC-0123's field-wise constraints
 are implemented); tuples and `[T; N]` are `Copy` when their elements are (a hardcoded arm,
 `metel-core#263`); `&T` is `Copy` and `&var T` is not; the `[T]` view is `Copy`
 (RFC-0126); function types and closures are `Copy` by their use multiplicity (RFC-0134 §1),
@@ -226,7 +229,7 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   allocate.
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
 - **Structural types**: `Copy` when their parts are, decided by the checker and not
-  written anywhere: tuples, `[T; N]`, anonymous and named records; `&T` and the `[T]`
+  written anywhere: tuples, `[T; N]`, anonymous records (a named `record` takes a header entry); `&T` and the `[T]`
   view always; fn-pointers per RFC-0061 §7.2 and RFC-0134 §1. Axis S below is about this
   group, which has no declaration to carry a grant.
 - **Closures**: RFC-0134 §1 makes a closure `Copy` iff all captures are `Copy`; stored in
@@ -554,7 +557,7 @@ smaller change.
 ### Axis S — Structural types (added 2026-11-02)
 
 Axes A to C are mostly about named types, where a declaration exists to hold a grant. The
-structural types (tuples, `[T; N]`, anonymous records, named records, the `[T]` view,
+structural types (tuples, `[T; N]`, anonymous records, the `[T]` view,
 function types and closures) are `Copy` by a rule the checker applies to their parts, and
 **no declaration exists to hold a keyword**: a tuple is written `(a, b)` and nothing else.
 So C2 and P4 cannot reach them, and today's answer (S1) is silent. The hazard is the one
