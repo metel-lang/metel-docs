@@ -51,9 +51,9 @@ P4 renames nothing (OQ4).
 2. **Named types state copyness in the declaration header** as a marker fact (C4), reusing
    RFC-0105's aspect-list grammar for markers: `struct Point: Copy { x: i64, y: i64 }`,
    `struct Token: Copy, !Send { … }`. `Copy` stays an aspect and a bound; the grant is the
-   header entry. The `: Copy` spelling is chosen because it mirrors `extend T: Copy`, and
-   because header aspects may later accept aspects with methods, which would make a header
-   behave nearly identically to an `extend` block. For a generic type the condition is derived from the fields (R1, decided 2026-11-02: every type
+   header entry. `Copy` has no methods, so it is a marker aspect listed after the colon;
+   aspects with methods are derived with a `derives` clause or written with `extend` (RFC-0207).
+   The `: Copy` spelling is chosen because it mirrors `extend T: Copy`. For a generic type the condition is derived from the fields (R1, decided 2026-11-02: every type
    parameter that occurs in a field must be `Copy`; an `extend` widens it where R1 is too
    strict, as for `struct W<T> { r: &T }`; R2, the weakest sufficient condition, was the
    alternative and is not taken). An `extend … : Copy;` is rejected except where it **refines** a
@@ -1157,9 +1157,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    Option<T>: Clone`, metel-core#270). A tuple arm is a hardcoded rule like tuple `Copy` until
    variadic generics. For a user `struct` or `enum`: (a) hand-written, as today; (b)
    RFC-0206 §4's `#derive(Clone)`, blocked on RFC-0093 and comptime and reopening the
-   hidden-derive worry; (c) a header entry with a derived field-wise body, `struct P: Clone`,
-   the first use of the direction that headers later accept aspects with methods, needing the
-   field-wise machinery (a native hook as records use, comptime later); (d) automatic
+   hidden-derive worry; (c) a `derives` entry with a derived field-wise body, `struct P derives Clone`,
+   needing the field-wise machinery (a native hook as records use, comptime later); (d) automatic
    availability as for records, at the cost of the API-stability hazard (adding a field with
    no `Clone` removes the method). **Process:** the split is done: `Clone` now lives in RFC-0206, so `Copy ⟹ Clone` no
    longer waits on RFC-0093. *Advancing condition:* a choice
