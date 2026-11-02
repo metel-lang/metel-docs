@@ -69,7 +69,7 @@ P4 renames nothing (OQ4).
 4. **What this answers.** The grant is visible at the declaration (D6.1); a derive cannot hide
    it, by a written rule (OQ5) since the header entry is as short as a derive would be (D6.2);
    the stop rule (D6.3) is a class and not an exception: *marker facts are declared on the
-   type, behaviour is implemented in `extend`*, which C5 would turn into declared grant modes.
+   type, behaviour is implemented in `extend`*, which RFC-0207's grant modes would turn into declared properties.
    RFC-0135's mechanism-location half is taken; its rename to `many` is not.
 5. **A named `record` takes a header entry like a `struct`** (decided 2026-11-02):
    `record P: Copy { … }`, and a plain `record P` is move-only and not cloneable. A `record`
@@ -333,14 +333,14 @@ today's answer (C1) was inherited without being chosen.
   an aspect with **no required methods** (a marker), a positive item is the grant itself and
   not an obligation that an `extend` elsewhere must meet. `Copy` stays an aspect, uniform
   with the rest, and the grant is in the one place a reader looks. Added 2026-11-02; see
-  "C4 in detail".
+  RFC-0207.
 
 - **C5. The aspect declares how it is granted.** Each aspect carries a *grant mode*, and the
   compiler enforces it. `Copy` is a `header` aspect: granted only in the type's declaration
   (written as C2's `copy` or C4's `: Copy`), with an `extend` of it an error. `Drop` stays
   `extend`; `Send`/`Sync`/`Linear` are `auto`. C2 and C4 become two spellings of what a
   `header` aspect's grant looks like, and the location is mandatory either way. Added
-  2026-11-02; see "C5 in detail".
+  2026-11-02; see RFC-0207.
 
 C2 has one property C1 cannot have: it makes the grant unforgeable by metaprogramming.
 Everything else it buys (locality, a keyword that looks like a language rule) is a matter
@@ -382,178 +382,27 @@ The pattern: C2 improves where an error lands (1, 5), what a reader can see (2) 
 the derive hazard (6); it costs the conditional-grant answer (4) and a mechanical migration
 of every `extend … : Copy;`. Grants for foreign types (3) are unaffected.
 
-#### C4 in detail
+#### C4 and C5 in detail: moved to RFC-0207
 
-> Added 2026-11-02 at the language owner's request, as a competitor to C2. It is the shape
-> the draft RFC-0105 (`struct Token: Copy2, Serializable, !Send { … }`) proposed for aspect
-> lists in general, restricted to the case `Copy` needs.
+> **Moved 2026-11-02 (RFC-0207, Header and Auto Aspects — Where an Aspect Is Granted).** The
+> header list (C4), its refinable grants and the aspect grant modes (C5) are not specific to
+> `Copy`: they decide where any marker aspect, `Clone`'s derived body (RFC-0206 §4) and
+> `Send`/`Sync`/`Linear` (RFC-0096) are granted. They have their own RFC; this section keeps
+> only what the `Copy` position needs.
 
-**The idea.** A type declaration may list marker aspects after its name. For an aspect that
-declares no required methods, `Copy` among them, a positive item is a grant, the same fact a
-bodyless `extend T: Copy;` states today. A negative item (`!Send`) denies, exactly as a
-bodyless negative `extend` does (RFC-0102, RFC-0081). Aspects with methods (`Drop`,
-`Display`, a user's own) are still implemented in `extend`; naming one in the header would
-be RFC-0105's obligation model, which this proposal does not take.
+What this RFC relies on from RFC-0207:
 
-**What it changes against C2.**
+- A named type states `Copy` in its header (`struct Point: Copy { … }`), and the grant is a
+  marker fact, not an obligation met elsewhere. `Copy` stays an aspect and a bound.
+- An `extend … : Copy;` is legal only to **refine** a header grant, for a **target with no
+  header** (std's primitives and the record rule), or as a **negative impl**. Without a
+  refinement the condition for a generic type is derived from the fields (R1, decided
+  2026-11-02: every type parameter occurring in a field must be `Copy`).
+- Structural types have no header; Axis S gives them a marker on the written type (S6).
+- If RFC-0207 is not accepted, the alternative kept here is C2 (`copy struct`).
 
-- **The stop rule (D6.3) has a principled answer.** C2 moves `Copy` to a keyword and leaves
-  `Drop`, `Send` and `Sync` as aspects, and has to say why. C4's boundary is a class: *marker
-  facts about a type are declared on the type; behaviour is implemented in `extend`*. `Copy`
-  is a marker; `Drop` is not (it has a method); `Send`/`Sync`/`Linear` are markers, and RFC-0096
-  already treats them as structural, with `!Send` the opt-out. No aspect is special-cased.
-- **`Copy` stays an aspect and a bound.** Nothing about `T: Copy`, `Copy ⇒ Clone`, the
-  conditional rules or coherence changes. The grant's location moves, as in C2.
-- **The derive hazard is not closed by the mechanism.** C2 has no impl to emit; C4 has a
-  header entry a deriver could add. In practice `#derive(Copy)` would be no shorter than
-  `: Copy`, so it would add nothing, and OQ5's written rule ("`Copy` has no deriver")
-  covers it. This is closed by policy and not by construction, which is a real difference.
-- **Visibility.** `copy struct P` puts a modifier before the keyword; `struct P: Copy` puts
-  the fact after the name, before any generics' `where`. Both are in the header. A modifier is
-  harder to miss; a list scales to several facts (`: Copy, !Send`) where a keyword does not.
-- **Conditional grants.** The derived condition of K4 is a rule of `Copy`'s eligibility
-  check (every field must be `Copy`), not of marker aspects in general: for a plain user
-  marker `struct W<T>: Marker`, there is no field-wise rule to derive from. So under C4 the
-  derived-condition rule would belong to a named class, the aspects with a structural
-  eligibility rule (`Copy`, and RFC-0096's `Send`/`Sync`/`Linear`), and any other marker
-  grant is unconditional or keeps `extend<T: X> W<T>: Marker;`.
-- **Vocabulary.** Axis S spells copyness on structural types as a qualifier (`copy`,
-  `once`); C4 spells it on named types as an aspect (`: Copy`). Two forms of one fact. C2
-  has one word throughout.
-- **Cost and dependency.** It adds a clause to type-declaration grammar, and depends on
-  RFC-0105 (a `0-draft` that was deferred as "a materially larger surface-language
-  commitment") being narrowed to markers and moved forward, or on this RFC absorbing the
-  marker-only subset. The obligation check and the registry-injection question RFC-0105 raises do
-  not arise for markers, because there is no `extend` to find.
-
-**Spelling and direction (language owner, 2026-11-02).** `: Copy` is the header's
-spelling because it mirrors the `extend T: Copy` block it replaces. The expected direction is
-that header aspects later accept aspects with methods too, which would make a header behave
-nearly identically to an `extend` block; this RFC proposes only the marker case, which needs
-no obligation check. That direction is why the single-place rule for `Copy` should rest on the
-aspect's grant mode (C5) and not on markers being the only aspects a header can name.
-
-**Refinable header grants (added 2026-11-02).** A pure header list cannot express a
-condition the compiler cannot derive, and gives std's own grants (primitives, the record
-rule) no place to live. The restriction can be relaxed without losing its invariant, which
-is: **a type is `Copy`-capable only if its header says so.** An `extend` of the aspect is
-legal in exactly three situations and an error otherwise (with a fix-it):
-
-1. *It refines a header grant.* The header already names the aspect (`struct W<T>: Copy`),
-   and the `extend` supplies the condition: `extend<T: Marker> W<T>: Copy;`. Without an
-   `extend`, the condition is derived from the fields (R1, decided 2026-11-02: every type parameter that occurs
-   in a field must be `Copy`; R2, the weakest sufficient condition, needs a solver and is not
-   taken; where R1 is too strict, as for `struct W<T> { r: &T }`, this `extend` widens it). With one, the `extend` wins, and must still satisfy the aspect's
-   eligibility check, exactly as `check_copy_impl_eligibility` does today.
-2. *The target has no header.* std's `extend i64: Copy;` and
-   `extend<record R> { ..R }: Copy where ..R: Copy;` have structural or builtin targets;
-   no exemption needs inventing.
-3. *It is a negative impl.* `extend<T> W<T>: !Copy where T: Marker;` denies and grants
-   nothing.
-
-An `extend T: Copy;` for a type whose header does not name `Copy` is rejected, so neither a
-deriver nor a distant `extend` can make a type `Copy` silently. This is RFC-0105's obligation
-model, header as promise and `extend` as detail, applied to markers only. The check is
-module-local, not whole-graph: `Copy` is a std aspect, so the orphan rule (`T0014`) already
-puts the grant in the type's own module, which is where the header is. The cost is that a
-conditional type can have two places, the header and an optional refining `extend`, and that
-a deriver may emit the refining `extend`, though only for a type whose header already names
-`Copy`. In C5's terms this is a `header` aspect that is *refinable*.
-
-**Structural types under C4.** A header list has no site on a tuple or an anonymous record.
-Axis S proposes S6 for them, a marker on the written type, which uses the same items as the
-header.
-
-**Worked examples** (C1 run against today's behaviour; C2 and C4 reasoned):
-
-1. *Adding a field* (`name: String` to a `Copy` struct): C1 errors at the `extend` line, C2
-   and C4 at the declaration, next to the field.
-2. *Reading the declaration:* C2 `copy struct P`, C4 `struct P: Copy`; both visible. C4 also
-   shows `struct P: Copy, !Send` in one place.
-3. *Conditional grant, `Holder<T>`, phantom `Witness<T>`:* both derive the condition from the
-   fields, C2 by the keyword and C4 by `Copy`'s eligibility rule.
-4. *A user marker* (`aspect Marker {}`; `struct Token: Marker`): C2 does not apply; C4 grants
-   it, unconditionally, with no `extend`.
-5. *`Drop`:* `struct H: Copy` with `extend H: Drop { … }` is rejected at the declaration under
-   both, with the same message as C2's.
-6. *A derive:* closed by construction under C2, by the written rule under C4, and by the
-   header requirement for the refining `extend` (above).
-7. *A condition on another aspect* (`extend<T: Marker> Witness<T>: Copy`, used by a
-   coherence fixture): inexpressible under C2 and under a pure header list; under refinable
-   header grants it is `struct Witness<T>: Copy { … }` plus that `extend`.
-8. *std's own grants:* `extend i64: Copy;` and the record rule stay as `extend`, by case 2,
-   with no exemption to invent.
-
-**What would decide it.** If the only grant ever moved is `Copy`, C2 is smaller and closes
-the derive hazard by construction. If the language wants one place for all marker facts
-(including `!Send`, and any future marker), C4 generalises and answers D6.3 without an
-exception, at the price of a larger grammar change, an RFC-0105 dependency and two forms of
-copyness across named and structural types.
-
-#### C5 in detail
-
-> Added 2026-11-02 at the language owner's request, as the question "could the language
-> enforce the position in which an aspect is granted?". It is a way to decide C2 against C4
-> once and for the other aspects too, and it would be a design of its own (see below).
-
-**The idea.** An aspect declares a *grant mode*, and the coherence pass (RFC-0060) enforces
-it; a grant in the wrong position is an error with a fix-it.
-
-| Mode | The aspect is granted | Examples |
-|---|---|---|
-| `extend` (the default) | by `extend T: A { … }`, as today | `Drop`, `Display`, any aspect with methods |
-| `header` | only in the type's declaration; an `extend` of it is an error | `Copy` |
-| `auto` | structurally, with no grant; a type opts out in its header (`!A`) | `Send`, `Sync`, `Linear` (RFC-0096) |
-
-A `header` aspect has no methods (it is a marker) and may declare a structural eligibility
-rule, "every field must implement it", which is today's `check_copy_impl_eligibility` for
-`Copy`. The derived condition of a generic grant (K4) is then a property of the aspect, not
-a special case of `Copy`: it is derived for exactly the aspects that declare the field-wise
-rule. The sketch is `header aspect Copy;` and `auto aspect Send;`; the spelling is open.
-
-**What it settles**
-
-- **The stop rule (D6.3).** There is nothing to argue about why only `Copy` moved: the
-  aspect states how it is granted, and `Drop` says `extend` because it has a method.
-- **C2 against C4.** The mandatory location is the mode; the modifier (`copy struct`) or the
-  list (`struct P: Copy`) is only how a `header` grant is written, and can be chosen on
-  readability.
-- **The derive hazard.** If a `header` aspect has no `extend` form, a deriver has no impl to
-  emit, which is C2's closure by construction with C4's uniformity.
-- **Where a grant may live.** A header grant is in the type's own module, so the orphan rule
-  (`T0014`) holds trivially; the foreign-type case stays rejected.
-
-**Worked examples**
-
-1. *`extend Point: Copy;`* under C5: error, "`Copy` is granted in the type's declaration";
-   the fix-it moves it into the header, in whichever spelling C2/C4 settled on.
-2. *`struct H: Drop`* (a method aspect named in a header): error, "`Drop` has methods and
-   is granted with `extend`". The same mechanism says why, in both directions.
-3. *`struct Token: !Send`* on an `auto` aspect: the opt-out, as RFC-0105 first proposed,
-   with `Send` otherwise holding because every field is `Send`.
-4. *A user marker* (`aspect Marker {}`): `extend` by default, so unchanged; declaring it
-   `header` is a choice open to std only at first.
-5. *Std's primitives and the record rule:* granted where std declares them; the mode of
-   `Copy` applies to declarations, and a builtin or structural type has none, so std's own
-   `extend i64: Copy;` and `extend<record R> { ..R }: Copy where ..R: Copy;` stay as
-   std-internal grants (question 7).
-
-**Costs and risks**
-
-- A new concept in the aspect system, and a property of each aspect that readers have to
-  learn. Keeping `header` and `auto` std-only at first leaves user aspects exactly as today.
-- RFC-0096's compiler-recognized auto-impl set would become declared properties, which
-  changes an under-review RFC; RFC-0105 would be narrowed to the marker case or absorbed.
-- A user-declared `auto` aspect would let users make a property hold implicitly, which is
-  the invisible behaviour D1 and the language owner's first concern object to. Hence
-  std-only.
-- It is a design of its own, large enough for its own RFC (aspect grant modes), which this
-  RFC would depend on. This section records the idea and what it would decide.
-
-**What would decide it.** C5 is worth its weight if more than `Copy` benefits from an
-enforced grant position (`Send`/`Sync`/`Linear`, any future marker) or if the stop rule
-cannot otherwise be stated. If `Copy` is the only aspect that ever needs it, C2 is the
-smaller change.
+The earlier worked examples comparing C1, C2 and C4, the stop-rule argument (D6.3), the derive
+hazard under C4 and the cost and risk list for grant modes are in RFC-0207.
 
 ### Axis S — Structural types (added 2026-11-02)
 
@@ -997,6 +846,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
 - **RFC-0206 (Clone and Copy, one duplication method, `1-under-review`)** — owns the `Clone` aspect (extracted from RFC-0080 §1).
+- **RFC-0207 (Header and Auto Aspects, `0-draft`)** — owns the header-grant mechanism and the aspect grant modes (this RFC's C4 and C5); `Copy`'s position C4 depends on it.
   RFC-0158 amends its §1 (tighten `Clone` to independent-duplication-only; add `Share`).
   This RFC's recommended direction leaves `Clone` otherwise untouched.
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
@@ -1283,14 +1133,14 @@ trait that gates nothing implicit is an unobjectionable trait.
    bound and the `where` on a declaration are out (`struct W<T: Copy>` and
    `struct W<T> where T: Copy` already restrict instantiation); the answer is the condition
    derived from the fields (R1 or R2), with an `extend` allowed only to refine a header grant
-   ("Refinable header grants" under C4).
+   (refinable header grants, RFC-0207).
    (b) *The stop rule (D6.3):* why `Copy` moves to a keyword while `Drop`, `Send` and `Sync`
    stay aspects; it must be stated as a principle or accepted as a special case. (c) *One
    word, two roles:* `copy` on a declaration asserts and is checked, `copy` on a function or
    structural type requires and is matched; RFC-0163's disjointness sentence needs amending
    (P4 sub-question 3). (d) *Coherence:* confirm against `coherence.rs` that no capability is
    removed (P4 sub-question 4; the foreign-type case was confirmed above). (e) *C4 against C2, and C5:* the choice between a `copy` modifier and a marker fact in
-   the header ("C4 in detail"), and whether the aspect's grant mode ("C5 in detail") is the
+   the header (RFC-0207), and whether the aspect's grant mode (RFC-0207) is the
    mechanism behind it; either would decide whether RFC-0105 is advanced in a narrowed form
    and whether RFC-0096's list becomes declared properties. *Advancing
    condition:* a conditional-grant spelling that survives the worked examples.
