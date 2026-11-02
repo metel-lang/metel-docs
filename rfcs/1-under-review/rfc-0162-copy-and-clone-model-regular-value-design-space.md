@@ -124,7 +124,7 @@ Metel, which has the chance to decide now, should.
 aspects connected by a blanket impl, such that `.clone()` on a `Copy` value is a syntactic
 no-op that still type-checks and still appears in code. Newcomers must learn both, when to
 write `.clone()` (only for non-`Copy` `Clone` types), and why calling it on an `i64` is
-allowed but pointless. RFC-0080 §1 preserves the split deliberately ("`Copy` (implicit,
+allowed but pointless. RFC-0206 §1 preserves the split deliberately ("`Copy` (implicit,
 free) and `Clone` (explicit, potentially expensive) is preserved") — this RFC asks
 whether that distinction needs two *aspects*, or whether it is better modeled as one
 duplication operation whose cost is a property of the type. A second observation: the
@@ -187,7 +187,7 @@ weights:
    method bodies, sitting in a list beside `Debug` and `PartialEq`, one entry of which
    silently changes the type's ownership behavior. Metel does not have this today —
    `Copy` has no deriver, and `#derive` itself is unimplemented (RFC-0093,
-   `1-under-review`; RFC-0080 §1.3 specifies a derive for `Clone` only). But nothing on
+   `1-under-review`; RFC-0206 §4 specifies a derive for `Clone` only). But nothing on
    the current path forbids it: RFC-0093's mechanism registers an arbitrary comptime
    function as an aspect's deriver, and a deriver for a marker aspect is trivially
    writable — it emits the bare impl and nothing else. So Metel is one unremarkable
@@ -217,7 +217,7 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   `check_copy_impl_eligibility` walks every struct field / enum-variant payload and
   rejects `extend … : Copy` with `T0001` if any is non-`Copy`. Empirically confirmed in
   RFC-0135's Background against the release binary.
-- **`Copy` ⇒ `Clone`** by blanket impl (RFC-0080 §1.2): `extend<T: Copy> T: Clone { fun
+- **`Copy` ⇒ `Clone`** by blanket impl (RFC-0206 §2): `extend<T: Copy> T: Clone { fun
   clone(self: &T) -> T { *self } }`. `Clone` alone (non-`Copy`) runs user code and may
   allocate.
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
@@ -262,7 +262,7 @@ Two orthogonal axes.
   type the compiler supplies `clone`, and its body is **sealed**, always a bitwise copy,
   never user-written; the compiler inserts the call at a by-value use. So `let b := a` for a
   `Copy` type is `let b := a.clone()` with the call inserted, and `Copy` is `Clone` that
-  the compiler calls for you. This is RFC-0080 §1.2's blanket
+  the compiler calls for you. This is RFC-0206 §2's blanket
   (`extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }`), stated as the
   definition of `Copy`. The body is sealed because a user-written `clone` invoked implicitly
   would run arbitrary code at every copy (hidden cost, hidden panics and effects, an
@@ -820,7 +820,7 @@ fun scale<T: Copy>(p: T, k: i64) -> T { … }   // bound spelling unchanged
 ```
 
 **Mechanism.** `Copy` stays in the type system exactly as it is — a bound, the
-`Copy ⇒ Clone` blanket (RFC-0080 §1.2), the `is_copy` predicate, `use_multiplicity` on
+`Copy ⇒ Clone` blanket (RFC-0206 §2), the `is_copy` predicate, `use_multiplicity` on
 `Type::Fun` (RFC-0134 §4). What changes is only who may establish it for a named type:
 
 1. `copy` on a `struct`/`enum` declaration registers the same bare impl bound that
@@ -988,7 +988,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   two framings if P4 advances.
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
-- **RFC-0080 (Stdlib Aspects — Clone…, `1-under-review`)** — owns the `Clone` aspect.
+- **RFC-0206 (Clone and Copy, one duplication method, `1-under-review`)** — owns the `Clone` aspect (extracted from RFC-0080 §1).
   RFC-0158 amends its §1 (tighten `Clone` to independent-duplication-only; add `Share`).
   This RFC's recommended direction leaves `Clone` otherwise untouched.
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
@@ -1265,8 +1265,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    Clone where ..R: Clone` in `std::core` (RFC-0123), as do arrays, primitives and
    `String`; **tuples have none** (`T: Clone` rejects `(i64, i64)`, and `.clone()` on one
    reports "cannot infer receiver type"); a named `struct`, `Option` and `List` have no
-   `clone` either, and `Copy` does not imply `Clone` for a declared `Copy` struct (RFC-0080
-   §1.2 specifies the blanket impl; it is not implemented). (c) *Scope:* markers only, and
+   `clone` either, and `Copy` does not imply `Clone` for a declared `Copy` struct (RFC-0206
+   §2 specifies the blanket impl; it is not implemented). (c) *Scope:* markers only, and
    no move-only structural value (S3p's `once`). *Advancing condition:* a spelling that
    survives the worked examples, and a decision on tuples' `Clone`.
 
@@ -1288,19 +1288,18 @@ trait that gates nothing implicit is an unobjectionable trait.
    condition:* a conditional-grant spelling that survives the worked examples.
 
 8. **`Clone` for the types that are not `Copy`.** Added 2026-11-02; Axis B has its position
-   (B1s). The sealed blanket of RFC-0080 §1.2 covers `Copy` types; the rest needs an
+   (B1s). The sealed blanket of RFC-0206 §2 covers `Copy` types; the rest needs an
    answer. *Measured:* records, arrays, primitives and `String` clone; tuples, a named
    `struct`, `Option` and `List` do not. Std types are plain work (`extend<T: Clone>
    Option<T>: Clone`, metel-core#270). A tuple arm is a hardcoded rule like tuple `Copy` until
    variadic generics. For a user `struct` or `enum`: (a) hand-written, as today; (b)
-   RFC-0080 §1.3's `#derive(Clone)`, blocked on RFC-0093 and comptime and reopening the
+   RFC-0206 §4's `#derive(Clone)`, blocked on RFC-0093 and comptime and reopening the
    hidden-derive worry; (c) a header entry with a derived field-wise body, `struct P: Clone`,
    the first use of the direction that headers later accept aspects with methods, needing the
    field-wise machinery (a native hook as records use, comptime later); (d) automatic
    availability as for records, at the cost of the API-stability hazard (adding a field with
-   no `Clone` removes the method). **Process:** RFC-0080 is `1-under-review` and its §1.3
-   waits on RFC-0093, so §1.2 needs splitting from it (an amendment here or a narrowed
-   RFC-0080) before `Copy ⟹ Clone` can be implemented. *Advancing condition:* a choice
+   no `Clone` removes the method). **Process:** the split is done: `Clone` now lives in RFC-0206, so `Copy ⟹ Clone` no
+   longer waits on RFC-0093. *Advancing condition:* a choice
    among (a) to (d) and the split.
 
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
