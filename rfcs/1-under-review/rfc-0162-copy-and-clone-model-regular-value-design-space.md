@@ -596,9 +596,17 @@ every use site downstream changes meaning.
   `Copy` value move-only (`!Copy` on a `(i64, i64)` asserts something false); a token is a
   named type. Markers only (aspects with no required methods). The positions are returns,
   parameters and `let` annotations; a struct field or a type argument is left out at
-  first. The alternative spelling is a `where` clause on the function, with the type as its
-  subject (`where { x: i64, y: i64 }: Copy`), which already accepts subjects that are not
-  parameters.
+  first. The alternative spelling is a `where` clause on the function with the type as its
+  subject (`where { x: i64, y: i64 }: Copy`), which restates the type and is the more
+  verbose of the two. **Neither parses today** (tried against the parser, 2026-11-02): a
+  trailing `: Copy` after a parameter, return or `let` type is a parse error, and so is a
+  concrete type as the subject of a `where` constraint, whose subject must be an identifier
+  (a type parameter) or `..R`; the existing row equation (`where R = { x: i64, ..Rest }`)
+  requires an open row with a `..Rest` tail, so it cannot pin a closed type either. Both
+  spellings are therefore a grammar change: the suffix as a restricted production
+  (`type_expr` followed by `":" ~ !"=" ~ bound_list`, used only in parameters, returns and
+  `let` annotations, with the `!"="` keeping it apart from `:=`), the `where` form as a
+  generalised subject.
 
 
 S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
@@ -1226,8 +1234,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    things remain. (a) *Spelling:* the expression form is `: extends Copy` (decided 2026-11-02), and whether
    it is allowed in a `let` annotation is open. For a written type, a trailing `: Copy`
    (`p: (i64, boolean): Copy`, `-> { x: i64 }: Copy`) is unusual next to a parameter's own
-   `:`, and a `where` clause on the function is the alternative; neither has been tried
-   against the grammar. Which positions are allowed (returns, parameters, `let`; not fields or
+   `:`, and a `where` clause on the function is the alternative; tried against the parser,
+   neither parses today and both need a grammar change (S6). Which positions are allowed (returns, parameters, `let`; not fields or
    type arguments) and whether a parameter's marker is a requirement as well as documentation
    are also open. (b) *Duplicating a non-`Copy`
    structural value:* records (anonymous and named) have a `Clone`, `extend<record R> { ..R }:
