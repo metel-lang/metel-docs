@@ -55,7 +55,7 @@ P4 renames nothing (OQ4).
    header grant (a condition the compiler cannot derive), where the **target has no header**
    (std's primitives and the record rule), or where it is a **negative impl**.
 3. **Structural types stay inferred from their parts, and may carry a marker on the written
-   type** (S5): `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
+   type** (S6): `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
    `let pair: (i64, boolean): Copy := …`, with `!Copy` and other markers accepted the same
    way. It is an erased check at the definition, a guarantee on a signature, and a
    parameter's marker also constrains callers. A value made move-only on purpose (a token)
@@ -421,7 +421,7 @@ a deriver may emit the refining `extend`, though only for a type whose header al
 `Copy`. In C5's terms this is a `header` aspect that is *refinable*.
 
 **Structural types under C4.** A header list has no site on a tuple or an anonymous record.
-Axis S proposes S5 for them, a marker on the written type, which uses the same items as the
+Axis S proposes S6 for them, a marker on the written type, which uses the same items as the
 header.
 
 **Worked examples** (C1 run against today's behaviour; C2 and C4 reasoned):
@@ -551,7 +551,14 @@ every use site downstream changes meaning.
   a body everything stays inferred. The boundary is where a change of copyness reaches other
   people's code, so the cost of writing it is paid exactly there.
 
-- **S5. Inferred, with a marker on the written type.** Inference stays, and a type written
+- **S5. Inferred, with a marker ascription at the expression** (dropped for now).
+  `({ x = 0, y = 0 }: Copy)`: an erased check that the value's type is `Copy`, using the
+  header list's items. It protects the author at the construction site only; a second
+  constructor of the same shape, or the signature a caller reads, is not covered, and it
+  cannot make a value move-only. Retired as the headline on 2026-11-02 in favour of S6, which
+  puts the marker on the written type; it could return later as an optional local check on
+  the same marker list.
+- **S6. Inferred, with a marker on the written type.** Inference stays, and a type written
   in a signature or an annotation may carry a bound list of markers, using the header list's
   own items: `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
   `let pair: (i64, boolean): Copy := …`, `: !Copy`. It is a refinement of the written type,
@@ -566,20 +573,19 @@ every use site downstream changes meaning.
   parameters and `let` annotations; a struct field or a type argument is left out at
   first. The alternative spelling is a `where` clause on the function, with the type as its
   subject (`where { x: i64, y: i64 }: Copy`), which already accepts subjects that are not
-  parameters. **An expression-position form** (`({ x = 0 }: Copy)`) was considered and
-  dropped for now: it protects only the construction site and is not part of the signature
-  a caller reads.
+  parameters.
+
 
 S3, S3p and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
 the structural type (as `use_multiplicity` is of the function type, RFC-0134 §4), so
 unification and the widening rule (a `copy` value satisfies a `once` slot, not the reverse)
 extend to tuples and records, and width subtyping for records (RFC-0117) must carry it.
-S3 and S3p use the multiplicity vocabulary of closures (`copy`, `once`); S5 uses the header
+S3 and S3p use the multiplicity vocabulary of closures (`copy`, `once`); S6 uses the header
 list's, so one vocabulary (`: Copy`, `!Send`) covers named types and structural values, and
 the division is principled: a type with a declaration states an aspect there, a structural
 type states it where it is written. Axis S composes with every A/B/C position.
 
-**Proposed (language owner's lean, 2026-11-02): S5, the marker on the written type, with no expression form.** S3p, which was the position earlier the
+**Proposed (language owner's lean, 2026-11-02): S6, the marker on the written type, with no expression form.** S3p, which was the position earlier the
 same day, is the alternative: it gives a signature-level contract and can express `once`, at
 the price of a multiplicity in the structural types and a second vocabulary. An alias
 header (`type Origin: Copy := …`) was considered as a third route and not taken, since
@@ -1186,7 +1192,7 @@ trait that gates nothing implicit is an unobjectionable trait.
    condition:* a concrete case where hand-writing the grant is genuinely onerous, which
    for a marker aspect with a one-line spelling is hard to construct.
 
-6. **Residuals of S5.** Added 2026-11-02; Axis S proposes S5, the marker on the written type. Three
+6. **Residuals of S6.** Added 2026-11-02; Axis S proposes S6, the marker on the written type. Three
    things remain. (a) *Spelling:* a trailing `: Copy` after a written type (`p: (i64, boolean): Copy`,
    `-> { x: i64 }: Copy`) is unusual next to a parameter's own `:`, and a `where` clause on
    the function is the alternative; neither has been tried against the grammar. Which
