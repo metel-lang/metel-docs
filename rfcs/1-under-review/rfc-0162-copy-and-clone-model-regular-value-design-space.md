@@ -932,10 +932,17 @@ trait that gates nothing implicit is an unobjectionable trait.
    remain. (a) *Cost:* how much carrying a multiplicity on `Tuple`, `Record` and open-row
    types changes unification, widening and width subtyping (RFC-0117); an implementation
    spike answers it, and a cost judged too high reopens the axis toward S1 plus the
-   diagnostic of example 3. (b) *Duplicating a non-`Copy` structural value:* with S3p a
-   `once` or `String`-holding tuple or record can no longer be copied implicitly; whether
-   it has a `Clone` (the corpus has no aspect impls for tuples or anonymous records, to be
-   verified) decides how a caller gets a second copy. (c) *Spelling* in type and in
+   diagnostic of example 3. (b) *Duplicating a non-`Copy` structural value:* with S3p a `once` or
+   `String`-holding tuple or record can no longer be copied implicitly, so a caller needs a
+   `Clone`. Measured 2026-11-02: records (anonymous and named) have one, `extend<record R>
+   { ..R }: Clone where ..R: Clone` in `std::core` (RFC-0123), so a record with a `String`
+   field clones and one with a field that is not `Clone` (a `struct` without an impl, a
+   closure) does not; `[T; N]` clones; primitives and `String` clone. **Tuples have no
+   `Clone`**: `T: Clone` rejects `(i64, i64)`, and `.clone()` on a tuple reports "cannot
+   infer receiver type", which hides the cause. A named `struct`, `Option` and `List` have no
+   `clone` either, and `Copy` does not imply `Clone` for a declared `Copy` struct (RFC-0080
+   §1.2 specifies the blanket impl; it is not implemented). So the gap that S3p exposes is
+   tuples, and the underlying one is the missing `Copy ⟹ Clone`. (c) *Spelling* in type and in
    expression position (`many (a, b)` against ascription only), and whether a `public`
    field of a named `public` type is a signature position. *Advancing condition:* the
    spike for (a), a check of (b) against the implementation.
