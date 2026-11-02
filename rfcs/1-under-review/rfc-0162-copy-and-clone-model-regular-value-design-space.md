@@ -3,7 +3,7 @@ id: rfc-0162
 title: "Copy and Clone Model — Regular-Value Design Space"
 date: '2026-09-01'
 status: under-review
-updated: '2026-09-02'
+updated: '2026-11-02'
 tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 ---
 
@@ -123,14 +123,19 @@ a hard expressiveness cliff (a plain-data type that wants a destructor — a
 tracing/refcount-debug hook, a scope-exit assertion — must give up implicit copy) that
 has not been independently justified for Metel's model.
 
-**D4 — The model is already non-uniform.** Per RFC-0135's own corrected Background:
-named types are `Copy` only by explicit `extend`; records can *never* be `Copy`
-(RFC-0071 lines 45-69, RFC-0123 is the unbuilt fix); tuples have no aspect impls at all
-(RFC-0061 §6); function pointers have a working blanket `Copy` (RFC-0061 §7.2); `T[]`
-slices are unconditionally `Copy` (RFC-0126); `[T; N]` has a hardcoded `Copy` arm
-(`metel-core#263`); closures compute `Copy`-ness per literal from captures (RFC-0134 §1).
-That is six mechanisms, three of them missing. A re-analysis is the natural place to ask
-whether a single coherent rule is reachable, or whether the fragmentation is inherent.
+**D4 — The model is already non-uniform.** Measured on 2026-11-02 against the implementation,
+by move checking and by a `T: Copy` bound: named `struct`, `enum` and the std enums
+(`Option`, `Result`) are `Copy` only by explicit `extend`; a named `record` and an
+anonymous record are `Copy` exactly when every field is (RFC-0123's field-wise constraints
+are implemented); tuples and `[T; N]` are `Copy` when their elements are (a hardcoded arm,
+`metel-core#263`); `&T` is `Copy` and `&var T` is not; the `[T]` view is `Copy`
+(RFC-0126); function types and closures are `Copy` by their use multiplicity (RFC-0134 §1),
+and a *written* function type is move-only (RFC-0166); and `()` is `Copy` for a bound but
+moved by move checking (`metel-core#1784`). The two consumers of "is this `Copy`" now agree
+except at `()`, but they still reach their answers by several mechanisms: explicit `extend`,
+a structural rule in the aspect resolver, a use-multiplicity field on function types, and a
+bypass in `is_copy`. A re-analysis is the natural place to ask whether a single coherent
+rule is reachable, or whether the fragmentation is inherent.
 
 **D6 — A load-bearing language rule is gated behind an ordinary, and prospectively
 derivable, aspect.** *(D5 is RFC-0157's closure-capture default, decided there; the
@@ -198,8 +203,10 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   clone(self: &T) -> T { *self } }`. `Clone` alone (non-`Copy`) runs user code and may
   allocate.
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
-- **Structural types**: records never `Copy` (RFC-0071); tuples no impls (RFC-0061 §6);
-  fn-pointers blanket `Copy` (RFC-0061 §7.2); `T[]` always `Copy` (RFC-0126).
+- **Structural types**: `Copy` when their parts are, decided by the checker and not
+  written anywhere: tuples, `[T; N]`, anonymous and named records; `&T` and the `[T]`
+  view always; fn-pointers per RFC-0061 §7.2 and RFC-0134 §1. Axis S below is about this
+  group, which has no declaration to carry a grant.
 - **Closures**: RFC-0134 §1 makes a closure `Copy` iff all captures are `Copy`; stored in
   a `use_multiplicity` field on `Type::Fun` (RFC-0134 §4 / RFC-0135's update note),
   because captures are absent from the type.
@@ -278,6 +285,46 @@ C2 has one property C1 cannot have: it makes the grant unforgeable by metaprogra
 Everything else it buys (locality, a keyword that looks like a language rule) is a matter
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
+
+### Axis S — Structural types (added 2026-11-02)
+
+Axes A to C are mostly about named types, where a declaration exists to hold a grant. The
+structural types (tuples, `[T; N]`, anonymous records, named records, the `[T]` view,
+function types and closures) are `Copy` by a rule the checker applies to their parts, and
+**no declaration exists to hold a keyword**: a tuple is written `(a, b)` and nothing else.
+So C2 and P4 cannot reach them, and today's answer (S1) is silent. The hazard is the one
+D1 names, in a sharper form: adding a `String` field to a record, or to the type of a tuple
+element, changes the type from `Copy` to move-only with no edit at any declaration, and
+every use site downstream changes meaning.
+
+- **S1. Inferred from the parts (today).** Nothing is written. Cheapest, and the hazard
+  above is unmitigated.
+- **S2. Never `Copy`.** A structural value is always moved; a user who wants copy semantics
+  names the type (`struct`, `record`) and declares it. Explicit and stable, but tuples and
+  anonymous records become awkward to pass around, and it removes behaviour that works
+  today (a tuple of `i64` copies), so it is a breaking change.
+- **S3. Inferred, with an optional assertion.** Inference stays, and `many` / `once` can be
+  written on a structural type and, in expression position, at the construction site:
+  `-> many { x: i64 }`, `let p: many (i64, boolean) := (1, true)`, `many (a, b)`. `many` is
+  checked against the parts and is an error if one is not `Copy`; `once` forbids copying
+  even when every part is `Copy` (a token). A signature that writes `many` is stable: adding
+  a `String` field breaks that signature and not its callers. For an open record,
+  `many { x: i64, ..R }` is the existing field-wise bound `where ..R: Copy` (RFC-0123).
+- **S4. Required qualifier.** Either the default is `once` and every `Copy` tuple writes
+  `many`, or the default is `many`, verified at construction as for closures, and every
+  tuple with a non-`Copy` part writes `once`. Fully explicit, and noisy at every literal:
+  structural values are far commoner than closures.
+
+S3 and S4 share a type-system cost that S1 and S2 do not: the multiplicity becomes part of
+the structural type (as `use_multiplicity` is of the function type, RFC-0134 §4), so
+unification and the widening rule (a `many` value satisfies a `once` slot, not the reverse)
+extend to tuples and records, and width subtyping for records (RFC-0117) must carry it.
+S3 is also the one position in which the vocabulary is the same across named types (P3,
+`many struct`), structural types and closures. Axis S composes with every A/B/C position
+except that P3 and P4 force a choice of spelling for the named half.
+
+This axis is **undecided**; the recommended direction below covers regular named values and
+does not cover it.
 
 ### Combined positions worth naming
 
@@ -431,9 +478,10 @@ fun scale<T: Copy>(p: T, k: i64) -> T { … }   // bound spelling unchanged
    in the program.
 4. Structural and compiler-provided cases are untouched: `T[]` (RFC-0126), fn-pointers
    (RFC-0061 §7.2), `[T; N]` (`metel-core#263`), closures (RFC-0134 §1). P4 does not
-   fix D4; it removes one of D4's six mechanisms from the *user-writable* surface, which
+   fix D4; it removes one of D4's mechanisms from the *user-writable* surface, which
    makes the remaining fragmentation easier to describe (everything left is a compiler
-   grant) without unifying it.
+   grant) without unifying it. A declaration keyword cannot reach the structural types
+   at all (a tuple has no declaration); see Axis S.
 
 **What P4 answers, precisely.**
 
@@ -591,8 +639,9 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 - **RFC-0074 / RFC-0076 (Rc / Arc, Rc Brands)** — the handle types and brand machinery
   that already distinguish "aliases the same cell" from "independent" in the types;
   RFC-0158 gives that a surface verb.
-- **RFC-0123 (Field-Wise Row Constraints, `4-implemented`)** — the named fix path for
-  "records can never be `Copy`"; reconcile any structural-type conclusion with it.
+- **RFC-0123 (Field-Wise Row Constraints, `4-implemented`)** — made a record `Copy` when its
+  fields are, and gives `where ..R: Copy` for open rows; any structural-type conclusion
+  (Axis S) is stated in its terms.
 - **RFC-0126 (`T[]` Copy view, `4-implemented`)**, **metel-core#263** (`[T; N]`),
   **RFC-0061 §6/§7.2** (tuples / fn-pointers) — the concrete structural cases D4
   enumerates; each is a place a unified rule would land or explicitly exempt.
@@ -834,6 +883,15 @@ trait that gates nothing implicit is an unobjectionable trait.
    can be recorded now, independently of every other question here. *Reopening
    condition:* a concrete case where hand-writing the grant is genuinely onerous, which
    for a marker aspect with a one-line spelling is hard to construct.
+
+6. **How are structural types made visible, if at all?** Added 2026-11-02 with Axis S.
+   S1 leaves the silent flip; S2 removes the behaviour; S3 adds an optional, checked
+   `many`/`once`; S4 makes it mandatory. The deciding facts are how often a structural
+   value's copyness changes under an edit in the corpus (not measured), and whether the
+   type-system cost of carrying a multiplicity on tuples and records is acceptable.
+   *Advancing condition:* a worked example set (an API that adds a field to a record
+   returned from a `public fun`; a tuple passed twice; an open record with `..R`) written
+   against S1 and S3. *Reopening condition:* none; this is a live question.
 
 *(Prior art beyond Rust — addressed, see the survey above. The aliasing-vs-duplication
 split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
