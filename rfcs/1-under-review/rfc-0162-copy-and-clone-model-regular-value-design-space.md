@@ -568,12 +568,21 @@ every use site downstream changes meaning.
   for "some type that extends this aspect" (RFC-0130): `x: extends Display` in a parameter
   is a bound the caller meets, `-> extends Display` in a return is opaque, and `: extends
   Copy` in an expression or `let` annotation would be a check that leaves the type visible.
-  It already parses (the typechecker rejects it today outside a parameter or return
-  position, so no grammar change is needed), and it is the one spelling that keeps `: Copy`
-  free to mean the header's. It protects the author at the construction site only; a second
+  It parses today, but the position is banned on purpose: RFC-0130 (implemented) makes
+  `extends Aspect` legal in exactly the parameter and return positions and "does not attempt
+  to legalize it anywhere `impl Aspect` is rejected", which metel-core#622 enforces. So S5 is
+  **an amendment to RFC-0130**, a third legal position with a non-opaque meaning, and the
+  #622 check relaxed for it. RFC-0130's own reasoning supports it ("the keyword reads as a
+  predicate about the position's own subject"), and it is the one spelling that keeps
+  `: Copy` free to mean the header's. It protects the author at the construction site only; a second
   constructor of the same shape, or the signature a caller reads, is not covered, and it
   cannot make a value move-only. Because `-> extends Copy` hides the result's type, a result
-  cannot use this spelling, which is why S6 puts its marker after the type.
+  cannot use this spelling, which is why S6 puts its marker after the type. In a `let`
+  annotation it would collide in meaning with the existential form of the draft RFC-0038
+  (`let items: extends Display[] := …`, type erased and dispatched through a vtable, which
+  RFC-0038 proposes to spell `dyn`): here the type stays visible, so the two need to be
+  stated side by side if both are adopted. **S5 is optional**, and is not needed for S6 or
+  for the header; it waits on an RFC-0130 amendment, which is why it is not the headline.
 - **S6. Inferred, with a marker on the written type.** Inference stays, and a type written
   in a signature or an annotation may carry a bound list of markers, using the header list's
   own items: `-> { x: i64, y: i64 }: Copy`, `p: (i64, boolean): Copy`,
@@ -959,6 +968,11 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
 - **RFC-0074 / RFC-0076 (Rc / Arc, Rc Brands)** — the handle types and brand machinery
   that already distinguish "aliases the same cell" from "independent" in the types;
   RFC-0158 gives that a surface verb.
+- **RFC-0130 (`extends Aspect`, `4-implemented`)** — limits `extends Aspect` to parameter and
+  return positions (enforced by metel-core#622). S5 would amend it; S6 does not touch it.
+- **RFC-0038 (Existential Types in Struct Fields, `0-draft`)** — `extends`/`dyn` in struct fields
+  and `let` annotations as erased existentials; the opposite of S5's non-opaque check in the
+  same position. Its spelling note defers to RFC-0130.
 - **RFC-0123 (Field-Wise Row Constraints, `4-implemented`)** — made a record `Copy` when its
   fields are, and gives `where ..R: Copy` for open rows; any structural-type conclusion
   (Axis S) is stated in its terms.
