@@ -129,6 +129,34 @@ question 8:
   `Clone`. No use-site behaviour changes. The cost is the API-stability hazard: adding a field
   with no `Clone` removes the method from the type.
 
+### Proposed direction: (c), with (a) kept (language owner's lean, 2026-11-02)
+
+A named `struct` or `enum` states that it is cloneable in its header, and the compiler
+supplies a field-wise body; a type with no such entry is not `Clone` unless the user writes
+the impl by hand. Not yet decided.
+
+```metel
+struct Doc: Clone { title: String, tags: List<String> }   // field-wise clone, derived
+struct Handle { fd: i64 }                                 // not Clone: nothing says it may be
+```
+
+Why (c) rather than the others:
+
+- **Not (d).** Whether a named type can be duplicated is a statement about what it means, not
+  a consequence of its field types. `Handle` owns a resource, yet every field is `Clone`, so
+  under (d) it would become cloneable by accident. Adding a field with no `Clone` would also
+  remove `.clone()` for callers, a break that shows up in their code, not at the declaration.
+  Records and arrays can be automatic because they are structural and carry no declared
+  identity.
+- **Not (b).** It puts the fact in an attribute away from the header, the indirection
+  RFC-0162 declines for `Copy`, and it waits on RFC-0093 and RFC-0092.
+- **(c) is opt-in and local.** A missing `Clone` on a field is an error at the declaration.
+  It mirrors `extend P: Clone`, follows the position taken for `Copy`, and can ship before
+  comptime because the field-wise body is native (as it already is for records). When comptime
+  lands the same header entry can use a library-written body.
+
+The rules (c) would need are open questions 6 to 9 below.
+
 ## 5. Pointers into allocators
 
 RFC-0080 §1.4 said a region pointer `@[r] T` is not `Clone` by default, because cloning one
@@ -153,7 +181,8 @@ are open and are not settled here.
 
 ## Open questions
 
-1. **`Clone` for user types** (§4): (a) to (d).
+1. **`Clone` for user types** (§4): (a) to (d); the proposed direction is (c) with (a) kept,
+   its rules being questions 6 to 9.
 2. **How sealing is enforced.** Either a coherence rule that rejects a second `Clone` for a
    `Copy` type, or the `Copy` aspect declared as granting a sealed `clone` (RFC-0162's C5 grant
    modes). The first is smaller; the second is the principled version.
@@ -162,6 +191,18 @@ are open and are not settled here.
 4. **Allocators** (§5).
 5. **Tuples before variadic generics**: a hardcoded arm, with the same migration problem as
    tuple `Copy`.
+6. **`: Copy, Clone` in one header.** `Copy` already gives `Clone` through the sealed blanket
+   (§2), so the pair is redundant. Proposed: an error, to keep one spelling; the alternative
+   is a warning.
+7. **Header `: Clone` against a hand-written impl.** Proposed: they conflict, as a header
+   `Copy` grant and a second `Copy` impl do in RFC-0162. A hand-written `extend P: Clone`
+   (to skip a cache field, say) is for a type with no `: Clone` entry.
+8. **What the derived body does.** Proposed: it calls `clone` on each field, so it is deep for
+   owning fields, and a field type without `Clone` makes the header entry an error at the
+   declaration. An enum's body matches the active variant.
+9. **Generic types.** Proposed: reuse RFC-0162's R1, so `Clone` is conditional on every type
+   parameter that occurs in a field being `Clone`; the alternative is R2, the weakest
+   sufficient condition. Whichever RFC-0162 settles for `Copy` should apply here.
 
 ---
 
