@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**208 RFCs total.** 36 draft, 52 under review, 9 accepted, 2 integrated (99 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**209 RFCs total.** 37 draft, 52 under review, 9 accepted, 2 integrated (100 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
-## Draft (36)
+## Draft (37)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -53,6 +53,7 @@ the curated thematic map.
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0208** — Row-Only Generic Parameters (`0-draft` ; rfcs/0-draft/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02)
 - **RFC-0209** — Per-Aspect Row Visibility (`0-draft` ; rfcs/0-draft/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02)
+- **RFC-0210** — Enum Parameters and Variant Rows (`0-draft` ; rfcs/0-draft/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02)
 
 ## Under Review (52)
 
