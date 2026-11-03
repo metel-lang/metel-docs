@@ -706,7 +706,7 @@ part of the same records/views substrate review):
 - **RFC-0062** — Ord/Eq Comparison Aspects — `Eq`/`Ord`/`Ordering` in `std::core`.
   RFC-0093's Derivable Aspects table assumes these exist; not cross-checked against
   RFC-0062's actual signatures.
-- **RFC-0168** *(draft, opened 2026-09-09)* — Equality Model and Super-Aspects — splits
+- **RFC-0168** *(under review 2026-11-03, opened 2026-09-09; #1793)* — Equality Model and Super-Aspects — splits
   equality into operation-bearing `PartialEq` and reflexivity-marker `Eq: PartialEq`,
   introduces nominal transitive super-aspect refinement, and lowers `==`/`!=` through
   `PartialEq`. Floats are `PartialEq` but not `Eq`; references compare referents rather

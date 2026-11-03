@@ -188,9 +188,9 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   `check_copy_impl_eligibility` walks every struct field / enum-variant payload and
   rejects `extend … : Copy` with `T0001` if any is non-`Copy`. Empirically confirmed in
   RFC-0135's Background against the release binary.
-- **`Copy` ⇒ `Clone`** by blanket impl (RFC-0206 §2): `extend<T: Copy> T: Clone { fun
-  clone(self: &T) -> T { *self } }`. `Clone` alone (non-`Copy`) runs user code and may
-  allocate.
+- **`Copy` ⇒ `Clone`** as a super-aspect (`Copy: Clone`, RFC-0168), with the `Clone` impl emitted
+  by `derives Copy` carrying the bitwise body `*self` (RFC-0206 §2). `Clone` alone (non-`Copy`)
+  runs user code and may allocate.
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
 - **Structural types**: `Copy` when their parts are, decided by the checker and not
   written anywhere: tuples, `[T; N]`, anonymous records (a named `record` takes a header entry); `&T` and the `[T]`
@@ -233,8 +233,8 @@ Two orthogonal axes.
   type the compiler supplies `clone`, and its body is **sealed**, always a bitwise copy,
   never user-written; the compiler inserts the call at a by-value use. So `let b := a` for a
   `Copy` type is `let b := a.clone()` with the call inserted, and `Copy` is `Clone` that
-  the compiler calls for you. This is RFC-0206 §2's blanket
-  (`extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }`), stated as the
+  the compiler calls for you. This is RFC-0206 §2's super-aspect
+  (`Copy: Clone`, with the `Clone` impl emitted by `derives Copy`), stated as the
   definition of `Copy`. The body is sealed because a user-written `clone` invoked implicitly
   would run arbitrary code at every copy (hidden cost, hidden panics and effects, an
   awkward interaction with `Drop`), which is D1 in its worst form. It follows that a `Copy`
@@ -517,7 +517,7 @@ fun scale<T: Copy>(p: T, k: i64) -> T { … }   // bound spelling unchanged
 ```
 
 **Mechanism.** `Copy` stays in the type system exactly as it is — a bound, the
-`Copy ⇒ Clone` blanket (RFC-0206 §2), the `is_copy` predicate, `use_multiplicity` on
+`Copy: Clone` super-aspect (RFC-0206 §2, RFC-0168), the `is_copy` predicate, `use_multiplicity` on
 `Type::Fun` (RFC-0134 §4). What changes is only who may establish it for a named type:
 
 1. `copy` on a `struct`/`enum` declaration registers the same bare impl bound that

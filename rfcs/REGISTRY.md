@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**211 RFCs total.** 39 draft, 49 under review, 12 accepted, 2 integrated (102 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**211 RFCs total.** 38 draft, 50 under review, 12 accepted, 2 integrated (102 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
-## Draft (39)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -39,7 +39,6 @@ the curated thematic map.
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
 - **RFC-0151** — Tuples as Numeric-Label Rows (`0-draft` ; rfcs/0-draft/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29)
 - **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`0-draft` ; rfcs/0-draft/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-09-02)
-- **RFC-0168** — Equality Model and Super-Aspects (`0-draft` ; rfcs/0-draft/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09)
 - **RFC-0170** — Literal Types and Discriminated Structural Unions (`0-draft` ; rfcs/0-draft/rfc-0170-literal-types-and-discriminated-structural-unions.md ; date 2026-09-27)
 - **RFC-0172** — Sized and Unsized Kinds, and a Generalized Unsizing Coercion (`0-draft` ; rfcs/0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md ; date 2026-10-01)
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
@@ -57,7 +56,7 @@ the curated thematic map.
 - **RFC-0211** — Aspect Templates on Residuals (`0-draft` ; rfcs/0-draft/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02)
 - **RFC-0212** — Markers on Structural Types (`0-draft` ; rfcs/0-draft/rfc-0212-markers-on-structural-types.md ; date 2026-11-02)
 
-## Under Review (49)
+## Under Review (50)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -96,6 +95,7 @@ the curated thematic map.
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-22)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
+- **RFC-0168** — Equality Model and Super-Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09 ; updated 2026-11-03)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
 - **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-30)

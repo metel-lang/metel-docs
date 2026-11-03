@@ -178,12 +178,13 @@ fix-it.
 |---|---|---|---|
 | `aspect X` (default) | `extend` only | none | `Drop`, user aspects |
 | `derivable aspect X` | `extend`, or the derivation | `derives` | `Clone`, `Debug`, `Display` |
-| `header derivable aspect X` | the derivation, in the declaration only | `derives` | `Copy` |
+| `header derivable aspect X` | the derivation, in the declaration only | `derives` | `Copy` (a super-aspect of `Clone`) |
 | `header aspect X` | a promise, in the declaration only | `:` | a user `Validated` |
 | `auto aspect X` (std only) | structurally; opt-out in the declaration | `: !X` | `Send`, `Sync`, `Linear` (RFC-0096) |
 
 ```metel
-header derivable aspect Copy;                            // derives Copy   (sealed; implies a sealed Clone)
+header derivable aspect Copy: Clone { provide Clone { fun clone(&self) -> Self { *self } } }
+                                                         // derives Copy   (emits the sealed Clone)
 derivable aspect Clone { fun clone(&self) -> Self; }     // derives Clone, or extend Clone { … }
 header aspect Validated;                                 // : Validated    (an unchecked promise)
 auto aspect Send;                                        // : !Send        to opt out
@@ -206,9 +207,9 @@ The keywords are sketches; the spelling is open to the implementation's review o
    Clone` can `extend Clone { … }`. A type with both is a coherence overlap error.
 5. *`auto` takes only negative entries.* A positive `: Send` is an error, because an auto aspect
    holds without being granted. `auto` is std's.
-6. *Sealing.* `Copy implies Clone` is a sealed blanket `extend` in std for a `derivable` aspect; the
-   coherence rule that rejects a second `Clone` on a `Copy` type is what seals it, so `derives
-   Copy` with `derives Clone` (or an `extend Clone`) is an error with no extra rule.
+6. *Sealing.* `Copy` is a super-aspect of `Clone` (RFC-0168), and `derives Copy` emits the `Clone`
+   impl with its sealed bitwise body. A second `Clone` for the type overlaps the emitted one, so
+   `derives Copy` with `derives Clone` (or an `extend Clone`) is an error with no extra rule.
 7. *The visibility guarantee.* It is a property of position: only a `header` aspect can be granted
    only in the declaration. `derivable` gives explicit derivation, not visibility, so a hand-written
    `extend Cache: Clone` elsewhere in the module is not visible at the declaration. That is
@@ -217,7 +218,8 @@ The keywords are sketches; the spelling is open to the implementation's review o
 
 **`Copy`.** `Copy` is `header derivable`. Its derivation checks every field against the eligibility
 rule ("every field must implement `Copy`", today's `check_copy_impl_eligibility`), derives the
-generic condition (R1), and supplies the sealed `clone` through the `Copy ⟹ Clone` blanket. The
+generic condition (R1), and emits the `Clone` impl with the sealed bitwise `clone`, which
+`Copy: Clone` then entails for bounds. The
 same applies to std aspects with a recognised rule (RFC-0096's `Send`/`Sync`/`Linear`, which are
 `auto`). It is not a special case: it is a `header derivable` aspect whose derivation std defines.
 

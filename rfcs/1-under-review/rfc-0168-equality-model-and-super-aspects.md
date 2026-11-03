@@ -2,8 +2,18 @@
 id: rfc-0168
 title: "Equality Model and Super-Aspects"
 date: '2026-09-09'
-status: draft
+status: under-review
+updated: '2026-11-03'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1793'
 ---
+
+> **Dependency note, 2026-11-02.** The Copy/Clone settlement (RFC-0162, RFC-0206, RFC-0207) rests
+> on this RFC's super-aspect relation: `Copy` is declared a super-aspect of `Clone`, so
+> `T: Copy` entails `T: Clone`, and `derives Copy` emits the `Clone` impl with its sealed
+> bitwise body. Whether the super-aspect relation is split from the equality model, so the
+> settlement does not wait on the rest, is open for review.
+
+> **Status — under review (2026-11-03).** pulled in as the dependency of the Copy/Clone settlement (Copy: Clone)
 
 ## Summary
 
