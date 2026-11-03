@@ -65,36 +65,42 @@ aliases shared state is `Share` (RFC-0158), not `Clone`.
 
 ## 2. `Copy` is `Clone` that the compiler calls (from RFC-0080 §1.2)
 
-`Copy` is a super-aspect of `Clone` (RFC-0168), and its derivation emits the `Clone` impl, with a
-bitwise body:
+`Copy` provides `Clone`: it is a super-aspect of `Clone` (RFC-0168), and its declaration carries
+the `Clone` implementation, with a bitwise body.
 
 ```metel
-header derivable aspect Copy: Clone {
-    // emitted by `derives Copy`; the only Clone a Copy type has
-    provide Clone { fun clone(&self) -> Self { *self } }
+header derivable aspect Copy provides Clone {
+    fun clone(&self) -> Self { *self }          // sealed body, used where Copy holds
 }
 ```
 
 A `derives Copy` entry therefore does two things: it checks every field and generates the `Copy`
-fact, and it emits `extend T: Clone` with this body for the same type, under the same condition.
-Four rules follow.
+fact, and it emits `extend T: Clone` with this body for the same type, under `Copy`'s condition.
+The general rule for `provides` and its selection rule are in RFC-0207; the consequences for
+`Clone` are these.
 
-1. **The body is sealed.** It is compiler-provided and always bitwise. A user-written `clone`
-   called implicitly would run arbitrary code at every copy (hidden cost, hidden panics and
-   effects, an awkward interaction with `Drop`), which is RFC-0162's D1 in its worst form.
-2. **A `Copy` type cannot have a custom `Clone`.** `extend P: Clone { … }` for a type with
-   `derives Copy` overlaps the `Clone` the derivation emitted and is an error, with a message that
-   says the `Clone` of a `Copy` type is always the bitwise copy. No dedicated coherence rule is
-   needed.
-3. **The implicit call is the definition.** `let b := a` for a `Copy` type is `let b := a.clone()`
+1. **The body is sealed where `Copy` holds.** It is compiler-provided and always bitwise. A
+   user-written `clone` called implicitly would run arbitrary code at every copy (hidden cost,
+   hidden panics and effects, an awkward interaction with `Drop`), which is RFC-0162's D1 in its
+   worst form.
+2. **A written `Clone` cannot override it.** `extend P: Clone { … }` for a type with `derives Copy`
+   overlaps the provided impl on the instantiations where `Copy` holds, and is a T0015 error, with a
+   message that says the `Clone` of a `Copy` type is always the bitwise copy. Making a written
+   impl disjoint with an explicit negative bound (`T: Clone` and `T: !Copy`) is legal.
+3. **A derived `Clone` may coexist.** `derives Copy, Clone` is valid. For the instantiations where
+   `Copy` holds, the provided body is used; the derived impl (field-wise, under `T: Clone`) covers
+   the instantiations that are `Clone` but not `Copy`, which is exactly Rust's
+   `#[derive(Clone, Copy)]` for a generic type. For a type that is always `Copy` the derived impl
+   is fully shadowed, and a lint reports it as redundant.
+4. **The implicit call is the definition.** `let b := a` for a `Copy` type is `let b := a.clone()`
    with the call inserted. A type that is not `Copy` is moved instead, and is `Clone` only if
    it says so.
-4. **A type needs only `derives Copy`** (however the grant is written, RFC-0162 Axis C): there is no
-   `derive(Clone, Copy)` pair, and `derives Copy, Clone` is an overlap error.
+5. **A type needs only `derives Copy`** for the common case (however the grant is written,
+   RFC-0162 Axis C): there is no `derive(Clone, Copy)` pair to write.
 
 `T: Copy` entails `T: Clone` by the super-aspect relation, so `x.clone()` and a second use of `x`
 both work under `T: Copy`, in the checker and in the abstract analysis of a generic body, with no
-special rule. A refining `extend<T> W<T>: Copy;` widens the condition of the emitted `Clone` as
+special rule. A refining `extend<T> W<T>: Copy;` widens the condition of the provided `Clone` as
 well, so the two carry one `where`. For a target with no declaration (a primitive, a tuple, an
 array, an anonymous record) there is no derivation to emit the impl; the super-aspect obligation
 is met by the `Clone` impls std already has (§3), and the tuple arm (§3) completes it. The
@@ -102,9 +108,16 @@ interpreter already deep-clones at every by-value use, so this makes existing be
 definition, with move checking as the restriction. A lint on a redundant `.clone()` of a `Copy`
 value is natural and is left to the implementation.
 
+**Generic types.** For `struct Wrapper<T> derives Copy, Clone { v: T }` the emitted impls are
+`extend<T: Copy> Wrapper<T>: Copy;`, `extend<T: Copy> Wrapper<T>: Clone { *self }` (provided) and
+`extend<T: Clone> Wrapper<T>: Clone { … }` (derived). `Wrapper<i64>` is `Copy` and `Clone` and uses
+the provided body; `Wrapper<String>` is `Clone` only and uses the derived body; `Wrapper<NoClone>`
+is neither. No negative bounds and no specialization are involved, because the provided impl wins
+only over a *derived* impl, whose behaviour on the overlap is known.
+
 **Dependency.** Super-aspects are RFC-0168's, a draft. The first implementation may realise
-`Copy: Clone` and the emitted impl as a compiler-known relation with the same observable behaviour
-and move to RFC-0168's mechanism when it lands; the surface does not change.
+`Copy: Clone` and the provided impl as a compiler-known relation with the same observable
+behaviour and move to RFC-0168's mechanism when it lands; the surface does not change.
 
 ## 3. Standard `Clone` impls
 
@@ -201,8 +214,10 @@ first implementation depends on them.
 1. **`Clone` for user types** (§4): option (c) with (a) kept: `struct P derives Clone`, or a
    hand-written `extend P: Clone` for a type with no `derives Clone` entry. `derives Clone` needs
    `Clone` declared a `derivable aspect` (RFC-0207).
-2. **Sealing** is an overlap: a second `Clone` for a type with `derives Copy` collides with the
-   one the derivation emitted. `derives Copy, Clone` is therefore an error, with no separate rule.
+2. **Sealing.** `Copy` provides `Clone` with a bitwise body (§2). A written `Clone` that overlaps
+   it is a T0015 error; a derived `Clone` coexists, and the provided body wins where `Copy` holds
+   (RFC-0207, the selection rule). `derives Copy, Clone` is valid; for an always-`Copy` type the
+   derived impl is dead and a lint reports it.
 3. **Bound entailment.** `T: Copy ⟹ T: Clone` is the super-aspect rule of RFC-0168, in the
    checker and in the abstract analysis of generic bodies.
 4. **Allocators** (§5): out of scope.
@@ -222,7 +237,7 @@ first implementation depends on them.
 
 **Outcome:** accepted 2026-11-02 (language owner), with RFC-0162 and RFC-0207 as one set.
 
-**Accepted:** `Copy` is `Clone` that the compiler calls, with a sealed bitwise body; the standard
+**Accepted:** `Copy` is `Clone` that the compiler calls, provided by `Copy` with a sealed bitwise body; the standard
 `Clone` impls of §3; `derives Clone` for user types with hand-written `extend` kept; the rules
 above.
 

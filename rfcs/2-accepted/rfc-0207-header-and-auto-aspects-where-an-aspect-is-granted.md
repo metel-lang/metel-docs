@@ -31,10 +31,11 @@ separates two properties of an aspect and gives each a declaration modifier:
    is only ever written by hand or, if `header`, recorded as a promise.
 
 The properties compose. `Copy` is both: it is granted only in the declaration, and its entry
-checks every field and generates the sealed `clone` (RFC-0206 §2).
+checks every field and provides the sealed `clone` (RFC-0206 §2).
 
 ```metel
-header derivable aspect Copy;                            // struct Point derives Copy
+header derivable aspect Copy provides Clone { fun clone(&self) -> Self { *self } }
+                                                         // struct Point derives Copy
 derivable aspect Clone { fun clone(&self) -> Self; }     // struct Doc derives Clone, or extend Clone { … }
 header aspect Validated;                                 // struct Order: Validated  (a promise; no derivation)
 auto aspect Send;                                        // struct Token: !Send      (opt-out)
@@ -178,13 +179,13 @@ fix-it.
 |---|---|---|---|
 | `aspect X` (default) | `extend` only | none | `Drop`, user aspects |
 | `derivable aspect X` | `extend`, or the derivation | `derives` | `Clone`, `Debug`, `Display` |
-| `header derivable aspect X` | the derivation, in the declaration only | `derives` | `Copy` (a super-aspect of `Clone`) |
+| `header derivable aspect X` | the derivation, in the declaration only | `derives` | `Copy` (provides `Clone`) |
 | `header aspect X` | a promise, in the declaration only | `:` | a user `Validated` |
 | `auto aspect X` (std only) | structurally; opt-out in the declaration | `: !X` | `Send`, `Sync`, `Linear` (RFC-0096) |
 
 ```metel
-header derivable aspect Copy: Clone { provide Clone { fun clone(&self) -> Self { *self } } }
-                                                         // derives Copy   (emits the sealed Clone)
+header derivable aspect Copy provides Clone { fun clone(&self) -> Self { *self } }
+                                                         // derives Copy   (provides the sealed Clone)
 derivable aspect Clone { fun clone(&self) -> Self; }     // derives Clone, or extend Clone { … }
 header aspect Validated;                                 // : Validated    (an unchecked promise)
 auto aspect Send;                                        // : !Send        to opt out
@@ -204,12 +205,14 @@ The keywords are sketches; the spelling is open to the implementation's review o
    `extend` (RFC-0102) as today; `header aspect` is the opt-in to the single-place form. Without
    the opt-in a marker would have two ways to be granted.
 4. *A `derivable` aspect that is not `header` may be written by hand.* A type with no `derives
-   Clone` can `extend Clone { … }`. A type with both is a coherence overlap error.
+   Clone` can `extend Clone { … }`. A type with both is a coherence overlap error (a written impl
+   overlaps a derived one).
 5. *`auto` takes only negative entries.* A positive `: Send` is an error, because an auto aspect
    holds without being granted. `auto` is std's.
-6. *Sealing.* `Copy` is a super-aspect of `Clone` (RFC-0168), and `derives Copy` emits the `Clone`
-   impl with its sealed bitwise body. A second `Clone` for the type overlaps the emitted one, so
-   `derives Copy` with `derives Clone` (or an `extend Clone`) is an error with no extra rule.
+6. *`provides`.* An aspect may name a super-aspect it provides: `Copy provides Clone` says that
+   `Copy` is a super-aspect of `Clone` (RFC-0168), that deriving `Copy` supplies the `Clone` impl,
+   and that `Copy` carries the body. The general rule is in "The `provides` clause" below;
+   sealing is its overlap rule, not a `Copy`-specific one.
 7. *The visibility guarantee.* It is a property of position: only a `header` aspect can be granted
    only in the declaration. `derivable` gives explicit derivation, not visibility, so a hand-written
    `extend Cache: Clone` elsewhere in the module is not visible at the declaration. That is
@@ -218,10 +221,58 @@ The keywords are sketches; the spelling is open to the implementation's review o
 
 **`Copy`.** `Copy` is `header derivable`. Its derivation checks every field against the eligibility
 rule ("every field must implement `Copy`", today's `check_copy_impl_eligibility`), derives the
-generic condition (R1), and emits the `Clone` impl with the sealed bitwise `clone`, which
+generic condition (R1), and provides the `Clone` impl with the sealed bitwise `clone`, which
 `Copy: Clone` then entails for bounds. The
 same applies to std aspects with a recognised rule (RFC-0096's `Send`/`Sync`/`Linear`, which are
 `auto`). It is not a special case: it is a `header derivable` aspect whose derivation std defines.
+
+**The `provides` clause.** An aspect declaration may name super-aspects it provides:
+`aspect D provides S` (and `aspect D: S` when it only requires `S`). The rules:
+
+1. *`provides` implies the super-aspect relation* (RFC-0168): `T: D` entails `T: S`. `S` must be
+   `derivable`, checked at the declaration, because a provided impl needs a derivation to stand
+   beside.
+2. *Deriving `D` provides `S`.* A type with `derives D` gets an `S` impl from `D`'s declaration. The
+   declaration may carry the body (`provides S { body }`), which is emitted under `D`'s condition and
+   is the implementation wherever `D` holds. Without a body the provided impl is `S`'s own
+   derivation, under `S`'s own condition.
+3. *Selection.* For a type and an aspect, a provided impl may overlap a **derived** impl of the same
+   aspect, and where both apply the provided one is used. A **written** impl that overlaps a
+   provided one is a T0015 error, because its body is unknown. A written impl made disjoint by an
+   explicit negative bound is legal. Two provided impls of the same aspect (from two sub-aspects) are
+   allowed only if their bodies are identical, or one has none.
+4. *The invariant.* Wherever `D` holds, the provided body must be observably equal to what `S`'s
+   derivation would produce. The compiler cannot check it in general; the aspect's author owes it.
+   For `Copy`/`Clone` it holds by induction over the fields, with std's primitive and structural
+   `Clone` impls as the base.
+5. *Redundancy is a lint, not an error.* `derives Copy, Clone` is valid. For a type where `D` always
+   holds the derived impl is fully shadowed, and a lint reports it as redundant. A fix-it names the
+   aspect that provides it.
+6. *Requires without providing.* `aspect D: S` (RFC-0168's `Eq: PartialEq`) requires an `S` impl to
+   exist for the type, derived or written, and provides none, so a hand-written `S` is legal and
+   `derives D` does not derive `S`.
+
+Worked examples, with `header derivable aspect Copy provides Clone { fun clone(&self) -> Self { *self } }`:
+
+```metel
+struct Point derives Copy { x: i64, y: i64 }
+// extend Point: Copy;        extend Point: Clone { *self }         (provided; sealed)
+
+struct Wrapper<T> derives Copy, Clone { v: T }
+// extend<T: Copy>  Wrapper<T>: Copy;
+// extend<T: Copy>  Wrapper<T>: Clone { *self }                     (provided)
+// extend<T: Clone> Wrapper<T>: Clone { Wrapper { v = self.v.clone() } }   (derived)
+// Wrapper<i64>: Copy + Clone, provided body; Wrapper<String>: Clone only, derived body
+
+struct Id derives Copy, Clone { n: i64 }            // accepted; lint: `derives Clone` is redundant, Copy provides it
+
+struct View<T> derives Copy, Clone { r: &T }
+extend<T> View<T>: Copy;                            // refinement widens the provided Clone as well
+// View<NoClone>: Copy + Clone (provided body); the derived impl is dead and the lint fires
+
+struct W2<T> derives Copy { v: T }
+extend<T: Clone> W2<T>: Clone { … }                 // error T0015: overlaps the Clone provided by Copy
+```
 
 **User-declared aspects (decided 2026-11-02).** `header` and `derivable` are user-declarable;
 `auto` stays std's.
@@ -379,6 +430,9 @@ attribute or registry is needed. RFC-0093 is narrowed to what a comptime derivat
    compile-time `N` for arrays, variadic generics for tuples; hardcoded until then), not
    auto-impls.
 6. **The visibility guarantee** covers `header` aspects (rule 7 above).
+7. **`provides`.** An aspect may provide a super-aspect, with an optional body; the selection rule
+   (provided over derived, written overlap an error), the invariant, and the redundancy lint are
+   accepted as stated under "The `provides` clause".
 
 **Deferred, with homes.**
 
@@ -399,8 +453,9 @@ attribute or registry is needed. RFC-0093 is narrowed to what a comptime derivat
 **Accepted:** the `header` and `derivable` modifiers and the `auto` kind; the `derives` clause for
 derivations (`Copy` included) and the colon list for promises and opt-outs; derivation always
 explicit; user header aspects as promises; structural coverage as written impls in the aspect's
-module; the refinement and negative-impl rules; the coherence rules (including sealing); the
-visibility guarantee scoped to `header` aspects; the spellings above.
+module; the refinement and negative-impl rules; the `provides` clause and its selection rule
+(sealing is its overlap rule); the visibility guarantee scoped to `header` aspects; the spellings
+above.
 
 **Deferred, with homes:** see the previous section.
 
