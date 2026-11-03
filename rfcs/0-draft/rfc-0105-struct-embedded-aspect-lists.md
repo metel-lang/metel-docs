@@ -6,9 +6,9 @@ status: draft
 updated: '2026-07-14'
 ---
 
-> **Note, 2026-11-02 (RFC-0207, accepted).** The marker subset of aspect lists in declarations is
-> taken by RFC-0207 (`struct Point: Copy`, `struct Token: !Send`), with a separate `derives` clause
-> for derivations. This RFC keeps the later stage: method-bearing aspects after the colon, with
+> **Note, 2026-11-02 (RFC-0207, accepted).** The subset of aspect lists in declarations that
+> RFC-0207 takes is two clauses: `derives` for what the compiler generates (`struct Point derives
+> Copy`) and the colon list for promises and opt-outs (`struct Token: !Send`). This RFC keeps the later stage: method-bearing aspects after the colon, with
 > their methods written in the body and qualified by aspect, conditional written impls, and
 > associated items.
 

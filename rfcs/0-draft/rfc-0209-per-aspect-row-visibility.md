@@ -21,7 +21,7 @@ struct Doc derives Clone { title: String, tags: List<String> }   // Doc's row is
 struct Handle { fd: i64 }                                 // not visible to any row template
 ```
 
-The derivation behind a `derives` or marker entry is then not a separate mechanism. `struct Doc derives Clone` is
+The derivation behind a `derives` entry is then not a separate mechanism. `struct Doc derives Clone` is
 `extend Doc: Clone` supplied by the aspect's existing template, applied to `Doc`'s row, and
 checked field by field through the template's `where ..R: Clone`. No new parameter kind and no
 derive attribute are added.
@@ -30,7 +30,7 @@ derive attribute are added.
 
 ## Motivation
 
-RFC-0162 and RFC-0207 give a named type an entry for `Copy` (`: Copy`) and `Clone` (`derives Clone`), and the entry
+RFC-0162 and RFC-0207 give a named type an entry for `Copy` and `Clone` (`derives Copy`, `derives Clone`), and the entry
 behaves like a derive: it checks the fields, supplies the body, and fixes the generic
 condition. RFC-0207 asks that this fall out of the language's rules instead of being a
 special case. The rule needed is how a nominal type's row reaches an aspect's template.
@@ -54,8 +54,7 @@ struct's narrowed residual and an opted-in `record` from being confusable.
 
 **Legality.**
 1. **Row visibility is a property of a (type, aspect) pair.** A nominal type's row is visible
-   to the row-conditional impls of aspect `A` exactly when its declaration header lists `A`, after the colon for a marker aspect or after
-   `derives` for a derivable one (RFC-0207), or, for a `record` declaration, as section 2 provides. Otherwise it is
+   to the row-conditional impls of aspect `A` exactly when its declaration header lists `A` after `derives` (RFC-0207), or, for a `record` declaration, as section 2 provides. Otherwise it is
    invisible, as today.
 2. **A row template.** An `extend` of `A` whose target is `{ ..R }` (with `R` a row, RFC-0208, or
    a `record R` today) is a row template. A template applies to a nominal type `T` that has
@@ -76,8 +75,8 @@ struct's narrowed residual and an opted-in `record` from being confusable.
 (same bits, new static type).
 
 **Generic types.** A generic nominal type is checked per instantiation: the template's `where`
-clause is evaluated on the instantiated field types, so `struct View<T>: Copy { r: &T }` is `Copy`
-for every `T` (because `&T` is) and `struct Wrapper<T>: Copy { v: T }` only when `T` is. This is
+clause is evaluated on the instantiated field types, so `struct View<T> derives Copy { r: &T }` is `Copy`
+for every `T` (because `&T` is) and `struct Wrapper<T> derives Copy { v: T }` only when `T` is. This is
 the weakest sufficient condition (RFC-0162's R2) with no stored condition and no solver
 beyond ordinary bound checking. RFC-0162 recorded R1 as decided; this RFC makes R2 the natural
 result, and the choice is reopened there.
@@ -87,7 +86,7 @@ result, and the choice is reopened there.
 ## 2. Records
 
 A `record` declaration is visible to every row template today (RFC-0120 tier 3). Under this
-RFC it is gated like a struct **for marker and derivable aspects** (RFC-0207): `record P`
+RFC it is gated like a struct **for derivable aspects** (RFC-0207): `record P`
 satisfies Clone's template only when `record P derives Clone` is written. For plain aspects
 (granted by `extend` only) nothing changes. This is the consequence of RFC-0162's decision that a named `record` takes a
 header entry; it is breaking for any `record` that is `Copy` or `Clone` today and is a
@@ -110,7 +109,7 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 |---|---|---|
 | plain `struct` / `enum`, no entry | none | none |
 | `struct T: A` / `derives A` | the templates of `A` | new |
-| `record` declaration, no entry | none, for marker and derivable aspects | all (changes) |
+| `record` declaration, no entry | none, for derivable aspects | all (changes) |
 | `record T: A` | the templates of `A` | all (narrowed) |
 | anonymous record | all | all |
 | `to_record()` (RFC-0119) | the result is an anonymous record | unchanged |
@@ -143,8 +142,8 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 
 ## Relationship to existing RFCs
 
-- **RFC-0137 / RFC-0120** — the tiers; this RFC refines tier 1 and narrows tier 3 for marker and derivable aspects.
-- **RFC-0207** — the declaration kinds (marker, derivable, auto), the colon list and the `derives` clause; this RFC gives an entry its derivation.
+- **RFC-0137 / RFC-0120** — the tiers; this RFC refines tier 1 and narrows tier 3 for derivable aspects.
+- **RFC-0207** — the `header`, `derivable` and `auto` modifiers, the colon list and the `derives` clause; this RFC gives a `derives` entry its derivation.
 - **RFC-0162 / RFC-0206** — `Copy` and `Clone`; R2 falls out here.
 - **RFC-0123 / RFC-0186 / RFC-0208** — the field-wise bound `..R: A` and row parameters.
 - **RFC-0119** — the explicit conversions, unchanged.
@@ -165,8 +164,8 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
    keep private (RFC-0116's rule for record fields); whether visibility overrides privacy for
    the granted aspect.
 5. **Which aspects have templates, and a checked user marker (deferred from RFC-0207).**
-   Whether a user derivable aspect may provide one, whether a marker aspect's declaration can
-   state a field-wise check by reusing the bound (`marker aspect Pod where ..F: Pod;` is a
+   Whether a user derivable aspect may provide one, whether a `header` aspect's declaration can
+   state a field-wise check by reusing the bound (`header aspect Pod where ..F: Pod;` is a
    sketch), and what makes a template's `where` bound the check of the entry.
 6. **R1 or R2**: R2 follows from this rule (section 1). RFC-0162 accepted R1 for the first
    implementation; moving to R2 later accepts everything R1 accepts.

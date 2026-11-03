@@ -21,12 +21,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 
 1. **The value model's semantics do not change.** `Copy` is implicit and cheap, `Clone` is
    explicit; no P1, P2 or P3. `Copy` is `Clone` whose body the compiler seals as a bitwise copy
-   and calls for you (B1s, RFC-0206 §2), so a type needs only `: Copy`.
-2. **Named types state copyness in the declaration header** as a marker fact (C4):
-   `struct Point: Copy { x: i64, y: i64 }`, `struct Token: !Send { … }`. `Copy` stays an aspect
-   and a bound; the grant is the header entry. `Copy` has no methods, so it is a marker aspect
-   listed after the colon; aspects with methods are derived with a `derives` clause or written
-   with `extend` (RFC-0207). `: Copy` mirrors `extend T: Copy`. For a generic type the condition
+   and calls for you (B1s, RFC-0206 §2), so a type needs only `derives Copy`.
+2. **Named types state copyness in the declaration header** (C4):
+   `struct Point derives Copy { x: i64, y: i64 }`, `struct Token: !Send { … }`. `Copy` stays an
+   aspect and a bound; the grant is the header entry. `Copy` is a `header derivable` aspect
+   (RFC-0207): granted only in the declaration, and its entry is a derivation, because it checks
+   every field and supplies the sealed `clone`. A promise with no derivation, and an opt-out, go
+   after the colon; a written implementation is `extend`. For a generic type the condition
    is derived from the fields (R1: every type parameter that occurs in a field must be `Copy`),
    and an `extend` widens it where R1 is too strict, as for `struct W<T> { r: &T }`. R1 is the
    rule for the first implementation; R2, the exact condition, is the intended outcome of
@@ -35,13 +36,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
    target with no declaration in the aspect's defining module (RFC-0207).
 3. **Structural types stay inferred from their parts** (S1). How one states its copyness where it
    is written is RFC-0212's question, not decided here.
-4. **A named `record` takes a header entry like a `struct`**: `record P: Copy { … }`, and a plain
+4. **A named `record` takes a header entry like a `struct`**: `record P derives Copy { … }`, and a plain
    `record P` is move-only and not cloneable. A `record` is `Copy` by its fields today, so
-   existing declarations need `: Copy` added, a mechanical migration. Anonymous records and
+   existing declarations need `derives Copy` added, a mechanical migration. Anonymous records and
    tuples stay inferred.
-5. **The grant is visible and cannot be hidden by a derive.** `Copy` has no deriver (it is a
-   marker, not derived); the stop rule (D6.3) is a class, not an exception: *marker facts are
-   declared on the type, behaviour is implemented in `extend` or derived with `derives`*.
+5. **The grant is visible and cannot be hidden by a derive.** `Copy`'s derivation is fixed by std
+   and requested in the header, so no deriver can act away from the declaration. The stop rule
+   (D6.3) is a property of the aspect, not an exception: *a `header` aspect is granted only in the
+   declaration; every other aspect is written or derived like any impl* (RFC-0207).
 6. **The names stay.** `Copy` and `Clone` are kept; RFC-0135's `Copy` to `many` rename is
    declined and the RFC refused. Its mechanism-location half is taken as the header entry.
 7. **`Copy` and `Drop` stay mutually exclusive** (RFC-0071 §4) for the first implementation; the
@@ -288,8 +290,8 @@ today's answer (C1) was inherited without being chosen.
   *supposed* to be removable without changing meaning. Listed for completeness; the
   weakest of the three.
 
-- **C4. A marker fact in the declaration header.** `struct Point: Copy { x: i64, y: i64 }`,
-  `enum Direction: Copy { … }`, `struct Token: Copy, !Send { … }`: the declaration's own
+- **C4. A fact in the declaration header.** `struct Point derives Copy { x: i64, y: i64 }`,
+  `enum Direction derives Copy { … }`, `struct Token: !Send derives Copy { … }`: the declaration's own
   aspect list (the draft RFC-0105, adopting its grammar and its `!Aspect` items), where, for
   an aspect with **no required methods** (a marker), a positive item is the grant itself and
   not an obligation that an `extend` elsewhere must meet. `Copy` stays an aspect, uniform
@@ -298,7 +300,7 @@ today's answer (C1) was inherited without being chosen.
 
 - **C5. The aspect declares how it is granted.** Each aspect carries a *grant mode*, and the
   compiler enforces it. `Copy` is a `header` aspect: granted only in the type's declaration
-  (written as C2's `copy` or C4's `: Copy`), with an `extend` of it an error. `Drop` stays
+  (written as C2's `copy` or C4's `derives Copy`), with an `extend` of it an error. `Drop` stays
   `extend`; `Send`/`Sync`/`Linear` are `auto`. C2 and C4 become two spellings of what a
   `header` aspect's grant looks like, and the location is mandatory either way. Added
   2026-11-02; see RFC-0207.
@@ -347,14 +349,14 @@ of every `extend … : Copy;`. Grants for foreign types (3) are unaffected.
 
 > **Moved 2026-11-02 (RFC-0207, Header and Auto Aspects — Where an Aspect Is Granted).** The
 > header list (C4), its refinable grants and the aspect grant modes (C5) are not specific to
-> `Copy`: they decide where any marker aspect, `Clone`'s derived body (RFC-0206 §4) and
+> `Copy`: they decide where any aspect is granted, `Clone`'s derived body (RFC-0206 §4) and
 > `Send`/`Sync`/`Linear` (RFC-0096) are granted. They have their own RFC; this section keeps
 > only what the `Copy` position needs.
 
 What this RFC relies on from RFC-0207:
 
-- A named type states `Copy` in its header (`struct Point: Copy { … }`), and the grant is a
-  marker fact, not an obligation met elsewhere. `Copy` stays an aspect and a bound.
+- A named type states `Copy` in its header (`struct Point derives Copy { … }`), and the grant is
+  a derivation, not an obligation met elsewhere. `Copy` stays an aspect and a bound.
 - An `extend … : Copy;` is legal only to **refine** a header grant, as a **negative impl**, or
   for a target with no declaration, in std (RFC-0207): the primitives (until they get
   declarations with headers) and the structural kinds, which are impls such as
@@ -908,10 +910,11 @@ The questions raised during review, with where each ended (numbering kept for th
    implementation (RFC-0071 §4); the relaxation is tracked by metel-core#1782 and needs a
    soundness argument checked against `--move-check`.
 3. **Disposition of RFC-0135.** Resolved: refused (metel-lang/metel-docs#544).
-4. **Keyword or aspect (Axis C / P4)?** Resolved: C4, a marker aspect after the colon, with
-   RFC-0207's declaration kinds stating the stop rule. C2 (`copy struct`) is the kept alternative.
-5. **May `Copy` ever be derived?** Resolved: no. `Copy` is a marker, granted in the header, not
-   derived, and a deriver for it would need its own RFC.
+4. **Keyword or aspect (Axis C / P4)?** Resolved: C4, a `derives Copy` entry on a `header
+   derivable` aspect, with RFC-0207's modifiers stating the stop rule. C2 (`copy struct`) is the kept alternative.
+5. **May `Copy` ever be derived?** Resolved: it is, by its own fixed std derivation, requested by
+   `derives Copy` in the header (RFC-0207). No user-registered deriver exists, and a derive hidden
+   away from the declaration is impossible.
 6. **Residuals of S6.** Extracted to RFC-0212 (markers on structural types).
 7. **Residuals of C2.** (a) Conditional grants: derived from the fields (R1), refined by an
    `extend`. (b) The stop rule: RFC-0207. (c) One word, two roles: moot, since C2 is not taken.
@@ -929,7 +932,7 @@ The questions raised during review, with where each ended (numbering kept for th
 **Outcome:** accepted 2026-11-02 (language owner), with RFC-0206 and RFC-0207 as one set.
 
 **Accepted:** the direction above: no value-model change; copyness of a named type stated in its
-declaration as a marker entry (C4, `struct P: Copy`); `Copy` as `Clone` the compiler calls with a
+declaration (C4, `struct P derives Copy`); `Copy` as `Clone` the compiler calls with a
 sealed bitwise body (B1s); R1 for generic conditions in the first implementation; a named
 `record` taking a header entry; the names kept; RFC-0135 refused.
 

@@ -16,7 +16,7 @@ A structural type is `Copy` when its parts are, and nothing is written. That is 
 hazard: adding a `String` field to a record, or to the type of a tuple element, changes the type
 from `Copy` to move-only with no edit at any declaration, and every use downstream changes
 meaning. This RFC proposes a **marker on the written type**, using the same items as the
-declaration's colon list (RFC-0207):
+declaration's colon list (RFC-0207), which also states checked promises:
 
 ```metel
 fun origin() -> { x: i64, y: i64 }: Copy { { x = 0, y = 0 } }
@@ -32,7 +32,7 @@ it is for every unmarked structural type.
 
 ## Motivation
 
-RFC-0162 moves the grant of `Copy` onto a named type's declaration (RFC-0207 marker entries).
+RFC-0162 moves the grant of `Copy` onto a named type's declaration (RFC-0207, `derives Copy`).
 That does not reach a tuple, an array or an anonymous record: each is written where it is used,
 with no header. The hazard (D1 of RFC-0162) is sharper here, because structural values are far
 commoner than named ones and the change that flips them is far from the code it breaks.
@@ -180,7 +180,7 @@ S2 and S4.
 ## Relationship to existing RFCs
 
 - **RFC-0162** — the `Copy`/`Clone` model; this RFC is its Axis S, extracted.
-- **RFC-0207** — marker aspects and the colon list whose items the marker reuses.
+- **RFC-0207** — the colon list whose items the marker reuses: on a structural type nothing is derived, so the marker is an assertion, the same statement the colon list makes for a promise.
 - **RFC-0123** — the field-wise row bound `where ..R: Copy`, which `{ x: i64, ..R }: Copy` spells.
 - **RFC-0130** — `extends Aspect`, legal only in parameter and return positions today
   (metel-core#622); S5 amends it.

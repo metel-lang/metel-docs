@@ -89,8 +89,8 @@ one level down: the members of `..E` are rows, and a row satisfies the bound whe
 for it. A unit variant satisfies it vacuously.
 
 ```metel
-enum Shape: Copy { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // marker entry; holds: f64 is Copy
-enum Bad: Copy { A { s: String } }                                // rejected at the declaration, next to `s`
+enum Shape derives Copy { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // holds: f64 is Copy
+enum Bad derives Copy { A { s: String } }                                // rejected at the declaration, next to `s`
 ```
 
 For a generic enum the bound is evaluated per instantiation (RFC-0209, R2): `Option<&String>`

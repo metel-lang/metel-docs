@@ -84,7 +84,7 @@ beside it. Four rules follow.
 3. **The implicit call is the definition.** `let b := a` for a `Copy` type is `let b := a.clone()`
    with the call inserted. A type that is not `Copy` is moved instead, and is `Clone` only if
    it says so.
-4. **A type needs only `: Copy`** (however the grant is written, RFC-0162 Axis C): there is no
+4. **A type needs only `derives Copy`** (however the grant is written, RFC-0162 Axis C): there is no
    `derive(Clone, Copy)` pair.
 
 `T: Copy` must therefore entail `T: Clone` wherever bounds are reasoned about, including the
@@ -123,8 +123,8 @@ question 8:
   reopens the worry about copyness-like behaviour hidden behind a derive, though `Clone` is an
   explicit call and hides no use-site behaviour.
 - **(c) A `derives` entry with a derived body**: `struct P derives Clone { … }`, field-wise.
-  `Clone` has methods, so it is a `derivable aspect` requested by `derives`, not a marker listed
-  after the colon (RFC-0207). It needs the field-wise machinery (a native hook, as records use
+  `Clone` is a `derivable aspect` requested by `derives`, and not `header`, so it can also be
+  written by hand (RFC-0207). It needs the field-wise machinery (a native hook, as records use
   now, and comptime later).
 - **(d) Automatic availability**, as for records and arrays: `Clone` whenever every field is
   `Clone`. No use-site behaviour changes. The cost is the API-stability hazard: adding a field

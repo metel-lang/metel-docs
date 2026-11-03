@@ -219,13 +219,13 @@ theme (#263, #893, #894), which waits on variadic generics and comptime.
 > inconsistently today (a bound accepts it, move checking moves it); that is a defect against this
 > rule (metel-core#1784), not an exception to it.
 
-> **Direction, not yet in force (2026-11-02).** RFC-0162 (with the header mechanism of RFC-0207) proposes that a named type state its
-> copyness in the declaration header (`struct Point: Copy { … }`, `record P: Copy { … }`), that
+> **Direction (2026-11-02, accepted in RFC-0162 and RFC-0207; not yet integrated).** RFC-0162 (with the header mechanism of RFC-0207) provides that a named type state its
+> copyness in the declaration header (`struct Point derives Copy { … }`, `record P derives Copy { … }`), that
 > the condition for a generic type be derived from its fields (every type parameter occurring in
-> a field must be `Copy`), and that `extend … : Copy;` remain only to refine a header grant. If
-> it is accepted, the "declared" rows of the table change their spelling and a named `record`
+> a field must be `Copy`), and that `extend … : Copy;` remain only to refine a header grant. Once
+> integrated, the "declared" rows of the table change their spelling and a named `record`
 > moves from structural to declared; the one-predicate rule above is unchanged. RFC-0206
-> proposes that `Copy` imply `Clone`, with a sealed bitwise body, which sharpens "bitwise-copyable"
+> provides that `Copy` imply `Clone`, with a sealed bitwise body, which sharpens "bitwise-copyable"
 > above to "a copy the compiler makes by calling a `clone` whose body is a bitwise copy".
 
 - **Do not write `extend<T: Copy> [T]: Copy;`.** The borrowed view is `Copy` structurally; a
