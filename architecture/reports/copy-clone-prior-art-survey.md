@@ -1,0 +1,283 @@
+---
+title: "Copyness in Other Languages: Prior-Art Survey"
+date: '2026-11-03'
+status: report
+relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212
+---
+
+# Copyness in Other Languages: Prior-Art Survey
+
+A survey of how other languages decide whether a value is duplicated implicitly, how a type states
+that, and how the answer interacts with generics, tuples, closures, references and destructors.
+It was written to inform the redesign of Metel's `Copy`/`Clone` model (RFC-0162, RFC-0206,
+RFC-0207). It records findings and open questions. It does not choose a design.
+
+## 1. Method and confidence
+
+Findings are marked by source quality:
+
+- **Verified** means read in a primary document (language reference, accepted proposal, release
+  notes) during this survey. Sources are listed in section 10.
+- **Memory** means stated from general knowledge and not re-checked here.
+- **Unconfirmed** means a search was attempted and returned nothing usable, or the sources
+  disagreed.
+
+The older prior-art section of RFC-0162 covers Rust, C++, Swift, C# and Hylo in less depth. This
+survey adds primary-source detail for Swift and Mojo, and a wider table of other languages.
+
+## 2. The questions
+
+Every language answers five questions, and the answers are largely independent:
+
+1. **Default.** Does a plain assignment or argument pass duplicate the value or move it?
+2. **Opting in or out.** How does a type change that default: an opt-in (Rust) or an opt-out
+   (Swift, C++, Ada, D)?
+3. **Where it is stated.** On the declaration, in an impl, in a derive, or by a lint?
+4. **User code.** Can code of the author's choosing run during an implicit copy?
+5. **Explicit duplication.** Is there a separate operation for a duplicate the programmer asks
+   for, and how does it relate to the implicit one?
+
+## 3. Summary table
+
+| Language | Default | How a type differs | Written where | User code in implicit copy | Explicit duplicate | Confidence |
+|---|---|---|---|---|---|---|
+| Rust | move | opt in to `Copy` | an impl or a derive, anywhere in the crate | no, always a bit copy | `.clone()` | verified |
+| Swift (structs, enums) | copy, inferred from fields | opt out with `~Copyable` | the declaration only | no (bitwise or copy-on-write) | `copy x` operator for borrowed bindings | verified |
+| Swift (classes) | reference | not applicable | not applicable | not applicable | not applicable | verified |
+| Mojo | move; implicit copy needs a marker | opt in with `ImplicitlyCopyable` | the struct's trait list | yes, a user copy initializer may run | `.copy()` | verified |
+| C++ | copy | opt out with `= delete`, or write the copy constructor | the class | yes | the copy constructor | memory |
+| D | copy | opt out with `@disable this(this)` | the struct | yes (postblit, copy constructors) | `.dup` for arrays | verified (bug threads) |
+| Nim (ARC/ORC) | copy for value types | opt out with an error pragma on `=copy` | hook procedures | yes (`=copy`, `=sink`, `=dup`) | `=dup` | verified |
+| Ada | copy (assignment) | opt out with `limited` | the type declaration | `Adjust` for controlled types | explicit procedures | verified |
+| Go | copy everything | none; `go vet` flags copying a lock | a lint, not a type property | no | convention | verified |
+| C# | copy for `struct`, reference for `class` | the declaration kind | the declaration | no | `Clone()` by convention | memory |
+| Zig | copy everything | none | not applicable | no | convention | memory |
+| Hylo | move; avoids implicit copies | not established | not established | not established | not established | unconfirmed |
+| Carbon, Austral | not established | not established | not established | not established | not established | unconfirmed |
+
+## 4. Rust
+
+The `Copy` trait documentation states the model plainly.
+
+- `Copy` is "types whose values can be duplicated simply by copying bits". Its behaviour "is not
+  overloadable; it is always a simple bit-wise copy".
+- `pub trait Copy: Clone {}`: "`Clone` is a supertrait of `Copy`, so everything which is `Copy`
+  must also implement `Clone`. If a type is `Copy` then its `Clone` implementation only needs to
+  return `*self`." The documentation does not state an agreement rule; the `*self` sentence is the
+  expectation.
+- A type cannot be `Copy` if a field is not (error E0204) or if it implements `Drop`.
+- Derive adds a bound on every type parameter, which the documentation calls imprecise: `&T` is
+  `Copy` for any `T`. The documented remedy is a manual impl with the exact bound.
+- "Implementing `Copy` is part of the public API of your type", so adding a non-`Copy` field later
+  is a breaking change.
+
+The direction of travel is toward more explicitness. The 2026 ergonomic ref-counting project goal
+proposes a `Share` trait, a subtrait of `Clone`, meaning "creates an alias", distinct from "is
+cheap to clone", with closures that capture selected values by `move(...)`. This is a goal with
+prototypes planned, not shipped.
+
+## 5. Swift
+
+### 5.1 Copyability is a protocol with an implicit default
+
+- `Copyable` has "no explicit requirements, and it has some special behaviors". Structs are
+  implicitly `Copyable` "unless [they have] a noncopyable stored property", enums unless an
+  associated value is noncopyable. Classes and actors always are, copied by retain and release.
+  "Extensions to the `Copyable` protocol are not allowed."
+- A struct or enum opts out with `~Copyable` on its declaration. Suppression is not allowed in an
+  extension, on a class, or where it "must hold for some other reason".
+- Generic parameters implicitly carry `Copyable`. `func f<T: ~Copyable>` accepts both kinds. A
+  protocol opts into noncopyable conformers by suppressing its own default, and the top type `Any`
+  is `any Copyable`.
+- Making a copyable type noncopyable is a breaking change. The reverse is source compatible.
+
+### 5.2 Conditional copyability is deliberately narrow
+
+`extension List: Copyable where T: Copyable {}` is the form. The conditions must be `T: Copyable`
+on a generic parameter, the extension must be in the type's own file, and it is not allowed on a
+type with a `deinit`. An unconditional `extension Optional: Copyable {}` is rejected.
+
+### 5.3 Copies are implicit, with an explicit operator where it matters
+
+Copying a copyable type is implicit. SE-0377 added `borrowing` and `consuming` parameter
+modifiers, and a revision made such bindings not implicitly copyable: where a copy is needed one
+writes `copy x`, an operator that yields an independently owned copy and "may still be optimized
+away". The motivation is visibility of copies that defeat ownership optimisation. The exact rule
+as shipped could not be confirmed from the sources found.
+
+### 5.4 Tuples, closures and function types
+
+- Tuples of copyable types are copyable (the `Copyable` documentation). SE-0390 lists tuples among
+  places a noncopyable type cannot appear, with the future direction that a tuple holding one
+  would itself be noncopyable. Whether that shipped is unconfirmed.
+- Only nonescaping closures are excluded from the implicit default: they have scoped lifetimes and
+  "can borrow their captures". Escaping closures are copyable whatever they capture, and values
+  they capture "behave like class properties" (shared boxes). A noncopyable value cannot be
+  consumed when captured by an escaping closure, and there is no one-shot closure type.
+- A nonescaping function type is a distinct type from an escaping one, and all function types are
+  escapable, which is why `withoutActuallyEscaping` can reverse nonescapingness. That API is a
+  promise the compiler no longer checks.
+
+### 5.5 References and views
+
+- `Span`, a read-only view, is declared `Copyable, ~Escapable`. Making it noncopyable "was in the
+  early vision", but that "would make `Span` a poor match to model borrowing semantics".
+- `MutableSpan` is `~Copyable, ~Escapable`: "Mutability requires exclusive access ... This
+  explains why the type which models mutations must be non-copyable." It cannot be a subtype of
+  `Span`, and it hands out a read-only `Span` through a borrowing accessor.
+- `Copyable` and `Escapable` are independent: "There is no relationship between `Copyable` and
+  `Escapable`". A nonescapable value may be copied freely within the current scope.
+
+### 5.6 Destructors
+
+Noncopyable structs and enums may declare `deinit`, which runs when the value's lifetime ends.
+Conditional copyability is not allowed on a type with a `deinit`.
+
+## 6. Mojo
+
+### 6.1 The model was reversed in v0.25.6
+
+Before: `Copyable` meant implicitly copyable and `ExplicitlyCopyable` covered the rest. Now:
+
+- `Copyable` is a type whose value can be explicitly copied with `.copy()`.
+- `ImplicitlyCopyable` is "a marker trait to permit the compiler to insert implicit calls to the
+  copy constructor". It "inherits from `Copyable`, and requires no additional methods".
+- The stated reason is a "long-standing issue with Mojo effectively forcing implicit copyability
+  upon all types", and fewer "performance and correctness issues caused by accidental implicit
+  copies". The change was staged: a warning for `List` and `Dict` in one release, an error in the
+  next.
+
+### 6.2 One definition of the copy
+
+- The required hook is the copy initializer, `__init__(out self, *, copy: Self)`. `copy()` is a
+  provided convenience for `Self(copy=self)`, and "overriding this method is not allowed".
+- The initializer is synthesised "when possible". `ImplicitlyCopyable` is synthesised only when all
+  fields are `ImplicitlyCopyable`. For mixed fields the author declares it and writes the
+  initializer, copying the others with `.copy()`, so user code can run at an implicit copy.
+- The reason given for the refinement is that it ensures "only one definition for the logic of how
+  a type is copied".
+- Triviality is a separate computed property: a copy is trivial "when the compiler generates it
+  and all of `T`'s fields are themselves trivially copyable".
+- Guidance: "Use `ImplicitlyCopyable` only when implicit copying is required by the compiler or an
+  API contract. Prefer an explicit `copy()` call, especially when copying may allocate memory or
+  otherwise have significant cost." Generic code should bound on `Copyable`. The standard
+  collections require only `Copyable` of their elements.
+
+### 6.3 Move, tuples, closures, views
+
+- Every `Copyable` type is `Movable`. A `Movable`-only type is move-only, and a type with neither
+  is immovable.
+- `Tuple` is `struct Tuple[*Ts: Movable]`, with `Copyable` and `ImplicitlyCopyable` each listed
+  `where all_conforms_to[...]` over the element types.
+- "A closure is `Copyable` when every value it captures is `Copyable`." A move-only capture makes
+  it `Movable` only. Copying a closure runs each captured value's copy initializer, at assignment.
+  Captures are chosen in a capture list (read, mut, var copy, transfer). Escaping closures are not
+  supported, and there is no one-shot closure type yet. The `thin` effect marks a function type as
+  a stateless function pointer. Whether closures are `ImplicitlyCopyable` is not stated.
+- A default (`read`) argument is a reference, not a copy. `mut` arguments are checked for
+  exclusivity at the call. `Span` is parameterised by mutability and origin, and its stable page
+  lists `Copyable` and `ImplicitlyCopyable`; whether that holds for mutable instantiations is
+  unconfirmed.
+
+## 7. Other languages
+
+- **C++** (memory). Every class has an implicitly generated copy constructor that the author can
+  replace or delete. The coupled special members are documented as the rules of three, five and
+  zero. There is no marker separating a cheap copy from an allocating one.
+- **D** (verified). Structs copy with postblit or copy constructors, which are user code.
+  `@disable this(this)` makes a struct non-copyable; the maintainers treat the resulting errors
+  when appending to arrays as intended.
+- **Nim** (verified). `=copy`, `=sink`, `=dup` and `=destroy` are user hooks. A copy can be
+  disabled by declaring `=copy` with the error pragma.
+- **Ada** (verified). A `limited` type forbids assignment. A controlled type customises it
+  through `Adjust`, and a limited controlled variant exists without `Adjust`.
+- **Go** (verified). Everything copies. `go vet` reports copying a value that contains a lock
+  (assignments, parameters, receivers, range variables). The protection is a lint, not a type
+  property.
+- **C# and Zig** (memory). `struct` copies bitwise on assignment with no user hook in C#, as
+  does Zig; neither has a copy marker.
+- **Hylo** (unconfirmed). Its introduction says it "avoids hidden costs such as implicit copies".
+  Its rules on explicit copy could not be found.
+
+## 8. Cross-cutting findings
+
+1. **Opting out on the declaration is the usual shape for languages that copy by default.**
+   Swift `~Copyable`, Ada `limited`, D `@disable this(this)`, C++ `= delete` and Nim's error pragma
+   all place the property on the type. Rust is the exception among them: its grant is an impl or a
+   derive that may be far from the type.
+2. **Two levels recur in the languages that move by default.** Rust (`Clone`, `Copy`) and Mojo
+   (`Copyable`, `ImplicitlyCopyable`) separate "can be duplicated" from "is duplicated for you".
+   Mojo's version makes the second a method-less marker that refines the first, so there is one
+   definition of the copy.
+3. **User code at an implicit copy splits the field.** Allowed in C++, D, Nim, Ada (controlled
+   types) and Mojo's initializer. Not allowed in Rust, Go, Zig, C# and Swift structs.
+4. **Generics integration is by implicit bound or by refinement, not by impl per type.** Swift gives
+   every generic parameter an implicit `Copyable` bound that can be suppressed. Mojo asks generic
+   code to bound on the explicit trait.
+5. **Conditional copyability is restricted.** Swift allows only `T: Copyable` on parameters, in the
+   type's file. Mojo uses conditional conformance over a variadic pack for tuples.
+6. **Structural types copy by their parts.** Tuples in Swift and Mojo, with no way to assert it.
+7. **Closure copyability follows captures in Mojo and escapingness in Swift.**
+8. **Mutable views are non-copyable (Swift) or exclusivity-checked at the call (Mojo).** Read-only
+   views are copyable in both.
+9. **Destructors and copyability interact.** Swift forbids conditional copyability on a type with a
+   `deinit`, and Rust forbids `Copy` with `Drop`.
+10. **Visible cost is the stated motive in the newest changes** (Swift `copy x`, Mojo `.copy()`
+    and its migration, Rust's proposed `Share`).
+11. **Migrations are staged.** Mojo's change went warning, then error. Swift keeps new suppression
+    out of extensions to avoid breaking existing code.
+
+## 9. Observations for Metel
+
+These are observations that bear on the open questions in RFC-0162. They are not decisions.
+
+- The current Metel pair already has Mojo's shape under Rust's names: `Clone` is the explicit
+  level and `Copy` is the implicit marker. The difference is that Metel's marker is a separate
+  aspect with a blanket relationship, while Mojo's refines the explicit trait by declaration.
+- A refinement relation, declared once, makes the coverage gap found in the adversarial review
+  structurally impossible: every implicit-copy type, references and views included, must be
+  explicitly copyable.
+- A name pair that keeps `Clone` and renames the implicit marker (for example `ImplicitClone`)
+  avoids reusing `Copy` with a different meaning, which would be a false friend for Rust
+  programmers. A pair that reuses `Copy` for the explicit level does not.
+- Swift's rule that copyability is fixed where the type is declared, and that conditional forms are
+  limited and local, is the closest precedent for the visibility concern in RFC-0162's D6.
+- No surveyed language lets a user assert copyability on a tuple type. A structural marker
+  (RFC-0212) would be new.
+- Nothing found supports sealing the implicit copy to a bitwise body. Mojo permits user code in
+  the initializer and advises against costly implicit copies instead.
+- Both Swift and Mojo tie closure and function-type copyability to different things (escapingness
+  against captures), and Metel's RFC-0134 rule matches Mojo's.
+
+## 10. Unconfirmed items and how to settle them
+
+- Which Swift standard-library types shipped as conditionally copyable, whether noncopyable tuple
+  elements shipped, and the exact form of the `copy x` rule: read the current SE-0377, SE-0427 and
+  standard library source.
+- Whether Mojo closures and mutable `Span` values are `ImplicitlyCopyable`, and whether references
+  and pointers are copyable: read the Mojo standard library source.
+- Hylo, Carbon and Austral: read their specifications directly.
+- Mojo documentation moves between hosts and versions; the pages cited below were reachable on
+  2026-11-03.
+
+## 11. Sources
+
+- Rust: https://doc.rust-lang.org/std/marker/trait.Copy.html and the 2026 ergonomic ref-counting
+  goal at https://rust-lang.github.io/rust-project-goals/2026/ergonomic-rc.html
+- Swift: SE-0390 (noncopyable structs and enums), SE-0427 (noncopyable generics), SE-0377
+  (parameter ownership modifiers), SE-0446 (nonescapable types), SE-0447 (Span) and SE-0467
+  (MutableSpan) under https://github.com/swiftlang/swift-evolution/tree/main/proposals, and
+  https://developer.apple.com/documentation/swift/copyable
+- Mojo: https://mojolang.org/releases/v0.25.6/ ,
+  https://mojolang.static.modular.com/docs/std/traits/copyable/Copyable/ ,
+  https://mojolang.org/docs/manual/lifecycle/life ,
+  https://mojolang.org/docs/manual/values/ownership/ ,
+  https://mojolang.org/docs/reference/closure-declarations/ ,
+  https://mojolang.org/docs/std/builtin/tuple/Tuple/ ,
+  https://forum.modular.com/t/mojo-closures-2026/3013 ,
+  https://mojolang.org/releases/v1.0.0b1/
+- Ada: https://docs.adacore.com/live/wave/arm12/html/arm12/arm12-7-6.html
+- Nim: https://nim-lang.org/docs/destructors.html
+- D: https://issues.dlang.org/bugs/20367/
+- Go: https://go.dev/src/cmd/vet/testdata/copylock/copylock.go
+- Hylo: https://hylo-lang.org/introduction/
