@@ -2,8 +2,12 @@
 id: rfc-0208
 title: "Row-Only Generic Parameters"
 date: '2026-11-02'
-status: draft
+status: under-review
+updated: '2026-11-03'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1789'
 ---
+
+> **Status — under review (2026-11-03).** review of the row-only binder
 
 ## Summary
 
