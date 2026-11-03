@@ -20,13 +20,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/924'
 ## Accepted direction
 
 1. **The value model's semantics do not change.** `Copy` is implicit and cheap, `Clone` is
-   explicit; no P1, P2 or P3. `Copy` is `Clone` whose body the compiler seals as a bitwise copy
-   and calls for you (B1s, RFC-0206 §2), so a type needs only `derives Copy`.
+   explicit; no P1, P2 or P3. `Copy` provides `Clone` with a sealed bitwise body and the compiler
+   calls it for you (B1s, RFC-0206 §2), so a type needs only `derives Copy`. A derived `Clone` may
+   coexist (`derives Copy, Clone`): the provided body wins where `Copy` holds, which is what keeps
+   a generic type `Clone` beyond its `Copy` instantiations (RFC-0207, the `provides` rule).
 2. **Named types state copyness in the declaration header** (C4):
    `struct Point derives Copy { x: i64, y: i64 }`, `struct Token: !Send { … }`. `Copy` stays an
    aspect and a bound; the grant is the header entry. `Copy` is a `header derivable` aspect
    (RFC-0207): granted only in the declaration, and its entry is a derivation, because it checks
-   every field and supplies the sealed `clone`. A promise with no derivation, and an opt-out, go
+   every field and provides the sealed `clone`. A promise with no derivation, and an opt-out, go
    after the colon; a written implementation is `extend`. For a generic type the condition
    is derived from the fields (R1: every type parameter that occurs in a field must be `Copy`),
    and an `extend` widens it where R1 is too strict, as for `struct W<T> { r: &T }`. R1 is the
@@ -91,7 +93,7 @@ no syntax at the use site acknowledging it. Rust lives with this; the question i
 Metel, which has the chance to decide now, should.
 
 **D2 — Two aspects for one idea (and the wrong two).** `Copy` and `Clone` are separate
-aspects connected by a blanket impl, such that `.clone()` on a `Copy` value is a syntactic
+aspects connected by a blanket impl (RFC-0080's plan; never built), such that `.clone()` on a `Copy` value is a syntactic
 no-op that still type-checks and still appears in code. Newcomers must learn both, when to
 write `.clone()` (only for non-`Copy` `Clone` types), and why calling it on an `i64` is
 allowed but pointless. RFC-0206 §1 preserves the split deliberately ("`Copy` (implicit,
@@ -115,7 +117,7 @@ has not been independently justified for Metel's model.
 by move checking and by a `T: Copy` bound: named `struct`, `enum` and the std enums
 (`Option`, `Result`) are `Copy` only by explicit `extend`; an
 anonymous record and, today, a named `record` are `Copy` exactly when every field is (a named
-`record` takes a header entry under the proposed direction, point 5; RFC-0123's field-wise constraints
+`record` takes a header entry under the accepted direction, point 4; RFC-0123's field-wise constraints
 are implemented); tuples and `[T; N]` are `Copy` when their elements are (a hardcoded arm,
 `metel-core#263`); `&T` is `Copy` and `&var T` is not; the `[T]` view is `Copy`
 (RFC-0126); function types and closures are `Copy` by their use multiplicity (RFC-0134 §1),
@@ -163,7 +165,9 @@ weights:
    function as an aspect's deriver, and a deriver for a marker aspect is trivially
    writable — it emits the bare impl and nothing else. So Metel is one unremarkable
    registration away from Rust's situation, and the decision to allow or forbid it has
-   never been made deliberately. **This is a live choice, not a settled inheritance.**
+   never been made deliberately. **This is a live choice, not a settled inheritance.** *(Settled by
+   the accepted direction, point 5: `Copy`'s derivation is fixed by std and requested in the
+   header, so no deriver can act away from the declaration.)*
 3. **The stop rule is the hard part, and this RFC should not pretend otherwise.** "A
    rule that changes the meaning of code that does not mention it should not be an
    ordinary impl" also reaches `Drop` (end-of-scope behavior, unmentioned at the scope),
@@ -188,9 +192,10 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   `check_copy_impl_eligibility` walks every struct field / enum-variant payload and
   rejects `extend … : Copy` with `T0001` if any is non-`Copy`. Empirically confirmed in
   RFC-0135's Background against the release binary.
-- **`Copy` ⇒ `Clone`** as a super-aspect (`Copy: Clone`, RFC-0168), with the `Clone` impl emitted
-  by `derives Copy` carrying the bitwise body `*self` (RFC-0206 §2). `Clone` alone (non-`Copy`)
-  runs user code and may allocate.
+- **`Copy` ⇒ `Clone`** as a super-aspect that provides the impl (`Copy provides Clone`, with the
+  bitwise body `*self`; RFC-0206 §2, RFC-0168). `Clone` alone (non-`Copy`) runs user code and may
+  allocate. (Today this is unimplemented: `Copy` does not imply `Clone` for a declared `Copy`
+  struct.)
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
 - **Structural types**: `Copy` when their parts are, decided by the checker and not
   written anywhere: tuples, `[T; N]`, anonymous records (a named `record` takes a header entry); `&T` and the `[T]`
@@ -227,19 +232,19 @@ Two orthogonal axes.
 ### Axis B — One duplication concept or two?
 
 - **B1. Two aspects (today).** `Copy` (implicit, cheap) and `Clone` (explicit, any cost),
-  linked by blanket impl.
-- **B1s. Two aspects, one method, `Copy` sealed (proposed 2026-11-02).** `Clone` is the
+  linked by blanket impl (RFC-0080's plan, never built).
+- **B1s. Two aspects, one method, `Copy` sealed (accepted 2026-11-02).** `Clone` is the
   explicit duplication method (`fun clone(&self) -> Self`). `Copy` refines it: for a `Copy`
   type the compiler supplies `clone`, and its body is **sealed**, always a bitwise copy,
   never user-written; the compiler inserts the call at a by-value use. So `let b := a` for a
   `Copy` type is `let b := a.clone()` with the call inserted, and `Copy` is `Clone` that
-  the compiler calls for you. This is RFC-0206 §2's super-aspect
-  (`Copy: Clone`, with the `Clone` impl emitted by `derives Copy`), stated as the
+  the compiler calls for you. This is RFC-0206 §2's `Copy provides Clone`, stated as the
   definition of `Copy`. The body is sealed because a user-written `clone` invoked implicitly
   would run arbitrary code at every copy (hidden cost, hidden panics and effects, an
   awkward interaction with `Drop`), which is D1 in its worst form. It follows that a `Copy`
-  type cannot have a custom `Clone` (the impls would overlap), and that a type needs only
-  `: Copy` to be both: no `derive(Clone, Copy)` pair. The interpreter already deep-clones at
+  type cannot have a hand-written `Clone` (it would overlap the provided impl), and that a type
+  needs only `derives Copy` to be both: no `derive(Clone, Copy)` pair. A derived `Clone` may
+  coexist; the provided body wins where `Copy` holds. The interpreter already deep-clones at
   every by-value use, so `Copy`, `Clone` and move are observationally identical at runtime;
   B1s is that behaviour made the definition, with move checking as the restriction.
 - **B2. One aspect, cost is a type property.** A single `Dup`/duplication capability;
@@ -291,12 +296,12 @@ today's answer (C1) was inherited without being chosen.
   weakest of the three.
 
 - **C4. A fact in the declaration header.** `struct Point derives Copy { x: i64, y: i64 }`,
-  `enum Direction derives Copy { … }`, `struct Token: !Send derives Copy { … }`: the declaration's own
-  aspect list (the draft RFC-0105, adopting its grammar and its `!Aspect` items), where, for
-  an aspect with **no required methods** (a marker), a positive item is the grant itself and
-  not an obligation that an `extend` elsewhere must meet. `Copy` stays an aspect, uniform
-  with the rest, and the grant is in the one place a reader looks. Added 2026-11-02; see
-  RFC-0207.
+  `enum Direction derives Copy { … }`, `struct Token: !Send derives Copy { … }`: the declaration's
+  own clauses (RFC-0207, taking the draft RFC-0105's aspect-list grammar and its `!Aspect` items):
+  `derives` lists what the compiler derives, `Copy` included, and the colon list carries promises
+  and opt-outs. The grant is the header entry, not an obligation that an `extend` elsewhere must
+  meet. `Copy` stays an aspect, uniform with the rest, and the grant is in the one place a reader
+  looks. Added 2026-11-02.
 
 - **C5. The aspect declares how it is granted.** Each aspect carries a *grant mode*, and the
   compiler enforces it. `Copy` is a `header` aspect: granted only in the type's declaration
@@ -315,7 +320,8 @@ grants.** It was preceded the same day by a position for C2, spelled `copy` (P4)
 as the alternative: smaller to specify, and it closes the derive hazard by construction. The
 principle both share is that the grant moves onto the type's declaration, `Copy` stays the
 bound, and `extend T: Copy;` stops being the way to write it. The parts expected to move are
-the spelling, the derived-condition rule (R1 or R2) and the stop rule (question 7).
+the spelling, the derived-condition rule (R1 or R2) and the stop rule; all three are settled by
+RFC-0207 and the Resolved Questions below.
 
 #### Worked examples
 
@@ -333,7 +339,8 @@ Run against the implementation for C1 (today); C2 is reasoned.
    already live in the type's own module, so C2 removes no capability.
 4. **A conditional grant.** `struct W<T> { v: T }` with `extend<T: Copy> W<T>: Copy;` makes
    `W<i64>` copy and `W<String>` move. `copy struct W<T>` has no obvious meaning for "when
-   `T` is `Copy`" (question 7).
+   `T` is `Copy`"; under C4 the condition is derived from the fields and refined by an `extend`
+   (RFC-0207).
 5. **Copy and Drop.** `extend H: Copy;` with `extend H: Drop { … }` is rejected at the `Drop`
    impl. Under C2 it is rejected at the declaration, where both the `copy` and the `Drop`
    are visible.
@@ -365,8 +372,9 @@ What this RFC relies on from RFC-0207:
   those land. Without a
   refinement the condition for a generic type is derived from the fields (R1, decided
   2026-11-02: every type parameter occurring in a field must be `Copy`).
-- Structural types have no header and never get one; they are `Copy` by those written std impls over their parts (Axis S's S1), and Axis S gives them a marker on the written type (S6).
-- If RFC-0207 is not accepted, the alternative kept here is C2 (`copy struct`).
+- Structural types have no header and never get one; they are `Copy` by those written std impls
+  over their parts (Axis S's S1). Whether they can state it where they are written is RFC-0212's.
+- RFC-0207 is accepted with this RFC; C2 (`copy struct`) stays the alternative should it not hold.
 
 The earlier worked examples comparing C1, C2 and C4, the stop-rule argument (D6.3), the derive
 hazard under C4 and the cost and risk list for grant modes are in RFC-0207.
@@ -383,7 +391,7 @@ optional expression form, or a required qualifier) is RFC-0212's question, extra
 
 - **P0 — Status quo + RFC-0135 rename.** A1 + B1, with `Copy` spelled `many` on the
   declaration. No drawback in §Motivation is addressed; D2/D4 are re-labeled. This is the
-  currently-milestoned path (RFC-0135, v0.14.2).
+  path RFC-0135 proposed; it was refused on 2026-11-02.
 - **P1 — Closed implicit set, keep explicit duplication as one operation.** A2 + B2.
   `i64`-and-friends copy implicitly; everything else moves and is duplicated with a
   visible `.dup()`; no `Copy` aspect, `Clone` folded in. Removes D1 (down to the keyword),
@@ -442,8 +450,8 @@ than same word / separate homes.
 1. **The name `Copy` is gone, not re-spelled.** No `Copy` aspect in the namespace;
    `is_copy(T)` becomes `use_multiplicity(T) == many`. Diagnostics read "`T` is `once`
    (move-only); used after move here" rather than "`T` is not `Copy`".
-2. **`Clone` folds into a single duplication operation.** Today `Clone` is a distinct
-   aspect with a blanket `extend<T: Copy> T: Clone`. Under P3 there is one `Dup` aspect,
+2. **`Clone` folds into a single duplication operation.** `Clone` is a distinct
+   aspect, which RFC-0080 planned to link to `Copy` by a blanket `extend<T: Copy> T: Clone`. Under P3 there is one `Dup` aspect,
    one method: `x.dup()` yields a second owned value regardless of `x`'s use-multiplicity
    — the trivial bitwise path for a `many`-use type, user code (possibly allocating) for a
    `once`-use type. Whether a given `.dup()` is *cheap* is a documented property (or a
@@ -603,7 +611,8 @@ it directly, since choosing both is not possible.
 
 > **Superseded in part, 2026-11-02.** Its conclusion on the value model (no P1, P2 or P3)
 > stands. It did not address where the grant is stated or how structural types are
-> asserted, which "Proposed direction" above does.
+> asserted, which the "Accepted direction" above does. Item 5 below (no registered deriver for
+> `Copy`) is superseded by the accepted direction's point 5.
 
 Stated as a recommendation for review to push on, not a decision. The frame: **where
 should Metel spend divergence budget — the regular-value duplication model, or closures?**
@@ -677,18 +686,24 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   assert-vs-require distinction has to be stated against.
 - **RFC-0093 (Derive Registration, `1-under-review`, #799)** — the mechanism D6.2 is
   about. Its `#derive(Aspect)` registration would make a `Copy` deriver writable with no
-  special effort; whether one may exist is OQ5, and is a question for this RFC, not for
-  RFC-0093's general mechanism.
+  special effort. Settled by RFC-0207: the `derives` clause replaces the request half of
+  `#derive`, and `Copy`'s derivation is fixed by std.
 - **RFC-0096 (Auto-Impl Aspects, `1-under-review`)** — the existing category of
-  compiler-granted, not-user-writable aspects (`Send`, `Sync`, `Linear`). Under P4,
-  `Copy` joins that category by keyword rather than by structural rule; reconcile the
-  two framings if P4 advances.
+  compiler-granted, not-user-writable aspects (`Send`, `Sync`, `Linear`). RFC-0207
+  declares them `auto aspect`; `Copy` is not one of them, since it is granted in the
+  declaration, not structurally.
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
-- **RFC-0206 (Clone and Copy, one duplication method, `2-accepted`)** — owns the `Clone` aspect (extracted from RFC-0080 §1).
-- **RFC-0207 (Header and Auto Aspects, `2-accepted`)** — owns the header-grant mechanism and the aspect grant modes (this RFC's C4 and C5); `Copy`'s position C4 depends on it.
-  RFC-0158 amends its §1 (tighten `Clone` to independent-duplication-only; add `Share`).
-  This RFC's recommended direction leaves `Clone` otherwise untouched.
+- **RFC-0206 (Clone and Copy, one duplication method, `2-accepted`)** — owns the `Clone` aspect
+  (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten `Clone` to
+  independent-duplication-only; add `Share`). This RFC's direction leaves `Clone` otherwise
+  untouched.
+- **RFC-0207 (Header and Auto Aspects, `2-accepted`)** — owns the declaration modifiers, the
+  `derives` clause and the `provides` rule (this RFC's C4 and C5); `Copy`'s position C4 depends
+  on it.
+- **RFC-0168 (Equality Model and Super-Aspects, `1-under-review`)** — the super-aspect relation
+  `Copy provides Clone` rests on.
+- **RFC-0212 (Markers on Structural Types, `0-draft`)** — Axis S, extracted.
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
   second cut": a new `Share` aspect beside `Copy`/`Clone`, no rename. One of the two
   regular-value changes the Recommended direction endorses. Orthogonal to P0–P3.
@@ -698,13 +713,13 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   that already distinguish "aliases the same cell" from "independent" in the types;
   RFC-0158 gives that a surface verb.
 - **RFC-0130 (`extends Aspect`, `4-implemented`)** — limits `extends Aspect` to parameter and
-  return positions (enforced by metel-core#622). S5 would amend it; S6 does not touch it.
+  return positions (enforced by metel-core#622). RFC-0212's S5 would amend it; S6 does not touch it.
 - **RFC-0038 (Existential Types in Struct Fields, `0-draft`)** — `extends`/`dyn` in struct fields
-  and `let` annotations as erased existentials; the opposite of S5's non-opaque check in the
+  and `let` annotations as erased existentials; the opposite of RFC-0212's S5 non-opaque check in the
   same position. Its spelling note defers to RFC-0130.
 - **RFC-0123 (Field-Wise Row Constraints, `4-implemented`)** — made a record `Copy` when its
   fields are, and gives `where ..R: Copy` for open rows; any structural-type conclusion
-  (Axis S) is stated in its terms.
+  (RFC-0212) is stated in its terms.
 - **RFC-0126 (`T[]` Copy view, `4-implemented`)**, **metel-core#263** (`[T; N]`),
   **RFC-0061 §6/§7.2** (tuples / fn-pointers) — the concrete structural cases D4
   enumerates; each is a place a unified rule would land or explicitly exempt.
@@ -721,8 +736,8 @@ listed at the end of this section.
 ### Rust — the model Metel inherited
 
 `Copy` (implicit, marker aspect, bitwise, opt-in via `derive`/`impl`, every field must be
-`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`, with a blanket
-`impl<T: Copy> Clone for T`). This is D1+D2+D3 verbatim — Metel took the whole shape.
+`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`; `Copy` has `Clone` as a
+supertrait, so every `Copy` type also needs a `Clone` impl, usually derived). This is D1+D2+D3 verbatim — Metel took the whole shape.
 
 Known friction in Rust, from its own discussions:
 
@@ -932,8 +947,8 @@ The questions raised during review, with where each ended (numbering kept for th
 **Outcome:** accepted 2026-11-02 (language owner), with RFC-0206 and RFC-0207 as one set.
 
 **Accepted:** the direction above: no value-model change; copyness of a named type stated in its
-declaration (C4, `struct P derives Copy`); `Copy` as `Clone` the compiler calls with a
-sealed bitwise body (B1s); R1 for generic conditions in the first implementation; a named
+declaration (C4, `struct P derives Copy`); `Copy` as `Clone` the compiler calls, provided
+by `Copy` with a sealed bitwise body (B1s), with a derived `Clone` allowed to coexist; R1 for generic conditions in the first implementation; a named
 `record` taking a header entry; the names kept; RFC-0135 refused.
 
 **Deferred, with homes:** markers on structural types (RFC-0212); the exact generic condition
