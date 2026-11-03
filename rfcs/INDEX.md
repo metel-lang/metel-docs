@@ -1239,7 +1239,7 @@ implementation).
   RFC-0006 → `spec_status: pending`, `amended_by`. Accepted as part of the v0.13.0 closure
   cluster. *Originally "Copy and Clone Model Re-analysis"; the regular-value `Copy`/`Clone`
   model critique (D1–D4, P0–P3, prior art) was extracted to **RFC-0162** on 2026-09-01.*
-- **RFC-0162** *(under review, opened 2026-09-01; **v0.14.2**, #924)* — Copy and Clone
+- **RFC-0162** *(under review, opened 2026-09-01; **v0.16.0**, #924; direction redesigned 2026-11-03)* — Copy and Clone
   Model — Regular-Value Design Space — the longer-horizon half split from RFC-0157.
   Drawbacks D1 (implicit-copy use-site invisibility + API-stability hazard), D2 (two-aspect
   split), D3 (`Copy`/`Drop` exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity),
@@ -1825,7 +1825,7 @@ implementation).
   The composition operator is deferred (`>->` / `>=>` preferred, after RFC-0190). Independent of RFC-0205.
 - **RFC-0205** *(draft 2026-11-01)* — Hole sections (`(_ * 10)`) and operator functions (`ops::add`).
   Independent of RFC-0204.
-- **RFC-0206** *(under-review 2026-11-02, #1785)* — Clone and Copy, one duplication method. Extracted from RFC-0080 §1: `Clone` as explicit duplication, `Copy` as `Clone` whose call the compiler inserts and whose body is sealed bitwise (so a type needs only `: Copy`), the standard `Clone` impls, and `Clone` for user types. RFC-0162 owns the wider model; RFC-0158 `Share` is the aliasing half.
+- **RFC-0206** *(under-review 2026-11-03, #1785)* — Clone and ImplicitClone. `Clone` is the explicit duplication aspect with Rust's contract; `ImplicitClone` is a compiler-known marker that refines it, granted only in the declaration's colon list, whose implicit copy calls the type's own `clone` (a user-writable hook, with a reserved effect bound). Exact per-instantiation condition, `Drop` excludes it, built-in kinds are compiler rules; `Copy` stays one minor release as a deprecated alias. Replaces the earlier `Copy`-provides-`Clone` design.
 
 ---
 
@@ -1877,7 +1877,7 @@ misleading. Do **not** duplicate stage counts, generated status summaries, or ot
 derivable facts here — those belong in `REGISTRY.md`, and `rfc.py check` treats that
 generated file as the exact source of truth.
 
-- **RFC-0207** *(under-review 2026-11-02, #1786)* — Header and auto aspects, where an aspect is granted. Extracted from RFC-0162 Axis C: marker facts granted in a type's declaration header (`struct P: Copy`), an `extend` allowed only to refine one, and aspects that declare a grant mode (`extend`, `header`, `auto`). Used by RFC-0162 for `Copy` and RFC-0206 for `Clone`; narrows RFC-0105.
+- **RFC-0207** *(under-review 2026-11-03, #1786)* — Declaration clauses: `derives` and the colon list. Two clauses after a type's name: the colon list (`: ImplicitClone`, `: !Send`) for compiler-checked markers and auto-aspect opt-outs, and `derives` for aspects the compiler generates (`derives Clone`); `derives` replaces the request half of RFC-0093's `#derive`. Cut down from the earlier `header`/`derivable`/`provides` design.
 - **RFC-0208** *(draft 2026-11-02)* — Row-only generic parameters. A binder `<..R>` for a parameter that stands only for a row, never a type; `record R` stays for parameters used as types. Additive to RFC-0186, shares the `..` binder with packs (RFC-0125), merges with them if RFC-0151 lands; motivated by the row-generic derivation of RFC-0207.
 - **RFC-0209** *(draft 2026-11-02)* — Per-aspect row visibility. A header entry makes a nominal type's row visible to the row-conditional impls of that one aspect, so header aspects (`Copy`, `Clone`) are derived from the aspect's own row template. No new parameter kind; refines RFC-0137's tiers; R2 falls out.
 - **RFC-0210** *(draft 2026-11-02)* — Enum parameters and variant rows. An `enum E` parameter kind and a variant row `..E`, so an aspect's template is written once for every enum that grants it in its header; the bound `..E: A` reuses the field-wise bound one level down. Completes RFC-0209 for sum types; depends on RFC-0174 for bodies.

@@ -5,6 +5,12 @@ date: '2026-11-02'
 status: draft
 ---
 
+> **Note, 2026-11-03.** The `Copy`/`Clone` settlement was redesigned: RFC-0206 is now "Clone and
+> ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
+> `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
+> of that design. What remains relevant here is the derivation of `Clone` by a row template;
+> examples below that use `Copy` read as `ImplicitClone` in the colon list.
+
 ## Summary
 
 Today a nominal type's row is invisible to row-conditional impls: a plain `struct` never

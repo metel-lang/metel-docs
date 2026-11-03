@@ -47,7 +47,7 @@ the code means:
 - **A struct's residual tail is not a record.** `Handle.{ fd, ..R }` splices the remaining
   fields of a struct. `R` there is the tail of a branded row, and declaring it `record R`
   suggests a standalone record. Impls that are generic over a struct's row (the Copy/Clone
-  derivation in RFC-0207) are written entirely in these tails.
+  derivation in RFC-0209) are written entirely in these tails.
 - **It turns on a real distinction in turbofish.** RFC-0192 makes the argument for a
   `record R` parameter "the record `R`, the remainder that the signature splices as `..R`".
   A row-only parameter makes that explicit: its argument is a row, with no type to bind.
@@ -145,7 +145,7 @@ labels, and the two binders merge into one kind. This RFC does not depend on tha
   tail appears.
 - **RFC-0192** — turbofish for record parameters; its argument rule for a row parameter is an
   open question below.
-- **RFC-0207** — header and auto aspects; its derivation template is written with row-only
+- **RFC-0209** — per-aspect row visibility (RFC-0207 is now only the colon list and `derives`); its derivation template is written with row-only
   parameters, which is the motivating use.
 
 ## Open questions
