@@ -2,7 +2,9 @@
 id: rfc-0211
 title: "Aspect Templates on Residuals"
 date: '2026-11-02'
-status: draft
+status: under-review
+updated: '2026-11-03'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 ---
 
 > **Note, 2026-11-03.** The `Copy`/`Clone` settlement was redesigned: RFC-0206 is now "Clone and
@@ -10,6 +12,8 @@ status: draft
 > `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
 > of that design. What remains relevant here is the derivation of `Clone` by a row template;
 > examples below that use `Copy` read as `ImplicitClone` in the colon list.
+
+> **Status — under review (2026-11-03).** review of residual templates
 
 ## Summary
 
