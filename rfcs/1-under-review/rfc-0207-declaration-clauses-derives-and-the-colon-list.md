@@ -20,7 +20,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 A type declaration may carry two clauses after its name:
 
 ```metel
-struct Point: ImplicitClone { x: i64, y: i64 }               // colon list: what the type is
+struct Cache: ImplicitClone { data: i64, hits: i64 }         // colon list: what the type is (its Clone is written)
+struct Point derives ImplicitClone { x: i64, y: i64 }        // derives: the compiler writes Clone, and the marker
 struct Doc derives Clone, Debug { title: String }            // derives: what the compiler writes
 struct Token: !Send derives Debug { id: i64 }                // both; the colon list comes first
 ```
@@ -54,15 +55,17 @@ Entries are aspects with no methods that the compiler checks.
    aspect goes in `derives` or `extend`.
 2. A negative entry (`!X`) must name an `auto` aspect (RFC-0096): `Send`, `Sync`, `Linear`. It is the
    opt-out of the structural rule. For any other aspect it says nothing and is an error.
-3. The colon list does not generate an impl. The compiler may derive `Clone` as a consequence of
-   `ImplicitClone` (RFC-0206 section 2); that is a rule of that marker, not of the clause.
+3. The colon list never generates an impl. `: ImplicitClone` requires a `Clone` that already exists,
+   written or requested with `derives Clone`; without one it is an error (RFC-0206 section 2).
 4. The grant is in the type's own module, so the orphan rule (`T0014`) holds trivially, and a marker
    cannot be granted to a type you do not own.
 
 ## 2. The `derives` clause
 
 1. `derives X` is legal exactly when `X` has a derivation. In the first implementation the
-   derivations are native and belong to std (`Clone`; `Debug` and `Display` as they gain one). An
+   derivations are native and belong to std (`Clone`; `Debug` and `Display` as they gain one). The
+   derivation of the lang-item marker `ImplicitClone` is the derivation of `Clone` plus the marker:
+   `derives ImplicitClone` is exactly `: ImplicitClone derives Clone` (RFC-0206). An
    aspect declares it has one with the `derivable` modifier (`derivable aspect Clone { … }`), which
    only std uses until comptime (RFC-0092, RFC-0093) lets a user supply a derivation.
 2. The derived impl is generated under the exact condition that every field type satisfies the
@@ -91,7 +94,8 @@ Entries are aspects with no methods that the compiler checks.
 ```metel
 struct Point: ImplicitClone { x: i64, y: i64 }               // ok
 struct Bad: Clone { x: i64 }                                 // error: Clone has methods; write `derives Clone`
-struct B2 derives ImplicitClone { x: i64 }                   // error: ImplicitClone is granted in the colon list
+struct B2: ImplicitClone { x: i64 }                          // error: no Clone; write one, or `derives ImplicitClone`
+struct B3 derives ImplicitClone { x: i64 }                   // ok: derives Clone and the marker
 struct Token: !Send { id: i64 }                              // ok: opt-out of an auto aspect
 struct C: !Clone { x: i64 }                                  // error: Clone is not an auto aspect
 struct D derives Clone { n: i64 }

@@ -24,10 +24,13 @@ is granted only in the type's declaration, and it is the stronger bound: every `
 type is `Clone`, and the converse does not hold.
 
 ```metel
-struct Point: ImplicitClone { x: i64, y: i64 }            // implicit; Clone is derived if absent
+struct Point derives ImplicitClone { x: i64, y: i64 }     // implicit; the compiler writes Clone
+struct Cache: ImplicitClone { data: i64, hits: i64 }      // implicit; the author wrote Clone
 struct Doc derives Clone { title: String }                // explicit only: d.clone()
-struct Cache { data: String, hits: i64 }                  // Clone written by hand (extend Cache: Clone)
 ```
+
+`derives` means the compiler wrote the `Clone`, and the colon means the author did. `ImplicitClone`
+is an ordinary aspect declared in std; the compiler knows it through a lang item, not by its name.
 
 This replaces the pair `Copy`/`Clone`. The name `Copy` is kept for one minor release as a
 deprecated alias for `ImplicitClone`. The explanation of the relationship is one sentence:
@@ -81,23 +84,46 @@ cloning the reference or view, not the referent. A handle that aliases shared st
 (RFC-0158), a separate aspect, and is not `Clone` unless its type says so.
 
 A type gets a `Clone` by writing one (`extend T: Clone { … }`), by a `derives Clone` request
-(RFC-0207), or, for an `ImplicitClone` type with neither, by compiler derivation (section 2).
+(RFC-0207), or through `derives ImplicitClone`, which derives it along with the marker (section 2).
 
 ---
 
 ## 2. `ImplicitClone`
 
-`ImplicitClone` is a compiler-known marker aspect. It has no methods and cannot be implemented
-with `extend`. It is the stronger bound: `T: ImplicitClone` accepts fewer types than `T: Clone`.
+`ImplicitClone` is declared in std as an ordinary aspect that refines `Clone`, and carries a
+lang-item attribute that gives it a known identity (the spelling is a sketch):
+
+```metel
+#lang(implicit_clone)
+aspect ImplicitClone: Clone;                 // no methods; std only
+```
+
+It is the stronger bound: `T: ImplicitClone` accepts fewer types than `T: Clone`.
+
+**The one exception, stated once.** The compiler gives the lang-item aspect these behaviours, keyed
+to its identity and never to the spelling "ImplicitClone" or "Copy":
+- the implicit duplication of values (a by-value use calls `clone` instead of moving);
+- the declaration-only grant (rule 1) and the exact predicate (rule 3);
+- the `Drop` exclusion (rule 5).
+
+User code cannot declare a lang item, and `ImplicitClone` cannot be implemented with `extend`.
+Today the compiler identifies `Copy` by the string `"Copy"` at about 38 sites in the frontend
+(`aspect_name == "Copy"`, `infer_type_satisfies_aspect(…, "Copy", …)`); the lang item replaces them
+with one declaration and one identity lookup.
 
 **Legality.**
-1. *Granted only in the declaration.* A named type is `ImplicitClone` only if its declaration lists
-   it in the colon list (RFC-0207): `struct Point: ImplicitClone { … }`. An `extend T: ImplicitClone;`
-   is an error with a fix-it that moves it. No refinement of the condition is possible.
-2. *It requires `Clone`.* The type must have a `Clone` for every instantiation at which it is
-   `ImplicitClone`. If the type has a `Clone` (written or `derives Clone`) that one is used. If it has
-   none, the compiler derives one (field-wise, each field cloned, under `Clone`'s own condition).
-   There is exactly one `Clone` impl, so there is no overlap and no priority rule.
+1. *Granted only in the declaration.* A named type is `ImplicitClone` only through its declaration:
+   `struct P: ImplicitClone { … }` or `struct P derives ImplicitClone { … }` (RFC-0207). An
+   `extend T: ImplicitClone;` is an error with a fix-it that moves it.
+2. *It requires `Clone`, and the clause says where it comes from.*
+   - `struct P: ImplicitClone` (the colon) promises that the type's own `Clone` may be called
+     implicitly. A `Clone` must already exist for the type, written (`extend P: Clone { … }`) or
+     requested (`derives Clone`). If none exists it is an error with two fix-its: write one, or use
+     `derives ImplicitClone`.
+   - `struct P derives ImplicitClone` makes the compiler derive the `Clone` as well. It is exactly
+     `: ImplicitClone derives Clone`. Together with a written `extend P: Clone` it overlaps the
+     derived impl and is an error (`T0015`).
+   The colon never generates an impl; `derives` always does.
 3. *The predicate is exact and conjunctive.* For an instantiation `T<A>`, `T<A>: ImplicitClone`
    holds when every field's type is `ImplicitClone`, and `T<A>: Clone` holds, and the type is not
    `Drop`. It is evaluated per instantiation, so `struct View<T>: ImplicitClone { r: &T }` is
@@ -108,8 +134,9 @@ with `extend`. It is the stronger bound: `T: ImplicitClone` accepts fewer types 
    run at an implicit copy (Mojo's choice), and nothing is sealed to a bitwise body.
 5. *`Drop` excludes it, and only it.* A type that implements `Drop` cannot be `ImplicitClone`.
    `Clone` on a `Drop` type is allowed.
-6. *Entailment is built in.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract
-   analysis of generic bodies, as a compiler rule and not as a super-aspect declaration.
+6. *Entailment.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract analysis
+   of generic bodies. The declaration `aspect ImplicitClone: Clone` states it. Until super-aspects
+   exist (RFC-0168) the lang-item rule provides the same entailment built in.
 
 **Built-in kinds are compiler rules, not impls.**
 
@@ -164,8 +191,9 @@ Measured on 2026-11-02:
   every `T`.
   For an enum it matches the active variant. Written and derived impls of the same aspect for one
   type overlap and are an error.
-- **Implied by `ImplicitClone`:** section 2, rule 2.
-- **Not automatic.** A type with none of these has no `Clone`: whether a named type may be
+- **Derived with the marker:** `derives ImplicitClone`, section 2 rule 2. The colon form needs one of
+  the other three.
+- **Not automatic.** A type with none of these has no `Clone`, and `: ImplicitClone` alone is an error: whether a named type may be
   duplicated is a statement about what it means, not a consequence of its fields, so an
   accidental `Clone` (for example on a handle type whose fields happen to be `Clone`) is not
   provided.
@@ -192,6 +220,8 @@ comptime derivation replaces the native one when RFC-0092 and RFC-0093 allow.
 
 ## 6. Implementation staging
 
+- Introduce the lang-item mechanism (an attribute reserved to std, or a std-only marker), declare
+  `ImplicitClone` with it, and replace the string-keyed `"Copy"` sites by the identity.
 - Derived and built-in clones keep the interpreter's existing fast path, which is observationally
   the same.
 - An implicit copy of a type with a hand-written `Clone` calls it. This is new behaviour: the
@@ -206,16 +236,16 @@ comptime derivation replaces the native one when RFC-0092 and RFC-0093 allow.
 ## 7. Worked examples
 
 ```metel
-struct Point: ImplicitClone { x: i64, y: i64 }
+struct Point derives ImplicitClone { x: i64, y: i64 }
 let a := Point { x = 1, y = 2 };
 let b := a;                    // a.clone() inserted; a is still valid
 let c := a;
 
-struct Wrapper<T>: ImplicitClone { v: T }
+struct Wrapper<T> derives ImplicitClone { v: T }
 // Wrapper<i64>: ImplicitClone and Clone; Wrapper<String>: neither (String is not ImplicitClone);
 // Wrapper<NoClone>: neither
 
-struct Id: ImplicitClone derives Clone { n: i64 }          // accepted: the derived Clone is the one used
+struct Id: ImplicitClone derives Clone { n: i64 }          // accepted: the long form of `derives ImplicitClone`
 
 struct Cache: ImplicitClone { data: i64, hits: i64 }
 extend Cache: Clone { fun clone(&self) -> Cache { Cache { data = self.data, hits = 0 } } }
@@ -226,6 +256,9 @@ extend H: Drop { fun drop(&var self) { } }
 extend H: Clone { fun clone(&self) -> H { H { fd = dup(self.fd) } } }     // Clone on a Drop type: fine
 // struct H2: ImplicitClone { fd: i64 } with extend H2: Drop { … }       // error: Drop excludes ImplicitClone
 
+struct NoClone2: ImplicitClone { n: i64 }                   // error: no Clone; write one or use `derives ImplicitClone`
+struct Both derives ImplicitClone { n: i64 }
+extend Both: Clone { fun clone(&self) -> Both { Both { n = 0 } } }   // error T0015: overlaps the derived Clone
 extend Point: ImplicitClone;                                // error: granted only in the declaration
 ```
 
@@ -243,6 +276,12 @@ extend Point: ImplicitClone;                                // error: granted on
   question to which types may be implicit anyway, since generic numeric code needs a bound.
 - **A bound `T: ImplicitClone` that accepts any `Clone` type.** Rejected: it would make the same name
   mean two things and let the author of a generic function consent for a type that never opted in.
+- **General mechanisms for the exception** (`header` and `derivable` modifiers, `provides`, a declared
+  field-wise rule, super-aspects). Rejected for one customer: the adversarial review judged them
+  heavier than the problem. If a second aspect needs them, `ImplicitClone` can move onto them
+  without changing its meaning.
+- **The string-keyed special case that exists today.** Rejected: about 38 sites test the spelling
+  "Copy", which cuts against the identity-based resolution of ADR-0054, ADR-0066 and ADR-0067.
 - **Inference of implicitness from fields** (Swift's default for structs). Rejected: it brings back
   the hazard that adding a field flips every use from copy to move.
 
@@ -270,7 +309,9 @@ extend Point: ImplicitClone;                                // error: granted on
    them.
 4. **A scoped implicit mode** for generic code over `Clone` types, if `.clone()` proves too noisy;
    deferred with the effects work.
-5. **Primitive declarations.** The compiler list becomes primitive struct declarations if std
+5. **The lang-item mechanism.** An attribute reserved to std (RFC-0095 is the home) or a std-only
+   marker; and whether the entailment to `Clone` waits for super-aspects (RFC-0168).
+6. **Primitive declarations.** The compiler list becomes primitive struct declarations if std
    gains them.
 
 ---

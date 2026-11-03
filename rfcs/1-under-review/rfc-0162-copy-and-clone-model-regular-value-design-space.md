@@ -45,13 +45,18 @@ implicit marker is named, declared and related to `Clone`.
    duplicated at a by-value use by calling its own `clone`. *`ImplicitClone` is `Clone` that the
    compiler calls for you.* `Copy` becomes a deprecated alias for one minor release. Details are
    RFC-0206.
-3. **The grant is fixed on the declaration.** `struct Point: ImplicitClone { … }`, in a colon list
-   that also carries opt-outs such as `!Send`; `extend T: ImplicitClone;` is an error. A derive
-   request is the `derives` clause (`derives Clone`). Both clauses are RFC-0207.
-4. **The marker is a compiler exception, deliberately.** It is not implemented by impls: the
-   compiler evaluates it (every field `ImplicitClone`, a `Clone` exists, not `Drop`), derives `Clone`
-   when the type has none, and guarantees `Clone` for built-in kinds. This replaces the earlier
-   general machinery (`header`/`derivable` modifiers, `provides`, a selection rule).
+3. **The grant is fixed on the declaration, and the clause says where `Clone` comes from.**
+   `struct Point derives ImplicitClone { … }` when the compiler writes the `Clone` (exactly
+   `: ImplicitClone derives Clone`), and `struct Cache: ImplicitClone { … }` when the author wrote it.
+   The colon list never generates, and also carries opt-outs such as `!Send`; `extend T: ImplicitClone;`
+   is an error. Both clauses are RFC-0207.
+4. **The marker is one declared exception, by identity.** `ImplicitClone` is an ordinary aspect
+   declared in std with a lang-item attribute, so the compiler knows it by identity and never by
+   spelling (replacing the string-keyed `"Copy"` special cases, about 38 sites). The compiler
+   evaluates it (every field `ImplicitClone`, a `Clone` exists, not `Drop`) and guarantees `Clone` for
+   built-in kinds. This replaces the earlier general machinery (`header`/`derivable` modifiers,
+   `provides`, a selection rule), which would have been the only way to avoid the exception; every
+   language surveyed keeps this one.
 5. **The hook is user-writable.** A written `clone` runs at an implicit copy. A future effect bound
    restricts what such a `clone` may do; no lint before then.
 6. **`Drop` excludes `ImplicitClone` only,** which makes `Clone` on a `Drop` type legal (D3's

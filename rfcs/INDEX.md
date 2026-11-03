@@ -1825,7 +1825,7 @@ implementation).
   The composition operator is deferred (`>->` / `>=>` preferred, after RFC-0190). Independent of RFC-0205.
 - **RFC-0205** *(draft 2026-11-01)* — Hole sections (`(_ * 10)`) and operator functions (`ops::add`).
   Independent of RFC-0204.
-- **RFC-0206** *(under-review 2026-11-03, #1785)* — Clone and ImplicitClone. `Clone` is the explicit duplication aspect with Rust's contract; `ImplicitClone` is a compiler-known marker that refines it, granted only in the declaration's colon list, whose implicit copy calls the type's own `clone` (a user-writable hook, with a reserved effect bound). Exact per-instantiation condition, `Drop` excludes it, built-in kinds are compiler rules; `Copy` stays one minor release as a deprecated alias. Replaces the earlier `Copy`-provides-`Clone` design.
+- **RFC-0206** *(under-review 2026-11-03, #1785)* — Clone and ImplicitClone. `Clone` is the explicit duplication aspect with Rust's contract; `ImplicitClone` is a std-declared aspect carrying a lang item that refines it, granted only in the declaration (`derives ImplicitClone` when the compiler writes the `Clone`, `: ImplicitClone` when the author did), whose implicit copy calls the type's own `clone` (a user-writable hook, with a reserved effect bound). Exact per-instantiation condition, `Drop` excludes it, built-in kinds are compiler rules; `Copy` stays one minor release as a deprecated alias. Replaces the earlier `Copy`-provides-`Clone` design.
 
 ---
 
