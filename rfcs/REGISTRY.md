@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-02'
+generated_on: '2026-11-03'
 ---
 
 # RFC Registry
@@ -108,8 +108,8 @@ the curated thematic map.
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
-- **RFC-0206** — Clone and Copy — One Duplication Method (`1-under-review` ; rfcs/1-under-review/rfc-0206-clone-and-copy-one-duplication-method.md ; date 2026-11-02 ; updated 2026-11-02)
-- **RFC-0207** — Header and Auto Aspects — Where an Aspect Is Granted (`1-under-review` ; rfcs/1-under-review/rfc-0207-header-and-auto-aspects-where-an-aspect-is-granted.md ; date 2026-11-02 ; updated 2026-11-02)
+- **RFC-0206** — Clone and ImplicitClone (`1-under-review` ; rfcs/1-under-review/rfc-0206-clone-and-implicitclone.md ; date 2026-11-02 ; updated 2026-11-03)
+- **RFC-0207** — Declaration Clauses: derives and the Colon List (`1-under-review` ; rfcs/1-under-review/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-03)
 
 ## Accepted (9)
 

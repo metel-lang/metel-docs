@@ -465,7 +465,7 @@ or it sits unused exactly as long as this one did.
   preserving alongside comptime substitution
 - RFC-0060 (Aspect Impl Coherence) — coherence/orphan rules `emit` must respect (Open
   Question 2)
-- RFC-0206 (Clone and Copy) — `Clone`'s derive is the concrete first test
+- RFC-0206 (Clone and ImplicitClone) — `Clone`'s derive is the concrete first test
   case for this RFC's mechanism (via RFC-0093)
 - RFC-0093 (Derive Registration) — depends on this RFC
 - RFC-0094 (Comptime Metaprogramming) — depends on this RFC, generalizes `emit`
