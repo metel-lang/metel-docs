@@ -38,8 +38,12 @@ implicit marker is named, declared and related to `Clone`.
 > model's semantics and changes the two aspects: an explicit `Clone` and a compiler-known implicit
 > marker that refines it, in the shape Mojo arrived at.
 
-1. **The value model's semantics do not change.** Implicit duplication stays cheap in intent and
-   explicit duplication stays a call; no P1, P2 or P3.
+1. **The ownership model does not change; what an implicit copy runs does.** Values are still
+   moved unless their type is `ImplicitClone`, and explicit duplication stays a call; no P1, P2 or P3.
+   An implicit copy of a type with a written `clone` now runs that code, so insertion and elision of
+   the call are observable, and an implementation must preserve the number and order of hook calls
+   for types that are not intrinsically cloneable (RFC-0206 section 2, copy sites). Implicit duplication
+   stays cheap in *intent*, as a convention and not a law.
 2. **Two aspects, one definition of the copy (B1m).** `Clone` is the explicit aspect. `ImplicitClone`
    is a method-less marker the compiler knows that refines `Clone`: an `ImplicitClone` type is
    duplicated at a by-value use by calling its own `clone`. *`ImplicitClone` is `Clone` that the
@@ -1162,7 +1166,7 @@ split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
 
 ## Decision
 
-**Outcome:** *(pending. Direction proposed 2026-11-03: the value model is unchanged; `Clone` and a
+**Outcome:** *(pending. Direction proposed 2026-11-03: the ownership model is unchanged and an implicit copy of a type with a written `clone` runs it; `Clone` and a
 compiler-known `ImplicitClone` marker replace `Copy`/`Clone`, specified in RFC-0206 and RFC-0207.
 The Open Questions above carry the status of each earlier question.)*
 **Target:** v0.16.0 (metel-core#924).

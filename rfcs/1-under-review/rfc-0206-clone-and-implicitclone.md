@@ -225,12 +225,21 @@ type, and must dispatch through the `clone` method otherwise. That is not a seco
 clone over leaf natives is by definition the representation copy, so the choice is unobservable. Any
 written `clone` among the reachable field types makes the type not intrinsically cloneable.
 
-**The effect contract.** An implicit copy runs user code, so a `clone` on an `ImplicitClone` type
-is expected to be cheap, total and free of observable side effects. The first implementation states
-the contract and does not check it. The design reserves an effect bound: once Metel's effect system
-exists, `ImplicitClone` requires its `Clone` to satisfy a stated effect bound, and a type whose
-`clone` does not cannot be `ImplicitClone`. No lint is specified before then, because detecting an
-allocating or panicking body without effect information would be guesswork.
+**The cost convention and what the language relies on.** An implicit copy runs user code, so a `clone`
+on an `ImplicitClone` type is expected to be cheap, total and free of external side effects. That is a
+convention against surprise in cost and value at every by-value use, not a law the compiler may assume.
+1. The language relies on nothing about a hook's result except that it is a value of the type. `Clone`
+   keeps its contract of RFC-0206 section 1, "another value of this type", with no equality law: a
+   `clone` may reset a field (the `Cache` example) or even change a counter.
+2. Insertion and elision of the call are therefore observable. Beyond the copy-site rules, an
+   implementation, interpreter or compiled backend, must preserve the number and order of hook calls
+   for any type that is not intrinsically cloneable.
+3. The first implementation neither checks nor lints the convention; detecting an allocating or
+   panicking body without effect information would be guesswork.
+4. **A future effect bound is a new restriction with a migration, not the completion of this
+   contract.** It would restrict a hook's effects (panic, I/O, allocation) and stop a type whose
+   `clone` has them from being `ImplicitClone`. It would not make a clone value-preserving. It is a
+   language change needing its own RFC and a migration note.
 
 **Bounds in generic code.** Generic code that may copy should bound on `Clone` and call `.clone()`
 where the copy is intended, and bound on `ImplicitClone` only where an implicit copy is the point
