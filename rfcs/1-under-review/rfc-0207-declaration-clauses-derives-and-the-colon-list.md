@@ -58,8 +58,8 @@ Entries are aspects with no methods that the compiler checks.
 2. There are no negative entries. An opt-out of an `auto` aspect (`Send`, `Sync`, `Linear`, RFC-0096)
    is the existing bodyless negative impl, `extend T: !Send;` (RFC-0102, RFC-0081), which is legal
    anywhere in the type's module. Whether the opt-out should instead be a colon-list entry, so that
-   it is visible at the declaration, is decided with RFC-0096's revision (language owner,
-   2026-11-04: not now).
+   it is visible at the declaration, is an open question of RFC-0096 (item 8), deferred with the
+   Send/Sync/Linear revision (language owner, 2026-11-04).
 3. The colon list never generates an impl. `: ImplicitClone` requires a `Clone` that already exists,
    written or requested with `derives Clone`; without one it is an error (RFC-0206 section 2).
 4. The grant is in the type's own module, so the orphan rule (`T0014`) holds trivially, and a marker
@@ -115,7 +115,7 @@ struct E derives Clone { s: NoClone }                        // error at the fie
 - **RFC-0162** — the model and the Axis C analysis this was extracted from.
 - **RFC-0093 / RFC-0092** — derive registration and comptime; `derives` is the request half.
 - **RFC-0096** — auto aspects, whose opt-out stays the negative `extend`; the colon-list form is
-  recorded there as an alternative.
+  an open question there, deferred.
 - **RFC-0105** — aspect lists in declarations; its later stage (method-bearing aspects after the
   colon, qualified methods in the body) is untouched.
 - **RFC-0123 / RFC-0209** — the field-wise condition and the row templates a derivation can use.

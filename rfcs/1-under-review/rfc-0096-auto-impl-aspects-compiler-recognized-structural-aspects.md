@@ -380,8 +380,9 @@ struct Token: ImplicitClone, !Send { id: i64 }
 - *Rule if adopted.* Negative colon entries are legal only for `auto` aspects, and the negative
   `extend` of an `auto` aspect becomes an error with a fix-it.
 
-**Chosen for now (B): the negative `extend`.** It needs no new syntax and no restriction, and it is
-not needed for `ImplicitClone`. The visibility argument is decided with this RFC's revision.
+**Current behaviour (B): the negative `extend`.** It needs no new syntax and no restriction, and it
+is not needed for `ImplicitClone`. Whether to adopt A is **an open question (see Unresolved Questions,
+8)**, deferred with this RFC's revision.
 
 ## Unresolved Questions
 
@@ -448,6 +449,12 @@ not needed for `ImplicitClone`. The visibility argument is decided with this RFC
    entry there itself. This RFC's own §5 already implies the answer; this question
    just makes the implementation obligation explicit before this RFC is accepted,
    rather than leaving it implicit in a sentence about coherence.
+
+8. **Colon-list opt-out (option A, section 8).** Should `struct Token: ImplicitClone, !Send` replace
+   the negative `extend T: !Send;` as the opt-out of an `auto` aspect? The Send/Sync/Linear revision of
+   this RFC (the `auto` and `structural any` properties of RFC-0212) is **deferred by the language
+   owner (2026-11-04)**; it is not part of the Clone/ImplicitClone settlement (RFC-0206), which does
+   not depend on either spelling. Until then the negative `extend` stands.
 
 ---
 
