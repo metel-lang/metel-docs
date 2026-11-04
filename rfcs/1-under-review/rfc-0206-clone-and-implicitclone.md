@@ -127,7 +127,13 @@ prerequisite refactor of section 6.
    holds when every field's type is `ImplicitClone`, and `T<A>: Clone` holds, and the type is not
    `Drop`. It is evaluated per instantiation, so `struct View<T>: ImplicitClone { r: &T }` is
    `ImplicitClone` for every `T`. A written `Clone` covering narrower instantiations makes
-   `ImplicitClone` hold only there; the error appears where an implicit copy is needed.
+   `ImplicitClone` hold only there; the error appears where an implicit copy is needed. This is the
+   declarative meaning: the least solution of those conditions over concrete instantiations. The
+   analysis of a generic body (ADR-0063) is a **sound approximation** of it: it answers yes, no or
+   unknown, and unknown never permits a copy, so the checker may reject a program the rule accepts
+   and never accept a copy the rule forbids. The first implementation decides a stated fragment
+   (conditions on parameters, on nested applications of provable types, and on shared references to
+   abstract types) and answers unknown outside it (section 6, step 2).
 4. *The implicit copy is the call.* A copy site (below) of an `ImplicitClone` value calls the type's
    `clone`. A type that is not `ImplicitClone` is moved. A written `clone` is therefore
    run at an implicit copy (Mojo's choice), and nothing is sealed to a bitwise body.
@@ -284,14 +290,22 @@ general features, in this order:
 
 1. **Identity-based aspect resolution.** Replace the string-keyed `"Copy"` sites by an aspect
    identity lookup (the ADR-0054/0066/0067 line). A prerequisite refactor, no RFC.
-2. **The declaration clauses** (RFC-0207): the colon list and `derives`.
-3. **Super-aspects** (RFC-0213), including entailment in the abstract analysis and negative closure.
-4. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
-5. **Aspect properties** (RFC-0212): `declared`, `implicit via`, and the std-written structural rule (a row template, RFC-0123), with the row
+2. **An obligation solver for abstract types** (metel-core#1810, a spike first). Goals
+   `type: aspect` over abstract types, answered yes, no or unknown with a witness (the selected impl
+   or derivation), from assumptions and their super-aspect closure, impls and templates with their
+   where clauses, and the compiler rules. Super-aspect entailment and the structural template are
+   instances of it, and elaboration carries the witness so a copy site records the `clone` it calls.
+   Recursion and cycles are a separate decision (RFC-0210, #1809 M2). If the spike shows it too large
+   for the release, the fallback is the stopgap (a nominal application that mentions an abstract
+   parameter is a move unless proven) with the solver completed in a later minor.
+3. **The declaration clauses** (RFC-0207): the colon list and `derives`.
+4. **Super-aspects** (RFC-0213), including entailment through the solver and negative closure.
+5. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
+6. **Aspect properties** (RFC-0212): `declared`, `implicit via`, and the std-written structural rule (a row template, RFC-0123), with the row
    machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211, RFC-0208).
-6. **Built-in kinds as impls:** references and views, then tuples (RFC-0125) and arrays (RFC-0132 §3),
+7. **Built-in kinds as impls:** references and views, then tuples (RFC-0125) and arrays (RFC-0132 §3),
    then closures and function types (metel-core#739, RFC-0134).
-7. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
+8. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
 Work specific to this RFC and independent of that order:
 - The representation copy is used only for intrinsically cloneable types (section 2, leaf clones); a type
@@ -300,7 +314,7 @@ Work specific to this RFC and independent of that order:
 - An implicit copy of a type with a hand-written `Clone` calls it; the evaluator must dispatch to the
   written `clone` at by-value uses of such types.
 - The move check and the abstract analysis treat an implicit copy as a call to `T::clone` under
-  the entailment of section 2, rule 6.
+  the entailment of section 2, rule 7.
 - The std repairs: array and tuple `Clone`, the reference and view cases, the unit fix, and #270's
   `Option`, `Result` and `List`.
 
