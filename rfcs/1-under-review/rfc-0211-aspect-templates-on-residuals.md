@@ -114,7 +114,7 @@ read, so the result is well defined at every width.
    residual that covers what the body reads. Declined by RFC-0137 §5, which removed body-derived
    sets in favour of declared ones.
 4. **Declared narrowed receivers** (RFC-0109, RFC-0146, RFC-0147): a hand-written impl that states
-   the residual it works on. Not an alternative but the route for written impls, and is outside
+   the residual it works on. Not an alternative but the route for written impls (drafted as RFC-0214, not a dependency of this RFC), and is outside
    this RFC.
 
 ---

@@ -343,6 +343,10 @@ extend Point: ImplicitClone;                                // error: granted on
 5. **The spelling and home of the aspect properties** (RFC-0212) and of negative super-aspect entries (RFC-0213).
 6. **Primitive declarations.** The compiler list becomes primitive struct declarations if std
    gains them.
+7. **Written `Clone` for a residual.** A projection of a type with a written `Clone` is neither `Clone` nor
+   `ImplicitClone` today (RFC-0211 rule 2). RFC-0214 (draft) would let the author write the impl for a
+   residual shape, and RFC-0211's super-aspect recheck then gives the projection `ImplicitClone`. Not a
+   dependency of this RFC.
 
 ---
 
