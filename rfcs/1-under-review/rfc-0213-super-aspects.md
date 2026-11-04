@@ -66,8 +66,8 @@ from the sub-aspect's impl by the compiler; deriving is the job of `derives` (se
 
 ## 3. Negative implementations
 
-RFC-0081's negative impls stay direct assertions. Coherence and the obligation solver (metel-core#1810)
-share one **signed closure**:
+RFC-0081's negative impls stay direct assertions. Coherence and, later, the obligation solver (metel-core#1813)
+share one **signed closure**; in v0.16.0 only coherence uses it:
 - **Positive:** `T: A` implies `T: B` for each super-aspect `B` of `A`.
 - **Exclusion:** `T: A` entails `T: !C` for each negative entry `!C` of `A`, and symmetrically
   `T: C` entails `T: !A`.

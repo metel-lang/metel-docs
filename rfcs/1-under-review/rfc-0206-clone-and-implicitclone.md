@@ -133,9 +133,11 @@ prerequisite refactor of section 6.
    declarative meaning: the least solution of those conditions over concrete instantiations. The
    analysis of a generic body (ADR-0063) is a **sound approximation** of it: it answers yes, no or
    unknown, and unknown never permits a copy, so the checker may reject a program the rule accepts
-   and never accept a copy the rule forbids. The first implementation decides a stated fragment
-   (conditions on parameters, on nested applications of provable types, and on shared references to
-   abstract types) and answers unknown outside it (section 6, step 2).
+   and never accept a copy the rule forbids. The v0.16.0 implementation decides only what the abstract analysis decides today (conditions on
+   parameters, and the compiler rules for references, tuples, arrays, closures and function types)
+   and treats every other abstract ownership as unknown, hence as a move. Reusing a `View<T>` in a
+   generic body is therefore rejected until the obligation solver, which is deferred to a later minor
+   (metel-core#1813; section 6, step 2). Concrete uses are unaffected.
 4. *The implicit copy is the call.* A copy site (below) of an `ImplicitClone` value calls the type's
    `clone`. A type that is not `ImplicitClone` is moved. A written `clone` is therefore
    run at an implicit copy (Mojo's choice), and nothing is sealed to a bitwise body.
@@ -278,7 +280,7 @@ Measured on 2026-11-02:
 | A named `struct` or `enum` | only if the user writes one | section 4 |
 | `&T` | no `Clone` in the reference satisfaction arm | std impl, `Clone` for every `T` (section 2) |
 | `[T]` | `Clone` only under `T: Clone` (`extend<T: Clone> [T]: Clone`) | `Clone` for every `T`: the view is copied, not its elements. This is a different operation from the owning array's element-wise `Clone` (`[T; N]` above), and the two impls stay separate |
-| Closures | no `Clone` | by captures (RFC-0134 §1); needs an environment-cloning witness from the solver (#1810), not only a verdict |
+| Closures | no `Clone` | by captures (RFC-0134 §1); needs an environment-cloning witness: the concrete checker supplies it at an instantiation, and the abstract analysis answers unknown until the solver (#1813) |
 
 ---
 
@@ -328,20 +330,22 @@ general features, in this order:
 
 1. **Identity-based aspect resolution.** Replace the string-keyed `"Copy"` sites by an aspect
    identity lookup (the ADR-0054/0066/0067 line). A prerequisite refactor, no RFC.
-2. **An obligation solver for abstract types** (metel-core#1810, a spike first). Goals
-   `type: aspect` over abstract types, answered yes, no or unknown with a witness (the selected impl
-   or derivation), from assumptions and their super-aspect closure, impls and templates with their
-   where clauses, and the compiler rules. Super-aspect entailment and the structural template are
-   instances of it, and elaboration carries the witness so a copy site records the `clone` it calls.
-   Recursion and cycles are a separate decision (RFC-0210, #1809 M2). If the spike shows it too large
-   for the release, the fallback is the stopgap (a nominal application that mentions an abstract
-   parameter is a move unless proven) with the solver completed in a later minor.
+2. **The abstract-ownership fallback** (metel-core#1814), not a solver. A spike (#1810, 2026-11-04)
+   prototyped an obligation solver and estimated 15 to 30 engineer-days for a production one, so
+   v0.16.0 ships the fallback: an abstract ownership the analysis cannot prove is unknown, and unknown
+   is a move, with the body analysed and not left unanalysed. **The obligation solver** (goals
+   `type: aspect` over abstract types, answered yes with a witness, no or unknown; nested
+   applications, field-wise templates, signed closure, witnesses carried to elaboration so a copy site
+   records the `clone` it calls) is a later minor (metel-core#1813). Super-aspect entailment in this
+   release covers declared bounds and their super-aspect closure; coherence uses the syntactic signed
+   closure of aspect declarations (RFC-0213 section 3), which needs no solver. Recursion and cycles
+   are decided in this RFC ("Recursion and termination") and apply to the solver when it is built.
 3. **The declaration clauses** (RFC-0207): the colon list and `derives`.
 4. **Super-aspects** (RFC-0213), including entailment through the solver and negative closure.
 5. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
 6. **Aspect properties** (RFC-0212): `declared`, `implicit via`, and the std-written structural rule (a row template, RFC-0123), with the row
    machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211). RFC-0208's `<..R>` binder is not
-   a prerequisite: the templates use `record R` until it lands (to be confirmed by the #1810 spike).
+   a prerequisite: the templates use `record R` until it lands (the #1810 spike did not exercise templates; to be checked in the Row machinery stage).
 7. **Built-in kinds as impls:** references and views, then tuples (RFC-0125, #794), then closures and
    function types (metel-core#739, RFC-0134). **Arrays and the native record `Clone` hook stay named
    compiler rules in this release.** Their std impls need a compile-time `N` (RFC-0132 §3) and the
