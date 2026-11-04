@@ -183,8 +183,8 @@ extend Row: PartialEq {
    RFC-0137 section 6 are open.
 2. **Methods with different receiver rows in one impl.** The union is the required set; whether a
    method with a narrower receiver may be called on a residual that has only its own fields is open.
-3. **Enums.** Variant rows (RFC-0210): what a residual of an enum is, and what a residual impl for one
-   means.
+3. **Enums.** Enums are atomic for narrowing and have no residuals (RFC-0150, RFC-0211), so this RFC
+   does not apply to them unless that changes (variant rows, RFC-0210).
 4. **Default methods** of the aspect and their receiver rows.
 5. **Spelling:** `extend DocTitle: A` through a view, `extend Doc.{ f }: A` inline, or both.
 6. **Whether row-bounded impls are needed at all** if exact-shape impls and templates suffice; the

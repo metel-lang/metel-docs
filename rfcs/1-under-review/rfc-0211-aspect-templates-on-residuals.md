@@ -67,8 +67,8 @@ header entry derives behaviour from the type's row, and a residual is that row n
 
 **Legality.**
 1. A residual `T.{ fields }` of a nominal type `T` satisfies aspect `A` through a **row template**
-   exactly when `T`'s header grants `A` (RFC-0207, RFC-0209) and the template's `where` bound holds
-   over the residual's present fields.
+   exactly when `T`'s header grants `A` (RFC-0207, RFC-0209), the template's `where` bound holds
+   over the residual's present fields, and rule 6 holds.
 2. A residual does **not** satisfy `A` through a hand-written impl of `A` for `T` (an
    `extend T: A { … }`), because the body may read a field the residual no longer has. A bound
    `T: A` on a residual is satisfied only through rule 1; otherwise it is `T0012`.
@@ -78,11 +78,19 @@ header entry derives behaviour from the type's row, and a residual is that row n
    brand does.
 5. A residual is a value of the same brand, so the brand's `Drop` rule is unchanged: a destructor
    is dispatched by the row-bounded rule of RFC-0137 §5 and is outside this RFC.
+6. **Super-aspects are rechecked on the residual.** A residual satisfies `A` only if every positive
+   super-aspect of `A` (RFC-0213) also holds for the residual, by these same rules: through its own
+   row template, or through a written impl for that residual shape once the language can express one
+   (RFC-0214, not a dependency of this RFC). An entailment `T: A` implies `T: B` is never assumed
+   across the residual boundary. A residual whose `A` template holds but whose super-aspect does not
+   does not satisfy `A`.
 
-**Marker aspects.** `Copy` follows rule 1: `Point.{ x }` is `Copy` if `Point` grants `Copy` and `x`
-is `Copy`; it is `Copy` whether or not `y` is. A residual of a type that cannot grant `Copy`
-(a field is not `Copy`) never is, even if the remaining fields are `Copy`: the header says so, not
-the shape.
+**Marker aspects.** `ImplicitClone` follows rules 1 and 6: `Point.{ x }` is `ImplicitClone` if
+`Point` grants `ImplicitClone`, `x` is `ImplicitClone`, and the residual is `Clone` (its super-aspect).
+It is `ImplicitClone` whether or not `y` is. A residual of a type that cannot grant `ImplicitClone`
+(a field is not) never is, even if the remaining fields are: the header says so, not the shape. A
+residual of a type whose `Clone` is written has no `Clone` template, so it is neither `Clone` nor
+`ImplicitClone`, and is moved, even though the type's header grants `ImplicitClone`.
 
 **Dynamic semantics.** The template runs over the present fields only. No field that is absent is
 read, so the result is well defined at every width.
@@ -95,18 +103,22 @@ read, so the result is well defined at every width.
    `Doc.{ title }`, built from the present field.
 2. **A written clone.** `extend Doc: Clone { fun clone(&self) -> Doc { … self.n … } }`: the
    residual does not satisfy `Clone`. The program of metel-core#1788 is `T0012` at the call.
-3. **Copy of a projection.** `Point: Copy` (a marker entry), `p.{ x }` used twice: accepted, as today, now by
-   rule 1 and not by looking through the brand.
-4. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `Copy`;
-   `H.{ fd }` is not `Copy` although `fd` is. A `Copy` projection of it needs a separate type.
-5. **Widening.** A cloned residual is widened by restoring the missing fields (RFC-0137 §6), so
+3. **A written clone and the marker.** `struct Cache: ImplicitClone { data: i64, hits: i64 }` with a
+   written `clone` that resets `hits`: `cache.{ data }` is not `Clone` (rule 2) and therefore not
+   `ImplicitClone` (rule 6), so `let a := p; let b := p;` on the projection is a use after move. The
+   same type declared `derives ImplicitClone` has both templates, and the projection copies.
+4. **Copy of a projection.** `struct Point derives ImplicitClone { x: i64, y: i64, }`, `p.{ x }` used
+   twice: accepted, by rules 1 and 6 through the two templates, and not by looking through the brand.
+5. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `ImplicitClone`;
+   `H.{ fd }` is not `ImplicitClone` although `fd` is. A copyable projection of it needs a separate type.
+6. **Widening.** A cloned residual is widened by restoring the missing fields (RFC-0137 §6), so
    a derived clone does not provide a way around a constructor invariant.
 
 ---
 
 ## 3. Alternatives considered
 
-1. **Residuals satisfy nothing.** Declined: it breaks `Copy` projections, which work today and are
+1. **Residuals satisfy nothing.** Declined: it breaks implicitly copied projections, which work today and are
    what `p.{ x }` is for, and it needs a separate story for generic code that passes residuals.
 2. **Residuals satisfy whatever the brand does** (today's bounds) and dispatch calls the brand's
    impl. Declined: unsound for hand-written impls, which would read fields the residual lacks.
@@ -124,6 +136,11 @@ read, so the result is well defined at every width.
 - **Bound satisfaction changes for hand-written impls** on residuals: a program that passes a
   residual to `T: Clone` today (and silently skips the user's impl) becomes `T0012`. This is the
   behaviour the bug (#1788) reports, and the fix is the rule.
+- **A written `Clone` removes implicit copying from projections** (rule 6): replacing a derived
+  `clone` with an equivalent written one changes `cache.{ data }` from copied to moved. A type that
+  wants copyable projections derives its `Clone`, or gets a residual impl from RFC-0214. A program
+  that copies a projection of a `Copy` type whose `Clone` will be written needs the same change when
+  it migrates to `ImplicitClone` (RFC-0206 section 5).
 - **Two ways to satisfy an aspect** depending on whether it is derived or written, which the
   header entry already makes visible.
 - **Dependence on RFC-0209** for the template and on RFC-0207 for the header entry.
@@ -134,7 +151,7 @@ read, so the result is well defined at every width.
 
 - **RFC-0137** — residuals and the `Drop` dispatch rule; this RFC fills in aspects other than `Drop`.
 - **RFC-0209 / RFC-0207** — per-aspect row visibility and header entries; the template applied here.
-- **RFC-0162 / RFC-0206** — `Copy` and `Clone`.
+- **RFC-0162 / RFC-0206** — `Copy` and `Clone`; RFC-0213 for the super-aspects rechecked by rule 6.
 - **RFC-0109 / RFC-0146 / RFC-0147 / RFC-0148** — narrowed receivers, the route for written impls.
 - **RFC-0210** — enums, which are atomic for narrowing (RFC-0150) and have no residuals.
 - **metel-core#1788** — the dispatch bug this RFC's rule resolves.

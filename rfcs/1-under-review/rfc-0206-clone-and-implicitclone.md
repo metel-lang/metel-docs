@@ -133,7 +133,10 @@ prerequisite refactor of section 6.
    run at an implicit copy (Mojo's choice), and nothing is sealed to a bitwise body.
 5. *`Drop` excludes it, and only it.* A type that implements `Drop` cannot be `ImplicitClone`.
    `Clone` on a `Drop` type is allowed.
-6. *Entailment.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract analysis
+6. *Residuals.* A residual of an `ImplicitClone` type is `ImplicitClone` only if it is also `Clone` by
+   the rules of RFC-0211 (a template, or a residual impl once RFC-0214 exists); a type with a written
+   `Clone` therefore has projections that move. The residual's hook is its own `Clone`.
+7. *Entailment.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract analysis
    of generic bodies, by the super-aspect relation of the declaration (RFC-0213).
 
 **Built-in kinds are compiler rules, not impls.**
