@@ -139,21 +139,35 @@ prerequisite refactor of section 6.
 7. *Entailment.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract analysis
    of generic bodies, by the super-aspect relation of the declaration (RFC-0213).
 
-**Built-in kinds are compiler rules, not impls.**
+**Built-in kinds: std impls where the target can be named, compiler rules where it cannot.**
 
 | Kind | `ImplicitClone` | `Clone` |
 |---|---|---|
-| Integers, floats, `boolean`, `Char`, unit | yes (a compiler list) | the value, guaranteed |
-| Shared references `&T`, views `[T]` | yes, for every `T` | the reference or view copied, guaranteed |
+| Integers, floats, `boolean`, `Char`, unit | yes, a std impl (`extend i64: ImplicitClone;`, as `extend i64: Copy;` is today) | the value: a leaf native (below) |
+| Shared references `&T`, views `[T]` | yes, for every `T`: `extend<T> &T: ImplicitClone;` in std | the reference or view copied: a leaf native |
 | `&var T` | never | none |
-| Tuples, `[T; N]`, records | when every part is | field-wise, guaranteed whenever `ImplicitClone` |
+| Tuples, `[T; N]`, records | when every part is (compiler rule until variadics and const `N`) | field-wise, guaranteed whenever `ImplicitClone` |
 | Closures | when every capture is (RFC-0134 §1) | by captures, guaranteed |
 | Written function types | move-only (RFC-0166) | none |
 | `String`, `List`, `Option`, `Result` | no | the std impls of §3 |
 
-The unit type joins the list, which fixes the disagreement between the bound and the move checker
-(metel-core#1784). Because the compiler guarantees `Clone` for every `ImplicitClone` built-in kind,
-the coverage holes of the Motivation cannot recur.
+Unit becomes a std impl like the scalars, which fixes the disagreement between the bound and the move
+checker (metel-core#1784) without a special case. Because std provides `Clone` with every
+`ImplicitClone` impl of a leaf and the compiler guarantees it for every `ImplicitClone` compiler-rule
+kind, the coverage holes of the Motivation cannot recur.
+
+**Leaf clones and the representation copy.** A leaf `Clone` is a std native, not Metel code:
+`extend i64: Clone { native(@std.core.copy_value) fun clone(&self) -> Self; }`, one host function for
+every scalar, `String`, `&T` and `[T]`. A native body cannot panic, reenter or allocate observably, and
+producing its result does not call `clone` again, so "an implicit copy is a call to `clone`" has a base
+case. A *derived* `clone` is defined as a per-field call to each field's `clone` (the semantics of
+today's record `Clone`, extended to structs, enums and arrays). A type is **intrinsically cloneable**
+when its `Clone` is a leaf native or derived and every field type is intrinsically cloneable, decided
+per instantiation (recursive types coinductively: a derived clone over finite values is well defined).
+The interpreter may perform the representation copy (`deep_clone_value`) for an intrinsically cloneable
+type, and must dispatch through the `clone` method otherwise. That is not a second semantics: a derived
+clone over leaf natives is by definition the representation copy, so the choice is unobservable. Any
+written `clone` among the reachable field types makes the type not intrinsically cloneable.
 
 **The effect contract.** An implicit copy runs user code, so a `clone` on an `ImplicitClone` type
 is expected to be cheap, total and free of observable side effects. The first implementation states
@@ -185,7 +199,7 @@ Measured on 2026-11-02:
 
 | Type | `Clone` today | Plan |
 |---|---|---|
-| Primitives, `String` | yes | unchanged |
+| Primitives, `String` | yes | the body becomes the leaf native `copy_value`; scalars also get `ImplicitClone` impls (`String` does not) |
 | `[T; N]` | yes, but it does not call the element's `clone` | field-wise through the element's `clone`; the discrepancy with records is a defect to fix |
 | Anonymous records | yes, field-wise: `extend<record R> { ..R }: Clone where ..R: Clone` (RFC-0123) | unchanged |
 | Named `record` | yes today, the same field-wise impl | takes a `derives Clone` or `: ImplicitClone` entry like a `struct`; a plain `record P` is not cloneable |
@@ -251,7 +265,9 @@ general features, in this order:
 7. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
 Work specific to this RFC and independent of that order:
-- Derived and built-in clones keep the interpreter's existing fast path.
+- The representation copy is used only for intrinsically cloneable types (section 2, leaf clones); a type
+  with a written `clone` among its reachable fields is cloned by dispatching to the method, as the record
+  `Clone` does today. `deep_clone_value` does not dispatch and must not be used for such types.
 - An implicit copy of a type with a hand-written `Clone` calls it; the evaluator must dispatch to the
   written `clone` at by-value uses of such types.
 - The move check and the abstract analysis treat an implicit copy as a call to `T::clone` under
@@ -344,8 +360,9 @@ extend Point: ImplicitClone;                                // error: granted on
 4. **A scoped implicit mode** for generic code over `Clone` types, if `.clone()` proves too noisy;
    deferred with the effects work.
 5. **The spelling and home of the aspect properties** (RFC-0212) and of negative super-aspect entries (RFC-0213).
-6. **Primitive declarations.** The compiler list becomes primitive struct declarations if std
-   gains them.
+6. **A native method in an aspect impl block.** Existing std natives are inherent methods (`String`,
+   `List`). Whether `native(..) fun clone(&self) -> Self;` is accepted inside `extend T: Clone { }`
+   must be confirmed; if not, the body calls an inherent native helper, or the checker accepts it in std.
 7. **Written `Clone` for a residual.** A projection of a type with a written `Clone` is neither `Clone` nor
    `ImplicitClone` today (RFC-0211 rule 2). RFC-0214 (draft) would let the author write the impl for a
    residual shape, and RFC-0211's super-aspect recheck then gives the projection `ImplicitClone`. Not a
