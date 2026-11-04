@@ -174,6 +174,27 @@ typed AST and the evaluator calls the clone method only there (today `deep_clone
 `let`, assignment, pattern binding and `for` iterable, for moves as well as copies, which is harmless
 only while a clone is unobservable).
 
+**Recursion and termination.** A recursive type goes through `List`, `Option`, `Result` or a reference
+(there is no `Box`).
+1. **Predicate queries are inductive.** A cycle in an `ImplicitClone` (or any marker) query is "no". This
+   is the least solution of rule 3, and it costs nothing: `List`, `Option` and `Result` are not
+   `ImplicitClone`, a reference is always `ImplicitClone` without being inspected, and a cycle by value
+   would be an infinite value.
+2. **Derivation conditions are coinductive on goals that repeat exactly.** `enum Tree derives Clone {
+   Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs
+   `Tree: Clone` again. The solver assumes the impl being derived while it checks the fields, as Rust
+   and Haskell do. The derived `clone` is a recursive function over finite values, so termination comes
+   from the data and not from the proof. This covers regular recursion such as `Node<T> { next:
+   Option<Node<T>>, v: T }`.
+3. **Coinduction never applies to a negative goal** (`!Drop`, `T: !B`) **or to a marker aspect.** A cycle
+   through one is unknown, never a proof.
+4. **Expanding recursion is rejected.** `struct Grow<T> derives Clone { rest: Option<Grow<List<T>>> }`
+   grows its argument at every step. A size and depth limit gives an error at the declaration with the
+   fix-it "write the impl", and unknown in the abstract analysis.
+5. **The derived body** is a per-field call, so a recursive `clone` recurses through the impl and needs
+   no unrolling. A written impl whose where clause mentions its own type is the ordinary case: the impl
+   exists and is not unrolled.
+
 **Built-in kinds: std impls where the target can be named, compiler rules where it cannot.**
 
 | Kind | `ImplicitClone` | `Clone` |

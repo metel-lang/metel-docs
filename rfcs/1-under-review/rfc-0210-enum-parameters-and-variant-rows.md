@@ -173,8 +173,10 @@ behaviour is the same; only the source of the body differs.
 3. **A variant row without the enum**: whether `<..V>` (RFC-0208) should also be allowed to stand
    for a variant row, which would matter only if anonymous sums arrive.
 4. **Field privacy** across the aspect's module and the enum's module (as in RFC-0209).
-5. **Recursive enums.** A recursive enum satisfies `..E: A` coinductively, or the bound is
-   rejected; `List`'s `Clone` shows the need.
+5. **Recursive enums** (resolved for the settlement, RFC-0206 section 2, "Recursion and termination").
+   A template for a *derivation* (`Clone`) is solved coinductively on goals that repeat exactly, with the
+   impl being derived assumed while its fields are checked; a *marker* is solved inductively, so a cycle
+   is "no". `List`'s `Clone` is the first case.
 6. **Narrowing and match refinement**: whether a template can see a narrowed variant after a
    match, which belongs to the residual RFC.
 7. **Which std enums** (`Option`, `Result`, user enums) take header entries first, and how that
