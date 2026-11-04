@@ -2,7 +2,7 @@
 title: "Copyness in Other Languages: Prior-Art Survey"
 date: '2026-11-03'
 status: report
-relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212
+relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212, rfc-0213
 ---
 
 # Copyness in Other Languages: Prior-Art Survey
@@ -10,14 +10,17 @@ relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212
 A survey of how other languages decide whether a value is duplicated implicitly, how a type states
 that, and how the answer interacts with generics, tuples, closures, references and destructors.
 It was written to inform the redesign of Metel's `Copy`/`Clone` model (RFC-0162, RFC-0206,
-RFC-0207). It records findings and open questions. It does not choose a design.
+RFC-0207). It records findings and open questions. It does not choose a design. Sections 4 to 10 survey
+copyness itself; section 11 (added 2026-11-04) surveys the sub-systems of the resulting proposal
+(declaration clauses, derivation, super-aspects, exclusion, aspect properties, structural rules),
+and includes Haskell and Scala.
 
 ## 1. Method and confidence
 
 Findings are marked by source quality:
 
 - **Verified** means read in a primary document (language reference, accepted proposal, release
-  notes) during this survey. Sources are listed in section 10.
+  notes) during this survey. Sources are listed in section 12.
 - **Memory** means stated from general knowledge and not re-checked here.
 - **Unconfirmed** means a search was attempted and returned nothing usable, or the sources
   disagreed.
@@ -260,7 +263,147 @@ These are observations that bear on the open questions in RFC-0162. They are not
 - Mojo documentation moves between hosts and versions; the pages cited below were reachable on
   2026-11-03.
 
-## 11. Sources
+## 11. Prior art by sub-system of the proposal
+
+Added 2026-11-04, after the settlement of RFC-0206, RFC-0207, RFC-0212 and RFC-0213. Each entry
+states what the other languages do and where the proposal sits relative to them. Confidence marks
+are as in section 1.
+
+### 11.1 Two levels, with a method-less marker refining the explicit one
+
+- Rust: `Copy: Clone` (verified). Mojo: `ImplicitlyCopyable` implies `Copyable`, and the docs say
+  all implicitly copyable types must be `Copyable` (verified).
+- Swift infers copyability and suppresses it with `~Copyable` (verified, section 5).
+- Haskell has no copy concept; the same refinement shape appears as `Eq => Ord` (memory).
+- Proposal: Mojo's shape with Rust's names, so every implicit-copy type is explicitly cloneable by
+  construction.
+
+### 11.2 Where the grant is written
+
+- Rust: an impl or derive anywhere in the crate (verified, section 4). Haskell: instances anywhere,
+  orphans allowed with a warning (memory).
+- Swift synthesizes only in the type declaration or a same-file extension (verified, SE-0185).
+  Mojo: the struct's trait list (verified).
+- Proposal: `declared`, the strictest form: only the declaration clauses; `extend T: ImplicitClone;`
+  is an error.
+
+### 11.3 Derivation as a request in the header
+
+- Haskell `deriving` and `StandaloneDeriving`, Scala 3 `derives` (a companion `derived` method;
+  the instance is placed in the companion; verified), Rust `#[derive]` (verified).
+- In Swift and Mojo the colon in the header is itself the request and the compiler synthesizes
+  unless the member is written (verified: SE-0185; Mojo's `Copyable` generates the copy constructor
+  unless one is written). This is the "synthesized unless written" model: a reader cannot tell
+  from the header who wrote the implementation.
+- Haskell, Scala and Rust report a duplicate instance when both a derive and a written instance
+  exist.
+- Haskell's `DerivingVia` and newtype deriving reuse the representation's instance (memory); nothing
+  in the proposal corresponds to them.
+- Proposal: `derives` means the compiler wrote it and `:` means the author did; both together are
+  `T0015`. This keeps the duplicate-instance rule of Haskell, Scala and Rust and adds a header
+  that records authorship.
+
+### 11.4 Super-aspects and deriving them
+
+- Haskell (`deriving Ord` without an `Eq` instance is an error) and Rust (`derive(Copy)` without
+  `Clone`) only require the super-aspect (memory, verified respectively).
+- Swift derives a missing super-aspect: declaring `Hashable` synthesizes `Equatable` as well
+  (verified: SE-0185), and a hand-written `==` takes precedence.
+- Both Haskell and Rust accept a derived `Ord` over a hand-written `Eq`; the consistency between
+  the two is a convention (memory).
+- Proposal: `derives A` derives `A` and every positive super-aspect, unconditionally, and a written
+  impl of any of them is `T0015` (RFC-0213 section 4). A derived marker is sound only over a derived
+  base. This is stricter than Swift, which derives only what is missing, and it excludes the
+  derived-ordering-over-custom-equality case.
+
+### 11.5 Exclusion and negative entries
+
+- Rust hardcodes the `Copy`/`Drop` exclusion (error E0184, memory); negative impls and `auto trait`
+  are unstable (memory). Swift's `~Copyable` suppresses a default requirement and is not an
+  exclusion between two protocols (verified).
+- Haskell has no negative instances; exclusion is simulated with closed type families or custom
+  type errors (memory). C++ concepts can state `!C<T>` (memory).
+- Proposal: a negative entry in the super list (`aspect ImplicitClone: Clone, !Drop`). No surveyed
+  language declares an exclusion on the aspect itself.
+
+### 11.6 Properties of the aspect declaration
+
+- Rust: lang items and unstable auto traits. Swift: `Sendable` and `@_marker`. Haskell: classes
+  solved by the compiler, such as `Typeable`, `Coercible`, `Generic`, `HasField` and `KnownNat`
+  (memory).
+- Visibility of structural grants is a semver question. Swift infers `Sendable` only for types
+  that are not publicly ABI-exposed, because inference on a public type is an API commitment
+  (verified: the SE-0302 review). The Rust language team calls each auto trait a semver hazard:
+  adding a private field can remove `Send` from a public type (verified: the lang-team design
+  note on auto traits), and `cargo-semver-checks` carries lints for it.
+- Proposal: the semantics are declared properties read by identity; `implicit` is std only;
+  `declared` avoids the leak. `auto` (Send/Sync/Linear) would inherit the Rust hazard and is
+  deferred with the RFC-0096 revision.
+
+### 11.7 The field-wise rule
+
+- C++: the implicit copy constructor is defaulted or deleted per instantiation from the members
+  (memory). It is the closest precedent for an exact per-instantiation predicate.
+- Rust: `derive(Clone)` adds a bound on every type parameter, over-approximating. The "perfect
+  derive" fix is not in the language; a third-party crate prototypes it (verified).
+- Haskell infers the context of a derived instance and requires `StandaloneDeriving` with an
+  explicit context when inference fails (memory). Swift conditional conformance is explicit and,
+  for copyability, limited to `T: Copyable` (verified).
+- The rule itself can be library code: Haskell `GHC.Generics` with default signatures, and Scala
+  `Mirror` with Magnolia (verified for Scala).
+- Proposal: a std-written row template (RFC-0123 form), exact per instantiation, checked at the
+  declaration when the field types are concrete.
+
+### 11.8 Built-in structural kinds
+
+- Rust builds in impls for tuples, arrays, closures and function pointers (memory). Mojo uses
+  conditional conformance over a variadic pack (verified, section 6). Haskell's base defines
+  tuple instances by hand up to a fixed arity (memory: 15).
+- Proposal: compiler rules for tuples and arrays until variadics (RFC-0125) and compile-time
+  lengths (RFC-0132 section 3) exist, then impls.
+
+### 11.9 User code at an implicit copy
+
+- Allowed in C++, D, Nim and Mojo; not allowed in Rust and Swift structs (section 8, finding 3).
+- Mojo advises against implicit copies of costly types and against bounding generic code on
+  `ImplicitlyCopyable` (verified). C++ states the corresponding promise with `noexcept` and
+  `is_nothrow_copy_constructible` (memory).
+- Proposal: the hook is the type's own `Clone`; the cheap, total and effect-free contract is stated
+  and checked only once an effect system exists.
+
+### 11.10 Destructors
+
+- Rust forbids `Copy` with `Drop` because a bitwise copy would drop twice. Swift forbids
+  conditional copyability with a `deinit` (section 8, finding 9). Mojo allows a destructor on a
+  type with a user copy initializer (memory).
+- Proposal: `!Drop` on `ImplicitClone` is a policy, not a soundness rule, because the hook can
+  duplicate the resource. It can be relaxed by removing one super-list entry.
+
+### 11.11 Equality
+
+- Haskell's single `Eq` makes `Eq Double` violate reflexivity (`NaN /= NaN`) (memory). Rust's
+  `PartialEq`/`Eq` split is the fix and RFC-0168 follows it.
+
+### 11.12 Summary of positions
+
+| Sub-system | Closest precedent | Where the proposal differs |
+|---|---|---|
+| Marker refining the explicit level | Mojo | Rust's names; guaranteed coverage of built-in kinds |
+| Grant only in the declaration | Swift (synthesis), Mojo | Stricter: no same-file extension |
+| `derives` versus `:` | Scala `derives`, Haskell `deriving` | Header records who wrote the impl |
+| Unconditional super-aspect derivation | Swift `Hashable` | Never over a written impl |
+| Exclusion in the declaration | none (Rust hardcodes it) | New |
+| Declared aspect properties | Rust lang items, Swift `Sendable` | Properties are data, `implicit` std only |
+| Exact structural rule | C++ implicit copy constructor | Checked at the declaration, written in std |
+| User hook at implicit copy | C++, Mojo | Opt-in marker, reserved effect bound |
+
+### 11.13 Unconfirmed in this section
+
+- The Haskell, C++ and Rust-E0184 statements marked memory were not re-read in primary sources.
+- Whether Mojo's `ImplicitlyCopyable` types may have a destructor, and the current Rust status of
+  `auto trait` and negative impls, should be checked before they are cited in an RFC.
+
+## 12. Sources
 
 - Rust: https://doc.rust-lang.org/std/marker/trait.Copy.html and the 2026 ergonomic ref-counting
   goal at https://rust-lang.github.io/rust-project-goals/2026/ergonomic-rc.html
@@ -281,3 +424,10 @@ These are observations that bear on the open questions in RFC-0162. They are not
 - D: https://issues.dlang.org/bugs/20367/
 - Go: https://go.dev/src/cmd/vet/testdata/copylock/copylock.go
 - Hylo: https://hylo-lang.org/introduction/
+- Swift synthesis and Sendable inference: SE-0185 at
+  https://github.com/swiftlang/swift-evolution/blob/main/proposals/0185-synthesize-equatable-hashable.md
+  and the SE-0302 review at https://forums.swift.org/t/accepted-se-0302-sendable-and-sendable-closures/45786
+- Mojo `ImplicitlyCopyable`: https://docs.modular.com/mojo/std/builtin/value/ImplicitlyCopyable
+- Scala 3 derivation: https://dotty.epfl.ch/3.0.0/docs/reference/contextual/derivation.html
+- Rust perfect derive: https://github.com/lucentflux/perfect-derive ; auto traits and semver:
+  https://lang-team.rust-lang.org/design_notes/auto_traits.html
