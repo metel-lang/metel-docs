@@ -8,7 +8,7 @@ The path from a version tag in `metel-core` to published, versioned documentatio
 
 ### PROC-RELEASE-001 — A release is cut by the maintainer, never by automation {#proc-release-001}
 
-The version number is chosen when a release is cut, by the versioning rule (a spec change needs at least a minor bump; a patch never changes the language). Nothing names a version that has not been cut (`ROADMAP.md`). Pushing the tag is the only step that starts automation.
+The version number is chosen when a release is cut, by the versioning rule (a spec change needs at least a minor bump; a patch never changes the spec; it can change which programs the implementation accepts only to bring it into line with the spec). Nothing names a version that has not been cut (`ROADMAP.md`). Pushing the tag is the only step that starts automation.
 
 | Field | Value |
 |---|---|
@@ -50,7 +50,7 @@ Reading metel-core's own pin, rather than resolving metel-docs `main` again, gua
 
 ### PROC-RELEASE-004 — Only a minor release freezes a docs snapshot {#proc-release-004}
 
-A patch release changes no language-visible behaviour, so its documentation is the minor version it patches. It still gets its docs pointer bumped and the site redeployed; it does not get a snapshot of its own.
+A patch release changes no spec, so its documentation is the minor version it patches. It still gets its docs pointer bumped and the site redeployed; it does not get a snapshot of its own.
 
 | Field | Value |
 |---|---|
