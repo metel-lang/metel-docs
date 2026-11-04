@@ -95,19 +95,17 @@ A type gets a `Clone` by writing one (`extend T: Clone { … }`), by a `derives 
 properties of RFC-0212 and the super-aspect relation of RFC-0213 (the spelling is a sketch):
 
 ```metel
-aspect ImplicitClone: derived Clone         // RFC-0213: a super-aspect, derived with it
+aspect ImplicitClone: Clone, !Drop          // RFC-0213: requires Clone, excludes Drop
     declared                                // RFC-0212: granted only in a declaration
-    structural all                          // RFC-0212: every field must satisfy it
-    excludes Drop                           // RFC-0212: no type is both
-    implicit via Clone::clone;              // RFC-0212: std only
+    implicit;                               // RFC-0212: std only; the hook is Clone::clone
 ```
 
 It is the stronger bound: `T: ImplicitClone` accepts fewer types than `T: Clone`.
 
 **No special case by name.** Every behaviour below follows from one of those properties. The compiler
 reads them from the aspect's declaration by identity and never tests the spelling "ImplicitClone" or
-"Copy". The one property that is a language semantic and not a constraint is `implicit via`
-(RFC-0212 section 4): it is the exception that remains, stated as a declaration property, and it is
+"Copy". The one property that is a language semantic and not a constraint is `implicit`
+(RFC-0212 section 3): it is the exception that remains, stated as a declaration property, and it is
 std only. Today the compiler identifies `Copy` by the string `"Copy"` at about 38 sites in the
 frontend (`aspect_name == "Copy"`, `infer_type_satisfies_aspect(…, "Copy", …)`); replacing them is the
 prerequisite refactor of section 6.
@@ -121,9 +119,10 @@ prerequisite refactor of section 6.
      implicitly. A `Clone` must already exist for the type, written (`extend P: Clone { … }`) or
      requested (`derives Clone`). If none exists it is an error with two fix-its: write one, or use
      `derives ImplicitClone`.
-   - `struct P derives ImplicitClone` makes the compiler derive the `Clone` as well (`derived Clone`,
-     RFC-0213 section 4). It is exactly `: ImplicitClone derives Clone`. Together with a written `extend P: Clone` it overlaps the
-     derived impl and is an error (`T0015`).
+   - `struct P derives ImplicitClone` derives the `Clone` when none is written (RFC-0213 section 4):
+     it is `: ImplicitClone derives Clone`. With a written `extend P: Clone` only the marker is
+     added, which is the colon form; `derives Clone, ImplicitClone` plus a written Clone overlaps
+     (`T0015`).
    The colon never generates an impl; `derives` always does.
 3. *The predicate is exact and conjunctive.* For an instantiation `T<A>`, `T<A>: ImplicitClone`
    holds when every field's type is `ImplicitClone`, and `T<A>: Clone` holds, and the type is not
@@ -227,8 +226,8 @@ general features, in this order:
    identity lookup (the ADR-0054/0066/0067 line). A prerequisite refactor, no RFC.
 2. **The declaration clauses** (RFC-0207): the colon list and `derives`.
 3. **Super-aspects** (RFC-0213), including entailment in the abstract analysis and negative closure.
-4. **Derivations** (RFC-0207): native `Clone` first; the derived relation of RFC-0213 section 4.
-5. **Aspect properties** (RFC-0212): `declared`, `structural`, `excludes`, `implicit via`, with the row
+4. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
+5. **Aspect properties** (RFC-0212): `declared`, `implicit`, and the std-written structural rule (a row template, RFC-0123), with the row
    machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211, RFC-0208).
 6. **Built-in kinds as impls:** references and views, then tuples (RFC-0125) and arrays (RFC-0132 §3),
    then closures and function types (metel-core#739, RFC-0134).
@@ -266,11 +265,11 @@ extend Cache: Clone { fun clone(&self) -> Cache { Cache { data = self.data, hits
 struct H { fd: i64 }
 extend H: Drop { fun drop(&var self) { } }
 extend H: Clone { fun clone(&self) -> H { H { fd = dup(self.fd) } } }     // Clone on a Drop type: fine
-// struct H2: ImplicitClone { fd: i64 } with extend H2: Drop { … }       // error: Drop excludes ImplicitClone
+// struct H2: ImplicitClone { fd: i64 } with extend H2: Drop { … }       // error: ImplicitClone: !Drop
 
 struct NoClone2: ImplicitClone { n: i64 }                   // error: no Clone; write one or use `derives ImplicitClone`
 struct Both derives ImplicitClone { n: i64 }
-extend Both: Clone { fun clone(&self) -> Both { Both { n = 0 } } }   // error T0015: overlaps the derived Clone
+extend Both: Clone { fun clone(&self) -> Both { Both { n = 0 } } }   // ok: only the marker is derived
 extend Point: ImplicitClone;                                // error: granted only in the declaration
 ```
 
@@ -306,9 +305,9 @@ extend Point: ImplicitClone;                                // error: granted on
 - **RFC-0162** — the model, the design space and the survey; this RFC is its accepted-direction
   specification of the two aspects.
 - **RFC-0207** — the colon list and the `derives` clause that carry the grant and the derivation.
-- **RFC-0212** — the aspect properties (`declared`, `structural`, `excludes`, `implicit via`) that
+- **RFC-0212** — the aspect properties (`declared`, `implicit`) that
   `ImplicitClone` is declared with.
-- **RFC-0213** — super-aspects, which give `ImplicitClone: derived Clone`.
+- **RFC-0213** — super-aspects, which give `ImplicitClone: Clone, !Drop`.
 - **RFC-0096** — auto aspects, revised so that `auto` is a declaration of RFC-0212.
 - **RFC-0071 §2** — states the one predicate; its `Copy` becomes `ImplicitClone`.
 - **RFC-0134 / RFC-0163 / RFC-0166** — closures and function types: copyable by captures; the `copy`
@@ -327,7 +326,7 @@ extend Point: ImplicitClone;                                // error: granted on
    them.
 4. **A scoped implicit mode** for generic code over `Clone` types, if `.clone()` proves too noisy;
    deferred with the effects work.
-5. **The spelling and home of the aspect properties** (RFC-0212) and of the `derived` mark (RFC-0213).
+5. **The spelling and home of the aspect properties** (RFC-0212) and of negative super-aspect entries (RFC-0213).
 6. **Primitive declarations.** The compiler list becomes primitive struct declarations if std
    gains them.
 

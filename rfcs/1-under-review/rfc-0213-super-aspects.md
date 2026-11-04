@@ -23,13 +23,14 @@ An aspect declaration may list one or more direct super-aspects after its name:
 pub aspect Ord: Eq {
     fun cmp(&self, other: &Self) -> Ordering;
 }
-aspect ImplicitClone: derived Clone;          // sketch: the derivation of ImplicitClone derives Clone
+aspect ImplicitClone: Clone, !Drop;           // sketch: requires Clone, excludes Drop
 ```
 
 The relation `A: B` is nominal and transitive: a proof of `T: A` also proves `T: B`; an
 implementation of `A` requires a coherent `B` for the same type; negative implementations stay
-local. A super-aspect entry may be marked `derived`, which makes the derivation of the sub-aspect
-also derive the super-aspect when the type lacks it. Without the mark an entry only requires.
+local. A super-aspect entry may be negative (`!B`): no type satisfies both aspects (section 3).
+The derivation of the sub-aspect derives the super-aspects the type lacks (section 4); no mark is
+needed.
 
 ---
 
@@ -61,7 +62,7 @@ also derive the super-aspect when the type lacks it. Without the mark an entry o
 
 For an explicit `extend T: A`, every direct and transitive super-aspect obligation must be satisfied
 by a coherent impl for `T`, written or derived (section 4). The compiler does not manufacture one
-from the sub-aspect's impl unless the relation is marked `derived`.
+from the sub-aspect's impl by the compiler; deriving is the job of `derives` (section 4).
 
 ## 3. Negative implementations
 
@@ -71,25 +72,31 @@ not:
 - `T: !B` makes `T: A` inconsistent, and is a coherence error.
 - `T: !A` does not imply `T: !B`.
 
-Any direct contradiction after super-aspect closure is a coherence error. Exclusions between aspects
-(RFC-0212 section 3) are closed the same way.
+Any direct contradiction after super-aspect closure is a coherence error.
 
-## 4. Derivation through a `derived` relation
+A negative entry in the super list (`aspect A: B, !C`) declares an exclusion: no type satisfies both
+`A` and `C`. A grant of the second is reported at that grant (RFC-0060), naming both; `T: A` entails
+`T: !C`; the exclusion is symmetric and need be declared on one side only. It generalises RFC-0071 §4
+and replaces the `excludes` property of an earlier draft of RFC-0212.
 
-`aspect A: derived B` states that the derivation of `A` also derives `B` for a type that has no `B`:
+## 4. Derivation of super-aspects
 
-1. `struct P derives A` derives `B` as well, exactly as `struct P derives A, B` would.
-2. Derivation is idempotent per type and aspect: `derives A, B` is valid and derives `B` once.
-3. A written `extend P: B` together with `derives A` overlaps the derived `B` and is an error
-   (`T0015`); a type that wants to write its own `B` lists `A` in the colon list instead of `derives`.
-4. `B` must have a derivation (RFC-0207), or the entry is an error at the aspect's declaration.
-5. An unmarked entry (`Eq: PartialEq`) never derives: the type brings its own `PartialEq`, which may be
-   custom.
+The rule is uniform, for every aspect with super-aspects:
 
-This is what lets `derives ImplicitClone` mean `: ImplicitClone derives Clone` (RFC-0206) without a
-rule specific to either aspect.
+1. `struct P derives A` also derives each positive super-aspect `B` of `A` (transitively) for which
+   `P` has no impl, written or derived, exactly as `struct P derives A, B` would. A super-aspect that
+   `P` already has is left alone: no overlap, no error.
+2. A missing super-aspect without a derivation (RFC-0207) makes the `derives` an error with a fix-it:
+   write the impl, or list the aspect.
+3. Derivation is idempotent per type and aspect: `derives A, B` is valid and derives `B` once.
+4. `struct P: A` (the colon list) generates nothing: every positive super-aspect must already exist for
+   `P`, or it is an error naming the missing one (section 2).
+5. A written `extend P: A` with `derives A` overlaps and is an error (`T0015`), as for any aspect.
 
----
+So `derives ImplicitClone` derives `Clone` when `Clone` is missing and is exactly `: ImplicitClone`
+when the author wrote one. `Eq: PartialEq` follows the same rule: `derives Eq` over a custom
+`PartialEq` adds only the marker-like `Eq`, and over none derives `PartialEq` first. No rule is
+specific to either aspect (RFC-0206).
 
 ## 5. Worked examples
 
@@ -102,34 +109,37 @@ extend Id: Eq;                               // ok: PartialEq exists
 struct Bad { n: i64 }
 extend Bad: Eq;                              // error: no PartialEq for Bad
 
-aspect ImplicitClone: derived Clone;
+aspect ImplicitClone: Clone, !Drop;
 struct Point derives ImplicitClone { x: i64 }          // derives Clone too
 struct Cache: ImplicitClone { n: i64 }
 extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: the colon form takes the author's Clone
 struct Both derives ImplicitClone { n: i64 }
-extend Both: Clone { … }                     // error T0015: overlaps the derived Clone
+extend Both: Clone { … }                     // ok: Clone is written, so only the marker is derived
+struct Dup derives Clone, ImplicitClone { n: i64 }
+extend Dup: Clone { … }                      // error T0015: overlaps the derived Clone
 ```
 
 ## 6. Alternatives considered
 
 - **No relation; a built-in entailment per aspect.** Rejected: an exception per aspect.
 - **Aspect aliases as the relation.** Rejected by RFC-0168: an alias creates no implementation target.
-- **Always derive super-aspects.** Rejected: `Eq` must be able to sit over a custom `PartialEq`.
+- **Always derive super-aspects, even over a written one.** Rejected: `Eq` must be able to sit over a custom `PartialEq`; the rule derives only what is missing.
+- **A `derived` mark on the entry.** Rejected: the uniform rule needs no per-aspect flag.
 - **A separate `provides` clause with a body** (an earlier draft of RFC-0206 and RFC-0207). Rejected:
   it needs a selection rule over overlapping impls and an equality law between two bodies.
 
 ## Relationship to existing RFCs
 
 - **RFC-0168** — the equality model, which depends on this RFC.
-- **RFC-0212** — properties of an aspect declaration; `implicit via` needs the relation.
-- **RFC-0206** — `ImplicitClone: derived Clone`.
+- **RFC-0212** — properties of an aspect declaration; `implicit` needs the relation.
+- **RFC-0206** — `ImplicitClone: Clone, !Drop`.
 - **RFC-0207** — the `derives` clause and the derivations this rule builds on.
 - **RFC-0081 / RFC-0060** — negative impls and coherence, extended by section 3.
 - **RFC-0039** — aspect aliases, unchanged.
 
 ## Open questions
 
-1. **The mark's spelling** (`derived`, as sketched, or another).
+1. **The spelling of a negative entry** (`!Drop` in the list, as sketched).
 2. **`dyn` and object safety** for an aspect with super-aspects.
 3. **Diamonds** (`A: B, C` with `B: D` and `C: D`): presumably one proof of `D`; to be specified.
 4. **Associated items and default methods** of a super-aspect, and whether a sub-aspect may override

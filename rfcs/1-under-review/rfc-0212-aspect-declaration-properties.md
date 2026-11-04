@@ -23,20 +23,16 @@ a named aspect today.
 |---|---|---|
 | `declared` | granted only through a type's declaration clauses (RFC-0207), never by `extend` | the `"Copy"` special case in coherence and `check_copy_impl_eligibility` |
 | `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync`, `Linear` (**deferred**: the Send/Sync/Linear revision is not part of the ImplicitClone settlement; `ImplicitClone` does not use `auto`) |
-| `structural` | satisfied for an instantiation when its parts are (`all`, or `any`) | the per-aspect composition code |
-| `excludes B` | no type satisfies both | the hardcoded `Copy`/`Drop` check (RFC-0071 §4) |
-| `implicit via S::m` | **std only**: a by-value use of a type satisfying the aspect calls `m` instead of moving | the implicit-copy semantics of `Copy` |
+| `implicit` | **std only**: a by-value use of a type satisfying the aspect calls its hook instead of moving; the hook is the one `fun m(&self) -> Self` of the aspect's super-aspects | the implicit-copy semantics of `Copy` |
 
 ```metel
 // sketches; every keyword is a placeholder
-aspect ImplicitClone: derived Clone         // RFC-0213: a super-aspect, derived with it
+aspect ImplicitClone: Clone, !Drop          // RFC-0213: requires Clone, excludes Drop
     declared
-    structural all
-    excludes Drop
-    implicit via Clone::clone;
+    implicit;
 
-aspect Send auto structural all;
-aspect Linear auto structural any;          // RFC-0089, RFC-0096 section 2
+aspect Send auto;                           // deferred with the Send/Sync/Linear revision (RFC-0096)
+aspect Linear auto;                         // its existential rule is part of that revision
 aspect Validated declared;                  // a user marker: a checked-by-nothing promise
 ```
 
@@ -78,15 +74,14 @@ colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an err
 - **Refinement of the condition is not provided.** The condition is the aspect's structural rule
   (section 2), evaluated exactly, so there is nothing to refine.
 
-## 2. `structural`
+## 2. The structural rule is a template, not a property
 
-`structural all` makes the aspect satisfied for `T<args>` when it holds for every field type of
-`T<args>`: every field of a struct or record, every field of every variant of an enum, every element
-of a tuple or array. `structural any` is satisfied when it holds for some field (RFC-0089's
-`Linear`). RFC-0096 section 2 states which quantifier each existing aspect uses; this RFC only needs
-the declaration to name it.
+There is no `structural` or `excludes` property. The field-wise rule of `ImplicitClone` is written in
+std as a conditional template over the type's row, in the form RFC-0123 and RFC-0186 give (`where ..R:
+A`), and an exclusion is a negative super-aspect entry (RFC-0213 section 3, `aspect ImplicitClone:
+Clone, !Drop`).
 
-- **Exact, per instantiation.** The rule is evaluated on the instantiated field types, not as a
+- **Exact, per instantiation.** The condition is evaluated on the instantiated field types, not as a
   bound on the type parameters. `struct View<T> { r: &T }` is covered for every `T` when `&T` is.
 - **Reaching the fields of a nominal type** needs the row machinery: RFC-0209 (a type's row is
   visible to the templates of an aspect it has granted), RFC-0210 (enums) and RFC-0211 (residuals,
@@ -96,28 +91,27 @@ the declaration to name it.
   impl for `&var T`), and by the closure rule of RFC-0134 §1 once function types can satisfy aspects
   (metel-core#739). Tuples need variadic generics (RFC-0125) and arrays a compile-time `N`
   (RFC-0132 §3), or a hardcoded arm until then.
-- **With `auto`,** the rule is the grant. With `declared` it is a check on the entry: a concrete
-  field type that fails is an error at the declaration, next to the field; one that depends on a type
-  parameter is decided per instantiation.
+- **With `declared`** the template is a check on the entry: a concrete field type that fails is an
+  error at the declaration, next to the field; one that depends on a type parameter is decided per
+  instantiation.
+- **`auto` with a structural rule** (`Send`, `Sync`, `Linear`, including the existential rule of
+  `Linear`) is deferred with the Send/Sync/Linear revision of RFC-0096. This RFC does not specify it.
 
-## 3. `excludes`
+## 3. `implicit` (std only)
 
-`aspect A excludes B` means no type satisfies both. The coherence pass (RFC-0060) reports a grant of
-the second as an error at that grant, naming both. It generalises RFC-0071 §4. `T: A` entails
-`T: !B` for negative reasoning. The exclusion is symmetric: it need only be declared on one side.
-
-## 4. `implicit via S::m` (std only)
-
-`aspect A: S … implicit via S::m` states that a by-value use of a value whose type satisfies `A` is
-the call `m(&x)` with the call inserted, and not a move. It requires:
-1. `A` refines the aspect `S` that owns `m` (RFC-0213);
-2. `m` has the shape `fun m(&self) -> Self`;
-3. the declaration is in std. The compiler identifies std by module provenance and rejects
+`aspect A: S, … implicit` states that a by-value use of a value whose type satisfies `A` is the call
+`m(&x)` with the call inserted, and not a move, where `m` is the hook. It requires:
+1. `A` refines (transitively) an aspect `S` that owns exactly one method of the shape
+   `fun m(&self) -> Self` among the methods of its super-aspects; zero or several is an error at the
+   declaration. There is no `via` naming the method: the shape determines it, and the compiler
+   reads it by identity.
+2. the declaration is in std. The compiler identifies std by module provenance and rejects
    `implicit` elsewhere. User-declared implicit aspects would let a user hook run silently at every
    use, which RFC-0162's D1 contains, so this is not offered.
 
-A type that satisfies two implicit aspects with different methods is a coherence error. Today there is
-one such aspect, `ImplicitClone`.
+A type that satisfies two implicit aspects with different hooks is a coherence error. Today there is
+one such aspect, `ImplicitClone`. The reserved effect bound (RFC-0206) belongs to the hook's
+signature.
 
 ---
 
@@ -125,9 +119,8 @@ one such aspect, `ImplicitClone`.
 
 | Aspect | Declaration |
 |---|---|
-| `ImplicitClone` | `: derived Clone`, `declared`, `structural all`, `excludes Drop`, `implicit via Clone::clone` |
-| `Send`, `Sync` | `auto`, `structural all` |
-| `Linear` | `auto`, `structural any` |
+| `ImplicitClone` | `: Clone, !Drop`, `declared`, `implicit`; the structural rule is a std row template |
+| `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |
 
@@ -139,7 +132,7 @@ extend Point: ImplicitClone;                              // error: ImplicitClon
 struct H { fd: i64 }
 extend H: Drop { fun drop(&var self) { } }
 struct H2 derives ImplicitClone { fd: i64 }
-extend H2: Drop { fun drop(&var self) { } }              // error: ImplicitClone excludes Drop
+extend H2: Drop { fun drop(&var self) { } }              // error: ImplicitClone: !Drop
 struct Token { id: i64 }
 extend Token: !Send;                                      // opt-out of an auto aspect: the existing negative impl
 ```
@@ -153,15 +146,15 @@ extend Token: !Send;                                      // opt-out of an auto 
 - **Keep RFC-0096's closed list.** Rejected: the same exception for three more aspects.
 - **Properties as attributes** (`#declared`). Possible; RFC-0095 is the home, and the properties
   change what the compiler accepts, which attributes are meant not to do. Open question 1.
-- **Make `implicit` user-available.** Rejected (section 4).
+- **Make `implicit` user-available.** Rejected (section 3).
 
 ## Relationship to existing RFCs
 
 - **RFC-0206** — `ImplicitClone` is declared with these properties.
-- **RFC-0213** — super-aspects, which `implicit via` and the derived relation need.
+- **RFC-0213** — super-aspects, which `implicit` and the exclusion need.
 - **RFC-0207** — the clauses that grant a `declared` aspect.
-- **RFC-0096** — revised so that `auto` is the `auto structural` declaration.
-- **RFC-0209 / RFC-0210 / RFC-0211 / RFC-0208** — the row machinery for `structural` on named types.
+- **RFC-0096** — its `auto` revision is deferred; see section 2.
+- **RFC-0209 / RFC-0210 / RFC-0211 / RFC-0208** — the row machinery for the structural template on named types.
 - **RFC-0060 / RFC-0081 / RFC-0071 §4** — coherence, negative impls and the `Copy`/`Drop` exclusion.
 - **RFC-0125 / RFC-0132 / metel-core#739** — tuples, arrays and function types.
 - **RFC-0123 / RFC-0186** — the field-wise bound `where ..R: A`, the form of the rule.
@@ -169,9 +162,8 @@ extend Token: !Send;                                      // opt-out of an auto 
 ## Open questions
 
 1. **Spelling and form.** Clauses on the declaration, a property list, or attributes (RFC-0095).
-2. **Which properties users may use.** `implicit` is std only; whether `declared`, `structural` and
-   `excludes` are open to user aspects.
-3. **`structural any` and the existential rule of `Linear`,** and whether other quantifiers are needed.
+2. **Which properties users may use.** `implicit` is std only; whether `declared` is open to user aspects.
+3. **`auto` and the structural rules of `Send`, `Sync`, `Linear`** (including `Linear`'s existential rule): deferred with the RFC-0096 revision.
 4. **Interaction of `declared` and a field of type-parameter type** when the failing instantiation is
    only discovered at a use.
 5. **Object safety** of aspects with these properties (`dyn ImplicitClone`).
