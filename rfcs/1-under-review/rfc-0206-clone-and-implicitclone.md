@@ -128,8 +128,8 @@ prerequisite refactor of section 6.
    `Drop`. It is evaluated per instantiation, so `struct View<T>: ImplicitClone { r: &T }` is
    `ImplicitClone` for every `T`. A written `Clone` covering narrower instantiations makes
    `ImplicitClone` hold only there; the error appears where an implicit copy is needed.
-4. *The implicit copy is the call.* A by-value use of an `ImplicitClone` value is `x.clone()` with
-   the call inserted. A type that is not `ImplicitClone` is moved. A written `clone` is therefore
+4. *The implicit copy is the call.* A copy site (below) of an `ImplicitClone` value calls the type's
+   `clone`. A type that is not `ImplicitClone` is moved. A written `clone` is therefore
    run at an implicit copy (Mojo's choice), and nothing is sealed to a bitwise body.
 5. *`Drop` excludes it, and only it.* A type that implements `Drop` cannot be `ImplicitClone`.
    `Clone` on a `Drop` type is allowed.
@@ -138,6 +138,35 @@ prerequisite refactor of section 6.
    `Clone` therefore has projections that move. The residual's hook is its own `Clone`.
 7. *Entailment.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract analysis
    of generic bodies, by the super-aspect relation of the declaration (RFC-0213).
+
+**Where an implicit copy happens (copy sites).** These rules are normative; the slogan "a by-value use
+is `x.clone()`" is not.
+1. A **place read in value position** is a copy site when the place's type is `ImplicitClone`, and a
+   move otherwise. Value position means a use that would otherwise take the value out of the place:
+   `let b := a`, `f(a)`, `return a`, `S { f = a }`, `[a, a]`, a by-value `self` argument, a by-copy
+   capture, and the same for a field `a.x`, an index `a[i]` and a dereference `*r`. A borrow (`&a`, a
+   `&self` receiver) reads nothing.
+2. A **temporary is transferred, never cloned.** Calls, literals, constructors, block results and the
+   result of an explicit `.clone()` are temporaries, so `let d := a.clone();` runs the hook once. A field
+   read from an owned temporary (`make().x`) transfers that field.
+3. **No elision of the last use.** `return x`, or the last use of `x`, is still a copy site, because a
+   written `clone` can change the value. An optimiser may skip a clone only for an intrinsically
+   cloneable type (leaf clones, below), where the skip is unobservable.
+4. **A generic body decides at its definition.** Whether a read is a copy or a move is decided by the
+   bounds visible there. `fun relay<T>(x: T) -> T { x }` moves, even when instantiated with an
+   `ImplicitClone` type; the same read under `T: ImplicitClone` is a copy site. Reconstructing the body
+   per instantiation reuses the definition's decisions and never revisits them, so generic and
+   non-generic code behave alike.
+5. **The hook runs with shared access and in a fixed order.** The base and index of a place expression
+   are evaluated once, left to right, then `clone` is called with `&self`, so the source place is
+   untouched whatever the hook does. A panic in the hook propagates like any panic and leaves no
+   partial result. A hook may call arbitrary code, including another copy site, so the interpreter
+   holds no borrow of its environment while it runs.
+
+The evaluator therefore does not clone at binding and assignment. Elaboration marks each copy site in the
+typed AST and the evaluator calls the clone method only there (today `deep_clone_value` runs at every
+`let`, assignment, pattern binding and `for` iterable, for moves as well as copies, which is harmless
+only while a clone is unobservable).
 
 **Built-in kinds: std impls where the target can be named, compiler rules where it cannot.**
 
