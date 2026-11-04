@@ -346,6 +346,43 @@ because this RFC is the right place to resolve it.
 
 ---
 
+## 8. Considered: the opt-out in the declaration (recorded 2026-11-04)
+
+An auto aspect holds structurally unless the type opts out. The opt-out today is the bodyless
+negative impl (RFC-0102, RFC-0081):
+
+```metel
+struct Token { id: i64 }
+extend Token: !Send;                 // legal anywhere in the type's module
+```
+
+During the `Copy`/`Clone` settlement (RFC-0206, RFC-0207, RFC-0212) the alternative of writing the
+opt-out in the declaration's colon list was weighed, and the language owner chose to keep the
+negative `extend` for now. It is recorded here so that it is decided together with this RFC's
+revision (the note at the top), when `Send` and `Sync` are implemented and there is real usage.
+
+**The alternative (A): a negative entry in the colon list.**
+
+```metel
+struct Token: ImplicitClone, !Send { id: i64 }
+```
+
+- *For.* A type that is not `Send` changes what every use across threads means, the same kind of
+  contract as implicit duplication, so the fact is visible at the declaration. One list then says
+  what the type is and is not, and it is what RFC-0105 originally proposed
+  (`struct Token: Copy2, Serializable, !Send { … }`). Swift fixes copyability on the declaration for
+  the same reason.
+- *Against.* It is a second spelling of a fact the negative `extend` already states. To keep the
+  declaration as the only place, `extend T: !A;` would have to be forbidden for `auto` aspects, a
+  coherence change; and negatives split into two kinds by the aspect's kind (`struct T: !Clone` an
+  error, `extend T: !Clone;` legal, which RFC-0081 uses for disjointness of blanket impls).
+- *Breakage.* None today: `Send` and `Sync` are not implemented for any type yet (RFC-0080).
+- *Rule if adopted.* Negative colon entries are legal only for `auto` aspects, and the negative
+  `extend` of an `auto` aspect becomes an error with a fix-it.
+
+**Chosen for now (B): the negative `extend`.** It needs no new syntax and no restriction, and it is
+not needed for `ImplicitClone`. The visibility argument is decided with this RFC's revision.
+
 ## Unresolved Questions
 
 1. **Enum variants with no fields.** A unit variant trivially satisfies any auto-impl

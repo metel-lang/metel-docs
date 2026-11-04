@@ -22,7 +22,7 @@ a named aspect today.
 | Property | Meaning | Replaces |
 |---|---|---|
 | `declared` | granted only through a type's declaration clauses (RFC-0207), never by `extend` | the `"Copy"` special case in coherence and `check_copy_impl_eligibility` |
-| `auto` | granted structurally with no entry; a type opts out with `!A` | RFC-0096's closed list for `Send`, `Sync`, `Linear` |
+| `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync`, `Linear` |
 | `structural` | satisfied for an instantiation when its parts are (`all`, or `any`) | the per-aspect composition code |
 | `excludes B` | no type satisfies both | the hardcoded `Copy`/`Drop` check (RFC-0071 §4) |
 | `implicit via S::m` | **std only**: a by-value use of a type satisfying the aspect calls `m` instead of moving | the implicit-copy semantics of `Copy` |
@@ -140,7 +140,8 @@ struct H { fd: i64 }
 extend H: Drop { fun drop(&var self) { } }
 struct H2 derives ImplicitClone { fd: i64 }
 extend H2: Drop { fun drop(&var self) { } }              // error: ImplicitClone excludes Drop
-struct Token: !Send { id: i64 }                           // opt-out of an auto aspect
+struct Token { id: i64 }
+extend Token: !Send;                                      // opt-out of an auto aspect: the existing negative impl
 ```
 
 ---

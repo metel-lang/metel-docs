@@ -48,8 +48,8 @@ implicit marker is named, declared and related to `Clone`.
 3. **The grant is fixed on the declaration, and the clause says where `Clone` comes from.**
    `struct Point derives ImplicitClone { … }` when the compiler writes the `Clone` (exactly
    `: ImplicitClone derives Clone`), and `struct Cache: ImplicitClone { … }` when the author wrote it.
-   The colon list never generates, and also carries opt-outs such as `!Send`; `extend T: ImplicitClone;`
-   is an error. Both clauses are RFC-0207.
+   The colon list never generates and has no negative entries (an opt-out such as `!Send` stays the
+   negative `extend`); `extend T: ImplicitClone;` is an error. Both clauses are RFC-0207.
 4. **No special case by name.** `ImplicitClone` is an ordinary aspect declared in std with general
    aspect properties (RFC-0212: `declared`, `structural`, `excludes`, and the std-only
    `implicit via`) over a super-aspect relation (RFC-0213). The compiler reads those properties by
@@ -375,7 +375,7 @@ of every `extend … : Copy;`. Grants for foreign types (3) are unaffected.
 
 The C4 header list and the C5 grant modes were developed in RFC-0207 and are not carried into the
 2026-11-03 direction. What survives from that work is small and lives in RFC-0207: the colon list
-(for the marker and for opt-outs such as `!Send`) and the `derives` clause. The refinable header
+(for the marker; an opt-out such as `!Send` stays the negative `extend`) and the `derives` clause. The refinable header
 grant, `provides`, the selection rule over overlapping impls and the `header`/`derivable` modifiers
 were removed; the reasons are in RFC-0206 section 8.
 
@@ -823,7 +823,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   `Clone` to independent-duplication-only; add `Share`). This RFC's direction leaves `Clone`
   otherwise untouched.
 - **RFC-0207 (Declaration Clauses: derives and the Colon List, `1-under-review`)** — the colon list
-  that carries the marker and `!Send`-style opt-outs, and the `derives` clause (this RFC's Axis C,
+  that carries the marker, and the `derives` clause (this RFC's Axis C,
   cut down).
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
   second cut": a new `Share` aspect beside `Copy`/`Clone`, no rename. One of the two

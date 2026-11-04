@@ -23,12 +23,14 @@ A type declaration may carry two clauses after its name:
 struct Cache: ImplicitClone { data: i64, hits: i64 }         // colon list: what the type is (its Clone is written)
 struct Point derives ImplicitClone { x: i64, y: i64 }        // derives: the compiler writes Clone, and the marker
 struct Doc derives Clone, Debug { title: String }            // derives: what the compiler writes
-struct Token: !Send derives Debug { id: i64 }                // both; the colon list comes first
+struct Handle: ImplicitClone derives Debug { id: i64 }       // both; the colon list comes first
 ```
 
 - **The colon list** names facts about the type that the compiler checks and that change what its
-  uses mean: a compiler-known declaration-granted marker (`ImplicitClone`, RFC-0206), and opt-outs
-  of an `auto` aspect (`!Send`, `!Sync`, RFC-0096).
+  uses mean: a compiler-known declaration-granted marker (`ImplicitClone`, RFC-0206). It has no
+  negative entries: an opt-out of an `auto` aspect stays the existing bodyless negative impl
+  (`extend Token: !Send;`, RFC-0102). A colon-list opt-out is recorded as an alternative in
+  RFC-0096.
 - **The `derives` clause** requests that the compiler generate an implementation of an aspect
   that has a derivation (`Clone`, `Debug`).
 
@@ -53,8 +55,11 @@ Entries are aspects with no methods that the compiler checks.
 1. A positive entry must name a compiler-known marker that is granted in the declaration. Today
    that is `ImplicitClone`. Naming any other aspect is an error with a fix-it: a method-bearing
    aspect goes in `derives` or `extend`.
-2. A negative entry (`!X`) must name an `auto` aspect (RFC-0096): `Send`, `Sync`, `Linear`. It is the
-   opt-out of the structural rule. For any other aspect it says nothing and is an error.
+2. There are no negative entries. An opt-out of an `auto` aspect (`Send`, `Sync`, `Linear`, RFC-0096)
+   is the existing bodyless negative impl, `extend T: !Send;` (RFC-0102, RFC-0081), which is legal
+   anywhere in the type's module. Whether the opt-out should instead be a colon-list entry, so that
+   it is visible at the declaration, is decided with RFC-0096's revision (language owner,
+   2026-11-04: not now).
 3. The colon list never generates an impl. `: ImplicitClone` requires a `Clone` that already exists,
    written or requested with `derives Clone`; without one it is an error (RFC-0206 section 2).
 4. The grant is in the type's own module, so the orphan rule (`T0014`) holds trivially, and a marker
@@ -96,8 +101,9 @@ struct Point: ImplicitClone { x: i64, y: i64 }               // ok
 struct Bad: Clone { x: i64 }                                 // error: Clone has methods; write `derives Clone`
 struct B2: ImplicitClone { x: i64 }                          // error: no Clone; write one, or `derives ImplicitClone`
 struct B3 derives ImplicitClone { x: i64 }                   // ok: derives Clone and the marker
-struct Token: !Send { id: i64 }                              // ok: opt-out of an auto aspect
-struct C: !Clone { x: i64 }                                  // error: Clone is not an auto aspect
+struct Token { id: i64 }
+extend Token: !Send;                                         // ok: the existing opt-out of an auto aspect
+struct C: !Clone { x: i64 }                                  // error: the colon list has no negative entries
 struct D derives Clone { n: i64 }
 extend D: Clone { fun clone(&self) -> D { D { n = 0 } } }    // error T0015: overlaps the derived impl
 struct E derives Clone { s: NoClone }                        // error at the field: NoClone is not Clone
@@ -108,7 +114,8 @@ struct E derives Clone { s: NoClone }                        // error at the fie
 - **RFC-0206** — `Clone` and `ImplicitClone`, the first user of the colon list and of `derives`.
 - **RFC-0162** — the model and the Axis C analysis this was extracted from.
 - **RFC-0093 / RFC-0092** — derive registration and comptime; `derives` is the request half.
-- **RFC-0096** — auto aspects, whose opt-out is written in the colon list.
+- **RFC-0096** — auto aspects, whose opt-out stays the negative `extend`; the colon-list form is
+  recorded there as an alternative.
 - **RFC-0105** — aspect lists in declarations; its later stage (method-bearing aspects after the
   colon, qualified methods in the body) is untouched.
 - **RFC-0123 / RFC-0209** — the field-wise condition and the row templates a derivation can use.
