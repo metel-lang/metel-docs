@@ -66,13 +66,33 @@ from the sub-aspect's impl by the compiler; deriving is the job of `derives` (se
 
 ## 3. Negative implementations
 
-RFC-0081's negative impls stay direct assertions. Positive satisfaction is transitive, negative is
-not:
-- `T: A` implies `T: B`.
-- `T: !B` makes `T: A` inconsistent, and is a coherence error.
-- `T: !A` does not imply `T: !B`.
+RFC-0081's negative impls stay direct assertions. Coherence and the obligation solver (metel-core#1810)
+share one **signed closure**:
+- **Positive:** `T: A` implies `T: B` for each super-aspect `B` of `A`.
+- **Exclusion:** `T: A` entails `T: !C` for each negative entry `!C` of `A`, and symmetrically
+  `T: C` entails `T: !A`.
+- **Contrapositive:** `T: !B` entails `T: !A` for each sub-aspect `A` of `B`, so an explicit `T: !B`
+  makes an impl of `A` for `T` a coherence error.
+- **No downward propagation:** `T: !A` does not imply `T: !B`.
 
-Any direct contradiction after super-aspect closure is a coherence error.
+Any direct contradiction after the closure is a coherence error.
+
+1. **Coherence uses the syntactic closure only.** Super entries and exclusions come from aspect
+   declarations, which exist before type checking, so no solved facts are needed. Two impls are disjoint
+   when a positive requirement of one is excluded, directly or by entailment, by a negative requirement
+   of the other. `extend<T: ImplicitClone> W<T>: A` and `extend<T: Drop> W<T>: A` are disjoint because
+   `ImplicitClone` excludes `Drop`.
+2. **Absence is not negation.** "No impl of `C` exists" never proves `T: !C`. In generic code `!C` comes
+   only from a bound or an entailment. A grant on a concrete named type is checked in its defining
+   module, where the orphan rule closes its impl set for the aspects of std (`Drop`), so
+   `ImplicitClone` on a `Drop` type is a coherence error at the grant. Unknown stays unknown and is never
+   a proof of `!Drop`.
+3. **Priority applies before closure.** If a negative impl wins over a blanket positive impl for a type
+   (RFC-0060 section 5), the closure is computed from the facts after that choice. A positive impl of a
+   sub-aspect for that type whose super-aspect now fails is a coherence error, and a blanket
+   sub-aspect impl is inapplicable at that type. Closure never resurrects the base.
+4. **A negative super entry is part of the aspect's contract.** Deleting it is a language change: it can
+   turn disjoint impls into `T0015` and lets one type satisfy both aspects.
 
 A negative entry in the super list (`aspect A: B, !C`) declares an exclusion: no type satisfies both
 `A` and `C`. A grant of the second is reported at that grant (RFC-0060), naming both; `T: A` entails

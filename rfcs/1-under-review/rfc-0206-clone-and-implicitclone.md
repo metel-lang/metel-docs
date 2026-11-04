@@ -240,7 +240,10 @@ by-value use may run the type's `clone`; Mojo's documentation gives the same adv
 
 **`!Drop` is a policy.** Rule 5 does not follow from soundness, as Rust's `Copy`/`Drop` rule does,
 because the hook can duplicate a resource. It keeps resource-owning types from being copied silently,
-and it is one entry in the super list (`!Drop`), so relaxing it later is a one-line change. Mojo allows
+and it is one entry in the super list (`!Drop`). Deleting that entry is a one-line edit but not a
+one-line change: it removes the evidence that makes impls such as `extend<T: ImplicitClone> W<T>: A` and
+`extend<T: Drop> W<T>: A` disjoint, so it can turn valid programs into `T0015`, and it lets a type be both
+(RFC-0213 section 3). A negative super entry is part of the aspect's contract. Mojo allows
 a destructor on a type with a user copy initializer; that point is not confirmed (report, 11.13).
 
 **Third-party types.** A type from another module cannot be made `ImplicitClone` by its user, because
