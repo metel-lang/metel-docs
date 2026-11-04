@@ -51,8 +51,9 @@ implicit marker is named, declared and related to `Clone`.
    The colon list never generates and has no negative entries (an opt-out such as `!Send` stays the
    negative `extend`); `extend T: ImplicitClone;` is an error. Both clauses are RFC-0207.
 4. **No special case by name.** `ImplicitClone` is an ordinary aspect declared in std with general
-   aspect properties (RFC-0212: `declared`, `structural`, `excludes`, and the std-only
-   `implicit via`) over a super-aspect relation (RFC-0213). The compiler reads those properties by
+   aspect properties (RFC-0212: `declared` and the std-only `implicit via`; the structural rule is a std
+   row template and the exclusion of `Drop` a negative super-aspect entry) over a super-aspect
+   relation (RFC-0213). The compiler reads those properties by
    identity, which replaces the string-keyed `"Copy"` special cases (about 38 sites). The one property
    that is a language semantic, implicit duplication, is a declaration property available to std only;
    every language surveyed keeps that one exception. The cost is a dependency chain (RFC-0206

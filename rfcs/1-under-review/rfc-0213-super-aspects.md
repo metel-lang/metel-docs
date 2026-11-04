@@ -29,8 +29,8 @@ aspect ImplicitClone: Clone, !Drop;           // sketch: requires Clone, exclude
 The relation `A: B` is nominal and transitive: a proof of `T: A` also proves `T: B`; an
 implementation of `A` requires a coherent `B` for the same type; negative implementations stay
 local. A super-aspect entry may be negative (`!B`): no type satisfies both aspects (section 3).
-The derivation of the sub-aspect derives the super-aspects the type lacks (section 4); no mark is
-needed.
+The derivation of the sub-aspect also derives every positive super-aspect, unconditionally
+(section 4); no mark is needed.
 
 ---
 

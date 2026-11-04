@@ -267,8 +267,8 @@ let b := a;                    // a.clone() inserted; a is still valid
 let c := a;
 
 struct Wrapper<T> derives ImplicitClone { v: T }
-// Wrapper<i64>: ImplicitClone and Clone; Wrapper<String>: neither (String is not ImplicitClone);
-// Wrapper<NoClone>: neither
+// Wrapper<i64>: ImplicitClone and Clone; Wrapper<String>: Clone only (String is Clone, not ImplicitClone);
+// Wrapper<NoClone>: neither (NoClone has no Clone)
 
 struct Id: ImplicitClone derives Clone { n: i64 }          // accepted: the long form of `derives ImplicitClone`
 
