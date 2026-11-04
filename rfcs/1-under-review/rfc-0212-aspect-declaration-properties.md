@@ -107,9 +107,31 @@ Clone, !Drop`).
 the call `m(&x)` with the call inserted, and not a move. It requires:
 1. `A` refines (transitively) the aspect `S` that owns `m` (RFC-0213);
 2. `m` has the shape `fun m(&self) -> Self`;
-3. the declaration is in std. The compiler identifies std by module provenance and rejects
-   `implicit` elsewhere. User-declared implicit aspects would let a user hook run silently at every
-   use, which RFC-0162's D1 contains, so this is not offered.
+3. the declaration is in std (below).
+
+**What is restricted.** `implicit` is the one language-semantic hook framework: the compiler understands
+the ownership transition, the hook's signature, place evaluation and the order of calls (RFC-0206
+section 2, copy sites). Authoring a hook's body is ordinary, since any `Clone` is one. What is std only is
+*registering a new implicit operation*: a user aspect could otherwise make arbitrary code run at every
+by-value use, which RFC-0162's D1 contains, so it is not offered.
+
+**Provenance is a property of the declaration.** A declaration is in std when its module comes from the
+embedded standard library, and the loader records that on the declaration. The flag belongs to the aspect,
+not to a path written at a use site, so it survives imports, aliases and re-exports. `std` is a reserved
+path root, so a user module cannot take the name. Under separate compilation the origin must be carried
+and verified in compiled artifacts (open question 6).
+
+**At most one implicit aspect per program** in the first implementation: `ImplicitClone`. A later std
+aspect with `implicit` must carry a negative entry excluding every other implicit aspect (RFC-0213
+section 3), so that no type can satisfy two. Applicability is decided at the declaration, not at an
+instantiation, and a conflict is an error at the second declaration.
+
+**Refining an implicit aspect does not bypass `declared`.** `aspect Cheap: ImplicitClone` is allowed, but
+`extend T: Cheap;` still needs `T: ImplicitClone` as a super-aspect obligation, which only a declaration
+clause grants. A sub-aspect cannot carry `implicit` itself, since that is std only.
+
+**The structural rule is a representation policy, not a judgment of the hook.** A wrapper with a field
+that is not `ImplicitClone` is not `ImplicitClone`, even if its own `clone` is cheap.
 
 The hook is named, not inferred from method shapes. Inference would make the meaning of `implicit`
 depend on every other method of the super-aspects: a second `fun (&self) -> Self` added to `Clone`
@@ -117,9 +139,8 @@ would silently change or break the hook. Naming it makes the declaration say wha
 calls, and a rename or a second candidate cannot change it unnoticed. The compiler reads the named
 method by identity, not by spelling.
 
-A type that satisfies two implicit aspects with different hooks is a coherence error. Today there is
-one such aspect, `ImplicitClone`. The reserved effect bound (RFC-0206) belongs to the hook's
-signature.
+The cost convention of RFC-0206 section 2 belongs to the hook's signature; a future effect bound would
+be a new restriction with a migration.
 
 ---
 
@@ -179,7 +200,8 @@ extend Token: !Send;                                      // opt-out of an auto 
 4. **Interaction of `declared` and a field of type-parameter type** when the failing instantiation is
    only discovered at a use.
 5. **Object safety** of aspects with these properties (`dyn ImplicitClone`).
-6. **Provenance of std** for the `implicit` check.
+6. **Provenance of std** under separate compilation: how the origin of a declaration is carried and
+   verified in compiled artifacts. Within one program the loader's record suffices.
 7. **Identity-based aspect resolution** is a prerequisite refactor with no RFC of its own; the
    properties are read from the aspect's declaration, never from its spelling.
 
