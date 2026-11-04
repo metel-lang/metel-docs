@@ -204,7 +204,7 @@ only while a clone is unobservable).
 | Integers, floats, `boolean`, `Char`, unit | yes, a std impl (`extend i64: ImplicitClone;`, as `extend i64: Copy;` is today) | the value: a leaf native (below) |
 | Shared references `&T`, views `[T]` | yes, for every `T`: `extend<T> &T: ImplicitClone;` in std | the reference or view copied: a leaf native |
 | `&var T` | never | none |
-| Tuples, `[T; N]`, records | when every part is (compiler rule until variadics and const `N`) | field-wise, guaranteed whenever `ImplicitClone` |
+| Tuples, `[T; N]`, records | when every part is (a compiler rule: tuples until variadics, #794; arrays and the record hook until a compile-time `N` and RFC-0174, after this release) | field-wise, guaranteed whenever `ImplicitClone` |
 | Closures | when every capture is (RFC-0134 §1) | by captures, guaranteed |
 | Written function types | move-only (RFC-0166) | none |
 | `String`, `List`, `Option`, `Result` | no | the std impls of §3 |
@@ -337,9 +337,15 @@ general features, in this order:
 4. **Super-aspects** (RFC-0213), including entailment through the solver and negative closure.
 5. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
 6. **Aspect properties** (RFC-0212): `declared`, `implicit via`, and the std-written structural rule (a row template, RFC-0123), with the row
-   machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211, RFC-0208).
-7. **Built-in kinds as impls:** references and views, then tuples (RFC-0125) and arrays (RFC-0132 §3),
-   then closures and function types (metel-core#739, RFC-0134).
+   machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211). RFC-0208's `<..R>` binder is not
+   a prerequisite: the templates use `record R` until it lands (to be confirmed by the #1810 spike).
+7. **Built-in kinds as impls:** references and views, then tuples (RFC-0125, #794), then closures and
+   function types (metel-core#739, RFC-0134). **Arrays and the native record `Clone` hook stay named
+   compiler rules in this release.** Their std impls need a compile-time `N` (RFC-0132 §3) and the
+   comptime-for implementation (RFC-0174), which the roadmap schedules after Move check default-on and
+   so after v0.16.0. They move to a later theme, "Structural kinds after comptime" (#1811, #1390, #702),
+   and the compiler rules are deleted there. This is the only exception the release keeps; it is named,
+   listed here and in the table of section 2, and has a removal condition.
 8. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
 Work specific to this RFC and independent of that order:
