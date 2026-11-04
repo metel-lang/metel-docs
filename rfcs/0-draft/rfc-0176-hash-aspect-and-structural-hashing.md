@@ -124,8 +124,8 @@ custom canonical representation.
 1. Should the method return `u64`, or an opaque hasher state/finalization type once
    map and set APIs exist?
 2. Does `Hash` require `PartialEq`, `Eq`, or only the equality-consistency law as a
-   semantic obligation? If `Hash: Eq`, the uniform super-aspect derivation (RFC-0213 section 4) makes
-   `derives Hash` derive `Eq` and `PartialEq` too, so a custom `eq` needs a hand-written `hash`.
+   semantic obligation? If `Hash: Eq`, whether the entry is marked `derived` (RFC-0213 section 4) decides
+   whether `derives Hash` also derives `Eq`; an unmarked entry is an obligation and allows a custom `eq`.
 3. Should floating-point hashing be supported, and if so, how are NaN payloads and
    `-0.0` normalized?
 4. Are references and owning views ever hashable by referent value, or are they

@@ -27,7 +27,7 @@ a named aspect today.
 
 ```metel
 // sketches; every keyword is a placeholder
-aspect ImplicitClone: Clone, !Drop          // RFC-0213: requires Clone, excludes Drop
+aspect ImplicitClone: derived Clone, !Drop  // RFC-0213: Clone derived with it, Drop excluded
     declared
     implicit via Clone::clone;
 

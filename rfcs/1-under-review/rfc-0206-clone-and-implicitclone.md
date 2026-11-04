@@ -95,7 +95,7 @@ A type gets a `Clone` by writing one (`extend T: Clone { … }`), by a `derives 
 properties of RFC-0212 and the super-aspect relation of RFC-0213 (the spelling is a sketch):
 
 ```metel
-aspect ImplicitClone: Clone, !Drop          // RFC-0213: requires Clone, excludes Drop
+aspect ImplicitClone: derived Clone, !Drop  // RFC-0213: Clone derived with it, Drop excluded
     declared                                // RFC-0212: granted only in a declaration
     implicit via Clone::clone;              // RFC-0212: std only; names the hook
 ```
