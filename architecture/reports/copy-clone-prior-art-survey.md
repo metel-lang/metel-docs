@@ -296,9 +296,10 @@ are as in section 1.
   unless one is written). This is the "synthesized unless written" model: a reader cannot tell
   from the header who wrote the implementation.
 - Haskell, Scala and Rust report a duplicate instance when both a derive and a written instance
-  exist.
-- Haskell's `DerivingVia` and newtype deriving reuse the representation's instance (memory); nothing
-  in the proposal corresponds to them.
+  exist (memory).
+- Haskell's `DerivingVia` and newtype deriving reuse the representation's instance; GHC notes their contexts often cannot be inferred and must
+  then be written with standalone deriving (verified: GHC issue #18219). Nothing in the proposal
+  corresponds to them.
 - Proposal: `derives` means the compiler wrote it and `:` means the author did; both together are
   `T0015`. This keeps the duplicate-instance rule of Haskell, Scala and Rust and adds a header
   that records authorship.
@@ -306,7 +307,9 @@ are as in section 1.
 ### 11.4 Super-aspects and deriving them
 
 - Haskell (`deriving Ord` without an `Eq` instance is an error) and Rust (`derive(Copy)` without
-  `Clone`) only require the super-aspect (memory, verified respectively).
+  `Clone`) only require the super-aspect. The Haskell rule is that `Eq` is a superclass of `Ord`, so an `Ord`
+  instance needs an `Eq` instance (verified in GHC discussions; the exact current error text was
+  not seen); the Rust rule is memory.
 - Swift derives a missing super-aspect: declaring `Hashable` synthesizes `Equatable` as well
   (verified: SE-0185), and a hand-written `==` takes precedence.
 - Both Haskell and Rust accept a derived `Ord` over a hand-written `Eq`; the consistency between
@@ -318,19 +321,22 @@ are as in section 1.
 
 ### 11.5 Exclusion and negative entries
 
-- Rust hardcodes the `Copy`/`Drop` exclusion (error E0184, memory); negative impls and `auto trait`
-  are unstable (memory). Swift's `~Copyable` suppresses a default requirement and is not an
+- Rust hardcodes the `Copy`/`Drop` exclusion (error E0184; verified); negative impls
+  (`negative_impls`) and user-defined auto traits (`auto_traits`) are unstable features (verified:
+  Unstable Book). An auto trait cannot have items or supertraits (verified). Swift's `~Copyable` suppresses a default requirement and is not an
   exclusion between two protocols (verified).
 - Haskell has no negative instances; exclusion is simulated with closed type families or custom
-  type errors (memory). C++ concepts can state `!C<T>` (memory).
+  type errors (memory). C++ constraints can negate a concept (not checked).
 - Proposal: a negative entry in the super list (`aspect ImplicitClone: Clone, !Drop`). No surveyed
   language declares an exclusion on the aspect itself.
 
 ### 11.6 Properties of the aspect declaration
 
-- Rust: lang items and unstable auto traits. Swift: `Sendable` and `@_marker`. Haskell: classes
-  solved by the compiler, such as `Typeable`, `Coercible`, `Generic`, `HasField` and `KnownNat`
-  (memory).
+- Rust: lang items and unstable auto traits. Swift: `Sendable` and `@_marker`. Swift's `@_marker`
+  is a compiler-internal underscored attribute: a marker protocol has no requirements and no runtime
+  representation (verified). Haskell: classes solved by the compiler and closed to user instances,
+  such as `Typeable`, `Coercible` and `KnownNat` (verified: GHC error index and base docs;
+  `HasField` not checked).
 - Visibility of structural grants is a semver question. Swift infers `Sendable` only for types
   that are not publicly ABI-exposed, because inference on a public type is an API commitment
   (verified: the SE-0302 review). The Rust language team calls each auto trait a semver hazard:
@@ -343,22 +349,28 @@ are as in section 1.
 ### 11.7 The field-wise rule
 
 - C++: the implicit copy constructor is defaulted or deleted per instantiation from the members
-  (memory). It is the closest precedent for an exact per-instantiation predicate.
+  (verified in part: cppreference lists the cases in which the implicit copy constructor is deleted,
+  among them a member whose copy constructor cannot be selected). It is the closest precedent for
+  an exact per-instantiation predicate.
 - Rust: `derive(Clone)` adds a bound on every type parameter, over-approximating. The "perfect
   derive" fix is not in the language; a third-party crate prototypes it (verified).
-- Haskell infers the context of a derived instance and requires `StandaloneDeriving` with an
-  explicit context when inference fails (memory). Swift conditional conformance is explicit and,
+- Haskell infers the context of a derived instance, accepts only contexts of bare type variables
+  without repetition, and otherwise requires `StandaloneDeriving` with a written context (verified:
+  GHC user guide). Swift conditional conformance is explicit and,
   for copyability, limited to `T: Copyable` (verified).
-- The rule itself can be library code: Haskell `GHC.Generics` with default signatures, and Scala
+- The rule itself can be library code: Haskell `GHC.Generics` with `DefaultSignatures` and `DeriveAnyClass` (verified: GHC user guide), and Scala
   `Mirror` with Magnolia (verified for Scala).
 - Proposal: a std-written row template (RFC-0123 form), exact per instantiation, checked at the
   declaration when the field types are concrete.
 
 ### 11.8 Built-in structural kinds
 
-- Rust builds in impls for tuples, arrays, closures and function pointers (memory). Mojo uses
+- Rust: the compiler implements `Copy` for tuples of `Copy` types, function pointers and items, and
+  closures whose captures are `Copy`, and supplies `Clone` for them (verified: Rust Reference). Arrays
+  are not in that list; their impls are library code (memory). Mojo uses
   conditional conformance over a variadic pack (verified, section 6). Haskell's base defines
-  tuple instances by hand up to a fixed arity (memory: 15).
+  tuple instances by hand up to a fixed arity; a 2005 mailing-list source gives 15 for `Eq` and `Ord`,
+  the current limit was not confirmed.
 - Proposal: compiler rules for tuples and arrays until variadics (RFC-0125) and compile-time
   lengths (RFC-0132 section 3) exist, then impls.
 
@@ -367,13 +379,14 @@ are as in section 1.
 - Allowed in C++, D, Nim and Mojo; not allowed in Rust and Swift structs (section 8, finding 3).
 - Mojo advises against implicit copies of costly types and against bounding generic code on
   `ImplicitlyCopyable` (verified). C++ states the corresponding promise with `noexcept` and
-  `is_nothrow_copy_constructible` (memory).
+  `is_nothrow_copy_constructible` (verified: cppreference).
 - Proposal: the hook is the type's own `Clone`; the cheap, total and effect-free contract is stated
   and checked only once an effect system exists.
 
 ### 11.10 Destructors
 
-- Rust forbids `Copy` with `Drop` because a bitwise copy would drop twice. Swift forbids
+- Rust rejects `Copy` together with `Drop` (E0184). The compiler documentation gives the reason as
+  an unsound implementation (issue #20126), not a stated drop-twice rule (verified). Swift forbids
   conditional copyability with a `deinit` (section 8, finding 9). Mojo allows a destructor on a
   type with a user copy initializer (memory).
 - Proposal: `!Drop` on `ImplicitClone` is a policy, not a soundness rule, because the hook can
@@ -381,7 +394,7 @@ are as in section 1.
 
 ### 11.11 Equality
 
-- Haskell's single `Eq` makes `Eq Double` violate reflexivity (`NaN /= NaN`) (memory). Rust's
+- Haskell's single `Eq` makes `Eq Double` violate reflexivity (`NaN /= NaN`) (verified: the base documentation for `Eq Double` states that `0/0 == 0/0` is `False`). Rust's
   `PartialEq`/`Eq` split is the fix and RFC-0168 follows it.
 
 ### 11.12 Summary of positions
@@ -397,11 +410,26 @@ are as in section 1.
 | Exact structural rule | C++ implicit copy constructor | Checked at the declaration, written in std |
 | User hook at implicit copy | C++, Mojo | Opt-in marker, reserved effect bound |
 
-### 11.13 Unconfirmed in this section
+### 11.13 Verification status
 
-- The Haskell, C++ and Rust-E0184 statements marked memory were not re-read in primary sources.
-- Whether Mojo's `ImplicitlyCopyable` types may have a destructor, and the current Rust status of
-  `auto trait` and negative impls, should be checked before they are cited in an RFC.
+Checked on 2026-11-04 against primary or near-primary sources: Swift synthesis and `Sendable`
+inference, Scala `derives`, Mojo `ImplicitlyCopyable` implying `Copyable`, Rust `perfect derive`
+status and auto-trait semver hazard, Rust E0184, Unstable Book entries for `negative_impls` and
+`auto_traits`, Rust Reference on built-in `Copy` and `Clone`, cppreference on the deleted implicit
+copy constructor and `is_nothrow_copy_constructible`, GHC user guide on deriving contexts,
+standalone deriving, `DefaultSignatures` and `DeriveAnyClass`, base documentation on `Eq Double`,
+`Coercible` and `Typeable`, and Swift `@_marker`.
+
+Still unconfirmed:
+- Whether Mojo permits a destructor on an `ImplicitlyCopyable` type (the page fetch failed and the
+  search results are silent).
+- The current size limit of base's hand-written tuple instances in Haskell.
+- Whether Haskell's `HasField` is solved by the compiler as claimed.
+- Rust's rule that `derive(Copy)` requires `Clone`, and that `derive(Ord)` accepts a hand-written
+  `Eq` (both memory).
+- Haskell and Rust acceptance of a derived `Ord` over a hand-written `Eq`, and the duplicate-instance
+  behaviour for derive plus written impl in Haskell, Scala and Rust (memory).
+- That C++ constraints can negate a concept.
 
 ## 12. Sources
 
@@ -431,3 +459,15 @@ are as in section 1.
 - Scala 3 derivation: https://dotty.epfl.ch/3.0.0/docs/reference/contextual/derivation.html
 - Rust perfect derive: https://github.com/lucentflux/perfect-derive ; auto traits and semver:
   https://lang-team.rust-lang.org/design_notes/auto_traits.html
+- Verification sources (2026-11-04): https://doc.rust-lang.org/unstable-book/language-features/auto-traits.html ,
+  https://doc.rust-lang.org/unstable-book/language-features/negative-impls.html ,
+  https://rust.googlesource.com/rust/+show/03028df750147a93f3199fef95932cfecdc2b375/compiler/rustc_error_codes/src/error_codes/E0184.md ,
+  https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/deriving_inferred.html ,
+  https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/standalone_deriving.html ,
+  https://gitlab.haskell.org/ghc/ghc/-/issues/18219 ,
+  https://errors.haskell.org/messages/GHC-97044/ ,
+  https://hackage.haskell.org/package/base-4.14.0.0/docs/Data-Eq.html ,
+  https://hackage.haskell.org/package/base-4.14.0.0/docs/Data-Coerce.html ,
+  https://cppreference.com/cpp/language/copy_constructor ,
+  https://cppreference.com/cpp/types/is_copy_constructible ,
+  https://github.com/swiftlang/swift/pull/39812
