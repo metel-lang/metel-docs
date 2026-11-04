@@ -69,8 +69,8 @@ Entries are aspects with no methods that the compiler checks.
 
 1. `derives X` is legal exactly when `X` has a derivation. In the first implementation the
    derivations are native and belong to std (`Clone`; `Debug` and `Display` as they gain one). The
-   super-aspects a type lacks are derived with their sub-aspect (RFC-0213 section 4), so
-   `derives ImplicitClone` is `: ImplicitClone derives Clone` when no `Clone` is written (RFC-0206). An
+   super-aspects are derived with their sub-aspect, unconditionally (RFC-0213 section 4), so
+   `derives ImplicitClone` is `: ImplicitClone derives Clone` (RFC-0206). An
    aspect declares it has one with the `derivable` modifier (`derivable aspect Clone { … }`), which
    only std uses until comptime (RFC-0092, RFC-0093) lets a user supply a derivation.
 2. The derived impl is generated under the exact condition that every field type satisfies the
@@ -107,7 +107,7 @@ struct C: !Clone { x: i64 }                                  // error: the colon
 struct D derives Clone { n: i64 }
 extend D: Clone { fun clone(&self) -> D { D { n = 0 } } }    // error T0015: overlaps the derived impl
 struct F derives ImplicitClone { n: i64 }
-extend F: Clone { fun clone(&self) -> F { F { n = 0 } } }    // ok: Clone is written; only the marker is derived
+extend F: Clone { fun clone(&self) -> F { F { n = 0 } } }    // error T0015: overlaps the Clone derived by `derives ImplicitClone`
 struct E derives Clone { s: NoClone }                        // error at the field: NoClone is not Clone
 ```
 

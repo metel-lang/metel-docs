@@ -83,20 +83,29 @@ and replaces the `excludes` property of an earlier draft of RFC-0212.
 
 The rule is uniform, for every aspect with super-aspects:
 
-1. `struct P derives A` also derives each positive super-aspect `B` of `A` (transitively) for which
-   `P` has no impl, written or derived, exactly as `struct P derives A, B` would. A super-aspect that
-   `P` already has is left alone: no overlap, no error.
-2. A missing super-aspect without a derivation (RFC-0207) makes the `derives` an error with a fix-it:
-   write the impl, or list the aspect.
-3. Derivation is idempotent per type and aspect: `derives A, B` is valid and derives `B` once.
-4. `struct P: A` (the colon list) generates nothing: every positive super-aspect must already exist for
+1. `struct P derives A` derives `A` and every positive super-aspect `B` of `A` (transitively),
+   exactly as `struct P derives A, B, …` would. It is unconditional: the compiler writes the whole
+   chain, so who wrote each impl is read from the clause alone (`derives` means the compiler wrote
+   it, `:` means the author did).
+2. A written `extend P: B` for any aspect the `derives` generates overlaps and is an error (`T0015`),
+   with two fix-its: delete the impl, or move `A` to the colon list.
+3. A super-aspect without a derivation (RFC-0207) makes the `derives` an error with a fix-it: write
+   that impl and use the colon form (or `extend`, for an aspect with no methods).
+4. Derivation is idempotent per type and aspect: `derives A, B` is valid and derives `B` once.
+5. `struct P: A` (the colon list) generates nothing: every positive super-aspect must already exist for
    `P`, or it is an error naming the missing one (section 2).
-5. A written `extend P: A` with `derives A` overlaps and is an error (`T0015`), as for any aspect.
 
-So `derives ImplicitClone` derives `Clone` when `Clone` is missing and is exactly `: ImplicitClone`
-when the author wrote one. `Eq: PartialEq` follows the same rule: `derives Eq` over a custom
-`PartialEq` adds only the marker-like `Eq`, and over none derives `PartialEq` first. No rule is
-specific to either aspect (RFC-0206).
+**Why unconditional.** A derived marker is sound only over a derived base. `derives Eq` justifies
+`Eq` because the compiler also wrote the field-wise `PartialEq`, so reflexivity follows from every
+field being `Eq` (RFC-0168). Deriving `Eq` over a hand-written `PartialEq` would assert a law for an
+`eq` the compiler never saw. The same holds for `ImplicitClone` over `Clone`, and for a derived `Ord`
+over `Eq` (a derived ordering cannot sit over a different hand-written equality). The case of a
+hand-written base is spelled with the colon list or, for a method-less aspect such as `Eq`, with
+`extend P: Eq;`.
+
+**Consequence.** There is no "requires but never derives" super-aspect: an aspect whose
+super-aspect must stay hand-written cannot be derived, and the user writes it. The same applies to a
+super-aspect with no derivation (`Error: Display`).
 
 ## 5. Worked examples
 
@@ -114,7 +123,7 @@ struct Point derives ImplicitClone { x: i64 }          // derives Clone too
 struct Cache: ImplicitClone { n: i64 }
 extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: the colon form takes the author's Clone
 struct Both derives ImplicitClone { n: i64 }
-extend Both: Clone { … }                     // ok: Clone is written, so only the marker is derived
+extend Both: Clone { … }                     // error T0015: overlaps the derived Clone; write `: ImplicitClone`
 struct Dup derives Clone, ImplicitClone { n: i64 }
 extend Dup: Clone { … }                      // error T0015: overlaps the derived Clone
 ```
@@ -123,7 +132,7 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
 
 - **No relation; a built-in entailment per aspect.** Rejected: an exception per aspect.
 - **Aspect aliases as the relation.** Rejected by RFC-0168: an alias creates no implementation target.
-- **Always derive super-aspects, even over a written one.** Rejected: `Eq` must be able to sit over a custom `PartialEq`; the rule derives only what is missing.
+- **Derive only the super-aspects that are missing.** Rejected: who wrote an impl would depend on what else is in the module, and a derived marker would sit over an impl the compiler never saw.
 - **A `derived` mark on the entry.** Rejected: the uniform rule needs no per-aspect flag.
 - **A separate `provides` clause with a body** (an earlier draft of RFC-0206 and RFC-0207). Rejected:
   it needs a selection rule over overlapping impls and an equality law between two bodies.

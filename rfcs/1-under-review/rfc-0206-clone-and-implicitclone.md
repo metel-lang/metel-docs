@@ -119,10 +119,9 @@ prerequisite refactor of section 6.
      implicitly. A `Clone` must already exist for the type, written (`extend P: Clone { … }`) or
      requested (`derives Clone`). If none exists it is an error with two fix-its: write one, or use
      `derives ImplicitClone`.
-   - `struct P derives ImplicitClone` derives the `Clone` when none is written (RFC-0213 section 4):
-     it is `: ImplicitClone derives Clone`. With a written `extend P: Clone` only the marker is
-     added, which is the colon form; `derives Clone, ImplicitClone` plus a written Clone overlaps
-     (`T0015`).
+   - `struct P derives ImplicitClone` always derives the `Clone` too (RFC-0213 section 4):
+     it is `: ImplicitClone derives Clone`. With a written `extend P: Clone` it overlaps the
+     derived impl and is an error (`T0015`); the author's own `Clone` is the colon form.
    The colon never generates an impl; `derives` always does.
 3. *The predicate is exact and conjunctive.* For an instantiation `T<A>`, `T<A>: ImplicitClone`
    holds when every field's type is `ImplicitClone`, and `T<A>: Clone` holds, and the type is not
@@ -269,7 +268,7 @@ extend H: Clone { fun clone(&self) -> H { H { fd = dup(self.fd) } } }     // Clo
 
 struct NoClone2: ImplicitClone { n: i64 }                   // error: no Clone; write one or use `derives ImplicitClone`
 struct Both derives ImplicitClone { n: i64 }
-extend Both: Clone { fun clone(&self) -> Both { Both { n = 0 } } }   // ok: only the marker is derived
+extend Both: Clone { fun clone(&self) -> Both { Both { n = 0 } } }   // error T0015: overlaps the derived Clone; write `: ImplicitClone`
 extend Point: ImplicitClone;                                // error: granted only in the declaration
 ```
 
