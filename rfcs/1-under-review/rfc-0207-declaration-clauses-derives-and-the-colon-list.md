@@ -63,8 +63,8 @@ Entries are aspects with no methods that the compiler checks.
 ## 2. The `derives` clause
 
 1. `derives X` is legal exactly when `X` has a derivation. In the first implementation the
-   derivations are native and belong to std (`Clone`; `Debug` and `Display` as they gain one). The
-   derivation of the lang-item marker `ImplicitClone` is the derivation of `Clone` plus the marker:
+   derivations are native and belong to std (`Clone`; `Debug` and `Display` as they gain one). A
+   super-aspect marked `derived` (RFC-0213 section 4) is derived with its sub-aspect, so
    `derives ImplicitClone` is exactly `: ImplicitClone derives Clone` (RFC-0206). An
    aspect declares it has one with the `derivable` modifier (`derivable aspect Clone { … }`), which
    only std uses until comptime (RFC-0092, RFC-0093) lets a user supply a derivation.

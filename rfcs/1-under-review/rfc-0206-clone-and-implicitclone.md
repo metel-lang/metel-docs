@@ -30,7 +30,8 @@ struct Doc derives Clone { title: String }                // explicit only: d.cl
 ```
 
 `derives` means the compiler wrote the `Clone`, and the colon means the author did. `ImplicitClone`
-is an ordinary aspect declared in std; the compiler knows it through a lang item, not by its name.
+is an ordinary aspect declared in std with general aspect properties (RFC-0212) over a super-aspect
+relation (RFC-0213); the compiler reads those properties, never the aspect's name.
 
 This replaces the pair `Copy`/`Clone`. The name `Copy` is kept for one minor release as a
 deprecated alias for `ImplicitClone`. The explanation of the relationship is one sentence:
@@ -90,26 +91,26 @@ A type gets a `Clone` by writing one (`extend T: Clone { … }`), by a `derives 
 
 ## 2. `ImplicitClone`
 
-`ImplicitClone` is declared in std as an ordinary aspect that refines `Clone`, and carries a
-lang-item attribute that gives it a known identity (the spelling is a sketch):
+`ImplicitClone` is declared in std as an ordinary aspect that refines `Clone`, using the aspect
+properties of RFC-0212 and the super-aspect relation of RFC-0213 (the spelling is a sketch):
 
 ```metel
-#lang(implicit_clone)
-aspect ImplicitClone: Clone;                 // no methods; std only
+aspect ImplicitClone: derived Clone         // RFC-0213: a super-aspect, derived with it
+    declared                                // RFC-0212: granted only in a declaration
+    structural all                          // RFC-0212: every field must satisfy it
+    excludes Drop                           // RFC-0212: no type is both
+    implicit via Clone::clone;              // RFC-0212: std only
 ```
 
 It is the stronger bound: `T: ImplicitClone` accepts fewer types than `T: Clone`.
 
-**The one exception, stated once.** The compiler gives the lang-item aspect these behaviours, keyed
-to its identity and never to the spelling "ImplicitClone" or "Copy":
-- the implicit duplication of values (a by-value use calls `clone` instead of moving);
-- the declaration-only grant (rule 1) and the exact predicate (rule 3);
-- the `Drop` exclusion (rule 5).
-
-User code cannot declare a lang item, and `ImplicitClone` cannot be implemented with `extend`.
-Today the compiler identifies `Copy` by the string `"Copy"` at about 38 sites in the frontend
-(`aspect_name == "Copy"`, `infer_type_satisfies_aspect(…, "Copy", …)`); the lang item replaces them
-with one declaration and one identity lookup.
+**No special case by name.** Every behaviour below follows from one of those properties. The compiler
+reads them from the aspect's declaration by identity and never tests the spelling "ImplicitClone" or
+"Copy". The one property that is a language semantic and not a constraint is `implicit via`
+(RFC-0212 section 4): it is the exception that remains, stated as a declaration property, and it is
+std only. Today the compiler identifies `Copy` by the string `"Copy"` at about 38 sites in the
+frontend (`aspect_name == "Copy"`, `infer_type_satisfies_aspect(…, "Copy", …)`); replacing them is the
+prerequisite refactor of section 6.
 
 **Legality.**
 1. *Granted only in the declaration.* A named type is `ImplicitClone` only through its declaration:
@@ -120,8 +121,8 @@ with one declaration and one identity lookup.
      implicitly. A `Clone` must already exist for the type, written (`extend P: Clone { … }`) or
      requested (`derives Clone`). If none exists it is an error with two fix-its: write one, or use
      `derives ImplicitClone`.
-   - `struct P derives ImplicitClone` makes the compiler derive the `Clone` as well. It is exactly
-     `: ImplicitClone derives Clone`. Together with a written `extend P: Clone` it overlaps the
+   - `struct P derives ImplicitClone` makes the compiler derive the `Clone` as well (`derived Clone`,
+     RFC-0213 section 4). It is exactly `: ImplicitClone derives Clone`. Together with a written `extend P: Clone` it overlaps the
      derived impl and is an error (`T0015`).
    The colon never generates an impl; `derives` always does.
 3. *The predicate is exact and conjunctive.* For an instantiation `T<A>`, `T<A>: ImplicitClone`
@@ -135,8 +136,7 @@ with one declaration and one identity lookup.
 5. *`Drop` excludes it, and only it.* A type that implements `Drop` cannot be `ImplicitClone`.
    `Clone` on a `Drop` type is allowed.
 6. *Entailment.* `T: ImplicitClone` entails `T: Clone` in the checker and in the abstract analysis
-   of generic bodies. The declaration `aspect ImplicitClone: Clone` states it. Until super-aspects
-   exist (RFC-0168) the lang-item rule provides the same entailment built in.
+   of generic bodies, by the super-aspect relation of the declaration (RFC-0213).
 
 **Built-in kinds are compiler rules, not impls.**
 
@@ -218,18 +218,30 @@ comptime derivation replaces the native one when RFC-0092 and RFC-0093 allow.
 
 ---
 
-## 6. Implementation staging
+## 6. Implementation staging and dependencies
 
-- Introduce the lang-item mechanism (an attribute reserved to std, or a std-only marker), declare
-  `ImplicitClone` with it, and replace the string-keyed `"Copy"` sites by the identity.
-- Derived and built-in clones keep the interpreter's existing fast path, which is observationally
-  the same.
-- An implicit copy of a type with a hand-written `Clone` calls it. This is new behaviour: the
-  evaluator must dispatch to the written `clone` at by-value uses of such types.
+There is no first stage that carries the semantics with a special case. The settlement waits for the
+general features, in this order:
+
+1. **Identity-based aspect resolution.** Replace the string-keyed `"Copy"` sites by an aspect
+   identity lookup (the ADR-0054/0066/0067 line). A prerequisite refactor, no RFC.
+2. **The declaration clauses** (RFC-0207): the colon list and `derives`.
+3. **Super-aspects** (RFC-0213), including entailment in the abstract analysis and negative closure.
+4. **Derivations** (RFC-0207): native `Clone` first; the derived relation of RFC-0213 section 4.
+5. **Aspect properties** (RFC-0212): `declared`, `structural`, `excludes`, `implicit via`, with the row
+   machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211, RFC-0208).
+6. **Built-in kinds as impls:** references and views, then tuples (RFC-0125) and arrays (RFC-0132 §3),
+   then closures and function types (metel-core#739, RFC-0134).
+7. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
+
+Work specific to this RFC and independent of that order:
+- Derived and built-in clones keep the interpreter's existing fast path.
+- An implicit copy of a type with a hand-written `Clone` calls it; the evaluator must dispatch to the
+  written `clone` at by-value uses of such types.
 - The move check and the abstract analysis treat an implicit copy as a call to `T::clone` under
   the entailment of section 2, rule 6.
-- The std repairs are the array and tuple `Clone`, the reference and view cases, the unit fix, and
-  #270's `Option`, `Result` and `List`.
+- The std repairs: array and tuple `Clone`, the reference and view cases, the unit fix, and #270's
+  `Option`, `Result` and `List`.
 
 ---
 
@@ -268,18 +280,20 @@ extend Point: ImplicitClone;                                // error: granted on
 
 - **`Copy` and `Clone` linked by `provides` with overlapping impls** (the earlier draft of this RFC
   and RFC-0207). Rejected after the adversarial review: it needs a selection rule over overlapping
-  impls, an uncheckable equality invariant between two bodies, an R1-to-R2 migration that negative
-  bounds break, and RFC-0168's super-aspects.
+  impls, an uncheckable equality invariant between two bodies, and an R1-to-R2 migration that negative
+  bounds break. Super-aspects are used here, but as a plain refinement relation (RFC-0213) with no
+  second impl.
 - **A sealed bitwise body.** Rejected: a user-writable hook is what makes the refinement meaningful,
   and an effect bound can restrict it later.
 - **An explicit duplication operator and no implicit marker** (`copy x`). Set aside: it moves the
   question to which types may be implicit anyway, since generic numeric code needs a bound.
 - **A bound `T: ImplicitClone` that accepts any `Clone` type.** Rejected: it would make the same name
   mean two things and let the author of a generic function consent for a type that never opted in.
-- **General mechanisms for the exception** (`header` and `derivable` modifiers, `provides`, a declared
-  field-wise rule, super-aspects). Rejected for one customer: the adversarial review judged them
-  heavier than the problem. If a second aspect needs them, `ImplicitClone` can move onto them
-  without changing its meaning.
+- **A lang-item attribute for one aspect, or a compiler-known marker** (earlier drafts of this RFC).
+  Rejected by the language owner: each is an exception keyed to a name. The aspect properties of
+  RFC-0212 and the relation of RFC-0213 replace them, at the cost of the dependency chain of
+  section 6; the review had judged that chain heavy for one customer, and the owner prefers it to an
+  exception.
 - **The string-keyed special case that exists today.** Rejected: about 38 sites test the spelling
   "Copy", which cuts against the identity-based resolution of ADR-0054, ADR-0066 and ADR-0067.
 - **Inference of implicitness from fields** (Swift's default for structs). Rejected: it brings back
@@ -292,6 +306,10 @@ extend Point: ImplicitClone;                                // error: granted on
 - **RFC-0162** — the model, the design space and the survey; this RFC is its accepted-direction
   specification of the two aspects.
 - **RFC-0207** — the colon list and the `derives` clause that carry the grant and the derivation.
+- **RFC-0212** — the aspect properties (`declared`, `structural`, `excludes`, `implicit via`) that
+  `ImplicitClone` is declared with.
+- **RFC-0213** — super-aspects, which give `ImplicitClone: derived Clone`.
+- **RFC-0096** — auto aspects, revised so that `auto` is a declaration of RFC-0212.
 - **RFC-0071 §2** — states the one predicate; its `Copy` becomes `ImplicitClone`.
 - **RFC-0134 / RFC-0163 / RFC-0166** — closures and function types: copyable by captures; the `copy`
   qualifier; written function types move-only.
@@ -309,8 +327,7 @@ extend Point: ImplicitClone;                                // error: granted on
    them.
 4. **A scoped implicit mode** for generic code over `Clone` types, if `.clone()` proves too noisy;
    deferred with the effects work.
-5. **The lang-item mechanism.** An attribute reserved to std (RFC-0095 is the home) or a std-only
-   marker; and whether the entailment to `Clone` waits for super-aspects (RFC-0168).
+5. **The spelling and home of the aspect properties** (RFC-0212) and of the `derived` mark (RFC-0213).
 6. **Primitive declarations.** The compiler list becomes primitive struct declarations if std
    gains them.
 

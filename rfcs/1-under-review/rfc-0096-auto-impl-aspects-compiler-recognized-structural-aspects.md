@@ -7,6 +7,11 @@ updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 ---
 
+> **Note, 2026-11-04 (RFC-0212).** The closed compiler-intrinsic list of section 1 is to be replaced by
+> an `auto structural` declaration on the aspect (RFC-0212), so that `Send`, `Sync`, `Linear` and
+> `ImplicitClone` are instances of one mechanism. The composition algorithm of section 2 is kept; it
+> becomes the `structural` rule. This RFC is revised accordingly when RFC-0212 is accepted.
+
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0080, 0061,
 > 0093, 0060, and 0081 — checked each first. None of them own this mechanism: RFC-0080
 > §3.2/§4.2 and the draft RFC-0089 §2 each independently invoke "the auto-impl pattern"

@@ -50,13 +50,13 @@ implicit marker is named, declared and related to `Clone`.
    `: ImplicitClone derives Clone`), and `struct Cache: ImplicitClone { … }` when the author wrote it.
    The colon list never generates, and also carries opt-outs such as `!Send`; `extend T: ImplicitClone;`
    is an error. Both clauses are RFC-0207.
-4. **The marker is one declared exception, by identity.** `ImplicitClone` is an ordinary aspect
-   declared in std with a lang-item attribute, so the compiler knows it by identity and never by
-   spelling (replacing the string-keyed `"Copy"` special cases, about 38 sites). The compiler
-   evaluates it (every field `ImplicitClone`, a `Clone` exists, not `Drop`) and guarantees `Clone` for
-   built-in kinds. This replaces the earlier general machinery (`header`/`derivable` modifiers,
-   `provides`, a selection rule), which would have been the only way to avoid the exception; every
-   language surveyed keeps this one.
+4. **No special case by name.** `ImplicitClone` is an ordinary aspect declared in std with general
+   aspect properties (RFC-0212: `declared`, `structural`, `excludes`, and the std-only
+   `implicit via`) over a super-aspect relation (RFC-0213). The compiler reads those properties by
+   identity, which replaces the string-keyed `"Copy"` special cases (about 38 sites). The one property
+   that is a language semantic, implicit duplication, is a declaration property available to std only;
+   every language surveyed keeps that one exception. The cost is a dependency chain (RFC-0206
+   section 6) that v0.16.0 waits for, by the language owner's choice.
 5. **The hook is user-writable.** A written `clone` runs at an implicit copy. A future effect bound
    restricts what such a `clone` may do; no lint before then.
 6. **`Drop` excludes `ImplicitClone` only,** which makes `Clone` on a `Drop` type legal (D3's

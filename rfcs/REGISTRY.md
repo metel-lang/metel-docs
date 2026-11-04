@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-03'
+generated_on: '2026-11-04'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**210 RFCs total.** 36 draft, 54 under review, 9 accepted, 2 integrated (101 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**212 RFCs total.** 36 draft, 56 under review, 9 accepted, 2 integrated (103 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
 ## Draft (36)
 
@@ -54,7 +54,7 @@ the curated thematic map.
 - **RFC-0209** — Per-Aspect Row Visibility (`0-draft` ; rfcs/0-draft/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02)
 - **RFC-0210** — Enum Parameters and Variant Rows (`0-draft` ; rfcs/0-draft/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02)
 
-## Under Review (54)
+## Under Review (56)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -110,6 +110,8 @@ the curated thematic map.
 - **RFC-0207** — Declaration Clauses: derives and the Colon List (`1-under-review` ; rfcs/1-under-review/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-03)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-03)
 - **RFC-0211** — Aspect Templates on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02 ; updated 2026-11-03)
+- **RFC-0212** — Aspect Declaration Properties (`1-under-review` ; rfcs/1-under-review/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-04)
+- **RFC-0213** — Super-Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-04)
 
 ## Accepted (9)
 
