@@ -23,13 +23,13 @@ a named aspect today.
 |---|---|---|
 | `declared` | granted only through a type's declaration clauses (RFC-0207), never by `extend` | the `"Copy"` special case in coherence and `check_copy_impl_eligibility` |
 | `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync`, `Linear` (**deferred**: the Send/Sync/Linear revision is not part of the ImplicitClone settlement; `ImplicitClone` does not use `auto`) |
-| `implicit` | **std only**: a by-value use of a type satisfying the aspect calls its hook instead of moving; the hook is the one `fun m(&self) -> Self` of the aspect's super-aspects | the implicit-copy semantics of `Copy` |
+| `implicit via S::m` | **std only**: a by-value use of a type satisfying the aspect calls `m` instead of moving | the implicit-copy semantics of `Copy` |
 
 ```metel
 // sketches; every keyword is a placeholder
 aspect ImplicitClone: Clone, !Drop          // RFC-0213: requires Clone, excludes Drop
     declared
-    implicit;
+    implicit via Clone::clone;
 
 aspect Send auto;                           // deferred with the Send/Sync/Linear revision (RFC-0096)
 aspect Linear auto;                         // its existential rule is part of that revision
@@ -97,17 +97,21 @@ Clone, !Drop`).
 - **`auto` with a structural rule** (`Send`, `Sync`, `Linear`, including the existential rule of
   `Linear`) is deferred with the Send/Sync/Linear revision of RFC-0096. This RFC does not specify it.
 
-## 3. `implicit` (std only)
+## 3. `implicit via S::m` (std only)
 
-`aspect A: S, … implicit` states that a by-value use of a value whose type satisfies `A` is the call
-`m(&x)` with the call inserted, and not a move, where `m` is the hook. It requires:
-1. `A` refines (transitively) an aspect `S` that owns exactly one method of the shape
-   `fun m(&self) -> Self` among the methods of its super-aspects; zero or several is an error at the
-   declaration. There is no `via` naming the method: the shape determines it, and the compiler
-   reads it by identity.
-2. the declaration is in std. The compiler identifies std by module provenance and rejects
+`aspect A: S, … implicit via S::m` states that a by-value use of a value whose type satisfies `A` is
+the call `m(&x)` with the call inserted, and not a move. It requires:
+1. `A` refines (transitively) the aspect `S` that owns `m` (RFC-0213);
+2. `m` has the shape `fun m(&self) -> Self`;
+3. the declaration is in std. The compiler identifies std by module provenance and rejects
    `implicit` elsewhere. User-declared implicit aspects would let a user hook run silently at every
    use, which RFC-0162's D1 contains, so this is not offered.
+
+The hook is named, not inferred from method shapes. Inference would make the meaning of `implicit`
+depend on every other method of the super-aspects: a second `fun (&self) -> Self` added to `Clone`
+would silently change or break the hook. Naming it makes the declaration say what an implicit copy
+calls, and a rename or a second candidate cannot change it unnoticed. The compiler reads the named
+method by identity, not by spelling.
 
 A type that satisfies two implicit aspects with different hooks is a coherence error. Today there is
 one such aspect, `ImplicitClone`. The reserved effect bound (RFC-0206) belongs to the hook's
@@ -119,7 +123,7 @@ signature.
 
 | Aspect | Declaration |
 |---|---|
-| `ImplicitClone` | `: Clone, !Drop`, `declared`, `implicit`; the structural rule is a std row template |
+| `ImplicitClone` | `: Clone, !Drop`, `declared`, `implicit via Clone::clone`; the structural rule is a std row template |
 | `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |
@@ -147,6 +151,8 @@ extend Token: !Send;                                      // opt-out of an auto 
 - **Properties as attributes** (`#declared`). Possible; RFC-0095 is the home, and the properties
   change what the compiler accepts, which attributes are meant not to do. Open question 1.
 - **Make `implicit` user-available.** Rejected (section 3).
+- **Infer the hook from the shape `fun (&self) -> Self` and drop `via`.** Tried and reversed on
+  2026-11-04: it is fragile against a second method of that shape in a super-aspect.
 
 ## Relationship to existing RFCs
 

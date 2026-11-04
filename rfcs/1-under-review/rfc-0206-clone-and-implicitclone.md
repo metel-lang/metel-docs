@@ -97,14 +97,14 @@ properties of RFC-0212 and the super-aspect relation of RFC-0213 (the spelling i
 ```metel
 aspect ImplicitClone: Clone, !Drop          // RFC-0213: requires Clone, excludes Drop
     declared                                // RFC-0212: granted only in a declaration
-    implicit;                               // RFC-0212: std only; the hook is Clone::clone
+    implicit via Clone::clone;              // RFC-0212: std only; names the hook
 ```
 
 It is the stronger bound: `T: ImplicitClone` accepts fewer types than `T: Clone`.
 
 **No special case by name.** Every behaviour below follows from one of those properties. The compiler
 reads them from the aspect's declaration by identity and never tests the spelling "ImplicitClone" or
-"Copy". The one property that is a language semantic and not a constraint is `implicit`
+"Copy". The one property that is a language semantic and not a constraint is `implicit via`
 (RFC-0212 section 3): it is the exception that remains, stated as a declaration property, and it is
 std only. Today the compiler identifies `Copy` by the string `"Copy"` at about 38 sites in the
 frontend (`aspect_name == "Copy"`, `infer_type_satisfies_aspect(…, "Copy", …)`); replacing them is the
@@ -226,7 +226,7 @@ general features, in this order:
 2. **The declaration clauses** (RFC-0207): the colon list and `derives`.
 3. **Super-aspects** (RFC-0213), including entailment in the abstract analysis and negative closure.
 4. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
-5. **Aspect properties** (RFC-0212): `declared`, `implicit`, and the std-written structural rule (a row template, RFC-0123), with the row
+5. **Aspect properties** (RFC-0212): `declared`, `implicit via`, and the std-written structural rule (a row template, RFC-0123), with the row
    machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211, RFC-0208).
 6. **Built-in kinds as impls:** references and views, then tuples (RFC-0125) and arrays (RFC-0132 §3),
    then closures and function types (metel-core#739, RFC-0134).
@@ -304,7 +304,7 @@ extend Point: ImplicitClone;                                // error: granted on
 - **RFC-0162** — the model, the design space and the survey; this RFC is its accepted-direction
   specification of the two aspects.
 - **RFC-0207** — the colon list and the `derives` clause that carry the grant and the derivation.
-- **RFC-0212** — the aspect properties (`declared`, `implicit`) that
+- **RFC-0212** — the aspect properties (`declared`, `implicit via`) that
   `ImplicitClone` is declared with.
 - **RFC-0213** — super-aspects, which give `ImplicitClone: Clone, !Drop`.
 - **RFC-0096** — auto aspects, revised so that `auto` is a declaration of RFC-0212.
