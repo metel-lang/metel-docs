@@ -11,7 +11,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 > ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
 > `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
 > of that design. What remains relevant here is the derivation of `Clone` by a row template;
-> examples below that use `Copy` read as `ImplicitClone` in the colon list.
+> examples below that use `Copy` read as `ImplicitClone` (`derives ImplicitClone`). The operative text below
+> was updated on 2026-11-04 to the settled rules: exact per-instantiation conditions (RFC-0206 rule 3), a
+> written impl that overlaps a template is `T0015` (RFC-0207 rule 4), and no refining `extend`.
 
 > **Status — under review (2026-11-04).** Tracker milestoned; reviewed as part of the Copy/Clone settlement (RFC-0206, RFC-0212)
 
@@ -77,8 +79,8 @@ struct's narrowed residual and an opted-in `record` from being confusable.
    that only reads works unchanged.
 4. **The nominal type stays nominal.** Visibility does not make `T` a record: it does not
    satisfy any row bound, and it matches no template of an aspect it has not granted.
-5. **An entry that no template covers is an error.** `struct P: Pod` for an aspect with no
-   row template and no methods is an unconditional promise (RFC-0207); for an aspect that has a
+5. **An entry that no template covers is an error.** `struct P: Pod` for a `declared`
+   aspect with no row template and no methods is an unchecked promise (RFC-0207 rule 1); for an aspect that has a
    row template, the template must apply, and a field that fails the `where` clause is reported
    at the declaration, next to the field.
 
@@ -86,11 +88,10 @@ struct's narrowed residual and an opted-in `record` from being confusable.
 (same bits, new static type).
 
 **Generic types.** A generic nominal type is checked per instantiation: the template's `where`
-clause is evaluated on the instantiated field types, so `struct View<T>: Copy { r: &T }` is `Copy`
-for every `T` (because `&T` is) and `struct Wrapper<T>: Copy { v: T }` only when `T` is. This is
-the weakest sufficient condition (RFC-0162's R2) with no stored condition and no solver
-beyond ordinary bound checking. RFC-0162 recorded R1 as decided; this RFC makes R2 the natural
-result, and the choice is reopened there.
+clause is evaluated on the instantiated field types, so `struct View<T> derives ImplicitClone { r: &T }`
+is `ImplicitClone` for every `T` (because `&T` is) and `struct Wrapper<T> derives ImplicitClone { v: T }`
+only when `T` is. This is the exact per-instantiation condition (RFC-0162's R2), decided in RFC-0206
+rule 3; the analysis of a generic body is a sound approximation of it (RFC-0206 section 2).
 
 ---
 
@@ -176,9 +177,10 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
    the granted aspect.
 5. **Which aspects have templates.** Whether a user derivable aspect may provide one, and what
    makes a template's `where` bound the check of the entry.
-6. **R1 or R2**: R2 follows from this rule (section 1); RFC-0162's R1 decision is reopened.
-7. **Coherence**: a header-visible template overlapping an explicit `extend` of the same aspect
-   (RFC-0207's refining `extend`), and the order of resolution.
+6. **R1 or R2**: resolved. R2, the exact per-instantiation condition, is the rule (RFC-0206 rule 3).
+7. **Coherence**: resolved. A header-visible template that overlaps a written `extend` of the same
+   aspect is `T0015` (RFC-0207 rule 4, RFC-0213 section 4); there is no refining `extend` and no order
+   of resolution.
 
 ---
 

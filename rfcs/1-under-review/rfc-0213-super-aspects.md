@@ -188,7 +188,8 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
      entry is the author's vouch for the law that links the two (the compiler checks only that the base
      exists).
    - *A callable derived body:* the derivation is exposed so that a written impl can delegate to it
-     (`Hash::derived(self, h)`) and adjust one field, which is the usual real need. It belongs with
+     (a delegating call such as `Ord::derived(self, other)`, spelled as the aspect's own method; `Hash` is
+     only an example and its API is RFC-0176's) and adjust one field, which is the usual real need. It belongs with
      comptime derivation (RFC-0092, RFC-0093).
    Not provided now: a derived `Ord` over a custom `eq` is wrong whenever the custom `eq` ignores a
    field, and the marked-super rule removes that footgun. Rejected shape: letting the colon list carry

@@ -276,7 +276,9 @@ Measured on 2026-11-02:
 | Tuples | **no** | a structural arm, hardcoded like tuple `Copy` (metel-core#263), until variadic generics (metel-core#794) |
 | `Option`, `Result`, `List` | **no** | `extend<T: Clone> Option<T>: Clone`, and the same for the others (metel-core#270) |
 | A named `struct` or `enum` | only if the user writes one | section 4 |
-| `&T`, `[T]`, closures | not `Clone` today | by the built-in rules of section 2 |
+| `&T` | no `Clone` in the reference satisfaction arm | std impl, `Clone` for every `T` (section 2) |
+| `[T]` | `Clone` only under `T: Clone` (`extend<T: Clone> [T]: Clone`) | `Clone` for every `T`: the view is copied, not its elements. This is a different operation from the owning array's element-wise `Clone` (`[T; N]` above), and the two impls stay separate |
+| Closures | no `Clone` | by captures (RFC-0134 §1); needs an environment-cloning witness from the solver (#1810), not only a verdict |
 
 ---
 
@@ -310,8 +312,9 @@ comptime derivation replaces the native one when RFC-0092 and RFC-0093 allow.
   that is accepted wherever `ImplicitClone` is, with a warning and a fix-it that rewrites
   `extend X: Copy;` to the colon-list entry and `T: Copy` to `T: ImplicitClone`.
 - **The function-type qualifier** `copy` and the keyword `once` (RFC-0163, RFC-0134) keep their
-  spelling. The qualifier now names the property whose aspect is `ImplicitClone`; the mismatch is
-  recorded, and a shipped qualifier is not renamed here.
+  planned spelling. `copy` is not reserved yet (RFC-0166 defers that surface), so nothing shipped is
+  renamed; the qualifier will name the property whose aspect is `ImplicitClone`, and the mismatch is
+  recorded.
 - **Generic code** should bound on `Clone` and call `.clone()`; `T: ImplicitClone` is for code
   that needs by-value reuse of a type. This is Mojo's guidance for `ImplicitlyCopyable`.
 - **`Share`** (RFC-0158) is unaffected, since the name `Clone` stays.

@@ -973,15 +973,17 @@ Re-read across the same languages, the answers line up unusually cleanly:
 | Language | Copyability decided by | Ordinary user-written impl? | Reachable by metaprogramming? |
 | --- | --- | --- | --- |
 | **Rust** | `impl Copy` / `#[derive(Copy)]` | yes | **yes** — the common case |
-| **C++** | the class's own special members (`= delete`, user-declared) | no — only the class's own members | no |
-| **Swift** | default-on; suppressed at the declaration (`~Copyable`, SE-0390) | no — `Copyable` is compiler-known | no |
+| **C++** | the class's own special members (`= delete`, user-declared), or a member or base that is not copyable | no — only the class's own members | not by the type system; preprocessor macros can generate special members |
+| **Swift** | default-on; suppressed at the declaration (`~Copyable`, SE-0390) | no — `Copyable` is compiler-known | not for `Copyable` as far as verified; attached macros can add other conformances |
 | **C#** | `struct` vs `class` — a declaration keyword | no | no |
 | **Go** | `struct` — a declaration keyword | no | no |
 | **Hylo** | nothing: there is no implicit copy to grant | n/a | n/a |
 
 **Rust is alone in the "yes" column, and alone again in the derive column.** Every other
 language that has implicit copying puts the decision in the type's own declaration —
-usually as a keyword — and none of them let an annotation or macro flip it. That is not
+usually as a keyword — and none of the cases verified lets an annotation flip it (C++ macros can
+generate special members and Swift's attached macros can add conformances; whether a macro can alter
+`Copyable` is unconfirmed, prior-art report section 11.13). That is not
 an argument that Rust is wrong (C# and Go pay for their keyword with *no* opt-out at all,
 which is worse in a different way), but it is the observation D6 rests on: the mechanism
 Metel inherited is the outlier, and it was inherited without being compared.
@@ -1017,8 +1019,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    RFC-0050's list survives the comparison cleanly; only the `move` specifier *inside*
    it lacked prior-art support.
 5. **On Axis C, Rust is the outlier and Metel copied the outlier** (added 2026-09-02).
-   Everyone else with implicit copying decides it at the declaration and puts it out of
-   reach of metaprogramming. This is the clearest prior-art signal in the survey — much
+   Everyone else with implicit copying decides it at the declaration and, in the cases verified,
+   puts it out of reach of annotations (macros that generate members are the caveat above). This is the clearest prior-art signal in the survey — much
    clearer than anything Axes A and B produced — and it costs almost nothing to follow
    (P4), because the keyword is already reserved and the word `Copy` is kept. Weigh it
    against the uniformity loss in the aspect system (D6.3), which is the real objection,

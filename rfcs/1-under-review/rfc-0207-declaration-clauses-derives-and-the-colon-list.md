@@ -102,7 +102,8 @@ capability in its declaration, and the supporting impls must exist (written by h
 ## 4. Worked examples
 
 ```metel
-struct Point: ImplicitClone { x: i64, y: i64 }               // ok
+struct Point: ImplicitClone { x: i64, y: i64 }               // ok: a Clone is written below
+extend Point: Clone { fun clone(&self) -> Point { Point { x = self.x, y = self.y } } }
 struct Bad: Clone { x: i64 }                                 // error: Clone has methods; write `derives Clone`
 struct B2: ImplicitClone { x: i64 }                          // error: no Clone; write one, or `derives ImplicitClone`
 struct B3 derives ImplicitClone { x: i64 }                   // ok: derives Clone and the marker

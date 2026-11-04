@@ -11,7 +11,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 > ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
 > `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
 > of that design. What remains relevant here is the derivation of `Clone` by a row template;
-> examples below that use `Copy` read as `ImplicitClone` in the colon list.
+> examples that used `Copy` were rewritten on 2026-11-04 to `derives ImplicitClone`.
 
 > **Status — under review (2026-11-03).** review of residual templates
 
@@ -27,11 +27,11 @@ satisfies, and the implementation answers inconsistently. This RFC sets the rule
 
 ```metel
 struct Doc derives Clone { title: String, n: i64 }   // derives entry: the Clone template applies
-struct Point: Copy { x: i64, y: i64 }
+struct Point derives ImplicitClone { x: i64, y: i64 }
 
 let q := d.{ title };        // q : Doc.{ title }
 q.clone()                     // Doc.{ title }: the template clones the present field
-let p2 := p.{ x };            // p2 : Point.{ x }, Copy because x is
+let p2 := p.{ x };            // p2 : Point.{ x }, ImplicitClone because x is (rules 1 and 6)
 ```
 
 A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ title }`; its body may read any
@@ -46,7 +46,7 @@ Measured against the current build (2026-11-02):
 - **Methods do not apply to a residual.** After `let n := h.name;`, a method of `Handle` called on
   `h` gives `T0002: cannot infer receiver type`. The narrowed-`self` form of RFC-0109
   (`&Self.{ fd }`) does not parse yet.
-- **Bounds look through the brand.** `Point.{ x }` of a `Copy` struct satisfies `T: Copy` and can
+- **Bounds look through the brand.** `Point.{ x }` of a `Copy` struct satisfies `T: Copy` today and can
   be used twice under `--move-check`; `Doc.{ title }` satisfies `T: Clone` when `Doc` has a user
   impl.
 - **Dispatch does not follow the bound.** Through `fun dup<T: Clone>(t: &T) -> T { t.clone() }`,
