@@ -50,11 +50,16 @@ aspect lists, RFC-0096's auto aspects). This RFC names those places, once.
 
 ## 1. The colon list
 
-Entries are aspects with no methods that the compiler checks.
+Entries are `declared` aspects (RFC-0212) with no methods. The colon **authorizes**: the type claims the
+capability in its declaration, and the supporting impls must exist (written by hand or requested in
+`derives`). `derives` **generates**: the compiler writes the impls it names.
 
-1. A positive entry must name a compiler-known marker that is granted in the declaration. Today
-   that is `ImplicitClone`. Naming any other aspect is an error with a fix-it: a method-bearing
-   aspect goes in `derives` or `extend`.
+1. A positive entry must name an aspect that is `declared` and has no methods; a `declared` aspect is
+   granted only here (RFC-0212). A std marker such as `ImplicitClone` is checked by the compiler by its
+   own rules (RFC-0206). A user marker (`aspect Validated declared;`) is an unchecked promise, visible in
+   the declaration, until refinement types (RFC-0202) can check it. Naming any other aspect is an error
+   with a fix-it: a method-bearing aspect goes in `derives` or `extend`. No rule keys on a name or on
+   std provenance.
 2. There are no negative entries. An opt-out of an `auto` aspect (`Send`, `Sync`, `Linear`, RFC-0096)
    is the existing bodyless negative impl, `extend T: !Send;` (RFC-0102, RFC-0081), which is legal
    anywhere in the type's module. Whether the opt-out should instead be a colon-list entry, so that
@@ -88,9 +93,9 @@ Entries are aspects with no methods that the compiler checks.
 
 - It does not add `header`, `derivable` (on user aspects) or `provides` machinery for markers, a
   refinement of a marker's condition, or a selection rule over overlapping impls.
-- It does not let a user declare a marker whose entry is an unchecked promise. A checked promise is
-  better expressed as a refinement type (RFC-0202), and method-bearing aspects in the colon list
-  are the later stage of RFC-0105.
+- A user marker's entry is an unchecked promise, accepted because the aspect is `declared`. A checked
+  promise is better expressed as a refinement type (RFC-0202), and method-bearing aspects in the colon
+  list are the later stage of RFC-0105.
 - It does not specify the grammar of named records and enums beyond the two clauses; RFC-0209 to
   RFC-0211 are the derivation templates, which stay drafts.
 
@@ -127,8 +132,8 @@ struct E derives Clone { s: NoClone }                        // error at the fie
 
 1. **Spelling:** `derives` against `derive`, and the clause order (colon list first).
 2. **User-declared `derivable` aspects** wait for comptime; until then only std declares them.
-3. **Whether user markers** (checked or promised) are ever added to the colon list, or are left to
-   RFC-0202's refinement types.
+3. **User markers:** resolved. A `declared` method-less aspect is admitted by property (rule 1), as an
+   unchecked promise until RFC-0202 can check it.
 4. **`Debug` and `Display`:** which std aspects gain a derivation in the first implementation.
 5. **Two spellings for a method-less aspect.** `: ImplicitClone` and `extend T: Eq;` both state a
    marker. They differ in kind, not in taste: the colon list is limited to markers that are `declared`

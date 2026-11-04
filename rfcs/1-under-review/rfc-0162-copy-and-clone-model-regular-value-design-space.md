@@ -51,7 +51,7 @@ implicit marker is named, declared and related to `Clone`.
    RFC-0206.
 3. **The grant is fixed on the declaration, and the clause says where `Clone` comes from.**
    `struct Point derives ImplicitClone { … }` when the compiler writes the `Clone` (exactly
-   `: ImplicitClone derives Clone`), and `struct Cache: ImplicitClone { … }` when the author wrote it.
+   `: ImplicitClone derives Clone`), and `struct Cache: ImplicitClone { … }` when `Clone` is written by hand (the colon authorizes, `derives` generates).
    The colon list never generates and has no negative entries (an opt-out such as `!Send` stays the
    negative `extend`); `extend T: ImplicitClone;` is an error. Both clauses are RFC-0207.
 4. **No special case by name.** `ImplicitClone` is an ordinary aspect declared in std with general

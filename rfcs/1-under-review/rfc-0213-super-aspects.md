@@ -144,7 +144,7 @@ extend Bad: Eq;                              // error: no PartialEq for Bad
 aspect ImplicitClone: derived Clone, !Drop;
 struct Point derives ImplicitClone { x: i64 }          // derives Clone too
 struct Cache: ImplicitClone { n: i64 }
-extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: the colon form takes the author's Clone
+extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: the colon form, with a hand-written Clone
 struct Both derives ImplicitClone { n: i64 }
 extend Both: Clone { … }                     // error T0015: overlaps the derived Clone; write `: ImplicitClone`
 struct Dup derives Clone, ImplicitClone { n: i64 }
@@ -155,7 +155,7 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
 
 - **No relation; a built-in entailment per aspect.** Rejected: an exception per aspect.
 - **Aspect aliases as the relation.** Rejected by RFC-0168: an alias creates no implementation target.
-- **Derive only the super-aspects that are missing.** Rejected: who wrote an impl would depend on what else is in the module, and a derived marker would sit over an impl the compiler never saw.
+- **Derive only the super-aspects that are missing.** Rejected: which impls the compiler generated would depend on what else is in the module, and a derived marker would sit over an impl the compiler never saw.
 - **A uniform rule: `derives A` derives every positive super-aspect.** Tried and reversed on 2026-11-04: it over-derives independent capabilities (`Error: Display`) and makes an aspect with a non-derivable super non-derivable. The mark restores the Rust and Haskell default (an obligation) and lets a law-bearing super opt in.
 - **A separate `provides` clause with a body** (an earlier draft of RFC-0206 and RFC-0207). Rejected:
   it needs a selection rule over overlapping impls and an equality law between two bodies.
@@ -182,9 +182,9 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
    is derived with its sub-aspect, so a sub-aspect whose marked super is written by hand (`derives Ord`
    over a written `Eq`, if `Ord` marked `Eq`) is `T0015` and the author writes the sub-aspect by hand.
    Two candidates, to be taken up when a real case appears:
-   - *`given`:* `struct T derives Hash given PartialEq, Eq` lists the super-aspects the author wrote.
+   - *`given`:* `struct T derives Hash given PartialEq, Eq` lists the super-aspects written by hand.
      Each must be a transitive positive super of the derived aspect and must already have a written
-     impl; everything unlisted is derived as before. The header still shows who wrote what, and the
+     impl; everything unlisted is derived as before. The header still shows what is generated, and the
      entry is the author's vouch for the law that links the two (the compiler checks only that the base
      exists).
    - *A callable derived body:* the derivation is exposed so that a written impl can delegate to it

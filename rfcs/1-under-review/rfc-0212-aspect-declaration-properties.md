@@ -172,7 +172,9 @@ extend Token: !Send;                                      // opt-out of an auto 
 ## Open questions
 
 1. **Spelling and form.** Clauses on the declaration, a property list, or attributes (RFC-0095).
-2. **Which properties users may use.** `implicit` is std only; whether `declared` is open to user aspects.
+2. **Which properties users may use.** `implicit` and `auto` are std only. `declared` is open to user
+   aspects (RFC-0207 rule 1): a user `declared` marker is admitted by the colon list as an unchecked
+   promise, and `extend T: A;` for it is an error.
 3. **`auto` and the structural rules of `Send`, `Sync`, `Linear`** (including `Linear`'s existential rule): deferred with the RFC-0096 revision.
 4. **Interaction of `declared` and a field of type-parameter type** when the failing instantiation is
    only discovered at a use.

@@ -25,11 +25,13 @@ type is `Clone`, and the converse does not hold.
 
 ```metel
 struct Point derives ImplicitClone { x: i64, y: i64 }     // implicit; the compiler writes Clone
-struct Cache: ImplicitClone { data: i64, hits: i64 }      // implicit; the author wrote Clone
+struct Cache: ImplicitClone { data: i64, hits: i64 }      // implicit; Clone is written by hand
 struct Doc derives Clone { title: String }                // explicit only: d.clone()
 ```
 
-`derives` means the compiler wrote the `Clone`, and the colon means the author did. `ImplicitClone`
+The colon **authorizes** and `derives` **generates**: the colon names a capability the declaration
+claims and requires the supporting `Clone` to exist, written by hand or requested in `derives`; `derives`
+asks the compiler to write the impls it names. `ImplicitClone`
 is an ordinary aspect declared in std with general aspect properties (RFC-0212) over a super-aspect
 relation (RFC-0213); the compiler reads those properties, never the aspect's name.
 
@@ -121,7 +123,7 @@ prerequisite refactor of section 6.
      `derives ImplicitClone`.
    - `struct P derives ImplicitClone` always derives the `Clone` too (RFC-0213 section 4):
      it is `: ImplicitClone derives Clone`. With a written `extend P: Clone` it overlaps the
-     derived impl and is an error (`T0015`); the author's own `Clone` is the colon form.
+     derived impl and is an error (`T0015`); a hand-written `Clone` goes with the colon form.
    The colon never generates an impl; `derives` always does.
 3. *The predicate is exact and conjunctive.* For an instantiation `T<A>`, `T<A>: ImplicitClone`
    holds when every field's type is `ImplicitClone`, and `T<A>: Clone` holds, and the type is not
