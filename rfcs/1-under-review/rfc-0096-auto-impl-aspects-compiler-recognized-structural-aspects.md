@@ -454,7 +454,10 @@ is not needed for `ImplicitClone`. Whether to adopt A is **an open question (see
    the negative `extend T: !Send;` as the opt-out of an `auto` aspect? The Send/Sync/Linear revision of
    this RFC (the `auto` and `structural any` properties of RFC-0212) is **deferred by the language
    owner (2026-11-04)**; it is not part of the Clone/ImplicitClone settlement (RFC-0206), which does
-   not depend on either spelling. Until then the negative `extend` stands.
+   not depend on either spelling. The revision must also address the semver hazard of `auto`: Rust's
+   language team calls each auto trait a hazard (a private field change can remove `Send` from a
+   public type), and Swift infers `Sendable` only for types that are not publicly ABI-exposed
+   (prior-art report, section 11.6). That favours an explicit grant for public types. Until then the negative `extend` stands.
 
 ---
 

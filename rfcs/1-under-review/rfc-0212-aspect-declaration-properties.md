@@ -91,6 +91,10 @@ Clone, !Drop`).
   impl for `&var T`), and by the closure rule of RFC-0134 §1 once function types can satisfy aspects
   (metel-core#739). Tuples need variadic generics (RFC-0125) and arrays a compile-time `N`
   (RFC-0132 §3), or a hardcoded arm until then.
+- **Errors name their cause.** A failed structural check names the aspect, the instantiation and the
+  field whose type fails (`View<NoClone>: ImplicitClone: field r: &NoClone is not Clone`), at the
+  declaration when the field type is concrete and at the use that needs the instance otherwise, with the
+  instantiation in the message. C++'s late, distant template errors are the cautionary precedent.
 - **With `declared`** the template is a check on the entry: a concrete field type that fails is an
   error at the declaration, next to the field; one that depends on a type parameter is decided per
   instantiation.

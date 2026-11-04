@@ -130,6 +130,12 @@ struct E derives Clone { s: NoClone }                        // error at the fie
 3. **Whether user markers** (checked or promised) are ever added to the colon list, or are left to
    RFC-0202's refinement types.
 4. **`Debug` and `Display`:** which std aspects gain a derivation in the first implementation.
+5. **Two spellings for a method-less aspect.** `: ImplicitClone` and `extend T: Eq;` both state a
+   marker. They differ in kind, not in taste: the colon list is limited to markers that are `declared`
+   (RFC-0212), which cannot be granted by `extend`, so the declaration is the only place to say it,
+   and the clause is checked against an existing `Clone`. `Eq`, `Send` and the like are grantable by
+   `extend`, and `extend T: Eq;` is the existing form (RFC-0168). Whether a grantable marker may also
+   appear in the colon list is not proposed.
 
 ---
 

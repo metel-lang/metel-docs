@@ -155,6 +155,21 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
    a default.
 5. **Generic aspects** (`aspect A<T>: B<T>`).
 6. **Where the abstract analysis consults the relation,** and how it composes with assumption sets.
+7. **An opt-in for deriving a sub-aspect over a hand-written super-aspect.** Section 4 is unconditional,
+   so `derives Hash` over a written `PartialEq`/`Eq` is `T0015` and the author writes `hash` by hand.
+   Two candidates, to be taken up when a real case appears:
+   - *`given`:* `struct T derives Hash given PartialEq, Eq` lists the super-aspects the author wrote.
+     Each must be a transitive positive super of the derived aspect and must already have a written
+     impl; everything unlisted is derived as before. The header still shows who wrote what, and the
+     entry is the author's vouch for the law that links the two (the compiler checks only that the base
+     exists).
+   - *A callable derived body:* the derivation is exposed so that a written impl can delegate to it
+     (`Hash::derived(self, h)`) and adjust one field, which is the usual real need. It belongs with
+     comptime derivation (RFC-0092, RFC-0093).
+   Not provided now: a derived `Hash` or `Ord` over a custom `eq` is wrong whenever the custom `eq`
+   ignores a field, and the rule removes that footgun. Rejected shapes: letting the colon list carry
+   method-bearing aspects (it reverses RFC-0207 section 1 and makes the list redundant with `extend`),
+   and a per-aspect "requires only" mark (the soundness question is per use, not per aspect).
 
 ---
 

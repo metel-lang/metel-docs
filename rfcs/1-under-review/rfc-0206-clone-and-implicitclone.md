@@ -159,6 +159,21 @@ exists, `ImplicitClone` requires its `Clone` to satisfy a stated effect bound, a
 `clone` does not cannot be `ImplicitClone`. No lint is specified before then, because detecting an
 allocating or panicking body without effect information would be guesswork.
 
+**Bounds in generic code.** Generic code that may copy should bound on `Clone` and call `.clone()`
+where the copy is intended, and bound on `ImplicitClone` only where an implicit copy is the point
+(for example numeric code over cheap scalars). A bound on `ImplicitClone` promises callers that every
+by-value use may run the type's `clone`; Mojo's documentation gives the same advice for
+`ImplicitlyCopyable` (prior-art report, section 11.9).
+
+**`!Drop` is a policy.** Rule 5 does not follow from soundness, as Rust's `Copy`/`Drop` rule does,
+because the hook can duplicate a resource. It keeps resource-owning types from being copied silently,
+and it is one entry in the super list (`!Drop`), so relaxing it later is a one-line change. Mojo allows
+a destructor on a type with a user copy initializer; that point is not confirmed (report, 11.13).
+
+**Third-party types.** A type from another module cannot be made `ImplicitClone` by its user, because
+the grant is `declared`. This is intended: whether a type is cheap to copy is its author's statement.
+A wrapper type in the user's module can be `ImplicitClone` over the foreign type when that type is.
+
 ---
 
 ## 3. Standard `Clone` impls
