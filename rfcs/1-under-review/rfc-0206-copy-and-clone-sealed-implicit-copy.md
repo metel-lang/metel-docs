@@ -67,8 +67,8 @@ Three further facts shaped this design:
 - **A user-writable implicit hook was explored and set aside.** Three adversarial reviews found that running user
   code at an implicit copy makes insertion and elision observable, and that its lowering, ordering and generic
   semantics cost more than they return in the first release (section 8). A sealed copy removes the problem, fits
-  the lattice of RFC-0089 (contraction is a structural rule, not a computation) and can be relaxed later without
-  breaking any program.
+  the lattice of RFC-0089 (contraction is a structural rule, not a computation) and a user-writable hook can be added later as a separate, separately authorized mode without breaking
+  accepted programs, under the conditions of section 8.
 
 The survey found the precedents: Rust's non-overloadable `Copy` and Swift's compiler-managed copy (neither can
 run user code at an implicit copy), Swift's `BitwiseCopyable` (SE-0426), which separates types copyable by
@@ -144,6 +144,8 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
    are unaffected.
 4. *The implicit copy is the representation copy.* A copy site (below) of a `Copy` value duplicates its
    representation. No user code runs, so a copy is unobservable; a type that is not `Copy` is moved.
+   Eliding the invocation removes the call or the materialisation of a duplicate; it never discards a duplicate
+   that a use needs.
    **Definition.** The implicit copy *is* an invocation of the type's provided `Clone` (rule 2), which the compiler
    is free to elide because it is the representation copy. This is why `Copy` entails `Clone`: `Copy` has no
    methods of its own, and the operation it grants is the provided `clone`, done implicitly. Because that `clone`
@@ -180,21 +182,30 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
 5. **Repeated arrays.** `[e; N]` with `N > 1` requires the element type to be `Copy`.
 
 **Recursion and termination.** A recursive type goes through `List`, `Option`, `Result` or a reference (there is
-no `Box`).
-1. **Predicate queries are inductive.** A cycle in a `Copy` (or any marker) query is "no". This is the least
-   solution of rule 3, and it costs nothing: `List`, `Option` and `Result` are not `Copy`, a reference is always
-   `Copy` without being inspected, and a cycle by value would be an infinite value.
-2. **Derivation conditions are coinductive on goals that repeat exactly.** `enum Tree derives Clone {
+no `Box`). One rule governs every recursive query, and section 6 ("Recursive declarations") states it for the
+stored interfaces. Cycles are solved per strongly connected component of the declaration dependency graph, and the
+direction depends on the property:
+1. **`Copy` queries are inductive** (a cycle is "no", the least solution of rule 3). It costs nothing under the
+   recursions that exist: `List`, `Option` and `Result` are not `Copy`, a reference is always `Copy` without being
+   inspected, and a cycle by value would be an infinite value. This is an inventory of the recursive indirections, not a
+   general theorem: a new indirection that is `Copy` must revisit it.
+2. **The structural "every field" markers `Discard`, `Send` and `Sync` are coinductive**: a cycle through the
+   declaration's own fields is assumed to hold, so `struct Node<T> { value: T, children: List<Node<T>> }` is `Discard`
+   exactly when `T` is. **`Linear` is existential and is never stored** (section 6): it is computed per
+   instantiation, inductively, seeded by real linear fields and fiat grants.
+3. **Derivation conditions are coinductive on goals that repeat exactly.** `enum Tree derives Clone {
    Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs `Tree: Clone`
    again. The solver assumes the impl being derived while it checks the fields, as Rust and Haskell do. The
    derived `clone` is a recursive function over finite values, so termination comes from the data and not from the
    proof. This covers regular recursion such as `Node<T> { next: Option<Node<T>>, v: T }`.
-3. **Coinduction never applies to a negative goal** (`!Drop`, `T: !B`) **or to a marker aspect.** A cycle through
-   one is unknown, never a proof.
-4. **Expanding recursion is rejected.** `struct Grow<T> derives Clone { rest: Option<Grow<List<T>>> }` grows its
+4. **Coinduction never applies to a negative goal** (`!Drop`, `T: !B`) **or to a granted marker** (`Copy`): a cycle
+   through one is unknown or "no", never a proof. The structural markers of rule 2 are the only exception.
+5. **Expanding recursion is rejected.** `struct Grow<T> derives Clone { rest: Option<Grow<List<T>>> }` grows its
    argument at every step. A size and depth limit gives an error at the declaration with the fix-it "write the
    impl", and unknown in the abstract analysis.
-5. **The derived body** is a per-field call, so a recursive `clone` recurses through the impl and needs no
+6. **Function requirements** (the `Discard` elaboration of RFC-0089 section 2.2) are a least fixed point: obligations
+   only accumulate, so a recursive helper group is solved by iterating from the empty set until nothing is added.
+7. **The derived body** is a per-field call, so a recursive `clone` recurses through the impl and needs no
    unrolling. A written impl whose where clause mentions its own type is the ordinary case: the impl exists and
    is not unrolled.
 
@@ -310,9 +321,11 @@ replaces the native one when RFC-0092 and RFC-0093 allow.
 ## 6. Implementation staging and dependencies
 
 **Scope of projections in v0.16.0 (decided 2026-11-05).** A residual `T.{ fields }` gets exactly two things:
-`Copy`, structurally and sealed (section 2 rule 6), and the existing `Drop` dispatch (RFC-0137 section 5). Every
-other aspect on a projection is `T0012`, with a use-site diagnostic that names the written impl as the cause
-(the language keeps no edit history, so it cannot warn at the edit). The end state is row templates for derived
+`Copy`, structurally and sealed, **together with its provided `Clone`** (section 2 rules 2 and 6), and the existing
+`Drop` dispatch (RFC-0137 section 5). Every other aspect on a projection is `T0012`. The use-site diagnostic
+distinguishes the two causes: a written whole-type impl is named as the cause when one exists, and a derived aspect
+whose template is deferred is reported as "template not yet available" (there is no written impl to name). The
+language keeps no edit history, so it cannot warn at the edit. The end state is row templates for derived
 impls (RFC-0211) plus written residual impls (RFC-0214, including its row-generic form, with construction in
 RFC-0216) for hand-written ones. Neither draft is a dependency.
 
@@ -321,8 +334,9 @@ its residuals `Copy` is compiler logic in v0.16.0, not the std row template, so 
 this settlement's critical path. It is a named, time-boxed exception; metel-core#1823 (milestone "Structural kinds
 after comptime") tracks replacing it by the template with no change in accepted programs.
 
-There is no first stage that carries the semantics with a special case. The settlement waits for the general
-features, in this order:
+There is no first stage that carries the semantics with an unnamed special case. The only special cases in this release
+are the named exceptions (native structural `Copy`, #1823; arrays and the record `Clone` hook, step 7; the
+abstract-ownership limitation, step 2). The settlement otherwise waits for the general features, in this order:
 
 1. **Identity-based aspect resolution.** Replace the string-keyed `"Copy"` sites by an aspect identity lookup (the
    ADR-0054/0066/0067 line). A prerequisite refactor, no RFC.
@@ -336,14 +350,14 @@ features, in this order:
    closure; an exclusion (a negative super entry) is a grant-time check only (RFC-0213 section 3), so coherence needs no
    closure beyond the positive one and no solver.
 3. **The declaration clauses** (RFC-0207): `derives`, the colon list for user markers, and the class keywords.
-4. **Super-aspects** (RFC-0213), including entailment over declared bounds and their super-aspect closure, and the
-   syntactic negative closure (there is no solver in this release).
+4. **Super-aspects** (RFC-0213), including entailment over declared bounds and their positive super-aspect closure. Exclusions are grant-time checks only
+   (RFC-0213 section 3), so there is no negative closure and no solver in this release.
 5. **Derivations** (RFC-0207): native `Clone` first; the marked super-aspect derivation of RFC-0213 section 4,
    which derives the provided `Clone` with `Copy`.
-6. **Aspect properties** (RFC-0212): `declared` and `implicit`, and the std-written structural rule (a row
-   template, RFC-0123), with the row machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211). RFC-0208's
-   `<..R>` binder is not a prerequisite: the templates use `record R` until it lands (the spikes did not exercise
-   templates; to be checked in the Row machinery stage).
+6. **Aspect properties** (RFC-0212): `declared` and `implicit`. The structural `Copy` rule for named types is native
+   in this release (#1823); the std-written row template (RFC-0123, with the row machinery of RFC-0209, RFC-0210,
+   RFC-0211) replaces it later. RFC-0208's `<..R>` binder is not a prerequisite: the templates use `record R` until
+   it lands (the spikes did not exercise templates; to be checked in the Row machinery stage).
 7. **Built-in kinds as impls:** references and views, then tuples (RFC-0125, #794), then closures and function
    types (metel-core#739, RFC-0134). **Arrays and the native record `Clone` hook stay named compiler rules in this
    release.** Their std impls need a compile-time `N` (RFC-0132 §3) and the comptime-for implementation
@@ -386,27 +400,38 @@ The route is incremental and nothing in v0.16.0 closes it:
    either keeps its stated condition sufficient or fails validation, so it cannot change the interface silently.
 Epic: metel-core#1821.
 
-**One rule for types and functions (decided 2026-11-05).** The stored ownership interface covers every ownership marker
-(`Copy`, `Discard`, and `Linear` once it exists). For a **type** it is the condition under which the marker holds; for a
-**function** it is the bounds, including the `Discard` that RFC-0089 section 2.2 elaborates. In both a `pub` item states
-it, a non-`pub` item gets it computed, and the diagnostic suggests the computed result as a fix-it. RFC-0089 section 2.2
-is this rule applied to functions, not a second mechanism.
+**One rule for types and functions (decided 2026-11-05, repaired after review 5).** The stored ownership interface covers
+the **permissive** capabilities, the ones that grant an operation: `Copy`, `Discard`, and `Send`/`Sync` when their
+structural rules land. For a **type** it is the condition under which the capability holds; for a **function** it is
+the bounds, including the `Discard` that RFC-0089 section 2.2 elaborates. A `pub` item states it, a non-`pub` item
+gets it computed, and the diagnostic suggests the computed result as a fix-it. **`Linear` is not a stored
+capability.** It is an obligation, existential over fields (`Linear(Pair<A, B>)` is `Linear(A) or Linear(B)`), so it
+does not fit a conjunction. It is computed per instantiation from the exact predicate (a linear field or a fiat
+grant), and generic bodies never need it: a bare `T` is already possibly linear, so a body only needs to know whether
+`T` is known `Discard`.
 
 **The condition language.** A stored or stated condition is a conjunction of atoms `Param: Marker` over the
-declaring item's own parameters. It has no disjunction, no negation and no recursion. A nested use such as
-`Option<Pair<T>>` is reduced by substituting the stored interface of each declaration, which ends in atoms on the
-outer parameters; each interface is flat and substitution only shrinks the term, so evaluation terminates. Any
-richer form (an associated-type condition, a `where` clause of another shape) is reduced the same way or rejected
-with a diagnostic naming the limitation.
+declaring item's own parameters, with the constants `true` (the empty conjunction) and `never`. It has no
+disjunction, no negation and no recursion. A fiat-linear type (`linear struct`) has `Discard` = `never`; a type with a
+`Drop` impl or all-`Discard` fields has the conjunction of its fields' conditions. A nested use such as
+`Option<Pair<T>>` is reduced by substituting the stored interface of each declaration. Substitution can expand one
+atom into several, so termination does not come from the term shrinking. It comes from the order of the solving:
+recursive groups (strongly connected components of the declaration dependency graph) are solved first by the polarity rule
+below, then declarations are solved in dependency order over the resulting acyclic graph; each interface is finite
+over its own parameters. Any richer form (an associated-type condition, a `where` clause of another shape) is
+rejected with a diagnostic naming the limitation; the language is closed under substitution only for the forms it
+admits.
 
-**Recursive declarations.** A cycle through a declaration's own fields is resolved by the marker's polarity, not by
-rejecting it. A marker that requires every field to qualify (`Discard`, `Send`, `Sync`) assumes the cycle holds
-(coinductive), so `struct Node<T> { value: T, next: Option<Box<Node<T>>> }` is `Discard` exactly when `T` is. A marker
-that needs one field to qualify (`Linear`) assumes the cycle does not hold (inductive), so a recursive type is
-linear only through a real linear field; `Discard` is its complement, so the two agree. `Copy` gives the same answer
-under either reading, because a recursive type needs an owning indirection, which is not `Copy`, and a shared
-reference contributes no cycle. The computation phase (#1819) must implement this; the spike's rule "a cycle yields no" is
-correct for `Copy` only.
+**`Discard` is exact and compiler-computed.** No user writes or negates a `Discard` impl; only fiat (`linear struct`)
+removes it, and `T: Copy` entails `T: Discard` in the checker. A stated condition on a public type may **withhold**
+`Discard` from generic code (a conservative published interface) but can never create it or suppress a structural
+linear obligation, so a public annotation cannot make a linear value droppable. Concretely, the complement of `Linear`
+holds for the computed obligation; independently stated public conditions need not be complements.
+
+**Recursive declarations.** See section 2, "Recursion and termination", which is the one authoritative rule:
+`Discard`, `Send` and `Sync` are coinductive over structural cycles, `Linear` is inductive and computed, `Copy` is
+inductive, and function requirements are a least fixed point. The spike's rule "a marker cycle yields no" (#1815b) is
+correct for `Copy` only and must not be carried into the computation phase (#1819).
 
 Work specific to this RFC and independent of that order:
 - The std repairs: array and tuple `Clone`, the reference and view cases, the unit fix, and #270's `Option`,
@@ -525,13 +550,13 @@ novel parts and their risk:
 | Part | Risk |
 |---|---|
 | Exclusion-based disjointness evidence (RFC-0213 section 3, deferred) | High if built: exclusions would become a public coherence contract; v0.16.0 keeps them a grant-time check only |
-| The stated condition as the public interface and its language (section 6) | Moderate: the condition language and the polarity rule for recursive declarations are specified; high until implemented and tested |
+| The stated condition as the public interface and its language (section 6) | Moderate: repaired after review 5 (permissive capabilities only, `never`, solving order, one recursion rule); high until implemented and tested |
 | Derivation provenance deciding residual instances (RFC-0211) | Lower for v0.16.0: projections get only `Copy` and the `Drop` dispatch, other aspects are `T0012` with a use-site diagnostic; the template half is later. Teaching and migration cost remain for that half |
 | The `derived` mark on super-aspect edges (RFC-0213 section 4) | Low: std only in v0.16.0, with `Copy` and `Eq` its only users; opening it to user aspects is a later addition |
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
 | A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |
-| Inferred `Discard` for generic code (RFC-0089 section 2.2) | Moderate: one named exception to "declared bounds", limited to the one implicit operation; `pub` functions state it once `linear` ships; **not yet reviewed adversarially** |
+| Inferred `Discard` for generic code (RFC-0089 section 2.2) | Moderate: one named exception to "declared bounds", limited to the one implicit operation; transitive for non-`pub` functions, stated on `pub` ones once `linear` ships; reviewed once (review 5) and repaired; the paper demonstration still has an open dependency on a conditional std destructor and on closure discard |
 | Native structural `Copy` for named types | Low: a named, time-boxed exception, tracked as metel-core#1823 |
 
 **Acceptance (decided 2026-11-05): one ratification sweep.** The settlement is one cluster, as the allocator
@@ -540,10 +565,8 @@ all are decided in the same sweep, in this order: RFC-0089 sections 1 to 2.1 (th
 section 2.2 demonstration), this RFC's ownership model (sections 1 to 5), then RFC-0207, RFC-0213 and RFC-0212.
 RFC-0211 is accepted with a **staged marker**: its v0.16.0 part (rule 2, a written impl never applies to a residual,
 giving `T0012` with the use-site diagnostic) is in the sweep, and its template half is marked "Planned for" a later
-release, with RFC-0209 and RFC-0210, which follow with the row machinery. A final targeted adversarial review of the
-changes made after the fourth review (the `Discard` capability and elaboration, the implicit-copy-as-provided-`Clone`
-definition, the std-only `derived` mark, the one-rule/condition-language/polarity text, and scope B for projections)
-precedes the sweep.
+release, with RFC-0209 and RFC-0210, which follow with the row machinery. The targeted adversarial review of the changes made after the fourth review (review 5, 2026-11-05) judged the cluster
+not ready; its repairs are applied, and a short second pass on the changed text precedes the sweep.
 
 ## Open questions
 

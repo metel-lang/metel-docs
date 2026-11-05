@@ -100,14 +100,17 @@ extend Doc: Display<record R> where ..R: Display {      // spelling provisional 
 extend Doc: Clone<record R> where ..R: Clone {          // a Self-returning method, written once
     fun clone(&self: Self.{ ..R }) -> Self.{ ..R } {
         return Self.{ ..R } { comptime for field in fields(R) {
-            [field.name] = if (field.name == "hits") { 0 } else { self.[field.name].clone() },
+            [field.name] = self.[field.name].clone(),
         } };                                            // construction: RFC-0216
     }
 }
 ```
 
-It subsumes the other two forms for aspects that read or rebuild every field, and it lets the author
-keep a customisation (reset `hits`) on projections. It is checked once against a symbolic field
+It subsumes the other two forms for aspects that read or rebuild every field. Customising one field (reset `hits`
+on clone) is not expressible in the loop above: a symbolic field with only `Clone` has no known type, so a branch
+on `field.name` cannot return an integer. It needs either a compile-time refinement rule (a `comptime if` on
+`field.name` that refines `field.type` in that branch, open question 9) or per-field customisation of a derive
+(RFC-0213 open question 8). It is checked once against a symbolic field
 (RFC-0174 D3). Its cost is the heaviest: it needs RFC-0174, RFC-0208, RFC-0123 and, for a `Self`-returning
 method, RFC-0216. `derives` stays the normal path; this is the power-user form.
 
@@ -164,7 +167,7 @@ extend Id.{ n }: Clone { /* .. */ }             // error T0015: overlaps the tem
 
 struct Row { key: i64, payload: String, }
 extend Row: PartialEq {
-    fun eq(&self: Self.{ key }, other: &Self) -> boolean { return self.key == other.key; }
+    fun eq(&self: Self.{ key }, other: &Self.{ key }) -> boolean { return self.key == other.key; }
 }
 // Row, Row.{ key }, Row.{ key, payload } all compare by key
 ```
@@ -225,6 +228,9 @@ extend Row: PartialEq {
 8. **Receiver narrowing as tooling.** Inferring a required field set from a body is rejected as a
    language rule (RFC-0137 section 5); an editor suggestion that proposes `Self.{ title }` for a body
    that reads only `title` is not.
+9. **Compile-time refinement of a symbolic field.** Whether `comptime if (field.name == "hits")` refines
+   `field.type` inside the branch, so a loop body can treat one named field specially while keeping the others
+   generic.
 
 ---
 

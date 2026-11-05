@@ -70,11 +70,11 @@ rules:
 1. **Defining module only.** It may be written only in the module that defines `T` (RFC-0214 rule 1).
    A brand with private fields therefore cannot be forged from outside.
 2. **Row match.** The entries must be exactly the row `R` of the residual type, no more, no fewer.
-3. **Constructor invariants.** A brand's constructors may enforce invariants (RFC-0137 section 6). The
-   residual construction bypasses them by design, as a projection or partial move already does for the
-   fields it keeps, so it is subject to the same rule: the construction is available only where a
-   field-wise copy of the existing value is, namely where the entries are derived from a value of the
-   same brand (see open question 2).
+3. **Constructor invariants and authority.** A brand's constructors may enforce invariants (RFC-0137 section 6).
+   A residual construction bypasses them. A projection or partial move only keeps values the brand already
+   produced, whereas arbitrary construction can create field combinations no constructor allows. "Entries derived from
+   a value of the same brand" is not yet a checkable typing rule, so the authority for construction is **open**
+   (open question 2): the defining-module restriction of rule 1 is the only rule fixed here.
 4. **Full width.** When `R` is the brand's whole row the result normalises to `T` (RFC-0137).
 5. **Enums** have no residuals (RFC-0150) and are outside this rule.
 
@@ -116,7 +116,8 @@ rules:
 4. **Order and duplicates.** The unrolled entries are in field order (RFC-0174 open question 3);
    whether an explicit entry may override a looped one (a custom tweak such as resetting `hits`).
 5. **Failure cleanup.** A clone that fails or panics halfway leaves partly built values; RFC-0206's
-   derived-clone cleanup order must apply to the loop.
+   derived-clone cleanup order must apply to the loop, and a linear intermediate result needs its own rule
+   (RFC-0089 section 2.2).
 6. **Interaction with `Drop`.** A residual of a `Drop` brand cannot be built field-wise without
    deciding who runs the destructor (RFC-0137 section 5).
 
