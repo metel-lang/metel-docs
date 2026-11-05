@@ -148,9 +148,9 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
    is free to elide because it is the representation copy. This is why `Copy` entails `Clone`: `Copy` has no
    methods of its own, and the operation it grants is the provided `clone`, done implicitly. Because that `clone`
    cannot be written (rule 2) and runs no user code, the definition and the representation copy cannot differ,
-   and a `T: Copy` bound in generic code still guarantees no user code runs at a copy. For a string or an owning
-   array the provided `clone` is the leaf native `copy_value` (section 2, leaf clones); the definition covers
-   them the same way.
+   and a `T: Copy` bound in generic code still guarantees no user code runs at a copy. The leaf native
+   `copy_value` (section 2, leaf clones) belongs to the explicit `Clone` of non-`Copy` leaves such as `String`; those
+   are moved, never implicitly copied, so the definition does not involve it.
 5. *`Drop` and `Linear` exclude it.* A type that implements `Drop` cannot be `Copy`, and neither can a `Linear`
    type. The justification is operational, and RFC-0089 section 1 states it with the lattice: a representation copy
    cannot perform the per-owner cleanup bookkeeping that a destructor needs, and a linear value is never implicitly
