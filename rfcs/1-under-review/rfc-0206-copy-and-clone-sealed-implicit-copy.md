@@ -386,6 +386,28 @@ The route is incremental and nothing in v0.16.0 closes it:
    either keeps its stated condition sufficient or fails validation, so it cannot change the interface silently.
 Epic: metel-core#1821.
 
+**One rule for types and functions (decided 2026-11-05).** The stored ownership interface covers every ownership marker
+(`Copy`, `Discard`, and `Linear` once it exists). For a **type** it is the condition under which the marker holds; for a
+**function** it is the bounds, including the `Discard` that RFC-0089 section 2.2 elaborates. In both a `pub` item states
+it, a non-`pub` item gets it computed, and the diagnostic suggests the computed result as a fix-it. RFC-0089 section 2.2
+is this rule applied to functions, not a second mechanism.
+
+**The condition language.** A stored or stated condition is a conjunction of atoms `Param: Marker` over the
+declaring item's own parameters. It has no disjunction, no negation and no recursion. A nested use such as
+`Option<Pair<T>>` is reduced by substituting the stored interface of each declaration, which ends in atoms on the
+outer parameters; each interface is flat and substitution only shrinks the term, so evaluation terminates. Any
+richer form (an associated-type condition, a `where` clause of another shape) is reduced the same way or rejected
+with a diagnostic naming the limitation.
+
+**Recursive declarations.** A cycle through a declaration's own fields is resolved by the marker's polarity, not by
+rejecting it. A marker that requires every field to qualify (`Discard`, `Send`, `Sync`) assumes the cycle holds
+(coinductive), so `struct Node<T> { value: T, next: Option<Box<Node<T>>> }` is `Discard` exactly when `T` is. A marker
+that needs one field to qualify (`Linear`) assumes the cycle does not hold (inductive), so a recursive type is
+linear only through a real linear field; `Discard` is its complement, so the two agree. `Copy` gives the same answer
+under either reading, because a recursive type needs an owning indirection, which is not `Copy`, and a shared
+reference contributes no cycle. The computation phase (#1819) must implement this; the spike's rule "a cycle yields no" is
+correct for `Copy` only.
+
 Work specific to this RFC and independent of that order:
 - The std repairs: array and tuple `Clone`, the reference and view cases, the unit fix, and #270's `Option`,
   `Result` and `List`.

@@ -244,7 +244,8 @@ the six listed under "The problem".
   that inserts the bound it computed), so the author confirms it instead of working it out; otherwise a change from consuming to dropping would change the
   public interface silently and break linear callers (Swift made public inference explicit for the same reason,
   SE-0427). A non-`pub` function is elaborated silently. This is the rule the stated-condition design already uses
-  for stored ownership conditions (RFC-0206 section 6).
+  for stored ownership conditions (RFC-0206 section 6, "One rule for types and functions"): this section is that
+  rule applied to functions, with the same condition language and the same polarity rule for recursive declarations.
 - **Closures.** Whether a closure value is `Discard` depends on what it captures and on its multiplicity
   qualifier (RFC-0134, RFC-0153). This section does not decide it.
 
