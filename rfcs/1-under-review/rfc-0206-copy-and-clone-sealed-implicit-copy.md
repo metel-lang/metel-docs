@@ -144,6 +144,13 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
    are unaffected.
 4. *The implicit copy is the representation copy.* A copy site (below) of a `Copy` value duplicates its
    representation. No user code runs, so a copy is unobservable; a type that is not `Copy` is moved.
+   **Definition.** The implicit copy *is* an invocation of the type's provided `Clone` (rule 2), which the compiler
+   is free to elide because it is the representation copy. This is why `Copy` entails `Clone`: `Copy` has no
+   methods of its own, and the operation it grants is the provided `clone`, done implicitly. Because that `clone`
+   cannot be written (rule 2) and runs no user code, the definition and the representation copy cannot differ,
+   and a `T: Copy` bound in generic code still guarantees no user code runs at a copy. For a string or an owning
+   array the provided `clone` is the leaf native `copy_value` (section 2, leaf clones); the definition covers
+   them the same way.
 5. *`Drop` and `Linear` exclude it.* A type that implements `Drop` cannot be `Copy`, and neither can a `Linear`
    type. The justification is operational, and RFC-0089 section 1 states it with the lattice: a representation copy
    cannot perform the per-owner cleanup bookkeeping that a destructor needs, and a linear value is never implicitly
@@ -440,6 +447,12 @@ affine struct Token { id: i64 }                                           // loc
   guarantees (D added and replaced hook mechanisms and accumulated precedence rules; C++ needs explicit
   elision rules). Writable to sealed would be a break. The cost of the extension is the work listed above,
   which is why it is deferred and not designed here.
+  **The definition of the implicit copy does not open the hook.** Section 2 rule 4 defines the implicit copy as an
+  elidable invocation of the *provided* `Clone`. That is a statement about the compiler-provided, unwritable
+  `clone` of a `Copy` type, whose body is the representation copy. It must not be read as "an implicit copy calls
+  whatever `clone` the type has": a written `Clone` on a `Copy` type is `T0015`, so there is no written `clone` for
+  an implicit copy to reach. A later hook is a separate, separately authorized mode with its own dispatch and
+  elision rules, not a relaxation of rule 2.
   **Decision (2026-11-05): the extension stays open, with a named trigger.** It is reopened only if a std or
   ecosystem type needs observable behaviour on an implicit copy and an explicit `.clone()` cannot express it. Until
   then `Copy` is sealed and nothing is built. Any proposal must meet the four conditions above and carry its own
