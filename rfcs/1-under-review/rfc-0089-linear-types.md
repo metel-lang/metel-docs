@@ -160,8 +160,8 @@ freely usable). `!Linear` is accepted where no field is `Linear`, for example th
 **Mutually exclusive with `Copy`** (`ω` and `1` can't coexist in the same field) **and
 with `Drop`.** `Drop`'s triggers — implicit scope-end, the generic `drop(x)` free
 function — have no legitimate firing point for a value that can never legally reach
-scope-end unconsumed, and `drop`'s signature should exclude `Linear` via `T: !Linear`
-(mirroring RFC-0072's negative-bound mechanism), specifically to avoid a documented
+scope-end unconsumed, and `drop`'s signature should require `T: Discard` (section 2.2; an earlier
+draft excluded `Linear` with a negative bound, `T: !Linear`), specifically to avoid a documented
 hazard (RFC-0049): a generic `drop` that discharges a linearity obligation without
 running real cleanup ("`drop(f)` appears to work but leaves captured values dangling").
 A linear type's teardown logic lives in an ordinary, author-named consuming method
@@ -205,6 +205,77 @@ commitment that nothing elsewhere in the codebase can later add `extend Handle: 
 and silently change what moving a `Handle` means.
 
 
+### 2.2 Generic code and the capability to discard (proposal, 2026-11-05; to be ratified)
+
+**The problem.** A generic body can do two things to a value of parameter type `T` without writing a call: copy it
+and drop it. A copy happens at a visible use site (a second use of `x` is a use-after-move unless `T: Copy`), so the
+author is told. A **drop** is implicit: scope end, an early `return` or `?`, an overwritten assignment, an unused
+argument, a discarded expression statement, the unmoved rest of a partial move. If a bare `T` is affine (the
+RFC-0071 default), then a linear type can never instantiate it, and generic code cannot be used with linear
+types at all. If a bare `T` is possibly linear and the author must write the bound, nearly every generic
+function that ever drops needs one. A scan of std and the integration programs (2026-11-05) found that 30 to 40 % of
+the functions that take a bare `T` by value drop it on some path (`unwrap_or` drops its fallback, `ok` drops the
+error, `print` takes a `T: Display` by value and only borrows it); the count is a floor, since it ignores locals,
+early returns and drops through `Option<T>` or `List<T>`.
+
+**The capability.** `Discard` is an aspect that says a value may be dropped. It is a positive capability, so
+generic code never needs the absence reasoning that RFC-0213 section 3 keeps out of v0.16.0.
+1. For a concrete type, `Discard` holds exactly when the type is not `Linear`. It is derived structurally (a type is
+   `Discard` when all its fields are, and not `Linear`), as `Send` is (RFC-0096). `Drop` types are `Discard`: their
+   drop runs. `T: Copy` entails `T: Discard`.
+2. For a type parameter, `Discard` holds only if a bound says so (`T: Discard`, or `T: Copy`).
+3. The generic `drop` is `drop<T: Discard>`, replacing the `T: !Linear` of section 2.
+
+**Bare `T` is possibly linear.** A generic body may consume a `T` (move it, return it, pass it, store it) and may
+not drop or copy it unless the bounds say so. This is the strictest assumption and the one under which the body is
+checked, once, at its definition (RFC-0173).
+
+**Elaboration of `Discard`.** When a generic function drops a value whose `Discard` depends on a parameter (a `T`,
+or an `Option<T>`, `List<T>` or struct holding one), the compiler adds `T: Discard` to that function's bounds. The
+body is then checked once against the elaborated bounds, so RFC-0173 holds: `T` is opaque and supports only its
+bounds, one of which the compiler wrote. For a method of a generic impl, the bound attaches to the method, not the
+impl, so `Option<Tx>` exists and `unwrap_or` is available only when `T: Discard`. The drop sites that count are
+the six listed under "The problem".
+- **Only `Discard` is elaborated.** Methods, operators, `Copy`, `Clone` and every other bound stay declared
+  (RFC-0173 is unchanged for them). The reason is the one above: a drop is the only implicit operation. This is
+  a single named exception to "declared bounds", limited to the one implicit operation.
+- **`pub` generic functions state the bound.** Once `linear` is implemented, a `pub` generic function whose body drops
+  a `T` must write `T: Discard`, with a fix-it; otherwise a change from consuming to dropping would change the
+  public interface silently and break linear callers (Swift made public inference explicit for the same reason,
+  SE-0427). A non-`pub` function is elaborated silently. This is the rule the stated-condition design already uses
+  for stored ownership conditions (RFC-0206 section 6).
+- **Closures.** Whether a closure value is `Discard` depends on what it captures and on its multiplicity
+  qualifier (RFC-0134, RFC-0153). This section does not decide it.
+
+**Staging.** In v0.16.0 every type is `Discard`, so every bare `T` behaves exactly as the affine default does
+today, no program changes, and `T: Discard` written explicitly is accepted and always true. What v0.16.0 must do so
+that nothing is foreclosed:
+1. The generic-body analysis (ADR-0063) records the drop sites of values whose type depends on a parameter. It
+   needs the record to compute the elaboration when `linear` lands; today it does not report them.
+2. The aspect name `Discard` and the rule that a bare `T` is possibly linear are reserved here.
+3. No std API documents a bare `T` as "droppable" as a guarantee.
+
+**Demonstration required before acceptance of sections 1 to 2.1.** Show, on paper, with the rules above:
+`fun identity<T>(x: T) -> T` accepting a linear value; a `Pair<T>` that is `Linear` exactly when `T` is;
+`Option<T>::unwrap_or` available only when `T: Discard`; a function that ends a linear value through an author-named
+consuming method; and `Vec<T>` holding linear values with `clear` unavailable for them. Austral's `T: Type`
+universes, Swift's `~Copyable` and Linear Haskell's multiplicity polymorphism are the comparisons.
+
+**Alternatives considered.** (a) *A written `T: ?Linear` opt-in on an affine default*: works, but linear types are
+locked out of every generic function until its author opts in (Swift needed several releases, SE-0427), and
+`T: !Linear` for the `drop` signature needs absence reasoning. (b) *A written `T: Discard` on a linear default*: no
+retrofit, but the author pays the 30 to 40 % of functions that drop, plus transitive cases, at once, and it is a
+breaking change. (c) *Check drop sites at each instantiation* (C++-template style): no bounds to write, but a body
+change breaks callers and it contradicts RFC-0173. (d) *Let a generic drop of a linear value run a
+type-supplied cleanup*: no lock-out, but the value is then affine with a destructor, not linear, which defeats the
+purpose. The proposal takes inference for the one implicit operation, written bounds for everything else.
+
+**Open.** The enforcement point for the `pub` rule (the release that implements `linear`); the spelling `Discard`;
+whether an explicit `where T: !Discard` ("this parameter must be linear") is ever needed (probably not); closure
+discard (RFC-0134, RFC-0153).
+
+---
+
 > **Sections 3 to 5 moved to RFC-0215 on 2026-11-05.** Partial consumption through `ToRecord`, the brand-carrying
 > conversion for fiat-linear structs (old section 3.1), `NonLinear<T>` and the two-struct comparison are in
 > RFC-0215 (Partial Consumption of Mixed-Multiplicity Structs), which keeps their section numbers. This RFC is
@@ -224,11 +295,10 @@ and silently change what moving a `Handle` means.
 3. *(Moved to RFC-0215.)* `NonLinear<T>`'s surface syntax.
 4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) — noted as a real, later
    extension; not attempted here.
-5. **The default for an unbounded type parameter with respect to `Linear`** (new 2026-11-05). This RFC did not
-   decide it; `drop<T: !Linear>` suggested a bare `T` might be linear. The settlement of RFC-0206 takes: an
-   unbounded `T` is affine (movable, droppable, not copyable), so existing generic code stays valid, and linear
-   types cannot instantiate it until a suppression spelling exists, which arrives with the implementation of
-   `linear`. To be ratified here.
+5. **The default for an unbounded type parameter with respect to `Linear`**: **proposed 2026-11-05**, section 2.2. A bare `T`
+   is possibly linear; `T: Discard` is elaborated for the one implicit operation (drop) and stated on `pub` functions
+   once `linear` ships. In v0.16.0 every type is `Discard`, so nothing changes for existing programs. To be ratified,
+   with the demonstration required there.
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
 
 ---

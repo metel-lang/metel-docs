@@ -297,14 +297,12 @@ replaces the native one when RFC-0092 and RFC-0093 allow.
   the type keyword `copy` and the qualifier name the same property.
 - **Defaults.** A type is affine unless it says otherwise (RFC-0071): forgetting a keyword on a handle or a token
   fails safe. A `Copy` grant is a statement; it is never inferred from the fields (copy-by-default, section 8).
-- **Generic code with respect to `Linear`.** An unbounded type parameter is affine: movable and droppable, not
-  copyable, and linear types cannot instantiate it until the suppression spelling for `Linear` exists, which
-  arrives with `linear` (RFC-0089, open there). The staging has a cost: containers, adapters, closures and utility
-  functions written before linearity may need broader parameter declarations later (Swift took several releases
-  for the same step, SE-0427). RFC-0089 must therefore show, before `linear` is implemented, a generic identity
-  function and a container that accept a future linear value under the suppression spelling (Austral's
-  `T: Type`, Swift's `~Copyable` and Linear Haskell's multiplicity polymorphism are the comparisons); v0.16.0
-  defines no such spelling, so nothing it ships forecloses one.
+- **Generic code with respect to `Linear`.** In v0.16.0 every type is discardable, so an unbounded type parameter
+  behaves as affine: movable and droppable, not copyable. The long-term rule is RFC-0089 section 2.2 (proposed): a bare `T` is
+  possibly linear, the capability `Discard` is elaborated for the one implicit operation (drop), and a `pub` generic
+  function states it once `linear` ships. The generic-body analysis must record drop sites of parameter-dependent
+  values now, so that nothing in v0.16.0 forecloses it. RFC-0089 must show the demonstration of section 2.2 before
+  its sections 1 to 2.1 are accepted.
 - **`Share`** (RFC-0158) is unaffected, since the name `Clone` stays.
 
 ---
@@ -520,8 +518,9 @@ Acceptance order: RFC-0089 sections 1 to 2.1 (the lattice and keywords), then th
 1. **A custom implicit hook** as a later extension (section 8): whether to build it, and its spelling.
 2. **The class keywords:** contextual spelling, their use on enums, and whether `copy struct` for a generic type
    needs the condition of section 6 in the header.
-3. **The default for an unbounded type parameter with respect to `Linear`** and the suppression spelling that lets
-   a generic accept linear types (RFC-0089, open there; this RFC takes affine).
+3. **The default for an unbounded type parameter with respect to `Linear`**: proposed in RFC-0089 section 2.2
+   (bare `T` possibly linear, `Discard` elaborated, `pub` states it once `linear` ships); this RFC ships the affine
+   behaviour, which is equivalent while no linear type exists.
 4. **Allocator-placed values and `Clone`.** Out of scope; the allocator RFCs (RFC-0063, RFC-0139) own them.
 5. **The spelling and home of the aspect properties** (RFC-0212) and of negative super-aspect entries (RFC-0213).
 6. **The `copy_value` native.** A native method inside an aspect impl is already accepted (the record `Clone` in
