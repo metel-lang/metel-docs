@@ -2,6 +2,9 @@
 id: rfc-0212
 title: "Aspect Declaration Properties"
 date: '2026-11-04'
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-1" }
+  "3": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-2" }
 status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1795'

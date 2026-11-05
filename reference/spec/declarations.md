@@ -3822,6 +3822,202 @@ constructor must be local to the module containing the `extend` declaration.
 
 ---
 
+### Super-Aspects
+
+> **Pending** metel-core#1801 super-aspects are accepted by the language but not yet by the checker.
+
+An aspect declaration may list direct super-aspects after its name:
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
+```metel
+pub aspect Ord: Eq {
+    fun cmp(&self, other: &Self) -> Ordering;
+}
+```
+
+The relation is nominal and [transitive](#spec.declarations.aspects.super-aspects.legality-1): a proof of
+`T: Ord` also proves `T: Eq`, and the methods of every super-aspect are callable through the bound. It is
+not subtyping; no coercion exists from `Ord` to `Eq`. An `extend T: Ord` requires a coherent
+[`Eq` impl for the same type](#spec.declarations.aspects.super-aspects.legality-3), written or derived.
+
+A super-aspect entry may be negative. `aspect Copy: derived Clone, !Drop` declares that no type may
+be granted both `Copy` and `Drop`:
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
+```metel
+copy struct H { fd: i64 }
+extend H: Drop { fun drop(&var self) { } }    // error: Copy excludes Drop
+```
+
+An [exclusion](#spec.declarations.aspects.super-aspects.legality-4) is checked when the second of the two
+aspects is granted. It is not evidence that two conditional impls are disjoint, and `T: !A` does not imply
+`T: !B` for a super-aspect `B` of `A`.
+
+An entry marked `derived` is generated together with the sub-aspect by `derives`. Only aspects declared in
+the standard library may carry the mark; [on a user aspect it is an error](#spec.declarations.aspects.super-aspects.legality-5),
+and a user aspect's entry is always an obligation.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-1}
+
+An aspect lists its direct super-aspects after its name, each a visible aspect. The relation is transitive: if `A: B` and `B: C`, a proof of `T: A` proves `T: C`. A cycle, direct or indirect, is an error.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: super-aspect declarations are not yet accepted by the checker" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: super-aspect declarations are not yet accepted by the checker_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-2}
+
+Through a bound `T: A`, the methods of every direct and transitive super-aspect of `A` are callable on `T`, and the abstract analysis of a generic body treats `T: A` as proving each of them.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the abstract analysis does not discover super-aspects yet" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the abstract analysis does not discover super-aspects yet_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-3}
+
+An explicit `extend T: A` requires a coherent impl of every direct and transitive super-aspect for `T`, written or derived. A missing one is an error naming it. The compiler does not manufacture it from the impl of `A`.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the obligation is not yet checked" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the obligation is not yet checked_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-4}
+
+If an aspect lists a negative entry `!C`, no type may be granted both that aspect and `C`. A grant of the second is a coherence error at that grant, naming both aspects. The exclusion is symmetric and need be declared on one side only. It is checked at the grant only: it does not make two conditional impls disjoint, and `T: !A` does not imply `T: !B` for a super-aspect `B` of `A`.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: exclusions are not yet declared by aspects" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: exclusions are not yet declared by aspects_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-5}
+
+The `derived` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an obligation.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the derived mark is not yet parsed" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the derived mark is not yet parsed_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
+---
+
+### Aspect Declaration Properties
+
+> **Pending** metel-core#1803 aspect declaration properties are accepted by the language but not yet by the checker.
+
+An aspect declaration may state properties that replace behaviour the compiler otherwise hardcodes for a named
+aspect. The compiler reads them from the aspect's declaration, never from its spelling.
+
+| Property | Meaning | Who may use it |
+|---|---|---|
+| `declared` | granted to a named type only through its declaration clauses, never by `extend` | any aspect |
+| `auto` | granted structurally with no entry; a type opts out with a negative impl | std only (reserved) |
+| `implicit` | a by-value use of a type satisfying the aspect copies its representation instead of moving | std only |
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
+```metel
+aspect Validated declared;          // a user marker: granted in the declaration of the type
+
+struct Token: Validated { id: i64 }
+extend Token: Validated;            // error: Validated is declared; grant it in the declaration
+```
+
+A `declared` aspect is [granted only in the declaration](#spec.declarations.aspects.aspect-declaration-properties.legality-1).
+Targets with no declaration of their own (primitives, tuples, arrays, anonymous records, references) cannot carry a
+clause; impls for them are allowed only in the aspect's defining module. `implicit` is the one property that is a
+language semantic and not a constraint: it is [restricted to the standard library](#spec.declarations.aspects.aspect-declaration-properties.legality-2).
+Which types satisfy `Copy`, and what the implicit copy does, are specified in [Ownership and Move Semantics](ownership.md).
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.aspects.aspect-declaration-properties.legality-1}
+
+A `declared` aspect is satisfied by a named type only if the type's declaration grants it, through the colon list or `derives`. An `extend T: A` of a `declared` aspect for a named type is an error with a fix-it that moves it into the declaration.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: the declared property and the declaration clauses are not yet implemented" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: the declared property and the declaration clauses are not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-declaration-properties.legality-2}
+
+The properties `implicit` and `auto` are accepted only on an aspect declared in the standard library. An `implicit` aspect must refine `Clone` through a `derived` super-aspect, and at most one `implicit` aspect exists in a program. A violation is an error at the aspect declaration.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: aspect properties are not yet parsed" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: aspect properties are not yet parsed_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-declaration-properties.legality-3}
+
+The properties of an aspect are read from its declaration by identity. A re-export, alias or import of the aspect carries them unchanged.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1799" reason="RFC-0212: aspects are still resolved by name at about 38 sites" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1799: RFC-0212: aspects are still resolved by name at about 38 sites_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
+---
+
 ### Aspect Bounds on Struct and Enum Type Parameters
 
 > **Availability:** Since v0.7.0.

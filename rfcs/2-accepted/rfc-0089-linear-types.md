@@ -2,6 +2,8 @@
 id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
+coverage:
+  "2.2": { spec: "spec.ownership.ownership-classes.legality-1" }
 status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
