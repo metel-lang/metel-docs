@@ -13,6 +13,8 @@ impl_status: implemented
 
 > **Status — implemented (2026-10-04).**
 
+> **Amendment (2026-11-05, RFC-0089 section 2.2).** A generic body is checked against its declared bounds **plus the `Discard` elaboration** defined in RFC-0089 section 2.2: when the body drops a value whose `Discard` depends on a parameter, the compiler adds `T: Discard` to the function's bounds (transitively through callees; a `pub` function states it once `linear` ships). The body is still checked once, with `T` opaque and supporting only its bounds, one of which the compiler wrote. This is the single exception to this RFC's "no inference of bounds"; every other bound (methods, operators, `Copy`, `Clone`) stays declared. In v0.16.0 every type is `Discard`, so no program changes.
+
 ## Summary
 
 A declared generic parameter is **opaque inside its own body**: it unifies only with itself and supports only what its declared bounds entail. Today a generic body is also re-checked at every call with the concrete argument types substituted, which lets a definition that over-constrains its parameters, or uses something its bounds never granted, be accepted and fail later at a call site, inside the body, or not at all. This RFC makes the definition-time check the contract (metel-core#1320, #1323) and records that the per-call re-check is an implementation device, not language semantics.
