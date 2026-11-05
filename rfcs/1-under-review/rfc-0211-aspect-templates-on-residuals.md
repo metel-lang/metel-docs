@@ -66,7 +66,7 @@ header entry derives behaviour from the type's row, and a residual is that row n
 ## 1. The rule
 
 > **v0.16.0 scope (2026-11-05).** Of the aspects, only `Copy` (structural, sealed) with its provided `Clone`, and the
-> existing `Drop` dispatch, are provided on residuals in v0.16.0. The templates of this RFC are the end state; the others stay
+> existing `Drop` dispatch, are provided on residuals in v0.16.0; compiler-computed ownership capabilities (`Discard`) are not impls and follow the surviving fields. The templates of this RFC are the end state; the others stay
 > `T0012` with the use-site diagnostic of section 4 until the Row machinery stage lands.
 > The structural `Copy` rule is native compiler logic in v0.16.0 and moves to the std template later
 > (metel-core#1823).

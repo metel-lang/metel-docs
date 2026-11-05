@@ -289,7 +289,7 @@ Measured on 2026-11-02:
   handle type whose fields happen to be `Clone`) is not provided.
 
 The derivation itself is native in the first implementation, as it already is for records; a comptime derivation
-replaces the native one when RFC-0092 and RFC-0093 allow.
+replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-core#1829).
 
 ---
 
@@ -326,7 +326,7 @@ replaces the native one when RFC-0092 and RFC-0093 allow.
 
 **Scope of projections in v0.16.0 (decided 2026-11-05).** A residual `T.{ fields }` gets exactly two things:
 `Copy`, structurally and sealed, **together with its provided `Clone`** (section 2 rules 2 and 6), and the existing
-`Drop` dispatch (RFC-0137 section 5). Every other aspect on a projection is `T0012`. The use-site diagnostic
+`Drop` dispatch (RFC-0137 section 5). Every other aspect that needs an impl is `T0012` on a projection; compiler-computed ownership capabilities (`Discard`, and `Linear` once it exists) are not impls and follow the surviving fields. The use-site diagnostic
 distinguishes the two causes: a written whole-type impl is named as the cause when one exists, and a derived aspect
 whose template is deferred is reported as "template not yet available" (there is no written impl to name). The
 language keeps no edit history, so it cannot warn at the edit. The end state is row templates for derived
@@ -337,6 +337,21 @@ RFC-0216) for hand-written ones. Neither draft is a dependency.
 its residuals `Copy` is compiler logic in v0.16.0, not the std row template, so the Row machinery stage is not on
 this settlement's critical path. It is a named, time-boxed exception; metel-core#1823 (milestone "Structural kinds
 after comptime") tracks replacing it by the template with no change in accepted programs.
+
+**Temporary workarounds and their exits (every one has a tracked exit).**
+
+| Workaround | Where | Exit | Tracked |
+|---|---|---|---|
+| Structural `Copy` for named types is native | v0.16.0 | std row template; must keep residuals such as `W<String>.{ n }` `Copy` | #1823 |
+| Arrays and the record `Clone` hook are compiler rules | v0.16.0 | std impls over a compile-time `N`, `comptime for` | #1811, #1390, #702 |
+| Tuple structural arms are native | v0.16.0 | variadics (RFC-0125) | #794 |
+| Native named-type `Clone` derivation | v0.16.0 | comptime derive (RFC-0092, RFC-0093) | #1829 |
+| Undecided abstract ownership is a diagnostic | v0.16.0 | obligation solver and stored interfaces | #1813, #1818, #1819, #1820 |
+| `Discard(List<T>) = Discard(T)` as a native rule | at `linear` | owning-storage kind distinct from the `[T]` view | #1826 |
+| Drop-site and callee-interface recording only (no elaboration yet) | v0.16.0 | `Discard` elaboration with `linear` | #1827, #1828 |
+
+The permanent restrictions are not workarounds and are not in this table: `implicit`, `auto` and `derived` are std-only
+by design, and `Discard` is the one inferred bound.
 
 There is no first stage that carries the semantics with an unnamed special case. The only special cases in this release
 are the named exceptions (native structural `Copy`, #1823; arrays and the record `Clone` hook, step 7; the
@@ -508,7 +523,7 @@ affine struct Token { id: i64 }                                           // loc
   compatibility argument; this RFC does not promise that the extension is monotone, only that it is not ruled out.
 - **Copy by default** (Swift's inference): rejected. A type whose fields are all copyable becomes `Copy` silently,
   so a capability token or a handle written without a keyword is freely copyable and droppable, the failure
-  linear types exist to prevent. Rust chose opt-in for the same reason; the affine default fails safe, and the
+  linear types exist to prevent. Rust's `Copy` is likewise opt-in (the documented behaviour; the motivation is not claimed here); the affine default fails safe, and the
   `copy` keyword makes the opt-in one word.
 - **`Copy` and `Clone` linked by `provides` with overlapping impls** (the first draft of this RFC and RFC-0207).
   Rejected after the first adversarial review: it needs a selection rule over overlapping impls, an uncheckable

@@ -13,10 +13,11 @@ implies for users, implementers and later work. The RFCs remain normative; this 
 
 **Status.** Design settled in RFC-0206, RFC-0207, RFC-0212, RFC-0213 and RFC-0089 sections 1 to 2.2 (PR #555 on
 `metel-docs`, tracked by metel-core#1808 and the ratification sweep #1824). RFC-0211 is staged (v0.16.0 part now,
-template half later). RFC-0214 and RFC-0216 are drafts and not dependencies. Two adversarial reviews of the changes
-made after the prior-art review followed: the first judged the cluster not ready, the second confirmed most repairs and
-its four remaining items are applied. Three gates remain open
-(RFC-0173 amendment text, the closure/trait-object rule, the std audit at `linear` time).
+template half later). RFC-0214 and RFC-0216 are drafts and not dependencies. Three adversarial reviews followed the prior-art
+review: the first judged the cluster not ready, the second confirmed most repairs, and a whole-model review (review 7)
+found a List classification defect, a nested derived-`Clone` contradiction and report inaccuracies, all applied here.
+The RFC-0173 amendment note is in place. Open gates are tracked: the linear-release gate (#1828), the temporary List
+rule (#1826), drop-site recording (#1827).
 
 ---
 
@@ -72,8 +73,8 @@ extend H: Clone { fun clone(&self) -> H { H { fd = dup(self.fd) } } } // fine: C
 **Decision.** If a type is `Copy`, its `Clone` is the compiler-provided one. If it is not `Copy`, `Clone` is an
 ordinary aspect: derive it or write it.
 
-**Implication.** The two operations cannot diverge. Rust only has a Clippy lint (`expl_impl_clone_on_copy`) for
-the case where a hand-written `Clone` disagrees with the implicit copy; here it is a compile error.
+**Implication.** The two operations cannot diverge. Rust documents that `Clone` should agree with `Copy` and has Clippy
+lints (`non_canonical_clone_impl` targets the divergence) but does not enforce it; here it is a compile error.
 
 ### 2.3 The implicit copy is the provided `Clone`, elided
 
@@ -93,8 +94,8 @@ struct P derives Copy { x: i64 }   // the same as `copy struct P`
 ```
 
 **Decision.** `Copy` changes the meaning of every use of a type, so it is visible where the type is declared.
-**Implication.** A reader never has to search the crate for an `extend T: Copy`. `extend T: Copy;` becomes a
-deprecated error with a fix-it (a minor-release deprecation).
+**Implication.** A reader never has to search the crate for an `extend T: Copy`. `extend T: Copy;` gets a fix-it that
+moves it: a warning for one minor release, then an error.
 
 ### 2.5 Copy by default was rejected
 
@@ -134,7 +135,8 @@ For a generic type a keyword states a capability, not a class: `copy struct Wrap
 ### 3.3 Aspect properties replace lang items
 
 ```metel
-aspect Copy: derived Clone, !Drop declared implicit;     // spelling per RFC-0212 (provisional)
+// std declaration sketch (not legal user code: `implicit` and `derived` are std-only); spelling per RFC-0212, provisional
+aspect Copy: derived Clone, !Drop declared implicit;
 ```
 
 | Property | Meaning | Who may use it |
@@ -143,8 +145,9 @@ aspect Copy: derived Clone, !Drop declared implicit;     // spelling per RFC-021
 | `auto` | structural rule, granted by field composition (`Send`, `Sync`; deferred) | std only |
 | `implicit` | a by-value use copies the representation instead of moving | std only |
 
-**Decision.** There is **no special case by name**: the compiler reads these properties from the aspect's
-declaration, never from the spelling "Copy". The string-keyed sites (about 38 today) are replaced by identity
+**Decision.** There is **no special case by name** for these three behaviours: the compiler reads these properties from the
+aspect's declaration, never from the spelling "Copy". (Structural composition is a template, not a property; v0.16.0 uses
+native logic for it, #1823.) The string-keyed sites (about 38 today) are replaced by identity
 lookup. **Implication.** The compiler's privilege is organised, not removed: `implicit` is std-only because a user
 aspect could otherwise change the ownership of every use of a type.
 
@@ -153,6 +156,7 @@ aspect could otherwise change the ownership of every use of a type.
 ## 4. Super-aspects, exclusions and the `derived` mark
 
 ```metel
+// std declarations (a user aspect may not carry `derived` in v0.16.0)
 aspect PartialEq { fun eq(&self, other: &Self) -> boolean; }
 aspect Eq: derived PartialEq;               // derives PartialEq with it
 struct Id { n: i64 }
@@ -293,6 +297,8 @@ fun run<T: Finish>(x: T) { x.finish() }           // x is moved into the call: r
 ### 6.3 Ending a container of linear values
 
 ```metel
+// Until the std List is redesigned, a named native rule says Discard(List<T>) = Discard(T) (#1826), because `inner: [T]`
+// is a copyable view. fun abandon(xs: List<Tx>) { } is rejected.
 // List<T> destructor becomes conditional: extend<T: Discard> List<T>: Drop  (a std change at `linear` time)
 fun end_all(xs: List<Tx>) { xs.consume_each(|t| commit(t)); }
 // consume_each(self, f: |T|) is a native that owns the list, moves each element into f, frees the storage.
@@ -302,7 +308,8 @@ fun end_all(xs: List<Tx>) { xs.consume_each(|t| commit(t)); }
 ### 6.4 `Clone` is not contraction
 
 A linear type may have a **written** `Clone` (the author asserts another instance is valid, for example opening
-another handle). A derived `Clone` of a struct with a linear field works only if that field's own `Clone` is written.
+another handle). A derived `Clone` requires every field to satisfy `Clone`, including linear fields; a fiat-linear leaf
+supplies a written one, and a wrapper of a field with a valid `Clone` derives normally.
 
 ---
 
@@ -320,7 +327,8 @@ let r := q; let s := q;         // accepted: copies
 
 fun dup<T: Clone>(x: &T) -> (T, T) { (x.clone(), x.clone()) }
 let d := Doc { title = "t", n = 1 };
-dup(&d.{ title });              // T0012 in v0.16.0: Clone has no impl for the projection (metel-core#1788)
+let t := d.{ title };           // a projection moves the field out (a borrowed projection of a non-Copy field is rejected, RFC-0137)
+dup(&t);                        // T0012 in v0.16.0: Clone has no impl for the projection (metel-core#1788)
 ```
 
 **Decision (scope B, 2026-11-05).** In v0.16.0 a projection gets exactly structural `Copy` **with its provided
@@ -328,12 +336,15 @@ dup(&d.{ title });              // T0012 in v0.16.0: Clone has no impl for the p
 distinguishes a written whole-type impl (named as the cause) from a derived aspect whose template is deferred
 ("template not yet available"). The language keeps no edit history, so there is no warning at the edit.
 
-**Implication.** Replacing `derives Clone` with a hand-written `Clone` removes `Clone` from projections, and the
-program fails at the use site, not at the edit. The remedy is later: row templates for derived impls (RFC-0211) and
+**Implication.** Once derived templates exist, replacing `derives Clone` with a hand-written `Clone` removes `Clone` from
+projections, and the program fails at the use site, not at the edit (in v0.16.0 a non-`Copy` derived `Clone` already
+provides none on a projection). The remedy is later: row templates for derived impls (RFC-0211) and
 written residual impls (RFC-0214).
 
 **Native for now.** The structural `Copy` rule for named types is compiler logic in v0.16.0, so the Row machinery is
-not on the critical path. It is a named, time-boxed exception tracked by #1823.
+not on the critical path. It is a named, time-boxed exception tracked by #1823, whose replacement must keep residuals such as
+`W<String>.{ n }` of `copy struct W<T> { n: i64, value: T }` `Copy` (the stored interface must be row-sensitive). Scope B
+means ordinary impl availability; compiler-computed ownership capabilities (`Discard`) follow the surviving fields.
 
 ### 7.1 Drafts (not dependencies)
 
@@ -381,15 +392,20 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 
 ---
 
-## 9. Named exceptions (as few as possible, each with a removal condition)
+## 9. Named exceptions and temporary workarounds (every one has a tracked exit)
 
-| Exception | Where | Removal |
-|---|---|---|
-| Structural `Copy` for named types is native | v0.16.0 | #1823: replace with the std row template once row templates and `comptime for` land |
-| Arrays and the record `Clone` hook are compiler rules | v0.16.0 | #1811, #1390, #702 (theme "Structural kinds after comptime") |
-| Undecided abstract ownership is a diagnostic | v0.16.0 | #1813 (solver), #1818, #1819 |
-| `implicit`, `auto`, `derived` are std-only | v0.16.0 | open question 9 (derived); RFC-0096 revision (auto) |
-| `Discard` inferred while all other bounds are declared | RFC-0089 2.2 | none planned: the single implicit operation |
+| Workaround | Where | Exit | Tracked |
+|---|---|---|---|
+| Structural `Copy` for named types is native | v0.16.0 | std row template; residuals such as `W<String>.{ n }` stay `Copy` | #1823 |
+| Arrays and the record `Clone` hook are compiler rules | v0.16.0 | std impls over a compile-time `N`, `comptime for` | #1811, #1390, #702 |
+| Tuple structural arms are native | v0.16.0 | variadics (RFC-0125) | #794 |
+| Native named-type `Clone` derivation | v0.16.0 | comptime derive (RFC-0092, RFC-0093) | #1829 |
+| Undecided abstract ownership is a diagnostic | v0.16.0 | obligation solver and stored interfaces | #1813, #1818, #1819, #1820 |
+| `Discard(List<T>) = Discard(T)` as a native rule | at `linear` | owning-storage kind distinct from the `[T]` view | #1826 |
+| Drop-site and callee-interface recording only | v0.16.0 | `Discard` elaboration with `linear` | #1827, #1828 |
+
+**Permanent restrictions** (design choices, not workarounds): `implicit`, `auto` and `derived` are std-only (open question 9 for
+`derived`; the RFC-0096 revision for `auto`), and `Discard` is the single inferred bound.
 
 ---
 
@@ -397,16 +413,16 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 
 **For a language user.** Declare copyness where the type is declared (`copy struct`). Write `Clone` only when you
 need a custom duplicate, and then the type is not `Copy`. Generic code that needs to copy says `T: Copy`; code that
-duplicates says `T: Clone` and calls `.clone()`. Nothing about linear types changes anything you write today.
+duplicates says `T: Clone` and calls `.clone()`. v0.16.0 introduces no linear values; later stages require
+public-interface annotations (see the next paragraph).
 
-**For a library author.** A `pub` generic type will have to state its ownership condition once stored interfaces
-land. A `pub` generic function that drops a `T` will have to state `T: Discard` once `linear` ships; the compiler will
+**For a library author.** A `pub` generic type will have to state its ownership condition at the final step of the stored-interface route (#1820). A `pub` generic function that drops a `T` will have to state `T: Discard` once `linear` ships; the compiler will
 suggest it. A hand-written `Clone` on a type that is passed around as projections loses `Clone` for those
 projections until residual impls exist.
 
 **For the implementation.** Replace string-keyed `"Copy"` sites with identity lookup (#1799); add the clauses (#1800),
-super-aspects (#1801), derivations (#1802) and properties (#1803); record drop sites of parameter-dependent values in
-the generic-body analysis (preparation for `Discard`); fix the derived-clone order (#1817). The evaluator keeps
+super-aspects (#1801), derivations (#1802) and properties (#1803); record drop sites of parameter-dependent values and the callee interfaces consulted in
+the generic-body analysis (preparation for `Discard`, #1827); fix the derived-clone order (#1817). The evaluator keeps
 `deep_clone_value` at bindings: a sealed copy is unobservable, so no per-site dispatch, witness or ordering rule is
 needed.
 
@@ -426,8 +442,8 @@ the std audit (conditional `List` destructor, `consume_each`, and the dropping m
 | `derived` and `implicit` as properties | Low and moderate; std-only |
 | A later observable hook | Reopened only on a named trigger and four conditions |
 
-**Not settled:** closure and trait-object discard (RFC-0134, RFC-0153); the RFC-0173 amendment text lands with the
-sweep; the demonstration for `List<Tx>` depends on the std change and the closure rule; spellings pending ratification
+**Not settled:** closure and trait-object discard (RFC-0134, RFC-0153, gate #1828); the demonstration for `List<Tx>`
+depends on the named List rule (#1826), the std change and the closure rule; spellings pending ratification
 (`derives` and clause order, the property clause form, `!Drop`, `derived`, `Discard`); user-declared `derivable`
 aspects; object safety for aspects with these properties.
 
