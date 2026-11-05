@@ -301,17 +301,28 @@ that nothing is foreclosed:
 5. Private helper and public wrapper: `fun sink<T>(x: T) { }` elaborates `T: Discard` silently;
    `pub fun api<T>(x: T) { sink(x) }` inherits it from the callee and, once `linear` ships, must state `T: Discard`
    (the diagnostic suggests it). **Follows.**
-6. `Vec<T>`/`List<T>` holding linear values: **not established by today's std.** `List<T>` contains `[T]`, so
-   `List<Tx>` is linear by the exact predicate, which is correct. But `List`'s destructor is native and
-   unconditional, and an unconditional `Drop` conflicts with structural `Linear`. The derivation needs a std change at
-   `linear` time: the destructor becomes conditional (`extend<T: Discard> List<T>: Drop`), `push` and `pop` are
-   unchanged (they move), `clear` and any other dropping method elaborate `T: Discard`, and a consuming extraction
-   (`pop` in a loop, or a `drain`/`into_each(self, f)` that consumes every element) is how a `List<Tx>` is ended.
-   That change is part of the std audit below, not a v0.16.0 deliverable.
+6. `Vec<T>`/`List<T>` holding linear values. `List<T>` contains `[T]`, so `List<Tx>` is linear by the exact
+   predicate, which is correct. Today's std does not support it: `List`'s destructor is native and unconditional, and an
+   unconditional `Drop` conflicts with structural `Linear`. The derivation needs a std change at `linear` time:
+   - The destructor becomes conditional, `extend<T: Discard> List<T>: Drop`, so `List<Tx>` has **no implicit
+     destructor**. `push` and `pop` are unchanged (they move). `clear` and any other dropping method elaborate
+     `T: Discard`.
+   - **The ender is a native consuming method:** `native fun consume_each(self, f: |T|)`. It takes ownership of the
+     list, calls `f` once per element (each linear element is moved into `f`), and frees the backing storage. Because
+     `self` is moved into the method, the list is consumed by the ordinary rule; the native's contract, trusted like
+     the other std natives (`copy_value`, RFC-0206 section 2), is that it consumes every element exactly once, and the
+     checker does not inspect a native body, so no storage is left to discharge.
+   - Emptying a list does **not** consume it: after a `pop` loop the value is still a `List<Tx>`, still non-`Discard`,
+     and still has to be ended. `fun end_all(xs: List<Tx>) { xs.consume_each(|t| commit(t)); }` ends a list; a `pop`
+     loop followed by `consume_each` on the now-empty list also works, because `f` is simply never called.
+   - **Depends on:** the closure `f` being droppable or consumed (the open closure-discard rule, RFC-0134, RFC-0153),
+     and the native's contract, which is a std obligation recorded in the audit list below.
+   **Follows, given the std change, the native contract and the closure rule.** Austral requires explicit consumption of
+   linear containers in the same way (memory, not re-verified).
 
 **Std audit list** (the functions that drop and so elaborate `Discard`): `Option::unwrap_or`, `Option::ok_or`,
-`Result::unwrap_or`, `Result::unwrap_or_else`, `Result::ok`, `print`, `println`, `__eq_array_item`, and the list
-destructor and `clear` (item 6).
+`Result::unwrap_or`, `Result::unwrap_or_else`, `Result::ok`, `print`, `println`, `__eq_array_item`, and for lists: the
+conditional destructor, `clear`, and the new native `consume_each` with its contract (item 6).
 
 **Alternatives considered.** (a) *A written `T: ?Linear` opt-in on an affine default*: works, but linear types are
 locked out of every generic function until its author opts in (Swift needed several releases, SE-0427), and
