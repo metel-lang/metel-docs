@@ -261,7 +261,7 @@ count are the six listed under "The problem".
   out. Otherwise a change from consuming to dropping would change the public interface silently and break linear
   callers. The rule covers every exported function: exported methods, re-exported items and a function value that
   escapes carry the stated bound in their type, not only a `pub` on the definition. Swift's SE-0426 is the nearest
-  precedent, at the type level: exported types get no inferred `BitwiseCopyable`, because a current representation
+  precedent, at the type level: non-frozen exported types get no inferred `BitwiseCopyable` (frozen ones may), because a current representation
   is not a lasting public promise. A non-`pub` function is elaborated silently. This is the rule of RFC-0206
   section 6 ("One rule for types and functions") applied to functions, with the same condition language.
 - **Closures and trait objects.** Whether a closure value is `Discard` depends on what it captures and on its
@@ -294,9 +294,10 @@ that nothing is foreclosed:
    the closure `f`, so it depends on the open closure-discard rule. **Follows for `unwrap_or`; `map` is open on closure
    discard.**
 4. A linear value ended through an author-named method: `fun commit(tx: Tx) { let Tx { id } := tx; flush(id); }` is
-   checked in its own body (the destructured `i64` fields are `Discard`), and generic code reaches it through a
-   declared aspect, `aspect Finish { fun finish(self); }` with `fun run<T: Finish>(x: T) { x.finish() }`: `x` is
-   moved into the call, so `run` needs no `Discard`. **Follows.**
+   checked in its own body (the destructured `i64` fields are `Discard`). Generic code reaches it through a declared
+   aspect: `aspect Finish { fun finish(self); }`, `extend Tx: Finish { fun finish(self) { commit(self) } }` and
+   `fun run<T: Finish>(x: T) { x.finish() }`. `x` is moved into the call, so `run` needs no `Discard`, and
+   `run(tx)` is accepted. **Follows.**
 5. Private helper and public wrapper: `fun sink<T>(x: T) { }` elaborates `T: Discard` silently;
    `pub fun api<T>(x: T) { sink(x) }` inherits it from the callee and, once `linear` ships, must state `T: Discard`
    (the diagnostic suggests it). **Follows.**

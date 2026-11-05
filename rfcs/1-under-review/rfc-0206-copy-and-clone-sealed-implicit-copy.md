@@ -195,7 +195,7 @@ direction depends on the property:
    instantiation, inductively, seeded by real linear fields and fiat grants.
 3. **Derivation conditions are coinductive on goals that repeat exactly.** `enum Tree derives Clone {
    Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs `Tree: Clone`
-   again. The solver assumes the impl being derived while it checks the fields, as Rust and Haskell do. The
+   again. The solver assumes the impl being derived while it checks the fields. This is the recursive-derivation case of Haskell's smallest derived context, computed by fixed point (Haskell Report section 11); Rust's coinduction applies to auto traits, not to derives, so it is not a precedent for this rule. The
    derived `clone` is a recursive function over finite values, so termination comes from the data and not from the
    proof. This covers regular recursion such as `Node<T> { next: Option<Node<T>>, v: T }`.
 4. **Coinduction never applies to a negative goal** (`!Drop`, `T: !B`) **or to a granted marker** (`Copy`): a cycle
@@ -551,7 +551,7 @@ novel parts and their risk:
 |---|---|
 | Exclusion-based disjointness evidence (RFC-0213 section 3, deferred) | High if built: exclusions would become a public coherence contract; v0.16.0 keeps them a grant-time check only |
 | The stated condition as the public interface and its language (section 6) | Moderate: repaired after review 5 (permissive capabilities only, `never`, solving order, one recursion rule); high until implemented and tested |
-| Derivation provenance deciding residual instances (RFC-0211) | Lower for v0.16.0: projections get only `Copy` and the `Drop` dispatch, other aspects are `T0012` with a use-site diagnostic; the template half is later. Teaching and migration cost remain for that half |
+| Derivation provenance deciding residual instances (RFC-0211) | Lower for v0.16.0: projections get only `Copy` (with its provided `Clone`) and the `Drop` dispatch, other aspects are `T0012` with a use-site diagnostic; the template half is later. Teaching and migration cost remain for that half |
 | The `derived` mark on super-aspect edges (RFC-0213 section 4) | Low: std only in v0.16.0, with `Copy` and `Eq` its only users; opening it to user aspects is a later addition |
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
