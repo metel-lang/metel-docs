@@ -238,3 +238,62 @@ fixtures (13 passed) and the two correctness failures named below (both fail, as
 roughly level with the solver, and E computed by default costlier, so the earlier recommendation (section 9) should be
 read as: E is attractive for its explicit public interface and its clearer diagnostics, not for a schedule saving.
 
+## 13. The hybrid: solve once, store, consume (intended end state, 2026-11-05)
+
+Considered with development cost set aside. Not decided; the language owner asked for it to be recorded as the
+intended end state.
+
+**The idea.** The general solver is the *producer* of each type's interface, and E's stored interface is what
+everything else reads.
+
+1. **At the declaration (once per type)**, the solver computes the weakest condition on the type's parameters under
+   which the exact predicate holds (every field `ImplicitClone`, `Clone` holds, not `Drop`). Where the exact
+   predicate can be written as parameter conditions, the stored interface equals it. Where it cannot, the stored
+   interface is a sound under-approximation and the author states a `when` that the compiler checks as sufficient.
+2. **The stored interface is an ordinary impl set**: heads with bounds, the shape `OwnershipRule` already models (a list
+   of candidates per `(type, aspect)` with polarity). Heads may be instantiation patterns, so a written `Clone` that
+   covers only `T = i64` is stored as the head `Narrow<i64>`, which a pure parameter-bound language cannot express
+   (RFC-0206 rule 3 keeps this case).
+3. **At every use, including generic bodies**, only stored interfaces are consulted: a small evaluator substitutes
+   arguments into declared conditions. The search never runs at use sites.
+4. **`when` is an assertion, not the source of truth.** If written, it is checked sufficient (stronger is allowed);
+   if omitted, the computed interface is used, with a lint suggesting it be stated for `pub` types.
+
+```metel
+struct Wrapper<T> derives ImplicitClone { value: T }                   // stored: `where T: ImplicitClone`
+struct View<T> derives ImplicitClone { r: &T }                         // stored: no condition
+struct Outer<T> derives ImplicitClone { p: Pair<Wrapper<T>, i64> }     // solved once from Pair's and Wrapper's stored interfaces
+struct Cursor<I: Iterator> derives ImplicitClone { cur: I::Item }      // exact: `I::Item: ImplicitClone`; stored if the condition
+                                                                       // language has projections, else "write `when ..` or drop the claim"
+```
+
+**Invariant (one sentence for RFC-0206):** a type's stored interface implies the exact predicate, and equals it whenever
+the condition language can express it. The generic-body analysis remains a sound approximation of the exact predicate and
+becomes complete for markers on nominal types.
+
+| Property | Solver | E (computed) | Hybrid |
+|---|---|---|---|
+| Exact predicate (rule 3 unchanged) | yes | no (parameter bounds only) | yes where expressible; sound under-approximation otherwise |
+| Generality for other aspects (`Eq`, `Hash`, coherence) | yes | no | yes: the same producer solves their conditions |
+| Nested generic bodies accepted | yes (later) | yes | yes |
+| Stable witnesses (the declaration's identity) | no | yes | yes |
+| Termination at use sites | needs guards | by construction | by construction |
+| Visible interface, clear diagnostics | partly | yes | yes |
+| Cycle and coinduction policy | at every query | at declaration | at declaration only |
+
+**What it still costs.**
+- A declaration-graph phase after name resolution and before coherence (ordering, cross-module interfaces, a cycle
+  policy). This is the phase the combined spike stopped at.
+- Silent change on public types when the condition is not stated. A lint helps; a stronger form would snapshot public
+  interfaces and flag changes between releases, as a semver checker does.
+- Two notions in the spec (the exact predicate and the stored interface), tied by the invariant above.
+
+**Reversal check.** Nothing already accepted is reversed: the exact predicate stays the meaning and the analysis stays a
+sound approximation.
+
+**Path to it.** This is where option (c) of section 8 converges: v0.16.0 ships the current design with the three
+decisions from review 3 (unknown is a diagnostic, copy-site retention, lowering rules); a later minor introduces stored
+interfaces with explicit conditions (E-explicit, with the absent-bound leak fixed by separating copy classification from
+entailment); the solver then replaces the syntactic computation as the producer of the interfaces. Choosing (c) now does
+not close the door on the hybrid.
+
