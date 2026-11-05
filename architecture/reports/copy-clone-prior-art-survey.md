@@ -2,7 +2,7 @@
 title: "Copyness in Other Languages: Prior-Art Survey"
 date: '2026-11-03'
 status: report
-relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212
+relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212, rfc-0213
 ---
 
 # Copyness in Other Languages: Prior-Art Survey
@@ -10,14 +10,17 @@ relates: rfc-0162, rfc-0206, rfc-0207, rfc-0212
 A survey of how other languages decide whether a value is duplicated implicitly, how a type states
 that, and how the answer interacts with generics, tuples, closures, references and destructors.
 It was written to inform the redesign of Metel's `Copy`/`Clone` model (RFC-0162, RFC-0206,
-RFC-0207). It records findings and open questions. It does not choose a design.
+RFC-0207). It records findings and open questions. It does not choose a design. Sections 4 to 10 survey
+copyness itself; section 11 (added 2026-11-04) surveys the sub-systems of the resulting proposal
+(declaration clauses, derivation, super-aspects, exclusion, aspect properties, structural rules),
+and includes Haskell and Scala.
 
 ## 1. Method and confidence
 
 Findings are marked by source quality:
 
 - **Verified** means read in a primary document (language reference, accepted proposal, release
-  notes) during this survey. Sources are listed in section 10.
+  notes) during this survey. Sources are listed in section 13.
 - **Memory** means stated from general knowledge and not re-checked here.
 - **Unconfirmed** means a search was attempted and returned nothing usable, or the sources
   disagreed.
@@ -44,7 +47,7 @@ Every language answers five questions, and the answers are largely independent:
 | Rust | move | opt in to `Copy` | an impl or a derive, anywhere in the crate | no, always a bit copy | `.clone()` | verified |
 | Swift (structs, enums) | copy, inferred from fields | opt out with `~Copyable` | the declaration only | no (bitwise or copy-on-write) | `copy x` operator for borrowed bindings | verified |
 | Swift (classes) | reference | not applicable | not applicable | not applicable | not applicable | verified |
-| Mojo | move; implicit copy needs a marker | opt in with `ImplicitlyCopyable` | the struct's trait list | yes, a user copy initializer may run | `.copy()` | verified |
+| Mojo | move; implicit copy needs a marker (an assignment of a value that is not implicitly copyable needs an explicit transfer or copy) | opt in with `ImplicitlyCopyable` | the struct's trait list | yes, a user copy initializer may run | `.copy()` | verified |
 | C++ | copy | opt out with `= delete`, or write the copy constructor | the class | yes | the copy constructor | memory |
 | D | copy | opt out with `@disable this(this)` | the struct | yes (postblit, copy constructors) | `.dup` for arrays | verified (bug threads) |
 | Nim (ARC/ORC) | copy for value types | opt out with an error pragma on `=copy` | hook procedures | yes (`=copy`, `=sink`, `=dup`) | `=dup` | verified |
@@ -63,8 +66,8 @@ The `Copy` trait documentation states the model plainly.
   overloadable; it is always a simple bit-wise copy".
 - `pub trait Copy: Clone {}`: "`Clone` is a supertrait of `Copy`, so everything which is `Copy`
   must also implement `Clone`. If a type is `Copy` then its `Clone` implementation only needs to
-  return `*self`." The documentation does not state an agreement rule; the `*self` sentence is the
-  expectation.
+  return `*self`." The `Clone` documentation does state an agreement expectation for `Copy` types (and equality
+  preservation where `PartialEq` exists), motivated by RFC 1521; the compiler does not enforce it (verified 2026-11-05).
 - A type cannot be `Copy` if a field is not (error E0204) or if it implements `Drop`.
 - Derive adds a bound on every type parameter, which the documentation calls imprecise: `&T` is
   `Copy` for any `T`. The documented remedy is a manual impl with the exact bound.
@@ -95,7 +98,8 @@ prototypes planned, not shipped.
 
 `extension List: Copyable where T: Copyable {}` is the form. The conditions must be `T: Copyable`
 on a generic parameter, the extension must be in the type's own file, and it is not allowed on a
-type with a `deinit`. An unconditional `extension Optional: Copyable {}` is rejected.
+type with a `deinit`. An unconditional `extension Optional: Copyable {}` is rejected. This is a restricted conditional
+extension conformance, distinct from the suppression `~Copyable`, which is allowed on the declaration only (verified, SE-0427).
 
 ### 5.3 Copies are implicit, with an explicit operator where it matters
 
@@ -133,6 +137,10 @@ as shipped could not be confirmed from the sources found.
 Noncopyable structs and enums may declare `deinit`, which runs when the value's lifetime ends.
 Conditional copyability is not allowed on a type with a `deinit`.
 
+### 5.7 BitwiseCopyable
+
+Verified 2026-11-05 (SE-0426). `BitwiseCopyable` marks types that can be copied by direct memory operations with no special destruction operation, as distinct from ordinary compiler-managed copyability, and distinguishes current physical eligibility from a permanent conformance promise. It is the closest Swift precedent for a sealed implicit copy with a declaration-level authorization, closer than `Copyable`, whose copy may involve ownership bookkeeping.
+
 ## 6. Mojo
 
 ### 6.1 The model was reversed in v0.25.6
@@ -149,7 +157,7 @@ Before: `Copyable` meant implicitly copyable and `ExplicitlyCopyable` covered th
 
 ### 6.2 One definition of the copy
 
-- The required hook is the copy initializer, `__init__(out self, *, copy: Self)`. `copy()` is a
+- The required hook is the copy initializer, `__init__(out self, *, copy: Self)` in the current documentation (v0.25.6 spelled it `__copyinit__`; do not combine versions). `copy()` is a
   provided convenience for `Self(copy=self)`, and "overriding this method is not allowed".
 - The initializer is synthesised "when possible". `ImplicitlyCopyable` is synthesised only when all
   fields are `ImplicitlyCopyable`. For mixed fields the author declares it and writes the
@@ -186,7 +194,8 @@ Before: `Copyable` meant implicitly copyable and `ExplicitlyCopyable` covered th
   zero. There is no marker separating a cheap copy from an allocating one.
 - **D** (verified). Structs copy with postblit or copy constructors, which are user code.
   `@disable this(this)` makes a struct non-copyable; the maintainers treat the resulting errors
-  when appending to arrays as intended.
+  when appending to arrays as intended. Postblits are legacy and were replaced by copy constructors, with documented
+  precedence and compatibility complications (verified 2026-11-05: the D specification and its legacy-features page).
 - **Nim** (verified). `=copy`, `=sink`, `=dup` and `=destroy` are user hooks. A copy can be
   disabled by declaring `=copy` with the error pragma.
 - **Ada** (verified). A `limited` type forbids assignment. A controlled type customises it
@@ -196,8 +205,33 @@ Before: `Copyable` meant implicitly copyable and `ExplicitlyCopyable` covered th
   property.
 - **C# and Zig** (memory). `struct` copies bitwise on assignment with no user hook in C#, as
   does Zig; neither has a copy marker.
+- **Austral** (verified: the specification's type universes). Declares `Free` and `Linear` universes; an unrestricted value
+  can be used repeatedly, a linear one cannot, and a type that is structurally linear cannot be classified as `Free`.
+  Generic aggregates can defer the universe to instantiation. It supports declaration-visible resource discipline.
 - **Hylo** (unconfirmed). Its introduction says it "avoids hidden costs such as implicit copies".
   Its rules on explicit copy could not be found.
+
+### 7.1 Linear and affine disciplines (added 2026-11-05)
+
+Verified 2026-11-05 against the cited sources; the evidence is heterogeneous, and **affine by default with opt-in copy and
+opt-in linear is not a cross-language consensus.**
+- **Austral:** `Free` and `Linear` universes declared on the type; `T: Type` accepts either and must be handled linearly;
+  a structurally linear type cannot be classified `Free`.
+- **Linear Haskell:** multiplicity belongs to arrows and bindings (`%1`, multiplicity-polymorphic `%m`) beside ordinary
+  unrestricted arrows.
+- **Idris 2:** quantities erased, exactly-once and unrestricted; unannotated arguments are unrestricted. Usage accounting on
+  variables, not nominal classes.
+- **Swift:** generic parameters default to requiring `Copyable`; `~Copyable` broadens admission (SE-0390, SE-0427).
+- **Rust:** destruction is not guaranteed; safe `forget` discards ownership without cleanup, so Rust's ownership is affine, not
+  exactly-once.
+- **Mojo:** explicit destruction needs deliberate consumption; broad `Movable` generic code can accept both destruction
+  models, while implicitly destroying code needs a stronger bound.
+- **Vale, Cyclone, ATS:** restricted aliasing or linear views rather than universal mandatory consumption (Vale's
+  linear-aliasing model, Cyclone's unique pointers, ATS viewtypes). **Clean:** uniqueness types (memory).
+- **Kotlin:** data classes prohibit an explicit `copy()` but permit written equality and hashing in place of generation
+  (verified); **Lean:** declaration-attached and standalone `deriving`, with instance priorities (verified).
+- **Zig:** aggregates may be passed by value or by reference by the implementation; copy size can make a copy expensive,
+  so semantic copying is not a physical transfer (verified).
 
 ## 8. Cross-cutting findings
 
@@ -244,8 +278,9 @@ These are observations that bear on the open questions in RFC-0162. They are not
   limited and local, is the closest precedent for the visibility concern in RFC-0162's D6.
 - No surveyed language lets a user assert copyability on a tuple type. A structural marker
   (RFC-0212) would be new.
-- Nothing found supports sealing the implicit copy to a bitwise body. Mojo permits user code in
-  the initializer and advises against costly implicit copies instead.
+- Sealing the implicit copy to a representation copy has direct precedent: Rust's non-overloadable `Copy` and Swift's
+  `BitwiseCopyable` (SE-0426, section 5.7). Mojo, C++, D and Nim permit user code in the copy; Mojo advises against
+  costly implicit copies.
 - Both Swift and Mojo tie closure and function-type copyability to different things (escapingness
   against captures), and Metel's RFC-0134 rule matches Mojo's.
 
@@ -260,7 +295,287 @@ These are observations that bear on the open questions in RFC-0162. They are not
 - Mojo documentation moves between hosts and versions; the pages cited below were reachable on
   2026-11-03.
 
-## 11. Sources
+## 11. Prior art by sub-system of the proposal
+
+Added 2026-11-04, after the settlement of RFC-0206, RFC-0207, RFC-0212 and RFC-0213. Each entry
+states what the other languages do and where the proposal sits relative to them. Confidence marks
+are as in section 1.
+
+### 11.1 Two levels, with a method-less marker refining the explicit one
+
+- Rust: `Copy: Clone` (verified). Mojo: `ImplicitlyCopyable` implies `Copyable`, and the docs say
+  all implicitly copyable types must be `Copyable` (verified).
+- Swift infers copyability and suppresses it with `~Copyable` (verified, section 5).
+- Haskell has no copy concept; the same refinement shape appears as `Eq => Ord` (memory).
+- Proposal: Mojo's shape with Rust's names, so every implicit-copy type is explicitly cloneable by
+  construction.
+
+### 11.2 Where the grant is written
+
+- Rust: an impl or derive anywhere in the crate (verified, section 4). Haskell: instances anywhere,
+  orphans allowed with a warning (memory).
+- Swift synthesizes only in the type declaration or a same-file extension (verified, SE-0185).
+  Mojo: the struct's trait list (verified).
+- Proposal: `declared`, the strictest form: only the declaration clauses; `extend T: ImplicitClone;`
+  is an error.
+
+### 11.3 Derivation as a request in the header
+
+- Haskell `deriving` and `StandaloneDeriving`, Scala 3 `derives` (a companion `derived` method;
+  the instance is placed in the companion; verified), Rust `#[derive]` (verified).
+- In Swift and Mojo the colon in the header is itself the request and the compiler synthesizes
+  unless the member is written (verified: SE-0185; Mojo's `Copyable` generates the copy constructor
+  unless one is written). This is the "synthesized unless written" model: a reader cannot tell
+  from the header who wrote the implementation.
+- Haskell reports a duplicate instance when a derive and a written instance both exist (verified). Scala's `derives`
+  generates a companion given, which does not establish a global duplicate-instance rule (verified); Rust is memory.
+- Haskell's `DerivingVia` and newtype deriving reuse the representation's instance; GHC notes their contexts often cannot be inferred and must
+  then be written with standalone deriving (verified: GHC issue #18219). Nothing in the proposal
+  corresponds to them.
+- Proposal: `derives` means the compiler wrote it and `:` means the author did; both together are
+  `T0015`. This keeps the duplicate-instance rule of Haskell, Scala and Rust and adds a header
+  that records authorship.
+
+### 11.4 Super-aspects and deriving them
+
+- Haskell (`deriving Ord` without an `Eq` instance is an error) and Rust (`derive(Copy)` without
+  `Clone`) only require the super-aspect. The Haskell rule is that `Eq` is a superclass of `Ord`, so an `Ord`
+  instance needs an `Eq` instance (verified in GHC discussions; the exact current error text was
+  not seen); the Rust rule is memory.
+- Swift derives a missing super-aspect: declaring `Hashable` synthesizes `Equatable` as well
+  (verified: SE-0185), and a hand-written `==` takes precedence.
+- Both Haskell and Rust accept a derived `Ord` over a hand-written `Eq`; the consistency between
+  the two is a convention (memory).
+- Proposal: a super-aspect entry is an obligation unless marked `derived`; `derives A` derives `A` and
+  every marked super-aspect, and a written impl of a derived one is `T0015` (RFC-0213 section 4). A
+  derived marker is sound only over a derived base. This is opt-in per entry where Swift derives what is
+  missing, and it never derives over a written impl.
+
+### 11.5 Exclusion and negative entries
+
+- Rust hardcodes the `Copy`/`Drop` exclusion (error E0184; verified); negative impls
+  (`negative_impls`) and user-defined auto traits (`auto_traits`) are unstable features (verified:
+  Unstable Book). An auto trait cannot have items or supertraits (verified). Swift's `~Copyable` suppresses a default requirement and is not an
+  exclusion between two protocols (verified).
+- Haskell has no negative instances; exclusion is simulated with closed type families or custom
+  type errors (memory). C++ constraints can negate a concept (not checked).
+- Proposal: a negative entry in the super list (`aspect ImplicitClone: Clone, !Drop`). No surveyed
+  language declares an exclusion on the aspect itself.
+
+### 11.6 Properties of the aspect declaration
+
+- Rust: lang items and unstable auto traits. Swift: `Sendable` and `@_marker`. Swift's `@_marker`
+  is a compiler-internal underscored attribute: a marker protocol has no requirements and no runtime
+  representation (verified). Haskell: `Typeable`, `Coercible` and `KnownNat` reject
+  user instances (verified: GHC error index and base docs), while `HasField` is compiler-solved and also admits user
+  instances (verified: GHC guide), so compiler-solved and closed to user instances are different properties.
+- Visibility of structural grants is a semver question. Swift infers `Sendable` for types that are
+  not publicly ABI-exposed and for frozen public types, not for resilient public ones, because inference on a public
+  type is an API commitment (verified: SE-0302 and Doug Gregor's clarification). The Rust language team calls each auto trait a semver hazard:
+  adding a private field can remove `Send` from a public type (verified: the lang-team design
+  note on auto traits), and `cargo-semver-checks` carries lints for it.
+- Proposal: the semantics are declared properties read by identity; `implicit` is std only;
+  `declared` avoids the leak. `auto` (Send/Sync/Linear) would inherit the Rust hazard and is
+  deferred with the RFC-0096 revision.
+
+### 11.7 The field-wise rule
+
+- C++: the implicit copy constructor is defaulted or deleted per instantiation from the members
+  (verified in part: cppreference lists the cases in which the implicit copy constructor is deleted,
+  among them a member whose copy constructor cannot be selected). It is the closest precedent for
+  an exact per-instantiation predicate.
+- Rust: `derive(Clone)` adds a bound on every type parameter, over-approximating. The "perfect
+  derive" fix is not in the language; a third-party crate prototypes it (verified).
+- Haskell infers the context of a derived instance, accepts only contexts whose constraints consist of type variables without repetition (`Eq (f a)` is accepted)
+  without repetition, and otherwise requires `StandaloneDeriving` with a written context (verified:
+  GHC user guide). Swift conditional conformance is explicit and,
+  for copyability, limited to `T: Copyable` (verified).
+- The rule itself can be library code: Haskell `GHC.Generics` with `DefaultSignatures` and `DeriveAnyClass` (verified: GHC user guide), and Scala
+  `Mirror` with Magnolia (verified for Scala).
+- Proposal: a std-written row template (RFC-0123 form), exact per instantiation, checked at the
+  declaration when the field types are concrete.
+
+### 11.8 Built-in structural kinds
+
+- Rust: the compiler implements `Copy` for tuples of `Copy` types, function pointers and items, and
+  closures whose captures are `Copy`, and supplies `Clone` for them (verified: Rust Reference). Arrays
+  are not in that list; their impls are library code (memory). Mojo uses
+  conditional conformance over a variadic pack (verified, section 6). Haskell's base defines
+  tuple instances by hand up to a fixed arity; a 2005 mailing-list source gives 15 for `Eq` and `Ord`,
+  the current limit was not confirmed.
+- Proposal: compiler rules for tuples and arrays until variadics (RFC-0125) and compile-time
+  lengths (RFC-0132 section 3) exist, then impls.
+
+### 11.9 User code at an implicit copy
+
+- Allowed in C++, D, Nim and Mojo; not allowed in Rust and Swift structs (section 8, finding 3).
+- Mojo advises against implicit copies of costly types and against bounding generic code on
+  `ImplicitlyCopyable` (verified). C++ states the corresponding promise with `noexcept` and
+  `is_nothrow_copy_constructible` (verified: cppreference).
+- Proposal: the hook is the type's own `Clone`; the cheap, total and effect-free contract is stated
+  and checked only once an effect system exists.
+
+### 11.10 Destructors
+
+- Rust rejects `Copy` together with `Drop` (E0184). The compiler documentation gives the reason as
+  an unsound implementation (issue #20126), not a stated drop-twice rule (verified). Swift forbids
+  conditional copyability with a `deinit` (section 8, finding 9). Mojo allows a destructor on a
+  type with a user copy initializer (memory).
+- Proposal: `!Drop` on `ImplicitClone` is a policy, not a soundness rule, because the hook can
+  duplicate the resource. It can be relaxed by removing one super-list entry.
+
+### 11.11 Equality
+
+- Haskell's single `Eq` makes `Eq Double` violate reflexivity (`NaN /= NaN`) (verified: the base documentation for `Eq Double` states that `0/0 == 0/0` is `False`). Rust's
+  `PartialEq`/`Eq` split is the fix and RFC-0168 follows it.
+
+### 11.12 Summary of positions
+
+| Sub-system | Closest precedent | Where the proposal differs |
+|---|---|---|
+| Marker refining the explicit level | Mojo | Rust's names; guaranteed coverage of built-in kinds |
+| Grant only in the declaration | Swift (synthesis), Mojo | Stricter: no same-file extension |
+| `derives` versus `:` | Scala `derives`, Haskell `deriving` | The colon authorizes, `derives` generates |
+| Marked super-aspect derivation | Swift `Hashable` | Opt-in per super entry; never over a written impl |
+| Exclusion in the declaration | none (Rust hardcodes it) | New |
+| Declared aspect properties | Rust lang items, Swift `Sendable` | Properties are data, `implicit` std only |
+| Exact structural rule | C++ implicit copy constructor | Checked at the declaration, written in std |
+| User hook at implicit copy | C++, Mojo | Opt-in marker, reserved effect bound |
+
+### 11.13 Verification status
+
+Checked on 2026-11-04 against primary or near-primary sources: Swift synthesis and `Sendable`
+inference, Scala `derives`, Mojo `ImplicitlyCopyable` implying `Copyable`, Rust `perfect derive`
+status and auto-trait semver hazard, Rust E0184, Unstable Book entries for `negative_impls` and
+`auto_traits`, Rust Reference on built-in `Copy` and `Clone`, cppreference on the deleted implicit
+copy constructor and `is_nothrow_copy_constructible`, GHC user guide on deriving contexts,
+standalone deriving, `DefaultSignatures` and `DeriveAnyClass`, base documentation on `Eq Double`,
+`Coercible` and `Typeable`, and Swift `@_marker`.
+
+Resolved by the fourth review (2026-11-05, codex-review-4): `derive(Copy)` requires a separately supplied `Clone` and does not
+generate one; `HasField` is compiler-solved and also admits user instances (so compiler-solved does not mean closed to user
+instances); C++ concepts can be negated (as an atomic constraint); Swift's exact explicit-copy rule is in SE-0377; the Rust `Clone`
+documentation does state an agreement expectation.
+
+Still unconfirmed:
+- Whether Mojo permits a destructor on an `ImplicitlyCopyable` type, and Mojo's exact name-versus-identity mechanism.
+- The current size limit of base's hand-written tuple instances in Haskell.
+- Rust's rule that `derive(Ord)` accepts a hand-written `Eq` (memory).
+- Haskell and Rust acceptance of a derived `Ord` over a hand-written `Eq`, and the duplicate-instance
+  behaviour for derive plus written impl in Haskell, Scala and Rust (memory).
+- That C++ constraints can negate a concept.
+
+## 12. How the proposed design compares with the prior art
+
+> **Revised later on 2026-11-05.** The design below was the user-writable-hook version (`ImplicitClone`). The language
+> owner then chose a **sealed** implicit copy named `Copy`, with the class keywords of RFC-0089 (`copy`, `affine`,
+> `linear`); section 12.8 states how the comparison changes. Sections 11 and 12.1 to 12.7 describe the hook version.
+
+Added 2026-11-05. The design is RFC-0206 with RFC-0207, RFC-0212 and RFC-0213: `Clone` plus the `ImplicitClone` marker
+whose hook is the type's own `clone`; the colon authorizes and `derives` generates; aspect properties are declared data;
+v0.16.0 ships the design with a diagnostic limitation for undecided abstract ownership, and the later minors converge on
+stored ownership interfaces with the solver as their producer (epic metel-core#1821). The ratings are the author's
+judgment, not measurements. Facts about other languages are those of sections 3 to 11 and carry their confidence marks;
+the Mojo destructor combination and the Haskell tuple limit are unverified and are not relied on here.
+
+| | Rust | Swift | Mojo | C++ | Proposed |
+|---|---|---|---|---|---|
+| Copy semantics | non-overloadable bit copy (`Copy`) plus explicit `Clone` | inferred from fields, compiler-managed | `Copyable` plus the `ImplicitlyCopyable` marker; a user copy initializer may run | copy constructor, user code, by default | `Clone` plus the `ImplicitClone` marker; the hook is the type's own `clone` |
+| Written for a plain value type | `#[derive(Clone, Copy)]` | nothing | one marker in the trait list | nothing | `derives ImplicitClone` |
+| Implicit copy can run user code | no | no | yes | yes | yes, opt-in |
+| Where the grant lives | an impl or derive, anywhere in the crate | the declaration | the trait list | the class | the declaration only |
+
+### 12.1 Teachability
+
+- **Two sentences cover the common case:** *`ImplicitClone` is `Clone` that the compiler calls for you; the colon
+  authorizes it and `derives` generates the impls.* That is better than Rust (one request instead of two traits, the
+  second goal of the redesign) and about level with Mojo, whose shape it follows. Swift is simpler still: the common case
+  needs nothing.
+- **Where users will stumble:** colon versus `derives`; a written `clone` making projections of the type move instead
+  of copy (RFC-0211 rule 6); the `derived` mark on super-aspects; the generic-code limitation of v0.16.0. This is more to
+  learn than in any of the four languages.
+
+### 12.2 Ease of use
+
+- **Better:** non-generic types; a custom clone at implicit copy (Rust and Swift cannot); exact conditions for generic
+  types, where Rust's derive adds a bound on every parameter ("perfect derive" is not in the language, verified).
+- **Worse in v0.16.0:** a generic function that reuses a nested generic type is rejected with a named diagnostic until the
+  stored-interface work. Rust accepts such code. A public generic type must state its condition once computed defaults
+  exist (an error, decided 2026-11-05), which Rust does not ask for.
+- **New, without an equivalent:** user markers (`declared`), exclusions in a declaration (`!Drop`), derivation recipes
+  across super-aspects.
+
+### 12.3 Correctness
+
+- **Rust and Swift have an inherent edge:** an implicit copy cannot run code, so inserting or eliding one is
+  unobservable.
+- **The proposal sits with C++ and Mojo and adds mitigations C++ lacks:** an opt-in marker (as Mojo), a hook with shared
+  access, a fixed call order, no elision of the last use for non-trivial types, and an implementation obliged to preserve
+  the number and order of hook calls. The cost convention (cheap, total, effect-free) is not enforced and not a law; a
+  counter-incrementing `clone` is legal.
+- **Derivation is more conservative than Rust's, and exact where Rust's over-approximates.** A derived marker cannot sit
+  over a hand-written base (`derives Eq` over a written `PartialEq` is `T0015`); this is a conservative generation policy,
+  not a proof that a hand-written base is unsound. Rust also accepts a derived `Ord` over a hand-written `Eq`, which the
+  policy prevents. Neither establishes general semantic soundness.
+- **The grant cannot leak.** A `declared` grant avoids the semver hazard of Rust's auto traits (verified: the lang-team
+  design note), and Swift's restriction of `Sendable` inference to non-public and frozen public types (verified: SE-0302) reflects the same concern.
+
+### 12.4 Consistency
+
+- **More principled:** properties are declared data and the compiler tests no aspect's spelling; generic code is
+  parametric as in Rust (an unbounded `T` moves whatever it is instantiated with). Rust identifies such items by lang-item
+  attributes (documented in the Unstable Book) and not by an aspect's spelling, so it is closer to the proposal than the
+  first draft of this sentence said; Mojo's mechanism is unconfirmed.
+- **Not free of exceptions:** `implicit` is std-only with at most one implicit aspect; arrays and the record `Clone` hook
+  are compiler rules for a release; undecided abstract ownership is a named limitation. Each has a removal condition.
+- **Machinery cost:** colon list, `derives`, `declared`, `implicit via`, `derived` marks, negative super entries, copy
+  sites, leaf natives. More general concepts than any of the four languages carries.
+
+### 12.5 Visibility of cost, evolution and migration
+
+- **Cost:** in Rust every duplication that can cost is a visible `.clone()`; in the proposal an implicit copy of an
+  `ImplicitClone` type may run user code, so a cost surprise is possible, as in C++ and Mojo, but only for types that opted in.
+- **Evolution:** the grant is stronger than Rust's against silent change; the `derived` mark and negative entries are
+  contracts like any interface. Stored conditions on public generic types are required in the source (an error if
+  omitted), so a field change cannot change the public interface silently.
+- **Migration:** `Copy` stays one minor as a deprecated alias, as Mojo staged its change (warning, then error).
+
+### 12.6 Maturity
+
+The prior art is in production; the proposal is not. Three adversarial reviews and two spikes found real gaps in earlier
+versions, the hybrid end state is several releases away, and v0.16.0 delivers a deliberately smaller subset. This is the
+proposal's largest weakness.
+
+### 12.7 Summary
+
+- **Better than the prior art:** one request instead of two; exact generic conditions; a grant visible in the
+  declaration; a derived-marker rule that prevents inconsistent derivations; user-extensible markers and exclusions.
+- **Worse:** observable hooks; more concepts; generic-code limits in v0.16.0; no field record.
+
+### 12.8 The sealed revision (2026-11-05)
+
+After three adversarial reviews and two spikes, RFC-0206 makes the implicit copy sealed: `Copy` (not `ImplicitClone`)
+is the representation copy, it runs no user code, and it brings a provided `Clone` that cannot be written. The class
+keywords `copy`, `affine` and `linear` (RFC-0089 section 2.1) are one-word sugar for the declaration clauses. A
+user-writable hook is a deferred extension (RFC-0206 section 8). What changes in the comparison:
+
+| Axis | Change against section 12.1 to 12.7 |
+|---|---|
+| Copy semantics row | An implicit copy cannot run user code: the proposal now sits with Rust and Swift, not with C++ and Mojo |
+| Written for a plain value type | `copy struct P` (one word) against Rust's `#[derive(Clone, Copy)]` |
+| Teachability | Three class words (`copy`, `affine`, `linear`) that match the closure qualifiers `copy` and `once`; "types are affine unless you say `copy`" |
+| Correctness | The observability edge of Rust and Swift is no longer a gap; the cost convention, the copy-site call order and the lowering contract are not needed |
+| Cost visibility | An implicit copy is a bit copy, so there is no cost surprise beyond size; `.clone()` stays the visible cost |
+| Consistency | Fewer concepts than the hook version (no hook, no `implicit via`, no `derived` mark needed for `Copy` beyond the provided `Clone`); the lattice of RFC-0089 explains the `Drop` and `Linear` exclusions as one rule |
+| Fail-safe default | Affine by default and `copy` opt-in, so a forgotten keyword on a handle or a token fails safe; copy-by-default (Swift) was rejected for that reason |
+| Scope of the correctness claim | The sealed copy removes the requirements that come from a copy callback; it does not erase ordinary operand evaluation, aliasing or destruction semantics |
+| Loses | A custom implicit copy (the `Cache` that resets a field on copy) until the later extension |
+
+The remaining weaknesses are unchanged: maturity, the generic-code limits of v0.16.0, and the extra machinery
+(super-aspects, `declared`, negative entries, the stored-interface route).
+
+## 13. Sources
+
 
 - Rust: https://doc.rust-lang.org/std/marker/trait.Copy.html and the 2026 ergonomic ref-counting
   goal at https://rust-lang.github.io/rust-project-goals/2026/ergonomic-rc.html
@@ -281,3 +596,22 @@ These are observations that bear on the open questions in RFC-0162. They are not
 - D: https://issues.dlang.org/bugs/20367/
 - Go: https://go.dev/src/cmd/vet/testdata/copylock/copylock.go
 - Hylo: https://hylo-lang.org/introduction/
+- Swift synthesis and Sendable inference: SE-0185 at
+  https://github.com/swiftlang/swift-evolution/blob/main/proposals/0185-synthesize-equatable-hashable.md
+  and the SE-0302 review at https://forums.swift.org/t/accepted-se-0302-sendable-and-sendable-closures/45786
+- Mojo `ImplicitlyCopyable`: https://docs.modular.com/mojo/std/builtin/value/ImplicitlyCopyable
+- Scala 3 derivation: https://dotty.epfl.ch/3.0.0/docs/reference/contextual/derivation.html
+- Rust perfect derive: https://github.com/lucentflux/perfect-derive ; auto traits and semver:
+  https://lang-team.rust-lang.org/design_notes/auto_traits.html
+- Verification sources (2026-11-04): https://doc.rust-lang.org/unstable-book/language-features/auto-traits.html ,
+  https://doc.rust-lang.org/unstable-book/language-features/negative-impls.html ,
+  https://rust.googlesource.com/rust/+show/03028df750147a93f3199fef95932cfecdc2b375/compiler/rustc_error_codes/src/error_codes/E0184.md ,
+  https://downloads.haskell.org/ghc/latest/docs/users_guide/exts/deriving_inferred.html ,
+  https://ghc.gitlab.haskell.org/ghc/doc/users_guide/exts/standalone_deriving.html ,
+  https://gitlab.haskell.org/ghc/ghc/-/issues/18219 ,
+  https://errors.haskell.org/messages/GHC-97044/ ,
+  https://hackage.haskell.org/package/base-4.14.0.0/docs/Data-Eq.html ,
+  https://hackage.haskell.org/package/base-4.14.0.0/docs/Data-Coerce.html ,
+  https://cppreference.com/cpp/language/copy_constructor ,
+  https://cppreference.com/cpp/types/is_copy_constructible ,
+  https://github.com/swiftlang/swift/pull/39812

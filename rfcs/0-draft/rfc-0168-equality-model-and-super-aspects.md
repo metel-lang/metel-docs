@@ -124,58 +124,15 @@ silently promotes a type to the stronger contract.
 
 ### Super-aspects
 
-An aspect declaration may list one or more direct super-aspects after its name:
-
-```metel
-pub aspect Ord: Eq {
-    fun cmp(&self, other: &Self) -> Ordering;
-}
-```
-
-This introduces an aspect-refinement relation. If `A: B` is declared, an
-implementation or generic bound proving `T: A` also proves `T: B`. The relation
-is transitive: if `A: B` and `B: C`, then `T: A` proves `T: C`.
-
-For an explicit implementation `extend T: A`, every direct and transitive
-super-aspect obligation must be satisfied. In the `Eq` example, `extend T: Eq`
-is well-formed only when a coherent `T: PartialEq` implementation is available.
-The implementation remains explicit; the compiler does not manufacture a
-`PartialEq` implementation from an `Eq` marker or infer an `Eq` marker from an
-implementation body.
-
-Super-aspects are nominal declarations, not aliases. In particular, this:
-
-```metel
-aspect Key = Eq + Hash;
-```
-
-remains RFC-0039's transparent shorthand for a compound *bound*. It creates no
-new implementation target and supplies no implication from `Key` to either
-aspect. In contrast, `Eq: PartialEq` gives `Eq` its own nominal implementation
-target and a durable semantic law.
-
-The compiler rejects a cycle in the super-aspect graph, including an indirect
-cycle. A super-aspect must name an already visible aspect. The initial design
-permits only aspects, not aspect aliases, in the declaration list; aliases can
-continue to be expanded where bounds are written.
-
-This relation is not general subtyping: values do not have an `Eq` runtime type
-which can be coerced to a `PartialEq` runtime type. It only expands what an
-aspect bound proves to the type checker and what methods are available through
-that proof.
-
-#### Interaction with negative implementations
-
-RFC-0081's negative implementations remain direct assertions. Positive
-super-aspect satisfaction is transitive, while negative satisfaction is not:
-
-- `T: Eq` implies `T: PartialEq`.
-- `T: !PartialEq` makes `T: Eq` inconsistent and therefore forbidden.
-- `T: !Eq` does not imply `T: !PartialEq`.
-
-Any direct contradiction after super-aspect closure is a coherence error. This
-keeps the meaning of a negative implementation local while preserving the
-logical requirement imposed by a super-aspect.
+The super-aspect relation (`aspect Ord: Eq`), its transitivity, its implementation obligations and
+its interaction with negative implementations were split into **RFC-0213 (Super-Aspects)** on
+2026-11-04, because other work needs the relation without the equality model. This RFC uses it as
+RFC-0213 specifies it: `Eq` is declared `aspect Eq: derived PartialEq` (the `derived` mark is std only in v0.16.0, RFC-0213 section 4, which covers this declaration), so `extend T: Eq;` requires a
+`PartialEq` and a custom `PartialEq` stays legal there. `derives Eq` is different (RFC-0213 section 4): it derives the
+field-wise `PartialEq` as well, and a hand-written `PartialEq` under it is `T0015`; the reflexivity
+of a derived `Eq` follows from every field being `Eq`, which the compiler checks. The author with a
+custom `eq` writes `extend T: PartialEq {…}` and `extend T: Eq;`, as above. `derives PartialEq` with a
+hand-written `extend T: Eq;` is also legal: the author vouches for reflexivity.
 
 ### Equality operators
 

@@ -2,14 +2,18 @@
 id: rfc-0210
 title: "Enum Parameters and Variant Rows"
 date: '2026-11-02'
-status: draft
+status: under-review
+updated: '2026-11-04'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1791'
 ---
 
-> **Note, 2026-11-03.** The `Copy`/`Clone` settlement was redesigned: RFC-0206 is now "Clone and
-> ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
-> `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
-> of that design. What remains relevant here is the derivation of `Clone` by a row template;
-> examples below that use `Copy` read as `ImplicitClone` in the colon list.
+> **Note, 2026-11-05.** The `Copy`/`Clone` settlement was redesigned (RFC-0206): `Copy` is a sealed implicit
+> copy granted by `derives Copy` or the `copy` keyword, and the `Clone` it brings is provided and cannot be
+> written. The `header` and `derivable` modifiers and `provides` that this draft cited are not part of that
+> design. What remains relevant here is the derivation of `Clone` and the structural `Copy` rule by a row template;
+> examples below that use `Copy` read as `copy enum`.
+
+> **Status — under review (2026-11-04).** Tracker milestoned; reviewed as part of the Copy/Clone settlement (RFC-0206, RFC-0212)
 
 ## Summary
 
@@ -36,8 +40,8 @@ enum Shape derives Clone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // der
 enum Option<T> derives Clone { None, Some { value: T } }
 ```
 
-`Copy` needs no body. Its sealed `clone` is a bitwise copy (RFC-0206 §2), so a `Copy` enum needs
-only the eligibility check `..E: Copy`.
+`Copy` needs no body of its own: it is a marker whose copy is the representation copy and whose `Clone` is
+provided (RFC-0206 section 2), so a `Copy` enum needs only the eligibility check `..E: Copy`.
 
 ---
 
@@ -95,8 +99,8 @@ one level down: the members of `..E` are rows, and a row satisfies the bound whe
 for it. A unit variant satisfies it vacuously.
 
 ```metel
-enum Shape: Copy { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // marker entry; holds: f64 is Copy
-enum Bad: Copy { A { s: String } }                                // rejected at the declaration, next to `s`
+copy enum Shape { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // holds: f64 is Copy
+copy enum Bad { A { s: String } }                                // rejected at the declaration, next to `s`: String is not Copy
 ```
 
 For a generic enum the bound is evaluated per instantiation (RFC-0209, R2): `Option<&String>`
@@ -169,8 +173,10 @@ behaviour is the same; only the source of the body differs.
 3. **A variant row without the enum**: whether `<..V>` (RFC-0208) should also be allowed to stand
    for a variant row, which would matter only if anonymous sums arrive.
 4. **Field privacy** across the aspect's module and the enum's module (as in RFC-0209).
-5. **Recursive enums.** A recursive enum satisfies `..E: A` coinductively, or the bound is
-   rejected; `List`'s `Clone` shows the need.
+5. **Recursive enums** (resolved for the settlement, RFC-0206 section 2, "Recursion and termination").
+   A template for a *derivation* (`Clone`) is solved coinductively on goals that repeat exactly, with the
+   impl being derived assumed while its fields are checked; a *marker* is solved inductively, so a cycle
+   is "no". `List`'s `Clone` is the first case.
 6. **Narrowing and match refinement**: whether a template can see a narrowed variant after a
    match, which belongs to the residual RFC.
 7. **Which std enums** (`Option`, `Result`, user enums) take header entries first, and how that

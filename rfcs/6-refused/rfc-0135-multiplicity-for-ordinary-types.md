@@ -39,15 +39,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/892'
 > - **The mechanism-location half was taken, under a different spelling.** This RFC asked that
 >   a named type's copyness be written on its declaration instead of an `extend T: Copy;`
 >   elsewhere. RFC-0162 proposes that position as a declaration-only entry in the colon list
->   (`struct Point: ImplicitClone { … }`), and RFC-0207 owns the clause. A `many struct` qualifier
->   was weighed against it (RFC-0162's C2, `copy struct`) and kept only as the alternative.
+>   (`struct Point derives Copy { … }`), and RFC-0207 owns the clause. A `many struct` qualifier
+>   was weighed against it (RFC-0162's C2, `copy struct`), and the `copy` keyword is now its one-word form (RFC-0206).
 > - **The rename to `many` was declined.** It changes a name with an established meaning for
 >   newcomers, needs a grammar change, and rewrites every `extend … : Copy;` in the spec, the
 >   tutorials and the corpus, with no new capability and no soundness fix. Closure call capability
 >   (RFC-0134) already carries `once`/`many` for calls, so closures need no second vocabulary. The
->   settlement later renamed the implicit marker for a different reason: `ImplicitClone` states that
->   it is `Clone` that the compiler calls (RFC-0206), and it avoids reusing `Copy` with a different
->   meaning for Rust programmers.
+>   settlement kept the name `Copy` (a drafted rename to `ImplicitClone` was withdrawn on 2026-11-05 when the
+>   implicit copy became sealed, RFC-0206).
 > - **The defect it did not touch** is that `Copy` was defined by four mechanisms that
 >   disagree (metel-core#741); RFC-0071 §2 now states one predicate (#1780).
 >

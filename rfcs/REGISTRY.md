@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-03'
+generated_on: '2026-11-05'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**210 RFCs total.** 36 draft, 54 under review, 9 accepted, 2 integrated (101 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**215 RFCs total.** 36 draft, 53 under review, 15 accepted, 2 integrated (106 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
 ## Draft (36)
 
@@ -51,17 +51,16 @@ the curated thematic map.
 - **RFC-0202** — Refinement and Smart-Constructor Types (`0-draft` ; rfcs/0-draft/rfc-0202-refinement-types.md ; date 2026-11-01)
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
-- **RFC-0209** — Per-Aspect Row Visibility (`0-draft` ; rfcs/0-draft/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02)
-- **RFC-0210** — Enum Parameters and Variant Rows (`0-draft` ; rfcs/0-draft/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02)
+- **RFC-0214** — Aspect Impls for Residuals (`0-draft` ; rfcs/0-draft/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04)
+- **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05)
 
-## Under Review (54)
+## Under Review (53)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
 - **RFC-0080** — Standard Library Aspects — Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-11-02)
-- **RFC-0089** — Linear Types (`1-under-review` ; rfcs/1-under-review/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-09-03)
 - **RFC-0091** — Linear Records (`1-under-review` ; rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-09-03)
 - **RFC-0092** — Comptime Core — Type-as-Value, Reflection, and Emit (`1-under-review` ; rfcs/1-under-review/rfc-0092-comptime-core.md ; date 2026-07-09 ; updated 2026-08-23)
 - **RFC-0093** — Derive Registration — #derive(Aspect) as Request and Registration (`1-under-review` ; rfcs/1-under-review/rfc-0093-derive-registration.md ; date 2026-07-09 ; updated 2026-08-23)
@@ -106,12 +105,12 @@ the curated thematic map.
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
-- **RFC-0206** — Clone and ImplicitClone (`1-under-review` ; rfcs/1-under-review/rfc-0206-clone-and-implicitclone.md ; date 2026-11-02 ; updated 2026-11-03)
-- **RFC-0207** — Declaration Clauses: derives and the Colon List (`1-under-review` ; rfcs/1-under-review/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-03)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-03)
-- **RFC-0211** — Aspect Templates on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02 ; updated 2026-11-03)
+- **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-04)
+- **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
+- **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
 
-## Accepted (9)
+## Accepted (15)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -119,9 +118,15 @@ the curated thematic map.
 - **RFC-0068** — Struct-Owned Allocators (`2-accepted` ; rfcs/2-accepted/rfc-0068-struct-owned-allocators.md ; date 2026-06-28 ; updated 2026-07-10)
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
+- **RFC-0089** — Linear Types (`2-accepted` ; rfcs/2-accepted/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-11-05)
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
+- **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`2-accepted` ; rfcs/2-accepted/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-05)
+- **RFC-0207** — Declaration Clauses: derives and the Colon List (`2-accepted` ; rfcs/2-accepted/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-05)
+- **RFC-0211** — Aspect Templates on Residuals (`2-accepted` ; rfcs/2-accepted/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02 ; updated 2026-11-05)
+- **RFC-0212** — Aspect Declaration Properties (`2-accepted` ; rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-05)
+- **RFC-0213** — Super-Aspects (`2-accepted` ; rfcs/2-accepted/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-05)
 
 ## Integrated (2)
 

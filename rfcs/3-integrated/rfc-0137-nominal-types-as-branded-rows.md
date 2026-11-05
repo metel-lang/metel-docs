@@ -44,7 +44,7 @@ impl_status: in-progress
 > *every* struct already does, unconditionally — narrower in one sense (structs only,
 > no new declaration keyword) and broader in another (no opt-in). §"Relationship to
 > RFC-0120" below states the reconciliation precisely rather than leaving the two RFCs
-> to silently disagree. RFC-0089 (Linear Types, under review) depends on per-field
+> to silently disagree. RFC-0089 (Linear Types, accepted) depends on per-field
 > multiplicity, which this RFC does not add — flagged only because both touch structs'
 > internal representation. RFC-0090 (Structural Records, superseded 2026-07-24) is the
 > six-way split's source document; §9 there sketched representation-sharing without the

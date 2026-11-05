@@ -32,35 +32,45 @@ implicit marker is named, declared and related to `Clone`.
 
 ---
 
-## Proposed direction (2026-11-03)
+## Proposed direction (revised 2026-11-05)
 
-> The language owner's current leaning after the survey. It is not decided. It keeps the value
-> model's semantics and changes the two aspects: an explicit `Clone` and a compiler-known implicit
-> marker that refines it, in the shape Mojo arrived at.
+> The language owner's current direction after the survey, three adversarial reviews and two spikes. It is not
+> decided. It keeps Rust's ownership model, makes the implicit copy sealed, settles the classes against the
+> lattice of RFC-0089, and leaves a user-writable hook as a later extension. The 2026-11-03 direction (an
+> `ImplicitClone` marker whose hook was the type's own `clone`) is recorded in RFC-0206 section 8.
 
-1. **The value model's semantics do not change.** Implicit duplication stays cheap in intent and
-   explicit duplication stays a call; no P1, P2 or P3.
-2. **Two aspects, one definition of the copy (B1m).** `Clone` is the explicit aspect. `ImplicitClone`
-   is a method-less marker the compiler knows that refines `Clone`: an `ImplicitClone` type is
-   duplicated at a by-value use by calling its own `clone`. *`ImplicitClone` is `Clone` that the
-   compiler calls for you.* `Copy` becomes a deprecated alias for one minor release. Details are
-   RFC-0206.
-3. **The grant is fixed on the declaration.** `struct Point: ImplicitClone { … }`, in a colon list
-   that also carries opt-outs such as `!Send`; `extend T: ImplicitClone;` is an error. A derive
-   request is the `derives` clause (`derives Clone`). Both clauses are RFC-0207.
-4. **The marker is a compiler exception, deliberately.** It is not implemented by impls: the
-   compiler evaluates it (every field `ImplicitClone`, a `Clone` exists, not `Drop`), derives `Clone`
-   when the type has none, and guarantees `Clone` for built-in kinds. This replaces the earlier
-   general machinery (`header`/`derivable` modifiers, `provides`, a selection rule).
-5. **The hook is user-writable.** A written `clone` runs at an implicit copy. A future effect bound
-   restricts what such a `clone` may do; no lint before then.
-6. **`Drop` excludes `ImplicitClone` only,** which makes `Clone` on a `Drop` type legal (D3's
-   relaxation, metel-core#1782).
-7. **Structural types and closures follow compiler rules** (Axis S's S1): tuples, arrays and records
-   by their parts, `&T` and `[T]` always, `&var T` never, closures by captures (RFC-0134), written
-   function types move-only (RFC-0166). No marker on a written type is needed.
-8. **Names.** `Clone` keeps its name and Rust's contract ("another value of this type"). The
-   closure qualifier `copy` and `once` keep their spelling (RFC-0163).
+1. **The ownership model does not change and neither does what an implicit copy runs.** Values are still moved
+   unless their type is `Copy`, and explicit duplication stays a call; no P1, P2 or P3. The implicit copy is the
+   representation copy: it runs no user code, so it is unobservable and may be elided at the last use.
+2. **Two aspects.** `Clone` is the explicit aspect and may do anything a function can. `Copy` is the sealed
+   implicit copy; it implies `Clone`, which the compiler provides and which cannot be written for a `Copy` type.
+   A type that needs a custom duplicate is not `Copy`. *`Copy` is the duplication the compiler does for you;
+   `Clone` is the one you ask for.* Details are RFC-0206.
+3. **The grant is fixed on the declaration.** `copy struct Point { … }`, the one-word form of
+   `struct Point derives Copy { … }`, generates the marker and the `Clone` it brings; `extend T: Copy;` is an error
+   (a deprecation for one minor). `affine struct` locks out `Copy` and `Linear`; `linear struct` is reserved
+   (RFC-0089 section 2.1). A type is affine unless it says otherwise, so forgetting a keyword on a handle fails
+   safe. The colon list holds user markers only; both clauses are RFC-0207.
+4. **No special case by name.** `Copy` is an ordinary aspect declared in std with general aspect properties
+   (RFC-0212: `declared` and the std-only `implicit`; the structural rule is a std row template and the
+   exclusion of `Drop` a negative super-aspect entry) over a super-aspect relation (RFC-0213). The compiler reads
+   those properties by identity, which replaces the string-keyed `"Copy"` special cases (about 38 sites). The one
+   property that is a language semantic, implicit duplication, is a declaration property available to std only;
+   each surveyed language keeps some compiler-defined operation for it (Rust's lang items, Swift's compiler-managed
+   copy, Mojo's hook dispatch), by different mechanisms. The cost is a dependency chain (RFC-0206 section 6) that
+   v0.16.0 waits for, by the language owner's choice.
+5. **The classes are the lattice of RFC-0089.** Unrestricted (`Copy`), affine (the default) and linear; `Drop` and
+   `Linear` exclude `Copy` as one rule (RFC-0071 section 4 is a special case, which also settles D3: `Drop`
+   excludes `Copy` and `Clone` on a `Drop` type is legal, metel-core#1782). RFC-0089 is a design-level
+   dependency; `linear` is reserved in v0.16.0.
+6. **A user-writable hook is a later extension.** Sealed to writable preserves accepted programs only for a separate, separately authorized mode that leaves
+   `Copy`'s guarantee intact (RFC-0206 section 8); the cost of the
+   hook (observable insertion, a lowering contract, per-site dispatch) is why it is deferred (RFC-0206 section 8).
+7. **Structural types and closures follow compiler rules** (Axis S's S1): tuples, arrays and records by their
+   parts, `&T` and `[T]` always, `&var T` never, closures by captures (RFC-0134), written function types
+   move-only (RFC-0166). No marker on a written type is needed.
+8. **Names.** `Clone` keeps its name and Rust's signature and ownership shape; `Copy` keeps its name. The closure
+   qualifier `copy` and `once` keep their spelling (RFC-0163), and the type keyword `copy` matches it.
 
 The earlier positions stay recorded: Rust's `Copy`/`Clone` pair with a header grant (C4) and
 declaration modifiers (C5), the keyword form (C2, P4), sealed bodies (B1s), and the structural
@@ -202,7 +212,7 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   `check_copy_impl_eligibility` walks every struct field / enum-variant payload and
   rejects `extend … : Copy` with `T0001` if any is non-`Copy`. Empirically confirmed in
   RFC-0135's Background against the release binary.
-- **`Copy` ⇒ `Clone`** by blanket impl (RFC-0206 §2): `extend<T: Copy> T: Clone { fun
+- **`Copy` ⇒ `Clone`** by blanket impl (the earlier RFC-0206 draft, since replaced): `extend<T: Copy> T: Clone { fun
   clone(self: &T) -> T { *self } }`. `Clone` alone (non-`Copy`) runs user code and may
   allocate.
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
@@ -247,7 +257,7 @@ Two orthogonal axes.
   type the compiler supplies `clone`, and its body is **sealed**, always a bitwise copy,
   never user-written; the compiler inserts the call at a by-value use. So `let b := a` for a
   `Copy` type is `let b := a.clone()` with the call inserted, and `Copy` is `Clone` that
-  the compiler calls for you. This is RFC-0206 §2's blanket
+  the compiler calls for you. This is the earlier RFC-0206 draft's blanket
   (`extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }`), stated as the
   definition of `Copy`. The body is sealed because a user-written `clone` invoked implicitly
   would run arbitrary code at every copy (hidden cost, hidden panics and effects, an
@@ -263,7 +273,7 @@ Two orthogonal axes.
   `once` = move-only; an explicit `dup()` bridges `once` → owned copy. `Clone`
   disappears into "`dup()` on a `once` type."
 
-- **B1m. Two aspects, one definition, a user-writable hook (proposed 2026-11-03).** `Clone` is the
+- **B1m. Two aspects, one definition, a user-writable hook (proposed 2026-11-03; deferred 2026-11-05 as a later extension).** `Clone` is the
   explicit aspect; `ImplicitClone` is a method-less marker the compiler knows that refines it, and
   the implicit copy is a call to the type's own `clone`. This is Mojo's shape (`Copyable`, with the
   `ImplicitlyCopyable` marker that "inherits from `Copyable`, and requires no additional methods"),
@@ -271,9 +281,13 @@ Two orthogonal axes.
   B1s in not sealing the body: sealing was what required a second impl, a selection rule over
   overlapping impls and an equality law between two bodies. Specified in RFC-0206.
 
-**Proposed (language owner's lean, 2026-11-03): B1m.** It answers the second concern (a type no
-longer writes both aspects) and explains the names without a rename of `Clone`: *`ImplicitClone` is
-`Clone` that the compiler calls for you.* B1s stays recorded above as the stricter alternative.
+**Proposed (language owner, revised 2026-11-05): a sealed copy, B1s-shaped, with a single provided `Clone`.** B1m was
+the lean of 2026-11-03 (`ImplicitClone` is `Clone` that the compiler calls for you); three adversarial reviews and
+two spikes found that a user-writable hook makes insertion and elision observable and costs a lowering contract,
+per-site dispatch and a value-changing "unknown". The sealed copy keeps the second concern answered (a type no
+longer writes both aspects: `copy struct` brings `Clone`) without B1s's second impl, because the `Clone` is provided
+by a `derived` super-aspect and cannot be written (RFC-0213 section 4). B1m stays a later extension (RFC-0206
+section 8).
 
 ### Axis B, second cut — duplication vs. aliasing (→ RFC-0158)
 
@@ -330,13 +344,12 @@ Everything else it buys (locality, a keyword that looks like a language rule) is
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
 
-**Proposed (language owner's lean, 2026-11-03): a variant of C4 without general modifiers.** The
-grant of the implicit marker is a declaration-only entry in the colon list (`struct P: ImplicitClone`),
-which the compiler evaluates itself. Swift's rule is the precedent: copyability is fixed on the
-declaration and cannot be changed in an extension. The earlier C4 with refinable grants, and the C5
-grant modes (`header`, `derivable`, `auto` as declaration kinds), were dropped after the adversarial
-review, because the compiler-known marker needs none of them (RFC-0207). C2 (`copy struct`) stays the
-alternative.
+**Proposed (language owner, revised 2026-11-05): C2 and C4 together.** The grant of `Copy` is a declaration-only
+clause, `struct P derives Copy`, with `copy struct P` as its one-word keyword form (C2, reusing the reserved
+word of RFC-0163 and the class vocabulary of RFC-0089), which the compiler evaluates itself. Swift's rule is the
+precedent: copyability is fixed on the declaration and cannot be changed in an extension. The earlier C4 with
+refinable grants, and the C5 grant modes (`header`, `derivable`, `auto` as declaration kinds), were dropped after
+the adversarial review (RFC-0207).
 
 #### Worked examples
 
@@ -370,7 +383,7 @@ of every `extend … : Copy;`. Grants for foreign types (3) are unaffected.
 
 The C4 header list and the C5 grant modes were developed in RFC-0207 and are not carried into the
 2026-11-03 direction. What survives from that work is small and lives in RFC-0207: the colon list
-(for the marker and for opt-outs such as `!Send`) and the `derives` clause. The refinable header
+(for the marker; an opt-out such as `!Send` stays the negative `extend`) and the `derives` clause. The refinable header
 grant, `provides`, the selection rule over overlapping impls and the `header`/`derivable` modifiers
 were removed; the reasons are in RFC-0206 section 8.
 
@@ -813,12 +826,12 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   two framings if P4 advances.
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
-- **RFC-0206 (Clone and ImplicitClone, `1-under-review`)** — specifies `Clone`, the `ImplicitClone`
-  marker and their relationship (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten
+- **RFC-0206 (Copy and Clone, `2-accepted`)** — specifies `Clone`, the sealed `Copy`
+  and their relationship (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten
   `Clone` to independent-duplication-only; add `Share`). This RFC's direction leaves `Clone`
   otherwise untouched.
-- **RFC-0207 (Declaration Clauses: derives and the Colon List, `1-under-review`)** — the colon list
-  that carries the marker and `!Send`-style opt-outs, and the `derives` clause (this RFC's Axis C,
+- **RFC-0207 (Declaration Clauses: derives and the Colon List, `2-accepted`)** — the colon list
+  that carries the marker, and the `derives` clause (this RFC's Axis C,
   cut down).
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
   second cut": a new `Share` aspect beside `Copy`/`Clone`, no rename. One of the two
@@ -852,8 +865,9 @@ listed at the end of this section.
 ### Rust — the model Metel inherited
 
 `Copy` (implicit, marker aspect, bitwise, opt-in via `derive`/`impl`, every field must be
-`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`, with a blanket
-`impl<T: Copy> Clone for T`). This is D1+D2+D3 verbatim — Metel took the whole shape.
+`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`, required as a
+supertrait of `Copy` and supplied separately: Rust has no blanket `impl<T: Copy> Clone for T`, and
+`#[derive(Copy)]` does not supply `Clone`). This is D1+D2+D3 verbatim — Metel took the whole shape.
 
 Known friction in Rust, from its own discussions:
 
@@ -881,14 +895,15 @@ recommendation 3.
 
 ### C++ — open implicit copy with user-defined hooks, no cost signal
 
-Every class is copyable by default via an implicitly generated member-wise copy
-constructor; the author may write their own or `= delete` it. Move (C++11) was added as
-an *optimization of* copy, not a distinct concept. The Rule of Three/Five documents that
-the five special members are coupled: declaring one suppresses or deletes others, and
-"if moves are deleted, the compiler falls back to copy, potentially surprising users."
+A class gets an implicitly declared member-wise copy constructor unless a member or base cannot be copied or a declared
+move operation causes it to be defined as deleted; the author may write their own or `= delete` it. Move (C++11) has
+separate constructors and move-only classes are meaningful, so it is not merely an optimization of copy. The Rule of
+Three/Five documents that the five special members are coupled: declaring one suppresses or deletes others (verified
+against the draft standard, 2026-11-05; the claim that a deleted move falls back to copy needs the
+absent-versus-deleted distinction and is not asserted here).
 
-There is **no marker at all** distinguishing a cheap copy from an allocating one — the
-cost is invisible at every call site, strictly worse than Rust's `Copy`/`Clone` split.
+There is **no mandatory use-site marker** distinguishing a cheap copy from an allocating one (a trivially-copyable
+property and its trait exist) — the cost is invisible at every call site, strictly worse than Rust's `Copy`/`Clone` split.
 C++ is the endpoint Metel should not drift toward, and the strongest single piece of
 evidence for D1.
 
@@ -936,8 +951,8 @@ optimizer for basic performance." Parameter passing uses explicit conventions
 (`let` / `inout` / `sink` / `set`) rather than reference types, so every access a
 function can make to a parameter is visible in its signature.
 
-This is RFC-0157's **P2** endpoint, shipped and internally coherent in a systems-oriented
-research language. The cost it pays is annotation burden and `.copy()` on small values;
+This is RFC-0157's **P2** endpoint, implemented and internally coherent in a systems-oriented
+research language that describes itself as under active development. The cost it pays is annotation burden and `.copy()` on small values;
 Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P2 is
 *achievable*; the open question is whether its ergonomics fit Metel's intended audience.
 
@@ -945,7 +960,7 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
 
 - **Go** — `struct` values copy shallowly on assignment and at call boundaries with no
   user hook and no marker (the `sync.Mutex`-copied-by-value bug class). "Implicit copy,
-  zero control": the position no one defends.
+  zero control": a position this survey found no advocate for (not a verified judgment of the community).
 - **Clean (uniqueness types), Pony (reference capabilities), Vale (region borrowing)** —
   sidestep duplication by governing *aliasing* instead: a value is either uniquely owned
   (safe to mutate/consume) or shared (immutable). Metel's affine model (RFC-0071) already
@@ -963,15 +978,17 @@ Re-read across the same languages, the answers line up unusually cleanly:
 | Language | Copyability decided by | Ordinary user-written impl? | Reachable by metaprogramming? |
 | --- | --- | --- | --- |
 | **Rust** | `impl Copy` / `#[derive(Copy)]` | yes | **yes** — the common case |
-| **C++** | the class's own special members (`= delete`, user-declared) | no — only the class's own members | no |
-| **Swift** | default-on; suppressed at the declaration (`~Copyable`, SE-0390) | no — `Copyable` is compiler-known | no |
+| **C++** | the class's own special members (`= delete`, user-declared), or a member or base that is not copyable | no — only the class's own members | not by the type system; preprocessor macros can generate special members |
+| **Swift** | default-on; suppressed at the declaration (`~Copyable`, SE-0390) | no — `Copyable` is compiler-known | not for `Copyable` as far as verified; attached macros can add other conformances |
 | **C#** | `struct` vs `class` — a declaration keyword | no | no |
 | **Go** | `struct` — a declaration keyword | no | no |
 | **Hylo** | nothing: there is no implicit copy to grant | n/a | n/a |
 
 **Rust is alone in the "yes" column, and alone again in the derive column.** Every other
 language that has implicit copying puts the decision in the type's own declaration —
-usually as a keyword — and none of them let an annotation or macro flip it. That is not
+usually as a keyword — and none of the cases verified lets an annotation flip it (C++ macros can
+generate special members and Swift's attached macros can add conformances; whether a macro can alter
+`Copyable` is unconfirmed, prior-art report section 11.13). That is not
 an argument that Rust is wrong (C# and Go pay for their keyword with *no* opt-out at all,
 which is worse in a different way), but it is the observation D6 rests on: the mechanism
 Metel inherited is the outlier, and it was inherited without being compared.
@@ -986,12 +1003,12 @@ trait that gates nothing implicit is an unobjectionable trait.
 
 ### What the survey suggests for Metel
 
-1. **The fully-open, fully-implicit end (C++, Go) is uniformly regretted.** The
+1. **The fully-open, fully-implicit end (C++, Go) is regretted by some maintainers and authors (unattributed here; treat as the author's reading).** The
    value-category-without-a-cost-signal middle (C#) is only safe with discipline rules.
    The two models people are actually comfortable with are Swift's
    implicit-copy-plus-COW (needs runtime COW Metel lacks) and Hylo's
    no-implicit-copy-plus-conventions (P2).
-2. **No language that started explicit has moved toward more implicitness** — Rust is
+2. **No language in this survey that started explicit is known to have moved toward more implicitness (a survey observation, not a verified history)** — Rust is
    moving the other way. Read alone this weighs toward P1/P2. But the same survey shows
    the *cost* of moving: Swift needed COW machinery to stay comfortable, Hylo pays a
    standing annotation tax, and Rust's own motion is on the *closure/`Rc`* side
@@ -1007,8 +1024,8 @@ trait that gates nothing implicit is an unobjectionable trait.
    RFC-0050's list survives the comparison cleanly; only the `move` specifier *inside*
    it lacked prior-art support.
 5. **On Axis C, Rust is the outlier and Metel copied the outlier** (added 2026-09-02).
-   Everyone else with implicit copying decides it at the declaration and puts it out of
-   reach of metaprogramming. This is the clearest prior-art signal in the survey — much
+   Everyone else with implicit copying decides it at the declaration and, in the cases verified,
+   puts it out of reach of annotations (macros that generate members are the caveat above). This is the clearest prior-art signal in the survey — much
    clearer than anything Axes A and B produced — and it costs almost nothing to follow
    (P4), because the keyword is already reserved and the word `Copy` is kept. Weigh it
    against the uniformity loss in the aspect system (D6.3), which is the real objection,
@@ -1032,20 +1049,20 @@ trait that gates nothing implicit is an unobjectionable trait.
 
 ## Open Questions
 
-> **Status under the 2026-11-03 direction.** The questions below keep their numbering. Where the
+> **Status under the 2026-11-05 direction.** The questions below keep their numbering. Where the
 > proposed direction answers one it is noted here; the original text follows for the record.
 >
 > 1. *No value-model change.* Answered by direction 1: no change. D1 stays as Rust has it.
-> 2. *D3, the `Copy`/`Drop` exclusion.* Answered by direction 6: `Drop` excludes `ImplicitClone` only;
->    `Clone` on a `Drop` type is legal (metel-core#1782).
+> 2. *D3, the `Copy`/`Drop` exclusion.* Answered by direction 5: `Drop` excludes `Copy` (the lattice rule
+>    of RFC-0089); `Clone` on a `Drop` type is legal (metel-core#1782).
 > 3. *RFC-0135.* Refused; its mechanism-location half is taken as the declaration-fixed marker.
-> 4. *Keyword or aspect (P4).* Answered by direction 3: a compiler-known marker aspect, granted in
->    the declaration's colon list. C2 stays the alternative.
-> 5. *May `Copy` be derived.* Answered: `ImplicitClone` is not derived or implemented; the compiler
->    evaluates it, and derives `Clone` when the type has none. There is no deriver to register.
+> 4. *Keyword or aspect (P4).* Answered by direction 3: the `copy` keyword is the one-word form of
+>    `derives Copy`; both are declaration-only grants of the `Copy` aspect.
+> 5. *May `Copy` be derived.* Answered: `derives Copy` derives the marker and the `Clone` it brings
+>    (a `derived` super-aspect, RFC-0213 section 4); the derivation is native in the first implementation.
 > 6. *Residuals of S6.* Moot: direction 7 keeps S1; no marker on a written type.
 > 7. *Residuals of C2.* Conditional grants: the condition is exact per instantiation, with no
->    refinement. The stop rule: the marker is a compiler exception (direction 4). C4, C5 and the
+>    refinement. The stop rule: the implicit property is a std-only declaration property (direction 4). C4, C5 and the
 >    refinable grant are dropped.
 > 8. *`Clone` for non-`Copy` types.* RFC-0206 section 4: written, `derives Clone`, or implied by the
 >    marker.
@@ -1156,7 +1173,6 @@ split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
 
 ## Decision
 
-**Outcome:** *(pending. Direction proposed 2026-11-03: the value model is unchanged; `Clone` and a
-compiler-known `ImplicitClone` marker replace `Copy`/`Clone`, specified in RFC-0206 and RFC-0207.
+**Outcome:** *(pending. Direction revised 2026-11-05: the ownership model is unchanged and the implicit copy is sealed (the representation copy); `Clone` is explicit and `Copy` implies a provided `Clone`, with the class keywords of RFC-0089, specified in RFC-0206 and RFC-0207.
 The Open Questions above carry the status of each earlier question.)*
 **Target:** v0.16.0 (metel-core#924).

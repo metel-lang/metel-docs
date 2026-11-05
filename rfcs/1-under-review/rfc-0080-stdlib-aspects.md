@@ -41,7 +41,7 @@ defined, is RFC-0206.
 
 ## 1. Clone
 
-Moved to **RFC-0206 (Clone and ImplicitClone)** on 2026-11-02: the `Clone`
+Moved to **RFC-0206 (Copy and Clone)** on 2026-11-02: the `Clone`
 aspect (formerly §1.1), `Copy` as `Clone` with a sealed bitwise body (formerly §1.2), the
 derive (formerly §1.3, now RFC-0206 §4) and the allocator note (formerly §1.4, now
 RFC-0206 §5).
@@ -221,7 +221,7 @@ Both conditions are required: `Sync` of `T` because any fiber may read through `
 
 | Relationship | Rule |
 |---|---|
-| `ImplicitClone` implies `Clone` | RFC-0206 §2 (a compiler rule: the implicit copy calls the type's `clone`) |
+| `Copy` implies `Clone` | RFC-0206 §2 (a `derived` super-aspect: the provided `Clone` is the copy) |
 | `Copy` and `Drop` are mutually exclusive | RFC-0071 |
 | `DerefMut` requires `Deref` | Supertrait |
 | `T: Sync` iff `&T: Send` | Definition of `Sync` |
@@ -264,7 +264,7 @@ does not depend on RFC-0003 and may be accepted independently.
   have `Send` or `Sync` despite its fields being `Send`/`Sync`.
 - RFC-0071 (Ownership and Move Semantics) — `Copy`/`Drop` mutual exclusion; move
   semantics.
-- RFC-0206 (Clone and ImplicitClone) — `Clone`, extracted from this RFC.
+- RFC-0206 (Copy and Clone) — `Clone`, extracted from this RFC.
 - RFC-0074 (Shared Pointers) — `Rc<T>: !Send`, `!Sync`; `Arc<T>: Send + Sync`;
   `Deref` impls for `Rc` and `Arc`; `get_mut` and `try_unwrap` as the mutation API.
 - RFC-0003 (Concurrency Model, under review) — fiber boundary crossing; consumer of `Send`

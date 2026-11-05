@@ -481,7 +481,7 @@ by-reference mode (§2).*
   convenience uses; OQ1 (resolved) confirms this RFC's actual capability doesn't depend
   on it
 - RFC-0076 (Brand Types) — **not a dependency of this RFC**; see §5
-- `public/rfcs/1-under-review/rfc-0089-linear-types.md` §2.1, §3.1 — fiat-linearity and the
+- `public/rfcs/2-accepted/rfc-0089-linear-types.md` §2.1, §3.1 — fiat-linearity and the
   brand exception, deferred until records are implemented
 - `rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md` (RFC-0109, `1-under-review`)
   — deferred; works around §3's no-implicit-coercion rule for method receivers specifically

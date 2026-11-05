@@ -93,7 +93,7 @@ was found and reconciled, and where this session did most of its work.
 
 > **Re-promoted, 2026-09-03 — the deferral condition is substantially met.** RFC-0116/
 > RFC-0117/RFC-0118 are implemented/integrated and RFC-0120 is implemented; RFC-0119 (the
-> `ToRecord` floor RFC-0089 §3 actually depends on) is still `1-under-review` but
+> `ToRecord` floor RFC-0215 §3 (split from RFC-0089) actually depends on) is still `1-under-review` but
 > milestoned v0.13.1, ahead of where linear types are going. **RFC-0089 and RFC-0091**
 > move back to `1-under-review`, **milestoned v0.21.1** — a third design-settlement lane
 > alongside RFC-0140/RFC-0003 (implementation deferred until acceptance), not folded into
@@ -1137,7 +1137,7 @@ implementation).
   to match, ahead of the linear-types cluster below that also needs it. Seven open
   questions, none look acceptance-blocking on their face; UQ3 (no stated reference
   rule for `Linear`) is explicitly flagged as RFC-0089's to close, not this RFC's.
-- **RFC-0089** *(under review 2026-09-03, opened 2026-07-09; **v0.21.1**, #953)* —
+- **RFC-0089** *(accepted 2026-11-05, sections 1 to 2.2; opened 2026-07-09; sections 3 to 5 moved to RFC-0215; #953)* —
   Linear Types — the four-point multiplicity lattice (`0`/`1`/`affine`/`ω`, extending
   RFC-0071's affine default rather than assuming Rust's three-point ω-default
   background); `Linear` as a marker aspect via RFC-0096's auto-impl mechanism;
@@ -1155,7 +1155,10 @@ implementation).
   design-settlement lane alongside RFC-0140/RFC-0003 (implementation deferred until
   acceptance), not folded into v0.20.0's already-large in-flight substrate milestone.
   §3's partial-consumption design needs a real pass against RFC-0119's actual (not
-  assumed) shape before this RFC can be accepted, not just reviewed.
+  assumed) shape before this RFC can be accepted, not just reviewed. **Split 2026-11-05:** sections 3 to 5
+  (partial consumption, the brand-carrying conversion, `NonLinear<T>`) moved to RFC-0215; this RFC is now the lattice,
+  the `Linear` aspect and the class keywords (`copy`, `affine`, `linear`), a design-level dependency of the
+  Copy/Clone settlement (RFC-0206).
 - **RFC-0091** *(under review 2026-09-03, opened 2026-07-09; **v0.21.1**, #954)* —
   Linear Records — per-field multiplicity via **Option C: automatic downgrade** — a
   mixed-multiplicity struct's binding type changes at the point of partial consumption
@@ -1825,7 +1828,7 @@ implementation).
   The composition operator is deferred (`>->` / `>=>` preferred, after RFC-0190). Independent of RFC-0205.
 - **RFC-0205** *(draft 2026-11-01)* — Hole sections (`(_ * 10)`) and operator functions (`ops::add`).
   Independent of RFC-0204.
-- **RFC-0206** *(under-review 2026-11-03, #1785)* — Clone and ImplicitClone. `Clone` is the explicit duplication aspect with Rust's contract; `ImplicitClone` is a compiler-known marker that refines it, granted only in the declaration's colon list, whose implicit copy calls the type's own `clone` (a user-writable hook, with a reserved effect bound). Exact per-instantiation condition, `Drop` excludes it, built-in kinds are compiler rules; `Copy` stays one minor release as a deprecated alias. Replaces the earlier `Copy`-provides-`Clone` design.
+- **RFC-0206** *(accepted 2026-11-05, #1785)* — Copy and Clone: a sealed implicit copy and an explicit clone. `Clone` is the explicit duplication aspect with Rust's signature; `Copy` is a std-declared aspect, with RFC-0212's properties over RFC-0213's super-aspect relation, granted only in the declaration (`copy struct P`, the one-word form of `derives Copy`), whose implicit copy is the representation copy (it runs no user code) and which brings a provided `Clone`. Settled against RFC-0089's multiplicity lattice (`affine` default, `Drop` and `Linear` exclude `Copy`); exact per-instantiation condition; built-in kinds are std impls or compiler rules. A user-writable hook (the earlier `ImplicitClone` design) is a deferred extension.
 
 ---
 
@@ -1877,8 +1880,13 @@ misleading. Do **not** duplicate stage counts, generated status summaries, or ot
 derivable facts here — those belong in `REGISTRY.md`, and `rfc.py check` treats that
 generated file as the exact source of truth.
 
-- **RFC-0207** *(under-review 2026-11-03, #1786)* — Declaration clauses: `derives` and the colon list. Two clauses after a type's name: the colon list (`: ImplicitClone`, `: !Send`) for compiler-checked markers and auto-aspect opt-outs, and `derives` for aspects the compiler generates (`derives Clone`); `derives` replaces the request half of RFC-0093's `#derive`. Cut down from the earlier `header`/`derivable`/`provides` design.
+- **RFC-0207** *(accepted 2026-11-05, #1786)* — Declaration clauses: `derives` and the colon list. Two clauses after a type's name: the colon list (user `declared` markers, an unchecked promise) and `derives` for aspects the compiler generates (`derives Copy`, `derives Clone`); `derives` replaces the request half of RFC-0093's `#derive`. The class keywords `copy`, `affine` and `linear` (RFC-0089) are sugar for these clauses. Cut down from the earlier `header`/`derivable`/`provides` design.
 - **RFC-0208** *(under review 2026-11-03, #1789)* — Row-only generic parameters. A binder `<..R>` for a parameter that stands only for a row, never a type; `record R` stays for parameters used as types. Additive to RFC-0186, shares the `..` binder with packs (RFC-0125), merges with them if RFC-0151 lands; motivated by the row-generic derivation of RFC-0207.
-- **RFC-0209** *(draft 2026-11-02)* — Per-aspect row visibility. A header entry makes a nominal type's row visible to the row-conditional impls of that one aspect, so header aspects (`Copy`, `Clone`) are derived from the aspect's own row template. No new parameter kind; refines RFC-0137's tiers; R2 falls out.
-- **RFC-0210** *(draft 2026-11-02)* — Enum parameters and variant rows. An `enum E` parameter kind and a variant row `..E`, so an aspect's template is written once for every enum that grants it in its header; the bound `..E: A` reuses the field-wise bound one level down. Completes RFC-0209 for sum types; depends on RFC-0174 for bodies.
-- **RFC-0211** *(under review 2026-11-03, #1792)* — Aspect templates on residuals. A granted aspect's row template applies to every residual of the brand over the present fields; hand-written impls apply to the full type only. Resolves the bound-versus-dispatch mismatch of metel-core#1788.
+- **RFC-0209** *(under review 2026-11-04)* — Per-aspect row visibility. A header entry makes a nominal type's row visible to the row-conditional impls of that one aspect, so header aspects (`Copy`, `Clone`) are derived from the aspect's own row template. No new parameter kind; refines RFC-0137's tiers; R2 falls out.
+- **RFC-0210** *(under review 2026-11-04)* — Enum parameters and variant rows. An `enum E` parameter kind and a variant row `..E`, so an aspect's template is written once for every enum that grants it in its header; the bound `..E: A` reuses the field-wise bound one level down. Completes RFC-0209 for sum types; depends on RFC-0174 for bodies.
+- **RFC-0211** *(accepted 2026-11-05, staged: v0.16.0 part now, template half later; #1792)* — Aspect templates on residuals. A granted aspect's row template applies to every residual of the brand over the present fields; hand-written impls apply to the full type only. Resolves the bound-versus-dispatch mismatch of metel-core#1788.
+- **RFC-0212** *(accepted 2026-11-05, #1795)* — Aspect declaration properties. What an aspect declaration may state: `declared` (granted only in a type's declaration), `auto` (deferred), and the std-only `implicit` (a by-value use copies the representation instead of moving). Lets `Copy`, `Send`, `Sync` and `Linear` be ordinary declarations instead of special cases by name.
+- **RFC-0213** *(accepted 2026-11-05, #1796)* — Super-aspects. The nominal refinement relation `aspect A: B` split from RFC-0168: a proof of `A` proves `B`, an impl of `A` requires `B`, negative closure, and a `derived` mark making the derivation of the sub-aspect derive the super-aspect.
+- **RFC-0214** *(draft 2026-11-04)* — Aspect impls for residuals. Generalises RFC-0137's row-bounded `Drop` dispatch to any aspect: an impl declares the residual it needs on its method receivers, targets one exact shape or view, or is generic over the whole row (`extend Doc: A<record R>`). Not a dependency of the Copy/Clone settlement.
+- **RFC-0216** *(draft 2026-11-05)* — Constructing rows and residuals from per-field results. A computed-label record literal and a defining-module residual construction, so `Clone`/`Default` can be written once over a row inside a `comptime for` body (RFC-0174 open question 7). Construction half of RFC-0214's row-generic impl. Not a dependency of the Copy/Clone settlement.
+- **RFC-0215** *(draft 2026-11-05)* — Partial consumption of mixed-multiplicity structs. Split from RFC-0089: partial consumption through `ToRecord`, the brand-carrying conversion for fiat-linear structs, `NonLinear<T>`; keeps RFC-0089's section numbers 3 to 5. RFC-0089 is now the lattice, the `Linear` aspect and the class keywords.

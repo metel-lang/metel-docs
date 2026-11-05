@@ -7,6 +7,11 @@ updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 ---
 
+> **Note, 2026-11-04 (RFC-0212).** The closed compiler-intrinsic list of section 1 is to be replaced by
+> an `auto` declaration on the aspect (RFC-0212). RFC-0212 no longer has a `structural` property (the
+> field-wise rule of `Copy` is a std-written row template), so how the composition rule of
+> section 2 is expressed is part of this RFC's revision, which the language owner has deferred.
+
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0080, 0061,
 > 0093, 0060, and 0081 — checked each first. None of them own this mechanism: RFC-0080
 > §3.2/§4.2 and the draft RFC-0089 §2 each independently invoke "the auto-impl pattern"
@@ -341,6 +346,44 @@ because this RFC is the right place to resolve it.
 
 ---
 
+## 8. Considered: the opt-out in the declaration (recorded 2026-11-04)
+
+An auto aspect holds structurally unless the type opts out. The opt-out today is the bodyless
+negative impl (RFC-0102, RFC-0081):
+
+```metel
+struct Token { id: i64 }
+extend Token: !Send;                 // legal anywhere in the type's module
+```
+
+During the `Copy`/`Clone` settlement (RFC-0206, RFC-0207, RFC-0212) the alternative of writing the
+opt-out in the declaration's colon list was weighed, and the language owner chose to keep the
+negative `extend` for now. It is recorded here so that it is decided together with this RFC's
+revision (the note at the top), when `Send` and `Sync` are implemented and there is real usage.
+
+**The alternative (A): a negative entry in the colon list.**
+
+```metel
+struct Token: Validated, !Send { id: i64 }
+```
+
+- *For.* A type that is not `Send` changes what every use across threads means, the same kind of
+  contract as implicit duplication, so the fact is visible at the declaration. One list then says
+  what the type is and is not, and it is what RFC-0105 originally proposed
+  (`struct Token: Copy2, Serializable, !Send { … }`). Swift fixes copyability on the declaration for
+  the same reason.
+- *Against.* It is a second spelling of a fact the negative `extend` already states. To keep the
+  declaration as the only place, `extend T: !A;` would have to be forbidden for `auto` aspects, a
+  coherence change; and negatives split into two kinds by the aspect's kind (`struct T: !Clone` an
+  error, `extend T: !Clone;` legal, which RFC-0081 uses for disjointness of blanket impls).
+- *Breakage.* None today: `Send` and `Sync` are not implemented for any type yet (RFC-0080).
+- *Rule if adopted.* Negative colon entries are legal only for `auto` aspects, and the negative
+  `extend` of an `auto` aspect becomes an error with a fix-it.
+
+**Current behaviour (B): the negative `extend`.** It needs no new syntax and no restriction, and it
+is not needed for `Copy`. Whether to adopt A is **an open question (see Unresolved Questions,
+8)**, deferred with this RFC's revision.
+
 ## Unresolved Questions
 
 1. **Enum variants with no fields.** A unit variant trivially satisfies any auto-impl
@@ -406,6 +449,15 @@ because this RFC is the right place to resolve it.
    entry there itself. This RFC's own §5 already implies the answer; this question
    just makes the implementation obligation explicit before this RFC is accepted,
    rather than leaving it implicit in a sentence about coherence.
+
+8. **Colon-list opt-out (option A, section 8).** Should `struct Token: Validated, !Send` replace
+   the negative `extend T: !Send;` as the opt-out of an `auto` aspect? The Send/Sync/Linear revision of
+   this RFC (the `auto` property of RFC-0212 and the structural rules) is **deferred by the language
+   owner (2026-11-04)**; it is not part of the Copy/Clone settlement (RFC-0206), which does
+   not depend on either spelling. The revision must also address the semver hazard of `auto`: Rust's
+   language team calls each auto trait a hazard (a private field change can remove `Send` from a
+   public type), and Swift infers `Sendable` only for types that are not publicly ABI-exposed
+   (prior-art report, section 11.6). That favours an explicit grant for public types. Until then the negative `extend` stands.
 
 ---
 

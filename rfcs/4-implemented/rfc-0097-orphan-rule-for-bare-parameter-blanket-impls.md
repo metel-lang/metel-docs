@@ -223,8 +223,8 @@ with no bare-parameter-specific handling needed.
   RFC extends to bare-parameter targets; §3/§5's own examples are what exposed the gap.
 - RFC-0036 (Conditional Impl Blocks, implemented) — the syntax this RFC's target form
   is an instance of; never shows the bare-parameter case in its own examples.
-- RFC-0080 §1.2 — the `Copy ⟹ Clone` blanket, the concrete motivating example. RFC-0206 (Clone and
-  ImplicitClone) no longer specifies a blanket, so this RFC's rule is not needed for the settlement.
+- RFC-0080 §1.2 — the `Copy ⟹ Clone` blanket, the concrete motivating example. RFC-0206 (Copy and
+  Clone) no longer specifies a blanket, so this RFC's rule is not needed for the settlement.
 - RFC-0061 (Structural Aspect Bounds, implemented) — §1's "structural constructors are
   owned by `std::core`" fix, the closest existing precedent, contrasted in §2.
 - RFC-0096 (Auto-Impl Aspects, under review) — opened the same review pass; the auto-impl
