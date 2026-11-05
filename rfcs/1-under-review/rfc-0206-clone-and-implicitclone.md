@@ -176,7 +176,7 @@ is `x.clone()`" is not.
    partial result. A hook may call arbitrary code, including another copy site, so the interpreter
    holds no borrow of its environment while it runs.
 
-**Lowering of the remaining by-value forms (proposed, 2026-11-05, to be confirmed one by one).** Each form below
+**Lowering of the remaining by-value forms (accepted by the language owner on 2026-11-05 as written; they may be revised later).** Each form below
 is a place read in value position only where it takes a value out of a place; the rule says what is cloned and in
 what order. In every case a temporary transfers.
 - **Patterns and `match`.** The scrutinee is not cloned as a whole. Each by-value binding in a pattern reads its
