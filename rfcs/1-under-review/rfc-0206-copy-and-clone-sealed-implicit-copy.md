@@ -311,6 +311,11 @@ other aspect on a projection is `T0012`, with a use-site diagnostic that names t
 impls (RFC-0211) plus written residual impls (RFC-0214, including its row-generic form, with construction in
 RFC-0216) for hand-written ones. Neither draft is a dependency.
 
+**Native structural `Copy` for now (decided 2026-11-05).** The structural rule that makes a named `Copy` type and
+its residuals `Copy` is compiler logic in v0.16.0, not the std row template, so the Row machinery stage is not on
+this settlement's critical path. It is a named, time-boxed exception; metel-core#1823 (milestone "Structural kinds
+after comptime") tracks replacing it by the template with no change in accepted programs.
+
 There is no first stage that carries the semantics with a special case. The settlement waits for the general
 features, in this order:
 

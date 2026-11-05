@@ -68,6 +68,8 @@ header entry derives behaviour from the type's row, and a residual is that row n
 > **v0.16.0 scope (2026-11-05).** Of the aspects, only `Copy` (structural, sealed) and the existing `Drop`
 > dispatch are provided on residuals in v0.16.0. The templates of this RFC are the end state; the others stay
 > `T0012` with the use-site diagnostic of section 4 until the Row machinery stage lands.
+> The structural `Copy` rule is native compiler logic in v0.16.0 and moves to the std template later
+> (metel-core#1823).
 
 **Legality.**
 1. A residual `T.{ fields }` of a nominal type `T` satisfies aspect `A` through a **row template**
