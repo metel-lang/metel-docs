@@ -304,6 +304,13 @@ replaces the native one when RFC-0092 and RFC-0093 allow.
 
 ## 6. Implementation staging and dependencies
 
+**Scope of projections in v0.16.0 (decided 2026-11-05).** A residual `T.{ fields }` gets exactly two things:
+`Copy`, structurally and sealed (section 2 rule 6), and the existing `Drop` dispatch (RFC-0137 section 5). Every
+other aspect on a projection is `T0012`, with a use-site diagnostic that names the written impl as the cause
+(the language keeps no edit history, so it cannot warn at the edit). The end state is row templates for derived
+impls (RFC-0211) plus written residual impls (RFC-0214, including its row-generic form, with construction in
+RFC-0216) for hand-written ones. Neither draft is a dependency.
+
 There is no first stage that carries the semantics with a special case. The settlement waits for the general
 features, in this order:
 

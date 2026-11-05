@@ -65,6 +65,10 @@ header entry derives behaviour from the type's row, and a residual is that row n
 
 ## 1. The rule
 
+> **v0.16.0 scope (2026-11-05).** Of the aspects, only `Copy` (structural, sealed) and the existing `Drop`
+> dispatch are provided on residuals in v0.16.0. The templates of this RFC are the end state; the others stay
+> `T0012` with the use-site diagnostic of section 4 until the Row machinery stage lands.
+
 **Legality.**
 1. A residual `T.{ fields }` of a nominal type `T` satisfies aspect `A` through a **row template**
    exactly when `T`'s header grants `A` (RFC-0207, RFC-0209), the template's `where` bound holds
@@ -137,8 +141,9 @@ read, so the result is well defined at every width.
   behaviour the bug (#1788) reports, and the fix is the rule.
 - **Replacing a derivation by a written impl removes the aspect from projections:** `derives Clone` to a
   hand-written `Clone` keeps whole-type behaviour and drops `Clone` from `Doc.{ title }` (rule 2). That is a
-  capability change caused by implementation provenance, not by behaviour; a warning or migration diagnostic at the
-  edit is wanted, and a residual impl (RFC-0214) is the later remedy. A `Copy` type is not affected (its `Clone`
+  capability change caused by implementation provenance, not by behaviour; the language cannot warn at the edit (no
+  history is kept), so the use site carries the diagnostic: `T0012` on a projection names the written impl as the
+  cause and points to RFC-0214 (a row-generic impl, RFC-0216 for its construction) as the remedy. A `Copy` type is not affected (its `Clone`
   cannot be written).
 - **Two ways to satisfy an aspect** depending on whether it is derived or written, which the
   header entry already makes visible.

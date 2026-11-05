@@ -54,7 +54,7 @@ extend DocTitle: Display {                      // the residual: needs only `tit
 4. **Some impls are naturally partial.** A `Display` for a view, or an equality that compares only the
    key fields, reads a few fields and should apply to every wider residual.
 
-## 1. Two forms of residual impl
+## 1. Three forms of residual impl
 
 **Row-bounded impl.** The impl's required field set is the union of the residual rows its method
 receivers declare (RFC-0147 fixed projection, RFC-0146 `Self.R where R: { f, .. }`). A receiver that
@@ -81,10 +81,41 @@ extend DocTitle: Clone {
 }
 ```
 
+**Row-generic impl.** The impl is generic over the whole row of the brand through a row binder
+(RFC-0208), with a field-wise bound (RFC-0123) and a body that walks the row (RFC-0174). It applies to
+the whole type and to every residual whose present fields all satisfy the bound. It is the written
+counterpart of a derivation: the compiler's row template (RFC-0209, RFC-0211) is this impl, generated.
+
+```metel
+extend Doc: Display<record R> where ..R: Display {      // spelling provisional (RFC-0208: `extend<..R>`)
+    fun fmt(&self: Self.{ ..R }) -> String {
+        var out := "";
+        comptime for field in fields(R) {
+            out := out + field.name + " = " + self.[field.name].fmt() + ", ";
+        }
+        return out;
+    }
+}
+
+extend Doc: Clone<record R> where ..R: Clone {          // a Self-returning method, written once
+    fun clone(&self: Self.{ ..R }) -> Self.{ ..R } {
+        return Self.{ ..R } { comptime for field in fields(R) {
+            [field.name] = if (field.name == "hits") { 0 } else { self.[field.name].clone() },
+        } };                                            // construction: RFC-0216
+    }
+}
+```
+
+It subsumes the other two forms for aspects that read or rebuild every field, and it lets the author
+keep a customisation (reset `hits`) on projections. It is checked once against a symbolic field
+(RFC-0174 D3). Its cost is the heaviest: it needs RFC-0174, RFC-0208, RFC-0123 and, for a `Self`-returning
+method, RFC-0216. `derives` stays the normal path; this is the power-user form.
+
 **Self-returning methods.** In a row-bounded impl `Self` is the matched residual, of unknown width. A
 method that returns `Self` or takes it by value cannot construct the missing fields, so it is an error
 in a row-bounded impl unless the missing fields are handled by a template (`where ..R: A`, RFC-0123,
-RFC-0209). `Clone` therefore needs the exact-shape form, or the template. Methods that only read
+RFC-0209). `Clone` therefore needs the exact-shape form, the template, or the row-generic form with
+residual construction (RFC-0216). Methods that only read
 (`fmt`, `eq(&self, other: &Self)` over the required fields) are fine.
 
 ## 2. Rules
@@ -101,7 +132,8 @@ RFC-0209). `Clone` therefore needs the exact-shape form, or the template. Method
    it, two row-bounded impls whose required sets are both contained) overlap and are `T0015`. There is
    no most-specific rule.
 4. **Templates.** If the type's header grants the aspect, the row template (RFC-0209, RFC-0211)
-   already covers every residual, and a residual impl of the same aspect overlaps it (`T0015`), as a
+   already covers every residual, and a residual impl of the same aspect, including a row-generic one
+   (which covers the whole type too, so a separate whole-type impl overlaps it), overlaps it (`T0015`), as a
    written impl overlaps a derived one (RFC-0207 rule 4). A type that wants a written residual impl does
    not derive that aspect.
 5. **Full width.** A residual whose row is the whole type normalises to the plain type (RFC-0137). An exact-shape impl for the full row is the whole-type impl, and writing both is `T0015`.
@@ -146,6 +178,8 @@ extend Row: PartialEq {
   "row-conditional impl resolution" (`extend Self.R where R: { f, .. }: Foo`); this RFC does not add it.
   The required set comes from method receivers, as for `Drop`, so the impl is selected by a subset
   check against a concrete row and needs no row variable in impl resolution.
+- **RFC-0174, RFC-0208, RFC-0123, RFC-0216** — the row-generic form: the field loop, the row binder,
+  the field-wise bound, and construction of the `Self`-returning result. Only this form depends on them.
 - **RFC-0209, RFC-0211** — templates for granted aspects; written impls cover the cases templates do not.
 - **RFC-0206, RFC-0212, RFC-0213** — `Copy` on a residual (rule 6), `declared` (rule 7),
   super-aspects (rule 6). Not a dependency of any of them.
@@ -173,10 +207,10 @@ extend Row: PartialEq {
 
 ## Unresolved Questions
 
-1. **How is a residual value built?** An exact-shape `clone` returns `Self`, a residual, and a residual
-   is produced today only by projection or partial move. A construction form (a residual literal),
-   restricted to the defining module, is needed. Its spelling and the constructor-invariant risk of
-   RFC-0137 section 6 are open.
+1. **How is a residual value built?** An exact-shape or row-generic `clone` returns `Self`, a residual,
+   and a residual is produced today only by projection or partial move. RFC-0216 (draft) proposes a
+   construction form restricted to the defining module; its spelling and the constructor-invariant risk
+   of RFC-0137 section 6 are open there.
 2. **Methods with different receiver rows in one impl.** The union is the required set; whether a
    method with a narrower receiver may be called on a residual that has only its own fields is open.
 3. **Enums.** Enums are atomic for narrowing and have no residuals (RFC-0150, RFC-0211), so this RFC
@@ -185,6 +219,12 @@ extend Row: PartialEq {
 5. **Spelling:** `extend DocTitle: A` through a view, `extend Doc.{ f }: A` inline, or both.
 6. **Whether row-bounded impls are needed at all** if exact-shape impls and templates suffice; the
    `Display`/`PartialEq` examples are the case for them.
+7. **Per-field customisation of a derive** (`derives Clone` with one field's behaviour overridden) as
+   a lighter alternative to the row-generic form for the common "reset one field" case (RFC-0213
+   open question 8).
+8. **Receiver narrowing as tooling.** Inferring a required field set from a body is rejected as a
+   language rule (RFC-0137 section 5); an editor suggestion that proposes `Self.{ title }` for a body
+   that reads only `title` is not.
 
 ---
 

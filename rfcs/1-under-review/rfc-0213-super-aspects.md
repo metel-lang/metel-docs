@@ -207,6 +207,11 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
    field, and the marked-super rule removes that footgun. Rejected shape: letting the colon list carry
    method-bearing aspects (it reverses RFC-0207 section 1 and makes the list redundant with `extend`).
 
+8. **Per-field customisation of a derive.** `derives Clone` with one field's behaviour overridden
+   (`derives Clone { hits = reset }`) would keep the template, and so projections, while changing one
+   field. It is the lighter alternative to a written row-generic impl (RFC-0214, RFC-0216) for the
+   common case; whether it is worth a clause form is open (RFC-0207).
+
 ---
 
 ## Decision
