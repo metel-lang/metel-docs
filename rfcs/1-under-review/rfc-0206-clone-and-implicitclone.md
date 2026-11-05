@@ -396,6 +396,23 @@ general features, in this order:
    the other. Each is named, listed here and in the table of section 2, and has a removal condition.
 8. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
+**End state: stored interfaces with the solver as producer (decided 2026-11-05).** v0.16.0 ships the design of
+this RFC as written, with the limitation of step 2. The direction after it is the hybrid recorded in the
+comparison report (`architecture/reports/clone-implicitclone-declared-conditions-comparison.md`, section 13):
+the general solver computes, once per declaration, the weakest condition on the type's parameters under which the
+exact predicate holds; that condition is stored as the type's interface (an impl set, whose heads may be
+instantiation patterns); every use, including generic bodies, consults only stored interfaces. The invariant is
+that a stored interface implies the exact predicate of rule 3 and equals it whenever the condition language can
+express it, so rule 3 stays the meaning and the generic-body analysis becomes complete for markers on nominal
+types. An optional `when` clause is an assertion checked as sufficient, not the source of truth. The route
+is incremental and nothing in v0.16.0 closes it:
+1. v0.16.0: this RFC, with the undecided-ownership diagnostic (#1814).
+2. A later minor: stored interfaces with explicit conditions, with copy-site classification separated from
+   obligation entailment (metel-core#1818).
+3. Then: the declaration-graph computation phase (#1819) and the solver as producer of the interfaces (#1813).
+4. Finally: public-interface snapshots and a lint for unstated public conditions (#1820).
+Epic: metel-core#1821.
+
 Work specific to this RFC and independent of that order:
 - **Copy-site retention** (metel-core#1816). A generic body is reconstructed per call from the source AST
   with fresh inference facts today, so a definition-time copy-or-move decision (rule 4 of the copy sites)

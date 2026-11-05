@@ -300,3 +300,12 @@ interfaces with explicit conditions (E-explicit, with the absent-bound leak fixe
 entailment); the solver then replaces the syntactic computation as the producer of the interfaces. Choosing (c) now does
 not close the door on the hybrid.
 
+## 14. Decision (2026-11-05)
+
+The language owner chose **option (c) with the hybrid of section 13 as the explicit end goal**: v0.16.0 ships the
+current design with the three decisions of review 3 (undecided abstract ownership is a diagnostic, copy-site retention,
+the lowering rules), and the later minors converge on the hybrid in steps (stored interfaces with explicit conditions;
+the declaration-graph computation phase with the solver as producer; public-interface snapshots and a lint). The
+route is recorded in RFC-0206 section 6, "End state", and tracked by the epic metel-core#1821 (#1818 to #1820 and
+#1813).
+
