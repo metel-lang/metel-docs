@@ -410,7 +410,9 @@ is incremental and nothing in v0.16.0 closes it:
 2. A later minor: stored interfaces with explicit conditions, with copy-site classification separated from
    obligation entailment (metel-core#1818).
 3. Then: the declaration-graph computation phase (#1819) and the solver as producer of the interfaces (#1813).
-4. Finally: public-interface snapshots and a lint for unstated public conditions (#1820).
+4. Finally: an unstated condition on a `pub` generic type is an error, with a fix-it showing the computed
+   condition (#1820); a non-`pub` type may rely on the computed condition. A field change to a public type then
+   either keeps its stated condition sufficient or fails validation, so it cannot change the interface silently.
 Epic: metel-core#1821.
 
 Work specific to this RFC and independent of that order:

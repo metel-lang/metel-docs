@@ -260,7 +260,9 @@ everything else reads.
 3. **At every use, including generic bodies**, only stored interfaces are consulted: a small evaluator substitutes
    arguments into declared conditions. The search never runs at use sites.
 4. **`when` is an assertion, not the source of truth.** If written, it is checked sufficient (stronger is allowed);
-   if omitted, the computed interface is used, with a lint suggesting it be stated for `pub` types.
+   if omitted, the computed interface is used, **except on a `pub` generic type, where leaving the condition unstated is
+   an error** (decided 2026-11-05; the fix-it shows the computed condition). A non-`pub` type may rely on the computed
+   condition.
 
 ```metel
 struct Wrapper<T> derives ImplicitClone { value: T }                   // stored: `where T: ImplicitClone`
@@ -287,8 +289,10 @@ becomes complete for markers on nominal types.
 **What it still costs.**
 - A declaration-graph phase after name resolution and before coherence (ordering, cross-module interfaces, a cycle
   policy). This is the phase the combined spike stopped at.
-- Silent change on public types when the condition is not stated. A lint helps; a stronger form would snapshot public
-  interfaces and flag changes between releases, as a semver checker does.
+- Silent change on public types is ruled out by making an unstated condition on a `pub` generic type an error (decided
+  2026-11-05): a field change then either keeps the stated condition sufficient or fails validation. The cost is that
+  public generic types always state their condition; non-generic and unconditional types state nothing, and non-`pub`
+  types may use the computed default.
 - Two notions in the spec (the exact predicate and the stored interface), tied by the invariant above.
 
 **Reversal check.** Nothing already accepted is reversed: the exact predicate stays the meaning and the analysis stays a
@@ -305,7 +309,8 @@ not close the door on the hybrid.
 The language owner chose **option (c) with the hybrid of section 13 as the explicit end goal**: v0.16.0 ships the
 current design with the three decisions of review 3 (undecided abstract ownership is a diagnostic, copy-site retention,
 the lowering rules), and the later minors converge on the hybrid in steps (stored interfaces with explicit conditions;
-the declaration-graph computation phase with the solver as producer; public-interface snapshots and a lint). The
+the declaration-graph computation phase with the solver as producer; an error for an unstated condition on a `pub`
+generic type). The
 route is recorded in RFC-0206 section 6, "End state", and tracked by the epic metel-core#1821 (#1818 to #1820 and
 #1813).
 
