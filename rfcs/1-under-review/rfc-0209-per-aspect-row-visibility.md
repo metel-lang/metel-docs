@@ -7,11 +7,11 @@ updated: '2026-11-04'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 ---
 
-> **Note, 2026-11-03.** The `Copy`/`Clone` settlement was redesigned: RFC-0206 is now "Clone and
-> ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
-> `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
-> of that design. What remains relevant here is the derivation of `Clone` by a row template;
-> examples below that use `Copy` read as `ImplicitClone` (`derives ImplicitClone`). The operative text below
+> **Note, 2026-11-05.** The `Copy`/`Clone` settlement was redesigned (RFC-0206): `Copy` is a sealed implicit
+> copy granted by `derives Copy` or the `copy` keyword, and the `Clone` it brings is provided and cannot be
+> written. The `header` and `derivable` modifiers and `provides` that this draft cited are not part of that
+> design. What remains relevant here is the derivation of `Clone` and the structural `Copy` rule by a row template;
+> examples below that use `Copy` read as `copy struct`. The operative text below
 > was updated on 2026-11-04 to the settled rules: exact per-instantiation conditions (RFC-0206 rule 3), a
 > written impl that overlaps a template is `T0015` (RFC-0207 rule 4), and no refining `extend`.
 
@@ -88,8 +88,8 @@ struct's narrowed residual and an opted-in `record` from being confusable.
 (same bits, new static type).
 
 **Generic types.** A generic nominal type is checked per instantiation: the template's `where`
-clause is evaluated on the instantiated field types, so `struct View<T> derives ImplicitClone { r: &T }`
-is `ImplicitClone` for every `T` (because `&T` is) and `struct Wrapper<T> derives ImplicitClone { v: T }`
+clause is evaluated on the instantiated field types, so `copy struct View<T> { r: &T }`
+is `Copy` for every `T` (because `&T` is) and `copy struct Wrapper<T> { v: T }`
 only when `T` is. This is the exact per-instantiation condition (RFC-0162's R2), decided in RFC-0206
 rule 3; the analysis of a generic body is a sound approximation of it (RFC-0206 section 2).
 

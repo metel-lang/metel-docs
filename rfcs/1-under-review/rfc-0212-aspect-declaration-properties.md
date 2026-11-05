@@ -3,33 +3,33 @@ id: rfc-0212
 title: "Aspect Declaration Properties"
 date: '2026-11-04'
 status: under-review
-updated: '2026-11-04'
+updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
 ---
 
 > **Written 2026-11-04** as part of the `Copy`/`Clone` settlement (RFC-0206). The compiler today
 > treats `Copy`, `Send`, `Sync` and `Linear` as special cases by name; this RFC lets an aspect
-> declaration state the properties those special cases encode, so that `ImplicitClone` is an
-> ordinary std declaration. Nothing here is decided.
+> declaration state the properties those special cases encode, so that `Copy` is an ordinary std
+> declaration (revised 2026-11-05: the implicit copy is sealed, so `implicit` has no hook). Nothing here is decided.
 
 > **Status — under review (2026-11-04).** first draft opened for review
 
 ## Summary
 
-An aspect declaration may state three properties (`declared`, `auto`, `implicit via`; `auto` is deferred). Each one replaces behaviour that is hardcoded for
+An aspect declaration may state three properties (`declared`, `auto`, `implicit`; `auto` is deferred). Each one replaces behaviour that is hardcoded for
 a named aspect today.
 
 | Property | Meaning | Replaces |
 |---|---|---|
 | `declared` | granted only through a type's declaration clauses (RFC-0207), never by `extend` | the `"Copy"` special case in coherence and `check_copy_impl_eligibility` |
-| `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync`, `Linear` (**deferred**: the Send/Sync/Linear revision is not part of the ImplicitClone settlement; `ImplicitClone` does not use `auto`) |
-| `implicit via S::m` | **std only**: a by-value use of a type satisfying the aspect calls `m` instead of moving | the implicit-copy semantics of `Copy` |
+| `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync`, `Linear` (**deferred**: the Send/Sync/Linear revision is not part of the Copy settlement; `Copy` does not use `auto`, it is opt-in) |
+| `implicit` | **std only**: a by-value use of a type satisfying the aspect copies its representation instead of moving | the implicit-copy semantics of `Copy` |
 
 ```metel
 // sketches; every keyword is a placeholder
-aspect ImplicitClone: derived Clone, !Drop  // RFC-0213: Clone derived with it, Drop excluded
+aspect Copy: derived Clone, !Drop           // RFC-0213: Clone derived with it, Drop excluded (and Linear once it exists)
     declared
-    implicit via Clone::clone;
+    implicit;
 
 aspect Send auto;                           // deferred with the Send/Sync/Linear revision (RFC-0096)
 aspect Linear auto;                         // its existential rule is part of that revision
@@ -38,14 +38,15 @@ aspect Validated declared;                  // a user marker: a checked-by-nothi
 
 `implicit` is the one property that is a language semantic and not a constraint. It is the single
 exception that remains, stated as a declaration property read by identity and available to std
-only. Everything else is a general feature other aspects can use.
+only. It means one thing: a by-value use copies the representation (RFC-0206 section 2), with no user code.
+Everything else is a general feature other aspects can use.
 
 ---
 
 ## Motivation
 
 The `Copy`/`Clone` settlement (RFC-0162, RFC-0206) first proposed a compiler-known marker for
-implicit duplication, then a lang-item attribute for it. Both are exceptions keyed to one aspect.
+implicit duplication, then a lang-item attribute for it, then a hook. Both are exceptions keyed to one aspect.
 The same pattern already exists elsewhere:
 
 - **`Copy` is identified by the string `"Copy"` at about 38 sites** in the frontend
@@ -76,10 +77,10 @@ colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an err
 
 ## 2. The structural rule is a template, not a property
 
-There is no `structural` or `excludes` property. The field-wise rule of `ImplicitClone` is written in
+There is no `structural` or `excludes` property. The field-wise rule of `Copy` is written in
 std as a conditional template over the type's row, in the form RFC-0123 and RFC-0186 give (`where ..R:
-A`), and an exclusion is a negative super-aspect entry (RFC-0213 section 3, `aspect ImplicitClone:
-Clone, !Drop`).
+A`), and an exclusion is a negative super-aspect entry (RFC-0213 section 3, `aspect Copy:
+derived Clone, !Drop`).
 
 - **Exact, per instantiation.** The condition is evaluated on the instantiated field types, not as a
   bound on the type parameters. `struct View<T> { r: &T }` is covered for every `T` when `&T` is.
@@ -87,12 +88,12 @@ Clone, !Drop`).
   visible to the templates of an aspect it has granted), RFC-0210 (enums) and RFC-0211 (residuals,
   so the rule is defined on a narrowed value), with RFC-0208 for the row binder.
 - **Kinds with no fields to walk** (references, views, closures, function types) are covered by std
-  impls on those targets, in the aspect's defining module (`extend<T> &T: ImplicitClone`, a negative
+  impls on those targets, in the aspect's defining module (`extend<T> &T: Copy`, a negative
   impl for `&var T`), and by the closure rule of RFC-0134 §1 once function types can satisfy aspects
   (metel-core#739). Tuples need variadic generics (RFC-0125) and arrays a compile-time `N`
   (RFC-0132 §3), or a hardcoded arm until then.
 - **Errors name their cause.** A failed structural check names the aspect, the instantiation and the
-  field whose type fails (`Wrapper<String>: ImplicitClone: field v: String is not ImplicitClone`), at the
+  field whose type fails (`Wrapper<String>: Copy: field v: String is not Copy`), at the
   declaration when the field type is concrete and at the use that needs the instance otherwise, with the
   instantiation in the message. C++'s late, distant template errors are the cautionary precedent.
 - **With `declared`** the template is a check on the entry: a concrete field type that fails is an
@@ -101,19 +102,18 @@ Clone, !Drop`).
 - **`auto` with a structural rule** (`Send`, `Sync`, `Linear`, including the existential rule of
   `Linear`) is deferred with the Send/Sync/Linear revision of RFC-0096. This RFC does not specify it.
 
-## 3. `implicit via S::m` (std only)
+## 3. `implicit` (std only)
 
-`aspect A: S, … implicit via S::m` states that a by-value use of a value whose type satisfies `A` is
-the call `m(&x)` with the call inserted, and not a move. It requires:
-1. `A` refines (transitively) the aspect `S` that owns `m` (RFC-0213);
-2. `m` has the shape `fun m(&self) -> Self`;
-3. the declaration is in std (below).
+`aspect A … implicit` states that a by-value use of a value whose type satisfies `A` copies its
+representation instead of moving it. There is no hook: the copy runs no user code (RFC-0206 section 2), so it
+is unobservable and needs no method, no signature check and no ordering rule. It requires:
+1. `A` has the shape of a duplication marker: it refines `Clone` through a `derived` super-aspect (RFC-0213), so
+   the compiler can provide the `Clone` that is the same copy;
+2. the declaration is in std (below).
 
-**What is restricted.** `implicit` is the one language-semantic hook framework: the compiler understands
-the ownership transition, the hook's signature, place evaluation and the order of calls (RFC-0206
-section 2, copy sites). Authoring a hook's body is ordinary, since any `Clone` is one. What is std only is
-*registering a new implicit operation*: a user aspect could otherwise make arbitrary code run at every
-by-value use, which RFC-0162's D1 contains, so it is not offered.
+**What is restricted.** `implicit` is the one language-semantic property: it changes what a by-value use
+means. It is std only because a user aspect could otherwise change the ownership of every use of a type, which
+RFC-0162's D1 contains, so it is not offered.
 
 **Provenance is a property of the declaration.** A declaration is in std when its module comes from the
 embedded standard library, and the loader records that on the declaration. The flag belongs to the aspect,
@@ -121,26 +121,19 @@ not to a path written at a use site, so it survives imports, aliases and re-expo
 path root, so a user module cannot take the name. Under separate compilation the origin must be carried
 and verified in compiled artifacts (open question 6).
 
-**At most one implicit aspect per program** in the first implementation: `ImplicitClone`. A later std
+**At most one implicit aspect per program** in the first implementation: `Copy`. A later std
 aspect with `implicit` must carry a negative entry excluding every other implicit aspect (RFC-0213
 section 3), so that no type can satisfy two. Applicability is decided at the declaration, not at an
 instantiation, and a conflict is an error at the second declaration.
 
-**Refining an implicit aspect does not bypass `declared`.** `aspect Cheap: ImplicitClone` is allowed, but
-`extend T: Cheap;` still needs `T: ImplicitClone` as a super-aspect obligation, which only a declaration
+**Refining an implicit aspect does not bypass `declared`.** `aspect Cheap: Copy` is allowed, but
+`extend T: Cheap;` still needs `T: Copy` as a super-aspect obligation, which only a declaration
 clause grants. A sub-aspect cannot carry `implicit` itself, since that is std only.
 
-**The structural rule is a representation policy, not a judgment of the hook.** A wrapper with a field
-that is not `ImplicitClone` is not `ImplicitClone`, even if its own `clone` is cheap.
-
-The hook is named, not inferred from method shapes. Inference would make the meaning of `implicit`
-depend on every other method of the super-aspects: a second `fun (&self) -> Self` added to `Clone`
-would silently change or break the hook. Naming it makes the declaration say what an implicit copy
-calls, and a rename or a second candidate cannot change it unnoticed. The compiler reads the named
-method by identity, not by spelling.
-
-The cost convention of RFC-0206 section 2 belongs to the hook's signature; a future effect bound would
-be a new restriction with a migration.
+**A custom hook is a later extension, not a property of this RFC.** The earlier design let `implicit` name a
+method (`implicit via Clone::clone`) so that a written `clone` ran at an implicit copy. It is deferred (RFC-0206
+section 8): sealed to writable is a monotone relaxation, so a later minor can add a custom mode without
+changing any accepted program.
 
 ---
 
@@ -148,7 +141,7 @@ be a new restriction with a migration.
 
 | Aspect | Declaration |
 |---|---|
-| `ImplicitClone` | `: derived Clone, !Drop`, `declared`, `implicit via Clone::clone`; the structural rule is a std row template |
+| `Copy` | `: derived Clone, !Drop`, `declared`, `implicit`; the structural rule is a std row template |
 | `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |
@@ -156,12 +149,12 @@ be a new restriction with a migration.
 ## 6. Worked examples
 
 ```metel
-struct Point derives ImplicitClone { x: i64, y: i64 }     // declared: the entry is the grant
-extend Point: ImplicitClone;                              // error: ImplicitClone is declared; use the declaration
+copy struct Point { x: i64, y: i64 }                      // declared: the declaration is the grant
+extend Point: Copy;                                       // error: Copy is declared; use the declaration
 struct H { fd: i64 }
 extend H: Drop { fun drop(&var self) { } }
-struct H2 derives ImplicitClone { fd: i64 }
-extend H2: Drop { fun drop(&var self) { } }              // error: ImplicitClone: !Drop
+copy struct H2 { fd: i64 }
+extend H2: Drop { fun drop(&var self) { } }              // error: Copy: !Drop
 struct Token { id: i64 }
 extend Token: !Send;                                      // opt-out of an auto aspect: the existing negative impl
 ```
@@ -176,12 +169,14 @@ extend Token: !Send;                                      // opt-out of an auto 
 - **Properties as attributes** (`#declared`). Possible; RFC-0095 is the home, and the properties
   change what the compiler accepts, which attributes are meant not to do. Open question 1.
 - **Make `implicit` user-available.** Rejected (section 3).
-- **Infer the hook from the shape `fun (&self) -> Self` and drop `via`.** Tried and reversed on
-  2026-11-04: it is fragile against a second method of that shape in a super-aspect.
+- **`implicit via S::m`, a named hook** (the design of 2026-11-04). Deferred with the custom hook of RFC-0206
+  section 8. While it was the design, inferring the hook from the shape `fun (&self) -> Self` was tried and
+  reversed as fragile against a second method of that shape in a super-aspect.
 
 ## Relationship to existing RFCs
 
-- **RFC-0206** — `ImplicitClone` is declared with these properties.
+- **RFC-0206** — `Copy` is declared with these properties.
+- **RFC-0089** — the lattice whose `Copy`/`Drop`/`Linear` exclusions the negative super entries express.
 - **RFC-0213** — super-aspects, which `implicit` and the exclusion need.
 - **RFC-0207** — the clauses that grant a `declared` aspect.
 - **RFC-0096** — its `auto` revision is deferred; see section 2.
@@ -199,7 +194,7 @@ extend Token: !Send;                                      // opt-out of an auto 
 3. **`auto` and the structural rules of `Send`, `Sync`, `Linear`** (including `Linear`'s existential rule): deferred with the RFC-0096 revision.
 4. **Interaction of `declared` and a field of type-parameter type** when the failing instantiation is
    only discovered at a use.
-5. **Object safety** of aspects with these properties (`dyn ImplicitClone`).
+5. **Object safety** of aspects with these properties (`dyn Copy`).
 6. **Provenance of std** under separate compilation: how the origin of a declaration is carried and
    verified in compiled artifacts. Within one program the loader's record suffices.
 7. **Identity-based aspect resolution** is a prerequisite refactor with no RFC of its own; the

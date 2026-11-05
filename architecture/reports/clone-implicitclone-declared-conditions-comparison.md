@@ -7,6 +7,11 @@ relates: rfc-0206, rfc-0207, rfc-0211, rfc-0212, rfc-0213
 
 # Inferred or Declared Conditions for ImplicitClone: A Comparison
 
+> **Revised later on 2026-11-05.** This comparison was written for the `ImplicitClone` (hook) design. The language owner
+> then chose a sealed implicit copy named `Copy` (RFC-0206); read `ImplicitClone` below as `Copy`. The question
+> (inferred or declared conditions for a generic nominal type) and the hybrid end state are unchanged; the hook,
+> the copy-site retention and the lowering rules mentioned in places no longer exist.
+
 A comparison of two ways to decide when a generic nominal type is `ImplicitClone`, written after
 the third adversarial review of the Clone and ImplicitClone design (metel-core#1809, review 3,
 alternative E). It records the effects of each on the review findings, on the RFCs and on the v0.16.0

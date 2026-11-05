@@ -202,7 +202,7 @@ so both properties that matter are inherited, not separately defined:
 ## 4. Not a tier-2 exception — a view was never a conversion output
 
 The original draft framed a view's brand-carrying-ness as a *third exception* to
-RFC-0090 §8's "tier 2 output is bare by default" rule, alongside RFC-0089 §3.1's
+RFC-0090 §8's "tier 2 output is bare by default" rule, alongside RFC-0215 §3 (split from RFC-0089).1's
 fiat-`Linear` carve-out. **That framing doesn't survive the RFC-0137 reading, and
 should be dropped rather than patched.** A view was never a `to_record()`/
 `to_record_mut()` output at all — it's a name for a struct's own RFC-0137 residual,

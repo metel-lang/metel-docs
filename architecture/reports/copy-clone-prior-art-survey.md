@@ -433,6 +433,10 @@ Still unconfirmed:
 
 ## 12. How the proposed design compares with the prior art
 
+> **Revised later on 2026-11-05.** The design below was the user-writable-hook version (`ImplicitClone`). The language
+> owner then chose a **sealed** implicit copy named `Copy`, with the class keywords of RFC-0089 (`copy`, `affine`,
+> `linear`); section 12.8 states how the comparison changes. Sections 11 and 12.1 to 12.7 describe the hook version.
+
 Added 2026-11-05. The design is RFC-0206 with RFC-0207, RFC-0212 and RFC-0213: `Clone` plus the `ImplicitClone` marker
 whose hook is the type's own `clone`; the colon authorizes and `derives` generates; aspect properties are declared data;
 v0.16.0 ships the design with a diagnostic limitation for undecided abstract ownership, and the later minors converge on
@@ -512,7 +516,29 @@ proposal's largest weakness.
   declaration; a derived-marker rule that prevents inconsistent derivations; user-extensible markers and exclusions.
 - **Worse:** observable hooks; more concepts; generic-code limits in v0.16.0; no field record.
 
+### 12.8 The sealed revision (2026-11-05)
+
+After three adversarial reviews and two spikes, RFC-0206 makes the implicit copy sealed: `Copy` (not `ImplicitClone`)
+is the representation copy, it runs no user code, and it brings a provided `Clone` that cannot be written. The class
+keywords `copy`, `affine` and `linear` (RFC-0089 section 2.1) are one-word sugar for the declaration clauses. A
+user-writable hook is a deferred extension (RFC-0206 section 8). What changes in the comparison:
+
+| Axis | Change against section 12.1 to 12.7 |
+|---|---|
+| Copy semantics row | An implicit copy cannot run user code: the proposal now sits with Rust and Swift, not with C++ and Mojo |
+| Written for a plain value type | `copy struct P` (one word) against Rust's `#[derive(Clone, Copy)]` |
+| Teachability | Three class words (`copy`, `affine`, `linear`) that match the closure qualifiers `copy` and `once`; "types are affine unless you say `copy`" |
+| Correctness | The observability edge of Rust and Swift is no longer a gap; the cost convention, the copy-site call order and the lowering contract are not needed |
+| Cost visibility | An implicit copy is a bit copy, so there is no cost surprise beyond size; `.clone()` stays the visible cost |
+| Consistency | Fewer concepts than the hook version (no hook, no `implicit via`, no `derived` mark needed for `Copy` beyond the provided `Clone`); the lattice of RFC-0089 explains the `Drop` and `Linear` exclusions as one rule |
+| Fail-safe default | Affine by default and `copy` opt-in, so a forgotten keyword on a handle or a token fails safe; copy-by-default (Swift) was rejected for that reason |
+| Loses | A custom implicit copy (the `Cache` that resets a field on copy) until the later extension |
+
+The remaining weaknesses are unchanged: maturity, the generic-code limits of v0.16.0, and the extra machinery
+(super-aspects, `declared`, negative entries, the stored-interface route).
+
 ## 13. Sources
+
 
 - Rust: https://doc.rust-lang.org/std/marker/trait.Copy.html and the 2026 ergonomic ref-counting
   goal at https://rust-lang.github.io/rust-project-goals/2026/ergonomic-rc.html

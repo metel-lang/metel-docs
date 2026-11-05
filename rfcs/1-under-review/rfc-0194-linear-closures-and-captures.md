@@ -83,7 +83,7 @@ this is structural composition, not derive-as-codegen.
 - A capture by reference (`[&t]`, `[&var t]`) does not move the value and does not make the closure
   linear. The `Linear` value is still owned outside and must still be consumed there.
 - A closure that captures another linear closure is linear, by the same join.
-- Capturing a *field* of a linear struct follows RFC-0089 §3: convert with `ToRecord` first and
+- Capturing a *field* of a linear struct follows RFC-0215 §3 (split from RFC-0089): convert with `ToRecord` first and
   capture the resulting field. A partial move out of a plain linear struct is not allowed.
 
 ### A linear closure is called exactly once

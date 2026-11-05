@@ -3,7 +3,7 @@ id: rfc-0213
 title: "Super-Aspects"
 date: '2026-11-04'
 status: under-review
-updated: '2026-11-04'
+updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
 ---
 
@@ -23,7 +23,7 @@ An aspect declaration may list one or more direct super-aspects after its name:
 pub aspect Ord: Eq {
     fun cmp(&self, other: &Self) -> Ordering;
 }
-aspect ImplicitClone: derived Clone, !Drop;   // sketch: requires Clone (derived with it), excludes Drop
+aspect Copy: derived Clone, !Drop;            // sketch: Clone derived with it, Drop excluded (and Linear, RFC-0089, once it exists)
 ```
 
 The relation `A: B` is nominal and transitive: a proof of `T: A` also proves `T: B`; an
@@ -37,8 +37,8 @@ entry is only an obligation.
 ## Motivation
 
 - **RFC-0168** needs `Eq: PartialEq`.
-- **The `Copy`/`Clone` settlement** needs `ImplicitClone: Clone`, so that every implicit-copy type is
-  explicitly copyable by construction and `T: ImplicitClone` entails `T: Clone` in the checker and in
+- **The `Copy`/`Clone` settlement** needs `Copy: Clone`, so that every implicit-copy type is
+  explicitly copyable by construction and `T: Copy` entails `T: Clone` in the checker and in
   the abstract analysis of generic bodies. Today the abstract-variable satisfaction query consults
   only its explicit assumption set and does not discover super-aspects
   (`type_engine/mod.rs`, `infer_type_satisfies_aspect`).
@@ -80,12 +80,12 @@ Any direct contradiction after the closure is a coherence error.
 1. **Coherence uses the syntactic closure only.** Super entries and exclusions come from aspect
    declarations, which exist before type checking, so no solved facts are needed. Two impls are disjoint
    when a positive requirement of one is excluded, directly or by entailment, by a negative requirement
-   of the other. `extend<T: ImplicitClone> W<T>: A` and `extend<T: Drop> W<T>: A` are disjoint because
-   `ImplicitClone` excludes `Drop`.
+   of the other. `extend<T: Copy> W<T>: A` and `extend<T: Drop> W<T>: A` are disjoint because
+   `Copy` excludes `Drop` (the lattice rule of RFC-0089 section 1).
 2. **Absence is not negation.** "No impl of `C` exists" never proves `T: !C`. In generic code `!C` comes
    only from a bound or an entailment. A grant on a concrete named type is checked in its defining
    module, where the orphan rule closes its impl set for the aspects of std (`Drop`), so
-   `ImplicitClone` on a `Drop` type is a coherence error at the grant. Unknown stays unknown and is never
+   `Copy` on a `Drop` type is a coherence error at the grant. Unknown stays unknown and is never
    a proof of `!Drop`.
 3. **Priority applies before closure.** If a negative impl wins over a blanket positive impl for a type
    (RFC-0060 section 5), the closure is computed from the facts after that choice. A positive impl of a
@@ -103,7 +103,7 @@ and replaces the `excludes` property of an earlier draft of RFC-0212.
 
 A super-aspect entry is an **obligation** unless it is marked `derived`. The mark says that the
 derivation recipe of the sub-aspect includes the super-aspect, because the sub-aspect's law is stated
-over the super-aspect's methods (`Eq` over `PartialEq`, `ImplicitClone` over `Clone`). The aspect's
+over the super-aspect's methods (`Eq` over `PartialEq`, `Copy` over `Clone`). The aspect's
 author marks it; std decides the first set.
 
 1. **Unmarked entry** (`aspect Error: Display`, the default, as in Rust and Haskell): `derives A` requires
@@ -147,13 +147,13 @@ extend Id: Eq;                               // ok: PartialEq exists
 struct Bad { n: i64 }
 extend Bad: Eq;                              // error: no PartialEq for Bad
 
-aspect ImplicitClone: derived Clone, !Drop;
-struct Point derives ImplicitClone { x: i64 }          // derives Clone too
-struct Cache: ImplicitClone { n: i64 }
-extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: the colon form, with a hand-written Clone
-struct Both derives ImplicitClone { n: i64 }
-extend Both: Clone { … }                     // error T0015: overlaps the derived Clone; write `: ImplicitClone`
-struct Dup derives Clone, ImplicitClone { n: i64 }
+aspect Copy: derived Clone, !Drop;
+copy struct Point { x: i64 }                 // = derives Copy: derives the marker and its Clone
+struct Cache { n: i64 }
+extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: not Copy; a custom duplicate is explicit-only
+copy struct Both { n: i64 }
+extend Both: Clone { … }                     // error T0015: overlaps the Clone that Copy brings
+struct Dup derives Clone, Copy { n: i64 }
 extend Dup: Clone { … }                      // error T0015: overlaps the derived Clone
 ```
 
@@ -170,7 +170,8 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
 
 - **RFC-0168** — the equality model, which depends on this RFC.
 - **RFC-0212** — properties of an aspect declaration; `implicit` needs the relation.
-- **RFC-0206** — `ImplicitClone: Clone, !Drop`.
+- **RFC-0206** — `Copy: derived Clone, !Drop`.
+- **RFC-0089** — the lattice whose exclusions (`Copy` with `Drop`, `Copy` with `Linear`) this relation expresses.
 - **RFC-0207** — the `derives` clause and the derivations this rule builds on.
 - **RFC-0081 / RFC-0060** — negative impls and coherence, extended by section 3.
 - **RFC-0039** — aspect aliases, unchanged.

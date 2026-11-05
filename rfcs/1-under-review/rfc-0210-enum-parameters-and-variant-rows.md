@@ -7,11 +7,11 @@ updated: '2026-11-04'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1791'
 ---
 
-> **Note, 2026-11-03.** The `Copy`/`Clone` settlement was redesigned: RFC-0206 is now "Clone and
-> ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
-> `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
-> of that design. What remains relevant here is the derivation of `Clone` by a row template;
-> examples below that use `Copy` read as `ImplicitClone` in the colon list.
+> **Note, 2026-11-05.** The `Copy`/`Clone` settlement was redesigned (RFC-0206): `Copy` is a sealed implicit
+> copy granted by `derives Copy` or the `copy` keyword, and the `Clone` it brings is provided and cannot be
+> written. The `header` and `derivable` modifiers and `provides` that this draft cited are not part of that
+> design. What remains relevant here is the derivation of `Clone` and the structural `Copy` rule by a row template;
+> examples below that use `Copy` read as `copy enum`.
 
 > **Status — under review (2026-11-04).** Tracker milestoned; reviewed as part of the Copy/Clone settlement (RFC-0206, RFC-0212)
 
@@ -40,9 +40,8 @@ enum Shape derives Clone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // der
 enum Option<T> derives Clone { None, Some { value: T } }
 ```
 
-`ImplicitClone` needs no body of its own: it is a marker whose hook is the type's `Clone` (RFC-0206
-section 2), so an `ImplicitClone` enum needs the eligibility check `..E: ImplicitClone` and a `Clone`
-(`derives Clone`, or `derives ImplicitClone`, which derives both).
+`Copy` needs no body of its own: it is a marker whose copy is the representation copy and whose `Clone` is
+provided (RFC-0206 section 2), so a `Copy` enum needs only the eligibility check `..E: Copy`.
 
 ---
 
@@ -100,8 +99,8 @@ one level down: the members of `..E` are rows, and a row satisfies the bound whe
 for it. A unit variant satisfies it vacuously.
 
 ```metel
-enum Shape derives ImplicitClone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // holds: f64 is ImplicitClone
-enum Bad derives ImplicitClone { A { s: String } }                                // rejected at the declaration, next to `s`: String is not ImplicitClone
+copy enum Shape { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // holds: f64 is Copy
+copy enum Bad { A { s: String } }                                // rejected at the declaration, next to `s`: String is not Copy
 ```
 
 For a generic enum the bound is evaluated per instantiation (RFC-0209, R2): `Option<&String>`

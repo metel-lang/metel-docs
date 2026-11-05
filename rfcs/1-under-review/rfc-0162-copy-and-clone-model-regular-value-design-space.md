@@ -32,45 +32,43 @@ implicit marker is named, declared and related to `Clone`.
 
 ---
 
-## Proposed direction (2026-11-03)
+## Proposed direction (revised 2026-11-05)
 
-> The language owner's current leaning after the survey. It is not decided. It keeps the value
-> model's semantics and changes the two aspects: an explicit `Clone` and a compiler-known implicit
-> marker that refines it, in the shape Mojo arrived at.
+> The language owner's current direction after the survey, three adversarial reviews and two spikes. It is not
+> decided. It keeps Rust's ownership model, makes the implicit copy sealed, settles the classes against the
+> lattice of RFC-0089, and leaves a user-writable hook as a later extension. The 2026-11-03 direction (an
+> `ImplicitClone` marker whose hook was the type's own `clone`) is recorded in RFC-0206 section 8.
 
-1. **The ownership model does not change; what an implicit copy runs does.** Values are still
-   moved unless their type is `ImplicitClone`, and explicit duplication stays a call; no P1, P2 or P3.
-   An implicit copy of a type with a written `clone` now runs that code, so insertion and elision of
-   the call are observable, and an implementation must preserve the number and order of hook calls
-   for types that are not intrinsically cloneable (RFC-0206 section 2, copy sites). Implicit duplication
-   stays cheap in *intent*, as a convention and not a law.
-2. **Two aspects, one definition of the copy (B1m).** `Clone` is the explicit aspect. `ImplicitClone`
-   is a method-less marker the compiler knows that refines `Clone`: an `ImplicitClone` type is
-   duplicated at a by-value use by calling its own `clone`. *`ImplicitClone` is `Clone` that the
-   compiler calls for you.* `Copy` becomes a deprecated alias for one minor release. Details are
-   RFC-0206.
-3. **The grant is fixed on the declaration, and the clause says where `Clone` comes from.**
-   `struct Point derives ImplicitClone { … }` when the compiler writes the `Clone` (exactly
-   `: ImplicitClone derives Clone`), and `struct Cache: ImplicitClone { … }` when `Clone` is written by hand (the colon authorizes, `derives` generates).
-   The colon list never generates and has no negative entries (an opt-out such as `!Send` stays the
-   negative `extend`); `extend T: ImplicitClone;` is an error. Both clauses are RFC-0207.
-4. **No special case by name.** `ImplicitClone` is an ordinary aspect declared in std with general
-   aspect properties (RFC-0212: `declared` and the std-only `implicit via`; the structural rule is a std
-   row template and the exclusion of `Drop` a negative super-aspect entry) over a super-aspect
-   relation (RFC-0213). The compiler reads those properties by
-   identity, which replaces the string-keyed `"Copy"` special cases (about 38 sites). The one property
-   that is a language semantic, implicit duplication, is a declaration property available to std only;
-   every language surveyed keeps that one exception. The cost is a dependency chain (RFC-0206
-   section 6) that v0.16.0 waits for, by the language owner's choice.
-5. **The hook is user-writable.** A written `clone` runs at an implicit copy. A future effect bound
-   restricts what such a `clone` may do; no lint before then.
-6. **`Drop` excludes `ImplicitClone` only,** which makes `Clone` on a `Drop` type legal (D3's
-   relaxation, metel-core#1782).
-7. **Structural types and closures follow compiler rules** (Axis S's S1): tuples, arrays and records
-   by their parts, `&T` and `[T]` always, `&var T` never, closures by captures (RFC-0134), written
-   function types move-only (RFC-0166). No marker on a written type is needed.
-8. **Names.** `Clone` keeps its name and Rust's contract ("another value of this type"). The
-   closure qualifier `copy` and `once` keep their spelling (RFC-0163).
+1. **The ownership model does not change and neither does what an implicit copy runs.** Values are still moved
+   unless their type is `Copy`, and explicit duplication stays a call; no P1, P2 or P3. The implicit copy is the
+   representation copy: it runs no user code, so it is unobservable and may be elided at the last use.
+2. **Two aspects.** `Clone` is the explicit aspect and may do anything a function can. `Copy` is the sealed
+   implicit copy; it implies `Clone`, which the compiler provides and which cannot be written for a `Copy` type.
+   A type that needs a custom duplicate is not `Copy`. *`Copy` is the duplication the compiler does for you;
+   `Clone` is the one you ask for.* Details are RFC-0206.
+3. **The grant is fixed on the declaration.** `copy struct Point { … }`, the one-word form of
+   `struct Point derives Copy { … }`, generates the marker and the `Clone` it brings; `extend T: Copy;` is an error
+   (a deprecation for one minor). `affine struct` locks out `Copy` and `Linear`; `linear struct` is reserved
+   (RFC-0089 section 2.1). A type is affine unless it says otherwise, so forgetting a keyword on a handle fails
+   safe. The colon list holds user markers only; both clauses are RFC-0207.
+4. **No special case by name.** `Copy` is an ordinary aspect declared in std with general aspect properties
+   (RFC-0212: `declared` and the std-only `implicit`; the structural rule is a std row template and the
+   exclusion of `Drop` a negative super-aspect entry) over a super-aspect relation (RFC-0213). The compiler reads
+   those properties by identity, which replaces the string-keyed `"Copy"` special cases (about 38 sites). The one
+   property that is a language semantic, implicit duplication, is a declaration property available to std only;
+   every language surveyed keeps that one exception. The cost is a dependency chain (RFC-0206 section 6) that
+   v0.16.0 waits for, by the language owner's choice.
+5. **The classes are the lattice of RFC-0089.** Unrestricted (`Copy`), affine (the default) and linear; `Drop` and
+   `Linear` exclude `Copy` as one rule (RFC-0071 section 4 is a special case, which also settles D3: `Drop`
+   excludes `Copy` and `Clone` on a `Drop` type is legal, metel-core#1782). RFC-0089 is a design-level
+   dependency; `linear` is reserved in v0.16.0.
+6. **A user-writable hook is a later extension.** Sealed to writable is a monotone relaxation; the cost of the
+   hook (observable insertion, a lowering contract, per-site dispatch) is why it is deferred (RFC-0206 section 8).
+7. **Structural types and closures follow compiler rules** (Axis S's S1): tuples, arrays and records by their
+   parts, `&T` and `[T]` always, `&var T` never, closures by captures (RFC-0134), written function types
+   move-only (RFC-0166). No marker on a written type is needed.
+8. **Names.** `Clone` keeps its name and Rust's signature and ownership shape; `Copy` keeps its name. The closure
+   qualifier `copy` and `once` keep their spelling (RFC-0163), and the type keyword `copy` matches it.
 
 The earlier positions stay recorded: Rust's `Copy`/`Clone` pair with a header grant (C4) and
 declaration modifiers (C5), the keyword form (C2, P4), sealed bodies (B1s), and the structural
@@ -273,7 +271,7 @@ Two orthogonal axes.
   `once` = move-only; an explicit `dup()` bridges `once` → owned copy. `Clone`
   disappears into "`dup()` on a `once` type."
 
-- **B1m. Two aspects, one definition, a user-writable hook (proposed 2026-11-03).** `Clone` is the
+- **B1m. Two aspects, one definition, a user-writable hook (proposed 2026-11-03; deferred 2026-11-05 as a later extension).** `Clone` is the
   explicit aspect; `ImplicitClone` is a method-less marker the compiler knows that refines it, and
   the implicit copy is a call to the type's own `clone`. This is Mojo's shape (`Copyable`, with the
   `ImplicitlyCopyable` marker that "inherits from `Copyable`, and requires no additional methods"),
@@ -281,9 +279,13 @@ Two orthogonal axes.
   B1s in not sealing the body: sealing was what required a second impl, a selection rule over
   overlapping impls and an equality law between two bodies. Specified in RFC-0206.
 
-**Proposed (language owner's lean, 2026-11-03): B1m.** It answers the second concern (a type no
-longer writes both aspects) and explains the names without a rename of `Clone`: *`ImplicitClone` is
-`Clone` that the compiler calls for you.* B1s stays recorded above as the stricter alternative.
+**Proposed (language owner, revised 2026-11-05): a sealed copy, B1s-shaped, with a single provided `Clone`.** B1m was
+the lean of 2026-11-03 (`ImplicitClone` is `Clone` that the compiler calls for you); three adversarial reviews and
+two spikes found that a user-writable hook makes insertion and elision observable and costs a lowering contract,
+per-site dispatch and a value-changing "unknown". The sealed copy keeps the second concern answered (a type no
+longer writes both aspects: `copy struct` brings `Clone`) without B1s's second impl, because the `Clone` is provided
+by a `derived` super-aspect and cannot be written (RFC-0213 section 4). B1m stays a later extension (RFC-0206
+section 8).
 
 ### Axis B, second cut — duplication vs. aliasing (→ RFC-0158)
 
@@ -340,13 +342,12 @@ Everything else it buys (locality, a keyword that looks like a language rule) is
 of degree. C1 has one property C2 cannot have: uniformity with `Drop`, `Send`, `Sync`,
 and every other capability the language expresses as an aspect. That is the whole trade.
 
-**Proposed (language owner's lean, 2026-11-03): a variant of C4 without general modifiers.** The
-grant of the implicit marker is a declaration-only entry in the colon list (`struct P: ImplicitClone`),
-which the compiler evaluates itself. Swift's rule is the precedent: copyability is fixed on the
-declaration and cannot be changed in an extension. The earlier C4 with refinable grants, and the C5
-grant modes (`header`, `derivable`, `auto` as declaration kinds), were dropped after the adversarial
-review, because the compiler-known marker needs none of them (RFC-0207). C2 (`copy struct`) stays the
-alternative.
+**Proposed (language owner, revised 2026-11-05): C2 and C4 together.** The grant of `Copy` is a declaration-only
+clause, `struct P derives Copy`, with `copy struct P` as its one-word keyword form (C2, reusing the reserved
+word of RFC-0163 and the class vocabulary of RFC-0089), which the compiler evaluates itself. Swift's rule is the
+precedent: copyability is fixed on the declaration and cannot be changed in an extension. The earlier C4 with
+refinable grants, and the C5 grant modes (`header`, `derivable`, `auto` as declaration kinds), were dropped after
+the adversarial review (RFC-0207).
 
 #### Worked examples
 
@@ -823,8 +824,8 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   two framings if P4 advances.
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
-- **RFC-0206 (Clone and ImplicitClone, `1-under-review`)** — specifies `Clone`, the `ImplicitClone`
-  marker and their relationship (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten
+- **RFC-0206 (Copy and Clone, `1-under-review`)** — specifies `Clone`, the sealed `Copy`
+  and their relationship (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten
   `Clone` to independent-duplication-only; add `Share`). This RFC's direction leaves `Clone`
   otherwise untouched.
 - **RFC-0207 (Declaration Clauses: derives and the Colon List, `1-under-review`)** — the colon list
@@ -1045,20 +1046,20 @@ trait that gates nothing implicit is an unobjectionable trait.
 
 ## Open Questions
 
-> **Status under the 2026-11-03 direction.** The questions below keep their numbering. Where the
+> **Status under the 2026-11-05 direction.** The questions below keep their numbering. Where the
 > proposed direction answers one it is noted here; the original text follows for the record.
 >
 > 1. *No value-model change.* Answered by direction 1: no change. D1 stays as Rust has it.
-> 2. *D3, the `Copy`/`Drop` exclusion.* Answered by direction 6: `Drop` excludes `ImplicitClone` only;
->    `Clone` on a `Drop` type is legal (metel-core#1782).
+> 2. *D3, the `Copy`/`Drop` exclusion.* Answered by direction 5: `Drop` excludes `Copy` (the lattice rule
+>    of RFC-0089); `Clone` on a `Drop` type is legal (metel-core#1782).
 > 3. *RFC-0135.* Refused; its mechanism-location half is taken as the declaration-fixed marker.
-> 4. *Keyword or aspect (P4).* Answered by direction 3: a compiler-known marker aspect, granted in
->    the declaration's colon list. C2 stays the alternative.
-> 5. *May `Copy` be derived.* Answered: `ImplicitClone` is not derived or implemented; the compiler
->    evaluates it, and derives `Clone` when the type has none. There is no deriver to register.
+> 4. *Keyword or aspect (P4).* Answered by direction 3: the `copy` keyword is the one-word form of
+>    `derives Copy`; both are declaration-only grants of the `Copy` aspect.
+> 5. *May `Copy` be derived.* Answered: `derives Copy` derives the marker and the `Clone` it brings
+>    (a `derived` super-aspect, RFC-0213 section 4); the derivation is native in the first implementation.
 > 6. *Residuals of S6.* Moot: direction 7 keeps S1; no marker on a written type.
 > 7. *Residuals of C2.* Conditional grants: the condition is exact per instantiation, with no
->    refinement. The stop rule: the marker is a compiler exception (direction 4). C4, C5 and the
+>    refinement. The stop rule: the implicit property is a std-only declaration property (direction 4). C4, C5 and the
 >    refinable grant are dropped.
 > 8. *`Clone` for non-`Copy` types.* RFC-0206 section 4: written, `derives Clone`, or implied by the
 >    marker.
@@ -1169,7 +1170,6 @@ split — RFC-0158. The closure-capture default — RFC-0157, decided.)*
 
 ## Decision
 
-**Outcome:** *(pending. Direction proposed 2026-11-03: the ownership model is unchanged and an implicit copy of a type with a written `clone` runs it; `Clone` and a
-compiler-known `ImplicitClone` marker replace `Copy`/`Clone`, specified in RFC-0206 and RFC-0207.
+**Outcome:** *(pending. Direction revised 2026-11-05: the ownership model is unchanged and the implicit copy is sealed (the representation copy); `Clone` is explicit and `Copy` implies a provided `Clone`, with the class keywords of RFC-0089, specified in RFC-0206 and RFC-0207.
 The Open Questions above carry the status of each earlier question.)*
 **Target:** v0.16.0 (metel-core#924).

@@ -9,7 +9,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 
 > **Note, 2026-11-04 (RFC-0212).** The closed compiler-intrinsic list of section 1 is to be replaced by
 > an `auto` declaration on the aspect (RFC-0212). RFC-0212 no longer has a `structural` property (the
-> field-wise rule of `ImplicitClone` is a std-written row template), so how the composition rule of
+> field-wise rule of `Copy` is a std-written row template), so how the composition rule of
 > section 2 is expressed is part of this RFC's revision, which the language owner has deferred.
 
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0080, 0061,
@@ -364,7 +364,7 @@ revision (the note at the top), when `Send` and `Sync` are implemented and there
 **The alternative (A): a negative entry in the colon list.**
 
 ```metel
-struct Token: ImplicitClone, !Send { id: i64 }
+struct Token: Validated, !Send { id: i64 }
 ```
 
 - *For.* A type that is not `Send` changes what every use across threads means, the same kind of
@@ -381,7 +381,7 @@ struct Token: ImplicitClone, !Send { id: i64 }
   `extend` of an `auto` aspect becomes an error with a fix-it.
 
 **Current behaviour (B): the negative `extend`.** It needs no new syntax and no restriction, and it
-is not needed for `ImplicitClone`. Whether to adopt A is **an open question (see Unresolved Questions,
+is not needed for `Copy`. Whether to adopt A is **an open question (see Unresolved Questions,
 8)**, deferred with this RFC's revision.
 
 ## Unresolved Questions
@@ -450,10 +450,10 @@ is not needed for `ImplicitClone`. Whether to adopt A is **an open question (see
    just makes the implementation obligation explicit before this RFC is accepted,
    rather than leaving it implicit in a sentence about coherence.
 
-8. **Colon-list opt-out (option A, section 8).** Should `struct Token: ImplicitClone, !Send` replace
+8. **Colon-list opt-out (option A, section 8).** Should `struct Token: Validated, !Send` replace
    the negative `extend T: !Send;` as the opt-out of an `auto` aspect? The Send/Sync/Linear revision of
    this RFC (the `auto` property of RFC-0212 and the structural rules) is **deferred by the language
-   owner (2026-11-04)**; it is not part of the Clone/ImplicitClone settlement (RFC-0206), which does
+   owner (2026-11-04)**; it is not part of the Copy/Clone settlement (RFC-0206), which does
    not depend on either spelling. The revision must also address the semver hazard of `auto`: Rust's
    language team calls each auto trait a hazard (a private field change can remove `Send` from a
    public type), and Swift infers `Sendable` only for types that are not publicly ABI-exposed

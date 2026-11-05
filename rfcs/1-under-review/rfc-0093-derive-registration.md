@@ -252,7 +252,7 @@ Deferred to **v0.5+**, alongside RFC-0092. `#derive(Clone)`'s registration funct
 
 - RFC-0092 (Comptime Core) — `type`-as-value, `typeinfo`, single-declaration `emit`
   this RFC's registration mechanism is built from
-- RFC-0206 (Clone and ImplicitClone) — `Clone`'s derive is the concrete first test
+- RFC-0206 (Copy and Clone) — `Clone`'s derive is the concrete first test
   case; its `#derive(Clone)` example depends on this RFC
 - RFC-0089 (Linear Types) — §2's correction (`Linear` is auto-impl, not derive-as-
   codegen)

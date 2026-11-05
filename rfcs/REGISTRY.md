@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**213 RFCs total.** 35 draft, 58 under review, 9 accepted, 2 integrated (104 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**214 RFCs total.** 35 draft, 59 under review, 9 accepted, 2 integrated (105 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
 ## Draft (35)
 
@@ -53,7 +53,7 @@ the curated thematic map.
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0214** — Aspect Impls for Residuals (`0-draft` ; rfcs/0-draft/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04)
 
-## Under Review (58)
+## Under Review (59)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -105,14 +105,15 @@ the curated thematic map.
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
-- **RFC-0206** — Clone and ImplicitClone (`1-under-review` ; rfcs/1-under-review/rfc-0206-clone-and-implicitclone.md ; date 2026-11-02 ; updated 2026-11-03)
-- **RFC-0207** — Declaration Clauses: derives and the Colon List (`1-under-review` ; rfcs/1-under-review/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-03)
+- **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`1-under-review` ; rfcs/1-under-review/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-05)
+- **RFC-0207** — Declaration Clauses: derives and the Colon List (`1-under-review` ; rfcs/1-under-review/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-05)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-03)
 - **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
-- **RFC-0211** — Aspect Templates on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02 ; updated 2026-11-03)
-- **RFC-0212** — Aspect Declaration Properties (`1-under-review` ; rfcs/1-under-review/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-04)
-- **RFC-0213** — Super-Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-04)
+- **RFC-0211** — Aspect Templates on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02 ; updated 2026-11-05)
+- **RFC-0212** — Aspect Declaration Properties (`1-under-review` ; rfcs/1-under-review/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-05)
+- **RFC-0213** — Super-Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-05)
+- **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
 
 ## Accepted (9)
 

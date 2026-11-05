@@ -3,15 +3,15 @@ id: rfc-0211
 title: "Aspect Templates on Residuals"
 date: '2026-11-02'
 status: under-review
-updated: '2026-11-03'
+updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 ---
 
-> **Note, 2026-11-03.** The `Copy`/`Clone` settlement was redesigned: RFC-0206 is now "Clone and
-> ImplicitClone", and RFC-0207 is reduced to the `derives` clause and the colon list. The `header` and
-> `derivable` modifiers, `provides` and the `derives Copy` spelling that this draft cites are not part
-> of that design. What remains relevant here is the derivation of `Clone` by a row template;
-> examples that used `Copy` were rewritten on 2026-11-04 to `derives ImplicitClone`.
+> **Note, 2026-11-05.** The `Copy`/`Clone` settlement was redesigned (RFC-0206): `Copy` is a sealed implicit
+> copy granted by `derives Copy` or the `copy` keyword, and the `Clone` it brings is provided and cannot be
+> written. The `header` and `derivable` modifiers and `provides` that this draft cited are not part of that
+> design. What remains relevant here is the derivation of `Clone` and the structural `Copy` rule by a row
+> template; the examples were rewritten to `copy struct`.
 
 > **Status — under review (2026-11-03).** review of residual templates
 
@@ -27,11 +27,11 @@ satisfies, and the implementation answers inconsistently. This RFC sets the rule
 
 ```metel
 struct Doc derives Clone { title: String, n: i64 }   // derives entry: the Clone template applies
-struct Point derives ImplicitClone { x: i64, y: i64 }
+copy struct Point { x: i64, y: i64 }
 
 let q := d.{ title };        // q : Doc.{ title }
 q.clone()                     // Doc.{ title }: the template clones the present field
-let p2 := p.{ x };            // p2 : Point.{ x }, ImplicitClone because x is (rules 1 and 6)
+let p2 := p.{ x };            // p2 : Point.{ x }, Copy because x is (rule 1)
 ```
 
 A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ title }`; its body may read any
@@ -85,12 +85,11 @@ header entry derives behaviour from the type's row, and a residual is that row n
    across the residual boundary. A residual whose `A` template holds but whose super-aspect does not
    does not satisfy `A`.
 
-**Marker aspects.** `ImplicitClone` follows rules 1 and 6: `Point.{ x }` is `ImplicitClone` if
-`Point` grants `ImplicitClone`, `x` is `ImplicitClone`, and the residual is `Clone` (its super-aspect).
-It is `ImplicitClone` whether or not `y` is. A residual of a type that cannot grant `ImplicitClone`
-(a field is not) never is, even if the remaining fields are: the header says so, not the shape. A
-residual of a type whose `Clone` is written has no `Clone` template, so it is neither `Clone` nor
-`ImplicitClone`, and is moved, even though the type's header grants `ImplicitClone`.
+**Marker aspects.** `Copy` follows rules 1 and 6: `Point.{ x }` is `Copy` if `Point` grants `Copy` and `x` is
+`Copy`; it is `Copy` whether or not `y` is, and it has the `Clone` that `Copy` brings (provided, so rule 6 holds
+by construction). A residual of a type that cannot grant `Copy` (a field is not) never is, even if the remaining
+fields are: the header says so, not the shape. A type whose `Clone` is written is not `Copy` (RFC-0206
+section 2), so its projections move like the value itself.
 
 **Dynamic semantics.** The template runs over the present fields only. No field that is absent is
 read, so the result is well defined at every width.
@@ -103,14 +102,13 @@ read, so the result is well defined at every width.
    `Doc.{ title }`, built from the present field.
 2. **A written clone.** `extend Doc: Clone { fun clone(&self) -> Doc { … self.n … } }`: the
    residual does not satisfy `Clone`. The program of metel-core#1788 is `T0012` at the call.
-3. **A written clone and the marker.** `struct Cache: ImplicitClone { data: i64, hits: i64 }` with a
-   written `clone` that resets `hits`: `cache.{ data }` is not `Clone` (rule 2) and therefore not
-   `ImplicitClone` (rule 6), so `let a := p; let b := p;` on the projection is a use after move. The
-   same type declared `derives ImplicitClone` has both templates, and the projection copies.
-4. **Copy of a projection.** `struct Point derives ImplicitClone { x: i64, y: i64, }`, `p.{ x }` used
-   twice: accepted, by rules 1 and 6 through the two templates, and not by looking through the brand.
-5. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `ImplicitClone`;
-   `H.{ fd }` is not `ImplicitClone` although `fd` is. A copyable projection of it needs a separate type.
+3. **A custom duplicate and `Copy` do not mix.** `struct Cache { data: i64, hits: i64 }` with a written `clone`
+   that resets `hits` is not `Copy`, so `cache.{ data }` moves; it is not `Clone` either (rule 2). The provenance
+   hazard of the hook design (a written `Clone` changing whether projections copy) does not arise.
+4. **Copy of a projection.** `copy struct Point { x: i64, y: i64 }`, `p.{ x }` used twice: accepted, by rule 1
+   through the structural `Copy` rule and the `Clone` it brings, and not by looking through the brand.
+5. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `Copy`;
+   `H.{ fd }` is not `Copy` although `fd` is. A copyable projection of it needs a separate type.
 6. **Widening.** A cloned residual is widened by restoring the missing fields (RFC-0137 §6). That restores
    the width and does not validate the relation between the restored and the retained fields: RFC-0137
    §6 documents an existing constructor-invariant bypass, which a derived clone neither adds nor repairs.
@@ -137,11 +135,6 @@ read, so the result is well defined at every width.
 - **Bound satisfaction changes for hand-written impls** on residuals: a program that passes a
   residual to `T: Clone` today (and silently skips the user's impl) becomes `T0012`. This is the
   behaviour the bug (#1788) reports, and the fix is the rule.
-- **A written `Clone` removes implicit copying from projections** (rule 6): replacing a derived
-  `clone` with an equivalent written one changes `cache.{ data }` from copied to moved. A type that
-  wants copyable projections derives its `Clone`, or gets a residual impl from RFC-0214. A program
-  that copies a projection of a `Copy` type whose `Clone` will be written needs the same change when
-  it migrates to `ImplicitClone` (RFC-0206 section 5).
 - **Two ways to satisfy an aspect** depending on whether it is derived or written, which the
   header entry already makes visible.
 - **Dependence on RFC-0209** for the template and on RFC-0207 for the header entry.

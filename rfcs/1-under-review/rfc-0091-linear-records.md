@@ -20,7 +20,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/954'
 >
 > **Revised 2026-07-09, later the same day**, matching RFC-0089's own revision: the
 > "floor" this RFC builds on top of is no longer "RFC-0089's Option B (raw field access
-> off a nominal struct)" — that mechanism was dropped. RFC-0089 §3 now specifies the
+> off a nominal struct)" — that mechanism was dropped. RFC-0215 §3 (split from RFC-0089) now specifies the
 > floor as conversion through `ToRecord`/`FromRecord` (RFC-0090) instead. This RFC's own
 > content is unaffected in substance: Option C (automatic downgrade, no explicit
 > `.to_record()` call needed at the point of consumption) is still the more expressive,
@@ -254,7 +254,7 @@ whole struct, narrowing exactly what must be un-borrowed for the consumption to 
 legal. Promising, not proven; no soundness argument is written down here either, only
 the shape of one.
 
-**A second application of the same idea, added 2026-07-10:** RFC-0089 §3.1 reuses
+**A second application of the same idea, added 2026-07-10:** RFC-0215 §3 (split from RFC-0089).1 reuses
 `(row, brand)` for a different purpose than this section's residual identity —
 preserving a *fiat*-linear struct's nominal origin through an ordinary tier-2
 `ToRecord` conversion, so a derive-emitted `impl Linear` can target that specific

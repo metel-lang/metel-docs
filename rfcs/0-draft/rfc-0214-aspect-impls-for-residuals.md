@@ -7,7 +7,7 @@ status: draft
 
 > **Status — draft (2026-11-04).** First draft. Nothing here is decided.
 
-> **Not a dependency.** The `Clone`/`ImplicitClone` settlement (RFC-0206, RFC-0207, RFC-0211, RFC-0212,
+> **Not a dependency.** The `Copy`/`Clone` settlement (RFC-0206, RFC-0207, RFC-0211, RFC-0212,
 > RFC-0213) does not wait for this RFC. Until it is accepted and implemented a residual satisfies an
 > aspect only through a row template (RFC-0211 rule 1), a hand-written impl for the whole type never
 > applies to a residual (RFC-0211 rule 2), and there is no way to write an impl for a residual. This RFC
@@ -44,8 +44,8 @@ extend DocTitle: Display {                      // the residual: needs only `tit
 1. **A residual cannot carry a written impl.** `d.{ title }` is a value of a type with the same brand
    as `Doc`, yet an author who wrote `Doc: Clone` by hand has no way to say what cloning a projection
    means. RFC-0211 gives the author two options only: derive the impl (a template then covers every
-   residual) or accept that the projection has no impl. With `ImplicitClone` that decides whether a
-   projection is copied or moved (RFC-0206, RFC-0211 rule 1).
+   residual) or accept that the projection has no impl. For a non-`Copy` type with a written `Clone` the
+   projection simply has no `Clone` (RFC-0211 rule 2); a `Copy` type needs none, since its `Clone` is provided.
 2. **A bound call on a residual silently skips the written impl today.** `dup(&d.{ title })` with
    `T: Clone` is accepted and runs a structural copy instead of the user's `clone` (metel-core#1788).
    RFC-0211 turns that into `T0012`. A written residual impl would give it a defined meaning.
@@ -106,12 +106,9 @@ RFC-0209). `Clone` therefore needs the exact-shape form, or the template. Method
    not derive that aspect.
 5. **Full width.** A residual whose row is the whole type normalises to the plain type (RFC-0137). An exact-shape impl for the full row is the whole-type impl, and writing both is `T0015`.
 6. **Super-aspects.** An impl of `A` for a residual requires every positive super-aspect of `A` to hold
-   for that residual, through a template or a residual impl (RFC-0213 section 2). This is how a
-   projection of a type with a written `Clone` becomes `ImplicitClone`: its header grants
-   `ImplicitClone`, and a residual `Clone` is written for that shape. The hook of the residual's
-   `ImplicitClone` is that residual's own `Clone` (RFC-0206 section 2).
-7. **`declared` aspects** are never granted by a residual impl: `extend DocTitle: ImplicitClone;` is the
-   error of RFC-0212 section 1. A residual is `ImplicitClone` only through the declaration's grant.
+   for that residual, through a template or a residual impl (RFC-0213 section 2).
+7. **`declared` aspects** are never granted by a residual impl: `extend DocTitle: Copy;` is the
+   error of RFC-0212 section 1. A residual is `Copy` only through the declaration's grant.
 8. **Dispatch** is static. A bound `T: A` instantiated with a residual selects the residual's impl, or
    fails with `T0012` if there is none. The silent skip of metel-core#1788 cannot occur.
 
@@ -128,8 +125,7 @@ view CacheData for Cache { data }
 extend CacheData: Clone {
     fun clone(&self) -> Self { /* a CacheData from self.data */ }
 }
-// cache.{ data } is Clone through the residual impl; with `: ImplicitClone` on Cache it is also
-// ImplicitClone, and an implicit copy of it calls CacheData::clone.
+// cache.{ data } is Clone through the residual impl (Cache is affine, so it is never Copy).
 
 struct Id derives Clone { n: i64, }
 extend Id.{ n }: Clone { /* .. */ }             // error T0015: overlaps the template of `derives Clone`
@@ -151,7 +147,7 @@ extend Row: PartialEq {
   The required set comes from method receivers, as for `Drop`, so the impl is selected by a subset
   check against a concrete row and needs no row variable in impl resolution.
 - **RFC-0209, RFC-0211** — templates for granted aspects; written impls cover the cases templates do not.
-- **RFC-0206, RFC-0212, RFC-0213** — `ImplicitClone` on a residual (rule 6), `declared` (rule 7),
+- **RFC-0206, RFC-0212, RFC-0213** — `Copy` on a residual (rule 6), `declared` (rule 7),
   super-aspects (rule 6). Not a dependency of any of them.
 - **RFC-0207 / RFC-0093** — derived against written impls (rule 4).
 - **RFC-0081 / RFC-0060** — coherence; `T0015` for overlap.

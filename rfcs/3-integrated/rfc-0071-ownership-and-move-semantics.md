@@ -219,14 +219,14 @@ theme (#263, #893, #894), which waits on variadic generics and comptime.
 > inconsistently today (a bound accepts it, move checking moves it); that is a defect against this
 > rule (metel-core#1784), not an exception to it.
 
-> **Direction, not yet in force (2026-11-03).** RFC-0162, RFC-0206 and RFC-0207 propose that `Copy`
-> be replaced by a compiler-known marker `ImplicitClone` that refines `Clone` and is granted only
-> in the declaration's colon list (`struct Point: ImplicitClone { … }`, `record P: ImplicitClone { … }`),
-> with an exact per-instantiation condition (every field `ImplicitClone`, a `Clone` exists, not `Drop`),
-> and that the implicit copy be a call to the type's own `clone`. If accepted, the "declared" rows
+> **Direction, not yet in force (revised 2026-11-05).** RFC-0162, RFC-0206 and RFC-0207 propose that `Copy`
+> keep its name and its sealed meaning (a representation copy that runs no user code), be granted only
+> in the declaration (`copy struct Point { … }`, the one-word form of `struct Point derives Copy { … }`, and
+> `copy record P { … }`), with an exact per-instantiation condition (every field `Copy`, not `Drop`, not
+> `Linear`), and that it bring a provided `Clone` that cannot be written. If accepted, the "declared" rows
 > of the table change their spelling, a named `record` moves from structural to declared, and
-> "bitwise-copyable" above becomes "a copy the compiler makes by calling the type's `clone`"; the
-> one-predicate rule above is unchanged. `Copy` remains a deprecated alias for one minor release.
+> `extend X: Copy;` is deprecated for one minor release; the one-predicate rule above is unchanged, and
+> the classes are the lattice of RFC-0089.
 
 - **Do not write `extend<T: Copy> [T]: Copy;`.** The borrowed view is `Copy` structurally; a
   second declaration would be a second answer.
