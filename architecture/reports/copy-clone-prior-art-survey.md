@@ -20,7 +20,7 @@ and includes Haskell and Scala.
 Findings are marked by source quality:
 
 - **Verified** means read in a primary document (language reference, accepted proposal, release
-  notes) during this survey. Sources are listed in section 12.
+  notes) during this survey. Sources are listed in section 13.
 - **Memory** means stated from general knowledge and not re-checked here.
 - **Unconfirmed** means a search was attempted and returned nothing usable, or the sources
   disagreed.
@@ -431,7 +431,88 @@ Still unconfirmed:
   behaviour for derive plus written impl in Haskell, Scala and Rust (memory).
 - That C++ constraints can negate a concept.
 
-## 12. Sources
+## 12. How the proposed design compares with the prior art
+
+Added 2026-11-05. The design is RFC-0206 with RFC-0207, RFC-0212 and RFC-0213: `Clone` plus the `ImplicitClone` marker
+whose hook is the type's own `clone`; the colon authorizes and `derives` generates; aspect properties are declared data;
+v0.16.0 ships the design with a diagnostic limitation for undecided abstract ownership, and the later minors converge on
+stored ownership interfaces with the solver as their producer (epic metel-core#1821). The ratings are the author's
+judgment, not measurements. Facts about other languages are those of sections 3 to 11 and carry their confidence marks;
+the Mojo destructor combination and the Haskell tuple limit are unverified and are not relied on here.
+
+| | Rust | Swift | Mojo | C++ | Proposed |
+|---|---|---|---|---|---|
+| Copy semantics | non-overloadable bit copy (`Copy`) plus explicit `Clone` | inferred from fields, compiler-managed | `Copyable` plus the `ImplicitlyCopyable` marker; a user copy initializer may run | copy constructor, user code, by default | `Clone` plus the `ImplicitClone` marker; the hook is the type's own `clone` |
+| Written for a plain value type | `#[derive(Clone, Copy)]` | nothing | one marker in the trait list | nothing | `derives ImplicitClone` |
+| Implicit copy can run user code | no | no | yes | yes | yes, opt-in |
+| Where the grant lives | an impl or derive, anywhere in the crate | the declaration | the trait list | the class | the declaration only |
+
+### 12.1 Teachability
+
+- **Two sentences cover the common case:** *`ImplicitClone` is `Clone` that the compiler calls for you; the colon
+  authorizes it and `derives` generates the impls.* That is better than Rust (one request instead of two traits, the
+  second goal of the redesign) and about level with Mojo, whose shape it follows. Swift is simpler still: the common case
+  needs nothing.
+- **Where users will stumble:** colon versus `derives`; a written `clone` making projections of the type move instead
+  of copy (RFC-0211 rule 6); the `derived` mark on super-aspects; the generic-code limitation of v0.16.0. This is more to
+  learn than in any of the four languages.
+
+### 12.2 Ease of use
+
+- **Better:** non-generic types; a custom clone at implicit copy (Rust and Swift cannot); exact conditions for generic
+  types, where Rust's derive adds a bound on every parameter ("perfect derive" is not in the language, verified).
+- **Worse in v0.16.0:** a generic function that reuses a nested generic type is rejected with a named diagnostic until the
+  stored-interface work. Rust accepts such code. A public generic type must state its condition once computed defaults
+  exist (an error, decided 2026-11-05), which Rust does not ask for.
+- **New, without an equivalent:** user markers (`declared`), exclusions in a declaration (`!Drop`), derivation recipes
+  across super-aspects.
+
+### 12.3 Correctness
+
+- **Rust and Swift have an inherent edge:** an implicit copy cannot run code, so inserting or eliding one is
+  unobservable.
+- **The proposal sits with C++ and Mojo and adds mitigations C++ lacks:** an opt-in marker (as Mojo), a hook with shared
+  access, a fixed call order, no elision of the last use for non-trivial types, and an implementation obliged to preserve
+  the number and order of hook calls. The cost convention (cheap, total, effect-free) is not enforced and not a law; a
+  counter-incrementing `clone` is legal.
+- **Derivation is sounder than Rust's.** A derived marker cannot sit over a hand-written base (`derives Eq` over a
+  written `PartialEq` is `T0015`), and the predicate is exact where Rust's derive over-approximates. Rust also accepts a
+  derived `Ord` over a hand-written `Eq`, a known footgun the mark rule prevents.
+- **The grant cannot leak.** A `declared` grant avoids the semver hazard of Rust's auto traits (verified: the lang-team
+  design note), and Swift's `Sendable` inference for non-public types only (verified: SE-0302) reflects the same concern.
+
+### 12.4 Consistency
+
+- **More principled:** properties are declared data and the compiler tests no aspect's spelling; generic code is
+  parametric as in Rust (an unbounded `T` moves whatever it is instantiated with). Rust and Mojo key the compiler on the
+  aspect's name.
+- **Not free of exceptions:** `implicit` is std-only with at most one implicit aspect; arrays and the record `Clone` hook
+  are compiler rules for a release; undecided abstract ownership is a named limitation. Each has a removal condition.
+- **Machinery cost:** colon list, `derives`, `declared`, `implicit via`, `derived` marks, negative super entries, copy
+  sites, leaf natives. More general concepts than any of the four languages carries.
+
+### 12.5 Visibility of cost, evolution and migration
+
+- **Cost:** in Rust every duplication that can cost is a visible `.clone()`; in the proposal an implicit copy of an
+  `ImplicitClone` type may run user code, so a cost surprise is possible, as in C++ and Mojo, but only for types that opted in.
+- **Evolution:** the grant is stronger than Rust's against silent change; the `derived` mark and negative entries are
+  contracts like any interface. Stored conditions on public generic types are required in the source (an error if
+  omitted), so a field change cannot change the public interface silently.
+- **Migration:** `Copy` stays one minor as a deprecated alias, as Mojo staged its change (warning, then error).
+
+### 12.6 Maturity
+
+The prior art is in production; the proposal is not. Three adversarial reviews and two spikes found real gaps in earlier
+versions, the hybrid end state is several releases away, and v0.16.0 delivers a deliberately smaller subset. This is the
+proposal's largest weakness.
+
+### 12.7 Summary
+
+- **Better than the prior art:** one request instead of two; exact generic conditions; a grant visible in the
+  declaration; a derived-marker rule that prevents inconsistent derivations; user-extensible markers and exclusions.
+- **Worse:** observable hooks; more concepts; generic-code limits in v0.16.0; no field record.
+
+## 13. Sources
 
 - Rust: https://doc.rust-lang.org/std/marker/trait.Copy.html and the 2026 ergonomic ref-counting
   goal at https://rust-lang.github.io/rust-project-goals/2026/ergonomic-rc.html
