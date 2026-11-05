@@ -314,10 +314,10 @@ features, in this order:
    an abstract ownership the analysis cannot decide is a diagnostic in the generic body (not an internal error,
    and not a silent move, which would make a later solver change what accepted programs do). The established
    proofs are preserved. **The obligation solver** (goals `type: aspect` over abstract types, answered yes with a
-   witness, no or unknown; nested applications, field-wise templates, signed closure) is a later minor
+   witness, no or unknown; nested applications, field-wise templates) is a later minor
    (metel-core#1813). Super-aspect entailment in this release covers declared bounds and their super-aspect
-   closure; coherence uses the syntactic signed closure of aspect declarations (RFC-0213 section 3), which needs
-   no solver.
+   closure; an exclusion (a negative super entry) is a grant-time check only (RFC-0213 section 3), so coherence needs no
+   closure beyond the positive one and no solver.
 3. **The declaration clauses** (RFC-0207): `derives`, the colon list for user markers, and the class keywords.
 4. **Super-aspects** (RFC-0213), including entailment over declared bounds and their super-aspect closure, and the
    syntactic negative closure (there is no solver in this release).
@@ -421,8 +421,8 @@ affine struct Token { id: i64 }                                           // loc
   lattice of RFC-0089. **It stays open as a later extension, on conditions.** Sealed to writable preserves every
   accepted program only if the hook is a **separate, separately authorized mode** and nothing weakens what `Copy`
   already guarantees: `Copy` (and so `T: Copy` in generic code) keeps meaning a representation copy that runs no
-  user code, the existing elision permissions stay valid, existing exclusion facts keep their meaning (removing
-  `!Drop` can break coherence, RFC-0213 section 3), and a hook cannot replace an already provided `Clone`.
+  user code, the existing elision permissions stay valid, existing exclusions keep their meaning (removing
+  `!Drop` would let a type be granted both, RFC-0213 section 3), and a hook cannot replace an already provided `Clone`.
   Allowing callbacks under the existing `Copy` guarantee would weaken a contract that generic libraries may rely
   on. No surveyed mature language replaced a sealed-copy guarantee by observable hooks while keeping its old
   guarantees (D added and replaced hook mechanisms and accumulated precedence rules; C++ needs explicit
@@ -475,7 +475,7 @@ novel parts and their risk:
 
 | Part | Risk |
 |---|---|
-| Exclusion-based disjointness (signed closure, RFC-0213 section 3) | High: negative declarations become a public coherence contract |
+| Exclusion-based disjointness evidence (RFC-0213 section 3, deferred) | High if built: exclusions would become a public coherence contract; v0.16.0 keeps them a grant-time check only |
 | The stated condition as the public interface and its terminating language (section 6) | High until implemented and tested |
 | Derivation provenance deciding residual instances (RFC-0211) | High teaching and migration cost, smaller for `Copy` types |
 | The `derived` mark on super-aspect edges (RFC-0213 section 4) | Moderate: API evolution; less established than Rust's or Haskell's require-only rule |

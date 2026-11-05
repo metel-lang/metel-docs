@@ -64,40 +64,38 @@ For an explicit `extend T: A`, every direct and transitive super-aspect obligati
 by a coherent impl for `T`, written or derived (section 4). The compiler does not manufacture one
 from the sub-aspect's impl by the compiler; deriving is the job of `derives` (section 4).
 
-## 3. Negative implementations
+## 3. Negative implementations and exclusions
 
-RFC-0081's negative impls stay direct assertions. Coherence and, later, the obligation solver (metel-core#1813)
-share one **signed closure**; in v0.16.0 only coherence uses it:
-- **Positive:** `T: A` implies `T: B` for each super-aspect `B` of `A`.
-- **Exclusion:** `T: A` entails `T: !C` for each negative entry `!C` of `A`, and symmetrically
-  `T: C` entails `T: !A`.
-- **Contrapositive:** `T: !B` entails `T: !A` for each sub-aspect `A` of `B`, so an explicit `T: !B`
-  makes an impl of `A` for `T` a coherence error.
+RFC-0081's negative impls stay direct assertions. Super-aspects add one closure rule and one declared check:
+- **Positive:** `T: A` implies `T: B` for each super-aspect `B` of `A`. This is used by the checker and the abstract
+  analysis, and it is the whole of the closure in v0.16.0.
+- **Exclusion (a negative entry, `aspect A: B, !C`):** no type may be granted both `A` and `C`. It is a **grant-time
+  check only** (decided 2026-11-05): a grant of the second is reported at that grant (RFC-0060), naming both, and the
+  exclusion is symmetric and need be declared on one side only. It generalises RFC-0071 §4 and replaces the
+  `excludes` property of an earlier draft of RFC-0212. `Copy` excludes `Drop` (and `Linear` once it exists) by this
+  entry; the justification is operational (RFC-0089 section 1).
 - **No downward propagation:** `T: !A` does not imply `T: !B`.
 
-Any direct contradiction after the closure is a coherence error.
+Any direct contradiction (a grant of an excluded pair, or an impl of `A` for a type with an explicit `T: !B` where `A`
+requires `B`) is a coherence error.
 
-1. **Coherence uses the syntactic closure only.** Super entries and exclusions come from aspect
-   declarations, which exist before type checking, so no solved facts are needed. Two impls are disjoint
-   when a positive requirement of one is excluded, directly or by entailment, by a negative requirement
-   of the other. `extend<T: Copy> W<T>: A` and `extend<T: Drop> W<T>: A` are disjoint because
-   `Copy` excludes `Drop` (the lattice rule of RFC-0089 section 1).
-2. **Absence is not negation.** "No impl of `C` exists" never proves `T: !C`. In generic code `!C` comes
-   only from a bound or an entailment. A grant on a concrete named type is checked in its defining
-   module, where the orphan rule closes its impl set for the aspects of std (`Drop`), so
-   `Copy` on a `Drop` type is a coherence error at the grant. Unknown stays unknown and is never
-   a proof of `!Drop`.
-3. **Priority applies before closure.** If a negative impl wins over a blanket positive impl for a type
-   (RFC-0060 section 5), the closure is computed from the facts after that choice. A positive impl of a
-   sub-aspect for that type whose super-aspect now fails is a coherence error, and a blanket
+1. **An exclusion is not evidence for disjointness.** Overlap of two impls is decided by the existing comparison of
+   their explicit bounds. `extend<T: Copy> W<T>: A` and `extend<T: Drop> W<T>: A` are not proven disjoint by the
+   exclusion and are `T0015` unless the author writes explicit disjoint bounds (`T: Copy` and `T: !Copy`).
+2. **A negative super entry is part of the aspect's contract at the grant:** deleting it is a language change that lets
+   one type be granted both aspects.
+3. **Priority before closure.** If a negative impl wins over a blanket positive impl for a type (RFC-0060 section 5),
+   a positive impl of a sub-aspect for that type whose super-aspect now fails is a coherence error, and a blanket
    sub-aspect impl is inapplicable at that type. Closure never resurrects the base.
-4. **A negative super entry is part of the aspect's contract.** Deleting it is a language change: it can
-   turn disjoint impls into `T0015` and lets one type satisfy both aspects.
 
-A negative entry in the super list (`aspect A: B, !C`) declares an exclusion: no type satisfies both
-`A` and `C`. A grant of the second is reported at that grant (RFC-0060), naming both; `T: A` entails
-`T: !C`; the exclusion is symmetric and need be declared on one side only. It generalises RFC-0071 §4
-and replaces the `excludes` property of an earlier draft of RFC-0212.
+**Deferred extension: disjointness evidence.** A later minor may use exclusions as evidence for disjointness, with the
+derived negatives (`T: A` entails `T: !C`; the contrapositive `T: !B` entails `T: !A` for sub-aspects of `B`) and the
+rule that absence is not negation (an unknown is never a proof of `!Drop`; a grant on a concrete named type is
+checked in its defining module, where the orphan rule closes the impl set for the aspects of std). Adding it is
+monotone (pairs that were `T0015` become accepted and no accepted program changes), but the exclusions then become a
+public coherence contract and removing one can break other libraries, which is why v0.16.0 leaves it out (the fourth
+adversarial review rated it high risk and no surveyed language does it: Rust hardcodes `Copy` against `Drop` and has
+only explicit negative impls).
 
 ## 4. Derivation of super-aspects
 
