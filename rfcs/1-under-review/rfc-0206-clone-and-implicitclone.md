@@ -135,9 +135,12 @@ prerequisite refactor of section 6.
    unknown, and unknown never permits a copy, so the checker may reject a program the rule accepts
    and never accept a copy the rule forbids. The v0.16.0 implementation decides only what the abstract analysis decides today (conditions on
    parameters, and the compiler rules for references, tuples, arrays, closures and function types)
-   and treats every other abstract ownership as unknown, hence as a move. Reusing a `View<T>` in a
+   and reports every other abstract ownership as **undecided**: a read of such a value in a generic body
+   is a diagnostic (a named limitation), never a guess in either direction. Reusing a `View<T>` in a
    generic body is therefore rejected until the obligation solver, which is deferred to a later minor
-   (metel-core#1813; section 6, step 2). Concrete uses are unaffected.
+   (metel-core#1813; section 6, step 2); today it is rejected with an internal error (`I0011`). Because
+   undecided is an error and not a move, the accepted set only grows when proof power improves, and
+   the behaviour of an accepted program never changes with it. Concrete uses are unaffected.
 4. *The implicit copy is the call.* A copy site (below) of an `ImplicitClone` value calls the type's
    `clone`. A type that is not `ImplicitClone` is moved. A written `clone` is therefore
    run at an implicit copy (Mojo's choice), and nothing is sealed to a bitwise body.
@@ -172,6 +175,39 @@ is `x.clone()`" is not.
    untouched whatever the hook does. A panic in the hook propagates like any panic and leaves no
    partial result. A hook may call arbitrary code, including another copy site, so the interpreter
    holds no borrow of its environment while it runs.
+
+**Lowering of the remaining by-value forms (proposed, 2026-11-05, to be confirmed one by one).** Each form below
+is a place read in value position only where it takes a value out of a place; the rule says what is cloned and in
+what order. In every case a temporary transfers.
+- **Patterns and `match`.** The scrutinee is not cloned as a whole. Each by-value binding in a pattern reads its
+  own sub-place (field, element, payload) and is a copy site if the bound type is `ImplicitClone`; a wildcard or an
+  unbound field reads nothing. For an enum the variant is selected before any binding is read. Bindings are read
+  in pattern source order. A scrutinee that is a temporary transfers its bound parts.
+- **`for (x in e)`.** `e` is evaluated once by the normal rules (a place of an `ImplicitClone` iterable is a copy
+  site, a temporary transfers). Each element the iterator yields is a temporary and transfers. Iterating a
+  borrowed view yields borrowed elements, and a by-value binding of an `ImplicitClone` element is a copy site per
+  iteration. Over an array of `ImplicitClone` elements the array is copied first (element clones in index order),
+  then iterated.
+- **Record spread `{ ..base, f = v }`.** `base` is evaluated once as a place. The explicit initializers are
+  evaluated in source order; then each field not overridden is read from `base` in declaration order, and is a
+  copy site by its own type. A field that is overridden is never cloned.
+- **Operators and compound assignment** (`+=`, `-=`, `*=`, `/=`, `%=`). The built-in operators on scalars
+  inspect their operands and clone nothing. An overloaded operator follows its aspect's signature: a by-value
+  parameter is a copy site, operands left to right. Plain reassignment `:=` evaluates the right-hand side by the
+  normal rules and drops the old value of the left place without cloning it. The order of evaluating the left
+  place's base and index relative to the right-hand side is the language's existing assignment order.
+- **Repeated array `[e; N]`.** `e` is evaluated once and fills the first slot; the remaining `N - 1` slots are
+  `clone` calls on the element, in index order. For `N > 1` the element type must be `ImplicitClone`.
+- **`?`.** `e?` clones nothing itself. The operand follows the normal rules (it is usually a temporary and
+  transfers); the success payload transfers to the continuing path; the error value transfers to `From::from`.
+- **Closure creation.** A capture is a place read at creation, so an `ImplicitClone` captured value is cloned
+  when the closure is built and not when it is called, in capture-list order (for inferred captures, in order
+  of first use in the body text). A borrow capture clones nothing. Cloning the closure afterwards clones its
+  environment in capture-list order.
+- **Aggregate clone order.** A derived clone calls the field clones in declaration order for structs, named
+  records and enum payload fields; in increasing index order for sequences; left to right for tuples; in
+  lexicographic label order for anonymous records; in capture-list order for closures. The interpreter's record
+  clone iterates a `HashMap` today and gives no defined order; it must follow this order (metel-core#1817).
 
 The evaluator therefore does not clone at binding and assignment. Elaboration marks each copy site in the
 typed AST and the evaluator calls the clone method only there (today `deep_clone_value` runs at every
@@ -333,10 +369,11 @@ general features, in this order:
 
 1. **Identity-based aspect resolution.** Replace the string-keyed `"Copy"` sites by an aspect
    identity lookup (the ADR-0054/0066/0067 line). A prerequisite refactor, no RFC.
-2. **The abstract-ownership fallback** (metel-core#1814), not a solver. A spike (#1810, 2026-11-04)
+2. **The abstract-ownership limitation** (metel-core#1814), not a solver. A spike (#1810, 2026-11-04)
    prototyped an obligation solver and estimated 15 to 30 engineer-days for a production one, so
-   v0.16.0 ships the fallback: an abstract ownership the analysis cannot prove is unknown, and unknown
-   is a move, with the body analysed and not left unanalysed. **The obligation solver** (goals
+   v0.16.0 ships a limitation: an abstract ownership the analysis cannot decide is a diagnostic in the
+   generic body (not an internal error, and not a silent move, which would make a later solver change
+   the behaviour of accepted programs, #1809 review 3, blocker 1). The established proofs are preserved. **The obligation solver** (goals
    `type: aspect` over abstract types, answered yes with a witness, no or unknown; nested
    applications, field-wise templates, signed closure, witnesses carried to elaboration so a copy site
    records the `clone` it calls) is a later minor (metel-core#1813). Super-aspect entailment in this
@@ -355,11 +392,17 @@ general features, in this order:
    compiler rules in this release.** Their std impls need a compile-time `N` (RFC-0132 §3) and the
    comptime-for implementation (RFC-0174), which the roadmap schedules after Move check default-on and
    so after v0.16.0. They move to a later theme, "Structural kinds after comptime" (#1811, #1390, #702),
-   and the compiler rules are deleted there. These are the structural-kind exceptions of the release; the abstract-ownership fallback of step 2 is
+   and the compiler rules are deleted there. These are the structural-kind exceptions of the release; the abstract-ownership limitation of step 2 is
    the other. Each is named, listed here and in the table of section 2, and has a removal condition.
 8. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
 Work specific to this RFC and independent of that order:
+- **Copy-site retention** (metel-core#1816). A generic body is reconstructed per call from the source AST
+  with fresh inference facts today, so a definition-time copy-or-move decision (rule 4 of the copy sites)
+  needs a per-read-site record, a stable correspondence between definition sites and reconstructed sites
+  (including imported bodies and sites inside closures), and a consumer that never re-classifies a read from
+  the concrete instantiation. This is needed even when the analysis decides only bare parameters, so it is
+  not part of the deferred solver.
 - The representation copy is used only for intrinsically cloneable types (section 2, leaf clones); a type
   with a written `clone` among its reachable fields is cloned by dispatching to the method, as the record
   `Clone` does today. `deep_clone_value` does not dispatch and must not be used for such types.

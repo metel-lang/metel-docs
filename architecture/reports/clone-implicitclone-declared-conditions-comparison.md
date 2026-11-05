@@ -28,6 +28,9 @@ body.
   parameters, and the compiler validates it as sufficient against the fields. `derives` computes the
   condition; the colon form requires it written.
 
+> **Status note, 2026-11-05.** Decision 1 of review 3 was applied: the v0.16.0 limitation for an undecided
+> abstract ownership is a diagnostic, not a move ("fallback" below refers to the earlier move-based wording).
+
 ## 2. The two designs side by side
 
 ```metel
