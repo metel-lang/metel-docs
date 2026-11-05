@@ -27,7 +27,7 @@ struct Handle: ImplicitClone derives Debug { id: i64 }       // both; the colon 
 ```
 
 - **The colon list** names facts about the type that the compiler checks and that change what its
-  uses mean: a compiler-known declaration-granted marker (`ImplicitClone`, RFC-0206). It has no
+  uses mean: a `declared` method-less aspect (`ImplicitClone`, RFC-0206, checked by the compiler; or a user marker, an unchecked promise, section 1). It has no
   negative entries: an opt-out of an `auto` aspect stays the existing bodyless negative impl
   (`extend Token: !Send;`, RFC-0102). A colon-list opt-out is recorded as an alternative in
   RFC-0096.
@@ -97,7 +97,7 @@ capability in its declaration, and the supporting impls must exist (written by h
   promise is better expressed as a refinement type (RFC-0202), and method-bearing aspects in the colon
   list are the later stage of RFC-0105.
 - It does not specify the grammar of named records and enums beyond the two clauses; RFC-0209 to
-  RFC-0211 are the derivation templates, which stay drafts.
+  RFC-0211 (under review) are the derivation templates.
 
 ## 4. Worked examples
 

@@ -8,9 +8,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/952'
 ---
 
 > **Note, 2026-11-04 (RFC-0212).** The closed compiler-intrinsic list of section 1 is to be replaced by
-> an `auto structural` declaration on the aspect (RFC-0212), so that `Send`, `Sync`, `Linear` and
-> `ImplicitClone` are instances of one mechanism. The composition algorithm of section 2 is kept; it
-> becomes the `structural` rule. This RFC is revised accordingly when RFC-0212 is accepted.
+> an `auto` declaration on the aspect (RFC-0212). RFC-0212 no longer has a `structural` property (the
+> field-wise rule of `ImplicitClone` is a std-written row template), so how the composition rule of
+> section 2 is expressed is part of this RFC's revision, which the language owner has deferred.
 
 > **New RFC.** Created despite `rfc.py new`'s overlap warning against RFC-0080, 0061,
 > 0093, 0060, and 0081 — checked each first. None of them own this mechanism: RFC-0080
@@ -452,7 +452,7 @@ is not needed for `ImplicitClone`. Whether to adopt A is **an open question (see
 
 8. **Colon-list opt-out (option A, section 8).** Should `struct Token: ImplicitClone, !Send` replace
    the negative `extend T: !Send;` as the opt-out of an `auto` aspect? The Send/Sync/Linear revision of
-   this RFC (the `auto` and `structural any` properties of RFC-0212) is **deferred by the language
+   this RFC (the `auto` property of RFC-0212 and the structural rules) is **deferred by the language
    owner (2026-11-04)**; it is not part of the Clone/ImplicitClone settlement (RFC-0206), which does
    not depend on either spelling. The revision must also address the semver hazard of `auto`: Rust's
    language team calls each auto trait a hazard (a private field change can remove `Send` from a

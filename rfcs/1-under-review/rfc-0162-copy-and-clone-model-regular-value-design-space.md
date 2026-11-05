@@ -212,7 +212,7 @@ RFC-0135's Background by design — this RFC and that one describe the same mach
   `check_copy_impl_eligibility` walks every struct field / enum-variant payload and
   rejects `extend … : Copy` with `T0001` if any is non-`Copy`. Empirically confirmed in
   RFC-0135's Background against the release binary.
-- **`Copy` ⇒ `Clone`** by blanket impl (RFC-0206 §2): `extend<T: Copy> T: Clone { fun
+- **`Copy` ⇒ `Clone`** by blanket impl (the earlier RFC-0206 draft, since replaced): `extend<T: Copy> T: Clone { fun
   clone(self: &T) -> T { *self } }`. `Clone` alone (non-`Copy`) runs user code and may
   allocate.
 - **`Copy` excludes `Drop`** (RFC-0071 §4), coherence-checked.
@@ -257,7 +257,7 @@ Two orthogonal axes.
   type the compiler supplies `clone`, and its body is **sealed**, always a bitwise copy,
   never user-written; the compiler inserts the call at a by-value use. So `let b := a` for a
   `Copy` type is `let b := a.clone()` with the call inserted, and `Copy` is `Clone` that
-  the compiler calls for you. This is RFC-0206 §2's blanket
+  the compiler calls for you. This is the earlier RFC-0206 draft's blanket
   (`extend<T: Copy> T: Clone { fun clone(self: &T) -> T { *self } }`), stated as the
   definition of `Copy`. The body is sealed because a user-written `clone` invoked implicitly
   would run arbitrary code at every copy (hidden cost, hidden panics and effects, an
@@ -862,8 +862,9 @@ listed at the end of this section.
 ### Rust — the model Metel inherited
 
 `Copy` (implicit, marker aspect, bitwise, opt-in via `derive`/`impl`, every field must be
-`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`, with a blanket
-`impl<T: Copy> Clone for T`). This is D1+D2+D3 verbatim — Metel took the whole shape.
+`Copy`, mutually exclusive with `Drop`) plus `Clone` (explicit `.clone()`, required as a
+supertrait of `Copy` and supplied separately: Rust has no blanket `impl<T: Copy> Clone for T`, and
+`#[derive(Copy)]` does not supply `Clone`). This is D1+D2+D3 verbatim — Metel took the whole shape.
 
 Known friction in Rust, from its own discussions:
 

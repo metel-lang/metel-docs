@@ -16,7 +16,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
 
 ## Summary
 
-An aspect declaration may state four properties. Each one replaces behaviour that is hardcoded for
+An aspect declaration may state three properties (`declared`, `auto`, `implicit via`; `auto` is deferred). Each one replaces behaviour that is hardcoded for
 a named aspect today.
 
 | Property | Meaning | Replaces |
@@ -148,7 +148,7 @@ be a new restriction with a migration.
 
 | Aspect | Declaration |
 |---|---|
-| `ImplicitClone` | `: Clone, !Drop`, `declared`, `implicit via Clone::clone`; the structural rule is a std row template |
+| `ImplicitClone` | `: derived Clone, !Drop`, `declared`, `implicit via Clone::clone`; the structural rule is a std row template |
 | `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |

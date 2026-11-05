@@ -111,8 +111,9 @@ read, so the result is well defined at every width.
    twice: accepted, by rules 1 and 6 through the two templates, and not by looking through the brand.
 5. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `ImplicitClone`;
    `H.{ fd }` is not `ImplicitClone` although `fd` is. A copyable projection of it needs a separate type.
-6. **Widening.** A cloned residual is widened by restoring the missing fields (RFC-0137 §6), so
-   a derived clone does not provide a way around a constructor invariant.
+6. **Widening.** A cloned residual is widened by restoring the missing fields (RFC-0137 §6). That restores
+   the width and does not validate the relation between the restored and the retained fields: RFC-0137
+   §6 documents an existing constructor-invariant bypass, which a derived clone neither adds nor repairs.
 
 ---
 

@@ -314,10 +314,10 @@ are as in section 1.
   (verified: SE-0185), and a hand-written `==` takes precedence.
 - Both Haskell and Rust accept a derived `Ord` over a hand-written `Eq`; the consistency between
   the two is a convention (memory).
-- Proposal: `derives A` derives `A` and every positive super-aspect, unconditionally, and a written
-  impl of any of them is `T0015` (RFC-0213 section 4). A derived marker is sound only over a derived
-  base. This is stricter than Swift, which derives only what is missing, and it excludes the
-  derived-ordering-over-custom-equality case.
+- Proposal: a super-aspect entry is an obligation unless marked `derived`; `derives A` derives `A` and
+  every marked super-aspect, and a written impl of a derived one is `T0015` (RFC-0213 section 4). A
+  derived marker is sound only over a derived base. This is opt-in per entry where Swift derives what is
+  missing, and it never derives over a written impl.
 
 ### 11.5 Exclusion and negative entries
 
@@ -403,8 +403,8 @@ are as in section 1.
 |---|---|---|
 | Marker refining the explicit level | Mojo | Rust's names; guaranteed coverage of built-in kinds |
 | Grant only in the declaration | Swift (synthesis), Mojo | Stricter: no same-file extension |
-| `derives` versus `:` | Scala `derives`, Haskell `deriving` | Header records who wrote the impl |
-| Unconditional super-aspect derivation | Swift `Hashable` | Never over a written impl |
+| `derives` versus `:` | Scala `derives`, Haskell `deriving` | The colon authorizes, `derives` generates |
+| Marked super-aspect derivation | Swift `Hashable` | Opt-in per super entry; never over a written impl |
 | Exclusion in the declaration | none (Rust hardcodes it) | New |
 | Declared aspect properties | Rust lang items, Swift `Sendable` | Properties are data, `implicit` std only |
 | Exact structural rule | C++ implicit copy constructor | Checked at the declaration, written in std |

@@ -112,10 +112,12 @@ author marks it; std decides the first set.
 2. **Marked entry** (`aspect Eq: derived PartialEq`): `struct P derives A` derives `A` and every marked
    super-aspect `B` of `A` (transitively), exactly as `struct P derives A, B, …` would. A written
    `extend P: B` for an aspect the `derives` generates overlaps and is an error (`T0015`). The
-   fix-it offers: delete the impl; or, if `A` is a marker, `extend P: A;` or the colon list; otherwise
-   write `A` by hand.
+   fix-it offers: delete the impl; or write `A` by hand instead of deriving it, using `extend P: A;`
+   when `A` has no methods, or the colon list when `A` is `declared` and has no methods (RFC-0207
+   section 1); a method-bearing `A` is simply written by hand.
 3. A marked super-aspect without a derivation (RFC-0207) makes the `derives` an error with a fix-it:
-   write that impl and use the colon form (or `extend`, for an aspect with no methods).
+   write that super-aspect by hand, then list `A` in the colon list if `A` is `declared` and method-less,
+   or write `A` by hand otherwise.
 4. Derivation is idempotent per type and aspect: `derives A, B` is valid and derives `B` once.
 5. `struct P: A` (the colon list) generates nothing: every positive super-aspect, marked or not, must
    already exist for `P`, or it is an error naming the missing one (section 2).
@@ -126,6 +128,10 @@ the compiler also wrote the field-wise `PartialEq`, so reflexivity follows from 
 never saw. That argument is about aspects whose law ties them to a super-aspect. It does not hold for a
 super-aspect that is an independent capability (`Error: Display`: deriving `Error` should not write the
 author's message), so the default is an obligation and the aspect's author opts in.
+
+**The mark is part of the aspect's contract,** as an exclusion is (section 3). Adding `derived` to an
+entry can introduce generation of `B` and turn existing written `B` impls into `T0015`; removing it can
+remove the `B` that made downstream `derives A` valid. Both are breaking changes to the aspect.
 
 **Diamonds.** `A: B, C` with `B: D` and `C: D` has one obligation `D`, deduplicated by aspect identity
 and arguments; a marked path derives it once.

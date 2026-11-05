@@ -40,8 +40,9 @@ enum Shape derives Clone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // der
 enum Option<T> derives Clone { None, Some { value: T } }
 ```
 
-`Copy` needs no body. Its sealed `clone` is a bitwise copy (RFC-0206 §2), so a `Copy` enum needs
-only the eligibility check `..E: Copy`.
+`ImplicitClone` needs no body of its own: it is a marker whose hook is the type's `Clone` (RFC-0206
+section 2), so an `ImplicitClone` enum needs the eligibility check `..E: ImplicitClone` and a `Clone`
+(`derives Clone`, or `derives ImplicitClone`, which derives both).
 
 ---
 
@@ -99,8 +100,8 @@ one level down: the members of `..E` are rows, and a row satisfies the bound whe
 for it. A unit variant satisfies it vacuously.
 
 ```metel
-enum Shape: Copy { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // marker entry; holds: f64 is Copy
-enum Bad: Copy { A { s: String } }                                // rejected at the declaration, next to `s`
+enum Shape derives ImplicitClone { Circle { r: f64 }, Rect { w: f64, h: f64 } }   // holds: f64 is ImplicitClone
+enum Bad derives ImplicitClone { A { s: String } }                                // rejected at the declaration, next to `s`: String is not ImplicitClone
 ```
 
 For a generic enum the bound is evaluated per instantiation (RFC-0209, R2): `Option<&String>`

@@ -309,7 +309,10 @@ comptime derivation replaces the native one when RFC-0092 and RFC-0093 allow.
 
 ## 5. Names and migration
 
-- **`Clone`** keeps its name and its Rust contract.
+- **`Clone`** keeps its name, its Rust signature and its ownership shape, with a weaker law: Rust also
+  expects `clone` to preserve equality where `PartialEq` exists, and collections rely on it. Metel's
+  `clone` may change the value (the cost convention of section 2), so Rust's collection assumptions
+  cannot be inherited without a further contract.
 - **`ImplicitClone`** replaces `Copy`. `Copy` remains for one minor release as a deprecated alias
   that is accepted wherever `ImplicitClone` is, with a warning and a fix-it that rewrites
   `extend X: Copy;` to the colon-list entry and `T: Copy` to `T: ImplicitClone`.
@@ -341,7 +344,8 @@ general features, in this order:
    closure of aspect declarations (RFC-0213 section 3), which needs no solver. Recursion and cycles
    are decided in this RFC ("Recursion and termination") and apply to the solver when it is built.
 3. **The declaration clauses** (RFC-0207): the colon list and `derives`.
-4. **Super-aspects** (RFC-0213), including entailment through the solver and negative closure.
+4. **Super-aspects** (RFC-0213), including entailment over declared bounds and their super-aspect closure, and the syntactic negative
+   closure (there is no solver in this release).
 5. **Derivations** (RFC-0207): native `Clone` first; the uniform super-aspect derivation of RFC-0213 section 4.
 6. **Aspect properties** (RFC-0212): `declared`, `implicit via`, and the std-written structural rule (a row template, RFC-0123), with the row
    machinery it needs for named types (RFC-0209, RFC-0210, RFC-0211). RFC-0208's `<..R>` binder is not
@@ -351,8 +355,8 @@ general features, in this order:
    compiler rules in this release.** Their std impls need a compile-time `N` (RFC-0132 §3) and the
    comptime-for implementation (RFC-0174), which the roadmap schedules after Move check default-on and
    so after v0.16.0. They move to a later theme, "Structural kinds after comptime" (#1811, #1390, #702),
-   and the compiler rules are deleted there. This is the only exception the release keeps; it is named,
-   listed here and in the table of section 2, and has a removal condition.
+   and the compiler rules are deleted there. These are the structural-kind exceptions of the release; the abstract-ownership fallback of step 2 is
+   the other. Each is named, listed here and in the table of section 2, and has a removal condition.
 8. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
 Work specific to this RFC and independent of that order:
@@ -454,6 +458,9 @@ extend Point: ImplicitClone;                                // error: granted on
 6. **A native method in an aspect impl block.** Existing std natives are inherent methods (`String`,
    `List`). Whether `native(..) fun clone(&self) -> Self;` is accepted inside `extend T: Clone { }`
    must be confirmed; if not, the body calls an inherent native helper, or the checker accepts it in std.
+   Natives already appear in std impls (`Display`, the record `Clone`), but `@std.core.copy_value` is not in
+   the closed `NativeKey` set and needs a key and a host function whose contract distinguishes a string,
+   a shared reference, an array view and an owning array.
 7. **Written `Clone` for a residual.** A projection of a type with a written `Clone` is neither `Clone` nor
    `ImplicitClone` today (RFC-0211 rule 2). RFC-0214 (draft) would let the author write the impl for a
    residual shape, and RFC-0211's super-aspect recheck then gives the projection `ImplicitClone`. Not a
