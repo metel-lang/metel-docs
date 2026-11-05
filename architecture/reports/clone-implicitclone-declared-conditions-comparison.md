@@ -205,3 +205,36 @@ richer conditions. If step one cannot fit, defer E.
 that made `Pair<Wrapper<T>, i64>` and the shared-reference cases definite. Applying it to E's desugared rules, which
 need no field-wise recursion, would test whether the three failing cases flip. That is a cheap combined spike and it
 would answer the open condition of the recommendation.
+
+## 12. Combined spike result (2026-11-05, metel-core#1815)
+
+The solver spike's nested evaluator was ported onto E's desugared rules, with an absent-bound policy. I re-ran the
+fixtures (13 passed) and the two correctness failures named below (both fail, as reported).
+
+- **The three target cases became definite.** `spike1815_nested` accepted; `spike1815_unbounded` and
+  `spike1815_nested_unbounded` T0019. The recursive evaluator is reusable.
+- **The absent-bound policy leaked.** The same evaluator answers `Drop` queries, so "an absent `T: Copy` bound is a
+  definite no" made `Guard<T>: Drop where T: Copy` inapplicable for an unbounded `T`, and the checker then permits
+  extracting a field from a possibly destructible value. Two existing tests fail for that reason
+  (`abstract_ownership_does_not_assume_conditional_destructor_absent` and `..._preserves_aliased_ownership_aspects`),
+  alongside the six `abstract_ownership_*` tests that expect unresolved ownership to leave a body unchecked.
+  Production needs copy-site classification separated from obligation entailment (RFC-0213 section 3: absence is not
+  negation).
+- **Computed defaults were not built.** Computation needs resolved names and cross-module interfaces, so it cannot run
+  at parse time. The earliest workable point is after path normalization and before coherence, with its own ordering
+  and cycle policy over the module graph. The spike stopped there.
+- **Computed interfaces can change silently** (public bounds strengthening and propagating to dependants). The
+  "validation fails when a field changes" benefit applies to explicit conditions only. This weakens the case for
+  computed-by-default on public types.
+- **Marker recursion does not disappear:** it moves from consumption to the computation of the interfaces.
+- **Effort.** E computed by default: 18 to 35 engineer-days (low confidence), against E-explicit 12 to 25 and the solver
+  15 to 30. No schedule saving over the solver is shown. With observable clone-call semantics a provisional end-to-end
+  planning range is 26 to 50 days.
+- **The spike's recommendation:** adopt in steps and do not schedule computed defaults for v0.16.0 on this evidence.
+  First explicit parameter conditions, preserved definition-time decisions, and copy classification separated from
+  entailment; then prototype the resolved-graph computation phase, imports, ordering and inductive cycles.
+
+**Effect on the comparison.** The first summary table put E ahead of the solver on effort. The evidence now shows E-explicit
+roughly level with the solver, and E computed by default costlier, so the earlier recommendation (section 9) should be
+read as: E is attractive for its explicit public interface and its clearer diagnostics, not for a schedule saving.
+
