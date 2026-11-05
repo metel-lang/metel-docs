@@ -396,6 +396,17 @@ general features, in this order:
    the other. Each is named, listed here and in the table of section 2, and has a removal condition.
 8. **Then `ImplicitClone` itself,** declared in std, with `Copy` as a deprecated alias.
 
+**Dependency on RFC-0089 (decided 2026-11-05, design level only).** The classes of ownership are the lattice of
+RFC-0089 section 1: ω (unrestricted, `Copy`), affine (the default, at most once), linear (exactly once) and erased.
+Settling the settlement against it gives: the `Copy`/`Drop` and `Copy`/`Linear` exclusions as instances of one rule
+(RFC-0071 section 4 is a special case, so `!Drop` on the implicit-copy marker is that rule and not an ad hoc policy);
+the keyword sugar `copy`, `affine` and `linear` before `struct` and `enum` as one-word spellings of the colon-list
+entries (`affine` desugars to the locking negative impls of RFC-0089 section 2.1, a declaration-site opt-out that needs no
+negative colon entry, and a `pub` type states its class with one word); and the closure rule shared with RFC-0194.
+v0.16.0 implements `copy` and `affine`; `linear` is reserved and marked "Planned for"; `Linear` itself, its structural
+`auto` rule and partial consumption stay with RFC-0089 section 3 and the RFC-0096 revision. The default for an
+unbounded type parameter with respect to `Linear` is not settled by RFC-0089 and is open there.
+
 **End state: stored interfaces with the solver as producer (decided 2026-11-05).** v0.16.0 ships the design of
 this RFC as written, with the limitation of step 2. The direction after it is the hybrid recorded in the
 comparison report (`architecture/reports/clone-implicitclone-declared-conditions-comparison.md`, section 13):
@@ -498,6 +509,11 @@ extend Point: ImplicitClone;                                // error: granted on
 - **RFC-0212** — the aspect properties (`declared`, `implicit via`) that
   `ImplicitClone` is declared with.
 - **RFC-0213** — super-aspects, which give `ImplicitClone: Clone, !Drop`.
+- **RFC-0089** — the multiplicity lattice (ω, affine, linear, erased), the `Linear` aspect and its exclusions with `Copy`
+  and `Drop`, and the `copy`/`affine`/`linear` keyword sugar. A **design-level dependency** of this settlement
+  (decided 2026-11-05): sections 1 to 2.1 are settled with it; section 3 (partial consumption through `ToRecord`),
+  the implementation of `Linear` and the RFC-0096 `auto` revision are not part of it. See section 6, "Dependency on
+  RFC-0089".
 - **RFC-0096** — auto aspects, revised so that `auto` is a declaration of RFC-0212.
 - **RFC-0071 §2** — states the one predicate; its `Copy` becomes `ImplicitClone`.
 - **RFC-0134 / RFC-0163 / RFC-0166** — closures and function types: copyable by captures; the `copy`
