@@ -98,7 +98,8 @@ prototypes planned, not shipped.
 
 `extension List: Copyable where T: Copyable {}` is the form. The conditions must be `T: Copyable`
 on a generic parameter, the extension must be in the type's own file, and it is not allowed on a
-type with a `deinit`. An unconditional `extension Optional: Copyable {}` is rejected.
+type with a `deinit`. An unconditional `extension Optional: Copyable {}` is rejected. This is a restricted conditional
+extension conformance, distinct from the suppression `~Copyable`, which is allowed on the declaration only (verified, SE-0427).
 
 ### 5.3 Copies are implicit, with an explicit operator where it matters
 
@@ -193,7 +194,8 @@ Before: `Copyable` meant implicitly copyable and `ExplicitlyCopyable` covered th
   zero. There is no marker separating a cheap copy from an allocating one.
 - **D** (verified). Structs copy with postblit or copy constructors, which are user code.
   `@disable this(this)` makes a struct non-copyable; the maintainers treat the resulting errors
-  when appending to arrays as intended.
+  when appending to arrays as intended. Postblits are legacy and were replaced by copy constructors, with documented
+  precedence and compatibility complications (verified 2026-11-05: the D specification and its legacy-features page).
 - **Nim** (verified). `=copy`, `=sink`, `=dup` and `=destroy` are user hooks. A copy can be
   disabled by declaring `=copy` with the error pragma.
 - **Ada** (verified). A `limited` type forbids assignment. A controlled type customises it
@@ -208,6 +210,28 @@ Before: `Copyable` meant implicitly copyable and `ExplicitlyCopyable` covered th
   Generic aggregates can defer the universe to instantiation. It supports declaration-visible resource discipline.
 - **Hylo** (unconfirmed). Its introduction says it "avoids hidden costs such as implicit copies".
   Its rules on explicit copy could not be found.
+
+### 7.1 Linear and affine disciplines (added 2026-11-05)
+
+Verified 2026-11-05 against the cited sources; the evidence is heterogeneous, and **affine by default with opt-in copy and
+opt-in linear is not a cross-language consensus.**
+- **Austral:** `Free` and `Linear` universes declared on the type; `T: Type` accepts either and must be handled linearly;
+  a structurally linear type cannot be classified `Free`.
+- **Linear Haskell:** multiplicity belongs to arrows and bindings (`%1`, multiplicity-polymorphic `%m`) beside ordinary
+  unrestricted arrows.
+- **Idris 2:** quantities erased, exactly-once and unrestricted; unannotated arguments are unrestricted. Usage accounting on
+  variables, not nominal classes.
+- **Swift:** generic parameters default to requiring `Copyable`; `~Copyable` broadens admission (SE-0390, SE-0427).
+- **Rust:** destruction is not guaranteed; safe `forget` discards ownership without cleanup, so Rust's ownership is affine, not
+  exactly-once.
+- **Mojo:** explicit destruction needs deliberate consumption; broad `Movable` generic code can accept both destruction
+  models, while implicitly destroying code needs a stronger bound.
+- **Vale, Cyclone, ATS:** restricted aliasing or linear views rather than universal mandatory consumption (Vale's
+  linear-aliasing model, Cyclone's unique pointers, ATS viewtypes). **Clean:** uniqueness types (memory).
+- **Kotlin:** data classes prohibit an explicit `copy()` but permit written equality and hashing in place of generation
+  (verified); **Lean:** declaration-attached and standalone `deriving`, with instance priorities (verified).
+- **Zig:** aggregates may be passed by value or by reference by the implementation; copy size can make a copy expensive,
+  so semantic copying is not a physical transfer (verified).
 
 ## 8. Cross-cutting findings
 
@@ -342,9 +366,9 @@ are as in section 1.
 
 - Rust: lang items and unstable auto traits. Swift: `Sendable` and `@_marker`. Swift's `@_marker`
   is a compiler-internal underscored attribute: a marker protocol has no requirements and no runtime
-  representation (verified). Haskell: classes solved by the compiler and closed to user instances,
-  such as `Typeable`, `Coercible` and `KnownNat` (verified: GHC error index and base docs;
-  `HasField` not checked).
+  representation (verified). Haskell: `Typeable`, `Coercible` and `KnownNat` reject
+  user instances (verified: GHC error index and base docs), while `HasField` is compiler-solved and also admits user
+  instances (verified: GHC guide), so compiler-solved and closed to user instances are different properties.
 - Visibility of structural grants is a semver question. Swift infers `Sendable` for types that are
   not publicly ABI-exposed and for frozen public types, not for resilient public ones, because inference on a public
   type is an API commitment (verified: SE-0302 and Doug Gregor's clarification). The Rust language team calls each auto trait a semver hazard:
@@ -544,6 +568,7 @@ user-writable hook is a deferred extension (RFC-0206 section 8). What changes in
 | Cost visibility | An implicit copy is a bit copy, so there is no cost surprise beyond size; `.clone()` stays the visible cost |
 | Consistency | Fewer concepts than the hook version (no hook, no `implicit via`, no `derived` mark needed for `Copy` beyond the provided `Clone`); the lattice of RFC-0089 explains the `Drop` and `Linear` exclusions as one rule |
 | Fail-safe default | Affine by default and `copy` opt-in, so a forgotten keyword on a handle or a token fails safe; copy-by-default (Swift) was rejected for that reason |
+| Scope of the correctness claim | The sealed copy removes the requirements that come from a copy callback; it does not erase ordinary operand evaluation, aliasing or destruction semantics |
 | Loses | A custom implicit copy (the `Cache` that resets a field on copy) until the later extension |
 
 The remaining weaknesses are unchanged: maturity, the generic-code limits of v0.16.0, and the extra machinery

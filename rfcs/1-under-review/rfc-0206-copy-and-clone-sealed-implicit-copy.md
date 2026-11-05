@@ -138,7 +138,10 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
    either direction. Reusing a `View<T>` in a generic body is therefore rejected until the obligation solver,
    which is deferred to a later minor (metel-core#1813; section 6, step 2); today it is rejected with an internal
    error (`I0011`). Because undecided is an error and not a move, the accepted set only grows when proof power
-   improves, and the behaviour of an accepted program never changes with it. Concrete uses are unaffected.
+   improves, and the copy-or-move behaviour of an accepted program never changes with it. Adding proofs must also not change overload
+   selection, conditional-implementation selection or coherence conclusions: every consumer of an ownership fact other
+   than the copy-or-move decision sees an undecided fact as undecided, never as no (RFC-0213 section 3). Concrete uses
+   are unaffected.
 4. *The implicit copy is the representation copy.* A copy site (below) of a `Copy` value duplicates its
    representation. No user code runs, so a copy is unobservable; a type that is not `Copy` is moved.
 5. *`Drop` and `Linear` exclude it.* A type that implements `Drop` cannot be `Copy`, and neither can a `Linear`
@@ -289,7 +292,12 @@ replaces the native one when RFC-0092 and RFC-0093 allow.
   fails safe. A `Copy` grant is a statement; it is never inferred from the fields (copy-by-default, section 8).
 - **Generic code with respect to `Linear`.** An unbounded type parameter is affine: movable and droppable, not
   copyable, and linear types cannot instantiate it until the suppression spelling for `Linear` exists, which
-  arrives with `linear` (RFC-0089, open there).
+  arrives with `linear` (RFC-0089, open there). The staging has a cost: containers, adapters, closures and utility
+  functions written before linearity may need broader parameter declarations later (Swift took several releases
+  for the same step, SE-0427). RFC-0089 must therefore show, before `linear` is implemented, a generic identity
+  function and a container that accept a future linear value under the suppression spelling (Austral's
+  `T: Type`, Swift's `~Copyable` and Linear Haskell's multiplicity polymorphism are the comparisons); v0.16.0
+  defines no such spelling, so nothing it ships forecloses one.
 - **`Share`** (RFC-0158) is unaffected, since the name `Clone` stays.
 
 ---
@@ -349,8 +357,9 @@ non-`pub` type). A stronger stated condition therefore keeps the published inter
 representation change would weaken the computed one. Use sites evaluate only stored interfaces, and the stored
 condition language is finite and acyclic: its evaluation terminates by construction (recursive conditional
 heads are rejected or normalised at the declaration). An ownership diagnostic names its proof path: no
-declaration permission, a field that fails, an absent bound, or a checker limitation. The route is
-incremental and nothing in v0.16.0 closes it:
+declaration permission, a field that fails, an absent bound, or a checker limitation. Haskell's report is the precedent for the computation: the smallest derived context, with a fixed point over
+mutually recursive declarations, and GHC restricts the inferred shapes and offers a written context for the rest.
+The route is incremental and nothing in v0.16.0 closes it:
 1. v0.16.0: this RFC, with the undecided-ownership diagnostic (#1814).
 2. A later minor: stored interfaces with explicit conditions, with copy classification separated from obligation
    entailment (metel-core#1818).
@@ -456,6 +465,26 @@ affine struct Token { id: i64 }                                           // loc
 - **RFC-0080** — the source of `Clone`; it keeps `Deref`, `Send` and `Sync`.
 - **RFC-0093 / RFC-0092** — the derive mechanism and comptime that replace the native derivation.
 - **RFC-0097** — the orphan rule for bare-parameter blanket impls; no longer needed for this.
+
+## Novel parts and acceptance
+
+The fourth review (prior art, 2026-11-05) judged that the ownership choice is on well-trodden ground (a sealed copy,
+a declaration-local grant, a provided `Clone`, definition-time generic decisions) and that the surrounding machinery
+is a language-design experiment. Accepting this RFC should not be presented as external validation of the latter. The
+novel parts and their risk:
+
+| Part | Risk |
+|---|---|
+| Exclusion-based disjointness (signed closure, RFC-0213 section 3) | High: negative declarations become a public coherence contract |
+| The stated condition as the public interface and its terminating language (section 6) | High until implemented and tested |
+| Derivation provenance deciding residual instances (RFC-0211) | High teaching and migration cost, smaller for `Copy` types |
+| The `derived` mark on super-aspect edges (RFC-0213 section 4) | Moderate: API evolution; less established than Rust's or Haskell's require-only rule |
+| `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
+| The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
+| A later observable hook under the same capability | High unless `Copy`'s sealed guarantee stays intact (section 8) |
+
+Acceptance order: RFC-0089 sections 1 to 2.1 (the lattice and keywords), then this RFC's ownership model (sections 1 to
+5), then RFC-0207, RFC-0213 and RFC-0212, with the row RFCs (0209 to 0211) later; each remains a separate decision.
 
 ## Open questions
 

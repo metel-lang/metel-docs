@@ -91,6 +91,12 @@ a value goes unused.
 
 ---
 
+> **Prior-art note (2026-11-05).** Rust's ownership is affine, not linear: destruction is not guaranteed and
+> safe `mem::forget` can discard ownership without cleanup, so Rust is evidence for the affine default and against
+> reading it as exactly-once resource discharge. Austral's `Free`/`Linear` universes, Linear Haskell's multiplicities,
+> Idris 2's quantities, Swift's `~Copyable` and Mojo's explicit destruction are the comparisons for `linear`
+> (architecture/reports/copy-clone-prior-art-survey.md, section 7).
+
 ## 1. The multiplicity lattice
 
 Quantitative type theory (Atkey 2018, Idris 2, Linear Haskell) typically uses a

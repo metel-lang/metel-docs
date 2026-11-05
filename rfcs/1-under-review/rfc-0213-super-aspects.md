@@ -135,6 +135,11 @@ author's message), so the default is an obligation and the aspect's author opts 
 entry can introduce generation of `B` and turn existing written `B` impls into `T0015`; removing it can
 remove the `B` that made downstream `derives A` valid. Both are breaking changes to the aspect.
 
+**Known novelty.** Haskell and Rust require the superclass instance to exist and never generate it from the subclass's
+derivation (Swift generates a missing one, as `Hashable` does for `Equatable`). A generic per-edge mark that
+makes the sub-aspect's derivation generate a super-aspect is a less established combination: it is judged moderate
+risk because it changes downstream generated impl sets when added or removed (see above).
+
 **Diamonds.** `A: B, C` with `B: D` and `C: D` has one obligation `D`, deduplicated by aspect identity
 and arguments; a marked path derives it once.
 
