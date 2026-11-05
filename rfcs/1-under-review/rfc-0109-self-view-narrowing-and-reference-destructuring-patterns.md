@@ -470,7 +470,7 @@ should also be composable per-field as Niko proposes, is open for this RFC.
   deliberately outside of (§1, §4).
 - RFC-0091 (Linear Records, `1-under-review`) — §2.1's open aliasing question, partially
   inherited by §7.
-- RFC-0089 (Linear Types, `1-under-review`) §3.1 — the fiat-`Linear` brand-carrying
+- RFC-0089 (Linear Types, `2-accepted`; its §3.1 moved to RFC-0215) §3.1 — the fiat-`Linear` brand-carrying
   exception; §4 explains why this RFC no longer claims to be a second instance of
   it.
 - RFC-0032 (Field-Level Visibility, implemented) — the private-field-access check §8

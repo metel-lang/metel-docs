@@ -2,7 +2,7 @@
 id: rfc-0207
 title: "Declaration Clauses: derives and the Colon List"
 date: '2026-11-02'
-status: under-review
+status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 ---
@@ -14,6 +14,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 > those unnecessary for the settlement and they are not carried. Nothing here is decided.
 
 > **Status — under review (2026-11-03).** Tracking metel-core#1786, v0.16.0.
+
+> **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
 
 ## Summary
 
@@ -115,7 +117,7 @@ type states its condition once computed defaults exist (RFC-0206 section 6, "End
   promise is better expressed as a refinement type (RFC-0202), and method-bearing aspects in the colon
   list are the later stage of RFC-0105.
 - It does not specify the grammar of named records and enums beyond the two clauses; RFC-0209 to
-  RFC-0211 (under review) are the derivation templates.
+  RFC-0211 (accepted, staged) are the derivation templates.
 
 ## 5. Worked examples
 

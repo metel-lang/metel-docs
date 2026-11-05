@@ -2,7 +2,7 @@
 id: rfc-0211
 title: "Aspect Templates on Residuals"
 date: '2026-11-02'
-status: under-review
+status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 ---
@@ -14,6 +14,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 > template; the examples were rewritten to `copy struct`.
 
 > **Status — under review (2026-11-03).** review of residual templates
+
+> **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
 
 ## Summary
 

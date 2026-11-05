@@ -2,7 +2,7 @@
 id: rfc-0213
 title: "Super-Aspects"
 date: '2026-11-04'
-status: under-review
+status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
 ---
@@ -14,6 +14,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
 > is decided.
 
 > **Status — under review (2026-11-04).** first draft opened for review
+
+> **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
 
 ## Summary
 

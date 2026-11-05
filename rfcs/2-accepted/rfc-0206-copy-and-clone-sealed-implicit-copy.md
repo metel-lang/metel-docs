@@ -2,7 +2,7 @@
 id: rfc-0206
 title: "Copy and Clone: A Sealed Implicit Copy and an Explicit Clone"
 date: '2026-11-02'
-status: under-review
+status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
 ---
@@ -16,6 +16,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
 > RFC-0207's; the model and its alternatives are RFC-0162's. Nothing here is decided.
 
 > **Status — under review (2026-11-05).** Committed to v0.16.0 as the Copy and Clone half of the settlement.
+
+> **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
 
 ## Summary
 
