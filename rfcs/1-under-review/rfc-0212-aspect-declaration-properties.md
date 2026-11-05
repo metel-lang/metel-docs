@@ -130,7 +130,7 @@ instantiation, and a conflict is an error at the second declaration.
 
 **Refining an implicit aspect does not bypass `declared`.** `aspect Cheap: Copy` is allowed, but
 `extend T: Cheap;` still needs `T: Copy` as a super-aspect obligation, which only a declaration
-clause grants. A sub-aspect cannot carry `implicit` itself, since that is std only.
+clause grants. A sub-aspect cannot carry `implicit` itself, since that is std only. The `derived` mark on a super-aspect entry (RFC-0213 section 4) is std only for the same reason.
 
 **A custom hook is a later extension, not a property of this RFC.** The earlier design let `implicit` name a
 method (`implicit via Clone::clone`) so that a written `clone` ran at an implicit copy. It is deferred (RFC-0206

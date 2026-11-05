@@ -127,7 +127,7 @@ silently promotes a type to the stronger contract.
 The super-aspect relation (`aspect Ord: Eq`), its transitivity, its implementation obligations and
 its interaction with negative implementations were split into **RFC-0213 (Super-Aspects)** on
 2026-11-04, because other work needs the relation without the equality model. This RFC uses it as
-RFC-0213 specifies it: `Eq` is declared `aspect Eq: derived PartialEq`, so `extend T: Eq;` requires a
+RFC-0213 specifies it: `Eq` is declared `aspect Eq: derived PartialEq` (the `derived` mark is std only in v0.16.0, RFC-0213 section 4, which covers this declaration), so `extend T: Eq;` requires a
 `PartialEq` and a custom `PartialEq` stays legal there. `derives Eq` is different (RFC-0213 section 4): it derives the
 field-wise `PartialEq` as well, and a hand-written `PartialEq` under it is `T0015`; the reflexivity
 of a derived `Eq` follows from every field being `Eq`, which the compiler checks. The author with a

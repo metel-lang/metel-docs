@@ -102,7 +102,10 @@ only explicit negative impls).
 A super-aspect entry is an **obligation** unless it is marked `derived`. The mark says that the
 derivation recipe of the sub-aspect includes the super-aspect, because the sub-aspect's law is stated
 over the super-aspect's methods (`Eq` over `PartialEq`, `Copy` over `Clone`). The aspect's
-author marks it; std decides the first set.
+author marks it, **but only std aspects may carry the mark in v0.16.0** (decided 2026-11-05); a user aspect's
+entry is always an obligation, and its author writes both impls by hand, as in Rust. `Copy: derived Clone` is the
+settlement's one use; `Eq: derived PartialEq` (RFC-0168) is the other std case. A `derived` on a user aspect is an
+error.
 
 1. **Unmarked entry** (`aspect Error: Display`, the default, as in Rust and Haskell): `derives A` requires
    the super-aspect to exist for the type, written or derived by its own `derives`. There is no overlap
@@ -133,10 +136,12 @@ author's message), so the default is an obligation and the aspect's author opts 
 entry can introduce generation of `B` and turn existing written `B` impls into `T0015`; removing it can
 remove the `B` that made downstream `derives A` valid. Both are breaking changes to the aspect.
 
-**Known novelty.** Haskell and Rust require the superclass instance to exist and never generate it from the subclass's
+**Known novelty, and why it is std only.** Haskell and Rust require the superclass instance to exist and never generate it from the subclass's
 derivation (Swift generates a missing one, as `Hashable` does for `Equatable`). A generic per-edge mark that
 makes the sub-aspect's derivation generate a super-aspect is a less established combination: it is judged moderate
-risk because it changes downstream generated impl sets when added or removed (see above).
+risk because it changes downstream generated impl sets when added or removed (see above). Restricting it to std
+confines the unproven combination to the aspects the settlement needs, and leaves its compatibility breakage under
+std's own change policy. Opening it to user aspects is an addition and forecloses nothing (open question 9).
 
 **Diamonds.** `A: B, C` with `B: D` and `C: D` has one obligation `D`, deduplicated by aspect identity
 and arguments; a marked path derives it once.
@@ -211,6 +216,10 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
    (`derives Clone { hits = reset }`) would keep the template, and so projections, while changing one
    field. It is the lighter alternative to a written row-generic impl (RFC-0214, RFC-0216) for the
    common case; whether it is worth a clause form is open (RFC-0207).
+9. **Opening `derived` to user aspects.** Only std aspects may carry the mark in v0.16.0. Reopen it when a real
+   user aspect needs its derivation to generate a super-aspect and writing both impls by hand is a demonstrated
+   cost; the compatibility rules of this section (the mark is part of the aspect's contract) then apply to that
+   aspect's author.
 
 ---
 
