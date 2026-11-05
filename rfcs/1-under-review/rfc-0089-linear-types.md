@@ -157,6 +157,12 @@ field's exactly-once obligation disappear (Austral likewise refuses to classify 
 freely usable). `!Linear` is accepted where no field is `Linear`, for example the locking pair of `affine struct`
 (section 2.1), which prevents a later fiat grant.
 
+**`Clone` is not contraction (decided 2026-11-05).** `Clone` is explicit creation of another value, not the
+implicit duplication that linearity forbids, so a linear type may have a **written** `Clone`: the author asserts that
+another instance is valid (for example opening another handle). A **derived** `Clone` of a struct with a linear field
+works only if that field's own `Clone` is written. Forbidding `Clone` on linear types would stop a user from
+duplicating a resource deliberately.
+
 **Mutually exclusive with `Copy`** (`ω` and `1` can't coexist in the same field) **and
 with `Drop`.** `Drop`'s triggers — implicit scope-end, the generic `drop(x)` free
 function — have no legitimate firing point for a value that can never legally reach

@@ -91,7 +91,9 @@ contract is Rust's signature and ownership shape: *another value of this type*. 
 preserve equality where `PartialEq` exists, and collections rely on it; Metel states no equality law, so Rust's
 collection assumptions cannot be inherited without a further contract: a future collection API must not assume an
 equality- or hash-preserving `clone` silently, and either states which operations cannot rely on it or asks for a
-stronger law-bearing capability. A reference or a view is cloned by cloning
+stronger law-bearing capability. **Std rule (decided 2026-11-05):** a std collection documents which of its operations
+assume a faithful `clone`; no law-bearing aspect is created until a collection needs one (today's std has `List` only, and
+no collection that clones keys). A reference or a view is cloned by cloning
 the reference or view, not the referent. A handle that aliases shared state is `Share` (RFC-0158), a separate
 aspect, and is not `Clone` unless its type says so.
 
@@ -229,15 +231,17 @@ holes of the Motivation cannot recur.
 (`native(@std.core.copy_value) fun clone(&self) -> Self;`); it cannot panic or reenter. A *derived* `clone` of a
 non-`Copy` type is a per-field call to each field's `clone`, in declaration order for structs, named records and
 enum payload fields, in increasing index order for sequences, left to right for tuples, in lexicographic label
-order for anonymous records and in capture-list order for closures. If a field's `clone` panics, the derived clone
-stops: fields already cloned are dropped in reverse order by whatever the runtime's panic semantics do (panics are
-not catchable, RFC-0153), and no partial value is observable. The order is observable only when an inner
+order for anonymous records and in capture-list order for closures. If a field's `clone` panics, a panic ends the
+process (runtime.md, `spec.runtime.panics.dynamics-1`; panics are not catchable, RFC-0153): no cleanup runs, and no partially
+built value or drop order is observable. This is safe for a linear field, because a linear value never needs discharging when
+the program ends. If recoverable failure is ever introduced (a `try_clone` returning `Result`), the cleanup of
+already-cloned fields must be specified then, and a linear intermediate needs an explicit rule. The order is observable only when an inner
 `clone` is written, and it is defined so that it is stable (the interpreter's record clone iterates a `HashMap`
 today and gives no defined order; metel-core#1817).
 
 **What `Copy` promises.** It is side-effect-free duplication, not necessarily cheap duplication: a large inline
 array is copied at its size (Zig's reference makes the same point), and a large-copy diagnostic is a possible
-later tool once layout exists.
+later tool once layout exists (tracked as a low-priority lint, metel-core#1825).
 
 **Bounds in generic code.** Generic code that must copy bounds on `Copy`; code that may duplicate bounds on
 `Clone` and calls `.clone()`. An unbounded type parameter is affine: it can be moved and dropped but not copied
