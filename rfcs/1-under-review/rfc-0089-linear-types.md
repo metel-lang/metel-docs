@@ -205,7 +205,7 @@ commitment that nothing elsewhere in the codebase can later add `extend Handle: 
 and silently change what moving a `Handle` means.
 
 
-### 2.2 Generic code and the capability to discard (proposal, 2026-11-05; to be ratified)
+### 2.2 Generic code and the capability to discard (accepted 2026-11-05)
 
 **The problem.** A generic body can do two things to a value of parameter type `T` without writing a call: copy it
 and drop it. A copy happens at a visible use site (a second use of `x` is a use-after-move unless `T: Copy`), so the
@@ -240,7 +240,8 @@ the six listed under "The problem".
   (RFC-0173 is unchanged for them). The reason is the one above: a drop is the only implicit operation. This is
   a single named exception to "declared bounds", limited to the one implicit operation.
 - **`pub` generic functions state the bound.** Once `linear` is implemented, a `pub` generic function whose body drops
-  a `T` must write `T: Discard`, with a fix-it; otherwise a change from consuming to dropping would change the
+  a `T` must write `T: Discard`; the compiler must **suggest the inferred capability** in the diagnostic (a fix-it
+  that inserts the bound it computed), so the author confirms it instead of working it out; otherwise a change from consuming to dropping would change the
   public interface silently and break linear callers (Swift made public inference explicit for the same reason,
   SE-0427). A non-`pub` function is elaborated silently. This is the rule the stated-condition design already uses
   for stored ownership conditions (RFC-0206 section 6).
@@ -295,10 +296,10 @@ discard (RFC-0134, RFC-0153).
 3. *(Moved to RFC-0215.)* `NonLinear<T>`'s surface syntax.
 4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) — noted as a real, later
    extension; not attempted here.
-5. **The default for an unbounded type parameter with respect to `Linear`**: **proposed 2026-11-05**, section 2.2. A bare `T`
+5. **The default for an unbounded type parameter with respect to `Linear`**: **decided 2026-11-05**, section 2.2. A bare `T`
    is possibly linear; `T: Discard` is elaborated for the one implicit operation (drop) and stated on `pub` functions
-   once `linear` ships. In v0.16.0 every type is `Discard`, so nothing changes for existing programs. To be ratified,
-   with the demonstration required there.
+   once `linear` ships. In v0.16.0 every type is `Discard`, so nothing changes for existing programs. The
+   demonstration required there remains a gate for accepting sections 1 to 2.1.
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
 
 ---

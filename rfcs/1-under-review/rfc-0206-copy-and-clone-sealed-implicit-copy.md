@@ -298,7 +298,7 @@ replaces the native one when RFC-0092 and RFC-0093 allow.
 - **Defaults.** A type is affine unless it says otherwise (RFC-0071): forgetting a keyword on a handle or a token
   fails safe. A `Copy` grant is a statement; it is never inferred from the fields (copy-by-default, section 8).
 - **Generic code with respect to `Linear`.** In v0.16.0 every type is discardable, so an unbounded type parameter
-  behaves as affine: movable and droppable, not copyable. The long-term rule is RFC-0089 section 2.2 (proposed): a bare `T` is
+  behaves as affine: movable and droppable, not copyable. The long-term rule is RFC-0089 section 2.2 (decided 2026-11-05): a bare `T` is
   possibly linear, the capability `Discard` is elaborated for the one implicit operation (drop), and a `pub` generic
   function states it once `linear` ships. The generic-body analysis must record drop sites of parameter-dependent
   values now, so that nothing in v0.16.0 forecloses it. RFC-0089 must show the demonstration of section 2.2 before
@@ -518,7 +518,7 @@ Acceptance order: RFC-0089 sections 1 to 2.1 (the lattice and keywords), then th
 1. **A custom implicit hook** as a later extension (section 8): whether to build it, and its spelling.
 2. **The class keywords:** contextual spelling, their use on enums, and whether `copy struct` for a generic type
    needs the condition of section 6 in the header.
-3. **The default for an unbounded type parameter with respect to `Linear`**: proposed in RFC-0089 section 2.2
+3. **The default for an unbounded type parameter with respect to `Linear`**: decided in RFC-0089 section 2.2
    (bare `T` possibly linear, `Discard` elaborated, `pub` states it once `linear` ships); this RFC ships the affine
    behaviour, which is equivalent while no linear type exists.
 4. **Allocator-placed values and `Clone`.** Out of scope; the allocator RFCs (RFC-0063, RFC-0139) own them.
