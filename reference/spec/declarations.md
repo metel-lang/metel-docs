@@ -3868,10 +3868,6 @@ An aspect lists its direct super-aspects after its name, each a visible aspect. 
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: super-aspect declarations are not yet accepted by the checker" -->
 
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
-<!-- rfc.py:origins:end -->
-
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: super-aspect declarations are not yet accepted by the checker_</span>
 <!-- rfc.py:exemption:rendered:end -->
@@ -3896,10 +3892,6 @@ An explicit `extend T: A` requires a coherent impl of every direct and transitiv
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the obligation is not yet checked" -->
 
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
-<!-- rfc.py:origins:end -->
-
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the obligation is not yet checked_</span>
 <!-- rfc.py:exemption:rendered:end -->
@@ -3912,10 +3904,6 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: exclusions are not yet declared by aspects" -->
 
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
-<!-- rfc.py:origins:end -->
-
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: exclusions are not yet declared by aspects_</span>
 <!-- rfc.py:exemption:rendered:end -->
@@ -3927,10 +3915,6 @@ The `derived` mark on a super-aspect entry is accepted only on an aspect declare
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the derived mark is not yet parsed" -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/2-accepted/rfc-0213-super-aspects.md)_</span>
-<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the derived mark is not yet parsed_</span>
@@ -3978,10 +3962,6 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: the declared property and the declaration clauses are not yet implemented" -->
 
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md)_</span>
-<!-- rfc.py:origins:end -->
-
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: the declared property and the declaration clauses are not yet implemented_</span>
 <!-- rfc.py:exemption:rendered:end -->
@@ -3993,10 +3973,6 @@ The properties `implicit` and `auto` are accepted only on an aspect declared in 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: aspect properties are not yet parsed" -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md)_</span>
-<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: aspect properties are not yet parsed_</span>

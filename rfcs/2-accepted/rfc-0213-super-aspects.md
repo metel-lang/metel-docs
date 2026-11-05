@@ -2,11 +2,6 @@
 id: rfc-0213
 title: "Super-Aspects"
 date: '2026-11-04'
-coverage:
-  "1": { spec: "spec.declarations.aspects.super-aspects.legality-1" }
-  "2": { spec: "spec.declarations.aspects.super-aspects.legality-3" }
-  "3": { spec: "spec.declarations.aspects.super-aspects.legality-4" }
-  "4": { spec: "spec.declarations.aspects.super-aspects.legality-5" }
 status: accepted
 updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1796'

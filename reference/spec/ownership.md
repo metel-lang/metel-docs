@@ -135,10 +135,6 @@ type may have a written `Clone`, and a derived `Clone` requires every field to s
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: Discard and Linear are not yet implemented" -->
 
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0089](../../rfcs/2-accepted/rfc-0089-linear-types.md)_</span>
-<!-- rfc.py:origins:end -->
-
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: Discard and Linear are not yet implemented_</span>
 <!-- rfc.py:exemption:rendered:end -->
