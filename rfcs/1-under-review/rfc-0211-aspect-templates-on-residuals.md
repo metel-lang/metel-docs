@@ -70,6 +70,8 @@ header entry derives behaviour from the type's row, and a residual is that row n
 > `T0012` with the use-site diagnostic of section 4 until the Row machinery stage lands.
 > The structural `Copy` rule is native compiler logic in v0.16.0 and moves to the std template later
 > (metel-core#1823).
+> Accepted with a **staged marker** (RFC-0206, "Novel parts and acceptance"): rule 2 and the use-site diagnostic are
+> the v0.16.0 part; the template half is "Planned for" a later release, with RFC-0209 and RFC-0210.
 
 **Legality.**
 1. A residual `T.{ fields }` of a nominal type `T` satisfies aspect `A` through a **row template**

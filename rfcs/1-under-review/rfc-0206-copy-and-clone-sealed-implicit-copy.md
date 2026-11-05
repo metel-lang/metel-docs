@@ -525,15 +525,25 @@ novel parts and their risk:
 | Part | Risk |
 |---|---|
 | Exclusion-based disjointness evidence (RFC-0213 section 3, deferred) | High if built: exclusions would become a public coherence contract; v0.16.0 keeps them a grant-time check only |
-| The stated condition as the public interface and its terminating language (section 6) | High until implemented and tested |
-| Derivation provenance deciding residual instances (RFC-0211) | High teaching and migration cost, smaller for `Copy` types |
-| The `derived` mark on super-aspect edges (RFC-0213 section 4) | Moderate: API evolution; less established than Rust's or Haskell's require-only rule |
+| The stated condition as the public interface and its language (section 6) | Moderate: the condition language and the polarity rule for recursive declarations are specified; high until implemented and tested |
+| Derivation provenance deciding residual instances (RFC-0211) | Lower for v0.16.0: projections get only `Copy` and the `Drop` dispatch, other aspects are `T0012` with a use-site diagnostic; the template half is later. Teaching and migration cost remain for that half |
+| The `derived` mark on super-aspect edges (RFC-0213 section 4) | Low: std only in v0.16.0, with `Copy` and `Eq` its only users; opening it to user aspects is a later addition |
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
-| A later observable hook under the same capability | High unless `Copy`'s sealed guarantee stays intact (section 8) |
+| A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |
+| Inferred `Discard` for generic code (RFC-0089 section 2.2) | Moderate: one named exception to "declared bounds", limited to the one implicit operation; `pub` functions state it once `linear` ships; **not yet reviewed adversarially** |
+| Native structural `Copy` for named types | Low: a named, time-boxed exception, tracked as metel-core#1823 |
 
-Acceptance order: RFC-0089 sections 1 to 2.1 (the lattice and keywords), then this RFC's ownership model (sections 1 to
-5), then RFC-0207, RFC-0213 and RFC-0212, with the row RFCs (0209 to 0211) later; each remains a separate decision.
+**Acceptance (decided 2026-11-05): one ratification sweep.** The settlement is one cluster, as the allocator
+cluster was (PROCESS.md, ratification sweeps). RFC-0206 is not accepted before the RFCs it depends on at design level, and
+all are decided in the same sweep, in this order: RFC-0089 sections 1 to 2.1 (the lattice, the keywords and the
+section 2.2 demonstration), this RFC's ownership model (sections 1 to 5), then RFC-0207, RFC-0213 and RFC-0212.
+RFC-0211 is accepted with a **staged marker**: its v0.16.0 part (rule 2, a written impl never applies to a residual,
+giving `T0012` with the use-site diagnostic) is in the sweep, and its template half is marked "Planned for" a later
+release, with RFC-0209 and RFC-0210, which follow with the row machinery. A final targeted adversarial review of the
+changes made after the fourth review (the `Discard` capability and elaboration, the implicit-copy-as-provided-`Clone`
+definition, the std-only `derived` mark, the one-rule/condition-language/polarity text, and scope B for projections)
+precedes the sweep.
 
 ## Open questions
 
