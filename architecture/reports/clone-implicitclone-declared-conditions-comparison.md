@@ -68,6 +68,11 @@ field-wise conditions, nested applications whose arguments are not bare paramete
 E removes the need for field-wise conditions on nominal types by making the header the source of the rule, and
 reduces nested applications to substitution into declared conditions.
 
+**Correction, 2026-11-05 (E spike, section 11).** This overstated how much of generic-body reuse the existing
+machinery already gives: `OwnershipRule::applicability` accepts only bare parameters and returns unknown for an absent
+bound, so nested applications need a recursive evaluator over type expressions, and an unbounded parameter needs an
+explicit definite-no policy.
+
 Grammar fact: `struct_decl` already accepts `where_clause?` between the generic parameters and `{`
 (`grammar.pest`), where it constrains the type itself. A per-entry condition therefore needs another
 spelling (`when` below, or a form inside the entry).
@@ -167,3 +172,36 @@ later.
 - That the existing `OwnershipRule` handles negative conditions in headers the way impl bounds do (it
   stores polarity, but the header path has not been exercised).
 - Whether `derives` can compute conditions for every field type form used in std.
+
+## 11. Spike result (2026-11-05, metel-core#1815)
+
+A codex spike prototyped E for the existing `Copy` aspect on branch `spike/1815-declared-conditions`
+(uncommitted; local worktree). I re-ran its fixtures: 7 passed, 3 failed, as it reported.
+
+| Part | Result |
+|---|---|
+| Header grammar and AST | Worked. `struct W<T>: Copy when T: Copy { .. }`; `when` is contextual; the struct-level `where` stays separate; about 212 lines |
+| Desugaring | Worked. The parser lowers each entry to an ordinary bodyless impl (`extend<T> W<T>: Copy where T: Copy;`) before name resolution and coherence |
+| Sufficiency validation | Worked, reusing `check_copy_impl_eligibility`: nested fields accepted under the declared condition, an unconditional `Bad<T> { value: T }` and a `String` field rejected. The missing-condition fix-it was not implemented |
+| Generic bodies | **Partial.** Bounded `Wrapper<T>` and unconditional `View<T>` accepted. The unbounded case and both nested cases still give `I0011`; nothing flipped from `I0011` to definite |
+| Condition computation (`derives`) | Not implemented; the spike stopped at the generic-body limit |
+| Coherence | Generated impls go through the positional bound collection; disjointness still compares direct aspect names, so the signed closure (RFC-0213 section 3) is additional work; no header-versus-written overlap test |
+| Recursion | Positive for the forms tried: a recursive type through a non-Copy `List` is rejected, an unconditional recursive type through shared references is accepted; no cycle detector was needed |
+
+**Why the three cases fail.** The existing consumer needs two things E does not provide by itself: a recursive
+evaluator over type expressions (nested applications), and an explicit definition-time policy that an absent bound
+is a definite "not Copy" rather than unknown. Neither needs field recursion.
+
+**Effort.** 12 to 25 engineer-days for production across `Copy`/`Clone`/`ImplicitClone` (Copy alone 6 to 12), against
+15 to 30 for the solver. The spike does not establish a large saving. Unknowns: absent-bound semantics, signed
+closure, `Clone` coverage implication, generated-impl provenance, `derives` coverage; callable witnesses are separate.
+
+**The spike's recommendation:** adopt E in two steps, conditional on resolving the three failing cases first. Step
+one: unconditional and own-parameter-conditional declarations, sufficiency validation, nested declared-interface
+evaluation, an absent-bound policy, diagnostics, tooling and coherence coverage. Step two: `derives` computation and
+richer conditions. If step one cannot fit, defer E.
+
+**An observation for the next step.** The earlier solver spike (#1810) already contains a nested-application evaluator
+that made `Pair<Wrapper<T>, i64>` and the shared-reference cases definite. Applying it to E's desugared rules, which
+need no field-wise recursion, would test whether the three failing cases flip. That is a cheap combined spike and it
+would answer the open condition of the recommendation.
