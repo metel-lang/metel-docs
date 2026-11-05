@@ -61,8 +61,9 @@ Three further facts shaped this design:
 - **Coverage holes.** `&T` and `[T]` are `Copy` but not `Clone` (`&i64` fails `T: Clone` with `T0012`), and array
   `clone` does not call the element's `clone` while record `clone` does. A rule of the form "every `Copy` type is
   `Clone`" cannot be left to std.
-- **Rust's pair has a documented friction.** `Copy: Clone` requires both impls, `Clone` may diverge from the
-  copy, and derive over-approximates generic bounds (the `Copy` documentation says so).
+- **Rust's pair has a documented friction.** `Copy: Clone` requires both impls and a type must write or derive
+  both; Rust documents that `Clone` should agree with the copy for a `Copy` type (RFC 1521) but the compiler does
+  not enforce it; and derive over-approximates generic bounds (the `Copy` documentation says so).
 - **A user-writable implicit hook was explored and set aside.** Three adversarial reviews found that running user
   code at an implicit copy makes insertion and elision observable, and that its lowering, ordering and generic
   semantics cost more than they return in the first release (section 8). A sealed copy removes the problem, fits
@@ -70,8 +71,10 @@ Three further facts shaped this design:
   breaking any program.
 
 The survey found the precedents: Rust's non-overloadable `Copy` and Swift's compiler-managed copy (neither can
-run user code at an implicit copy), Mojo's single copy hook with an `ImplicitlyCopyable` marker, and Swift's rule
-that copyability is fixed on the declaration.
+run user code at an implicit copy), Swift's `BitwiseCopyable` (SE-0426), which separates types copyable by
+direct memory operations from ordinary copyable types and makes the property a permanent promise (the closest
+precedent for a sealed `Copy` with a declaration-level authorization), Mojo's single copy hook with an
+`ImplicitlyCopyable` marker, and Swift's rule that copyability is fixed on the declaration.
 
 ---
 
@@ -86,7 +89,9 @@ aspect Clone {
 `clone` returns a new owned value of the same type and the caller keeps the original; no move occurs. The
 contract is Rust's signature and ownership shape: *another value of this type*. Rust also expects `clone` to
 preserve equality where `PartialEq` exists, and collections rely on it; Metel states no equality law, so Rust's
-collection assumptions cannot be inherited without a further contract. A reference or a view is cloned by cloning
+collection assumptions cannot be inherited without a further contract: a future collection API must not assume an
+equality- or hash-preserving `clone` silently, and either states which operations cannot rely on it or asks for a
+stronger law-bearing capability. A reference or a view is cloned by cloning
 the reference or view, not the referent. A handle that aliases shared state is `Share` (RFC-0158), a separate
 aspect, and is not `Clone` unless its type says so.
 
@@ -137,8 +142,9 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
 4. *The implicit copy is the representation copy.* A copy site (below) of a `Copy` value duplicates its
    representation. No user code runs, so a copy is unobservable; a type that is not `Copy` is moved.
 5. *`Drop` and `Linear` exclude it.* A type that implements `Drop` cannot be `Copy`, and neither can a `Linear`
-   type. These are the lattice rules of RFC-0089 section 1 (RFC-0071 section 4's `Copy`/`Drop` exclusion is a
-   special case): weakening and contraction are different disciplines. `Clone` on a `Drop` type is allowed.
+   type. The justification is operational, and RFC-0089 section 1 states it with the lattice: a representation copy
+   cannot perform the per-owner cleanup bookkeeping that a destructor needs, and a linear value is never implicitly
+   discarded (RFC-0071 section 4's `Copy`/`Drop` exclusion is the first fact). `Clone` on a `Drop` type is allowed.
 6. *Residuals.* A residual `T.{ fields }` of a `Copy` type is `Copy` when the present fields are `Copy`
    (RFC-0211 rule 1) and has the provided `Clone`; there is no dependence on how `Clone` was written, because it
    cannot be.
@@ -202,9 +208,15 @@ holes of the Motivation cannot recur.
 (`native(@std.core.copy_value) fun clone(&self) -> Self;`); it cannot panic or reenter. A *derived* `clone` of a
 non-`Copy` type is a per-field call to each field's `clone`, in declaration order for structs, named records and
 enum payload fields, in increasing index order for sequences, left to right for tuples, in lexicographic label
-order for anonymous records and in capture-list order for closures. The order is observable only when an inner
+order for anonymous records and in capture-list order for closures. If a field's `clone` panics, the derived clone
+stops: fields already cloned are dropped in reverse order by whatever the runtime's panic semantics do (panics are
+not catchable, RFC-0153), and no partial value is observable. The order is observable only when an inner
 `clone` is written, and it is defined so that it is stable (the interpreter's record clone iterates a `HashMap`
 today and gives no defined order; metel-core#1817).
+
+**What `Copy` promises.** It is side-effect-free duplication, not necessarily cheap duplication: a large inline
+array is copied at its size (Zig's reference makes the same point), and a large-copy diagnostic is a possible
+later tool once layout exists.
 
 **Bounds in generic code.** Generic code that must copy bounds on `Copy`; code that may duplicate bounds on
 `Clone` and calls `.clone()`. An unbounded type parameter is affine: it can be moved and dropped but not copied
@@ -331,7 +343,13 @@ exact predicate holds; that condition is stored as the type's interface (an impl
 instantiation patterns); every use, including generic bodies, consults only stored interfaces. The invariant is
 that a stored interface implies the exact predicate of rule 3 and equals it whenever the condition language can
 express it, so rule 3 stays the meaning and the generic-body analysis becomes complete for markers on nominal
-types. An optional `when` clause is an assertion checked as sufficient, not the source of truth. The route is
+types. **The stated condition is the interface.** An optional `when` clause, checked as sufficient against the
+computed one, is what other code sees; the computed condition is the interface only when none is stated (a
+non-`pub` type). A stronger stated condition therefore keeps the published interface stable when a
+representation change would weaken the computed one. Use sites evaluate only stored interfaces, and the stored
+condition language is finite and acyclic: its evaluation terminates by construction (recursive conditional
+heads are rejected or normalised at the declaration). An ownership diagnostic names its proof path: no
+declaration permission, a field that fails, an absent bound, or a checker limitation. The route is
 incremental and nothing in v0.16.0 closes it:
 1. v0.16.0: this RFC, with the undecided-ownership diagnostic (#1814).
 2. A later minor: stored interfaces with explicit conditions, with copy classification separated from obligation
@@ -391,10 +409,16 @@ affine struct Token { id: i64 }                                           // loc
   complete lowering and ordering contract for patterns, iteration, spread, `?`, captures and aggregates; that
   generic reads need a per-site decision and dispatch evidence through reconstruction; and that a value-changing
   clone makes "unknown" a semantic choice. A sealed copy removes all of that, matches Rust and Swift, and fits the
-  lattice of RFC-0089. **It stays open as a later extension:** sealed to writable is a monotone relaxation (a
-  later minor can accept a custom mode, for example a `copy` declaration with an explicit custom hook, and no
-  accepted program changes), whereas writable to sealed would be a break. The cost of the extension is the work
-  listed above, which is why it is deferred and not designed here.
+  lattice of RFC-0089. **It stays open as a later extension, on conditions.** Sealed to writable preserves every
+  accepted program only if the hook is a **separate, separately authorized mode** and nothing weakens what `Copy`
+  already guarantees: `Copy` (and so `T: Copy` in generic code) keeps meaning a representation copy that runs no
+  user code, the existing elision permissions stay valid, existing exclusion facts keep their meaning (removing
+  `!Drop` can break coherence, RFC-0213 section 3), and a hook cannot replace an already provided `Clone`.
+  Allowing callbacks under the existing `Copy` guarantee would weaken a contract that generic libraries may rely
+  on. No surveyed mature language replaced a sealed-copy guarantee by observable hooks while keeping its old
+  guarantees (D added and replaced hook mechanisms and accumulated precedence rules; C++ needs explicit
+  elision rules). Writable to sealed would be a break. The cost of the extension is the work listed above,
+  which is why it is deferred and not designed here.
 - **Copy by default** (Swift's inference): rejected. A type whose fields are all copyable becomes `Copy` silently,
   so a capability token or a handle written without a keyword is freely copyable and droppable, the failure
   linear types exist to prevent. Rust chose opt-in for the same reason; the affine default fails safe, and the
@@ -442,11 +466,9 @@ affine struct Token { id: i64 }                                           // loc
    a generic accept linear types (RFC-0089, open there; this RFC takes affine).
 4. **Allocator-placed values and `Clone`.** Out of scope; the allocator RFCs (RFC-0063, RFC-0139) own them.
 5. **The spelling and home of the aspect properties** (RFC-0212) and of negative super-aspect entries (RFC-0213).
-6. **A native method in an aspect impl block.** Existing std natives are inherent methods (`String`, `List`).
-   Whether `native(..) fun clone(&self) -> Self;` is accepted inside `extend T: Clone { }` must be confirmed; if
-   not, the body calls an inherent native helper, or the checker accepts it in std. `@std.core.copy_value` is not
-   in the closed `NativeKey` set and needs a key and a host function whose contract distinguishes a string and
-   an owning array.
+6. **The `copy_value` native.** A native method inside an aspect impl is already accepted (the record `Clone` in
+   `core.mtl` is one). What is missing is the key: `@std.core.copy_value` is not in the closed `NativeKey` set and
+   needs a key and a host function whose contract distinguishes a string and an owning array.
 7. **Written `Clone` for a residual of a non-`Copy` type.** RFC-0214 (draft) would let the author write one; it is
    not a dependency of this RFC.
 

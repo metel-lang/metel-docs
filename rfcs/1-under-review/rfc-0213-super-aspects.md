@@ -122,10 +122,12 @@ author marks it; std decides the first set.
 5. `struct P: A` (the colon list) generates nothing: every positive super-aspect, marked or not, must
    already exist for `P`, or it is an error naming the missing one (section 2).
 
-**Why a mark.** A derived marker is sound only over a derived base: `derives Eq` justifies `Eq` because
-the compiler also wrote the field-wise `PartialEq`, so reflexivity follows from every field being `Eq`
-(RFC-0168). Deriving `Eq` over a hand-written `PartialEq` would assert a law for an `eq` the compiler
-never saw. That argument is about aspects whose law ties them to a super-aspect. It does not hold for a
+**Why a mark.** This is a conservative generation policy, not a proof that a hand-written base is unsound (a
+hand-written `PartialEq` can satisfy its laws perfectly). `derives Eq` generates `Eq` together with the field-wise
+`PartialEq` the compiler also wrote, so reflexivity follows from every field being `Eq` (RFC-0168); the policy
+declines to trust a relationship between a generated marker and a base the compiler never saw. Generating both does
+not prove their laws unconditionally either: field implementations keep their contracts. That argument is about
+aspects whose law ties them to a super-aspect. It does not hold for a
 super-aspect that is an independent capability (`Error: Display`: deriving `Error` should not write the
 author's message), so the default is an obligation and the aspect's author opts in.
 

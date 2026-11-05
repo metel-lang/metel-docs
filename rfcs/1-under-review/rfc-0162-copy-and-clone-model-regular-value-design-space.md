@@ -56,13 +56,15 @@ implicit marker is named, declared and related to `Clone`.
    exclusion of `Drop` a negative super-aspect entry) over a super-aspect relation (RFC-0213). The compiler reads
    those properties by identity, which replaces the string-keyed `"Copy"` special cases (about 38 sites). The one
    property that is a language semantic, implicit duplication, is a declaration property available to std only;
-   every language surveyed keeps that one exception. The cost is a dependency chain (RFC-0206 section 6) that
+   each surveyed language keeps some compiler-defined operation for it (Rust's lang items, Swift's compiler-managed
+   copy, Mojo's hook dispatch), by different mechanisms. The cost is a dependency chain (RFC-0206 section 6) that
    v0.16.0 waits for, by the language owner's choice.
 5. **The classes are the lattice of RFC-0089.** Unrestricted (`Copy`), affine (the default) and linear; `Drop` and
    `Linear` exclude `Copy` as one rule (RFC-0071 section 4 is a special case, which also settles D3: `Drop`
    excludes `Copy` and `Clone` on a `Drop` type is legal, metel-core#1782). RFC-0089 is a design-level
    dependency; `linear` is reserved in v0.16.0.
-6. **A user-writable hook is a later extension.** Sealed to writable is a monotone relaxation; the cost of the
+6. **A user-writable hook is a later extension.** Sealed to writable preserves accepted programs only for a separate, separately authorized mode that leaves
+   `Copy`'s guarantee intact (RFC-0206 section 8); the cost of the
    hook (observable insertion, a lowering contract, per-site dispatch) is why it is deferred (RFC-0206 section 8).
 7. **Structural types and closures follow compiler rules** (Axis S's S1): tuples, arrays and records by their
    parts, `&T` and `[T]` always, `&var T` never, closures by captures (RFC-0134), written function types
@@ -893,14 +895,15 @@ recommendation 3.
 
 ### C++ — open implicit copy with user-defined hooks, no cost signal
 
-Every class is copyable by default via an implicitly generated member-wise copy
-constructor; the author may write their own or `= delete` it. Move (C++11) was added as
-an *optimization of* copy, not a distinct concept. The Rule of Three/Five documents that
-the five special members are coupled: declaring one suppresses or deletes others, and
-"if moves are deleted, the compiler falls back to copy, potentially surprising users."
+A class gets an implicitly declared member-wise copy constructor unless a member or base cannot be copied or a declared
+move operation causes it to be defined as deleted; the author may write their own or `= delete` it. Move (C++11) has
+separate constructors and move-only classes are meaningful, so it is not merely an optimization of copy. The Rule of
+Three/Five documents that the five special members are coupled: declaring one suppresses or deletes others (verified
+against the draft standard, 2026-11-05; the claim that a deleted move falls back to copy needs the
+absent-versus-deleted distinction and is not asserted here).
 
-There is **no marker at all** distinguishing a cheap copy from an allocating one — the
-cost is invisible at every call site, strictly worse than Rust's `Copy`/`Clone` split.
+There is **no mandatory use-site marker** distinguishing a cheap copy from an allocating one (a trivially-copyable
+property and its trait exist) — the cost is invisible at every call site, strictly worse than Rust's `Copy`/`Clone` split.
 C++ is the endpoint Metel should not drift toward, and the strongest single piece of
 evidence for D1.
 
@@ -948,8 +951,8 @@ optimizer for basic performance." Parameter passing uses explicit conventions
 (`let` / `inout` / `sink` / `set`) rather than reference types, so every access a
 function can make to a parameter is visible in its signature.
 
-This is RFC-0157's **P2** endpoint, shipped and internally coherent in a systems-oriented
-research language. The cost it pays is annotation burden and `.copy()` on small values;
+This is RFC-0157's **P2** endpoint, implemented and internally coherent in a systems-oriented
+research language that describes itself as under active development. The cost it pays is annotation burden and `.copy()` on small values;
 Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P2 is
 *achievable*; the open question is whether its ergonomics fit Metel's intended audience.
 
@@ -957,7 +960,7 @@ Hylo absorbs much of that through its borrow/`sink` conventions. Evidence that P
 
 - **Go** — `struct` values copy shallowly on assignment and at call boundaries with no
   user hook and no marker (the `sync.Mutex`-copied-by-value bug class). "Implicit copy,
-  zero control": the position no one defends.
+  zero control": a position this survey found no advocate for (not a verified judgment of the community).
 - **Clean (uniqueness types), Pony (reference capabilities), Vale (region borrowing)** —
   sidestep duplication by governing *aliasing* instead: a value is either uniquely owned
   (safe to mutate/consume) or shared (immutable). Metel's affine model (RFC-0071) already
@@ -1000,12 +1003,12 @@ trait that gates nothing implicit is an unobjectionable trait.
 
 ### What the survey suggests for Metel
 
-1. **The fully-open, fully-implicit end (C++, Go) is uniformly regretted.** The
+1. **The fully-open, fully-implicit end (C++, Go) is regretted by some maintainers and authors (unattributed here; treat as the author's reading).** The
    value-category-without-a-cost-signal middle (C#) is only safe with discipline rules.
    The two models people are actually comfortable with are Swift's
    implicit-copy-plus-COW (needs runtime COW Metel lacks) and Hylo's
    no-implicit-copy-plus-conventions (P2).
-2. **No language that started explicit has moved toward more implicitness** — Rust is
+2. **No language in this survey that started explicit is known to have moved toward more implicitness (a survey observation, not a verified history)** — Rust is
    moving the other way. Read alone this weighs toward P1/P2. But the same survey shows
    the *cost* of moving: Swift needed COW machinery to stay comfortable, Hylo pays a
    standing annotation tax, and Rust's own motion is on the *closure/`Rc`* side

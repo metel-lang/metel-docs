@@ -39,7 +39,9 @@ aspect Validated declared;                  // a user marker: a checked-by-nothi
 `implicit` is the one property that is a language semantic and not a constraint. It is the single
 exception that remains, stated as a declaration property read by identity and available to std
 only. It means one thing: a by-value use copies the representation (RFC-0206 section 2), with no user code.
-Everything else is a general feature other aspects can use.
+Encoding it as declaration data organises and exposes the compiler's privileged operation (it is inspectable and
+keyed by identity); it does not make it ordinary library semantics. Unsupported property combinations are
+rejected. Everything else is a general feature other aspects can use.
 
 ---
 
@@ -132,8 +134,9 @@ clause grants. A sub-aspect cannot carry `implicit` itself, since that is std on
 
 **A custom hook is a later extension, not a property of this RFC.** The earlier design let `implicit` name a
 method (`implicit via Clone::clone`) so that a written `clone` ran at an implicit copy. It is deferred (RFC-0206
-section 8): sealed to writable is a monotone relaxation, so a later minor can add a custom mode without
-changing any accepted program.
+section 8): a later minor can add a **separate, separately authorized** custom mode without changing any accepted
+program, provided `Copy` keeps its sealed guarantee for generic `T: Copy` code, the elision permissions and the
+exclusion facts keep their meaning, and a hook cannot replace a provided `Clone`.
 
 ---
 

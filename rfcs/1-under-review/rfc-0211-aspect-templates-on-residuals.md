@@ -135,6 +135,11 @@ read, so the result is well defined at every width.
 - **Bound satisfaction changes for hand-written impls** on residuals: a program that passes a
   residual to `T: Clone` today (and silently skips the user's impl) becomes `T0012`. This is the
   behaviour the bug (#1788) reports, and the fix is the rule.
+- **Replacing a derivation by a written impl removes the aspect from projections:** `derives Clone` to a
+  hand-written `Clone` keeps whole-type behaviour and drops `Clone` from `Doc.{ title }` (rule 2). That is a
+  capability change caused by implementation provenance, not by behaviour; a warning or migration diagnostic at the
+  edit is wanted, and a residual impl (RFC-0214) is the later remedy. A `Copy` type is not affected (its `Clone`
+  cannot be written).
 - **Two ways to satisfy an aspect** depending on whether it is derived or written, which the
   header entry already makes visible.
 - **Dependence on RFC-0209** for the template and on RFC-0207 for the header entry.

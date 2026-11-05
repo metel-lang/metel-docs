@@ -264,7 +264,9 @@ everything else reads.
    (RFC-0206 rule 3 keeps this case).
 3. **At every use, including generic bodies**, only stored interfaces are consulted: a small evaluator substitutes
    arguments into declared conditions. The search never runs at use sites.
-4. **`when` is an assertion, not the source of truth.** If written, it is checked sufficient (stronger is allowed);
+4. **The stated condition is the interface** (decided 2026-11-05, after the fourth review). If written, `when` is checked
+   sufficient against the computed condition (stronger is allowed) and is what other code sees; a representation
+   change that would weaken the computed condition then cannot change the published interface;
    if omitted, the computed interface is used, **except on a `pub` generic type, where leaving the condition unstated is
    an error** (decided 2026-11-05; the fix-it shows the computed condition). A non-`pub` type may rely on the computed
    condition.
@@ -278,7 +280,8 @@ struct Cursor<I: Iterator> derives ImplicitClone { cur: I::Item }      // exact:
 ```
 
 **Invariant (one sentence for RFC-0206):** a type's stored interface implies the exact predicate, and equals it whenever
-the condition language can express it. The generic-body analysis remains a sound approximation of the exact predicate and
+the condition language can express it and none is stated; a stated condition is the interface. The stored condition
+language is finite and acyclic so that use-site evaluation terminates by construction. The generic-body analysis remains a sound approximation of the exact predicate and
 becomes complete for markers on nominal types.
 
 | Property | Solver | E (computed) | Hybrid |

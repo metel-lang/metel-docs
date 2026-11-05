@@ -116,12 +116,16 @@ restrictive than `ω` (ω additionally allows duplication). `0` sits outside thi
 ordering — it's not "fewer uses," it's "not a runtime value," and behaves the way
 `PhantomBrand` (RFC-0074) and phantom type-state parameters already do.
 
-**A struct's overall discipline is the join (least upper bound, toward more permissive)
-of its fields' multiplicities.** A struct with any `1` field is linear overall; a
-struct with only `affine`/`ω` fields (no `1`) is affine overall; a struct with only `ω`
-fields may (if it opts in) be `Copy`. `Drop` is compatible with `affine` and `1` but not
-`ω` (RFC-0071 §4's existing `Copy`/`Drop` exclusion is a special case of this general
-rule, not a separate one).
+**A struct's overall discipline is the most restrictive of its fields' multiplicities**
+(`1` is more restrictive than `affine`, and `affine` than `ω`; this is the meet toward restriction,
+not a join toward permissiveness, which an earlier draft of this paragraph said and then contradicted).
+A struct with any `1` field is linear overall; a struct with only `affine`/`ω` fields (no `1`) is
+affine overall; a struct with only `ω` fields may (if it opts in) be `Copy`. `Drop` is compatible with
+`affine` only: not with `ω`, because a representation copy cannot perform the per-owner cleanup bookkeeping
+a destructor needs, and not with `1`, because a linear value is never implicitly discarded (section 2).
+RFC-0071 §4's `Copy`/`Drop` exclusion is the first of these two facts, and the lattice states them
+together; the exclusion rests on those operational reasons, not on the ordering alone (weakening says
+that discarding is permitted, not that discarding cannot run cleanup).
 
 ---
 
@@ -134,16 +138,18 @@ aspect Linear { }
 A marker aspect, structurally identical in form to `Send` (RFC-0080). Auto-derived, not
 opt-in: a struct containing a multiplicity-`1` field is `Linear` automatically, per
 RFC-0080 §3.2's auto-impl rule (the same structural-composition mechanism that grants
-`Send`/`Sync`, substituting `Linear` for `Send`), matching the lattice's join rule
+`Send`/`Sync`, substituting `Linear` for `Send`), matching the lattice's composition rule
 directly rather than being a bespoke case — RFC-0096 (2026-07-11) is where that
 mechanism is now formalized once, generically, since this citation and RFC-0080 §3.2's
 own text were the two places it was previously only informally assumed. **No
 `#derive(Linear)` annotation is needed or meaningful** — this is category 1 (auto-trait
 structural composition), not category 2 (derive-as-codegen); it should never appear in
 a derivable-aspects list alongside `Clone`/`Eq`/`Display` (RFC-0093 §"Derivable Aspects"
-corrects an earlier draft's error on exactly this point). `extend X: !Linear;`
-(RFC-0081) is the escape hatch for a type that would otherwise structurally qualify but
-shouldn't.
+corrects an earlier draft's error on exactly this point). A type
+with a `Linear` field **cannot opt out**: `extend X: !Linear;` on it is an error, because the assertion would make the
+field's exactly-once obligation disappear (Austral likewise refuses to classify a structurally linear type as
+freely usable). `!Linear` is accepted where no field is `Linear`, for example the locking pair of `affine struct`
+(section 2.1), which prevents a later fiat grant.
 
 **Mutually exclusive with `Copy`** (`ω` and `1` can't coexist in the same field) **and
 with `Drop`.** `Drop`'s triggers — implicit scope-end, the generic `drop(x)` free
