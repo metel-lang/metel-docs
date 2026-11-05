@@ -136,7 +136,8 @@ clause grants. A sub-aspect cannot carry `implicit` itself, since that is std on
 method (`implicit via Clone::clone`) so that a written `clone` ran at an implicit copy. It is deferred (RFC-0206
 section 8): a later minor can add a **separate, separately authorized** custom mode without changing any accepted
 program, provided `Copy` keeps its sealed guarantee for generic `T: Copy` code, the elision permissions and the
-exclusion facts keep their meaning, and a hook cannot replace a provided `Clone`.
+exclusion facts keep their meaning, and a hook cannot replace a provided `Clone`. It is reopened only on the trigger in RFC-0206 section 8 (a type
+that needs observable behaviour on an implicit copy which an explicit `.clone()` cannot express).
 
 ---
 
@@ -144,7 +145,7 @@ exclusion facts keep their meaning, and a hook cannot replace a provided `Clone`
 
 | Aspect | Declaration |
 |---|---|
-| `Copy` | `: derived Clone, !Drop`, `declared`, `implicit`; the structural rule is a std row template |
+| `Copy` | `: derived Clone, !Drop`, `declared`, `implicit`; the structural rule is native in v0.16.0, a std row template later (metel-core#1823) |
 | `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |

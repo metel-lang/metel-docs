@@ -440,6 +440,10 @@ affine struct Token { id: i64 }                                           // loc
   guarantees (D added and replaced hook mechanisms and accumulated precedence rules; C++ needs explicit
   elision rules). Writable to sealed would be a break. The cost of the extension is the work listed above,
   which is why it is deferred and not designed here.
+  **Decision (2026-11-05): the extension stays open, with a named trigger.** It is reopened only if a std or
+  ecosystem type needs observable behaviour on an implicit copy and an explicit `.clone()` cannot express it. Until
+  then `Copy` is sealed and nothing is built. Any proposal must meet the four conditions above and carry its own
+  compatibility argument; this RFC does not promise that the extension is monotone, only that it is not ruled out.
 - **Copy by default** (Swift's inference): rejected. A type whose fields are all copyable becomes `Copy` silently,
   so a capability token or a handle written without a keyword is freely copyable and droppable, the failure
   linear types exist to prevent. Rust chose opt-in for the same reason; the affine default fails safe, and the
