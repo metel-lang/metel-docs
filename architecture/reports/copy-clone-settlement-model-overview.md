@@ -29,7 +29,7 @@ rule (#1826), drop-site recording (#1827).
 | **Clone** | Explicit duplication, `x.clone()`. Provided by the compiler for every `Copy` type (and cannot be written there); ordinary and writable otherwise. | RFC-0206 sections 1, 2 |
 | **Classes** | `copy` / `affine` / `linear` (contextual keywords, sugar). Affine by default. | RFC-0207 section 3, RFC-0089 section 2.1 |
 | **Declarations** | `derives`, the colon list for user markers, and aspect properties `declared`, `auto`, `implicit` (std-only). | RFC-0207, RFC-0212 |
-| **Super-aspects** | `aspect A: B`; a `derived` mark (std-only) makes a derivation generate the super; exclusions (`!Drop`) are grant-time checks. | RFC-0213 |
+| **Super-aspects** | `aspect A: B`; a `deriving` mark (std-only) makes a derivation generate the super; exclusions (`!Drop`) are grant-time checks. | RFC-0213 |
 | **Generic code** | Exact per-instantiation predicate; a sound approximation in generic bodies (yes / no / undecided, and undecided is a diagnostic, not a move); stored ownership interfaces as the end state. | RFC-0206 sections 2 and 6 |
 | **Discard** | A positive capability meaning "may be dropped". Bare `T` is possibly linear; `Discard` is inferred from bodies and stated on `pub` functions once `linear` ships. | RFC-0089 section 2.2 |
 | **Projections** | A residual `T.{ fields }` gets structural `Copy` (with its provided `Clone`) and the `Drop` dispatch in v0.16.0; the rest is later. | RFC-0206 section 6, RFC-0211 |
@@ -135,8 +135,8 @@ For a generic type a keyword states a capability, not a class: `copy struct Wrap
 ### 3.3 Aspect properties replace lang items
 
 ```metel
-// std declaration sketch (not legal user code: `implicit` and `derived` are std-only); spelling per RFC-0212, provisional
-aspect Copy: derived Clone, !Drop declared implicit;
+// std declaration sketch (not legal user code: `implicit` and `deriving` are std-only); spelling per RFC-0212, provisional
+declared implicit aspect Copy: deriving Clone, !Drop;
 ```
 
 | Property | Meaning | Who may use it |
@@ -153,12 +153,12 @@ aspect could otherwise change the ownership of every use of a type.
 
 ---
 
-## 4. Super-aspects, exclusions and the `derived` mark
+## 4. Super-aspects, exclusions and the `deriving` mark
 
 ```metel
-// std declarations (a user aspect may not carry `derived` in v0.16.0)
+// std declarations (a user aspect may not carry `deriving` in v0.16.0)
 aspect PartialEq { fun eq(&self, other: &Self) -> boolean; }
-aspect Eq: derived PartialEq;               // derives PartialEq with it
+aspect Eq: deriving PartialEq;               // derives PartialEq with it
 struct Id { n: i64 }
 extend Id: PartialEq { /* ... */ }
 extend Id: Eq;                              // ok: PartialEq exists
@@ -168,8 +168,8 @@ extend Bad: Eq;                             // error: no PartialEq for Bad
 aspect Error: Display;                      // unmarked entry = an obligation: Display must already exist
 ```
 
-- A super-aspect entry is an **obligation** unless marked `derived`.
-- `derived` means the sub-aspect's derivation also generates the super (`derives Copy` also derives `Clone`).
+- A super-aspect entry is an **obligation** unless marked `deriving`.
+- `deriving` means the sub-aspect's derivation also generates the super (`derives Copy` also derives `Clone`).
   **Decided 2026-11-05: only std aspects may carry the mark in v0.16.0** (open question 9 reopens it for user aspects
   when a real case appears). The mark is part of the aspect's contract: adding or removing it can change which impls
   are generated, so it is a breaking change to the aspect, which std controls.
@@ -377,7 +377,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | 3 | `Copy` granted only in the declaration; affine by default; copy-by-default rejected | 11-05 | Visible at the type; fails safe for handles and tokens | `extend T: Copy;` deprecated |
 | 4 | Class keywords `copy`/`affine`/`linear` as contextual sugar | 11-05 | One-word class at the declaration; leaves room for linear | `affine` is a locking pair of negative impls; `linear` reserved |
 | 5 | Aspect properties (`declared`; std-only `auto` and `implicit`) instead of lang items | 11-05 | No special case by name | About 38 string-keyed sites become identity lookup |
-| 6 | Super-aspects with a `derived` mark, std-only in v0.16.0 | 11-05 | Generalises "Copy brings Clone" without a per-aspect exception, confines the unproven combination | Opening to user aspects needs a real case |
+| 6 | Super-aspects with a `deriving` mark, std-only in v0.16.0 | 11-05 | Generalises "Copy brings Clone" without a per-aspect exception, confines the unproven combination | Opening to user aspects needs a real case |
 | 7 | Exclusions are a grant-time check only | 11-05 | Disjointness evidence would make exclusions a public coherence contract | No negative closure; absence is not negation |
 | 8 | Generic bodies: exact predicate, sound approximation, undecided is a diagnostic | 11-05 | Undecided-as-move would let a later solver change accepted programs | Accepted set only grows as proof power grows (later stages may add intentional rejections, e.g. the `pub` rule) |
 | 9 | Hybrid end state: stored interfaces, solver as producer; the stated condition is the interface; `pub` must state | 11-05 | Stable public interfaces; use sites consult stored data only | Steps #1814, #1818, #1819, #1820, #1813 |
@@ -404,8 +404,8 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | `Discard(List<T>) = Discard(T)` as a native rule | at `linear` | owning-storage kind distinct from the `[T]` view | #1826 |
 | Drop-site and callee-interface recording only | v0.16.0 | `Discard` elaboration with `linear` | #1827, #1828 |
 
-**Permanent restrictions** (design choices, not workarounds): `implicit`, `auto` and `derived` are std-only (open question 9 for
-`derived`; the RFC-0096 revision for `auto`), and `Discard` is the single inferred bound.
+**Permanent restrictions** (design choices, not workarounds): `implicit`, `auto` and `deriving` are std-only (open question 9 for
+`deriving`; the RFC-0096 revision for `auto`), and `Discard` is the single inferred bound.
 
 ---
 
@@ -439,12 +439,12 @@ the std audit (conditional `List` destructor, `consume_each`, and the dropping m
 | The stored-condition language and `pub`-must-state | Moderate; high until implemented and tested |
 | Derivation provenance deciding residual instances | Lower for v0.16.0 (scope B); the template half is later |
 | Inferred `Discard` | Moderate; reviewed twice; open dependency on a conditional std destructor and closure discard |
-| `derived` and `implicit` as properties | Low and moderate; std-only |
+| `deriving` and `implicit` as properties | Low and moderate; std-only |
 | A later observable hook | Reopened only on a named trigger and four conditions |
 
 **Not settled:** closure and trait-object discard (RFC-0134, RFC-0153, gate #1828); the demonstration for `List<Tx>`
 depends on the named List rule (#1826), the std change and the closure rule; spellings pending ratification
-(`derives` and clause order, the property clause form, `!Drop`, `derived`, `Discard`); user-declared `derivable`
+(`derives` and clause order, the property clause form, `!Drop`, `deriving`, `Discard`); user-declared `derivable`
 aspects; object safety for aspects with these properties.
 
 ---
