@@ -26,15 +26,15 @@ a named aspect today.
 | Property | Meaning | Replaces |
 |---|---|---|
 | `declared` | granted only through a type's declaration clauses (RFC-0207), never by `extend` | the `"Copy"` special case in coherence and `check_copy_impl_eligibility` |
-| `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync`, `Linear` (**deferred**: the Send/Sync/Linear revision is not part of the Copy settlement; `Copy` does not use `auto`, it is opt-in) |
+| `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync` (**deferred**: the Send/Sync/Linear revision is not part of the Copy settlement; `Copy` does not use `auto`, it is opt-in) |
 | `implicit` | **std only**: a by-value use of a type satisfying the aspect copies its representation instead of moving | the implicit-copy semantics of `Copy` |
 
 ```metel
 // properties are contextual keywords in front of `aspect`; `pub` stays outermost (`pub declared aspect X`)
 declared implicit aspect Copy: deriving Clone, !Drop;   // RFC-0213: Clone derived with it, Drop excluded (and Linear once it exists)
 
-auto aspect Send;                           // deferred with the Send/Sync/Linear revision (RFC-0096)
-auto aspect Linear;                         // its existential rule is part of that revision
+auto aspect Send;                           // deferred with the Send/Sync revision (RFC-0096)
+declared aspect Linear;                     // granted only by the `linear` keyword (RFC-0089); checked against the fields
 declared aspect Validated;                  // a user marker: a checked-by-nothing promise
 ```
 
@@ -103,8 +103,8 @@ deriving Clone, !Drop`).
 - **With `declared`** the template is a check on the entry: a concrete field type that fails is an
   error at the declaration, next to the field; one that depends on a type parameter is decided per
   instantiation.
-- **`auto` with a structural rule** (`Send`, `Sync`, `Linear`, including the existential rule of
-  `Linear`) is deferred with the Send/Sync/Linear revision of RFC-0096. This RFC does not specify it.
+- **`auto` with a structural rule** (`Send`, `Sync`) is deferred with the Send/Sync revision of RFC-0096. `Linear` is
+  not `auto`: it is `declared` (RFC-0089 amendment, 2026-11-06). This RFC does not specify it.
 
 ## 3. `implicit` (std only)
 
@@ -148,7 +148,8 @@ that needs observable behaviour on an implicit copy which an explicit `.clone()`
 | Aspect | Declaration |
 |---|---|
 | `Copy` | `: deriving Clone, !Drop`, `declared`, `implicit`; the structural rule is native in v0.16.0, a std row template later (metel-core#1823) |
-| `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
+| `Send`, `Sync` | `auto` (their structural rules deferred, section 2) |
+| `Linear` | `declared` (granted by the `linear` keyword, RFC-0089) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |
 
@@ -197,7 +198,7 @@ extend Token: !Send;                                      // opt-out of an auto 
 2. **Which properties users may use.** `implicit` and `auto` are std only. `declared` is open to user
    aspects (RFC-0207 rule 1): a user `declared` marker is admitted by the colon list as an unchecked
    promise, and `extend T: A;` for it is an error.
-3. **`auto` and the structural rules of `Send`, `Sync`, `Linear`** (including `Linear`'s existential rule): deferred with the RFC-0096 revision.
+3. **`auto` and the structural rules of `Send`, `Sync`**: deferred with the RFC-0096 revision.
 4. **Interaction of `declared` and a field of type-parameter type** when the failing instantiation is
    only discovered at a use.
 5. **Object safety** of aspects with these properties (`dyn Copy`).

@@ -7,6 +7,8 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
+> **Amendment (2026-11-06, language owner): a type's class is declared, never inferred.** `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
+
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
 > (a living design report) as part of decomposing an oversized RFC-0012 into smaller,
 > independently reviewable pieces. Also resolves a lineage gap: RFC-0024 (Linear Types)
@@ -76,7 +78,7 @@ affine-by-default model rather than replacing it: affine already means "at most 
 duplication"; `Linear` narrows that to "at least once too," ruling out silent drop.
 Linearity is checked statically, no runtime overhead. Partial consumption of a struct
 with mixed multiplicities (some `Linear` fields, some not) moved to RFC-0215 on 2026-11-05; this RFC is the
-lattice, the aspect and the class keywords (`copy`, `affine`, `linear`) that the Copy and Clone settlement
+lattice, the aspect and the class keywords (`copy`, `linear`) that the Copy and Clone settlement
 (RFC-0206) depends on.
 
 ---
@@ -124,11 +126,12 @@ restrictive than `ω` (ω additionally allows duplication). `0` sits outside thi
 ordering — it's not "fewer uses," it's "not a runtime value," and behaves the way
 `PhantomBrand` (RFC-0074) and phantom type-state parameters already do.
 
-**A struct's overall discipline is the most restrictive of its fields' multiplicities**
-(`1` is more restrictive than `affine`, and `affine` than `ω`; this is the meet toward restriction,
-not a join toward permissiveness, which an earlier draft of this paragraph said and then contradicted).
-A struct with any `1` field is linear overall; a struct with only `affine`/`ω` fields (no `1`) is
-affine overall; a struct with only `ω` fields may (if it opts in) be `Copy`. `Drop` is compatible with
+**A type's class is declared and checked against its fields (amendment 2026-11-06).** The class is never
+inferred. The declared class must be at least as restrictive as the class of every field (`1` more restrictive than
+`affine`, `affine` more than `ω`): a `copy` type needs every field `Copy`; an undeclared (affine) type may hold no
+linear field; a `linear` type may hold anything, including no linear field at all (a capability token wrapping an
+`i64`). A mismatch is an error at the field, and the fix-it adds the missing keyword (`declare it \`linear struct\``).
+This is the earlier "most restrictive field wins" rule turned from a computation into a check. `Drop` is compatible with
 `affine` only: not with `ω`, because a representation copy cannot perform the per-owner cleanup bookkeeping
 a destructor needs, and not with `1`, because a linear value is never implicitly discarded (section 2).
 RFC-0071 §4's `Copy`/`Drop` exclusion is the first of these two facts, and the lattice states them
@@ -143,21 +146,21 @@ that discarding is permitted, not that discarding cannot run cleanup).
 aspect Linear { }
 ```
 
-A marker aspect, structurally identical in form to `Send` (RFC-0080). Auto-derived, not
-opt-in: a struct containing a multiplicity-`1` field is `Linear` automatically, per
-RFC-0080 §3.2's auto-impl rule (the same structural-composition mechanism that grants
-`Send`/`Sync`, substituting `Linear` for `Send`), matching the lattice's composition rule
-directly rather than being a bespoke case — RFC-0096 (2026-07-11) is where that
-mechanism is now formalized once, generically, since this citation and RFC-0080 §3.2's
-own text were the two places it was previously only informally assumed. **No
-`#derive(Linear)` annotation is needed or meaningful** — this is category 1 (auto-trait
-structural composition), not category 2 (derive-as-codegen); it should never appear in
-a derivable-aspects list alongside `Clone`/`Eq`/`Display` (RFC-0093 §"Derivable Aspects"
-corrects an earlier draft's error on exactly this point). A type
-with a `Linear` field **cannot opt out**: `extend X: !Linear;` on it is an error, because the assertion would make the
-field's exactly-once obligation disappear (Austral likewise refuses to classify a structurally linear type as
-freely usable). `!Linear` is accepted where no field is `Linear`, for example the locking pair of `affine struct`
-(section 2.1), which prevents a later fiat grant.
+A marker aspect that is `declared` (RFC-0212), like `Copy`: it is granted only in a type's declaration by the
+`linear` keyword, never by `extend` and never inferred from the fields. There is no `#derive(Linear)` and no
+structural `auto` rule for named types. The check runs the other way: a struct, record or enum that holds a linear
+field (or a closure that captures a linear value) and is not declared `linear` is an error at the field, and the
+diagnostic suggests the keyword. There is no `!Linear` opt-out, because nothing is inferred for it to opt out of.
+
+- **Generic types.** On a generic type the keyword states a **capability**, as `copy struct Wrapper<T>` does
+  (RFC-0207 section 3): `linear struct Pair<T>` is linear exactly when some field is linear, and otherwise follows its
+  other keywords. Without `linear`, the type's parameters must satisfy `Discard`, so `Pair<Token>` is an error whose
+  fix-it suggests `linear struct Pair<T>`. A type may be both `copy`- and `linear`-capable (`copy linear struct
+  Pair<T>`): its class is decided per instantiation.
+- **Types with no declaration site** (tuples, arrays, anonymous records) cannot carry the keyword. They are linear
+  when a component is, by a compiler rule like the existing tuple and array rules for `Copy`.
+- **Closures** are declared `linear` explicitly in the literal's prefix and in a function type (RFC-0194): a closure
+  that captures a linear value without `linear` is an error whose fix-it adds it. `linear` implies `once`.
 
 **`Clone` is not contraction (decided 2026-11-05).** `Clone` is explicit creation of another value, not the
 implicit duplication that linearity forbids, so a linear type may have a **written** `Clone`: the author asserts that
@@ -178,41 +181,30 @@ instead, called directly.
 
 ### 2.1 Surface syntax: aspect, keyword, or a mix
 
-Every mechanism that needs `Linear` in a bound position (`drop<T: !Linear>`,
-`HasField`/`Lacks` conditions in RFC-0090, residual recomposition in RFC-0091) needs
-`Linear` to be usable as an aspect, not just a keyword. A bare keyword with no backing
-aspect either collapses into aspect sugar or is a strictly weaker mechanism that can't
-participate in the rest of this design. Aspect-plus-sugar wins on one real capability:
-declaring a type linear *by fiat* when nothing about its fields structurally requires
-it (a capability token wrapping a plain `i64`, say):
+Every mechanism that needs `Linear` in a bound position (`HasField`/`Lacks` conditions in RFC-0090, residual
+recomposition in RFC-0091) needs `Linear` to be usable as an aspect, not just a keyword. A bare keyword with no backing
+aspect either collapses into aspect sugar or is a strictly weaker mechanism that can't participate in the rest of this
+design. So `Linear` is a `declared` aspect and the keyword is its one spelling:
 
 ```metel
-extend Receipt: Linear {}          // explicit, forces it
-linear struct Receipt { id: i64 }   // proposed sugar for exactly the line above
+linear struct Receipt { id: i64 }            // a capability token wrapping a plain i64: linear with no linear field
+linear struct Guard { t: Token }             // required: a field is linear
+struct Plain { t: Token }                    // error: field `t` is linear; declare it `linear struct Plain`
 ```
 
-The keyword should stay struct-only, never extended to the `{ … }` type-former
-(RFC-0090) — records have no declaration site to attach it to, and forcing a
-structurally-plain row to be linear "by fiat" undermines the premise that a record is
-*just* its row.
+The keyword applies to `struct`, `enum` and named `record` (RFC-0120), which have a declaration site, and never to
+the anonymous `{ … }` type-former (RFC-0090): a record there is *just* its row. `extend X: Linear {}` is not legal,
+as for any `declared` aspect.
 
-**`Affine` needs no aspect of its own.** It's definitionally "not `Copy` and not
-`Linear`" — `T: !Copy + !Linear` (RFC-0072's already-accepted mixed positive/negative
-bound form) already says it. RFC-0039 (`aspect` Alias Syntax, `1-under-review`) is the vehicle to
-name it without writing the compound bound at every call site:
+**There is no `affine` keyword (decided 2026-11-06).** Affine is the default class and is never written. `Copy` and
+`Linear` are both declared only in a declaration, so nothing elsewhere in the codebase can change what moving a type
+means, and a locking pair of negative impls would add nothing. **`Affine` needs no aspect of its own.** It's
+definitionally "not `Copy` and not `Linear`" — `T: !Copy + !Linear` (RFC-0072's mixed positive/negative bound form)
+says it, and RFC-0039 (`aspect` Alias Syntax, `1-under-review`) is the vehicle to name it:
 
 ```metel
 aspect Affine = !Copy + !Linear
 ```
-
-Symmetrically to `linear struct`, a struct-only `affine struct` keyword would desugar
-to a *locking pair of negative impls* — `extend X: !Copy; extend X: !Linear;` —
-not a positive capability grant, since affine is an absence, not an addition. That pair
-is more than documentation: RFC-0081's negative impls override any later conflicting
-impl via ordinary coherence, so `affine struct Handle { fd: i64 }` is a real, checked
-commitment that nothing elsewhere in the codebase can later add `extend Handle: Copy`
-and silently change what moving a `Handle` means.
-
 
 ### 2.2 Generic code and the capability to discard (accepted 2026-11-05; repaired after review 5)
 
@@ -231,8 +223,8 @@ early returns and drops through `Option<T>` or `List<T>`.
 generic code never needs the absence reasoning that RFC-0213 section 3 keeps out of v0.16.0.
 1. For a concrete type, `Discard` holds exactly when the type is not `Linear`. It is **computed by the compiler**
    (an `auto` aspect, RFC-0212, structural as `Send` is, RFC-0096): a type is `Discard` when all its fields are,
-   and it is not linear by fiat. `Drop` types are `Discard`: their drop runs. `T: Copy` entails `T: Discard`.
-   **No user writes or negates a `Discard` impl.** Only fiat (`linear struct`, section 2.1) removes it.
+   and it is not declared `linear`. `Drop` types are `Discard`: their drop runs. `T: Copy` entails `T: Discard`.
+   **No user writes or negates a `Discard` impl.** Only a `linear` declaration (section 2.1), or a structural type with a linear component, removes it.
 2. For a type parameter, `Discard` holds only if a bound says so (`T: Discard`, or `T: Copy`).
 3. The generic `drop` is `drop<T: Discard>`, replacing the `T: !Linear` of section 2.
 4. **Obligation versus published capability.** The computed `Discard`/`Linear` obligation is determined by
@@ -369,10 +361,10 @@ discard (RFC-0134, RFC-0153); the rule that moving every field out consumes a st
 
 1. Ship the four-point lattice (§1) as the documented model: **resolved 2026-11-05**, yes; the settlement of
    RFC-0206 is written against it.
-2. Struct-and-enum `copy`/`affine`/`linear` keyword sugar (§2.1): **resolved 2026-11-05** in favour, for
-   structs and enums, not the anonymous record type; the sugar is `copy struct P` = `struct P derives Copy`,
-   `affine struct H` = the locking pair of negative impls, `linear struct T` = `extend T: Linear {}`. In v0.16.0
-   `copy` and `affine` are implemented and `linear` is reserved ("Planned for").
+2. The `copy` and `linear` class keywords (§2.1): **resolved 2026-11-05, amended 2026-11-06**. `copy struct P` = `struct P
+   derives Copy`; `linear struct T` grants the declared aspect `Linear`; there is **no `affine` keyword**; `Linear` is
+   declared and checked against the fields, not inferred. In v0.16.0 `copy` is implemented and `linear` is reserved
+   ("Planned for"). Applies to structs, enums and named records, not the anonymous record type.
 3. *(Moved to RFC-0215.)* `NonLinear<T>`'s surface syntax.
 4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) — noted as a real, later
    extension; not attempted here.
@@ -392,7 +384,7 @@ discard (RFC-0134, RFC-0153); the rule that moving every field out consumes a st
   substituting `Linear` for `Send`
 - RFC-0096 (Auto-Impl Aspects, under review) — formalizes that pattern once, generically,
   rather than each auto-impl aspect (`Send`/`Sync`/`Linear`) restating it
-- RFC-0081 (Negative Impls) — `extend X: !Linear;` opt-out
+- RFC-0081 (Negative Impls) — negative impls; `Linear` is no longer opted out of (it is declared, not inferred)
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
 - RFC-0039 (`aspect` Alias Syntax, `1-under-review`) — vehicle for the `Affine` alias (§2.1)
 - RFC-0049 (Linear Function Type System, superseded by RFC-0194) — documents the generic-`drop`-discharges-

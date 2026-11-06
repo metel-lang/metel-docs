@@ -31,7 +31,6 @@ written for a `Copy` type.
 ```metel
 copy struct Point { x: i64, y: i64 }              // Copy; Clone is provided; the declaration says so
 struct Doc derives Clone { title: String }        // affine (the default): moves; d.clone() is explicit
-affine struct Handle { fd: i64 }                  // locked: nothing can later make it Copy or Linear
 struct Cache { data: i64, hits: i64 }
 extend Cache: Clone { fun clone(&self) -> Cache { Cache { data = self.data, hits = 0 } } }
 // explicit-only: a custom duplicate means the type is not Copy
@@ -40,7 +39,7 @@ extend Cache: Clone { fun clone(&self) -> Cache { Cache { data = self.data, hits
 The classes are the lattice of RFC-0089: unrestricted (`Copy`), affine (the default: at most once, no duplication)
 and linear (exactly once). The one-sentence explanation is: *`Copy` is the duplication the compiler does for you, a
 bit copy; `Clone` is the one you ask for, and it may be anything.* `copy struct P` is the one-word form of
-`struct P derives Copy`; `affine` and `linear` are the other two keywords (section 5).
+`struct P derives Copy`; `linear` is the other keyword (section 5), and affine, the default, has none.
 
 ---
 
@@ -300,15 +299,15 @@ replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-
 - **`Copy`** keeps its name and its place in bounds (`T: Copy`); what changes is where it is granted (the
   declaration) and that `Clone` comes with it. `extend X: Copy;` is accepted for one minor release with a
   deprecation warning and a fix-it that rewrites it to `copy struct X`, then becomes an error. An `extend X: Clone`
-  next to a `Copy` type must be removed (or the type made affine). The name `ImplicitClone` of earlier drafts is
+  next to a `Copy` type must be removed (or the type made non-`Copy`). The name `ImplicitClone` of earlier drafts is
   not used.
 - **Class keywords** before `struct` and `enum` (RFC-0089 section 2.1), contextual and not reserved globally, sugar
-  for the declaration clauses (RFC-0207): `copy struct P` is `struct P derives Copy`; `affine struct H` is the
-  locking pair of negative impls `extend H: !Copy; extend H: !Linear;`, a declaration-site opt-out that needs no
-  negative colon entry; `linear struct T` is `extend T: Linear {}` and is **reserved and marked "Planned for"** in
-  v0.16.0. They apply to structs and enums, not to the anonymous record type. For a generic type a keyword states
-  a capability, not a class: `copy struct Wrapper<T>` is `Copy` exactly when `T` is (the conditions of section 6,
-  "End state").
+  for the declaration clauses (RFC-0207): `copy struct P` is `struct P derives Copy`; `linear struct T` grants the declared
+  aspect `Linear` and is **reserved and marked "Planned for"** in v0.16.0. There is no `affine` keyword (decided
+  2026-11-06): affine is the default, and `Copy` and `Linear` are both declared only in a declaration, so nothing can
+  change a type's class elsewhere. They apply to structs, enums and named records, not to the anonymous record type. For
+  a generic type a keyword states a capability, not a class: `copy struct Wrapper<T>` is `Copy` exactly when `T` is (the
+  conditions of section 6, "End state").
 - **The function-type qualifier** `copy` (RFC-0219, split from RFC-0163) and the keyword `once` (RFC-0134) keep their planned spelling;
   the type keyword `copy` and the qualifier name the same property.
 - **Defaults.** A type is affine unless it says otherwise (RFC-0071): forgetting a keyword on a handle or a token
@@ -391,8 +390,8 @@ abstract-ownership limitation, step 2). The settlement otherwise waits for the g
 RFC-0089 section 1. Settling against it gives: the `Copy`/`Drop` and `Copy`/`Linear` exclusions as one rule; the
 class keywords as one-word spellings (above); and the closure rule shared with RFC-0194. RFC-0089 is split so that
 its sections 1 to 2.1 can be accepted without section 3 (partial consumption through `ToRecord`, coupled to
-RFC-0090), which moves to its own RFC. v0.16.0 implements `copy` and `affine`; `linear` is reserved; `Linear`
-itself, its structural `auto` rule and partial consumption stay with the split-off RFC and the RFC-0096 revision.
+RFC-0090), which moves to its own RFC. v0.16.0 implements `copy`; `linear` is reserved; `Linear`
+itself, its declaration and the check against the fields, and partial consumption stay with RFC-0089 and the split-off RFC.
 
 **End state: stored interfaces with the solver as producer (decided 2026-11-05).** v0.16.0 ships the design of
 this RFC as written, with the limitation of step 2. The direction after it is the hybrid recorded in the
@@ -442,7 +441,7 @@ over its own parameters. Any richer form (an associated-type condition, a `where
 rejected with a diagnostic naming the limitation; the language is closed under substitution only for the forms it
 admits.
 
-**`Discard` is exact and compiler-computed.** No user writes or negates a `Discard` impl; only fiat (`linear struct`)
+**`Discard` is exact and compiler-computed.** No user writes or negates a `Discard` impl; only a `linear` declaration
 removes it, and `T: Copy` entails `T: Discard` in the checker. A stated condition on a public type may **withhold**
 `Discard` from generic code (a conservative published interface) but can never create it or suppress a structural
 linear obligation, so a public annotation cannot make a linear value droppable. Concretely, the complement of `Linear`
@@ -489,7 +488,6 @@ extend H: Clone { fun clone(&self) -> H { H { fd = dup(self.fd) } } }     // Clo
 copy struct Both { n: i64 }
 extend Both: Clone { fun clone(&self) -> Both { Both { n = 0 } } }        // error T0015: overlaps the provided Clone
 extend Point: Copy;                                                       // error: granted only in the declaration
-affine struct Token { id: i64 }                                           // locked: extend Token: Copy; is a coherence error
 ```
 
 ---
