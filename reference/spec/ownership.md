@@ -83,6 +83,112 @@ of the source binding is rejected.
 
 </details>
 
+## Ownership classes
+
+> **Pending** metel-core#1831 the ownership classes beyond `Copy` and the affine default are accepted by the language but not yet by the checker.
+
+Every type has one of four ownership classes, ordered by how much a value of the type may do:
+
+| Class | At most / exactly | May be dropped | May be copied |
+|---|---|---|---|
+| erased | not a runtime value | not applicable | not applicable |
+| linear | exactly once | no | no |
+| affine (the default) | at most once | yes | no |
+| copy | any number | yes | yes |
+
+A struct's class is the most restrictive class of its fields: one linear field makes the struct linear, and a
+struct with only affine and copy fields is affine unless its declaration grants `Copy`. `Drop` is compatible with
+the affine class only: not with copy, because a representation copy cannot run per-owner cleanup, and not with
+linear, because a linear value is never implicitly discarded.
+
+The class keywords `copy`, `affine` and `linear` before `struct` and `enum` state the class in one word.
+`linear` is reserved: the keyword and the `Linear` aspect are not yet accepted.
+
+**Dropping in generic code.** A generic body can drop a value of a type-parameter type without writing a call:
+at scope end, on an early `return` or `?`, by overwriting a binding, by leaving an argument unused, or by discarding
+an expression statement. Dropping is permitted when the type is [`Discard`](#spec.ownership.ownership-classes.legality-1).
+`Discard` holds for every type that is not linear and is never written by a user. A bare type parameter is
+[possibly linear](#spec.ownership.ownership-classes.legality-2): a generic body may move it, return it and pass it,
+but may not drop or copy it unless its bounds say so. The compiler adds `T: Discard` to the bounds of a function
+that [drops such a value](#spec.ownership.ownership-classes.legality-3), through callees as well, and a `pub`
+function [states the bound](#spec.ownership.ownership-classes.legality-4) once `linear` is implemented. Until then
+every type is `Discard`, so a bare type parameter behaves as affine and no program changes.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1831" -->
+```metel
+fun identity<T>(x: T) -> T { x }       // x is moved into the result: no Discard obligation
+fun sink<T>(x: T) { }                  // drops x: elaborates T: Discard
+pub fun api<T>(x: T) { sink(x) }       // inherits T: Discard from sink; a pub function states it
+```
+
+`Clone` is explicit creation of another value and is not the duplication that the linear class forbids: a linear
+type may have a written `Clone`, and a derived `Clone` requires every field to satisfy `Clone`.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.ownership.ownership-classes.legality-1}
+
+`Discard` is computed by the compiler. For a concrete type it holds exactly when the type is not linear, and `T: Copy` entails `T: Discard`. Writing or negating a `Discard` impl is an error. A stated public condition may withhold `Discard` from generic code but cannot create it or suppress a structural linear obligation.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: Discard and Linear are not yet implemented" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: Discard and Linear are not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.ownership-classes.legality-2}
+
+In a generic body, a value whose type is a bare type parameter may not be dropped or copied unless a bound of the function entails `Discard` or `Copy` for it.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: every type is Discard until linear is implemented" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: every type is Discard until linear is implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.ownership-classes.legality-3}
+
+The `Discard` obligations of a function are those of its implicit and explicit drops of values whose `Discard` depends on a type parameter, together with the obligations of the callees it uses, after substitution. For a method of a generic impl the bound attaches to the method. An impl of an aspect is checked after elaboration: the elaborated requirement of an impl method must be entailed by the impl's bounds.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1827" reason="RFC-0089: drop sites and callee interfaces are not yet recorded" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1827: RFC-0089: drop sites and callee interfaces are not yet recorded_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.ownership-classes.legality-4}
+
+Once `linear` is implemented, an exported generic function states every `Discard` obligation its body requires, including those inherited from callees. A missing one is an error whose diagnostic suggests the computed bound.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1828" reason="RFC-0089: the pub rule is enforced when linear ships" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1828: RFC-0089: the pub rule is enforced when linear ships_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.ownership-classes.legality-5}
+
+A linear type may have a written `Clone`. A derived `Clone` requires every field to satisfy `Clone`, including linear fields.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: linear types are reserved" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: linear types are reserved_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ## `Copy`
 
 `Copy` marks a type whose values may be duplicated rather than moved. It is **opt in**, and
