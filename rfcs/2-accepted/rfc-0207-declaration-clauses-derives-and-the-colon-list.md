@@ -59,9 +59,9 @@ capability in its declaration, and the supporting impls must exist (written by h
 `derives`). `derives` **generates**: the compiler writes the impls it names.
 
 1. A positive entry must name an aspect that is `declared` and has no methods; a `declared` aspect is
-   granted only through a declaration clause (RFC-0212). A user marker (`aspect Validated declared;`) is an
+   granted only through a declaration clause (RFC-0212). A user marker (`declared aspect Validated;`) is an
    unchecked promise, visible in the declaration, until refinement types (RFC-0202) can check it. An aspect
-   with a `derived` super-aspect, such as `Copy`, is granted through `derives` (or its class keyword), not the
+   with a `deriving` super-aspect, such as `Copy`, is granted through `derives` (or its class keyword), not the
    colon list, because the super-aspect it brings is generated (RFC-0213 section 4). Naming any other aspect is an error
    with a fix-it: a method-bearing aspect goes in `derives` or `extend`. No rule keys on a name or on
    std provenance.
@@ -79,7 +79,7 @@ capability in its declaration, and the supporting impls must exist (written by h
 
 1. `derives X` is legal exactly when `X` has a derivation. In the first implementation the
    derivations are native and belong to std (`Clone`; `Debug` and `Display` as they gain one). The
-   super-aspects marked `derived` are derived with their sub-aspect (RFC-0213 section 4), so
+   super-aspects marked `deriving` are derived with their sub-aspect (RFC-0213 section 4), so
    `derives Copy` derives the marker and the `Clone` it brings (RFC-0206). An
    aspect declares it has one with the `derivable` modifier (`derivable aspect Clone { … }`), which
    only std uses until comptime (RFC-0092, RFC-0093) lets a user supply a derivation.

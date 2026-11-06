@@ -221,7 +221,7 @@ Both conditions are required: `Sync` of `T` because any fiber may read through `
 
 | Relationship | Rule |
 |---|---|
-| `Copy` implies `Clone` | RFC-0206 §2 (a `derived` super-aspect: the provided `Clone` is the copy) |
+| `Copy` implies `Clone` | RFC-0206 §2 (a `deriving` super-aspect: the provided `Clone` is the copy) |
 | `Copy` and `Drop` are mutually exclusive | RFC-0071 |
 | `DerefMut` requires `Deref` | Supertrait |
 | `T: Sync` iff `&T: Send` | Definition of `Sync` |

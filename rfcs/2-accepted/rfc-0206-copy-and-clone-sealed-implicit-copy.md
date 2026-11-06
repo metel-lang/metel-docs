@@ -110,9 +110,8 @@ A type gets a `Clone` by writing one (`extend T: Clone { … }`), by a `derives 
 relation of RFC-0213 (the spelling is a sketch):
 
 ```metel
-aspect Copy: derived Clone, !Drop           // RFC-0213: Clone derived with it, Drop excluded (and Linear, once it exists)
-    declared                                // RFC-0212: granted only in a declaration
-    implicit;                               // RFC-0212: std only; a by-value use copies instead of moving
+declared implicit aspect Copy: deriving Clone, !Drop;   // RFC-0212: `declared` = granted only in a declaration, `implicit` = std only,
+                                            // a by-value use copies instead of moving; RFC-0213: Clone derived with it, Drop excluded
 ```
 
 It is the stronger bound: `T: Copy` accepts fewer types than `T: Clone`.
@@ -352,7 +351,7 @@ after comptime") tracks replacing it by the template with no change in accepted 
 | `Discard(List<T>) = Discard(T)` as a native rule | at `linear` | owning-storage kind distinct from the `[T]` view | #1826 |
 | Drop-site and callee-interface recording only (no elaboration yet) | v0.16.0 | `Discard` elaboration with `linear` | #1827, #1828 |
 
-The permanent restrictions are not workarounds and are not in this table: `implicit`, `auto` and `derived` are std-only
+The permanent restrictions are not workarounds and are not in this table: `implicit`, `auto` and `deriving` are std-only
 by design, and `Discard` is the one inferred bound.
 
 There is no first stage that carries the semantics with an unnamed special case. The only special cases in this release
@@ -548,7 +547,7 @@ affine struct Token { id: i64 }                                           // loc
 - **RFC-0207** — the `derives` clause and the colon list (user markers) that carry the grant and the derivation,
   and the class keywords as sugar.
 - **RFC-0212** — the aspect properties (`declared`, `implicit`) that `Copy` is declared with.
-- **RFC-0213** — super-aspects, which give `Copy: derived Clone, !Drop`.
+- **RFC-0213** — super-aspects, which give `Copy: deriving Clone, !Drop`.
 - **RFC-0089** — the multiplicity lattice, the `Linear` aspect and its exclusions, and the class keywords. A
   **design-level dependency** of this settlement (decided 2026-11-05); RFC-0089 is split so its sections 1 to 2.1
   can be accepted without section 3. See section 6.
@@ -573,7 +572,7 @@ novel parts and their risk:
 | Exclusion-based disjointness evidence (RFC-0213 section 3, deferred) | High if built: exclusions would become a public coherence contract; v0.16.0 keeps them a grant-time check only |
 | The stated condition as the public interface and its language (section 6) | Moderate: repaired after review 5 (permissive capabilities only, `never`, solving order, one recursion rule); high until implemented and tested |
 | Derivation provenance deciding residual instances (RFC-0211) | Lower for v0.16.0: projections get only `Copy` (with its provided `Clone`) and the `Drop` dispatch, other aspects are `T0012` with a use-site diagnostic; the template half is later. Teaching and migration cost remain for that half |
-| The `derived` mark on super-aspect edges (RFC-0213 section 4) | Low: std only in v0.16.0, with `Copy` and `Eq` its only users; opening it to user aspects is a later addition |
+| The `deriving` mark on super-aspect edges (RFC-0213 section 4) | Low: std only in v0.16.0, with `Copy` and `Eq` its only users; opening it to user aspects is a later addition |
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
 | A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |

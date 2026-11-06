@@ -14,6 +14,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
 
 > **Status — under review (2026-11-04).** first draft opened for review
 
+> **Amendment (2026-11-06, language owner).** The properties are spelled as contextual keywords in front of `aspect` (`declared aspect Validated;`, `declared implicit aspect Copy: deriving Clone, !Drop;`, `auto aspect Send;`), with `pub` outermost, and the mark on a super-aspect entry is `deriving` (RFC-0213 section 4), distinct from the `derives` clause of RFC-0207. The trailing forms and `derived` of the ratified text are superseded.
+
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
 
 ## Summary
@@ -28,14 +30,12 @@ a named aspect today.
 | `implicit` | **std only**: a by-value use of a type satisfying the aspect copies its representation instead of moving | the implicit-copy semantics of `Copy` |
 
 ```metel
-// sketches; every keyword is a placeholder
-aspect Copy: derived Clone, !Drop           // RFC-0213: Clone derived with it, Drop excluded (and Linear once it exists)
-    declared
-    implicit;
+// properties are contextual keywords in front of `aspect`; `pub` stays outermost (`pub declared aspect X`)
+declared implicit aspect Copy: deriving Clone, !Drop;   // RFC-0213: Clone derived with it, Drop excluded (and Linear once it exists)
 
-aspect Send auto;                           // deferred with the Send/Sync/Linear revision (RFC-0096)
-aspect Linear auto;                         // its existential rule is part of that revision
-aspect Validated declared;                  // a user marker: a checked-by-nothing promise
+auto aspect Send;                           // deferred with the Send/Sync/Linear revision (RFC-0096)
+auto aspect Linear;                         // its existential rule is part of that revision
+declared aspect Validated;                  // a user marker: a checked-by-nothing promise
 ```
 
 `implicit` is the one property that is a language semantic and not a constraint. It is the single
@@ -84,7 +84,7 @@ colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an err
 There is no `structural` or `excludes` property. The field-wise rule of `Copy` is written in
 std as a conditional template over the type's row, in the form RFC-0123 and RFC-0186 give (`where ..R:
 A`), and an exclusion is a negative super-aspect entry (RFC-0213 section 3, `aspect Copy:
-derived Clone, !Drop`).
+deriving Clone, !Drop`).
 
 - **Exact, per instantiation.** The condition is evaluated on the instantiated field types, not as a
   bound on the type parameters. `struct View<T> { r: &T }` is covered for every `T` when `&T` is.
@@ -108,10 +108,10 @@ derived Clone, !Drop`).
 
 ## 3. `implicit` (std only)
 
-`aspect A … implicit` states that a by-value use of a value whose type satisfies `A` copies its
+`implicit aspect A` states that a by-value use of a value whose type satisfies `A` copies its
 representation instead of moving it. There is no hook: the copy runs no user code (RFC-0206 section 2), so it
 is unobservable and needs no method, no signature check and no ordering rule. It requires:
-1. `A` has the shape of a duplication marker: it refines `Clone` through a `derived` super-aspect (RFC-0213), so
+1. `A` has the shape of a duplication marker: it refines `Clone` through a `deriving` super-aspect (RFC-0213), so
    the compiler can provide the `Clone` that is the same copy;
 2. the declaration is in std (below).
 
@@ -132,7 +132,7 @@ instantiation, and a conflict is an error at the second declaration.
 
 **Refining an implicit aspect does not bypass `declared`.** `aspect Cheap: Copy` is allowed, but
 `extend T: Cheap;` still needs `T: Copy` as a super-aspect obligation, which only a declaration
-clause grants. A sub-aspect cannot carry `implicit` itself, since that is std only. The `derived` mark on a super-aspect entry (RFC-0213 section 4) is std only for the same reason.
+clause grants. A sub-aspect cannot carry `implicit` itself, since that is std only. The `deriving` mark on a super-aspect entry (RFC-0213 section 4) is std only for the same reason.
 
 **A custom hook is a later extension, not a property of this RFC.** The earlier design let `implicit` name a
 method (`implicit via Clone::clone`) so that a written `clone` ran at an implicit copy. It is deferred (RFC-0206
@@ -147,7 +147,7 @@ that needs observable behaviour on an implicit copy which an explicit `.clone()`
 
 | Aspect | Declaration |
 |---|---|
-| `Copy` | `: derived Clone, !Drop`, `declared`, `implicit`; the structural rule is native in v0.16.0, a std row template later (metel-core#1823) |
+| `Copy` | `: deriving Clone, !Drop`, `declared`, `implicit`; the structural rule is native in v0.16.0, a std row template later (metel-core#1823) |
 | `Send`, `Sync`, `Linear` | `auto` (their structural rules deferred, section 2) |
 | `Drop` | plain (no properties) |
 | `Clone`, `Debug` | plain, with a derivation (RFC-0207) |

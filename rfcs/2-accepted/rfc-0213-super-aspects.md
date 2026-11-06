@@ -15,6 +15,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
 
 > **Status — under review (2026-11-04).** first draft opened for review
 
+> **Amendment (2026-11-06, language owner).** The mark on a super-aspect entry is spelled `deriving` (`aspect Copy: deriving Clone, !Drop;`), distinct from the `derives` clause of RFC-0207: `derives` is a request on a type declaration, `deriving` is a fact about an aspect that extends what a `derives` request generates. `deriving` attaches only to the entry that follows it, so `aspect Eq: deriving PartialEq, Debug` marks `PartialEq` only. The earlier spelling `derived` is superseded.
+
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
 
 ## Summary
@@ -25,13 +27,13 @@ An aspect declaration may list one or more direct super-aspects after its name:
 pub aspect Ord: Eq {
     fun cmp(&self, other: &Self) -> Ordering;
 }
-aspect Copy: derived Clone, !Drop;            // sketch: Clone derived with it, Drop excluded (and Linear, RFC-0089, once it exists)
+aspect Copy: deriving Clone, !Drop;            // sketch: Clone derived with it, Drop excluded (and Linear, RFC-0089, once it exists)
 ```
 
 The relation `A: B` is nominal and transitive: a proof of `T: A` also proves `T: B`; an
 implementation of `A` requires a coherent `B` for the same type; negative implementations stay
 local. A super-aspect entry may be negative (`!B`): no type satisfies both aspects (section 3).
-A super-aspect entry marked `derived` is derived together with the sub-aspect (section 4); an unmarked
+A super-aspect entry marked `deriving` is derived together with the sub-aspect (section 4); an unmarked
 entry is only an obligation.
 
 ---
@@ -101,18 +103,18 @@ only explicit negative impls).
 
 ## 4. Derivation of super-aspects
 
-A super-aspect entry is an **obligation** unless it is marked `derived`. The mark says that the
+A super-aspect entry is an **obligation** unless it is marked `deriving`. The mark says that the
 derivation recipe of the sub-aspect includes the super-aspect, because the sub-aspect's law is stated
 over the super-aspect's methods (`Eq` over `PartialEq`, `Copy` over `Clone`). The aspect's
 author marks it, **but only std aspects may carry the mark in v0.16.0** (decided 2026-11-05); a user aspect's
-entry is always an obligation, and its author writes both impls by hand, as in Rust. `Copy: derived Clone` is the
-settlement's one use; `Eq: derived PartialEq` (RFC-0168) is the other std case. A `derived` on a user aspect is an
+entry is always an obligation, and its author writes both impls by hand, as in Rust. `Copy: deriving Clone` is the
+settlement's one use; `Eq: deriving PartialEq` (RFC-0168) is the other std case. A `deriving` on a user aspect is an
 error.
 
 1. **Unmarked entry** (`aspect Error: Display`, the default, as in Rust and Haskell): `derives A` requires
    the super-aspect to exist for the type, written or derived by its own `derives`. There is no overlap
    and no `T0015`.
-2. **Marked entry** (`aspect Eq: derived PartialEq`): `struct P derives A` derives `A` and every marked
+2. **Marked entry** (`aspect Eq: deriving PartialEq`): `struct P derives A` derives `A` and every marked
    super-aspect `B` of `A` (transitively), exactly as `struct P derives A, B, …` would. A written
    `extend P: B` for an aspect the `derives` generates overlaps and is an error (`T0015`). The
    fix-it offers: delete the impl; or write `A` by hand instead of deriving it, using `extend P: A;`
@@ -134,7 +136,7 @@ aspects whose law ties them to a super-aspect. It does not hold for a
 super-aspect that is an independent capability (`Error: Display`: deriving `Error` should not write the
 author's message), so the default is an obligation and the aspect's author opts in.
 
-**The mark is part of the aspect's contract,** as an exclusion is (section 3). Adding `derived` to an
+**The mark is part of the aspect's contract,** as an exclusion is (section 3). Adding `deriving` to an
 entry can introduce generation of `B` and turn existing written `B` impls into `T0015`; removing it can
 remove the `B` that made downstream `derives A` valid. Both are breaking changes to the aspect.
 
@@ -152,14 +154,14 @@ and arguments; a marked path derives it once.
 
 ```metel
 aspect PartialEq { fun eq(&self, other: &Self) -> boolean; }
-aspect Eq: derived PartialEq;                // derives PartialEq with it
+aspect Eq: deriving PartialEq;                // derives PartialEq with it
 struct Id { n: i64 }
 extend Id: PartialEq { … }
 extend Id: Eq;                               // ok: PartialEq exists
 struct Bad { n: i64 }
 extend Bad: Eq;                              // error: no PartialEq for Bad
 
-aspect Copy: derived Clone, !Drop;
+aspect Copy: deriving Clone, !Drop;
 copy struct Point { x: i64 }                 // = derives Copy: derives the marker and its Clone
 struct Cache { n: i64 }
 extend Cache: Clone { fun clone(&self) -> Cache { … } }   // ok: not Copy; a custom duplicate is explicit-only
@@ -182,7 +184,7 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
 
 - **RFC-0168** — the equality model, which depends on this RFC.
 - **RFC-0212** — properties of an aspect declaration; `implicit` needs the relation.
-- **RFC-0206** — `Copy: derived Clone, !Drop`.
+- **RFC-0206** — `Copy: deriving Clone, !Drop`.
 - **RFC-0089** — the lattice whose exclusions (`Copy` with `Drop`, `Copy` with `Linear`) this relation expresses.
 - **RFC-0207** — the `derives` clause and the derivations this rule builds on.
 - **RFC-0081 / RFC-0060** — negative impls and coherence, extended by section 3.
@@ -190,7 +192,7 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
 
 ## Open questions
 
-1. **The spelling of a negative entry** (`!Drop` in the list, as sketched) and of the `derived` mark.
+1. **The spelling of a negative entry** (`!Drop` in the list, as sketched) and of the `deriving` mark.
 2. **`dyn` and object safety** for an aspect with super-aspects.
 3. **Diamonds:** resolved in section 4 (one obligation, deduplicated).
 4. **Associated items and default methods** of a super-aspect, and whether a sub-aspect may override
@@ -218,7 +220,7 @@ extend Dup: Clone { … }                      // error T0015: overlaps the deri
    (`derives Clone { hits = reset }`) would keep the template, and so projections, while changing one
    field. It is the lighter alternative to a written row-generic impl (RFC-0214, RFC-0216) for the
    common case; whether it is worth a clause form is open (RFC-0207).
-9. **Opening `derived` to user aspects.** Only std aspects may carry the mark in v0.16.0. Reopen it when a real
+9. **Opening `deriving` to user aspects.** Only std aspects may carry the mark in v0.16.0. Reopen it when a real
    user aspect needs its derivation to generate a super-aspect and writing both impls by hand is a demonstrated
    cost; the compatibility rules of this section (the mark is part of the aspect's contract) then apply to that
    aspect's author.

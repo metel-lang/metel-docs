@@ -286,7 +286,7 @@ the lean of 2026-11-03 (`ImplicitClone` is `Clone` that the compiler calls for y
 two spikes found that a user-writable hook makes insertion and elision observable and costs a lowering contract,
 per-site dispatch and a value-changing "unknown". The sealed copy keeps the second concern answered (a type no
 longer writes both aspects: `copy struct` brings `Clone`) without B1s's second impl, because the `Clone` is provided
-by a `derived` super-aspect and cannot be written (RFC-0213 section 4). B1m stays a later extension (RFC-0206
+by a `deriving` super-aspect and cannot be written (RFC-0213 section 4). B1m stays a later extension (RFC-0206
 section 8).
 
 ### Axis B, second cut — duplication vs. aliasing (→ RFC-0158)
@@ -1059,7 +1059,7 @@ trait that gates nothing implicit is an unobjectionable trait.
 > 4. *Keyword or aspect (P4).* Answered by direction 3: the `copy` keyword is the one-word form of
 >    `derives Copy`; both are declaration-only grants of the `Copy` aspect.
 > 5. *May `Copy` be derived.* Answered: `derives Copy` derives the marker and the `Clone` it brings
->    (a `derived` super-aspect, RFC-0213 section 4); the derivation is native in the first implementation.
+>    (a `deriving` super-aspect, RFC-0213 section 4); the derivation is native in the first implementation.
 > 6. *Residuals of S6.* Moot: direction 7 keeps S1; no marker on a written type.
 > 7. *Residuals of C2.* Conditional grants: the condition is exact per instantiation, with no
 >    refinement. The stop rule: the implicit property is a std-only declaration property (direction 4). C4, C5 and the
