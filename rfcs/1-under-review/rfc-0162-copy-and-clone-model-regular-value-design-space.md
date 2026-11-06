@@ -48,7 +48,7 @@ implicit marker is named, declared and related to `Clone`.
    `Clone` is the one you ask for.* Details are RFC-0206.
 3. **The grant is fixed on the declaration.** `copy struct Point { … }`, the one-word form of
    `struct Point derives Copy { … }`, generates the marker and the `Clone` it brings; `extend T: Copy;` is an error
-   (a deprecation for one minor). `affine struct` locks out `Copy` and `Linear`; `linear struct` is reserved
+   (a deprecation for one minor). there is no `affine` keyword (amended 2026-11-06: affine is the default); `linear struct` is reserved
    (RFC-0089 section 2.1). A type is affine unless it says otherwise, so forgetting a keyword on a handle fails
    safe. The colon list holds user markers only; both clauses are RFC-0207.
 4. **No special case by name.** `Copy` is an ordinary aspect declared in std with general aspect properties

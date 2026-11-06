@@ -7,6 +7,9 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1822'
 ---
 
+> **Note (2026-11-06).** `Linear` is now a declared aspect (RFC-0089 amendment): a "fiat-linear" struct below is simply a `linear struct`
+> with no linear field, and a struct with a linear field must be declared `linear`.
+
 > **Split from RFC-0089 on 2026-11-05.** RFC-0089 (Linear Types) carried two things: the multiplicity lattice,
 > the `Linear` aspect and the class keywords (its sections 1 to 2.1), and the mechanism for partially
 > consuming a struct that mixes linear and non-linear fields (its sections 3 to 5). The first half became a
@@ -219,7 +222,7 @@ decision between two different models.
    only — affects how this gets written up if formalized, not the mechanics. Leaning
    toward presenting the lattice explicitly, since it's what actually explains the
    composition and reversion rules rather than asserting them.
-2. Struct-only `linear`/`affine` keyword sugar (§2.1) — leaning yes, not ratified.
+2. The `linear` keyword (§2.1) — decided in RFC-0089 (amended 2026-11-06); there is no `affine` keyword.
 3. `NonLinear<T>`'s exact surface syntax (a type-level function, a special form,
    something else) — unresolved; only the shape of what it computes is settled.
 4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) —

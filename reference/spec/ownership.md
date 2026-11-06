@@ -96,13 +96,16 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | affine (the default) | at most once | yes | no |
 | copy | any number | yes | yes |
 
-A struct's class is the most restrictive class of its fields: one linear field makes the struct linear, and a
-struct with only affine and copy fields is affine unless its declaration grants `Copy`. `Drop` is compatible with
+A type's class is declared, never inferred, and the compiler checks it against the fields: the declared class must be at
+least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
+linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
+`Drop` is compatible with
 the affine class only: not with copy, because a representation copy cannot run per-owner cleanup, and not with
 linear, because a linear value is never implicitly discarded.
 
-The class keywords `copy`, `affine` and `linear` before `struct` and `enum` state the class in one word.
-`linear` is reserved: the keyword and the `Linear` aspect are not yet accepted.
+The class keywords `copy` and `linear` before `struct` and `enum` state the class in one word; affine is the default and has
+no keyword. A closure that captures a linear value is declared `linear` as well. `linear` is reserved: the keyword and the
+`Linear` aspect are not yet accepted.
 
 **Dropping in generic code.** A generic body can drop a value of a type-parameter type without writing a call:
 at scope end, on an early `return` or `?`, by overwriting a binding, by leaving an argument unused, or by discarding

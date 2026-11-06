@@ -26,7 +26,7 @@ copy struct Point { x: i64, y: i64 }                         // class keyword: o
 struct Pixel derives Copy, Debug { x: i64, y: i64 }          // derives: the compiler writes the marker, its Clone and Debug
 struct Doc derives Clone, Debug { title: String }            // derives: what the compiler writes
 struct Ticket: Validated derives Debug { id: i64 }           // colon list: a user marker (an unchecked promise); both clauses
-affine struct Handle { fd: i64 }                             // class keyword: locks out Copy and Linear
+linear struct Receipt { id: i64 }                            // class keyword: exactly once (reserved until Linear is implemented)
 ```
 
 - **The colon list** names facts about the type that the compiler checks and that change what its
@@ -35,7 +35,7 @@ affine struct Handle { fd: i64 }                             // class keyword: l
   (`extend Token: !Send;`, RFC-0102). A colon-list opt-out is recorded as an alternative in
   RFC-0096.
 - **The `derives` clause** requests that the compiler generate an implementation of an aspect
-  that has a derivation (`Copy`, `Clone`, `Debug`). The **class keywords** `copy`, `affine` and `linear` before
+  that has a derivation (`Copy`, `Clone`, `Debug`). The **class keywords** `copy` and `linear` before
   `struct` and `enum` are sugar for these clauses (section 3).
 
 Derivation is always explicit: a type with neither a `derives` entry nor an `extend` of an aspect
@@ -96,17 +96,17 @@ capability in its declaration, and the supporting impls must exist (written by h
 
 ## 3. Class keywords
 
-`copy`, `affine` and `linear` before `struct` and `enum` (RFC-0089 section 2.1) state a type's class in one word.
+`copy` and `linear` before `struct` and `enum` (RFC-0089 section 2.1) state a type's class in one word. Affine is the default and has no keyword (decided 2026-11-06).
 They are contextual (not reserved globally), apply to structs and enums and not to the anonymous record type, and
 are sugar for the clauses above:
 - `copy struct P { … }` is `struct P derives Copy { … }`: the marker and the `Clone` it brings are generated, and
   every field must be `Copy` (RFC-0206 section 2).
-- `affine struct H { … }` is the locking pair of negative impls `extend H: !Copy; extend H: !Linear;` (RFC-0081
-  coherence then forbids a later grant), a declaration-site opt-out that needs no negative colon entry.
-- `linear struct T { … }` is `extend T: Linear {}` (a grant by fiat) and is reserved and marked "Planned for" in
-  v0.16.0, until `Linear` is implemented.
-A type with no keyword is affine unless it carries a `derives Copy` or a `Linear` field. For a generic type a
-keyword states a capability, not a class: `copy struct Wrapper<T>` is `Copy` exactly when `T` is. A `pub` generic
+- `linear struct T { … }` grants the declared aspect `Linear` in the declaration (RFC-0089 section 2): the type may hold
+  linear fields or none (a capability token), and is reserved and marked "Planned for" in v0.16.0, until `Linear` is
+  implemented. `extend T: Linear {}` is not legal.
+A type with no keyword is affine; the class is never inferred. A type with a linear field and no `linear` keyword is an
+error whose fix-it adds it (RFC-0089 section 2). For a generic type a keyword states a capability, not a class:
+`copy struct Wrapper<T>` is `Copy` exactly when `T` is, and `linear struct Pair<T>` is linear exactly when a field is. A `pub` generic
 type states its condition once computed defaults exist (RFC-0206 section 6, "End state").
 
 ## 4. What this does not do
@@ -140,7 +140,7 @@ struct E derives Clone { s: NoClone }                        // error at the fie
 ## Relationship to existing RFCs
 
 - **RFC-0206** — `Copy` and `Clone`, the first user of `derives` and of the class keywords.
-- **RFC-0089** — the lattice and the keyword sugar (`copy`, `affine`, `linear`) of section 3.
+- **RFC-0089** — the lattice and the keywords (`copy`, `linear`) of section 3.
 - **RFC-0162** — the model and the Axis C analysis this was extracted from.
 - **RFC-0093 / RFC-0092** — derive registration and comptime; `derives` is the request half.
 - **RFC-0096** — auto aspects, whose opt-out stays the negative `extend`; the colon-list form is

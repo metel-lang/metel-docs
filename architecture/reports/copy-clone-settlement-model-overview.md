@@ -27,7 +27,7 @@ rule (#1826), drop-site recording (#1827).
 |---|---|---|
 | **Copy** | A sealed, implicit, representation copy. Runs no user code, so it is unobservable and elidable. Granted only in the declaration. | RFC-0206 section 2 |
 | **Clone** | Explicit duplication, `x.clone()`. Provided by the compiler for every `Copy` type (and cannot be written there); ordinary and writable otherwise. | RFC-0206 sections 1, 2 |
-| **Classes** | `copy` / `affine` / `linear` (contextual keywords, sugar). Affine by default. | RFC-0207 section 3, RFC-0089 section 2.1 |
+| **Classes** | `copy` and `linear` (contextual keywords); affine is the default and has no keyword. The class is declared and checked against the fields, never inferred. | RFC-0207 section 3, RFC-0089 section 2.1 |
 | **Declarations** | `derives`, the colon list for user markers, and aspect properties `declared`, `auto`, `implicit` (std-only). | RFC-0207, RFC-0212 |
 | **Super-aspects** | `aspect A: B`; a `deriving` mark (std-only) makes a derivation generate the super; exclusions (`!Drop`) are grant-time checks. | RFC-0213 |
 | **Generic code** | Exact per-instantiation predicate; a sound approximation in generic bodies (yes / no / undecided, and undecided is a diagnostic, not a move); stored ownership interfaces as the end state. | RFC-0206 sections 2 and 6 |
@@ -124,13 +124,16 @@ fix-it to `derives Copy`.
 
 ```metel
 copy   struct P { x: i64 }      // = struct P derives Copy
-affine struct H { fd: i64 }     // = extend H: !Copy; extend H: !Linear;   (a locking pair of negative impls)
-linear struct T { id: i64 }     // = extend T: Linear {}   (reserved; "Planned for" in v0.16.0)
+struct H { fd: i64 }            // affine: the default, no keyword
+linear struct T { id: i64 }     // grants the declared aspect Linear (reserved; "Planned for" in v0.16.0)
+struct G { t: T }               // error: field `t` is linear; declare it `linear struct G`
 ```
 
-**Implication.** `affine` is a real, checked commitment: a later `extend H: Copy` anywhere is a coherence error.
-For a generic type a keyword states a capability, not a class: `copy struct Wrapper<T>` is `Copy` exactly when
-`T` is.
+**Implication.** `Copy` and `Linear` are declared only in a declaration, so no `extend` elsewhere can change what moving
+`H` means, and there is no `affine` keyword. For a generic type a keyword states a capability, not a class:
+`copy struct Wrapper<T>` is `Copy` exactly when `T` is, and `linear struct Pair<T>` is linear exactly when a field is.
+Without `linear`, a generic type's parameters must satisfy `Discard`. A closure that captures a linear value is declared
+`linear` too: `[t] linear || { close(t); }`.
 
 ### 3.3 Aspect properties replace lang items
 
@@ -253,7 +256,9 @@ struct Node<T> { value: T, children: List<Node<T>> }   // Discard exactly when T
 ### 6.1 The lattice
 
 Four points, not three: `erased` (0), `linear` (exactly once), `affine` (at most once, the default), `copy` (ω).
-A struct's discipline is the **most restrictive** of its fields. `Drop` is compatible with affine only: not with `ω`
+The class is **declared** and the compiler checks it against the fields: it must be at least as restrictive as every field
+(`copy` needs all fields `Copy`; an undeclared affine type may hold no linear field; `linear` may hold anything), with a fix-it
+that adds the missing keyword. `Drop` is compatible with affine only: not with `ω`
 (a representation copy cannot do per-owner cleanup) and not with linear (a linear value is never implicitly
 discarded).
 
@@ -308,7 +313,7 @@ fun end_all(xs: List<Tx>) { xs.consume_each(|t| commit(t)); }
 ### 6.4 `Clone` is not contraction
 
 A linear type may have a **written** `Clone` (the author asserts another instance is valid, for example opening
-another handle). A derived `Clone` requires every field to satisfy `Clone`, including linear fields; a fiat-linear leaf
+another handle). A derived `Clone` requires every field to satisfy `Clone`, including linear fields; a `linear` leaf with no linear field
 supplies a written one, and a wrapper of a field with a valid `Clone` derives normally.
 
 ---
@@ -375,7 +380,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | 1 | Sealed `Copy` (representation copy), explicit `Clone`; no writable implicit hook | 11-05 | The hook makes insertion and elision of a call observable and needs a full lowering and ordering contract | A type needing a custom duplicate is not `Copy` |
 | 2 | `Copy` brings a provided `Clone` that cannot be written; implicit copy is its elided invocation | 11-05 | One operation, two spellings must not diverge; keeps "Copy uses Clone" true | `T0015` on a written `Clone` for a `Copy` type |
 | 3 | `Copy` granted only in the declaration; affine by default; copy-by-default rejected | 11-05 | Visible at the type; fails safe for handles and tokens | `extend T: Copy;` deprecated |
-| 4 | Class keywords `copy`/`affine`/`linear` as contextual sugar | 11-05 | One-word class at the declaration; leaves room for linear | `affine` is a locking pair of negative impls; `linear` reserved |
+| 4 | Class keywords `copy` and `linear`, contextual; no `affine` keyword; the class is declared and checked, never inferred (amended 11-06) | 11-05 | One-word class at the declaration, symmetric for Copy and Linear | A container of linear values must say `linear`, with a fix-it; `linear` reserved |
 | 5 | Aspect properties (`declared`; std-only `auto` and `implicit`) instead of lang items | 11-05 | No special case by name | About 38 string-keyed sites become identity lookup |
 | 6 | Super-aspects with a `deriving` mark, std-only in v0.16.0 | 11-05 | Generalises "Copy brings Clone" without a per-aspect exception, confines the unproven combination | Opening to user aspects needs a real case |
 | 7 | Exclusions are a grant-time check only | 11-05 | Disjointness evidence would make exclusions a public coherence contract | No negative closure; absence is not negation |
@@ -383,7 +388,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | 9 | Hybrid end state: stored interfaces, solver as producer; the stated condition is the interface; `pub` must state | 11-05 | Stable public interfaces; use sites consult stored data only | Steps #1814, #1818, #1819, #1820, #1813 |
 | 10 | Stored conditions: permissive capabilities only, conjunctions with `true`/`never`; polarity for recursion | 11-05 | `Linear` is existential and cannot be a conjunction; termination by solving order | `Linear` is computed per instantiation |
 | 11 | Bare `T` possibly linear; `Discard` inferred, transitive, stated on `pub` once `linear` ships | 11-05 | Linear types stay usable in generic code without a written bound on 30 to 40 % of functions | One named exception to RFC-0173 |
-| 12 | `Discard` is compiler-computed, never user-writable | 11-05 | A user grant could make a linear value droppable | Only fiat removes it, beyond structural propagation from fields |
+| 12 | `Discard` is compiler-computed, never user-writable | 11-05 | A user grant could make a linear value droppable | Only a `linear` declaration removes it |
 | 13 | RFC-0089 split; the lattice and keywords stay, partial consumption goes to RFC-0215 | 11-05 | The settlement needs the lattice, not the `ToRecord` coupling | Acceptance order 0089, 0206, 0207, 0213, 0212 |
 | 14 | `Clone` is not contraction; panic in a derived clone ends the process | 11-05 | Resource duplication must stay possible; the spec already ends the process on panic | Linear fields need no partial-clone cleanup |
 | 15 | Projections: scope B, native structural `Copy` for now | 11-05 | Keeps Row machinery off the critical path | `T0012` with a use-site diagnostic; #1823 removes the exception |
@@ -454,7 +459,7 @@ aspects; object safety for aspects with these properties.
 | Question | Metel | Closest precedent |
 |---|---|---|
 | Sealed implicit copy, provided `Clone` | `Copy` runs no code; `Clone` cannot be written for a `Copy` type | Rust `Copy: Clone` (without the enforcement); Swift `BitwiseCopyable` |
-| Class keywords | `copy`/`affine`/`linear` | Austral universes; Linear Haskell and Idris 2 quantities |
+| Class keywords | `copy` and `linear` (affine unwritten) | Austral universes; Linear Haskell and Idris 2 quantities |
 | Grant in the declaration | `copy struct`, `derives Copy` | Swift `~Copyable` on the declaration; Mojo trait list |
 | Properties instead of lang items | `declared`, `auto`, `implicit` | Rust lang items and auto traits |
 | Exact conditions, stored interfaces | stated condition is the interface | Haskell smallest derived context; Swift SE-0426 public contracts |

@@ -88,14 +88,11 @@ once_only(double);               // ok: a copyable value flows in by moving
 1. **The diagnostic text and code** for a capture that prevents `copy` (assigned at `4-implemented`).
 2. **Generic callbacks.** Whether a generic parameter `F` can be bounded so that a `copy |T| -> U` is accepted (RFC-0163 section "Generic callbacks"); out of scope here.
 3. **Display of `copy` in inferred function types** for tooling (hover, errors).
-4. **Co-design with RFC-0194's must-call spelling.** RFC-0194 (linear closures, under review, tracker metel-core#1670)
-   has one open question: how a function type says "the holder must call this exactly once", distinct from affine
-   `once`. Its candidates (a stronger form of `once`, a `Linear` bound such as `F: Linear + once || -> ()`, or a
-   `linear || -> ()` modifier) sit on the same prefix position and the same use axis as `copy`. The two spellings must
-   be chosen together so they compose (`copy` and a must-call form are mutually exclusive: a copyable callable cannot
-   be linear, RFC-0089 section 2) and cannot be read as competing: `copy |T| -> U` (may be copied), `|T| -> U`
-   (move-only, may be dropped), and the must-call form (move-only, must be called). RFC-0219 does not decide the
-   must-call spelling, and RFC-0194 should not decide it without this RFC's qualifier in view.
+4. **The must-call spelling: resolved 2026-11-06.** RFC-0194's must-call form is `linear`, a modifier in the same prefix
+   position as `copy`, `once` and `var` (`linear || -> ()`). `copy` and `linear` are mutually exclusive (a copyable callable
+   cannot be linear), and `linear` implies `once`. The family reads as: `copy |T| -> U` (may be copied), bare `|T| -> U`
+   (move-only, may be dropped), `once |T| -> U` (at most once, may be dropped), `linear |T| -> U` (exactly once, cannot be
+   dropped). RFC-0219 specifies only `copy`; `linear` is RFC-0194's and RFC-0089's.
 
 ---
 

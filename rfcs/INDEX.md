@@ -1157,7 +1157,7 @@ implementation).
   §3's partial-consumption design needs a real pass against RFC-0119's actual (not
   assumed) shape before this RFC can be accepted, not just reviewed. **Split 2026-11-05:** sections 3 to 5
   (partial consumption, the brand-carrying conversion, `NonLinear<T>`) moved to RFC-0215; this RFC is now the lattice,
-  the `Linear` aspect and the class keywords (`copy`, `affine`, `linear`), a design-level dependency of the
+  the `Linear` aspect (declared, checked against the fields; amended 2026-11-06) and the class keywords (`copy`, `linear`), a design-level dependency of the
   Copy/Clone settlement (RFC-0206).
 - **RFC-0091** *(under review 2026-09-03, opened 2026-07-09; **v0.21.1**, #954)* —
   Linear Records — per-field multiplicity via **Option C: automatic downgrade** — a
@@ -1880,7 +1880,7 @@ misleading. Do **not** duplicate stage counts, generated status summaries, or ot
 derivable facts here — those belong in `REGISTRY.md`, and `rfc.py check` treats that
 generated file as the exact source of truth.
 
-- **RFC-0207** *(accepted 2026-11-05, #1786)* — Declaration clauses: `derives` and the colon list. Two clauses after a type's name: the colon list (user `declared` markers, an unchecked promise) and `derives` for aspects the compiler generates (`derives Copy`, `derives Clone`); `derives` replaces the request half of RFC-0093's `#derive`. The class keywords `copy`, `affine` and `linear` (RFC-0089) are sugar for these clauses. Cut down from the earlier `header`/`derivable`/`provides` design.
+- **RFC-0207** *(accepted 2026-11-05, #1786)* — Declaration clauses: `derives` and the colon list. Two clauses after a type's name: the colon list (user `declared` markers, an unchecked promise) and `derives` for aspects the compiler generates (`derives Copy`, `derives Clone`); `derives` replaces the request half of RFC-0093's `#derive`. The class keywords `copy` and `linear` (RFC-0089) are sugar for these clauses; affine is the default and has no keyword. Cut down from the earlier `header`/`derivable`/`provides` design.
 - **RFC-0208** *(under review 2026-11-03, #1789)* — Row-only generic parameters. A binder `<..R>` for a parameter that stands only for a row, never a type; `record R` stays for parameters used as types. Additive to RFC-0186, shares the `..` binder with packs (RFC-0125), merges with them if RFC-0151 lands; motivated by the row-generic derivation of RFC-0207.
 - **RFC-0209** *(under review 2026-11-04)* — Per-aspect row visibility. A header entry makes a nominal type's row visible to the row-conditional impls of that one aspect, so header aspects (`Copy`, `Clone`) are derived from the aspect's own row template. No new parameter kind; refines RFC-0137's tiers; R2 falls out.
 - **RFC-0210** *(under review 2026-11-04)* — Enum parameters and variant rows. An `enum E` parameter kind and a variant row `..E`, so an aspect's template is written once for every enum that grants it in its header; the bound `..E: A` reuses the field-wise bound one level down. Completes RFC-0209 for sum types; depends on RFC-0174 for bodies.
