@@ -190,6 +190,21 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: linear types are reserved_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
+##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
+
+A value of a declared `linear` struct, enum or named record is consumed only by total destructuring or by passing it to a
+function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern may skip with `..`
+only fields that are `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are
+allowed. An anonymous record or tuple that holds a linear value is not declared, and narrows when a field moves out.
+
+<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: linear types are reserved" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: linear types are reserved_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 </details>
 
 ## `Copy`
@@ -485,6 +500,7 @@ A `Drop` type may still be partially *borrowed*; only moving out is restricted.
 | record fields | [yes, at field granularity](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2) |
 | enum payloads | no — matching a variant and moving its payload consumes the enum wholly |
 | array elements | **no** |
+| declared `linear` struct or named record | **no** — consumed whole by total destructuring (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)) |
 
 An array element cannot be moved out because the index may be computed at run time, so which
 element left is not a static fact.
