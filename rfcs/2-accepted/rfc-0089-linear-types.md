@@ -162,6 +162,24 @@ diagnostic suggests the keyword. There is no `!Linear` opt-out, because nothing 
 - **Closures** are declared `linear` explicitly in the literal's prefix and in a function type (RFC-0194): a closure
   that captures a linear value without `linear` is an error whose fix-it adds it. `linear` implies `once`.
 
+**Consuming a linear aggregate (decided 2026-11-06).** A value of a **declared** linear type (struct, enum, named
+record) is consumed whole: by **total destructuring**, or by passing it to a function that consumes it. There are no
+partial moves and so no residuals of a declared linear type, which removes the question of whether a type was linear
+for its field or by fiat (the declaration records only "linear", not why, and a leftover could not be classified).
+- Reading a `Copy` field and borrowing a field (`&r.t`, `&var r.t`) change no ownership state and stay legal.
+- `..` in a destructuring pattern may skip only fields that are `Discard`; every other field is bound.
+- Assigning to a linear field would drop its old value, so it is an error; replace by destructuring and rebuilding.
+- Record spread (`{ ..r, n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
+- A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
+  dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
+  fields can.
+- This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly) and mirrors
+  the ban on partial moves out of a `Drop` type.
+**Structural types are the exception.** An anonymous record or a tuple has no declaration: its class is computed from
+its components (as `Copy` is for a tuple), so a field move narrows it and the leftover's class is recomputed, with the
+obligation travelling with the moved value. Destructuring a declared linear aggregate and rebuilding an anonymous
+record or tuple from the pieces is always available as an escape hatch.
+
 **`Clone` is not contraction (decided 2026-11-05).** `Clone` is explicit creation of another value, not the
 implicit duplication that linearity forbids, so a linear type may have a **written** `Clone`: the author asserts that
 another instance is valid (for example opening another handle). A **derived** `Clone` requires every field to satisfy

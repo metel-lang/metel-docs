@@ -7,6 +7,11 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1822'
 ---
 
+> **Note (2026-11-06, later).** Partial consumption is resolved differently: a declared linear aggregate (struct, enum, named
+> record) has no partial moves and is consumed by total destructuring (RFC-0089 section 2, "Consuming a linear aggregate");
+> structural types (anonymous records, tuples) narrow as usual. The `ToRecord` route of section 3 survives only as an explicit,
+> author-written opt-in for a struct that wants to hand out a structural view; it is no longer the floor.
+
 > **Note (2026-11-06).** `Linear` is now a declared aspect (RFC-0089 amendment): a "fiat-linear" struct below is simply a `linear struct`
 > with no linear field, and a struct with a linear field must be declared `linear`.
 
