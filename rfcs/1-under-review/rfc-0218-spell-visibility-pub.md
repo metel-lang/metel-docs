@@ -38,7 +38,7 @@ The change is a token rename with no semantic effect: module-private by default,
 ## 1. The rule
 
 1. `pub` is the visibility keyword at every site that accepts a visibility today. It is a reserved word.
-2. `public` is reserved as the legacy spelling: using it is an error with a fix-it that replaces it with `pub`, the way `pub` is reserved today with a clear error (RFC-0098, RFC-0130). Open question 1 asks whether it should be a warning for one minor release instead.
+2. `public` is reserved as the legacy spelling: using it is an error with a fix-it that replaces it with `pub`, the way `pub` is reserved today with a clear error (RFC-0098, RFC-0130). **Decided 2026-11-06 (language owner): a hard error**, as in RFC-0098, with no transition warning.
 3. With the prefix keywords of RFC-0206, RFC-0207 and RFC-0212, `pub` is outermost: `pub copy struct P`, `pub declared aspect Validated;`.
 4. No semantic change: RFC-0032 (field-level visibility), RFC-0083 (public value exports) and the module visibility rules apply unchanged under the new spelling.
 
@@ -46,7 +46,7 @@ The change is a token rename with no semantic effect: module-private by default,
 
 ## 2. Migration
 
-A sweep, not a blind regex (PROCESS.md, exit criterion of 2026-07-31): stdlib, the fixture corpus (248 files), the spec and docs, RFCs, the blog and reports, scoped by code-fence language, verified by compiling at least one complete swept example. Superseded and refused RFCs and dated records are left alone. Existing user programs get the fix-it error; a mechanical rewrite (`public` to `pub`) is safe because the token is only ever the visibility keyword.
+A sweep, not a blind regex (PROCESS.md, exit criterion of 2026-07-31): stdlib, the fixture corpus (248 files), the spec and docs, RFCs, the blog and reports, scoped by code-fence language, verified by compiling at least one complete swept example. Superseded and refused RFCs and dated records are left alone. Existing user programs get the hard fix-it error; a mechanical rewrite (`public` to `pub`) is safe because the token is only ever the visibility keyword.
 
 RFC text written during the Copy and Clone settlement already uses `pub` in examples and prose, as the target spelling.
 
@@ -68,7 +68,7 @@ RFC text written during the Copy and Clone settlement already uses `pub` in exam
 
 ## Open questions
 
-1. **Hard error or one-minor warning for `public`.** RFC-0098 used a hard rename with a clear error. A one-minor warning with the same fix-it eases migration of external programs at the cost of two accepted spellings for one release.
+1. **Hard error or one-minor warning for `public`: resolved 2026-11-06.** A hard error with a fix-it, as RFC-0098 did.
 2. **A rewrite tool.** Whether `metel fmt` or a dedicated `--fix` applies the rename, or only the diagnostic's fix-it does.
 3. **Docs and versioned snapshots.** Whether versioned documentation of released versions keeps `public`.
 
