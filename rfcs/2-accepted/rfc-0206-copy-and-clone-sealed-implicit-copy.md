@@ -309,7 +309,7 @@ replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-
   v0.16.0. They apply to structs and enums, not to the anonymous record type. For a generic type a keyword states
   a capability, not a class: `copy struct Wrapper<T>` is `Copy` exactly when `T` is (the conditions of section 6,
   "End state").
-- **The function-type qualifier** `copy` and the keyword `once` (RFC-0163, RFC-0134) keep their planned spelling;
+- **The function-type qualifier** `copy` (RFC-0219, split from RFC-0163) and the keyword `once` (RFC-0134) keep their planned spelling;
   the type keyword `copy` and the qualifier name the same property.
 - **Defaults.** A type is affine unless it says otherwise (RFC-0071): forgetting a keyword on a handle or a token
   fails safe. A `Copy` grant is a statement; it is never inferred from the fields (copy-by-default, section 8).
