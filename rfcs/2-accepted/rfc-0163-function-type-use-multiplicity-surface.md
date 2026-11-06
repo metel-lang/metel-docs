@@ -7,6 +7,8 @@ updated: '2026-09-03'
 tracking: 'https://github.com/metel-lang/metel-core/issues/936'
 ---
 
+> **Split (2026-11-06).** The `copy` qualifier on written function types is split into RFC-0219 (v0.16.0, Copy migration stage), now that the Copy and Clone settlement made the decisions this RFC was waiting for: sealed `Copy`, and one property for the declaration keyword and the qualifier (RFC-0206 section 5). The `Erased` state, the provenance model, the coercion table and the join rule stay here, rescheduled as below. The keyword is contextual (RFC-0207 section 3), which replaces the global reservation proposed below.
+
 > **Status — rescheduled to v0.18.1, split (2026-09-03).** The urgent,
 > design-agnostic part of this RFC — a written function type lowers to
 > concrete `Move`, a `Copy` value coerces in by moving, nested function types
