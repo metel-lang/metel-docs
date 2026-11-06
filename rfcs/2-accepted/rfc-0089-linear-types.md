@@ -373,6 +373,7 @@ discard (RFC-0134, RFC-0153); the rule that moving every field out consumes a st
    once `linear` ships. In v0.16.0 every type is `Discard`, so nothing changes for existing programs. The
    demonstration required there remains a gate for accepting sections 1 to 2.1.
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
+7. **Binding-level strengthening** (a `linear` binding, parameter, return or field on an ordinary type, never looser than the type): designed as an extension on 2026-11-06 and drafted as RFC-0220. It is local discipline and does not change the declared-class model of sections 1 to 2.1.
 
 ---
 
