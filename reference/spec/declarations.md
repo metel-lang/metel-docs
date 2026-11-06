@@ -3840,7 +3840,7 @@ The relation is nominal and [transitive](#spec.declarations.aspects.super-aspect
 not subtyping; no coercion exists from `Ord` to `Eq`. An `extend T: Ord` requires a coherent
 [`Eq` impl for the same type](#spec.declarations.aspects.super-aspects.legality-3), written or derived.
 
-A super-aspect entry may be negative. `aspect Copy: derived Clone, !Drop` declares that no type may
+A super-aspect entry may be negative. `aspect Copy: deriving Clone, !Drop` declares that no type may
 be granted both `Copy` and `Drop`:
 
 <!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
