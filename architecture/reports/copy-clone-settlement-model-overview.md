@@ -2,7 +2,7 @@
 title: "The Copy and Clone Settlement: Model Overview, Decisions and Implications"
 date: '2026-11-05'
 status: report
-relates: rfc-0089, rfc-0206, rfc-0207, rfc-0211, rfc-0212, rfc-0213, rfc-0214, rfc-0216, rfc-0173
+relates: rfc-0089, rfc-0206, rfc-0207, rfc-0211, rfc-0212, rfc-0213, rfc-0214, rfc-0216, rfc-0217, rfc-0173
 ---
 
 # The Copy and Clone Settlement: Model Overview, Decisions and Implications
@@ -12,7 +12,7 @@ ownership classes and generic code, with the decisions taken, the code each deci
 implies for users, implementers and later work. The RFCs remain normative; this report is the map.
 
 **Status.** Design settled in RFC-0206, RFC-0207, RFC-0212, RFC-0213 and RFC-0089 sections 1 to 2.2 (PR #555 on
-`metel-docs`, tracked by metel-core#1808 and the ratification sweep #1824). RFC-0211 is staged (v0.16.0 part now,
+`metel-docs`, tracked by metel-core#1808 and the ratification sweep #1824). RFC-0211 (split 2026-11-06 from the template half, now RFC-0217, under review; v0.16.0 part now,
 template half later). RFC-0214 and RFC-0216 are drafts and not dependencies. Three adversarial reviews followed the prior-art
 review: the first judged the cluster not ready, the second confirmed most repairs, and a whole-model review (review 7)
 found a List classification defect, a nested derived-`Clone` contradiction and report inaccuracies, all applied here.
@@ -338,7 +338,7 @@ distinguishes a written whole-type impl (named as the cause) from a derived aspe
 
 **Implication.** Once derived templates exist, replacing `derives Clone` with a hand-written `Clone` removes `Clone` from
 projections, and the program fails at the use site, not at the edit (in v0.16.0 a non-`Copy` derived `Clone` already
-provides none on a projection). The remedy is later: row templates for derived impls (RFC-0211) and
+provides none on a projection). The remedy is later: row templates for derived impls (RFC-0217) and
 written residual impls (RFC-0214).
 
 **Native for now.** The structural `Copy` rule for named types is compiler logic in v0.16.0, so the Row machinery is
@@ -388,7 +388,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | 14 | `Clone` is not contraction; panic in a derived clone ends the process | 11-05 | Resource duplication must stay possible; the spec already ends the process on panic | Linear fields need no partial-clone cleanup |
 | 15 | Projections: scope B, native structural `Copy` for now | 11-05 | Keeps Row machinery off the critical path | `T0012` with a use-site diagnostic; #1823 removes the exception |
 | 16 | Hook stays open with a named reopen trigger | 11-05 | Sealed-to-writable is monotone only as a separate, separately authorized mode | Four conditions in RFC-0206 section 8 |
-| 17 | One ratification sweep, RFC-0211 staged | 11-05 | The cluster is interdependent (the RFC-0063 precedent) | Gates on #1824 |
+| 17 | One ratification sweep; RFC-0211 accepted staged, then split into RFC-0211 (v0.16.0) and RFC-0217 (templates) on 11-06 | 11-05 | The cluster is interdependent (the RFC-0063 precedent) | Gates on #1824 |
 
 ---
 

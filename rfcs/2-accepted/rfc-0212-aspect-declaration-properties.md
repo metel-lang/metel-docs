@@ -89,7 +89,7 @@ derived Clone, !Drop`).
 - **Exact, per instantiation.** The condition is evaluated on the instantiated field types, not as a
   bound on the type parameters. `struct View<T> { r: &T }` is covered for every `T` when `&T` is.
 - **Reaching the fields of a nominal type** needs the row machinery: RFC-0209 (a type's row is
-  visible to the templates of an aspect it has granted), RFC-0210 (enums) and RFC-0211 (residuals,
+  visible to the templates of an aspect it has granted), RFC-0210 (enums) and RFC-0217 (residuals,
   so the rule is defined on a narrowed value), with RFC-0208 for the row binder.
 - **Kinds with no fields to walk** (references, views, closures, function types) are covered by std
   impls on those targets, in the aspect's defining module (`extend<T> &T: Copy`, a negative
@@ -186,7 +186,7 @@ extend Token: !Send;                                      // opt-out of an auto 
 - **RFC-0213** — super-aspects, which `implicit` and the exclusion need.
 - **RFC-0207** — the clauses that grant a `declared` aspect.
 - **RFC-0096** — its `auto` revision is deferred; see section 2.
-- **RFC-0209 / RFC-0210 / RFC-0211 / RFC-0208** — the row machinery for the structural template on named types.
+- **RFC-0209 / RFC-0210 / RFC-0217 / RFC-0208** — the row machinery for the structural template on named types.
 - **RFC-0060 / RFC-0081 / RFC-0071 §4** — coherence, negative impls and the `Copy`/`Drop` exclusion.
 - **RFC-0125 / RFC-0132 / metel-core#739** — tuples, arrays and function types.
 - **RFC-0123 / RFC-0186** — the field-wise bound `where ..R: A`, the form of the rule.

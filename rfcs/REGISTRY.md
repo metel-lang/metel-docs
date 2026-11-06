@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-05'
+generated_on: '2026-11-06'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**215 RFCs total.** 36 draft, 53 under review, 15 accepted, 2 integrated (106 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**216 RFCs total.** 36 draft, 54 under review, 15 accepted, 2 integrated (107 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
 ## Draft (36)
 
@@ -54,7 +54,7 @@ the curated thematic map.
 - **RFC-0214** — Aspect Impls for Residuals (`0-draft` ; rfcs/0-draft/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04)
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05)
 
-## Under Review (53)
+## Under Review (54)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -109,6 +109,7 @@ the curated thematic map.
 - **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
+- **RFC-0217** — Row Templates for Aspects on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0217-row-templates-for-aspects-on-residuals.md ; date 2026-11-06 ; updated 2026-11-06)
 
 ## Accepted (15)
 
@@ -124,7 +125,7 @@ the curated thematic map.
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`2-accepted` ; rfcs/2-accepted/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-05)
 - **RFC-0207** — Declaration Clauses: derives and the Colon List (`2-accepted` ; rfcs/2-accepted/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-05)
-- **RFC-0211** — Aspect Templates on Residuals (`2-accepted` ; rfcs/2-accepted/rfc-0211-aspect-templates-on-residuals.md ; date 2026-11-02 ; updated 2026-11-05)
+- **RFC-0211** — Aspects on Residuals (`2-accepted` ; rfcs/2-accepted/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-06)
 - **RFC-0212** — Aspect Declaration Properties (`2-accepted` ; rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-05)
 - **RFC-0213** — Super-Aspects (`2-accepted` ; rfcs/2-accepted/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-05)
 

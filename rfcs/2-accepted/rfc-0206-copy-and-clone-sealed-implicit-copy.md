@@ -332,7 +332,7 @@ replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-
 distinguishes the two causes: a written whole-type impl is named as the cause when one exists, and a derived aspect
 whose template is deferred is reported as "template not yet available" (there is no written impl to name). The
 language keeps no edit history, so it cannot warn at the edit. The end state is row templates for derived
-impls (RFC-0211) plus written residual impls (RFC-0214, including its row-generic form, with construction in
+impls (RFC-0217) plus written residual impls (RFC-0214, including its row-generic form, with construction in
 RFC-0216) for hand-written ones. Neither draft is a dependency.
 
 **Native structural `Copy` for now (decided 2026-11-05).** The structural rule that makes a named `Copy` type and
@@ -377,7 +377,7 @@ abstract-ownership limitation, step 2). The settlement otherwise waits for the g
    which derives the provided `Clone` with `Copy`.
 6. **Aspect properties** (RFC-0212): `declared` and `implicit`. The structural `Copy` rule for named types is native
    in this release (#1823); the std-written row template (RFC-0123, with the row machinery of RFC-0209, RFC-0210,
-   RFC-0211) replaces it later. RFC-0208's `<..R>` binder is not a prerequisite: the templates use `record R` until
+   RFC-0217) replaces it later. RFC-0208's `<..R>` binder is not a prerequisite: the templates use `record R` until
    it lands (the spikes did not exercise templates; to be checked in the Row machinery stage).
 7. **Built-in kinds as impls:** references and views, then tuples (RFC-0125, #794), then closures and function
    types (metel-core#739, RFC-0134). **Arrays and the native record `Clone` hook stay named compiler rules in this
@@ -584,9 +584,9 @@ novel parts and their risk:
 cluster was (PROCESS.md, ratification sweeps). RFC-0206 is not accepted before the RFCs it depends on at design level, and
 all are decided in the same sweep, in this order: RFC-0089 sections 1 to 2.1 (the lattice, the keywords and the
 section 2.2 demonstration), this RFC's ownership model (sections 1 to 5), then RFC-0207, RFC-0213 and RFC-0212.
-RFC-0211 is accepted with a **staged marker**: its v0.16.0 part (rule 2, a written impl never applies to a residual,
-giving `T0012` with the use-site diagnostic) is in the sweep, and its template half is marked "Planned for" a later
-release, with RFC-0209 and RFC-0210, which follow with the row machinery. The targeted adversarial review of the changes made after the fourth review (review 5, 2026-11-05) judged the cluster
+RFC-0211 was accepted with a staged marker and split on 2026-11-06: RFC-0211 keeps the v0.16.0 rules (structural `Copy`
+with its provided `Clone`, the `Drop` dispatch, `T0012` otherwise) and the template half is RFC-0217, under review, with
+RFC-0209 and RFC-0210, which follow with the row machinery. The targeted adversarial review of the changes made after the fourth review (review 5, 2026-11-05) judged the cluster
 not ready; its repairs are applied, and a short second pass on the changed text precedes the sweep.
 
 ## Open questions
