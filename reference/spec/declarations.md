@@ -3853,7 +3853,7 @@ An [exclusion](#spec.declarations.aspects.super-aspects.legality-4) is checked w
 aspects is granted. It is not evidence that two conditional impls are disjoint, and `T: !A` does not imply
 `T: !B` for a super-aspect `B` of `A`.
 
-An entry marked `derived` is generated together with the sub-aspect by `derives`. Only aspects declared in
+An entry marked `deriving` is generated together with the sub-aspect by `derives`. Only aspects declared in
 the standard library may carry the mark; [on a user aspect it is an error](#spec.declarations.aspects.super-aspects.legality-5),
 and a user aspect's entry is always an obligation.
 
@@ -3910,14 +3910,14 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 
 ##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-5}
 
-The `derived` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an obligation.
+The `deriving` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an obligation.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the derived mark is not yet parsed" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1801" reason="RFC-0213: the deriving mark is not yet parsed" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the derived mark is not yet parsed_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1801: RFC-0213: the deriving mark is not yet parsed_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -3939,7 +3939,7 @@ aspect. The compiler reads them from the aspect's declaration, never from its sp
 
 <!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
 ```metel
-aspect Validated declared;          // a user marker: granted in the declaration of the type
+declared aspect Validated;          // a user marker: granted in the declaration of the type
 
 struct Token: Validated { id: i64 }
 extend Token: Validated;            // error: Validated is declared; grant it in the declaration
@@ -3968,7 +3968,7 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-declaration-properties.legality-2}
 
-The properties `implicit` and `auto` are accepted only on an aspect declared in the standard library. An `implicit` aspect must refine `Clone` through a `derived` super-aspect, and at most one `implicit` aspect exists in a program. A violation is an error at the aspect declaration.
+The properties `implicit` and `auto` are accepted only on an aspect declared in the standard library. An `implicit` aspect must refine `Clone` through a `deriving` super-aspect, and at most one `implicit` aspect exists in a program. A violation is an error at the aspect declaration.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
