@@ -206,7 +206,9 @@ say "the holder must call this exactly once", distinct from affine `once` ("may 
 split RFC-0134's `once` into `once` (affine) and a stronger form; use the `Linear` aspect as a bound
 (`F: Linear + once || -> ()`); or a modifier on the type (`linear || -> ()`). The rules above do not
 depend on the spelling. It is co-designed with RFC-0163, which owns the function-type use-multiplicity
-surface, so it is settled there or here with that RFC's agreement.
+surface, so it is settled there or here with that RFC's agreement. RFC-0219 (the `copy` qualifier, split from RFC-0163,
+v0.16.0) occupies the same prefix position, so the spelling is also chosen with RFC-0219 in view: `copy` and a
+must-call form are mutually exclusive.
 
 ---
 
