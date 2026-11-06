@@ -9,7 +9,7 @@ status: draft
 
 > **Not a dependency.** The `Copy`/`Clone` settlement (RFC-0206, RFC-0207, RFC-0211, RFC-0212,
 > RFC-0213) does not wait for this RFC. Until it is accepted and implemented a residual satisfies an
-> aspect only through a row template (RFC-0211 rule 1), a hand-written impl for the whole type never
+> aspect only through a row template (RFC-0217 rule 1), a hand-written impl for the whole type never
 > applies to a residual (RFC-0211 rule 2), and there is no way to write an impl for a residual. This RFC
 > only adds that written route; every rule of the settlement stays true without it.
 
@@ -43,7 +43,7 @@ extend DocTitle: Display {                      // the residual: needs only `tit
 
 1. **A residual cannot carry a written impl.** `d.{ title }` is a value of a type with the same brand
    as `Doc`, yet an author who wrote `Doc: Clone` by hand has no way to say what cloning a projection
-   means. RFC-0211 gives the author two options only: derive the impl (a template then covers every
+   means. RFC-0211 and RFC-0217 give the author two options only: derive the impl (a template then covers every
    residual) or accept that the projection has no impl. For a non-`Copy` type with a written `Clone` the
    projection simply has no `Clone` (RFC-0211 rule 2); a `Copy` type needs none, since its `Clone` is provided.
 2. **A bound call on a residual silently skips the written impl today.** `dup(&d.{ title })` with
@@ -84,7 +84,7 @@ extend DocTitle: Clone {
 **Row-generic impl.** The impl is generic over the whole row of the brand through a row binder
 (RFC-0208), with a field-wise bound (RFC-0123) and a body that walks the row (RFC-0174). It applies to
 the whole type and to every residual whose present fields all satisfy the bound. It is the written
-counterpart of a derivation: the compiler's row template (RFC-0209, RFC-0211) is this impl, generated.
+counterpart of a derivation: the compiler's row template (RFC-0209, RFC-0217) is this impl, generated.
 
 ```metel
 extend Doc: Display<record R> where ..R: Display {      // spelling provisional (RFC-0208: `extend<..R>`)
@@ -134,7 +134,7 @@ residual construction (RFC-0216). Methods that only read
    that are equal, a row-bounded impl whose required set the shape contains and an exact-shape impl for
    it, two row-bounded impls whose required sets are both contained) overlap and are `T0015`. There is
    no most-specific rule.
-4. **Templates.** If the type's header grants the aspect, the row template (RFC-0209, RFC-0211)
+4. **Templates.** If the type's header grants the aspect, the row template (RFC-0209, RFC-0217)
    already covers every residual, and a residual impl of the same aspect, including a row-generic one
    (which covers the whole type too, so a separate whole-type impl overlaps it), overlaps it (`T0015`), as a
    written impl overlaps a derived one (RFC-0207 rule 4). A type that wants a written residual impl does
@@ -183,7 +183,7 @@ extend Row: PartialEq {
   check against a concrete row and needs no row variable in impl resolution.
 - **RFC-0174, RFC-0208, RFC-0123, RFC-0216** — the row-generic form: the field loop, the row binder,
   the field-wise bound, and construction of the `Self`-returning result. Only this form depends on them.
-- **RFC-0209, RFC-0211** — templates for granted aspects; written impls cover the cases templates do not.
+- **RFC-0209, RFC-0217** — templates for granted aspects; written impls cover the cases templates do not.
 - **RFC-0206, RFC-0212, RFC-0213** — `Copy` on a residual (rule 6), `declared` (rule 7),
   super-aspects (rule 6). Not a dependency of any of them.
 - **RFC-0207 / RFC-0093** — derived against written impls (rule 4).
@@ -191,7 +191,7 @@ extend Row: PartialEq {
 
 ## Alternatives considered
 
-- **Templates only; no written residual impl.** The status quo of RFC-0211. Simple, and enough for the
+- **Templates only; no written residual impl.** The status quo of RFC-0211 and RFC-0217. Simple, and enough for the
   settlement. It leaves a type with a written `Clone` unable to define what its projections copy to,
   and leaves `Drop` as the only aspect with a written residual route.
 - **A row-conditional impl** (`extend Self.R where R: { f, .. }: A`). Excluded by RFC-0146 section 6 as
@@ -201,7 +201,7 @@ extend Row: PartialEq {
   that RFC-0137 section 5 removed in favour of a declared set.
 - **Generate a structural impl for the residual when the whole type's is written.** This is the
   template, and deriving it for a type whose author wrote the impl by hand discards the author's
-  intent. Rejected by RFC-0211.
+  intent. Rejected by RFC-0211 and RFC-0217.
 
 ## Out of Scope
 
@@ -216,7 +216,7 @@ extend Row: PartialEq {
    of RFC-0137 section 6 are open there.
 2. **Methods with different receiver rows in one impl.** The union is the required set; whether a
    method with a narrower receiver may be called on a residual that has only its own fields is open.
-3. **Enums.** Enums are atomic for narrowing and have no residuals (RFC-0150, RFC-0211), so this RFC
+3. **Enums.** Enums are atomic for narrowing and have no residuals (RFC-0150, RFC-0217), so this RFC
    does not apply to them unless that changes (variant rows, RFC-0210).
 4. **Default methods** of the aspect and their receiver rows.
 5. **Spelling:** `extend DocTitle: A` through a view, `extend Doc.{ f }: A` inline, or both.

@@ -85,7 +85,7 @@ rules:
 - **RFC-0214** — the row-generic impl form is the consumer.
 - **RFC-0137** — residual types, the constructor-invariant risk of section 6.
 - **RFC-0123, RFC-0208** — `where ..R: A` and the row binder.
-- **RFC-0209, RFC-0211** — the std templates are the compiler's instance of this mechanism.
+- **RFC-0209, RFC-0217** — the std templates are the compiler's instance of this mechanism.
 - **RFC-0093 / RFC-0092** — derive functions and `emit`; the alternative route to construction.
 
 ## Alternatives considered

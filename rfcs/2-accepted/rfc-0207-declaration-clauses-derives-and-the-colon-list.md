@@ -117,7 +117,7 @@ type states its condition once computed defaults exist (RFC-0206 section 6, "End
   promise is better expressed as a refinement type (RFC-0202), and method-bearing aspects in the colon
   list are the later stage of RFC-0105.
 - It does not specify the grammar of named records and enums beyond the two clauses; RFC-0209 to
-  RFC-0211 (accepted, staged) are the derivation templates.
+  RFC-0217 (under review) are the derivation templates.
 
 ## 5. Worked examples
 
