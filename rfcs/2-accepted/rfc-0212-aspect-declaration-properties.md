@@ -69,7 +69,7 @@ RFC-0207 the declaration clauses.
 ## 1. `declared`
 
 A `declared` aspect is satisfied by a named type only if the type's declaration says so, through the
-colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an error with a fix-it.
+colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an error with a fix-it. `Linear` is `declared` but keyword-only: it is granted by the `linear` keyword (RFC-0089 section 2.1), not by the colon list or `derives`.
 
 - **Targets with no declaration** (primitives, tuples, arrays, anonymous records, references)
   cannot carry a clause. Impls for them are allowed, and only in the aspect's defining module (the

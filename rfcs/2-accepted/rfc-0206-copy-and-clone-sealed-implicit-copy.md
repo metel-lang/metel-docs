@@ -193,7 +193,7 @@ direction depends on the property:
    general theorem: a new indirection that is `Copy` must revisit it.
 2. **The structural "every field" markers `Discard`, `Send` and `Sync` are coinductive**: a cycle through the
    declaration's own fields is assumed to hold, so `struct Node<T> { value: T, children: List<Node<T>> }` is `Discard`
-   exactly when `T` is. **`Linear` is existential and is never stored** (section 6): it is computed per
+   exactly when `T` is (it must be declared `linear struct Node<T>` to admit a linear `T`; the recursion rule is the same). **`Linear` is existential and is never stored** (section 6): it is computed per
    instantiation, inductively, seeded by real linear fields and fiat grants.
 3. **Derivation conditions are coinductive on goals that repeat exactly.** `enum Tree derives Clone {
    Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs `Tree: Clone`

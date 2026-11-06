@@ -63,6 +63,7 @@ let name := "x";
 retry([name] || { name.len() > 0 });   // error: capturing `name` (String, not Copy) prevents `copy`
 
 fun double(x: i64) -> i64 { x * 2 }
+fun at_most_once(f: copy once |i64| -> i64) -> i64 { f(1) }   // accepts a copyable (hence reusable) callable; this slot calls it at most once
 fun once_only(f: |i64| -> i64) -> i64 { f(1) }    // bare: f may be called once, as a move
 once_only(double);               // ok: a copyable value flows in by moving
 ```
@@ -77,6 +78,8 @@ once_only(double);               // ok: a copyable value flows in by moving
 4. **Reserve `copy` globally**, as RFC-0163 proposed. Rejected: RFC-0207 makes the class keywords contextual and the grammar does not reserve `copy` today.
 
 ## Relationship to existing RFCs
+
+`copy once |T| -> U` is a requirement on the supplied callable (copyable, so reusable) combined with a `once` interface for the holder: a reusable callable is accepted into a `once` slot, and the holder of the slot may call it at most once per copy.
 
 - **RFC-0163** — amended: the `copy` qualifier is split out here; the `Erased` state, provenance model, coercion table and join rule stay there.
 - **RFC-0166** — the bare case; this RFC adds the qualifier it explicitly left out.

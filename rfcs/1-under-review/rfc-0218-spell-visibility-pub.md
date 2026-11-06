@@ -30,7 +30,7 @@ The change is a token rename with no semantic effect: module-private by default,
 ## Motivation
 
 - **It is written on every exported item.** The corpus and stdlib use `public` on 514 lines across 248 `.mtl` files; every declaration the spec calls exported carries it. Three letters shorter is a small saving paid on every line of a library's surface.
-- **It composes with the new prefix keywords.** The settlement (RFC-0206, RFC-0207, RFC-0212) puts contextual keywords in front of the declaration keyword: `copy struct`, `affine struct`, `declared aspect`. With visibility outermost, `pub declared implicit aspect X` and `pub copy struct P` read as one short prefix; `public declared implicit aspect X` is long.
+- **It composes with the new prefix keywords.** The settlement (RFC-0206, RFC-0207, RFC-0212) puts contextual keywords in front of the declaration keyword: `copy struct`, `linear struct`, `declared aspect`. With visibility outermost, `pub declared implicit aspect X` and `pub copy struct P` read as one short prefix; `public declared implicit aspect X` is long.
 - **The reason for `public` was identity, and it does not hold up.** RFC-0098 chose `public` because Metel "reads as a deliberate identity rather than an accident" where it diverges from Rust at no cost. Its cost is not zero (the line length above), and `pub` is the keyword the rest of the corpus already used before RFC-0098 and the one readers of Rust-family languages know. The identity argument still stands for `aspect`, `extend` and `var`, which are not reversed.
 
 ---
