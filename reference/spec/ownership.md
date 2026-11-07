@@ -87,7 +87,7 @@ of the source binding is rejected.
 
 > **Pending** metel-core#1831 the ownership classes beyond `Copy` and the affine default are accepted by the language but not yet by the checker.
 
-> **Reserved (2026-11-07).** The rules below that exist only for linear types (computed generic classes, legality-6 and legality-7, and consuming patterns in the partial-move rules) describe the intended design and are not accepted yet; see RFC-0089. Until the `linear` release every type is `Discard`.
+> **Partly reserved (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy`, and `T: Discard` on a type parameter (legality-7) are settled (RFC-0089, decision D7). The rules that exist only for linear elimination (legality-6, the field-linear-for-every-instantiation guard in legality-7, and consuming patterns in the partial-move rules) describe the intended design and are not accepted yet. Until the `linear` release every type is `Discard`.
 
 Every type has one of four ownership classes, ordered by how much a value of the type may do:
 
