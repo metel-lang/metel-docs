@@ -446,15 +446,18 @@ admits.
 generic-class model of RFC-0089 and inert until the `linear` release, because every type is `Discard` before it. A `pub` generic type's `Discard`
 condition becomes part of its interface, as its `Copy` and `Clone` conditions are. Outside the defining module a client
 may rely only on the **stated** condition. With no statement the condition is the **conservative default**: `Discard`
-exactly when every type parameter is `Discard` (the conjunction `P1: Discard, P2: Discard, ...`), whatever the fields
-are. A type that wants a stronger condition states it in the declaration, in the condition language below (`true` for
-"always `Discard`", or a conjunction over some of the parameters). The statement is **checked**: it must be implied by
-the condition computed from the fields, and a statement stronger than the fields support is an error at the
-declaration. Inside the defining module the exact computed condition applies. A non-`pub` type uses its computed
+exactly when every type parameter is `Discard` (the conjunction `P1: Discard, P2: Discard, ...`). A type that wants a stronger condition states it in the declaration, in the condition language below (`true` for
+"always `Discard`", or a conjunction over some of the parameters). The effective condition, **stated or default, is checked**: it must be implied by the condition computed from the
+fields, and a condition stronger than the fields support is an error at the declaration. Without the check an
+unstated default would let outside code drop a value the fields forbid dropping. Inside the defining module the exact computed condition applies. A non-`pub` type uses its computed
 condition. Consequences:
 - Making a public type more permissive later is never breaking, because clients relied only on the stated or default
   condition.
 - Making it less permissive than its statement is an error at the declaration, so the interface cannot change silently.
+- `pub struct Cache<T> { marker: &T, ticket: Tx }` fails the check: the default (`Discard` when `T` is) is stronger than
+  the fields support (`Tx` is linear, so the type is never `Discard`). The error is at the declaration and suggests
+  `linear struct`. This is what protects a public type when a field such as `Ticket<T>` mentions a parameter but is
+  linear for every `T`, which the syntactic keyword rule of RFC-0089 section 2 (D10) does not catch.
 - A public type that does not own its parameter (`View<T> { v: &T }`) must state `Discard` (`true`) to be droppable
   for a linear `T`. Without the statement `View<Tx>` is linear for outside users, which is over-conservative but
   harmless, and the author fixes it with one statement.
@@ -594,7 +597,7 @@ novel parts and their risk:
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
 | A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |
-| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword); `dyn` erasure remains a linear-release gate (callable discard is settled: a non-`linear` function type is `Discard`); public stated conditions stabilise `Copy` and `Clone` only and computed `Discard` is not part of the stated interface (D19 extends the stated interface to `Discard`), and a field that is linear for every instantiation requires the keyword; reviewed in reviews 8 and 9 |
+| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword; a field such as `Ticket<T>` is caught for a public type by the checked `Discard` condition, D19); `dyn` erasure remains a linear-release gate (callable discard is settled: a non-`linear` function type is `Discard`); public stated conditions stabilise `Copy` and `Clone` only and computed `Discard` is not part of the stated interface (D19 extends the stated interface to `Discard`), and a field that mentions no type parameter and is linear requires the keyword; reviewed in reviews 8 and 9 |
 | Native structural `Copy` for named types | Low: a named, time-boxed exception, tracked as metel-core#1823 |
 
 **Acceptance (decided 2026-11-05): one ratification sweep.** The settlement is one cluster, as the allocator

@@ -182,7 +182,7 @@ so mainly because their ecosystem already existed when the capability was introd
 ### Public API stability
 
 - **X:** an owned `T` field added to a public generic type changes only which instantiations are linear. Adding a field
-  that is linear for every instantiation forces the keyword (D10), so that change is explicit. Linear users and
+  that mentions no type parameter and is linear forces the keyword (D10), so that change is explicit. Linear users and
   generic clients without `T: Discard` are affected. Rust documents the same hazard for auto traits (RFC 1105).
   **Mitigation (D19, reserved):** a public generic type states its `Discard` condition like its `Copy` and `Clone`
   conditions. With no statement, outside code sees the conservative default (`Discard` exactly when every parameter
@@ -226,8 +226,8 @@ computed from its owned fields (D7), with `linear` unconditional and `copy` a ca
 parameter forbidding linear arguments (D9), and public generic types stating their `Discard` condition with a
 conservative default (D19, section 3 "Public API stability"). The effects-library test
 (`effects-generic-functions-computed-vs-explicit.md`) supports it: 8 annotations against 29 for the same programs.
-The guard that forces `linear` on a generic type holding a field linear for every instantiation (D10) stays
-reserved; the elimination rules (D11 to D13) were settled in design the same day.
+The guard that forces `linear` on a generic type holding a concrete linear field (D10, a syntactic rule backed by
+the checked D19 condition) and the elimination rules (D11 to D13) were settled the same day.
 
 What would reopen it: a standard library or ecosystem in which most generic code drops its arguments, or evidence
 that linear types stay a niche feature used only in application code (the case for Model Y in section 4).

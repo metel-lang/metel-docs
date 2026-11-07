@@ -87,7 +87,7 @@ of the source binding is rejected.
 
 > **Pending** metel-core#1831 the ownership classes beyond `Copy` and the affine default are accepted by the language but not yet by the checker.
 
-> **Settled in design, effective with the `linear` release (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter (legality-7), the Discard-based partial-move rule (legality-6, decision D11) and consuming patterns (partial-move legality-4, decision D12) are decided in design and inert until then; every type is `Discard` before it. The guard that a field linear for every instantiation forces `linear` (decision D10) is still reserved.
+> **Settled in design, effective with the `linear` release (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter (legality-7), the Discard-based partial-move rule (legality-6, decision D11) and consuming patterns (partial-move legality-4, decision D12) are decided in design and inert until then; every type is `Discard` before it. A field that mentions no type parameter and is linear forces `linear` on a generic type (decision D10); closures and binding-level qualifiers (D14, D15) are still reserved.
 
 Every type has one of four ownership classes, ordered by how much a value of the type may do:
 
@@ -98,7 +98,7 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | affine (the default) | at most once | yes | no |
 | copy | any number | yes | yes |
 
-A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a field linear for every instantiation forces `linear` on a generic type too): the declared class must be at
+A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a field that mentions no type parameter and is linear forces `linear` on a generic type too): the declared class must be at
 least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
 linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
 `Drop` is compatible with
@@ -195,7 +195,7 @@ A partial move out of a nominal aggregate is legal only when the aggregate is kn
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-7}
 
-A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field that is linear for every instantiation (linear with every type parameter assumed discardable; a projection of a parameter is parameter-dependent) forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
+A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field whose type mentions no type parameter and is linear forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 

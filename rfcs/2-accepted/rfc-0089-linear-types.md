@@ -18,8 +18,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > out of a nominal aggregate needs the aggregate known `Discard` (D11); destructuring patterns consume their scrutinee,
 > which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
 > variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
-> open with RFC-0218). **Still reserved, kept as design text for review and not binding on implementation:** the rule
-> that a field linear for every instantiation forces the keyword on a generic type (D10), and the closure and
+> open with RFC-0218); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
+> syntactic rule backed by the checked public `Discard` condition (D10, D19). **Still reserved, kept as design text for review and not binding on implementation:** the closure and
 > binding-level rules (D14, D15). The reasoning and the alternatives are in the decision register
 > (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
 > (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
@@ -173,13 +173,12 @@ diagnostic suggests the keyword. There is no `!Linear` opt-out (no negative impl
 - **Generic types.** A generic type's class is **computed per instantiation** from its owned fields, as a tuple's is
   (the keyword is not needed to admit a linear argument). `linear` on a generic type is **unconditional**: every
   instantiation is linear. `copy` states a capability: `Copy` exactly when the fields are. A type parameter written
-  `T: Discard` forbids linear arguments. A field whose type is **linear for every instantiation** of the declaration's parameters forces `linear` on the
-  declaration, as for a non-generic type (the test: evaluate the field's ownership condition with every type parameter assumed
-  discardable and the declared bounds kept; `Ticket<T>` stays linear, `Wrapper<T> { v: T }` has no linear component. A
-  projection of a parameter such as `T::Item` is parameter-dependent, so it is conditional and forces nothing; a
-  `Self`-recursive field uses the fixed-point solver of RFC-0206 section 2, not placeholder expansion). Adding such a field to a public generic type
-  is therefore an explicit edit and not a silent change of every instantiation; only fields whose class depends on a
-  parameter make the class conditional. Details in section 2.2.
+  `T: Discard` forbids linear arguments. A field whose type **mentions no type parameter** and is linear (a concrete linear
+  type) forces `linear` on the declaration, as for a non-generic type (D10, decided 2026-11-07), with the same error at
+  the field and a fix-it that adds the keyword. The test is syntactic and needs no solver. A field such as
+  `ticket: Ticket<T>`, which mentions `T` but is linear for every `T`, is not caught by it: the type's class then
+  computes as linear without the keyword, which for a `pub` type is caught at the declaration by the checked `Discard`
+  condition of RFC-0206 section 6 (D19), and for a private type surfaces at the drop sites. Details in section 2.2.
 - **Types with no declaration site** (tuples, arrays, anonymous records) cannot carry the keyword. They are linear
   when a component is, by a compiler rule like the existing tuple and array rules for `Copy`.
 - **Closures** are declared `linear` explicitly in the literal's prefix and in a function type (RFC-0194): a closure
@@ -307,8 +306,8 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   function that only forwards a `T` to a function that drops it needs the bound too.
 - **Generic types.** A generic type's parameters are **open by default** (they admit linear arguments), and its class
   is computed per instantiation from its owned fields, as a tuple's is. `linear` on a generic type is unconditional
-  (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A field that is
-  linear for every instantiation forces `linear` on the declaration (section 2). A parameter written `T: Discard` forbids
+  (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A field that
+  mentions no type parameter and is linear forces `linear` on the declaration (section 2). A parameter written `T: Discard` forbids
   linear arguments: instantiating it with one is an error naming the parameter. Naming such a type requires its bound at
   every use, by the ordinary well-formedness rule. A derived impl that requires `Discard`, or a field of a type whose
   parameter is `Discard`-bounded, is an error that suggests `T: Discard`.
