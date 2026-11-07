@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**220 RFCs total.** 37 draft, 57 under review, 15 accepted, 2 integrated (111 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**221 RFCs total.** 38 draft, 57 under review, 15 accepted, 2 integrated (112 live), 79 implemented, 15 superseded, 15 refused (109 settled).
 
-## Draft (37)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -54,6 +54,7 @@ the curated thematic map.
 - **RFC-0214** — Aspect Impls for Residuals (`0-draft` ; rfcs/0-draft/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04)
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05)
 - **RFC-0221** — Dotted Row Labels (`0-draft` ; rfcs/0-draft/rfc-0221-dotted-row-labels.md ; date 2026-11-07)
+- **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
 ## Under Review (57)
 
