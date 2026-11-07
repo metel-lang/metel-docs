@@ -13,6 +13,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 > this RFC's own "is losing `f(x = 1)` acceptable" question as a side effect if it
 > lands first).
 
+> **Scheduled for v0.16.0 and widened (2026-11-07, language owner).** This RFC is part of the v0.16.0 stage "Call and record
+> syntax" (metel-core#807, milestone 84). Keyword arguments are part of the call syntax of **every** function call, not a
+> feature of constructors: section 2 is now normative and states the rules (section 2.1). The rules marked *proposed* there
+> are drafted for review and are not yet accepted.
+
 > **Split 2026-07-24, later the same day.** The separator half of this RFC — changing
 > `field_init` from `ident ":" expr` to `ident "=" expr` — is extracted into
 > **RFC-0115 (Field Initializer Separator)** and is no longer this RFC's to deliver.
@@ -45,9 +50,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 
 `Type(args)` call-shaped syntax replaces `Type { field: value }` struct literals at construction sites. The RFC's real deliverable isn't the struct-literal rename — it's **general keyword arguments for function calls**, spelled `name = value`, since positional-only construction is unreadable beyond one or two fields, and struct construction is just the first, motivating use of that mechanism. Like RFC-0099, this is not a pure token/reordering change: keyword arguments occupy a grammar position already spoken for, and this RFC has to settle that before the feature is well-formed (§3) — though the `=` spelling adopted here trades the original, severe collision with type ascription (RFC-0023) for a much smaller one with assignment-as-an-expression. Raises (and resolves) a symmetry question against pattern-matching destructuring, which keeps its current syntax unchanged.
 
-The call is the only way to construct a struct or an enum struct-variant: the brace form `Type { field = value }`
+Keyword arguments are available at **every** call (section 2.1): free functions, associated functions, methods after the
+receiver, aspect methods, constructor calls and enum-variant calls. The call is the only way to construct a struct or an enum struct-variant: the brace form `Type { field = value }`
 is prohibited (§5). For a struct, `Type(args)` is a call of the constructor function that the `Construct` aspect
-(RFC-0114) provides (§7), with a compiler-synthesized default for types that have no invariant. For an enum
+(RFC-0114) provides (§7), with a compiler-synthesized default for types that have no invariant. In v0.16.0 only the
+synthesized default exists: the call builds the struct directly, and RFC-0114 is not part of the stage. For an enum
 variant, `Enum::Variant(args)` builds the variant directly.
 
 ---
@@ -102,9 +109,10 @@ vehicle that *completes* the invariant.
 
 Field order at the construction site becomes non-load-bearing — `Token(secret = "shh".to_string(), value = "x".to_string())` is equally valid, matching keyword-argument semantics in every language that has them (Python, Kotlin, F#, Ada). Positional arguments remain available for the common one-or-two-field case: `IntBox(42)` is valid when there's exactly one field and no ambiguity about which one it binds to; mixing positional and keyword arguments in one call follows the same rule most languages use (positional arguments must precede keyword ones).
 
-## 2. Keyword arguments as a general call-syntax feature
+## 2. Keyword arguments at every call
 
-This is the section that makes this RFC bigger than "rename struct literals." Once `name = value` is legal at a struct's construction call site, the natural and more valuable generalization is allowing it at *any* function call:
+**Keyword arguments are part of the call syntax of every function** (decided in principle 2026-11-07, language owner),
+not a feature of constructors. Struct construction was the first use that motivated the mechanism, and it is a call like any other:
 
 ```metel
 fun connect(host: String, port: i64, timeout: i64) -> Connection { ... }
@@ -117,6 +125,30 @@ Note that the declaration side is untouched and stays `:` — `host: String` cla
 it always has. Only the *call* side, where a value is bound to a name, takes `=`. The two
 sides of a function reading differently is the invariant working, not a wart: they are
 doing genuinely different things.
+
+### 2.1 Rules (proposed 2026-11-07, for review)
+
+1. **Binding.** A keyword argument `name = value` binds the callee's parameter `name`. Positional arguments bind the leading
+   parameters in order; keyword arguments bind the rest by name. Positional arguments come first.
+2. **Each parameter once.** A keyword that names a parameter already bound positionally, a repeated keyword, and an unknown
+   name are errors. The unknown-name error lists the callee's parameter names.
+3. **Every parameter bound.** There are no default values here, so a call binds every parameter. Default values are a
+   separate decision.
+4. **Every callable with declared parameter names.** Free functions, associated functions (`Type::f`), methods after the
+   receiver, aspect methods, constructor calls (section 7), enum-variant calls and native std functions, whose declared
+   names are their keyword names. The receiver is never a keyword argument (`self` is reserved).
+5. **Calls through a function value are positional only.** A function type carries no parameter names, so a call
+   through a closure, a `|T| -> U` parameter or a `dyn` callable binds by position, and a keyword argument there is an error.
+   A function item passed as a value does not give the value names.
+6. **Aspect methods have one name set.** The parameter names are those of the aspect's method declaration, and an impl
+   method must declare the same names, checked at conformance as parameter types are. A call through a generic bound, a `dyn`
+   and a call on the concrete type all use that set.
+7. **Overloads** follow section 6: the call's keyword names must match some candidate's own parameter names.
+8. **Parameter names are public API.** Renaming a parameter of a `pub` function or aspect method breaks callers that use
+   it by keyword, so it is a breaking change of the declaring package, like changing a parameter's type. (Whether an author
+   may mark a parameter positional-only is open, see Unresolved Questions.)
+9. **Typing and evaluation** are unchanged: each argument is typed against its parameter, generic inference is
+   unaffected, and evaluation order is the written order (section 6).
 
 Parameter names become part of a function's public call-site surface, the same way they already are conceptually (every existing signature already names its parameters — this RFC exposes that naming at the call site rather than introducing new declaration syntax). Keyword arguments are optional at every call site — purely positional calls remain valid and unchanged for any function, including ones defined before this RFC.
 
@@ -277,6 +309,14 @@ site takes `=`.)
 
 ## 7. Construction is a call of `Construct::construct`
 
+**Scope for v0.16.0 (decided 2026-11-07, language owner): construction goes through the compiler-synthesized default
+only.** `Type(args)` builds the struct directly, which is exactly what the synthesized default does (`Error = !`,
+`construct(row) { Ok(row) }`, compiled away). The `Construct` aspect, a written `construct`, fallible construction
+(item 3), the minting-site rule (item 4) and `ConstructUnchecked` are not part of v0.16.0 and stay with RFC-0114,
+which is not in the stage. Items 1, 2 (as the default), 5 (as a direct build from a record of exactly the type's row),
+6 and the enum rule apply. When RFC-0114 is accepted later, the call becomes a call of `Construct::construct`
+without changing any call site, because the default compiles away.
+
 `Type(args)` is not a special form. It is a call of the constructor function that the `Construct` aspect
 (RFC-0114) provides, after the arguments are collected into the type's row:
 
@@ -359,10 +399,11 @@ What actually remains open:
 
 - **Is `=` the right separator?** This revision proposes it; review has not accepted it.
   The honest case against is precedent (Swift, C#), stated in Alternatives.
-- **Is losing `f(x = 1)` as a positional bare assignment acceptable?** Argued in §3 as a
-  benefit — it is the C `if (x = 5)` footgun — but Metel's assignment is a genuine
-  expression today, and this has **not** been checked against existing test fixtures. That
-  check is cheap and should happen before acceptance rather than after.
+- ~~**Is losing `f(x = 1)` as a positional bare assignment acceptable?**~~ **Resolved 2026-11-07 by RFC-0183**
+  (accepted and integrated): assignment becomes a statement, never an argument, so `f(x = 1)` is unambiguously the keyword
+  argument of this RFC and there is no positional-assignment reading to lose. RFC-0183 lands before this RFC in the
+  v0.16.0 sweep order (`pub`, `:=`, construction calls, dotted labels). The §3 collision with `assign_expr` therefore
+  does not arise once RFC-0183 is implemented.
 - **The `arg_list`/`call_arg`/`keyword_arg` restructuring in §3 is designed from grammar
   reading, not from a built prototype.** Same caveat the record-syntax work carries: pest's
   behaviour under the new ordering is predicted, not observed.
@@ -377,6 +418,15 @@ What actually remains open:
   checked against RFC-0125's pack expansion, which also uses `..`, and the rule when it is combined with
   keyword arguments (`Type(..r, x = 5)`: override, or an error as RFC-0191's record update decides) is not
   settled here.
+
+- **Positional-only parameters (section 2.1 rule 8).** Whether an author may declare that a parameter cannot be bound by
+  keyword (as Python's `/`), so that renaming it is not a breaking change. Not proposed here; the cost of not having it is
+  that every parameter name of a public function is API.
+- **Default parameter values (rule 3).** Out of scope for this RFC; keyword arguments are the usual prerequisite for them.
+- **Impl parameter names (rule 6).** Requiring an impl method to repeat the aspect's parameter names is proposed here and
+  has not been checked against the existing aspect impls in std and the corpus.
+- **Native std functions (rule 4).** Every native must declare stable parameter names before keyword arguments can be used
+  on it; the audit is part of the implementation.
 
 Evaluation order, aspect-method calls, and overload resolution stay resolved in §6 — and
 are now known to be separator-independent, so this revision does not reopen them.
@@ -401,7 +451,7 @@ are now known to be separator-independent, so this revision does not reopen them
   `Type(args)` calls (§7), the synthesized default, and the result-handling rule. `0-draft`; a soft dependency
   (§7). RFC-0114 does not require this RFC (its §2), and its fallback of banning the literal only for types with
   a non-default impl is rejected here (§5).
-- RFC-0221 (Dotted Row Labels, draft) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
+- RFC-0221 (Dotted Row Labels, under review) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
   construction here uses parameter names and is unaffected (§7); `Type(..r)` takes a dotted record.
 - RFC-0098 (Surface Keyword Renames) — sibling surface-syntax RFC from the same review; independent of this one (no shared grammar production, no shared open question).
 - RFC-0099 (Dot-Separated Module Paths) — sibling surface-syntax RFC from the same review; independent of this one.
