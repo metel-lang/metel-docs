@@ -2,12 +2,24 @@
 id: rfc-0183
 title: "Initialization-Only Walrus"
 date: '2026-10-24'
-status: under-review
-updated: '2026-10-30'
+status: integrated
+updated: '2026-11-07'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1594'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1594'
+impl_status: not-started
+coverage:
+  "1": { kind: blocked, reason: "The rule is spec.expressions.assignment.legality-3, which has no fixture until the := implementation lands.", ref: "metel-core#1594" }
+  "2": { kind: untestable, reason: "Records how this RFC changes RFC-0136's resolved side effect; no new language rule." }
+  "4": { kind: untestable, reason: "Costs of the change; no language rule." }
+  "5": { kind: untestable, reason: "Sequencing and interaction with RFC-0221; process, not a language rule." }
+  "6": { kind: blocked, reason: "The worked examples become fixtures of the := implementation.", ref: "metel-core#1594" }
 ---
 
 > **Status — under review (2026-10-24).** design settlement committed to a release milestone (tracking issue linked).
+
+> **Status — accepted (2026-11-07).** Reviewed 2026-11-07 against RFC-0136's invariant (reworded), RFC-0100 (f(x = 1) is a keyword argument) and RFC-0221 (this RFC first, tail rules required); open questions resolved; ordinary parse errors; closure bodies need a block.
+
+> **Status — integrated (2026-11-07).** Integrated 2026-11-07: spec assignment legality-3 and the mutable-bindings rule state the design (blocked-exempt on metel-core#1594 until the sweep lands); worked examples and sibling cross-check recorded.
 
 ## Summary
 
@@ -99,7 +111,10 @@ alternatives are untouched. `:=` is removed from `assign_op` and stays in `let_d
 `let_mut_decl`, the record-pattern declaration, `type_alias`, and `assoc_type_def`.
 
 Assignment (plain and compound) moves out of `assign_expr` into statement position: a block
-statement, a match arm body, and a `for` header's init and update clauses (Open Question 1).
+statement, a match arm body, and a `for` header's init and update clauses (Open Question 1). It is
+**not** a closure's expression body: `|v| total = v` is rejected, and the closure is written with a
+block, `|v| { total = v; }` (decided 2026-11-07). The migration rewrite adds the braces and the `;` where a
+closure body was a bare reassignment, and a fixture covers the case.
 
 ### Audit (RFC-0136's table, restated)
 
@@ -114,11 +129,14 @@ statement, a match arm body, and a `for` header's init and update clauses (Open 
 ### The invariant (replaces RFC-0136's)
 
 > **Within the separator sites (`=` or `:=` between a name/target and a value): `:=` when the
-> left-hand side is a name this site introduces; `=` when it is a place, slot or label that
-> already exists.**
+> site introduces a name into scope; `=` everywhere else** (assignment to an existing place, a
+> field or label of a value being built, a keyword argument, an associated-type binding).
 
 Future sites are placed by that rule: pattern-position field renaming (`local := field`)
-introduces `local`, so `:=`; a keyword argument names an existing parameter, so `=`.
+introduces `local`, so `:=`; a keyword argument binds an existing parameter, so `=`. Checked
+against RFC-0136's invariant (acceptance review, 2026-11-07): every site of the audit table keeps its
+token, and the reworded rule also places the labels of a record literal (`=`: a label is not a name
+in scope), which the earlier wording ("a label that already exists") did not.
 
 ### Worked examples
 
@@ -148,11 +166,10 @@ always an anonymous record, in every position that admits one (finding 5).
 
 ### Diagnostics
 
-Both old spellings become targeted errors rather than a bare parse failure:
-
-- `let x = 1;` → "a binding is initialized with `:=`"
-- `x := 1;` where `x` is not being declared → "`:=` introduces a name; use `=` to assign
-  to an existing place"
+Both old spellings are rejected with the ordinary parse error (decided 2026-11-07, language owner), as
+RFC-0218 decides for `public`: `let x = 1;` is not a binding, and `x := 1;` where `x` is not being declared is
+not an assignment. RFC-0136's own cut shipped no tailored message for its old spelling, and none is promised
+here. A hint on `if (x = 1)` ("`=` assigns; did you mean `==`?") is optional and not part of the contract.
 
 ---
 
@@ -160,7 +177,10 @@ Both old spellings become targeted errors rather than a bare parse failure:
 
 RFC-0136 notes that once plain assignment requires `:=`, "`f(x = 1)` is unambiguously a
 keyword-argument label", so RFC-0100's `call_arg` ordering concern disappears. **This RFC
-gives that back.** Assignment is an expression of type `()` today
+gives that back, and Open Question 1 takes it back again:** with assignment a statement,
+`f(x = 1)` is unambiguously the keyword argument of RFC-0100, which is normative at every call (2026-11-07). This
+RFC therefore resolves RFC-0100's question whether losing `f(x = 1)` as a positional assignment is acceptable,
+and it lands before RFC-0100. Assignment is an expression of type `()` today
 (`assign_expr = { unary_expr ~ assign_op ~ assign_expr | or_expr }`), so `f(x = 1)` is again
 both a keyword argument and an assignment passed as a positional argument; likewise
 `if (x = 1)`, which today is a type error only because `()` is not `boolean`.
@@ -243,8 +263,38 @@ two. A block ending in `x = 1` with no `;` is then a parse error with the hint "
 3. If this RFC must ship first, the §1 *Tail assignments* rules are required, not optional: the
    `;` append, the hint and the fixtures.
 
-RFC-0221 has no milestone yet. This RFC does not depend on it, but its record handling is strictly simpler
+RFC-0221 is in the same stage (metel-core#1847) and is swept after this RFC (Open Question 6). This RFC does not depend on it, but its record handling is strictly simpler
 after it.
+
+---
+
+## 6. Worked examples (integration, 2026-11-07)
+
+Each combines this RFC with an integrated feature or a sibling RFC of the v0.16.0 surface stage. They cannot compile until
+the grammar change lands, so each becomes a fixture of the implementation (metel-core#1594). A hit means a contradiction.
+
+```metel
+var total := 0;
+for (var i := 0; i < n; i += 2) { total = total + i; }       // update clauses keep compound; the body assigns as a statement
+let r := match k { 0 => total = 1, _ => total = 2, };        // an arm body is an assignment statement (type unit)
+let add := [&var total] |v| { total = total + v; };          // RFC-0050/0153: a closure that assigns is written with a block
+p.left = "c";                                                // RFC-0071: reassigning a moved-out field restores it, with `=`
+connect(host = "db.local", port = 5432);                     // RFC-0100: a keyword argument, never an assignment
+let t := { ..s, a = 10 };                                    // RFC-0191: a replacement label in a record, not an assignment
+```
+
+1. **`f(x = 1)`** is a keyword argument (RFC-0100) and `Type(x = 1)` a construction; neither can be an assignment passed as an
+   argument. `if (x = 1)` is a syntax error.
+2. **Records and blocks.** `{ x = 1 }` is a record and `{ x = 1; }` a unit block; `{ x = 1, y = 2 }` is a record. The same
+   holds in a match arm, a closure body and a function body (the §1 *Tail assignments* rules, required because this RFC lands
+   before RFC-0221).
+3. **Closures.** `|v| total = v` is rejected; `|v| { total = v; }` is accepted.
+4. **Tokens.** `n if n > 0 => ...` never attempts an assignment parse (`=` not followed by `=` or `>`); `x == y` is comparison.
+5. **Unchanged sites.** `local := field` (pattern renaming), `type Item := T` and `let`/`var` initializers keep `:=`.
+6. **Moves.** Assigning to a moved-out field of a `var` struct restores the field, as before; only the spelling changes.
+
+Exit check: no contradiction with the integrated spec (assignment, mutable bindings, partial moves, closures) or with the
+sibling RFCs of the stage (RFC-0100, RFC-0191, RFC-0221, RFC-0218's sweep order).
 
 ---
 
@@ -291,18 +341,25 @@ A review against the grammar and the corpus found four things this RFC did not s
 1. **Is assignment still an expression?** *Resolved: no, option (b).* Assignment (plain and
    compound) is a statement. It is allowed as a block statement `target = expr;`, as the body of a
    match arm, and in a `for` header's init and update clauses. It is not an operand, argument,
-   initializer, condition, or a block's tail expression. Consequences: `f(x = 1)` and `if (x = 1)`
-   are grammar errors (the latter with the hint "`=` assigns; did you mean `==`?"), and
-   `{ x = 1 }` stays an anonymous record. The type of an assignment is no longer `()` as a value
+   initializer, condition, a closure's expression body, or a block's tail expression. Consequences:
+   `if (x = 1)` is a grammar error, `f(x = 1)` is no longer an assignment passed as an argument and is the
+   keyword argument of RFC-0100, and `{ x = 1 }` stays an anonymous record. The type of an assignment is no longer `()` as a value
    anyone can use.
-2. **Migration path.** *Resolved: hard cut*, as RFC-0136 did, with targeted diagnostics for both
-   old spellings (§1).
+2. **Migration path.** *Resolved: hard cut*, as RFC-0136 did, with the ordinary parse error for both old
+   spellings (§1, decided 2026-11-07).
 3. **Assignment targets.** *Confirmed.* The parser's `unary_expr` target covers a name, field,
    tuple element and index; each moves to `=` identically. Destructuring targets stay out of scope.
 4. **Pattern-position renaming (metel-core#706).** *Confirmed unaffected.* `local := field`
    introduces `local`, so `:=` is still right; nothing relies on RFC-0136's "kept" wording.
-5. **Release timing.** *Resolved: v0.15.0*, the milestone already on the tracking issue, so the
-   release's explicit-syntax changes (Option rename, `*r`, `?` on Option) migrate once.
+5. **Release timing.** *Resolved 2026-11-07: v0.16.0*, in the first stage "Call and record syntax" (metel-core#1594), so
+   the release's surface sweeps migrate together. The sweep order of the stage is `pub` (RFC-0218), then `:=` (this RFC),
+   then construction calls (RFC-0100), then dotted labels (RFC-0221).
+6. **Order against RFC-0221.** *Resolved 2026-11-07: this RFC first.* Section 5's third case applies, so the §1 *Tail
+   assignments* rules are required: the `;` append in the rewrite, the record-versus-block hint and the fixtures.
+7. **Dated documents and the sweep tool.** *Resolved 2026-11-07: as RFC-0218.* One one-shot, context-aware script
+   (not a blind regex, line endings preserved, verified by compiling an example). Swept: stdlib, fixtures, spec,
+   tutorials, live RFC worked examples, reports and the blog. Left alone: release notes, released-version snapshots,
+   superseded and refused RFCs, ADRs, and prose describing the old spelling.
 
 ---
 

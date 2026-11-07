@@ -21,8 +21,8 @@ fun main() -> i64 {
 
 `let` bindings [cannot be reassigned and must always be initialized](#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
-- `x := newValue` is rejected (reassignment)
-- `x.field := value` is rejected (field assignment through an immutable binding)
+- `x = newValue` is rejected (reassignment)
+- `x.field = value` is rejected (field assignment through an immutable binding)
 - `&var x` is rejected (taking a mutable reference to an immutable binding)
 
 All three forms require `var`.
@@ -385,16 +385,23 @@ fun main() -> i64 {
 
 ##### Legality Rule {#spec.declarations.variables.mutable-bindings.legality-1}
 
-A `var` binding must be initialized and may be assigned after initialization; `var` is the
-mutable binding spelling. Both the initializer and a subsequent plain reassignment use the
-`:=` separator (RFC-0136); the compound assignment operators `+=`, `-=`, `*=`, `/=`, `%=`
-keep `=`. The bare `=` spelling for a `var` initializer or reassignment is a parse error.
+A `var` binding must be initialized with the `:=` separator and may be assigned after
+initialization with `=`; `var` is the mutable binding spelling. `:=` introduces a name and `=`
+assigns to an existing place (RFC-0183); the compound assignment operators `+=`, `-=`, `*=`,
+`/=`, `%=` keep their spelling. The bare `=` spelling for a `var` initializer, and `:=` for a
+reassignment, are parse errors.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1594" reason="RFC-0183: the grammar still spells plain reassignment := until the := sweep lands" -->
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0136](../../rfcs/4-implemented/rfc-0136-walrus-for-kept-bindings.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1594: RFC-0183: the grammar still spells plain reassignment := until the := sweep lands_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
