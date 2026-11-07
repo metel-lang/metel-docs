@@ -18,7 +18,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > out of a nominal aggregate needs the aggregate known `Discard` (D11); destructuring patterns consume their scrutinee,
 > which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
 > variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
-> open with RFC-0218); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
+> open, tracked in #1828); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
 > syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
 > is `Discard` (D14, RFC-0194). **Deferred (2026-11-07):** binding-level qualifiers (D15, RFC-0220), parked as a draft; the
 > wrapper-type and bracket patterns of the decision register give must-use for an affine type meanwhile. The reasoning and the alternatives are in the decision register
@@ -211,7 +211,7 @@ not depend on how the class was determined.
   fields can.
 - **A type with a `Drop` impl, conditional or not, is dismantled only by a marked method** (D13, decided 2026-11-07).
   A *dismantling method* is an inherent method in the type's defining module whose receiver is an owned `self` carrying
-  the dismantling marker (the spelling is open and settles with the `pub` sweep, RFC-0218; it is written `consume self`
+  the dismantling marker (the spelling is open, tracked in metel-core#1828, and settles with the surface renames of v0.16.0; it is written `consume self`
   below as a placeholder). Its body destructures `self` totally: every field is bound or skipped (skipped fields
   `Discard`), and each bound field is moved on or dropped. The outer destructor is **suppressed**; nested field
   destructors still run when a field is skipped or dropped, and binding a field does not license dropping a bare `T`.
@@ -403,7 +403,7 @@ explicit bounds. (d) *Check drop sites at each instantiation* (C++-template styl
 breaks callers and it contradicts RFC-0173. (e) *Let a generic drop of a linear value run a type-supplied cleanup*:
 the value is then affine with a destructor, not linear.
 
-**Open (exit tracking: metel-core#1828, the linear-release gate).** The spelling `Discard`; whether an explicit
+**Open (exit tracking: metel-core#1828, the linear-release gate).** The spelling of the dismantling-method marker of decision D13 (candidates `consume self`, `deinit self`, a `dismantle` keyword; it must not collide with `pub`, RFC-0218); the spelling `Discard`; whether an explicit
 `where T: !Discard` ("this parameter must be linear") is ever needed (probably not); the rule that moving every field out consumes a struct (RFC-0215); whether `print` and `println` take `&T`.
 
 ---

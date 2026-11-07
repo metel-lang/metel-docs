@@ -28,9 +28,12 @@ By convention:
 ```
 as        aspect    break     continue  else      enum      export
 extend    false     for       fun       if        impl      import
-let       loop      match     public    return    root      self
-std       struct    super     true      var       where     while
+let       loop      match     pub       public    return    root
+self      std       struct    super     true      var       where
+while
 ```
+
+`pub` is the visibility keyword. `public` is its legacy spelling and stays reserved, so using it is a parse error, as with `impl` and `mut`.
 
 ## Literals
 
