@@ -184,6 +184,10 @@ so mainly because their ecosystem already existed when the capability was introd
 - **X:** an owned `T` field added to a public generic type changes only which instantiations are linear. Adding a field
   that is linear for every instantiation forces the keyword (D10), so that change is explicit. Linear users and
   generic clients without `T: Discard` are affected. Rust documents the same hazard for auto traits (RFC 1105).
+  **Mitigation (D19, reserved):** a public generic type states its `Discard` condition like its `Copy` and `Clone`
+  conditions. With no statement, outside code sees the conservative default (`Discard` exactly when every parameter
+  is), and the statement is checked against the fields. Making a type more permissive is then never breaking, and
+  making it less permissive than stated is an error at the declaration.
 - **Y:** supporting linear arguments is itself a visible, versioned edit (`?Discard` appears in the signature), so
   removing support is a visible breaking change.
 
