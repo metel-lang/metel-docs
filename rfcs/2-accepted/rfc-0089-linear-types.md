@@ -7,17 +7,20 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
-> **Acceptance scope (2026-11-07, language owner): the linear-specific rules are reserved, not accepted.** Accepted and
-> binding for v0.16.0: the class keywords (`copy`, `linear` reserved), `Linear` as a declared aspect, `Discard` as a
-> compiler-computed capability written as a bound (`T: Discard`), bare `T` as possibly linear, and "every type is
-> `Discard`" until the `linear` release. **Reserved, kept as design text for review and not binding on implementation:**
-> the computed class of generic instantiations and the rule that a field linear for every instantiation forces the
-> keyword (section 2, "Generic types"); stated `Discard` conditions for public generic types (RFC-0206 section 6, D19); the elimination rules (partial moves need known `Discard`, consuming
-> patterns, the `Drop` dismantling rule, structural narrowing); and the `T: Discard` well-formedness rule for types.
-> They return for acceptance with the Linear types theme, after the decision register
-> (`architecture/reports/linear-types-decision-register.md`) and the generic-class comparison
-> (`architecture/reports/generic-class-computed-vs-explicit.md`) have been worked through. Nothing in v0.16.0 depends on
-> them, because every type is `Discard` there.
+> **Acceptance scope (2026-11-07, language owner): generic classes are settled; the elimination rules are reserved.**
+> Accepted (inert in v0.16.0, because every type is `Discard` there): the class keywords (`copy`, `linear` reserved),
+> `Linear` as a declared aspect, `Discard` as a compiler-computed capability written as a bound (`T: Discard`), bare `T`
+> as possibly linear, and the generic-class model settled as decision D7: generic types are **open by default** and the
+> class of an instance is **computed** from its owned fields; `linear` on a generic type is unconditional and `copy`
+> states a capability (D8); `T: Discard` on a type parameter forbids linear arguments and every use repeats the bound
+> (D9); a `pub` generic type states its `Discard` condition like `Copy` and `Clone`, with a conservative default (D19,
+> RFC-0206 section 6). **Reserved, kept as design text for review and not binding on implementation:** the rule that a
+> field linear for every instantiation forces the keyword on a generic type (D10); and the elimination rules (partial
+> moves need known `Discard`, consuming patterns, the `Drop` dismantling rule, structural narrowing). The reserved
+> rules return for acceptance with the Linear types theme. The reasoning and the alternatives are in the decision
+> register (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
+> (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
+> (`architecture/reports/effects-generic-functions-computed-vs-explicit.md`).
 
 > **Amendment (2026-11-06, language owner): a named type's class is declared and checked against its fields.** (Generic instantiations and structural types, such as tuples, arrays and anonymous records, compute their class from their components; generic code names the capabilities it needs in bounds, so a bare `T` is possibly linear and dropping it requires `T: Discard`, section 2.2.) `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
 

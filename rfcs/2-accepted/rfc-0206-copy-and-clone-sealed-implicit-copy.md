@@ -425,7 +425,7 @@ when their structural rules land. For a **type** it is the condition under which
 **function** it is its **written bounds** (RFC-0089 section 2.2: capabilities are bounds, nothing is inferred). A `pub` item
 states its `Copy` and `Clone` conditions (the stated-condition rule below); its `Discard` condition is computed from the
 fields, and a generic function writes `T: Discard` where it drops, so there is no separate public annotation for
-`Discard` (the reserved note below on stated `Discard` for public generic types would change this for types). **`Linear` is not a stored capability.** It is an obligation, existential over fields (`Linear(Pair<A, B>)` is
+`Discard` (the note below on stated `Discard` for public generic types changes this for types). **`Linear` is not a stored capability.** It is an obligation, existential over fields (`Linear(Pair<A, B>)` is
 `Linear(A) or Linear(B)`), so it does not fit a conjunction. It is computed per instantiation from the exact predicate (a
 linear field or a fiat grant), and generic bodies never need it: a bare `T` is already possibly linear, so a body
 only needs to know whether `T` is known `Discard`.
@@ -442,8 +442,8 @@ over its own parameters. Any richer form (an associated-type condition, a `where
 rejected with a diagnostic naming the limitation; the language is closed under substitution only for the forms it
 admits.
 
-**Stated `Discard` for public generic types (D19, reserved 2026-11-07, language owner).** Reserved with the
-linear-specific rules of RFC-0089: nothing here is binding until the Linear types theme. A `pub` generic type's `Discard`
+**Stated `Discard` for public generic types (D19, decided 2026-11-07 with D7, language owner).** Settled with the
+generic-class model of RFC-0089 and inert until the `linear` release, because every type is `Discard` before it. A `pub` generic type's `Discard`
 condition becomes part of its interface, as its `Copy` and `Clone` conditions are. Outside the defining module a client
 may rely only on the **stated** condition. With no statement the condition is the **conservative default**: `Discard`
 exactly when every type parameter is `Discard` (the conjunction `P1: Discard, P2: Discard, ...`), whatever the fields
@@ -594,7 +594,7 @@ novel parts and their risk:
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
 | A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |
-| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword); `dyn` erasure remains a linear-release gate (callable discard is settled: a non-`linear` function type is `Discard`); public stated conditions stabilise `Copy` and `Clone` only and computed `Discard` is not part of the stated interface (the reserved D19 note would extend the stated interface to `Discard`), and a field that is linear for every instantiation requires the keyword; reviewed in reviews 8 and 9 |
+| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword); `dyn` erasure remains a linear-release gate (callable discard is settled: a non-`linear` function type is `Discard`); public stated conditions stabilise `Copy` and `Clone` only and computed `Discard` is not part of the stated interface (D19 extends the stated interface to `Discard`), and a field that is linear for every instantiation requires the keyword; reviewed in reviews 8 and 9 |
 | Native structural `Copy` for named types | Low: a named, time-boxed exception, tracked as metel-core#1823 |
 
 **Acceptance (decided 2026-11-05): one ratification sweep.** The settlement is one cluster, as the allocator

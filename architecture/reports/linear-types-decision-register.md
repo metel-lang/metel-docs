@@ -14,7 +14,8 @@ questions to test understanding. Part 5 is a reading order for the RFCs.
 
 This report records and explains. It does not decide. The **confidence** column is the author's assessment of how
 well the decision is supported, not the language owner's. On 2026-11-07 the language owner **reserved** the
-linear-specific rules (registered below as D7 to D14) until the Linear types theme; RFC-0089 carries the scope note.
+elimination rules (D10 to D14 below) until the Linear types theme, and **settled** the generic-class model on the same day:
+D7, D8, D9 and D19 are accepted (inert until the `linear` release). RFC-0089 carries the scope note.
 
 ## Status legend
 
@@ -148,9 +149,9 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D4 | Capabilities are written bounds: `T: Copy`, `T: Clone`, `T: Discard`. A bare `T` is possibly linear. | Accepted | Infer `Discard` for bodies; a closed default where `T` is discardable and `?Discard` opts in (Swift style); declare universes (Austral style) | Medium-High | Cheap in v0.16.0 (the bound is vacuous), moderate later | D1 |
 | D5 | `Discard` is computed by the compiler. It cannot be implemented or negated by users. `Copy` implies `Discard`, and a `Drop` type is `Discard`. | Accepted | A user-written `Discard` impl | High | Cheap | D4 |
 | D6 | In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true. The check activates at the `linear` release. | Accepted | Ship the check early | High | Cheap | D4, D5 |
-| D7 | The class of a generic instance is **computed** from its owned fields. Generic types are open by default. | **Reserved** | Declared class with explicit conditional (Austral `Type` universe, Swift `~Copyable`); closed by default | **Medium: the keystone** | Hard once std is written | D4 |
-| D8 | `linear` on a generic type is unconditional. `copy` states a capability (`Copy` exactly when the fields are). | Reserved | `linear` conditional too | Medium-High | Moderate | D7 |
-| D9 | `T: Discard` on a type parameter forbids linear arguments, and every use of the type repeats the bound. | Reserved | Bound only at the declaration; a separate marker | Medium | Moderate | D4, D7 |
+| D7 | The class of a generic instance is **computed** from its owned fields. Generic types are open by default. | **Accepted (2026-11-07)** | Declared class with explicit conditional (Austral `Type` universe, Swift `~Copyable`); closed by default | **Medium: the keystone** | Hard once std is written | D4 |
+| D8 | `linear` on a generic type is unconditional. `copy` states a capability (`Copy` exactly when the fields are). | **Accepted (2026-11-07)** | `linear` conditional too | Medium-High | Moderate | D7 |
+| D9 | `T: Discard` on a type parameter forbids linear arguments, and every use of the type repeats the bound. | **Accepted (2026-11-07)** | Bound only at the declaration; a separate marker | Medium | Moderate | D4, D7 |
 | D10 | A field that is linear for every instantiation (symbolic test) forces `linear` on a generic type. Projections count as parameter-dependent. | Reserved | No guard; a syntactic test; require the keyword for any generic with a linear-capable field | Medium | Moderate | D7 |
 | D11 | A partial move out of a nominal aggregate is legal only when it is known `Discard`. Structural types still narrow. | Reserved | Rust-style residuals; ban partial moves outright; per-field classes | Medium | Moderate | D2, D7 |
 | D12 | Destructuring patterns consume the scrutinee. Skipped fields must be `Discard`. Matching through a reference consumes nothing; a whole-value `_` consumes nothing. | Reserved | Rust's `..` leaves a residual | Medium | Moderate (it overrides implemented RFC-0137 pattern narrowing) | D11 |
@@ -160,7 +161,7 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D16 | The `dyn` erasure gate, native owning storage (`List<Tx>`), and `consume_each`'s contract. | Open (release gates) | Forbid at first | n/a | n/a | D7 |
 | D17 | Do destructors run at panic? When do skipped fields drop (at the pattern, or at scope end)? | Open (#1835, #1843) | n/a | n/a | n/a | D12 |
 | D18 | Public generic types state their `Copy`/`Clone` conditions (the interface). `Discard` is computed from fields and, until D19, is not part of the stated interface. | Accepted (RFC-0206 section 6) | State `Discard` too (D19) | Medium | Moderate | D7 |
-| D19 | Public generic types also have a stated `Discard` condition. Without a statement, outside code sees the conservative default (`Discard` exactly when every parameter is `Discard`); a stronger statement is checked against the fields. Inside the defining module the exact computed class applies. A publish-time interface comparison (M2) is a possible later addition. | **Reserved** | Required statement on every public generic type; tooling only; policy only | Medium-High | Moderate | D7, D18 |
+| D19 | Public generic types also have a stated `Discard` condition. Without a statement, outside code sees the conservative default (`Discard` exactly when every parameter is `Discard`); a stronger statement is checked against the fields. Inside the defining module the exact computed class applies. A publish-time interface comparison (M2) is a possible later addition. | **Accepted (2026-11-07)** | Required statement on every public generic type; tooling only; policy only | Medium-High | Moderate | D7, D18 |
 
 ## Part 3. How the decisions depend on each other
 
@@ -169,7 +170,7 @@ D1 D2 D3        classes, declared classes, sealed Copy        (settled; independ
    |
   D4 D5 D6      capabilities are bounds; Discard computed     (settled; inert until `linear` ships)
    |
-  D7            computed class of generic instances           <- keystone, reserved
+  D7            computed class of generic instances           <- keystone, accepted 2026-11-07
  / | \
 D8 D9 D10       conditional keywords, bound repetition, guard
    |
@@ -183,7 +184,13 @@ D14 (closures)  depends on D7
 D15 (RFC-0220)  depends on D7, D11
 ```
 
-**If D7 is wrong:** D8, D9 and D10 are replaced by an explicit-class model (generic types declare which parameters
+**D7 was settled on 2026-11-07** as the open-by-default model, with D8, D9 and D19. The reasons: in the effects-library
+test 24 of 31 parameters are moved rather than dropped, so annotating the dropping minority (8 annotations) is cheaper
+than annotating the moving majority (29); Mojo moved toward written destruction bounds; D19 answers the public-API
+instability; and the `T: Discard` bound is vacuous in v0.16.0, so the choice is cheapest to change now. The paragraph
+below records what a reversal would cost.
+
+**If D7 were wrong:** D8, D9 and D10 are replaced by an explicit-class model (generic types declare which parameters
 may be linear, as Austral and Swift do). D11 and D12 survive unchanged, because they depend on whether the class is
 known, not on how it is computed. D13 is unaffected. The std library gains annotations on every generic container.
 
@@ -229,14 +236,14 @@ Answer these without looking, then check against the text.
 
 In order of how much I would want more time on:
 
-1. **D7, computed generic classes.** It is the only decision that touches every generic type, and it is the hardest
+1. **D7, computed generic classes (now accepted).** It is the only decision that touches every generic type, and it is the hardest
    to reverse once std is written. The comparison report puts the two models side by side.
 2. **D13, `Drop` dismantling.** The most speculative: no prior art handles `Drop` plus conditional capability this way,
    and it needed three review rounds to reach a coherent form.
 3. **D12, patterns consume.** It is a deliberate divergence from Rust and it overrides an implemented v0.13.0
    behavior. The reason (the language reads `{ x, .. }` as consumption) is sound, but it is a language-feel decision,
    not a soundness one.
-4. **D19, stated `Discard` for public generic types.** It answers the public-API instability of D7, but it adds a
+4. **D19, stated `Discard` for public generic types (now accepted).** It answers the public-API instability of D7, but it adds a
    declaration-site statement for a capability otherwise computed, and the conservative default can over-restrict
    public types that do not own their parameter.
 5. **D4, the written `T: Discard` bound.** The cost (about 30 to 40 percent of by-value generic functions) is large,
