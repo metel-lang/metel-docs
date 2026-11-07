@@ -69,7 +69,7 @@ the curated thematic map.
 - **RFC-0095** — Attributes and Metadata (`1-under-review` ; rfcs/1-under-review/rfc-0095-attributes-and-metadata.md ; date 2026-07-09 ; updated 2026-09-01)
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
-- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-08-23)
+- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-11-07)
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
