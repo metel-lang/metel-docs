@@ -7,6 +7,13 @@ updated: '2026-11-06'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1840'
 ---
 
+> **Deferred (2026-11-07, language owner), decision D15.** Parked as a draft, not a refused design. Its composition
+> with generic code is unresolved (a `linear` parameter and return force a `linear let` on every caller, and without
+> qualifier polymorphism a generic function cannot take a linear binding), the guarantee it gives a careful caller is
+> weak, and the type-level tools already cover the strong case: a `linear struct` wrapper and a bracket function (see
+> `architecture/reports/linear-types-decision-register.md`, section 1.8). It reopens when a concrete need appears
+> that those cannot meet. It is not part of the settled linear design and needs a rewrite before any review.
+
 > **Status — draft (2026-11-06).** Designed with the language owner on 2026-11-06 as an extension of the type-level model of RFC-0089 (as amended the same day). Not part of v0.16.0.
 
 > **Status — under review (2026-11-06).** Designed with the language owner as an extension of RFC-0089

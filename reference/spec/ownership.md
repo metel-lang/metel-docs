@@ -87,7 +87,7 @@ of the source binding is rejected.
 
 > **Pending** metel-core#1831 the ownership classes beyond `Copy` and the affine default are accepted by the language but not yet by the checker.
 
-> **Partly reserved (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy`, and `T: Discard` on a type parameter (legality-7) are settled (RFC-0089, decision D7). The rules that exist only for linear elimination (legality-6, the field-linear-for-every-instantiation guard in legality-7, and consuming patterns in the partial-move rules) describe the intended design and are not accepted yet. Until the `linear` release every type is `Discard`.
+> **Settled in design, effective with the `linear` release (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter (legality-7), the Discard-based partial-move rule (legality-6, decision D11) and consuming patterns (partial-move legality-4, decision D12) are decided in design and inert until then; every type is `Discard` before it. A field that mentions no type parameter and is linear forces `linear` on a generic type (decision D10); closures (D14) are settled with RFC-0194; binding-level qualifiers (D15, RFC-0220) are deferred.
 
 Every type has one of four ownership classes, ordered by how much a value of the type may do:
 
@@ -98,7 +98,7 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | affine (the default) | at most once | yes | no |
 | copy | any number | yes | yes |
 
-A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a field linear for every instantiation forces `linear` on a generic type too): the declared class must be at
+A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a field that mentions no type parameter and is linear forces `linear` on a generic type too): the declared class must be at
 least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
 linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
 `Drop` is compatible with
@@ -183,7 +183,7 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
 
-A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is consumed whole only by its own methods (those authored in its defining module that take an owned whole `self`), by total destructuring that suppresses only the outer destructor, and is otherwise never destructured, partially moved or used in a record spread. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
+A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is dismantled only by a marked dismantling method (an inherent method in its defining module whose receiver is an owned `self` carrying the dismantling marker), by total destructuring that suppresses only the outer destructor, and is otherwise never destructured, partially moved or used in a record spread, even in its own module. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -195,7 +195,7 @@ A partial move out of a nominal aggregate is legal only when the aggregate is kn
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-7}
 
-A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field that is linear for every instantiation (linear with every type parameter assumed discardable; a projection of a parameter is parameter-dependent) forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
+A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field whose type mentions no type parameter and is linear forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -439,7 +439,7 @@ its narrowed residual type, including an empty residual, is legal.
 
 ##### Legality Rule {#spec.ownership.partial-moves.legality-2}
 
-A field of a `Drop` type may not be moved out, except by the total destructuring with which a type's own methods consume it (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)).
+A field of a `Drop` type may not be moved out, except by the total destructuring of a marked dismantling method (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)).
 
 <!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 

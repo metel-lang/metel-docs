@@ -7,18 +7,22 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
-> **Acceptance scope (2026-11-07, language owner): generic classes are settled; the elimination rules are reserved.**
+> **Acceptance scope (2026-11-07, language owner): generic classes and the elimination rules are settled in design.**
 > Accepted (inert in v0.16.0, because every type is `Discard` there): the class keywords (`copy`, `linear` reserved),
 > `Linear` as a declared aspect, `Discard` as a compiler-computed capability written as a bound (`T: Discard`), bare `T`
-> as possibly linear, and the generic-class model settled as decision D7: generic types are **open by default** and the
-> class of an instance is **computed** from its owned fields; `linear` on a generic type is unconditional and `copy`
-> states a capability (D8); `T: Discard` on a type parameter forbids linear arguments and every use repeats the bound
-> (D9); a `pub` generic type states its `Discard` condition like `Copy` and `Clone`, with a conservative default (D19,
-> RFC-0206 section 6). **Reserved, kept as design text for review and not binding on implementation:** the rule that a
-> field linear for every instantiation forces the keyword on a generic type (D10); and the elimination rules (partial
-> moves need known `Discard`, consuming patterns, the `Drop` dismantling rule, structural narrowing). The reserved
-> rules return for acceptance with the Linear types theme. The reasoning and the alternatives are in the decision
-> register (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
+> as possibly linear, and the generic-class model, decision D7: generic types are **open by default** and the class of
+> an instance is **computed** from its owned fields; `linear` on a generic type is unconditional and `copy` states a
+> capability (D8); `T: Discard` on a type parameter forbids linear arguments and every use repeats the bound (D9); a
+> `pub` generic type states its `Discard` condition like `Copy` and `Clone`, with a conservative default (D19, RFC-0206
+> section 6). The elimination rules are accepted in design and take effect with the `linear` release: a partial move
+> out of a nominal aggregate needs the aggregate known `Discard` (D11); destructuring patterns consume their scrutinee,
+> which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
+> variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
+> open with RFC-0218); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
+> syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
+> is `Discard` (D14, RFC-0194). **Deferred (2026-11-07):** binding-level qualifiers (D15, RFC-0220), parked as a draft; the
+> wrapper-type and bracket patterns of the decision register give must-use for an affine type meanwhile. The reasoning and the alternatives are in the decision register
+> (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
 > (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
 > (`architecture/reports/effects-generic-functions-computed-vs-explicit.md`).
 
@@ -170,13 +174,12 @@ diagnostic suggests the keyword. There is no `!Linear` opt-out (no negative impl
 - **Generic types.** A generic type's class is **computed per instantiation** from its owned fields, as a tuple's is
   (the keyword is not needed to admit a linear argument). `linear` on a generic type is **unconditional**: every
   instantiation is linear. `copy` states a capability: `Copy` exactly when the fields are. A type parameter written
-  `T: Discard` forbids linear arguments. A field whose type is **linear for every instantiation** of the declaration's parameters forces `linear` on the
-  declaration, as for a non-generic type (the test: evaluate the field's ownership condition with every type parameter assumed
-  discardable and the declared bounds kept; `Ticket<T>` stays linear, `Wrapper<T> { v: T }` has no linear component. A
-  projection of a parameter such as `T::Item` is parameter-dependent, so it is conditional and forces nothing; a
-  `Self`-recursive field uses the fixed-point solver of RFC-0206 section 2, not placeholder expansion). Adding such a field to a public generic type
-  is therefore an explicit edit and not a silent change of every instantiation; only fields whose class depends on a
-  parameter make the class conditional. Details in section 2.2.
+  `T: Discard` forbids linear arguments. A field whose type **mentions no type parameter** and is linear (a concrete linear
+  type) forces `linear` on the declaration, as for a non-generic type (D10, decided 2026-11-07), with the same error at
+  the field and a fix-it that adds the keyword. The test is syntactic and needs no solver. A field such as
+  `ticket: Ticket<T>`, which mentions `T` but is linear for every `T`, is not caught by it: the type's class then
+  computes as linear without the keyword, which for a `pub` type is caught at the declaration by the checked `Discard`
+  condition of RFC-0206 section 6 (D19), and for a private type surfaces at the drop sites. Details in section 2.2.
 - **Types with no declaration site** (tuples, arrays, anonymous records) cannot carry the keyword. They are linear
   when a component is, by a compiler rule like the existing tuple and array rules for `Copy`.
 - **Closures** are declared `linear` explicitly in the literal's prefix and in a function type (RFC-0194): a closure
@@ -206,20 +209,21 @@ not depend on how the class was determined.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
-- A type with a `Drop` impl, conditional or not, is consumed whole only by its own methods, by **total destructuring
-  that suppresses the destructor**. A type's own methods are those authored in its defining module that take an owned
-  whole `self`: a `&self` or `&var self` receiver confers no permission, and an aspect default body never acquires it
-  through dispatch or instantiation (an aspect impl written in the defining module qualifies; a client's impl of its
-  own aspect on the type does not). Suppression affects only the outer destructor: a nested field's destructor still
-  runs when that field is skipped or dropped, and binding a field does not license dropping a bare `T`. Every field is bound or skipped (skipped fields `Discard`), and each bound field is
-  moved on or dropped. This is how a wrapper such as `Logged<T>` is unwrapped (`into_inner`), including for a linear
-  `T`, where no destructor applies. Outside its own methods such a type is never destructured, partially moved or used
-  in a record spread.
+- **A type with a `Drop` impl, conditional or not, is dismantled only by a marked method** (D13, decided 2026-11-07).
+  A *dismantling method* is an inherent method in the type's defining module whose receiver is an owned `self` carrying
+  the dismantling marker (the spelling is open and settles with the `pub` sweep, RFC-0218; it is written `consume self`
+  below as a placeholder). Its body destructures `self` totally: every field is bound or skipped (skipped fields
+  `Discard`), and each bound field is moved on or dropped. The outer destructor is **suppressed**; nested field
+  destructors still run when a field is skipped or dropped, and binding a field does not license dropping a bare `T`.
+  The marker is not allowed on `&self` or `&var self`, in an aspect default body, on an aspect impl method, or outside
+  the defining module. Without the marker such a type is never destructured, partially moved or used in a record
+  spread, even in its own module. Callers see an ordinary consuming method. This is how a wrapper such as `Logged<T>`
+  is unwrapped (`into_inner`), including for a linear `T`, where no destructor applies.
 - This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly).
 **Structural types are the exception.** An anonymous record or a tuple has no declaration: its class is computed from
 its components (as `Copy` is for a tuple), so a field move narrows it and the leftover's class is recomputed, with the
 obligation travelling with the moved value. Destructuring any aggregate and rebuilding an anonymous record or tuple from
-the pieces is available as an escape hatch (except for a type with a `Drop` impl outside its own methods).
+the pieces is available as an escape hatch (except for a type with a `Drop` impl outside a dismantling method).
 
 **`Clone` is not contraction (decided 2026-11-05).** `Clone` is explicit creation of another value, not the
 implicit duplication that linearity forbids, so a linear type may have a **written** `Clone`: the author asserts that
@@ -303,8 +307,8 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   function that only forwards a `T` to a function that drops it needs the bound too.
 - **Generic types.** A generic type's parameters are **open by default** (they admit linear arguments), and its class
   is computed per instantiation from its owned fields, as a tuple's is. `linear` on a generic type is unconditional
-  (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A field that is
-  linear for every instantiation forces `linear` on the declaration (section 2). A parameter written `T: Discard` forbids
+  (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A field that
+  mentions no type parameter and is linear forces `linear` on the declaration (section 2). A parameter written `T: Discard` forbids
   linear arguments: instantiating it with one is an error naming the parameter. Naming such a type requires its bound at
   every use, by the ordinary well-formedness rule. A derived impl that requires `Discard`, or a field of a type whose
   parameter is `Discard`-bounded, is an error that suggests `T: Discard`.
@@ -313,7 +317,7 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   no `T`, so its unconditional impl is legal), and a conditional `extend<T: Discard> Foo<T>: Drop` is the way to give a generic
   type a destructor without closing it to linear arguments. A conditional impl adds no bound to the type declaration.
   `Foo<Tx>` then exists, is linear and has no destructor. This is the same exclusion check as for `Copy` and `Drop` at
-  an instantiation (RFC-0213). A type with any `Drop` impl is consumed only by its own methods, by total destructuring that suppresses the destructor (section 2).
+  an instantiation (RFC-0213). A type with any `Drop` impl is dismantled only by a marked dismantling method, by total destructuring that suppresses the destructor (section 2).
 - **Methods.** In a generic impl the bound attaches to the method (`where T: Discard`), so `Option<Tx>` exists and
   `unwrap_or` is available only when `T: Discard`.
 - **Conformance.** An impl method's requirements must be entailed by the impl's bounds, as for any aspect (an impl
