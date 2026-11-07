@@ -118,8 +118,8 @@ well defined at every width.
    presumably yes.
 2. **Residuals of generic types** and of types with row parameters: whether the template's condition is evaluated
    before or after narrowing.
-3. **`Send`, `Sync`, `Linear`** (RFC-0096, auto aspects): they follow the present fields, but the rule has not been
-   checked against RFC-0096's text.
+3. **`Send`, `Sync`** (RFC-0096, auto aspects): they follow the present fields, but the rule has not been
+   checked against RFC-0096's text. `Linear` is declared and has no residuals (RFC-0211 rule 6).
 4. **Empty residuals** (`Handle.{}`): whether every template is satisfied vacuously, and whether a derived `Clone` of
    an empty residual is useful or a hazard.
 5. **Named views** (RFC-0109): whether a view declares its own header entries.

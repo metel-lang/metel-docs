@@ -7,7 +7,7 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
-> **Amendment (2026-11-06, language owner): a type's class is declared, never inferred.** `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
+> **Amendment (2026-11-06, language owner): a named type's class is declared and checked against its fields.** (Only generic instantiations and structural types, such as tuples, arrays and anonymous records, compute their class from their components.) `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
 > (a living design report) as part of decomposing an oversized RFC-0012 into smaller,
@@ -143,14 +143,14 @@ that discarding is permitted, not that discarding cannot run cleanup).
 ## 2. `Linear` as an aspect
 
 ```metel
-aspect Linear { }
+declared aspect Linear;
 ```
 
 A marker aspect that is `declared` (RFC-0212), like `Copy`: it is granted only in a type's declaration by the
 `linear` keyword, never by `extend` and never inferred from the fields. There is no `#derive(Linear)` and no
 structural `auto` rule for named types. The check runs the other way: a struct, record or enum that holds a linear
 field (or a closure that captures a linear value) and is not declared `linear` is an error at the field, and the
-diagnostic suggests the keyword. There is no `!Linear` opt-out, because nothing is inferred for it to opt out of.
+diagnostic suggests the keyword. There is no `!Linear` opt-out (no negative impl), because nothing is inferred for it to opt out of. The negative *bound* `T: !Linear` of RFC-0072 remains a legal bound form.
 
 - **Generic types.** On a generic type the keyword states a **capability**, as `copy struct Wrapper<T>` does
   (RFC-0207 section 3): `linear struct Pair<T>` is linear exactly when some field is linear, and otherwise follows its
@@ -305,7 +305,7 @@ that nothing is foreclosed:
 { id: i64 }` and the rules above:
 1. `fun identity<T>(x: T) -> T { x }`: `x` is moved into the result; there is no drop site and no callee, so no
    obligation. `identity(tx)` is accepted. **Follows.**
-2. `struct Pair<T> { a: T, b: T }`: `Discard(Pair<T>)` is `Discard(T)` (two equal atoms); `Pair<i64>` is `Discard`,
+2. `linear struct Pair<T> { a: T, b: T }` (it must be declared `linear` to admit a linear `T`): `Discard(Pair<T>)` is `Discard(T)` (two equal atoms); `Pair<i64>` is `Discard`,
    `Pair<Tx>` is not, so it is linear by the exact predicate and must be consumed. `fun swap<T>(p: Pair<T>) ->
    Pair<T>` destructures `p`, moves both fields out and rebuilds: nothing is dropped, so no obligation. It assumes the
    rule that moving every field out of a by-value struct consumes it (a residual would need its own `Discard`;

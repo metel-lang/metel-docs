@@ -89,11 +89,12 @@ may have no linear capture at all (a fiat `linear`, a must-call callback). `copy
 
 - A by-value capture is a move (RFC-0157: a bare non-`Copy` capture moves and the capture list is
   required when it would). A `Linear` value cannot be duplicated implicitly (RFC-0089 §1: no contraction), so
-  `[t]` is a move; `[t.clone()]` is legal only if the type has a written `Clone` (RFC-0089 §2).
+  `[t]` is a move; `[t.clone()]` is legal only if the type satisfies `Clone` (written or derived, RFC-0089 §2).
 - A capture by reference (`[&t]`, `[&var t]`) does not move the value and does not require `linear`. The `Linear` value is still owned outside and must still be consumed there.
 - A closure that captures another linear closure captures a linear value, so it must be declared `linear` too.
-- Capturing a *field* of a linear struct follows RFC-0215 §3 (split from RFC-0089): convert with `ToRecord` first and
-  capture the resulting field. A partial move out of a plain linear struct is not allowed.
+- Capturing a *field* of a declared linear struct is not possible: a declared linear aggregate has no partial moves
+  (RFC-0089 section 2, "Consuming a linear aggregate"). Destructure it totally and capture the resulting linear
+  binding.
 
 ### A linear closure is called exactly once
 
@@ -104,7 +105,7 @@ may have no linear capture at all (a fiat `linear`, a must-call callback). `copy
   apply: its bound is `T: Discard` (RFC-0089 §2.2), which a linear closure does not satisfy.
 - **Its body consumes what it captured.** Inside the body, the captured linear values are owned
   locals, and the linearity checker requires each to be consumed exactly once on every path.
-  Returning a captured linear value is a consumption (`[buf] || -> Buffer { buf }` is valid: the
+  Returning a captured linear value is a consumption (`[buf] linear || -> Buffer { buf }` is valid: the
   caller receives the buffer by calling the closure).
 - **It may be consumed by being passed on.** Moving a linear closure into a function, a struct field
   or a return value is a consumption of the binding and transfers the obligation, as for any `Linear`
@@ -134,6 +135,14 @@ A parameter's written function type says how the callee may use the closure (RFC
 | `once` (affine: the callee may drop it) | yes | yes | **no** |
 | `linear` (the callee consumes it exactly once) | yes | yes | yes |
 
+`-> linear || -> ()` names a **linear callable type**. A binding of a linear type needs no qualifier, so the caller may
+write a plain `let`; RFC-0220's rule that a linear result is bound with `linear let` concerns the `-> linear T`
+return *qualifier* on a type that is not itself linear.
+
+**Strengthening and invocation.** Passing a reusable or `once` closure into a `linear` slot strengthens it at the
+boundary, and an invocation through a `linear` function type consumes the slot even when the supplied callable was
+reusable. Occurrences of `linear` in nested function types match exactly, as `copy` does (RFC-0219 rule 4).
+
 A linear closure is not accepted where the callee may drop it, because the callee could discard the
 obligation. A `many` or affine `once` closure is accepted where the callee must call it: it is
 simply called once. This is the useful direction of RFC-0049 OQ-3 (a plain closure can go where a
@@ -147,7 +156,7 @@ The written spelling of "must-call" is `linear` (decided 2026-11-06); a reusable
 A one-shot cleanup registered by a function and run by its caller:
 
 ```metel
-fun with_guard(g: Guard) -> linear || -> () {   // must-call return
+fun with_guard(g: Guard) -> linear || -> () {   // a linear callable type: a plain `let done := with_guard(..)` is legal (see below)
     [g] linear || { release(g); }                // linear closure returned: caller must call it
 }
 
@@ -165,7 +174,7 @@ fun never_called(t: Token) { let f := [t] linear || { close(t); }; }         // 
 fun called_twice(t: Token) { let f := [t] linear || { close(t); }; f(); f(); } // used after move
 fun not_consumed(t: Token) { let f := [t] linear || { }; f(); }              // body does not consume `t`
 fun undeclared(t: Token)   { let f := [t] || { close(t); }; f(); }           // captures linear `t`: write `linear`
-fun cloned(t: Token)       { let f := [t.clone()] linear || { close(t); }; } // never called; and Token needs a written Clone
+fun cloned(t: Token)       { let f := [t.clone()] linear || { close(t); }; } // f is never called, and the original `t` is never consumed (the clone also needs `Token: Clone`)
 
 fun run_maybe(f: once || -> ()) { }                                          // affine `once`: the callee may drop it
 fun passes(t: Token)       { let f := [t] linear || { close(t); }; run_maybe(f); } // rejected: would let the obligation vanish
@@ -187,9 +196,9 @@ fun passes(t: Token)       { let f := [t] linear || { close(t); }; run_maybe(f);
 - **RFC-0166.** Written function types are move-only. A linear closure is move-only a fortiori.
 - **Effects (#1662).** A one-shot continuation is the intended consumer: resumption is the call, and
   abandonment is not available unless the effects design adds an explicit, checked one.
-- **Function types and aspects (#739, RFC-0161).** `Linear` over a closure needs the auto-impl
-  mechanism (RFC-0096) to reach function types, which today satisfy no aspects. This is a
-  prerequisite, not part of this RFC.
+- **Function types and aspects (#739, RFC-0161).** A closure's `Linear` class is declared (the `linear` keyword) and
+  checked against its captures, so it needs no auto-impl. `Copy` and `Discard` for function types come from the Copy
+  migration's std impls; function types satisfy no aspects today. This is a prerequisite, not part of this RFC.
 
 ---
 
@@ -199,7 +208,7 @@ fun passes(t: Token)       { let f := [t] linear || { close(t); }; run_maybe(f);
    closure can be silently lost. Rejected.
 2. **A `linear fun` type and `[move x]` captures (RFC-0046/0049).** A separate closure type and
    capture keyword. RFC-0046 was refused; the shipped capture lists and the single `Type::Fun`
-   already carry what it wanted, with linearity derived from captures instead of written.
+   already carry what it wanted, with linearity written in the closure prefix and checked against the captures.
 3. **Auto-generated `Drop` for linear closures (RFC-0049 option B).** Lets the obligation be
    discharged by discarding. Rejected above; reopenable with the cleanup design.
 4. **Strengthen `once` to mean forced consumption everywhere.** RFC-0134 names this as a way to

@@ -26,13 +26,13 @@ fun main() {
 }
 ```
 
-An ordinary `File` is dropped (and closed) at scope end. `linear let f` says "I must close this explicitly", without making `File` a linear type for every other user of it. It is a strengthening only, so it is sound locally, adds no type class, and does not spread through containers.
+An ordinary `File` is dropped (and closed) at scope end. `linear let f` says "this must be explicitly consumed" (a `close`, or an explicit `drop` for a `Discard` type), without making `File` a linear type for every other user of it. It is a strengthening only, so it is sound locally, adds no type class, and does not spread through containers.
 
 ---
 
 ## Motivation
 
-- **Must-handle without virality.** Making `File` linear would force `linear` onto every struct that holds one, and onto std types that store it (RFC-0089 section 2, the annotation chain). Most of the time the only thing wanted is that one binding must reach an explicit `close`.
+- **Must-handle without virality.** Making `File` linear would force `linear` onto every struct that holds one, and onto std types that store it (RFC-0089 section 2, the annotation chain). Most of the time the only thing wanted is that one binding must be explicitly consumed.
 - **A home for guaranteed cleanup of ordinary resources.** Today the options are the implicit `Drop` or making the type linear. The qualifier is the middle.
 - **It composes with the settled model.** Types still describe capabilities; bindings carry discipline. Nothing here weakens `linear` types, and nothing is inferred (RFC-0089 amendment, 2026-11-06).
 - **Prior art.** Idris 2 puts the multiplicity on binders (`(1 x : T)`), and Linear Haskell on arrows (`%1 ->`); both are verified in the fifth review of the Copy/Clone design. Austral and Swift's `~Copyable` keep it on types. Swift's `consuming` parameter modifier (SE-0377, from memory) is the nearest to a callee-side promise on an ordinary type.
@@ -58,10 +58,10 @@ An ordinary `File` is dropped (and closed) at scope end. `linear let f` says "I 
 2. **Exactly once.** A linear binding is consumed exactly once on every path. A consumption is: passing it to a `linear` parameter or receiver; returning it from a `linear` return; destructuring it (rule 3); or passing it to `drop`, which takes a `linear` parameter and requires `T: Discard` (rule 7). A borrow (`&f`, `&var f`) does not consume.
 3. **Destructuring inherits** (and is the only way to take a declared linear aggregate apart: RFC-0089 section 2, "Consuming a linear aggregate"). A `match` or `let` pattern on a linear binding consumes it, and each non-`Copy` field binding it introduces is linear. `Copy` fields are copied out and carry no obligation.
 4. **No laundering.** A linear binding cannot be moved into an ordinary binding or ordinary parameter, stored in a struct literal field or constructor argument that is not a `linear` field, captured by a closure that is not declared `linear` (RFC-0194), or assigned over. Scope end, shadowing without consuming, a loop body that may consume it twice, and branches that disagree are errors.
-5. **Linear results are bound explicitly.** A call to a function with a `linear` return must bind its result with `linear let`, pass it directly to a `linear` parameter, or return it from a `linear` return. Discarding it, or binding it with a plain `let`, is an error whose fix-it writes `linear let`. Nothing is inferred.
+5. **Linear results are bound explicitly.** A call to a function with a `linear` return must bind its result with `linear let`, pass it directly to a `linear` parameter, or return it from a `linear` return. Discarding it, or binding it with a plain `let`, is an error whose fix-it writes `linear let`. Nothing is inferred. This concerns the `-> linear T` return *qualifier* on a type that is not itself linear: a function whose return type is itself linear (`-> linear || -> ()`, RFC-0194) needs no qualifier on the binding.
 6. **Fields.** A `linear` field on a field type that is not itself linear makes the struct hold an obligation, so the struct must be declared `linear struct`. This is checked, and the fix-it adds the keyword. A struct literal may initialise a `linear` field with any value (strengthening). Destructuring the struct yields a linear binding for that field (rule 3).
 7. **`drop`.** `drop` takes a `linear` parameter and requires `T: Discard` (RFC-0089 section 2.2). So `linear let f := open(..); drop(f);` is an explicit discard and is legal, and a value of an intrinsically linear type (not `Discard`) cannot be dropped.
-8. **Variance in function types.** A function value with a `linear` parameter may be used where an ordinary parameter is expected, since the callee only promises more. A function with a `linear` return may not be used where an ordinary return is expected, since the caller of that slot may drop the result; the reverse is allowed. (To be confirmed in review.)
+8. **Variance in function types.** A function value with a `linear` parameter may be used where an ordinary parameter is expected, since the callee only promises more. A function with a `linear` return may not be used where an ordinary return is expected, since the caller of that slot may drop the result; the reverse is allowed. Adapters and ascriptions enforce the destination contract, including for nested function types (which match exactly below the first function level, as `copy` does in RFC-0219) and for `Copy` results. (To be confirmed in review.)
 
 **Dynamic semantics.** The qualifier has no runtime effect. A linear binding has no scope-end drop: its value is moved into the consuming position, and any destructor runs there (destructor invocation itself is #261).
 

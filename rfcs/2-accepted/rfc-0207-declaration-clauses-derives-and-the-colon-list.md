@@ -65,11 +65,11 @@ capability in its declaration, and the supporting impls must exist (written by h
    colon list, because the super-aspect it brings is generated (RFC-0213 section 4). Naming any other aspect is an error
    with a fix-it: a method-bearing aspect goes in `derives` or `extend`. No rule keys on a name or on
    std provenance.
-2. There are no negative entries. An opt-out of an `auto` aspect (`Send`, `Sync`, `Linear`, RFC-0096)
+2. There are no negative entries. An opt-out of an `auto` aspect (`Send`, `Sync`, RFC-0096)
    is the existing bodyless negative impl, `extend T: !Send;` (RFC-0102, RFC-0081), which is legal
    anywhere in the type's module. Whether the opt-out should instead be a colon-list entry, so that
    it is visible at the declaration, is an open question of RFC-0096 (item 8), deferred with the
-   Send/Sync/Linear revision (language owner, 2026-11-04).
+   Send/Sync revision (language owner, 2026-11-04). `Linear` is declared, not `auto`, and has no opt-out.
 3. The colon list never generates an impl. Every positive super-aspect of an entry must already exist for the
    type, written or derived, or it is an error naming the missing one (RFC-0213 section 4, rule 5).
 4. The grant is in the type's own module, so the orphan rule (`T0014`) holds trivially, and a marker

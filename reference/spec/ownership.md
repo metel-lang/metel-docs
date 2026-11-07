@@ -96,7 +96,7 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | affine (the default) | at most once | yes | no |
 | copy | any number | yes | yes |
 
-A type's class is declared, never inferred, and the compiler checks it against the fields: the declared class must be at
+A named type's class is declared, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records): the declared class must be at
 least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
 linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
 `Drop` is compatible with
@@ -110,7 +110,7 @@ no keyword. A closure that captures a linear value is declared `linear` as well.
 **Dropping in generic code.** A generic body can drop a value of a type-parameter type without writing a call:
 at scope end, on an early `return` or `?`, by overwriting a binding, by leaving an argument unused, or by discarding
 an expression statement. Dropping is permitted when the type is [`Discard`](#spec.ownership.ownership-classes.legality-1).
-`Discard` holds for every type that is not linear and is never written by a user. A bare type parameter is
+`Discard` holds for every type that is not linear, and its implementations are never written by a user. A bare type parameter is
 [possibly linear](#spec.ownership.ownership-classes.legality-2): a generic body may move it, return it and pass it,
 but may not drop or copy it unless its bounds say so. The compiler adds `T: Discard` to the bounds of a function
 that [drops such a value](#spec.ownership.ownership-classes.legality-3), through callees as well, and a `pub`
@@ -495,7 +495,7 @@ A `Drop` type may still be partially *borrowed*; only moving out is restricted.
 
 | construct | partial move |
 |---|---|
-| struct fields | yes, at field granularity |
+| struct fields | yes, at field granularity (not for a declared `linear` struct, see below) |
 | tuple elements | yes — positional fields are statically named |
 | record fields | [yes, at field granularity](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2) |
 | enum payloads | no — matching a variant and moving its payload consumes the enum wholly |
