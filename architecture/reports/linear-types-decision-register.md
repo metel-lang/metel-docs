@@ -13,9 +13,9 @@ is to reverse. Part 3 is a dependency map, so you can see which decisions move t
 questions to test understanding. Part 5 is a reading order for the RFCs.
 
 This report records and explains. It does not decide. The **confidence** column is the author's assessment of how
-well the decision is supported, not the language owner's. On 2026-11-07 the language owner **reserved** the
-D14 and D15 below until the Linear types theme, and **settled** the generic-class model and the elimination rules on
-the same day: D7 to D13 and D19 are accepted (inert until the `linear` release). RFC-0089 carries the scope note.
+well the decision is supported, not the language owner's. On 2026-11-07 the language owner **settled** the
+generic-class model, the elimination rules and closures: D7 to D14 and D19 are accepted (inert until the `linear`
+release), and **deferred** D15 (binding-level qualifiers). RFC-0089 carries the scope note.
 
 ## Status legend
 
@@ -137,6 +137,29 @@ callback without a bound. A `linear` function type can only be filled by a linea
   found 30 to 40 percent of by-value generic functions drop on some path. Taking `&T` instead removes many.
 - Types they define: nothing, unless a field's type is a linear type from a library.
 
+### 1.8 Must-use for an affine type, without binding-level qualifiers
+
+Binding-level qualifiers (D15) are deferred. Two type-level patterns give must-use for an ordinary affine type:
+
+```metel
+linear struct OpenFile { file: File }               // forces the obligation on every holder
+extend OpenFile {
+    fun close(self) { let OpenFile { file } := self; file.close_now(); }
+}
+
+fun with_file<T>(path: String, use_it: |&File| -> T) -> T {     // cleanup guaranteed by the bracket
+    let f := open(path);
+    let r := use_it(&f);
+    f.close_now();
+    r
+}
+```
+
+The wrapper makes the producer force the obligation, which a `linear let` the caller may or may not write does not.
+The bracket guarantees cleanup around a scope with no linear types at all. Both avoid the composition problem with
+generics that stopped D15: a `linear` parameter and return force a `linear let` on every caller, and without
+qualifier polymorphism a generic function cannot take a linear binding.
+
 ## Part 2. Decision register
 
 Reversibility: **cheap** means a text and checker change with no user-visible break (Metel has no users now),
@@ -157,8 +180,8 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D11 | A partial move out of a nominal aggregate is legal only when it is known `Discard`. Structural types still narrow. | **Accepted in design (2026-11-07); effective with the `linear` release** | Rust-style residuals; ban partial moves outright; per-field classes | Medium | Moderate | D2, D7 |
 | D12 | Destructuring patterns consume the scrutinee. Skipped fields must be `Discard`. Matching through a reference consumes nothing; a whole-value `_` consumes nothing. | **Accepted in design (2026-11-07); effective with the `linear` release** | Rust's `..` leaves a residual | Medium | Moderate (it overrides implemented RFC-0137 pattern narrowing) | D11 |
 | D13 | `Drop` impls must prove the target `Discard`. A type with a `Drop` impl is dismantled only by an **explicitly marked** inherent method in its defining module taking an owned `self`, by total destructuring that suppresses only the outer destructor. The marker is illegal on borrowed receivers, aspect defaults, aspect impl methods and outside the defining module. Spelling settles with the `pub` sweep (RFC-0218). | **Accepted in design (2026-11-07); takes effect with D11 and D12** | Implicit own-method authority; Rust-style ban; no conditional `Drop` (a `Drop` type must be `Discard` for every instantiation) | Medium | Moderate | D11, D12 |
-| D14 | A closure capturing a linear value must be declared `linear`. A non-`linear` function type is `Discard`. | Reserved (RFC-0194 is under review) | Infer linearity of closures; allow droppable linear closures | Medium-High | Moderate | D7 |
-| D15 | Binding-level qualifiers: `linear let`, `linear` parameters, returns and fields (RFC-0220). | Open (draft; needs a rewrite) | Not adding them; type-level only | Low | Cheap (draft) | D7, D11 |
+| D14 | A closure capturing a linear value must be declared `linear`. A non-`linear` function type is `Discard`. | **Accepted in design (2026-11-07); RFC-0194 awaits formal acceptance** | Infer linearity of closures; allow droppable linear closures | Medium-High | Moderate | D7 |
+| D15 | Binding-level qualifiers: `linear let`, `linear` parameters, returns and fields (RFC-0220). | **Deferred (2026-11-07)**: RFC-0220 parked as a draft; wrapper and bracket patterns (section 1.8) cover the strong case | Not adding them; type-level only | Low | Cheap (draft) | D7, D11 |
 | D16 | The `dyn` erasure gate, native owning storage (`List<Tx>`), and `consume_each`'s contract. | Open (release gates) | Forbid at first | n/a | n/a | D7 |
 | D17 | Do destructors run at panic? When do skipped fields drop (at the pattern, or at scope end)? | Open (#1835, #1843) | n/a | n/a | n/a | D12 |
 | D18 | Public generic types state their `Copy`/`Clone` conditions (the interface). `Discard` is computed from fields and, until D19, is not part of the stated interface. | Accepted (RFC-0206 section 6) | State `Discard` too (D19) | Medium | Moderate | D7 |
@@ -188,8 +211,8 @@ D8 D9 D10       conditional keywords, bound repetition, guard
    |
   D13           Drop dismantling by a marked method           (accepted in design; takes effect with D11, D12)
 D19 (pub states Discard)  depends on D7, D18; guards the public interface of D7
-D14 (closures)  depends on D7
-D15 (RFC-0220)  depends on D7, D11
+D14 (closures, accepted)  depends on D7
+D15 (RFC-0220, deferred)  depends on D7, D11
 ```
 
 **D7 was settled on 2026-11-07** as the open-by-default model, with D8, D9 and D19. The reasons: in the effects-library

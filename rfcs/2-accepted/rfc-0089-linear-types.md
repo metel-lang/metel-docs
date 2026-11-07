@@ -19,8 +19,9 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
 > variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
 > open with RFC-0218); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
-> syntactic rule backed by the checked public `Discard` condition (D10, D19). **Still reserved, kept as design text for review and not binding on implementation:** the closure and
-> binding-level rules (D14, D15). The reasoning and the alternatives are in the decision register
+> syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
+> is `Discard` (D14, RFC-0194). **Deferred (2026-11-07):** binding-level qualifiers (D15, RFC-0220), parked as a draft; the
+> wrapper-type and bracket patterns of the decision register give must-use for an affine type meanwhile. The reasoning and the alternatives are in the decision register
 > (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
 > (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
 > (`architecture/reports/effects-generic-functions-computed-vs-explicit.md`).

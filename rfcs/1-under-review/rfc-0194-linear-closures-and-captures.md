@@ -7,6 +7,10 @@ updated: '2026-10-29'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1670'
 ---
 
+> **Design settled (2026-11-07, language owner), decision D14.** The rules of this RFC are accepted in design,
+> including the generic-capture rule (a closure over a value of bare type `T` is declared `linear` or the function
+> bounds `T: Discard`; there is no conditional closure class). Formal acceptance of the RFC is a separate step.
+
 > **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1670 (Linear types); one open question (spelling of must-call)
 
 ## Summary

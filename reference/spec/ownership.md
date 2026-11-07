@@ -87,7 +87,7 @@ of the source binding is rejected.
 
 > **Pending** metel-core#1831 the ownership classes beyond `Copy` and the affine default are accepted by the language but not yet by the checker.
 
-> **Settled in design, effective with the `linear` release (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter (legality-7), the Discard-based partial-move rule (legality-6, decision D11) and consuming patterns (partial-move legality-4, decision D12) are decided in design and inert until then; every type is `Discard` before it. A field that mentions no type parameter and is linear forces `linear` on a generic type (decision D10); closures and binding-level qualifiers (D14, D15) are still reserved.
+> **Settled in design, effective with the `linear` release (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter (legality-7), the Discard-based partial-move rule (legality-6, decision D11) and consuming patterns (partial-move legality-4, decision D12) are decided in design and inert until then; every type is `Discard` before it. A field that mentions no type parameter and is linear forces `linear` on a generic type (decision D10); closures (D14) are settled with RFC-0194; binding-level qualifiers (D15, RFC-0220) are deferred.
 
 Every type has one of four ownership classes, ordered by how much a value of the type may do:
 
