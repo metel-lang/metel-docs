@@ -115,8 +115,8 @@ extend<T, record Need, record Have> Building<T, ..Need, ..Have> {
 }
 ```
 
-- `l` is a comptime `Label` parameter (RFC-0132 §3 as extended for labels) and appears in the return type, so
-  later types in the signature depend on an earlier comptime argument.
+- `l` is a comptime `Label` parameter (RFC-0132 §3.6) and appears in the return type. It is a unification
+  variable resolved from the call's argument, as `V` is, and not an expression evaluated during checking.
 - `Need: { .[l]: V, .. }` requires the target to have a field `l` of type `V`. `Have: !{.[l]}` (RFC-0189) requires
   that it is not yet set.
 - The method takes `self` by value. The result has a different type from the receiver, which a `&var` method
@@ -223,8 +223,9 @@ own.
 
 ## Costs
 
-- **A dependent signature.** `set`'s return type mentions its own comptime argument. This is the most
-  demanding thing the RFC asks of the label model and is the part most likely to fail the prototype.
+- **A comptime parameter in a return type.** `set`'s return type mentions its own comptime `Label` argument
+  (RFC-0132 §3.6d). That is unification, not dependent typing, but it is new for a method and is the part
+  of the label model this RFC leans on hardest.
 - **Setters by label, not by name.** `set(.host, v)` is more verbose than `.host(v)` and a typo is a type error,
   not a missing method. That is a deliberate trade for generating nothing.
 - **Type size.** A long chain produces a distinct type per step. They are erased after checking and cost nothing
@@ -260,7 +261,7 @@ own.
 
 Before this leaves draft:
 
-- `set`'s signature type-checks: a method whose return type mentions its own comptime `Label` argument, with
+- `set`'s signature type-checks: a method whose return type mentions its own comptime `Label` parameter, with
   a label variable in a row field and in a row bound.
 - `build` on `Building<T, ..R, ..R>` is accepted only when the two rows are equal, and rejected otherwise. If a
   repeated parameter in an impl head is not legal, the equality is expressed with a `where` row equation and the

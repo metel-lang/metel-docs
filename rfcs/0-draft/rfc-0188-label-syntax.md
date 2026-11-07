@@ -16,7 +16,8 @@ is a label, so it is written `.name` too (RFC-0221). This is the spelling that l
 tuples as numeric-label rows (RFC-0151) and compile-time field iteration (RFC-0174) are missing.
 
 The semantics of label polymorphism (RFC-0175) and of rows (RFC-0121, RFC-0186) are not changed
-here. This RFC is the syntax layer, and it answers RFC-0175's open questions 1 to 4 on spelling.
+here. This RFC is the syntax layer: it gives the spelling that RFC-0175's earlier draft left open, and RFC-0175 now
+defines the `Label` type that the spelling denotes.
 
 Examples write anonymous records as `{| … |}` (RFC-0187) so the empty record has a spelling, with dotted fields (RFC-0221), and row parameters as `record R` with `..R` (RFC-0186). The label spelling does not depend on either: with `{ … }` every non-empty example reads the same apart from those tokens.
 
@@ -32,9 +33,10 @@ A field name in a record is a bare identifier. That is unambiguous while labels 
 the source. Three proposals need a label to be a value or a variable:
 
 - **RFC-0175 (Label Polymorphism, `0-draft`)** wants `fun get<label L, row R, T>(r: { L: T, ..R })`.
-  Written like that, `L` in field position looks exactly like a field called `L`. The draft leaves
+  Written like that, `L` in field position looks exactly like a field called `L`. That draft left
   the binder keyword, the literal form (strings, identifier tokens, `#field`) and the selection
-  syntax (`value.[L]`) open (its questions 1 to 4).
+  syntax (`value.[L]`) open. RFC-0175 now takes the binder from RFC-0132 (`comptime l: Label`) and the spelling
+  from this RFC.
 - **RFC-0151 (Tuples as numeric-label rows, `0-draft`)** would write `(a, b)` as `{ 0 = a, 1 = b }`,
   which today is not a record at all, since `0 = a` is not an identifier field.
 - **RFC-0174 (compile-time iteration over a row's fields, `1-under-review`)** needs a way to name a
@@ -90,30 +92,29 @@ row equation and projection list the field is written `.x`: `{| .x = 1 |}`, `Han
 RFC-0221 owns that rule and its sites. Struct and enum construction, declarations and patterns keep bare
 names (RFC-0100).
 
-**This RFC does not define the label kind.** What `.[L]` ranges over, label equality, ownership of
-a drained field and the meaning of `r.[L]` for a non-`Copy` field are RFC-0175's, and its open
-questions 5 to 8 stay open. This RFC settles only how a label is written.
+**This RFC does not define the `Label` type.** What `.[L]` ranges over (a comptime value of the built-in
+`Label` type), label equality, and the meaning of `r.[L]` for a non-`Copy` field are RFC-0175's. The binder is
+a `comptime` parameter (RFC-0132 §3.6), so there is no label kind. This RFC settles only how a label is written.
 
 ### A worked example: a record map
 
-A map keyed at compile time. The label-typed parameter `l: .[L]` (a label literal is also its own
-singleton type) is not defined by this RFC and is open question 4; the turbofish form
-`m.put::<.host>("a.com")` needs nothing beyond the spelling above. This example depends on RFC-0175
-being integrated, and is illustrative.
+A map keyed at compile time. The label is passed as a `comptime l: Label` parameter (RFC-0132 §3.6, RFC-0175),
+so `m.put(.host, "a.com")` infers it from the argument. This example depends on RFC-0175 being integrated, and is
+illustrative.
 
 ```metel
 record Rec<record R> { data: {| ..R |} }
 
 extend<record R> Rec<..R> {
-    fun empty() -> Rec<..{| |}> { Rec { data = {| |} } }
+        fun empty() -> Rec<..{| |}> { Rec(data = {| |}) }
 
-    fun put<L, V>(self, l: .[L], v: V) -> Rec<..{| .[L]: V, ..R |}>
-    where R: !{| .[L] |}
+    fun put<V>(self, comptime l: Label, v: V) -> Rec<..{| .[l]: V, ..R |}>
+    where R: !{| .[l] |}
     {
-        Rec { data = {| .[L] = v, ..self.data |} }
+        Rec(data = {| .[l] = v, ..self.data |})
     }
 
-    fun get<L, V, record Rest>(&self, l: .[L]) -> &V where R = {| .[L]: V, ..Rest |} { &self.data.[L] }
+    fun get<V, record Rest>(&self, comptime l: Label) -> &V where R = {| .[l]: V, ..Rest |} { &self.data.[l] }
 }
 
 let m := Rec::empty().put(.host, "a.com").put(.port, 8080);   // Rec<..{| .host: String, .port: i64 |}>
@@ -136,9 +137,9 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 
 ## Interactions
 
-- **RFC-0175 (Label Polymorphism):** this RFC supplies spellings for its questions 1 to 4 (binder,
-  literal form, selection, use in construction). RFC-0175 keeps the semantics and is amended, not
-  superseded.
+- **RFC-0175 (Label Polymorphism):** defines the `Label` type, label equality and what a label parameter may do in
+  a row. This RFC supplies the spelling it uses.
+- **RFC-0132 (§3.6):** supplies the binder, `comptime l: Label`, in the generic list or as a function parameter.
 - **RFC-0151 (Tuples as numeric-label rows):** `.0`, `.1` give its rows a legible spelling.
 - **RFC-0174 (compile-time iteration over a row's fields):** a label value can be written `.name`.
 - **RFC-0186 (Rows as an operator on record parameters):** supplies the row spelling in the examples
@@ -174,9 +175,6 @@ nothing to migrate. It is a language-visible addition and so a minor version whe
 ## Open Questions
 
 1. **`.[expr]`:** is a computed label beyond a variable needed now, or only when RFC-0174 asks for it?
-2. **A label-typed parameter** (`l: .[L]`, a label literal being its own singleton type) so a call
-   can write `m.put(.host, v)`. Alternatives are the turbofish only, or a parameter pattern
-   `fun put<L, V>(self, .[L], v: V)`. This interacts with RFC-0170's literal types.
 
 ---
 
@@ -192,7 +190,7 @@ Before this leaves draft:
 
 ## References
 
-- RFC-0175 — Label Polymorphism (questions 1 to 4); RFC-0151 — Tuples as Numeric-Label Rows;
+- RFC-0175 — Label Polymorphism; RFC-0132 §3.6 — label parameters; RFC-0151 — Tuples as Numeric-Label Rows;
   RFC-0174 — Compile-time iteration over a row's fields; RFC-0091 — Linear Records.
 - RFC-0186 — Rows as an operator on record parameters; RFC-0187 — Anonymous record delimiters.
 - RFC-0121 — Open Rows (the projection-brace rule); RFC-0170 — Literal types and discriminated

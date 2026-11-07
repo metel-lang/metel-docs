@@ -254,12 +254,13 @@ above it are.
   #1337/#1338, whose near-term path is compiler-derived impls (RFC-0096). Open: loop and
   access spelling, field order, row construction (`Clone`/`Default`), moves out of `self`.
 
-- **RFC-0175** *(draft, opened 2026-10-06)* — Label Polymorphism — a dedicated `label`
-  generic kind for record operations that abstract over which field is selected, not merely
-  over the row remainder. Proposes compile-time label literals and checked selection such as
-  `value.[L]`, enabling one `get_field`/`drain_field` helper to work for `token`, `alloc`, or
-  any other statically known field. Separate from RFC-0174's iteration over all fields; open
-  questions cover syntax, label equality, construction, and interaction with linear moves.
+- **RFC-0175** *(draft, opened 2026-10-06; rewritten 2026-11-07)* — Label Polymorphism — a label is a
+  comptime value of a built-in `Label` type, not a kind. A function or impl generic over a field name takes a
+  `comptime l: Label` parameter (RFC-0132 §3.6) and uses `.[l]` in row fields, bounds and selection (`r.[l]`),
+  so one `get`/`insert` helper works for any field. Owns the type, label equality, comptime-only use and
+  diagnostics; spelling is RFC-0188, dotted fields RFC-0221, drain ownership RFC-0122. `field.name` in RFC-0174
+  is a `Label`. Open: field visibility in generic code, how a `comptime if` on a label is checked, and how a
+  signature says two labels differ.
 
 
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
@@ -618,7 +619,8 @@ part of the same records/views substrate review):
 - **RFC-0132** — Comptime Execution Model — `comptime let`/`fun`/`if`, `pub comptime let`
   (public value exports), and **comptime-known non-type generic parameters**
   (`comptime N: u64`) — i.e. the const generics RFC-0053 deferred to "a future RFC," now
-  with an actual home. Split out of RFC-0092 §0/§0a on 2026-08-13, acting on an escape
+  with an actual home. §3.6 (proposed 2026-11-07) widens it to `comptime L: Label` parameters and to
+  the function-parameter position, for the label model of RFC-0175. Split out of RFC-0092 §0/§0a on 2026-08-13, acting on an escape
   hatch RFC-0092's own Timing Recommendation had written down 35 days earlier and nobody
   could act on because §0 had no independently schedulable identity. **This is now the
   dependency root of the whole cluster** — RFC-0092 depends on it, not the reverse.

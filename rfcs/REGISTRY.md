@@ -42,7 +42,7 @@ the curated thematic map.
 - **RFC-0168** — Equality Model and Super-Aspects (`0-draft` ; rfcs/0-draft/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09)
 - **RFC-0170** — Literal Types and Discriminated Structural Unions (`0-draft` ; rfcs/0-draft/rfc-0170-literal-types-and-discriminated-structural-unions.md ; date 2026-09-27)
 - **RFC-0172** — Sized and Unsized Kinds, and a Generalized Unsizing Coercion (`0-draft` ; rfcs/0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md ; date 2026-10-01)
-- **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06)
+- **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06 ; updated 2026-11-07)
 - **RFC-0176** — Hash Aspect and Structural Hashing (`0-draft` ; rfcs/0-draft/rfc-0176-hash-aspect-and-structural-hashing.md ; date 2026-10-06)
 - **RFC-0188** — Label syntax (`0-draft` ; rfcs/0-draft/rfc-0188-label-syntax.md ; date 2026-10-26)
 - **RFC-0199** — Lazy<T> — Deferred, Once-Evaluated Values (`0-draft` ; rfcs/0-draft/rfc-0199-lazy-t.md ; date 2026-11-01)
