@@ -219,10 +219,15 @@ so mainly because their ecosystem already existed when the capability was introd
   values, which blocks linear callers on 11 of the 20. 24 of 31 parameters are moved, not dropped. The sample is the
   author's selection and does not settle the question.
 
-## 5. Recommendation space (not a decision)
+## 5. Decision
 
-1. **Keep X.** Consistent with the owner's C1. Accept that every generic author writes `T: Discard` where they drop.
-2. **Switch to Y.** Consistent with C2. Accept that linear support is opt-in and every std generic is annotated.
-3. **Keep X for now, test with the effects design before the `linear` release.** The bound is vacuous in v0.16.0,
-   so the decision can wait, but it must be made before std grows. This is the course the reserved status in RFC-0089
-   already implies.
+**Settled 2026-11-07 (language owner): Model X.** Generic types are open by default and the class of an instance is
+computed from its owned fields (D7), with `linear` unconditional and `copy` a capability (D8), `T: Discard` on a type
+parameter forbidding linear arguments (D9), and public generic types stating their `Discard` condition with a
+conservative default (D19, section 3 "Public API stability"). The effects-library test
+(`effects-generic-functions-computed-vs-explicit.md`) supports it: 8 annotations against 29 for the same programs.
+The guard that forces `linear` on a generic type holding a field linear for every instantiation (D10) and the
+elimination rules (D11 to D13) stay reserved.
+
+What would reopen it: a standard library or ecosystem in which most generic code drops its arguments, or evidence
+that linear types stay a niche feature used only in application code (the case for Model Y in section 4).
