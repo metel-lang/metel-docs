@@ -12,7 +12,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > compiler-computed capability written as a bound (`T: Discard`), bare `T` as possibly linear, and "every type is
 > `Discard`" until the `linear` release. **Reserved, kept as design text for review and not binding on implementation:**
 > the computed class of generic instantiations and the rule that a field linear for every instantiation forces the
-> keyword (section 2, "Generic types"); the elimination rules (partial moves need known `Discard`, consuming
+> keyword (section 2, "Generic types"); stated `Discard` conditions for public generic types (RFC-0206 section 6, D19); the elimination rules (partial moves need known `Discard`, consuming
 > patterns, the `Drop` dismantling rule, structural narrowing); and the `T: Discard` well-formedness rule for types.
 > They return for acceptance with the Linear types theme, after the decision register
 > (`architecture/reports/linear-types-decision-register.md`) and the generic-class comparison

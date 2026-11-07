@@ -159,7 +159,8 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D15 | Binding-level qualifiers: `linear let`, `linear` parameters, returns and fields (RFC-0220). | Open (draft; needs a rewrite) | Not adding them; type-level only | Low | Cheap (draft) | D7, D11 |
 | D16 | The `dyn` erasure gate, native owning storage (`List<Tx>`), and `consume_each`'s contract. | Open (release gates) | Forbid at first | n/a | n/a | D7 |
 | D17 | Do destructors run at panic? When do skipped fields drop (at the pattern, or at scope end)? | Open (#1835, #1843) | n/a | n/a | n/a | D12 |
-| D18 | Public generic types state their `Copy`/`Clone` conditions (the interface). `Discard` is computed from fields and is not part of the stated interface. | Accepted (RFC-0206 section 6) | State `Discard` too | Medium | Moderate | D7 |
+| D18 | Public generic types state their `Copy`/`Clone` conditions (the interface). `Discard` is computed from fields and, until D19, is not part of the stated interface. | Accepted (RFC-0206 section 6) | State `Discard` too (D19) | Medium | Moderate | D7 |
+| D19 | Public generic types also have a stated `Discard` condition. Without a statement, outside code sees the conservative default (`Discard` exactly when every parameter is `Discard`); a stronger statement is checked against the fields. Inside the defining module the exact computed class applies. A publish-time interface comparison (M2) is a possible later addition. | **Reserved** | Required statement on every public generic type; tooling only; policy only | Medium-High | Moderate | D7, D18 |
 
 ## Part 3. How the decisions depend on each other
 
@@ -177,6 +178,7 @@ D8 D9 D10       conditional keywords, bound repetition, guard
   D12           patterns consume
    |
   D13           Drop dismantling                              (most speculative)
+D19 (pub states Discard)  depends on D7, D18; guards the public interface of D7
 D14 (closures)  depends on D7
 D15 (RFC-0220)  depends on D7, D11
 ```
@@ -234,7 +236,10 @@ In order of how much I would want more time on:
 3. **D12, patterns consume.** It is a deliberate divergence from Rust and it overrides an implemented v0.13.0
    behavior. The reason (the language reads `{ x, .. }` as consumption) is sound, but it is a language-feel decision,
    not a soundness one.
-4. **D4, the written `T: Discard` bound.** The cost (about 30 to 40 percent of by-value generic functions) is large,
+4. **D19, stated `Discard` for public generic types.** It answers the public-API instability of D7, but it adds a
+   declaration-site statement for a capability otherwise computed, and the conservative default can over-restrict
+   public types that do not own their parameter.
+5. **D4, the written `T: Discard` bound.** The cost (about 30 to 40 percent of by-value generic functions) is large,
    though it is the same kind of cost as `Copy` bounds and Metel has no users to migrate.
 
 Decisions D1 to D6 and D18 are the part of the design that does not depend on linear types being right.
