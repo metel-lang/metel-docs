@@ -448,7 +448,7 @@ checker. The complement of `Linear` holds for the computed obligation.
 
 **Recursive declarations.** See section 2, "Recursion and termination", which is the one authoritative rule:
 `Discard`, `Send` and `Sync` are coinductive over structural cycles, `Linear` is inductive and computed, `Copy` is
-inductive, and function requirements are a least fixed point. The spike's rule "a marker cycle yields no" (#1815b) is
+inductive, and a function's requirements are its written bounds, checked by entailment (nothing is inferred). The spike's rule "a marker cycle yields no" (#1815b) is
 correct for `Copy` only and must not be carried into the computation phase (#1819).
 
 Work specific to this RFC and independent of that order:
@@ -573,7 +573,7 @@ novel parts and their risk:
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
 | A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |
-| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword); callable and `dyn` erasure remain a linear-release gate; reviewed in reviews 8 and 9 |
+| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword); `dyn` erasure remains a linear-release gate (callable discard is settled: a non-`linear` function type is `Discard`); public stated conditions stabilise `Copy` and `Clone` only, computed `Discard` is not part of the stated interface, and a field that is linear for every instantiation requires the keyword; reviewed in reviews 8 and 9 |
 | Native structural `Copy` for named types | Low: a named, time-boxed exception, tracked as metel-core#1823 |
 
 **Acceptance (decided 2026-11-05): one ratification sweep.** The settlement is one cluster, as the allocator

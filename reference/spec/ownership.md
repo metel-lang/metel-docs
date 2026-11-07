@@ -96,7 +96,7 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | affine (the default) | at most once | yes | no |
 | copy | any number | yes | yes |
 
-A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a concrete linear field forces `linear` on a generic type too): the declared class must be at
+A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a field linear for every instantiation forces `linear` on a generic type too): the declared class must be at
 least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
 linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
 `Drop` is compatible with
@@ -181,7 +181,7 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
 
-A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern may skip with `..` only fields that are `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is never destructured or partially moved. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
+A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is consumed whole only by its own methods, by total destructuring that suppresses the destructor, and is otherwise never destructured, partially moved or used in a record spread. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -193,7 +193,7 @@ A partial move out of a nominal aggregate is legal only when the aggregate is kn
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-7}
 
-A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field of a concrete linear type forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
+A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field that is linear for every instantiation (linear when each type parameter is given a `Copy` type) forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -468,10 +468,7 @@ some of several moved-out fields is not enough.
 
 ##### Legality Rule {#spec.ownership.partial-moves.legality-4}
 
-Destructuring a struct or tuple with a pattern that binds a subset of its fields (a struct
-pattern with `..`, a tuple pattern, a bound field of a matched variant's payload) moves
-exactly those fields, leaving the scrutinee partially moved under the same rules as an
-explicit field move — including the `Drop`-type ban ([legality-2](#spec.ownership.partial-moves.legality-2)).
+A destructuring pattern consumes its scrutinee. Destructuring a struct, tuple or enum payload moves the bound fields. A field skipped by `..` or `_` is inaccessible afterwards, and where the aggregate is not known `Discard` each skipped field must itself be `Discard`. A pattern never leaves the scrutinee partially moved: a partial move comes only from an explicit field move. The `Drop`-type ban of [legality-2](#spec.ownership.partial-moves.legality-2) applies.
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 

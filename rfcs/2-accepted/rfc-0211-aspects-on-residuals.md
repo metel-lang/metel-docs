@@ -71,7 +71,7 @@ aspects.
 4. A residual of a type whose declaration grants nothing satisfies nothing for marker and derivable aspects, as the
    brand does.
 5. A residual is a value of the same brand, so the brand's `Drop` rule is unchanged: a destructor is dispatched by the
-   row-bounded rule of RFC-0137 section 5 and is outside this RFC.
+   row-bounded rule of RFC-0137 section 5 and is outside this RFC. The total destructuring a type's own methods may use to consume it (RFC-0089 section 2) suppresses the destructor and is separate from that dispatch.
 6. **Compiler-computed ownership capabilities** (`Discard`, RFC-0089) are not impls: they follow the surviving fields of
    the residual. A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard`
    (RFC-0089 section 2, "Consuming an aggregate that is not known `Discard`"), so a residual of a linear or possibly
