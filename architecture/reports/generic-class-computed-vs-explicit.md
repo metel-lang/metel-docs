@@ -213,6 +213,11 @@ so mainly because their ecosystem already existed when the capability was introd
   per 8 programs are paid by authors who never use them. C2 becomes the stronger criterion.
 - **A test that would decide it:** write the first 20 generic functions of the effects design under both models and
   count (a) annotations and (b) how many cannot be written without opting in.
+  **Run 2026-11-07:** see `effects-generic-functions-computed-vs-explicit.md`. For 20 effects-library functions, X needs
+  8 annotations (7 `T: Discard` on 5 functions, 1 stated `Discard` on a type) and Y needs 29 for the same accepted
+  programs (24 on 15 functions, 5 on types), or 10 if Y authors opt in only where the effects design needs linear
+  values, which blocks linear callers on 11 of the 20. 24 of 31 parameters are moved, not dropped. The sample is the
+  author's selection and does not settle the question.
 
 ## 5. Recommendation space (not a decision)
 
