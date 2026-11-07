@@ -1440,7 +1440,7 @@ implementation).
   reference (RFC-0067a §3a): reading through a reference is always `*r`; selector auto-deref
   stays. It is RFC-0112's declined "Strict Go" alternative and supersedes it. Tracked by
   metel-core#1596; implemented by metel-core#1631.
-- **RFC-0183** — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
+- **RFC-0183** *(integrated 2026-11-07, #1594)* — Initialization-only `:=`. `:=` introduces a name; plain reassignment returns
   to `=`; compound operators unchanged. Amends RFC-0136 (its "kept" axis does not describe
   reassignment). Open: whether assignment stays an expression (the `f(x = 1)` overlap
   RFC-0136 incidentally removed, RFC-0100). Tracked by metel-core#1594.
