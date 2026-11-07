@@ -1,6 +1,6 @@
 ---
 id: rfc-0221
-title: "Dotted Record Fields"
+title: "Dotted Row Labels"
 date: '2026-11-07'
 status: draft
 ---
