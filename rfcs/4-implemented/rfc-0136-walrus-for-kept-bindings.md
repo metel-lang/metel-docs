@@ -11,6 +11,8 @@ impl_tracking: 'https://github.com/metel-lang/metel-core/issues/804'
 impl_status: implemented
 ---
 
+> **Amended by RFC-0183 (2026-11-07).** Plain reassignment returns to `=`: `:=` only introduces a name, and the invariant is replaced (`:=` when the site introduces a name into scope, `=` everywhere else). Everything else in this RFC stands.
+
 > **Status — under review (2026-08-23).** Design-complete three-way split, formalized from reports/syntax/colon-classifies-equals-labels-walrus-binds.md's design discussion; open questions remain (compound ops, RFC-0132 coordination, migration strategy) so under-review, not accepted.
 >
 > **Updated 2026-08-25, corrected same day.** Added Open Question 5 and a new audit-table

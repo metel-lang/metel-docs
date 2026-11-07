@@ -1056,8 +1056,9 @@ does not write the replacement value back into the iterated source.
 
 ### Assignment
 
-An assignment writes a new value into an existing place. Plain assignment is `target := value`;
-compound assignment is `target += value`, and likewise `-=`, `*=`, `/=` and `%=`.
+An assignment writes a new value into an existing place. Plain assignment is `target = value`;
+compound assignment is `target += value`, and likewise `-=`, `*=`, `/=` and `%=`. An assignment is a
+statement, not an expression ([legality-3](#spec.expressions.assignment.legality-3)).
 
 ```metel
 struct Point { x: i64, y: i64 }
@@ -1091,15 +1092,15 @@ and a shared `&` grants no write access (both are
 covered under [References](#references).
 
 The right-hand side is evaluated before the target's own sub-expressions
-([dynamics-1](#spec.expressions.assignment.dynamics-1)), so `a[i] := f()` runs `f()` before it reads
+([dynamics-1](#spec.expressions.assignment.dynamics-1)), so `a[i] = f()` runs `f()` before it reads
 `i`, and does not read `i` at all if `f()` returns. A value the right-hand side moves is therefore gone
 when the target's index reads it, which the move check reports as a use of a moved value
 ([T0019](../error-codes.md#t0019--use-of-moved-value)).
 
 [Any other expression on the left of an assignment is a syntax error](#spec.expressions.assignment.legality-2):
 a literal, a call, a method call, or a tuple or array of names. So is a field, tuple element or
-index of a value that is not itself a target, such as `make().f := 1` or `[1, 2][0] := 3`.
-There is no destructuring assignment, so `(a, b) := (b, a)` is rejected; assign the elements one at
+index of a value that is not itself a target, such as `make().f = 1` or `[1, 2][0] = 3`.
+There is no destructuring assignment, so `(a, b) = (b, a)` is rejected; assign the elements one at
 a time.
 
 <details>
@@ -1136,6 +1137,20 @@ or index has an object that is not a target, is a syntax error
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlAwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im11c3QgaXRzZWxmIGJlIG9uZSBvZiB0aGVzZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InBhcnNlX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoidjBfMTVfMF9uZWdfYXNzaWduX3RvX2FuX2VsZW1lbnRfb2ZfYW5fYXJyYXlfbGl0ZXJhbC5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzE3NDA6IG5vciBpcyBhbiBhcnJheSBsaXRlcmFsIHRoZSBvYmplY3Qgb2YgYW4gaW5kZXggYXNzaWdubWVudC5cbmZ1biBtYWluKCkge1xuICAgIFsxLCAyXVswXSA6PSAzO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9wYXJzaW5nL3YwXzE1XzBfbmVnX2Fzc2lnbl90b19hbl9lbGVtZW50X29mX2FuX2FycmF5X2xpdGVyYWwubXRsIiwibmFtZSI6InYwXzE1XzBfbmVnX2Fzc2lnbl90b19hbl9lbGVtZW50X29mX2FuX2FycmF5X2xpdGVyYWwubXRsIn0="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.assignment.legality-3}
+
+An assignment, plain or compound, is a statement. It appears as a block statement ending in `;`, as the body
+of a match arm, and in the init and update clauses of a `for` header. It is not an operand, an argument, an
+initializer, a condition, a closure's expression body or the tail expression of a block, so `f(x = 1)` is a
+keyword argument and never an assignment, `if (x = 1)` is a syntax error, and a closure that assigns is written
+with a block, `|v| { total = v; }`.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1594" reason="RFC-0183: assignment is still an expression of type () and plain assignment is still spelled := until the sweep lands" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1594: RFC-0183: assignment is still an expression of type () and plain assignment is still spelled := until the sweep lands_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.expressions.assignment.dynamics-1}
 
