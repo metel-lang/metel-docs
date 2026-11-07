@@ -399,10 +399,11 @@ What actually remains open:
 
 - **Is `=` the right separator?** This revision proposes it; review has not accepted it.
   The honest case against is precedent (Swift, C#), stated in Alternatives.
-- **Is losing `f(x = 1)` as a positional bare assignment acceptable?** Argued in §3 as a
-  benefit — it is the C `if (x = 5)` footgun — but Metel's assignment is a genuine
-  expression today, and this has **not** been checked against existing test fixtures. That
-  check is cheap and should happen before acceptance rather than after.
+- ~~**Is losing `f(x = 1)` as a positional bare assignment acceptable?**~~ **Resolved 2026-11-07 by RFC-0183**
+  (accepted and integrated): assignment becomes a statement, never an argument, so `f(x = 1)` is unambiguously the keyword
+  argument of this RFC and there is no positional-assignment reading to lose. RFC-0183 lands before this RFC in the
+  v0.16.0 sweep order (`pub`, `:=`, construction calls, dotted labels). The §3 collision with `assign_expr` therefore
+  does not arise once RFC-0183 is implemented.
 - **The `arg_list`/`call_arg`/`keyword_arg` restructuring in §3 is designed from grammar
   reading, not from a built prototype.** Same caveat the record-syntax work carries: pest's
   behaviour under the new ordering is predicted, not observed.
