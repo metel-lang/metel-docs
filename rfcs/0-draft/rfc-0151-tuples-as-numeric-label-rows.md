@@ -121,17 +121,28 @@ as `(i64, String)`, `{ 0: i64, 1: String }` written by hand prints the same, and
 
 ### 6. `()` and the unit type
 
-Two options, deliberately left open (Open Question 1):
+**`()` is the empty closed row `{}`.** The primitive `Unit` type is retired as a separate type, and the two
+spellings denote one type with one value:
 
-- **Unify**: `()` becomes the empty row `{}`, and the primitive `Unit` type is
-  retired. One fewer type; but every `-> ()` signature, every `()` literal, and
-  the evaluator's unit value are touched.
-- **Keep `Unit` primitive**: the `(…)` sugar covers arity `≥ 1` only; `()`
-  stays the unit type as today. Smaller blast radius; leaves `{}` and `()` as two
-  spellings of "no information" if `{}` is also inhabited.
+- **Type.** `()` and `{}` are the same type. `-> ()`, `Result<(), E>` and a closed empty row are
+  interchangeable. The tuple sugar has arity 0 as well: `(A, B)` is `{ .0: A, .1: B }`, and no elements give
+  `{}`.
+- **Value.** The unit value is the empty record. A literal `()` and an empty record literal `{}` denote it, and
+  an empty block, or a block with no tail, has this type.
+- **Patterns.** `()` and `{}` match it.
+- **One impl target.** `extend (): A` and `extend {}: A` name the same target, so writing both is an overlap
+  error.
+- **Printing.** The type prints as `()`.
+- **Surface.** There is no `Unit` name in the standard library today, so nothing user-facing is renamed.
 
-This RFC leans toward **keep `Unit` primitive** for the first cut and revisit
-unification separately.
+This accepts strictly more programs than today: `{}` where `()` is expected now type-checks. The one program it
+can reject is an overload set or a pair of impls that distinguished `()` from `{}`. The change is internal:
+measured on the metel-core checkout on 2026-11-07, `Type::Unit`/`InferType::Unit` appears 32 times in 14
+files, `Value::Unit` 44 times, and the grammar has `unit_type` and `unit_lit`. How the checker represents the
+empty row is an ADR matter.
+
+RFC-0221 relies on this: with one type, an empty brace group is the same value whether it is read as a block or
+as a record.
 
 ## What this RFC does not cover
 
@@ -184,8 +195,8 @@ ad-hoc returns and argument lists.
 
 ## Open Questions
 
-1. **`()` vs `Unit`** (§6). Unify to `{}` and retire the primitive, or keep
-   `Unit` and desugar arity `≥ 1` only? Blast radius versus type-count.
+1. ~~**`()` vs `Unit`** (§6).~~ **Resolved:** unify. `()` is the empty row `{}` and `Unit` is retired as a
+   separate type.
 2. **Mixed-label rows.** Are `{ 0: A, name: B }` rows worth allowing at all, or
    should integer and identifier labels be mutually exclusive per row (tuples
    integer-only, records identifier-only, and a row is one or the other)? The
@@ -225,7 +236,7 @@ ad-hoc returns and argument lists.
 ## Decision
 
 **Outcome:** *(pending — draft, opened 2026-08-29. The core desugaring is
-straightforward; the open questions are `()`/`Unit` unification, whether
+straightforward; the open questions are whether
 mixed-label rows are allowed, and the migration staging. Sequence before
 RFC-0125, which depends on it.)*
 **Target:** *(set when accepted; naturally lands with or just before v0.14.0's

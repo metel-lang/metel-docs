@@ -90,7 +90,8 @@ updated: '2026-10-01'
 The base compile-time execution model: `comptime let` bindings, `comptime fun` evaluation
 and its restrictions, `comptime if`, `pub comptime let` for public value exports, and a
 **proposed** mechanism for comptime-known non-type generic parameters (§3, unreviewed —
-see Open Question 7) — filling the gap RFC-0053 called "const generics" and deferred.
+see Open Question 7), and its extension to label parameters and to the function-parameter position
+(§3.6, proposed 2026-11-07) — filling the gap RFC-0053 called "const generics" and deferred.
 Deliberately excludes `type`-as-first-class-value,
 `typeinfo(T)` reflection, and `emit`, all of which stay in RFC-0092 and continue to wait
 on RFC-0093's derive mechanism.
@@ -166,11 +167,14 @@ that true.)*
 
 An expression is **comptime-known** exactly when it is one of:
 
-1. A literal (`i64`/`u64`/…, `f32`/`f64`, `String`, `boolean`, `Char`).
+1. A literal (`i64`/`u64`/…, `f32`/`f64`, `String`, `boolean`, `Char`), or a label literal
+   (`.name`, `.0`, RFC-0175; §3.6).
 2. A reference to an in-scope `comptime let` or `pub comptime let` binding (§1, §2).
-3. A reference to an in-scope `comptime N: u64`-style generic parameter (§3), within the
+3. A reference to an in-scope `comptime N: u64`-style parameter (§3), or `comptime L: Label`
+   (§3.6), declared in the generic list or as a function parameter (§3.6d), within the
    body of the `fun`/`struct`/`enum`/`extend` that declares it — comptime-known even
    though its concrete value is not fixed until that declaration is instantiated.
+   3b. The name of a field bound by a `comptime for` over a row (RFC-0174), which is a `Label`.
 4. An operator, field-access, or index expression, all of whose operands are
    comptime-known.
 5. *(Full RFC scope, not `#726`'s slice — see below.)* A `comptime fun` call (§4), all of
@@ -238,7 +242,8 @@ fun accept(current: u64) -> boolean { current < MAX_CONNECTIONS }
 > see §3.2 below. This settles §3 for the purpose `#726` actually needs (comptime-known
 > array sizes for `#1291`/`#263`); it is not a claim that RFC-0132 as a whole is ready for
 > `2-accepted`, since §1/§2/§4/§5 and Open Questions 1–3 remain outside this review's
-> scope.
+> scope. §3.6 (2026-11-07) widens §3 to label parameters and the function-parameter position and is not
+> covered by this ratification.
 
 **New in this RFC.** RFC-0092 §1 argues that Metel's `<T>` generics are sugar over
 comptime type parameters: `fun first<T>(arr: T[])` is
@@ -484,6 +489,73 @@ purposes — confirming they compile and integrate cleanly with the existing
 time, not a design decision left open, exactly as Open Question 5 already treats the
 equivalent step for §3 as a whole.
 
+### 3.6 Label parameters and the function-parameter position
+
+> **Status: proposed 2026-11-07, unreviewed.** A widening of §3, not covered by the 2026-09-27
+> ratification. It is additive: it accepts programs §3.1–§3.5 reject and rejects none they accept. It exists
+> because the label model (RFC-0175, RFC-0188, RFC-0221) needs a comptime parameter whose value is a field
+> label, and a call that passes that label as an argument.
+
+#### 3.6a A second parameter type: `Label`
+
+`comptime L: Label` is admitted in a generic parameter list wherever `comptime N: u64` is (§3.1, §3.5c).
+`Label` is a built-in type owned by RFC-0175: its values are field labels, it is comptime-only, and this RFC
+needs nothing of it beyond equality. §3.2's admissible instantiations are widened by exactly these forms:
+
+1. a label literal, `.name` or `.0`;
+2. a `comptime let` of type `Label` (§1);
+3. an in-scope `comptime L: Label` parameter;
+4. the name of a field bound by a `comptime for` over a row (RFC-0174).
+
+A `comptime fun` call is excluded for the reason §3.2 gives, and is wideneable by the same argument.
+
+#### 3.6b Where a label may appear in a type
+
+The field slot of a record type, row bound or row equation admits a bare reference to an in-scope
+`comptime L: Label` parameter, written `.[L]` (RFC-0188). This is §3.5a for labels: the slot parses a name and
+typechecking accepts only a label literal or a bare reference to an in-scope label parameter. A computed label
+in a type (`.[f(L)]`) is out of scope for the reason `[T; N + 1]` is (§3.4). In a value position `.[expr]`
+takes any comptime-known `Label` expression (selection `r.[expr]`, record field `.[expr] = v`).
+
+#### 3.6c Representation
+
+The same as §3.5b: `L` is a unification variable resolved per call or construction site, declared in the same
+generic list, and checked at the definition site (§3.3). A resolved `Type` keeps concrete field names. The
+checker data this needs is an implementation matter for an ADR, not this RFC.
+
+#### 3.6d The function-parameter position
+
+A function parameter may be marked `comptime`:
+
+```metel
+fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T { r.[l] }
+
+get::<i64, _>(.name, user)           // the label is an argument
+get::<.name, i64, _>(user)           // the same function written with the label in the generic list
+```
+
+1. **It is sugar for a generic parameter.** `comptime l: Label` among the parameters is a generic parameter
+   `comptime l: Label` that the call supplies positionally. RFC-0092 §1 already reads `fun first<T>(arr)` as
+   `fun first(comptime T: type, arr)`; this is the same identity read the other way. The two spellings are
+   equivalent.
+2. **Turbofish skips it.** A parameter-position `comptime` parameter is an argument, so the turbofish lists the
+   remaining generic parameters in order.
+3. **The argument must be comptime-known** (§1.1). A runtime value is an error that names the parameter.
+4. **This is not dependent typing.** `l` is a unification variable, like `T`. The call unifies `l` with the
+   argument's label while it unifies `T` and `R` with the other arguments, in any order, and a later parameter's
+   type mentions `l` the way it mentions `T`. Nothing is evaluated during checking beyond §1.1's rules.
+5. **It applies to `u64` as well.** `fun first_n<T>(comptime n: u64, a: [T; n])` is the same mechanism, with
+   §3.5a's array-size slot resolving a name against comptime parameters of either position.
+6. **Instantiated at the call.** A function with a `comptime` parameter is called, not passed as a plain value,
+   until its comptime arguments are supplied. To pass one, wrap it in a closure: `|u| get(.name, u)`.
+
+#### 3.6e What this does not include
+
+- Computed labels in types (§3.6b).
+- Operations on `Label` beyond equality and `to_string()`; RFC-0175 owns them.
+- `comptime` parameters of other types (`String`, `boolean`, …), by the line §3.4 draws.
+- Labels that name enum variants (RFC-0210).
+
 ---
 
 ## 4. `comptime fun`
@@ -557,6 +629,13 @@ fun word_size() -> i64 {
     comptime if (IS_64BIT) { 8 } else { 4 }
 }
 ```
+
+**A condition that depends on a parameter.** When the condition mentions a comptime parameter, such as
+`l == .password` for a label (RFC-0175) or a comparison on a `comptime N: u64`, its value is not known at the
+definition, and §3.3's definition-site checking applies. Both arms are checked at the definition under the
+declared bounds, with no assumption that the condition holds or fails inside an arm, and each instantiation
+keeps the arm its condition selects and emits only that one. "Never type-checked or emitted" above applies to a
+condition whose value is known at the definition, as `IS_64BIT` is.
 
 This is the mechanism RFC-0095 Open Question 4 speculates might subsume `#cfg`; RFC-0055
 reached the same conclusion independently. Both converging is treated as confidence in

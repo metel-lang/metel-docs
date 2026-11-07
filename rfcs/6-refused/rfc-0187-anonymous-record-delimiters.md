@@ -2,8 +2,8 @@
 id: rfc-0187
 title: "Anonymous record delimiters"
 date: '2026-10-21'
-status: under-review
-updated: '2026-10-30'
+status: refused
+updated: '2026-11-07'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 ---
 
@@ -12,6 +12,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 > **Scope (2026-10-26, revised 2026-10-27).** This RFC originally also proposed label syntax (`.name`,
 > `.[L]`) and rows as record types. The label spelling is now RFC-0188; the row declaration change is
 > RFC-0186. This RFC keeps only the record delimiters.
+
+> **Status — refused (2026-11-07).** No case remains: RFC-0221 (dotted row labels) removes the single-pun collision, RFC-0151 section 6 makes () and {} one type so the empty record needs no spelling, and RFC-0183 makes assignment a statement.
 
 ## Summary
 
@@ -466,7 +468,7 @@ What the examples show:
 |---|---|---|
 | `{\| … \|}` | `{\| x = 1 \|}` | **Proposed.** Stays in the `{ }` family, covers the empty record, keeps `x` plain. Two characters heavier than today. |
 | Field prefix only | `{ .x = 1, .y = 2 }` | Makes a field never start a block, but leaves `{ }` as an empty block, so the empty record needs its own spelling. Marks every field of every literal, and `.x` next to the rest `..r` is a one-dot slip. Declined as the record delimiter; the dot is kept for labels (RFC-0188). |
-| `#{ … }` | `#{ x = 1 }` | Unambiguous and light. Declined only because RFC-0175's open question 2 lists `#field` as a label literal form, which would give `#` two meanings. Reconsidered if label literals (RFC-0188) are not `#`-based. |
+| `#{ … }` | `#{ x = 1 }` | Unambiguous and light. Declined only because a `#field` label literal was once considered, which would give `#` two meanings. Label literals are `.name` (RFC-0188), so that reason no longer applies, but a second sigil for the same idea remains. |
 | `%{ … }` | `%{ x = 1 }` | `%` is the remainder operator. |
 | `[\| … \|]` | `[\| x = 1 \|]` | Brackets suggest arrays and capture lists. |
 | `(\| … \|)` | `(\| x = 1 \|)` | Parenthesized closures, `(\|x\| x + 1)`, are common, so it collides far more often than `{\|` does. |

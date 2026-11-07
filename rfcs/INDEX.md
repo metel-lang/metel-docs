@@ -254,12 +254,14 @@ above it are.
   #1337/#1338, whose near-term path is compiler-derived impls (RFC-0096). Open: loop and
   access spelling, field order, row construction (`Clone`/`Default`), moves out of `self`.
 
-- **RFC-0175** *(draft, opened 2026-10-06)* — Label Polymorphism — a dedicated `label`
-  generic kind for record operations that abstract over which field is selected, not merely
-  over the row remainder. Proposes compile-time label literals and checked selection such as
-  `value.[L]`, enabling one `get_field`/`drain_field` helper to work for `token`, `alloc`, or
-  any other statically known field. Separate from RFC-0174's iteration over all fields; open
-  questions cover syntax, label equality, construction, and interaction with linear moves.
+- **RFC-0175** *(draft, opened 2026-10-06; rewritten 2026-11-07)* — Label Polymorphism — a label is a
+  comptime value of a built-in `Label` type, not a kind. A function or impl generic over a field name takes a
+  `comptime l: Label` parameter (RFC-0132 §3.6) and uses `.[l]` in row fields, bounds and selection (`r.[l]`),
+  so one `get`/`insert` helper works for any field. Owns the type, label equality, comptime-only use and
+  diagnostics; spelling is RFC-0188, dotted fields RFC-0221, drain ownership RFC-0122. `field.name` in RFC-0174
+  is a `Label`. Settled: field visibility is checked where a row bound is discharged (a grant entitles the
+  template, not its callers); a `comptime if` that depends on a parameter checks both arms at the definition
+  (RFC-0132 §5); two sibling label parameters need `where a != b`.
 
 
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
@@ -431,7 +433,8 @@ above it are.
   surface syntax and `t.0` access stay; `Type::Tuple` goes away. Narrowing (RFC-0117),
   row bounds (RFC-0118), branding (RFC-0137), and the `Copy` / `Ord` derivations then
   apply to tuples with no second column — and RFC-0150's tuple-residual open question
-  and RFC-0125's pack-into-tuple calculus dissolve. Open: `()` vs `Unit`, whether
+  and RFC-0125's pack-into-tuple calculus dissolve. `()` is the empty row `{}` and
+  the separate `Unit` type is retired (§6, decided 2026-11-07). Open: whether
   mixed integer/identifier-label rows are allowed, migration staging. Sequence before
   RFC-0125 (v0.21.1).
 - **RFC-0165** *(under review, opened 2026-09-02; metel-core#937; **unscheduled**)* — Structural Union Types — an anonymous
@@ -618,7 +621,8 @@ part of the same records/views substrate review):
 - **RFC-0132** — Comptime Execution Model — `comptime let`/`fun`/`if`, `pub comptime let`
   (public value exports), and **comptime-known non-type generic parameters**
   (`comptime N: u64`) — i.e. the const generics RFC-0053 deferred to "a future RFC," now
-  with an actual home. Split out of RFC-0092 §0/§0a on 2026-08-13, acting on an escape
+  with an actual home. §3.6 (proposed 2026-11-07) widens it to `comptime L: Label` parameters and to
+  the function-parameter position, for the label model of RFC-0175. Split out of RFC-0092 §0/§0a on 2026-08-13, acting on an escape
   hatch RFC-0092's own Timing Recommendation had written down 35 days earlier and nobody
   could act on because §0 had no independently schedulable identity. **This is now the
   dependency root of the whole cluster** — RFC-0092 depends on it, not the reverse.
@@ -1458,14 +1462,14 @@ implementation).
   respells the quantifier RFC-0125 reuses for packs; RFC-0146, RFC-0174 and RFC-0175 use the syntax it
   replaces. The single change to row declarations (RFC-0187 and RFC-0188 do not touch them). Tracked by
   metel-core#1597.
-- **RFC-0187** *(under review, v0.15.0; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
+- **RFC-0187** *(refused 2026-11-07; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
   written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
   the `({ x = 1 })` workaround). Syntax only: the semantics of records are unchanged. With RFC-0183's `=` assignment
   it also removes the `{ x = 1 }` record-versus-block collision. Label spelling is RFC-0188 and the row declaration
-  change is RFC-0186. Open: whether types and bounds also take `{| |}`, the transition policy, the empty-record spelling.
+  change is RFC-0186. Refused: RFC-0221 (dotted row labels) removes the single-pun collision and RFC-0151 §6 (`()` is `{}`) removes the empty-record case, so no delimiter is needed.
 - **RFC-0188** *(draft, split from RFC-0187 2026-10-26)* — Label syntax — labels as compile-time values written `.name`
-  and label variables `.[L]` (spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and RFC-0174).
-  Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
+  and label variables `.[L]` (the spelling RFC-0175 uses, RFC-0151's numeric labels and RFC-0174).
+  A row field is a label too, `.x` (RFC-0221). Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
   in favour of RFC-0186.
 - **RFC-0189** *(under-review 2026-10-28, #1661; opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
   (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
@@ -1890,6 +1894,8 @@ generated file as the exact source of truth.
 - **RFC-0213** *(accepted 2026-11-05, #1796)* — Super-aspects. The nominal refinement relation `aspect A: B` split from RFC-0168: a proof of `A` proves `B`, an impl of `A` requires `B`, negative closure, and a `deriving` mark making the derivation of the sub-aspect derive the super-aspect.
 - **RFC-0214** *(draft 2026-11-04)* — Aspect impls for residuals. Generalises RFC-0137's row-bounded `Drop` dispatch to any aspect: an impl declares the residual it needs on its method receivers, targets one exact shape or view, or is generic over the whole row (`extend Doc: A<record R>`). Not a dependency of the Copy/Clone settlement.
 - **RFC-0216** *(draft 2026-11-05)* — Constructing rows and residuals from per-field results. A computed-label record literal and a defining-module residual construction, so `Clone`/`Default` can be written once over a row inside a `comptime for` body (RFC-0174 open question 7). Construction half of RFC-0214's row-generic impl. Not a dependency of the Copy/Clone settlement.
+- **RFC-0221** *(draft 2026-11-07)* — Dotted row labels. A label of a row (anonymous record literal, pattern, type, row bound, row equation, projection list) is written as a label, `.x`, so a brace group starting with `.x` is a record in every position. Row labels only (records and projection lists `Handle.{ .fd }`): struct and enum construction is RFC-0100's call, and nominal declarations and patterns stay bare. Completes RFC-0188's label spelling (its open question 1) and removes the single-pun block collision from RFC-0187. The empty record needs no spelling because RFC-0151 §6 makes `()` and `{}` one type.
+- **RFC-0222** *(draft 2026-11-07)* — Builder aspect. `derives Builder` gives a struct a typestate builder written as a std row template (RFC-0209), not a generated type: `Building<T, Need, Have>` tracks the fields set in its type, one generic `set(.label, v)` keyed by a comptime `Label`, and `build()` only when `Have` equals `Need`, calling `T(..fields)` (RFC-0100/0114). No per-struct code. Named setters (`.host(v)`) and field defaults are out of scope; depends on the label model, RFC-0100/0114 and RFC-0209, and on whether `derives` is open to a non-compiler template.
 - **RFC-0215** *(draft 2026-11-05)* — Partial consumption of mixed-multiplicity structs. Split from RFC-0089: partial consumption through `ToRecord`, the brand-carrying conversion for fiat-linear structs, `NonLinear<T>`; keeps RFC-0089's section numbers 3 to 5. RFC-0089 is now the lattice, the `Linear` aspect and the class keywords.
 - **RFC-0218** *(under review 2026-11-06, #1837)* — Spell visibility `pub`. Reverses section 2 of RFC-0098: the visibility keyword is `pub` again, `public` becomes the reserved legacy spelling with a fix-it. A token rename with no semantic effect; composes with the prefix keywords (`pub copy struct`). Targeted at v0.16.0.
 - **RFC-0219** *(under review 2026-11-06, #1839)* — The `copy` function-type qualifier. A narrow split of RFC-0163 in the style of RFC-0166: `copy |T| -> U` requires a capture-proved copyable callable and lets the holder copy it; bare `|T| -> U` stays move-only; no `Erased` state. Contextual keyword. Targeted at v0.16.0 (Copy migration stage).

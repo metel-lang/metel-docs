@@ -3,7 +3,7 @@ id: rfc-0174
 title: "Compile-time iteration over a row's fields"
 date: '2026-10-03'
 status: under-review
-updated: '2026-10-03'
+updated: '2026-11-07'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1340'
 ---
 
@@ -15,20 +15,20 @@ A compile-time `for` loop over the fields of a row, so that a blanket impl over 
 record can walk its fields:
 
 ```metel
-extend<row R> { ..R }: Display where all R: Display {
+extend<record R> { ..R }: Display where ..R: Display {
     fun to_string(&self) -> String {
         var out := "{ ";
         comptime for field in fields(R) {
-            out := out + field.name + " = " + self.[field.name].to_string() + ", ";
+            out := out + field.name.to_string() + " = " + self.[field.name].to_string() + ", ";
         }
         out + "}"
     }
 }
 ```
 
-The loop is **unrolled per instantiation**, `field.name` and `field.type` are compile-time
-values, `self.[field.name]` is a field access by a compile-time name, and the body is
-**checked once against a symbolic field** that has only the aspects `where all R: A` grants.
+The loop is **unrolled per instantiation**, `field.name` is a `Label` (RFC-0175) and `field.type` is a
+compile-time type, `self.[field.name]` is a field access by a label, and the body is
+**checked once against a symbolic field** that has only the aspects `where ..R: A` grants.
 That last rule is what lets a loop over an unknown row be checked at the definition, in line
 with RFC-0173.
 
@@ -42,15 +42,15 @@ row, the same loop walks a tuple. One loop, three uses.
 
 ### The condition exists; the body does not
 
-RFC-0123 added `where all R: Aspect`, now implemented (metel-core#1302): an impl or function
-requires an aspect of every field of a row. It deliberately stopped there. RFC-0123 §4 chose
+RFC-0123 added the field-wise bound `where ..R: Aspect`, now implemented (metel-core#1302): an impl or
+function requires an aspect of every field of a row. It deliberately stopped there. RFC-0123 §4 chose
 a primitive quantifier over PureScript-style induction because "every actual use needed is
 *apply one fixed aspect to every field*, never user-programmable" — a statement about the
 **condition**.
 
 The **body** of such an impl is a different problem. A `Display` for a record has to render
 each field, and nothing in the language can iterate a row: there is no reflection, no row
-induction, and no macro system. So `extend<row R> { ..R }: Display where all R: Display` is
+induction, and no macro system. So `extend<record R> { ..R }: Display where ..R: Display` is
 accepted today but cannot be given a body that does anything (metel-core#1338). `Eq`, `Hash`
 and `Clone` for records have the same shape. `Copy` does not: it has no body (metel-core#1337).
 
@@ -70,7 +70,7 @@ but neither says what that loop looks like, and both are larger RFCs still under
 - **Parameter packs.** RFC-0125 §1.1 lesson 4 identifies Bertholet's `static for` as "the same
   construct as RFC-0092's comptime iteration" and as the best implementation of its stage 2.
   Its open question 4 asks whether the two are one feature.
-- **Tuples.** RFC-0151 (draft) desugars `(A, B, C)` to the row `{ 0: A, 1: B, 2: C }`. If that
+- **Tuples.** RFC-0151 (draft) desugars `(A, B, C)` to the row `{ .0: A, .1: B, .2: C }`. If that
   lands, a loop over a row's fields is a loop over a tuple's elements, and RFC-0125's pack
   becomes a row operation rather than a separate calculus.
 
@@ -111,7 +111,7 @@ comptime for field in fields(R) { body }
 - The loop is **unrolled**: for a row of `n` fields the body is instantiated `n` times, once
   per field, in order. `comptime for` follows the family of `comptime let`, `comptime fun` and
   `comptime if` (RFC-0132), whose untaken branch is likewise "never type-checked or emitted".
-- Each `field` has `name` (a compile-time string), `type` (a type value) and `index`.
+- Each `field` has `name` (a `Label`, RFC-0175), `type` (a type value) and `index`.
 - The sequence must be compile-time-known at the point of instantiation. Looping over a row
   that is still an abstract variable at the definition is legal; it is unrolled when `R` is
   instantiated.
@@ -125,9 +125,10 @@ serves RFC-0093's derive functions unchanged.
 self.[field.name]
 ```
 
-reads the field of `self` whose label is the compile-time value `field.name`. Its type is
-`field.type`. The index must be compile-time-known (a `field.name` of the enclosing
-`comptime for`, or another compile-time string); anything else is an error. Reads only in the
+reads the field of `self` whose label is the `Label` `field.name`. It is selection by a label as RFC-0175
+defines it (§3, §4), and means what `self.x` means for that field. Its type is `field.type`. The label must be
+comptime-known (RFC-0132 §1.1): a `field.name` of the enclosing `comptime for`, or another comptime-known
+`Label`; anything else is an error. Reads only in the
 first version; assignment through a computed access (`self.[name] := v`) and moves out of one
 are open question 6.
 
@@ -138,9 +139,9 @@ unrolling. Re-checking each unrolled copy per concrete shape would be the templa
 behaviour RFC-0173 removes from generic bodies.
 
 Instead the body is checked **once**, with `field` bound to a *symbolic* field: `field.name` is
-an opaque compile-time string, `field.type` is a fresh opaque type `F`, and `self.[field.name]`
+an opaque `Label`, `field.type` is a fresh opaque type `F`, and `self.[field.name]`
 has type `F`. `F` is assumed to satisfy exactly the aspects the enclosing declaration requires
-of every field (`where all R: Display` gives `F: Display`) and nothing else. A body that
+of every field (`where ..R: Display` gives `F: Display`) and nothing else. A body that
 uses more than that is rejected at the definition, with the error on the offending
 expression.
 
@@ -149,7 +150,7 @@ not fail on a type the symbolic check did not already cover. This is RFC-0173 D2
 row: a body may use only what its bounds entail.
 
 Consequence: a `comptime for` whose body needs an aspect the declaration does not state is a
-definition error, not a use-site error, and `all R: A` is what makes the loop usable at all.
+definition error, not a use-site error, and `..R: A` is what makes the loop usable at all.
 
 ### D4: Where it may appear
 
@@ -161,7 +162,7 @@ function (RFC-0093) loops over `typeinfo(T)`'s row the same way; there the outpu
 
 Specified here: the loop, `fields`, computed read access, the checking rule. Not specified
 here: `typeinfo`'s shape (RFC-0092 §2), `emit` and `#derive` (RFC-0093), constructing a row
-from per-field results (open question 7), packs (RFC-0125) and tuples (RFC-0151) beyond
+from per-field results (RFC-0216), packs (RFC-0125) and tuples (RFC-0151) beyond
 "the same loop".
 
 ---
@@ -170,14 +171,14 @@ from per-field results (open question 7), packs (RFC-0125) and tuples (RFC-0151)
 
 ### `Display` (the motivating case)
 
-As in the summary. `where all R: Display` supplies `F: Display` for the single symbolic check;
-at `{ x = 1, y = "a" }` the loop unrolls to two statements, each calling the right
+As in the summary. `where ..R: Display` supplies `F: Display` for the single symbolic check;
+at `{ .x = 1, .y = "a" }` the loop unrolls to two statements, each calling the right
 `to_string`.
 
 ### `Eq` (illustrative; the aspect's method names are as RFC text, not checked here)
 
 ```metel
-extend<row R> { ..R }: Eq where all R: Eq {
+extend<record R> { ..R }: Eq where ..R: Eq {
     fun eq(&self, other: &Self) -> boolean {
         comptime for field in fields(R) {
             if (self.[field.name] != other.[field.name]) { return false; }
@@ -194,8 +195,8 @@ is open question 5.
 ### What it does not cover
 
 `Clone` and `Default` need to *build* a record whose labels are compile-time values. Reading by
-computed label is not enough; that needs a record literal with computed labels, or `emit`
-(RFC-0093). Left to open question 7 and to RFC-0093.
+computed label is not enough; that needs a record literal with computed labels, `{ .[field.name] = v }`,
+which RFC-0216 specifies, or `emit` (RFC-0093).
 
 ---
 
@@ -223,26 +224,26 @@ computed label is not enough; that needs a record literal with computed labels, 
 
 1. **Spelling of the loop.** `comptime for` (consistent with `comptime let/fun/if`) or
    `static for` (D, and the name RFC-0125 quotes from the Rust draft). Leaning `comptime for`.
-2. **Spelling of computed access.** `self.[name]`, `self.(name)`, or a function `field(self,
-   name)`. Leaning `self.[name]`; the bracket form cannot be confused with a literal label or
-   a call.
+2. ~~**Spelling of computed access.**~~ **Resolved:** `self.[name]`, a value followed by the label variable
+   `.[name]` (RFC-0188).
 3. **Field order.** Declaration order for a nominal record or struct; anonymous records are
    stored sorted by label, so a sorted order there. RFC-0092 §2 already notes reflection needs
    a stable order and open question 1 asks where the metadata lives. Needs a decision that
    covers a nominal record, an anonymous record and a tuple.
-4. **Name type.** A `String`, or a `Symbol` type (RFC-0092's `TypeInfo` uses `Symbol`). The
-   difference matters for `self.[field.name]` being checked against a closed label set.
+4. ~~**Name type.**~~ **Resolved:** `field.name` is a `Label` (RFC-0175), not a `String`. Text is
+   `field.name.to_string()`. The `Symbol` type RFC-0092's `TypeInfo` uses is `Label`.
 5. **`break`/`continue` and early exit.** Allowed only when the condition is compile-time
    decidable, or banned in the first version. `return` inside the unrolled body is expected to
    work as an ordinary runtime early exit.
 6. **Moves and writes.** Does `self.[field.name]` read by copy, by reference, or move out of a
    by-value `self`? A partial move out of a row has residual-type consequences (RFC-0137). Is
    assignment through a computed access in scope?
-7. **Building a row from per-field results.** `Clone`, `Default` and deserialization need a
-   record literal with computed labels (`{ [field.name] = v, .. }`) or `emit`. Specify here, or
-   leave to RFC-0093.
+7. ~~**Building a row from per-field results.**~~ **Resolved:** RFC-0216 specifies the computed-label
+   record literal `{ .[field.name] = v, .. }` and the residual construction. `emit` stays with RFC-0093.
 8. **Visibility.** Does a loop in module `m` see the private fields of a nominal record from
-   another module? A `record` has only public fields (RFC-0120), a `struct` may not.
+   another module? A `record` has only public fields (RFC-0120), a `struct` may not. For a label supplied
+   to generic code see RFC-0175 §9: a loop sees only the row its bounds expose, and a granted aspect template sees
+   the row it was granted.
 9. **Packs and tuples.** Confirm that a pack loop (RFC-0125 stage 2, spelled `static for` in
    the Rust draft it cites) and a tuple row (RFC-0151) are the same construct as this one, and
    which RFC owns the spelling for a pack.
@@ -251,7 +252,10 @@ computed label is not enough; that needs a record literal with computed labels, 
     errors in general.
 11. **Interaction with `comptime if`.** A `comptime if (field.type == i64)` inside the loop
     would let a body specialise per field type, which breaks the "only the declared bounds"
-    check of D3 unless the branch is checked on both sides. Allowed, or deferred?
+    check of D3 unless the branch is checked on both sides. Allowed, or deferred? A condition on a label
+    (`field.name == .password`) is settled: RFC-0132 §5 (as amended) checks both arms at the definition when the
+    condition depends on a parameter. A condition on `field.type` is checked the same way, so an arm cannot
+    assume `F = i64`, and the body cannot specialise per type; allowed with that limit, or deferred?
 
 ---
 
@@ -262,8 +266,8 @@ computed label is not enough; that needs a record literal with computed labels, 
 - **Depends on** RFC-0132 (the `comptime` execution model: `comptime fun`, `comptime if`) and
   on RFC-0173 for D3's rule. It cannot be implemented ahead of either, and RFC-0132's current
   slice (#726, static array sizes) does not include a loop.
-- **Staging.** The loop and computed read access are the minimum. `emit`/`#derive` and row
-  construction stay with RFC-0093.
+- **Staging.** The loop and computed read access are the minimum. Row construction is RFC-0216;
+  `emit`/`#derive` stay with RFC-0093.
 - An ADR accompanies the implementation once accepted, recording the unrolling and the
   symbolic-field check.
 
@@ -271,8 +275,11 @@ computed label is not enough; that needs a record literal with computed labels, 
 
 ## References
 
-- RFC-0123 (Field-Wise Row Constraints): `where all R: A` and its §4 on why the quantifier is
+- RFC-0123 (Field-Wise Row Constraints): `where ..R: A` and its §4 on why the quantifier is
   primitive.
+- RFC-0175 (Label Polymorphism): the `Label` type of `field.name` and selection by a label.
+- RFC-0188 (Label syntax): `.[name]`; RFC-0186: `record R` and `..R`; RFC-0216: building a row from the
+  per-field results.
 - RFC-0125 (Variadic Generics), §1.1 lesson 4 and open question 4: the same loop for packs.
 - RFC-0151 (Tuples as Numeric-Label Rows, draft): a tuple is a row.
 - RFC-0092 §2 (`typeinfo`), RFC-0093 (`#derive`, `emit`), RFC-0132 (comptime execution model).

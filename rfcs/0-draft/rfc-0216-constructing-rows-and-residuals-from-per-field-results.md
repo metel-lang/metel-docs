@@ -2,6 +2,7 @@
 id: rfc-0216
 title: "Constructing Rows and Residuals from Per-Field Results"
 date: '2026-11-05'
+updated: '2026-11-07'
 status: draft
 ---
 
@@ -17,20 +18,20 @@ A `comptime for` loop over a row (RFC-0174) can read every field. It cannot yet 
 the per-field results, so a method that returns `Self` (`clone`, `default`, a deserializer) cannot be
 written once over a row. This RFC adds two things:
 
-1. **A computed-label record literal**, `{ [field.name] = expr, .. }`, whose labels are compile-time
-   values, so a loop can produce a record of the same row as its input.
-2. **A residual construction** for a branded type: inside the defining module, a record-shaped value
-   of the right row converts to a residual `T.{ ..R }` of the brand. Outside that module it is not
-   available.
+1. **A computed-label record literal**, `{ .[field.name] = expr, .. }`, whose labels are `Label` values
+   (RFC-0175), so a loop can produce a record of the same row as its input.
+2. **A residual construction** for a branded type: inside the defining module, a record of the right row
+   is spread into a call of the residual, `T.{ ..R }(..record)` (RFC-0100 §7), which builds a residual of
+   the brand. Outside that module it is not available.
 
 ```metel
 extend Doc: Clone<record R> where ..R: Clone {          // RFC-0214 row-generic form
     fun clone(&self: Self.{ ..R }) -> Self.{ ..R } {
-        return Self.{ ..R } {                           // residual construction, defining module only
+                return Self.{ ..R }(..{                         // residual construction, defining module only
             comptime for field in fields(R) {
-                [field.name] = self.[field.name].clone(),
+                .[field.name] = self.[field.name].clone(),
             }
-        };
+        });
     }
 }
 ```
@@ -52,24 +53,25 @@ extend Doc: Clone<record R> where ..R: Clone {          // RFC-0214 row-generic 
 
 ## 1. Computed-label record literal
 
-`{ [e] = v, .. }` is a record literal whose label is the compile-time string `e`. It may appear only
-where `e` is a compile-time value, normally `field.name` of an enclosing `comptime for` (RFC-0174
-D2). A `comptime for` may appear inside a record literal and contributes one `[field.name] = v`
-entry per iteration, in field order.
+`{ .[e] = v, .. }` is a record literal whose label is the `Label` `e` (RFC-0175, RFC-0188). It may appear
+only where `e` is comptime-known (RFC-0132 §1.1), normally `field.name` of an enclosing `comptime for`
+(RFC-0174 D2). A `comptime for` may appear inside a record literal and contributes one
+`.[field.name] = v` entry per iteration, in field order.
 
 Typing: the literal's row is the union of its literal entries and the entries its loops produce. A
-loop over `fields(R)` whose entries are `[field.name] = f(self.[field.name])` has row `{ ..R' }`, where
+loop over `fields(R)` whose entries are `.[field.name] = f(self.[field.name])` has row `{ ..R' }`, where
 `R'` maps each field type through `f`. For `clone`, `R' = R`; the checker proves this once, against the
 symbolic field of RFC-0174 D3, from the bound `..R: Clone` (RFC-0123), not per instantiation.
 
 ## 2. Residual construction
 
-`T.{ ..R } { entries }` builds a residual of the brand `T` from a record-shaped value, with these
-rules:
+`T.{ ..R }(..record)` builds a residual of the brand `T` from a record, with these rules. The brace form
+`T.{ ..R } { entries }` is a brace construction and is prohibited by RFC-0100 §5; the record is passed by the
+spread of RFC-0100 §7, as `Type(..r)` is for a struct.
 
 1. **Defining module only.** It may be written only in the module that defines `T` (RFC-0214 rule 1).
    A brand with private fields therefore cannot be forged from outside.
-2. **Row match.** The entries must be exactly the row `R` of the residual type, no more, no fewer.
+2. **Row match.** The record must be exactly the row `R` of the residual type, no more, no fewer.
 3. **Constructor invariants and authority.** A brand's constructors may enforce invariants (RFC-0137 section 6).
    A residual construction bypasses them. A projection or partial move only keeps values the brand already
    produced, whereas arbitrary construction can create field combinations no constructor allows. "Entries derived from
@@ -80,6 +82,9 @@ rules:
 
 ## 3. Relationship to existing RFCs
 
+- **RFC-0175 / RFC-0188** — the `Label` type and the spelling `.[e]` of a computed label.
+- **RFC-0100** — the spread call `T(..r)` this RFC's residual construction uses, and the prohibition of the
+  brace form (§5).
 - **RFC-0174** — supplies the loop and computed access; this RFC closes its open question 7 for rows
   and residuals. Whether `emit` (RFC-0093) is still needed for other outputs is left to RFC-0093.
 - **RFC-0214** — the row-generic impl form is the consumer.
@@ -106,8 +111,9 @@ rules:
 
 ## Unresolved Questions
 
-1. **Spelling.** `T.{ ..R } { .. }`, a conversion from a record value, or an intrinsic. The syntax
-   must not collide with RFC-0137's projection `.{ }`.
+1. **Spelling.** The call form `T.{ ..R }(..record)` follows RFC-0100 §7. Confirm that it parses as a call
+   whose head is a projection type, and that it does not collide with RFC-0137's projection `.{ }`
+   (a projection expression lists labels and has no `..R` tail).
 2. **How narrow is the capability.** Should construction be restricted to bodies that take the brand
    itself as input (clone-shaped), or may a defining-module body build a residual from arbitrary
    values? The second is the constructor-invariant risk.
