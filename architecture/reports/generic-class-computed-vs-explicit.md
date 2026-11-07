@@ -226,8 +226,8 @@ computed from its owned fields (D7), with `linear` unconditional and `copy` a ca
 parameter forbidding linear arguments (D9), and public generic types stating their `Discard` condition with a
 conservative default (D19, section 3 "Public API stability"). The effects-library test
 (`effects-generic-functions-computed-vs-explicit.md`) supports it: 8 annotations against 29 for the same programs.
-The guard that forces `linear` on a generic type holding a field linear for every instantiation (D10) and the
-elimination rules (D11 to D13) stay reserved.
+The guard that forces `linear` on a generic type holding a field linear for every instantiation (D10) stays
+reserved; the elimination rules (D11 to D13) were settled in design the same day.
 
 What would reopen it: a standard library or ecosystem in which most generic code drops its arguments, or evidence
 that linear types stay a niche feature used only in application code (the case for Model Y in section 4).

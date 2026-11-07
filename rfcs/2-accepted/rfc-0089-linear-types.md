@@ -7,19 +7,21 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
-> **Acceptance scope (2026-11-07, language owner): generic classes are settled; the elimination rules are reserved.**
+> **Acceptance scope (2026-11-07, language owner): generic classes and the elimination rules are settled in design.**
 > Accepted (inert in v0.16.0, because every type is `Discard` there): the class keywords (`copy`, `linear` reserved),
 > `Linear` as a declared aspect, `Discard` as a compiler-computed capability written as a bound (`T: Discard`), bare `T`
-> as possibly linear, and the generic-class model settled as decision D7: generic types are **open by default** and the
-> class of an instance is **computed** from its owned fields; `linear` on a generic type is unconditional and `copy`
-> states a capability (D8); `T: Discard` on a type parameter forbids linear arguments and every use repeats the bound
-> (D9); a `pub` generic type states its `Discard` condition like `Copy` and `Clone`, with a conservative default (D19,
-> RFC-0206 section 6). **Reserved, kept as design text for review and not binding on implementation:** the rule that a
-> field linear for every instantiation forces the keyword on a generic type (D10); and the elimination rules (partial
-> moves need known `Discard`, consuming patterns, structural narrowing). The `Drop` dismantling rule is decided as an
-> explicit marked method (D13, spelling open with RFC-0218) and takes effect with the elimination rules. The reserved
-> rules return for acceptance with the Linear types theme. The reasoning and the alternatives are in the decision
-> register (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
+> as possibly linear, and the generic-class model, decision D7: generic types are **open by default** and the class of
+> an instance is **computed** from its owned fields; `linear` on a generic type is unconditional and `copy` states a
+> capability (D8); `T: Discard` on a type parameter forbids linear arguments and every use repeats the bound (D9); a
+> `pub` generic type states its `Discard` condition like `Copy` and `Clone`, with a conservative default (D19, RFC-0206
+> section 6). The elimination rules are accepted in design and take effect with the `linear` release: a partial move
+> out of a nominal aggregate needs the aggregate known `Discard` (D11); destructuring patterns consume their scrutinee,
+> which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
+> variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
+> open with RFC-0218). **Still reserved, kept as design text for review and not binding on implementation:** the rule
+> that a field linear for every instantiation forces the keyword on a generic type (D10), and the closure and
+> binding-level rules (D14, D15). The reasoning and the alternatives are in the decision register
+> (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
 > (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
 > (`architecture/reports/effects-generic-functions-computed-vs-explicit.md`).
 
