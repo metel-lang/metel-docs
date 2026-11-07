@@ -1467,7 +1467,7 @@ implementation).
   it also removes the `{ x = 1 }` record-versus-block collision. Label spelling is RFC-0188 and the row declaration
   change is RFC-0186. Open: whether types and bounds also take `{| |}`, the transition policy, the empty-record spelling.
 - **RFC-0188** *(draft, split from RFC-0187 2026-10-26)* — Label syntax — labels as compile-time values written `.name`
-  and label variables `.[L]` (spellings for RFC-0175's open questions 1 to 4, RFC-0151's numeric labels and RFC-0174).
+  and label variables `.[L]` (the spelling RFC-0175 uses, RFC-0151's numeric labels and RFC-0174).
   A row field is a label too, `.x` (RFC-0221). Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
   in favour of RFC-0186.
 - **RFC-0189** *(under-review 2026-10-28, #1661; opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
