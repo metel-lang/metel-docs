@@ -71,6 +71,10 @@ RFC text written during the Copy and Clone settlement already uses `pub` in exam
 1. **Hard error or one-minor warning for `public`: resolved 2026-11-06.** A hard error with a fix-it, as RFC-0098 did.
 2. **A rewrite tool.** Whether `metel fmt` or a dedicated `--fix` applies the rename, or only the diagnostic's fix-it does.
 3. **Docs and versioned snapshots.** Whether versioned documentation of released versions keeps `public`.
+4. **Dismantling-method marker (D13, RFC-0089 section 2).** A type with a `Drop` impl is dismantled only by an inherent
+  method in its defining module whose receiver is an owned `self` carrying a marker. The marker's spelling is
+  undecided and is settled together with this RFC's surface renames, because both change declaration and receiver
+  syntax (candidates: `consume self`, `deinit self`, a `dismantle` keyword). It must not collide with `pub`.
 
 ---
 

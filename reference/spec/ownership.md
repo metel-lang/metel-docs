@@ -183,7 +183,7 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
 
-A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is consumed whole only by its own methods (those authored in its defining module that take an owned whole `self`), by total destructuring that suppresses only the outer destructor, and is otherwise never destructured, partially moved or used in a record spread. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
+A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is dismantled only by a marked dismantling method (an inherent method in its defining module whose receiver is an owned `self` carrying the dismantling marker), by total destructuring that suppresses only the outer destructor, and is otherwise never destructured, partially moved or used in a record spread, even in its own module. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -439,7 +439,7 @@ its narrowed residual type, including an empty residual, is legal.
 
 ##### Legality Rule {#spec.ownership.partial-moves.legality-2}
 
-A field of a `Drop` type may not be moved out, except by the total destructuring with which a type's own methods consume it (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)).
+A field of a `Drop` type may not be moved out, except by the total destructuring of a marked dismantling method (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)).
 
 <!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 

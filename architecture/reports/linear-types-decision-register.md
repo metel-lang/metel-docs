@@ -107,15 +107,16 @@ because the rest might be linear too. So:
 - **Structural** types (tuples, anonymous records) have no declaration, so they work field by field: moving a field
   out leaves a smaller structural type whose class is recomputed.
 - A pattern **consumes** the value it destructures. It does not leave a half-moved remainder behind.
-- A type with a destructor (`Drop`) is dismantled only by its own methods, and doing so skips the destructor:
+- A type with a destructor (`Drop`) is dismantled only by an explicitly marked method in its defining module, and doing so
+  skips the destructor (the marker's spelling is open; `consume self` is a placeholder):
 
 ```metel
 struct Logged<T> { value: T }
 extend<T: Discard> Logged<T>: Drop { fun drop(&var self) { log("gone"); } }
 
 extend<T> Logged<T> {
-    fun into_inner(self) -> T {
-        let Logged { value } := self;      // own method: allowed, destructor skipped
+    fun into_inner(consume self) -> T {    // marker, defining module only
+        let Logged { value } := self;      // allowed: destructor skipped
         value
     }
 }
@@ -155,7 +156,7 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D10 | A field that is linear for every instantiation (symbolic test) forces `linear` on a generic type. Projections count as parameter-dependent. | Reserved | No guard; a syntactic test; require the keyword for any generic with a linear-capable field | Medium | Moderate | D7 |
 | D11 | A partial move out of a nominal aggregate is legal only when it is known `Discard`. Structural types still narrow. | Reserved | Rust-style residuals; ban partial moves outright; per-field classes | Medium | Moderate | D2, D7 |
 | D12 | Destructuring patterns consume the scrutinee. Skipped fields must be `Discard`. Matching through a reference consumes nothing; a whole-value `_` consumes nothing. | Reserved | Rust's `..` leaves a residual | Medium | Moderate (it overrides implemented RFC-0137 pattern narrowing) | D11 |
-| D13 | `Drop` impls must prove the target `Discard`. A type's own methods (defining module, owned `self`) may dismantle it by total destructuring, which suppresses only the outer destructor. | Reserved | Rust-style ban; Swift-style explicit `discard self`; allow any method | Medium-Low | Moderate | D11, D12 |
+| D13 | `Drop` impls must prove the target `Discard`. A type with a `Drop` impl is dismantled only by an **explicitly marked** inherent method in its defining module taking an owned `self`, by total destructuring that suppresses only the outer destructor. The marker is illegal on borrowed receivers, aspect defaults, aspect impl methods and outside the defining module. Spelling settles with the `pub` sweep (RFC-0218). | **Accepted in design (2026-11-07); takes effect with D11 and D12, which stay reserved** | Implicit own-method authority; Rust-style ban; no conditional `Drop` (a `Drop` type must be `Discard` for every instantiation) | Medium | Moderate | D11, D12 |
 | D14 | A closure capturing a linear value must be declared `linear`. A non-`linear` function type is `Discard`. | Reserved (RFC-0194 is under review) | Infer linearity of closures; allow droppable linear closures | Medium-High | Moderate | D7 |
 | D15 | Binding-level qualifiers: `linear let`, `linear` parameters, returns and fields (RFC-0220). | Open (draft; needs a rewrite) | Not adding them; type-level only | Low | Cheap (draft) | D7, D11 |
 | D16 | The `dyn` erasure gate, native owning storage (`List<Tx>`), and `consume_each`'s contract. | Open (release gates) | Forbid at first | n/a | n/a | D7 |
@@ -178,7 +179,7 @@ D8 D9 D10       conditional keywords, bound repetition, guard
    |
   D12           patterns consume
    |
-  D13           Drop dismantling                              (most speculative)
+  D13           Drop dismantling by a marked method           (accepted in design; takes effect with D11, D12)
 D19 (pub states Discard)  depends on D7, D18; guards the public interface of D7
 D14 (closures)  depends on D7
 D15 (RFC-0220)  depends on D7, D11
@@ -238,8 +239,9 @@ In order of how much I would want more time on:
 
 1. **D7, computed generic classes (now accepted).** It is the only decision that touches every generic type, and it is the hardest
    to reverse once std is written. The comparison report puts the two models side by side.
-2. **D13, `Drop` dismantling.** The most speculative: no prior art handles `Drop` plus conditional capability this way,
-   and it needed three review rounds to reach a coherent form.
+2. **D13, `Drop` dismantling (accepted in design, marker spelling open).** The most speculative: no prior art handles
+   `Drop` plus conditional capability this way, and it needed three review rounds to reach a coherent form; the explicit
+   marker replaced the vaguer "own methods" boundary.
 3. **D12, patterns consume.** It is a deliberate divergence from Rust and it overrides an implemented v0.13.0
    behavior. The reason (the language reads `{ x, .. }` as consumption) is sound, but it is a language-feel decision,
    not a soundness one.

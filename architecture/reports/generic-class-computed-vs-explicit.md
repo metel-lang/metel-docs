@@ -105,7 +105,7 @@ struct Logged<T> { value: T }
 extend<T> Logged<T>: Drop { fun drop(&var self) { log("gone"); } }
 ```
 
-- **X:** the impl becomes conditional, `extend<T: Discard> Logged<T>: Drop`. Plus the own-method dismantling rule
+- **X:** the impl becomes conditional, `extend<T: Discard> Logged<T>: Drop`. Plus a marked dismantling method
   for `into_inner` (D13). **1.**
 - **Y (linear-ready):** `struct Logged<T: ?Discard>` (1), the conditional drop impl `T: Discard` (1), plus the same
   dismantling rule. **2.** (not ready: **0**, and `Logged<Tx>` is impossible)

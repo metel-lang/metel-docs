@@ -16,7 +16,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > (D9); a `pub` generic type states its `Discard` condition like `Copy` and `Clone`, with a conservative default (D19,
 > RFC-0206 section 6). **Reserved, kept as design text for review and not binding on implementation:** the rule that a
 > field linear for every instantiation forces the keyword on a generic type (D10); and the elimination rules (partial
-> moves need known `Discard`, consuming patterns, the `Drop` dismantling rule, structural narrowing). The reserved
+> moves need known `Discard`, consuming patterns, structural narrowing). The `Drop` dismantling rule is decided as an
+> explicit marked method (D13, spelling open with RFC-0218) and takes effect with the elimination rules. The reserved
 > rules return for acceptance with the Linear types theme. The reasoning and the alternatives are in the decision
 > register (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
 > (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
@@ -206,20 +207,21 @@ not depend on how the class was determined.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
-- A type with a `Drop` impl, conditional or not, is consumed whole only by its own methods, by **total destructuring
-  that suppresses the destructor**. A type's own methods are those authored in its defining module that take an owned
-  whole `self`: a `&self` or `&var self` receiver confers no permission, and an aspect default body never acquires it
-  through dispatch or instantiation (an aspect impl written in the defining module qualifies; a client's impl of its
-  own aspect on the type does not). Suppression affects only the outer destructor: a nested field's destructor still
-  runs when that field is skipped or dropped, and binding a field does not license dropping a bare `T`. Every field is bound or skipped (skipped fields `Discard`), and each bound field is
-  moved on or dropped. This is how a wrapper such as `Logged<T>` is unwrapped (`into_inner`), including for a linear
-  `T`, where no destructor applies. Outside its own methods such a type is never destructured, partially moved or used
-  in a record spread.
+- **A type with a `Drop` impl, conditional or not, is dismantled only by a marked method** (D13, decided 2026-11-07).
+  A *dismantling method* is an inherent method in the type's defining module whose receiver is an owned `self` carrying
+  the dismantling marker (the spelling is open and settles with the `pub` sweep, RFC-0218; it is written `consume self`
+  below as a placeholder). Its body destructures `self` totally: every field is bound or skipped (skipped fields
+  `Discard`), and each bound field is moved on or dropped. The outer destructor is **suppressed**; nested field
+  destructors still run when a field is skipped or dropped, and binding a field does not license dropping a bare `T`.
+  The marker is not allowed on `&self` or `&var self`, in an aspect default body, on an aspect impl method, or outside
+  the defining module. Without the marker such a type is never destructured, partially moved or used in a record
+  spread, even in its own module. Callers see an ordinary consuming method. This is how a wrapper such as `Logged<T>`
+  is unwrapped (`into_inner`), including for a linear `T`, where no destructor applies.
 - This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly).
 **Structural types are the exception.** An anonymous record or a tuple has no declaration: its class is computed from
 its components (as `Copy` is for a tuple), so a field move narrows it and the leftover's class is recomputed, with the
 obligation travelling with the moved value. Destructuring any aggregate and rebuilding an anonymous record or tuple from
-the pieces is available as an escape hatch (except for a type with a `Drop` impl outside its own methods).
+the pieces is available as an escape hatch (except for a type with a `Drop` impl outside a dismantling method).
 
 **`Clone` is not contraction (decided 2026-11-05).** `Clone` is explicit creation of another value, not the
 implicit duplication that linearity forbids, so a linear type may have a **written** `Clone`: the author asserts that
@@ -313,7 +315,7 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   no `T`, so its unconditional impl is legal), and a conditional `extend<T: Discard> Foo<T>: Drop` is the way to give a generic
   type a destructor without closing it to linear arguments. A conditional impl adds no bound to the type declaration.
   `Foo<Tx>` then exists, is linear and has no destructor. This is the same exclusion check as for `Copy` and `Drop` at
-  an instantiation (RFC-0213). A type with any `Drop` impl is consumed only by its own methods, by total destructuring that suppresses the destructor (section 2).
+  an instantiation (RFC-0213). A type with any `Drop` impl is dismantled only by a marked dismantling method, by total destructuring that suppresses the destructor (section 2).
 - **Methods.** In a generic impl the bound attaches to the method (`where T: Discard`), so `Option<Tx>` exists and
   `unwrap_or` is available only when `T: Discard`.
 - **Conformance.** An impl method's requirements must be entailed by the impl's bounds, as for any aspect (an impl
