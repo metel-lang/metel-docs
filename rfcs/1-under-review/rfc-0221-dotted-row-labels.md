@@ -7,7 +7,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
 updated: '2026-11-07'
 ---
 
-> **Status — under review (2026-11-07).** Committed to the v0.16.0 stage Call and record syntax (metel-core#1847); review still has open prerequisites (RFC-0151 section 6, the parser prototype).
+> **Status — under review (2026-11-07).** Committed to the v0.16.0 stage Call and record syntax (metel-core#1847); review still has an open prerequisite (the parser prototype). It does not depend on RFC-0151 (decided 2026-11-07): the empty brace group keeps today's rule, section 5.
 
 ## Summary
 
@@ -157,19 +157,18 @@ whose type is a record or struct and the group has no spread.
 
 ### 5. The empty record
 
-A dot cannot mark a field that does not exist, so the empty record has no dotted form. It needs none: `()` and
-`{}` are one type with one value (RFC-0151 §6), so an empty brace group is that value whether the parser reads it
-as an empty block or as an empty record.
+A dot cannot mark a field that does not exist, so the empty record has no dotted form, and it needs no new one. **This
+RFC does not change `{}`** (decided 2026-11-07, language owner): the rule in force today stays.
 
-- `{}` stays legal in every position. As the body of a function, an `if` or `else`, a loop or a match arm it
-  parses as a block, and elsewhere as a record, which is the rule in force today. Both readings have type
-  `()`, which is `{}`, so the choice is not observable. `let a: () := {}` and `fun f() -> {} {}` both
-  type-check, and the workarounds `({})` and `{ {} }` are not needed.
+- `{}` as the body of a function, an `if` or `else`, a loop or a match arm parses as a block, and elsewhere as a record.
+  A mismatch between the empty block and the empty record is a type error, never a silent wrong meaning, and the
+  workarounds `({})` and `{ {} }` stay.
 - No new delimiter is needed for the empty record (RFC-0187's `{| |}`).
 - The remaining mismatches are type errors on non-empty values, as before.
 
-This section depends on RFC-0151 §6. If that is not accepted, `{}` keeps today's position-dependent rule, where a
-mismatch is a type error and never a silent wrong meaning, and `({})` is the workaround.
+Making `()` and `{}` one type and one value (RFC-0151 §6) would remove the workarounds. That is a separate decision,
+and the text above works with or without it: if it is accepted later, an empty brace group becomes the same value
+under either reading and the workarounds are no longer needed.
 
 ---
 
@@ -195,7 +194,8 @@ mismatch is a type error and never a silent wrong meaning, and `({})` is the wor
 - **RFC-0189 (Per-label negative bounds):** entries become `!.x` / `!.x: T`. The whole-row form `!{ .a, .b: T }`
   is sugar for `{ !.a, !.b: T, .. }` as before.
 - **RFC-0151 (Tuples as numeric-label rows):** `{ .0 = a, .1 = b }` is what `(a, b)` denotes, with no special
-  lexical case. Its §6 makes `()` the empty row `{}`, which §5 below depends on.
+  lexical case. This RFC does not depend on RFC-0151. Its §6 (`()` is the empty row `{}`) would remove the `{}`
+  workarounds of §5 and is a separate decision.
 - **RFC-0216 (Constructing rows and residuals):** its computed-label literal `{ [field.name] = expr }` is a
   third spelling of a computed label; under this RFC it is `{ .[field.name] = expr }`. Its residual construction
   `T.{ ..R } { entries }` is a brace construction and falls under RFC-0100 §5 (see RFC-0100's open questions).
@@ -255,7 +255,6 @@ taken for the prototype, not estimated here.
 - Spec: records, patterns, types and row bounds. Rules that say "a field `x`" of a record are restated in terms
   of the label `.x`.
 - RFC-0188 amended (Interactions). RFC-0187 refused.
-- RFC-0151 §6 accepted with this RFC, or before it.
 - Error code for a bare record field, with a fixture each for literal, pattern, type and bound.
 - A migration tool or rewrite recipe, and fixtures and spec examples converted.
 
@@ -275,8 +274,8 @@ Before this leaves draft:
   allowed, and a group starting with a bare identifier never parses as a record.
 - `.x` is confirmed unambiguous against `..` spreads, float literals and every other brace-group entry.
 - A count of affected sites in fixtures and spec examples.
-- With RFC-0151 §6, `let a: () := {};`, `fun f() -> () { {} }` and `fun f() -> {} {}` type-check, and an
-  empty block and an empty record literal are the same value.
+- `{}` behaves as it does today in every position: a block where a block is required, a record elsewhere, with the
+  workarounds `({})` and `{ {} }` unchanged, and a fixture for each position.
 - The `.r` / `..r` slip: the row check rejects it when the expected row is known, and the lint fires when it is
   not.
 
