@@ -38,7 +38,7 @@ This is a design draft. Nothing here is accepted, and the grammar is unchanged u
 
 RFC-0100 prohibits `Type { x = 1 }` and `Enum::Variant { x = 1 }` in expression position (its §5) and replaces
 them with calls. If that lands, a brace group in expression position is a block or an anonymous record, and
-nothing else. The collision RFC-0187 describes is then between those two alone:
+nothing else. The collision that RFC-0187 (refused) described is then between those two alone:
 
 - A single pun `{ x }` is a block returning `x`. RFC-0187's workaround is the trailing comma `{ x, }`.
 - The empty literal `{}` is an empty block in body and arm positions and an empty record elsewhere (§5).
@@ -51,7 +51,7 @@ with no lookahead, no trailing-comma rule and no parentheses. That removes the p
 ### A label has two spellings
 
 RFC-0188 introduces `.name` for a label used as a value and keeps a plain identifier for the same label used as
-a field of a record. Its own numeric-label examples already write `{| .0 = a, .1 = b |}`, because `0 = a` cannot
+a field of a record. Its own numeric-label examples already write `.0 = a, .1 = b`, because `0 = a` cannot
 be a bare identifier, so a tuple's fields are dotted and a record's are not. RFC-0188 Open Question 1 asks
 whether `.x` should also be accepted in field position and recommends no, on the grounds that "a mandatory
 prefix would mark everything twice."
@@ -181,9 +181,8 @@ mismatch is a type error and never a silent wrong meaning, and `({})` is the wor
   open questions.
 - **RFC-0175 (Label Polymorphism):** a fixed label and a label variable share one slot, so `{ .[L]: T, ..R }`
   and `{ .x: T, ..R }` are the same shape.
-- **RFC-0187 (Anonymous record delimiters):** the pun collision is removed without a new delimiter, and the
-  empty record needs none (§5), so no case for a delimiter remains. Whether to refuse RFC-0187 is its own
-  review's decision; this RFC does not supersede it.
+- **RFC-0187 (Anonymous record delimiters, refused 2026-11-07):** this RFC removes the pun collision without a
+  new delimiter, and the empty record needs none (§5), so no case for a delimiter remained.
 - **RFC-0183 (Initialization-only walrus):** unchanged and still needed. Statement-only assignment removes the
   `f(x = 1)` and `if (x = 1)` expression hazards, and with RFC-0100 `f(x = 1)` is unambiguously a keyword
   argument. RFC-0183's tail-assignment rule has no bare-field case left to cover.
@@ -211,7 +210,7 @@ mismatch is a type error and never a silent wrong meaning, and `({})` is the wor
 | Dotted fields for structs and enums too | `Point { .x = 1 }` | The earlier form of this RFC. Dropped: RFC-0100 removes struct and enum brace construction, and a head already says whose fields they are, so the dot adds nothing there. |
 | A spelling for the empty record (`{\| \|}`) | `{\| \|}` for `{}` | Removes the position rule, but adds a special spelling for one value, and rewrites every `{}` value in current code. Unneeded once `()` and `{}` are one type (§5). |
 | Bare fields + statement-only assignment | `{ x = 1 }`, `{ x, }` for one pun | The smaller change. Leaves the pun needing a trailing comma and the label with two spellings. Viable if the label model is not adopted. |
-| `{\| … \|}` delimiters (RFC-0187) | `{\| x = 1 \|}` | Solves the pun and the empty record. Does not unify the label spelling, and adds a delimiter pair. Not exclusive of this RFC. |
+| `{\| … \|}` delimiters (RFC-0187, refused) | `{\| x = 1 \|}` | Solves the pun and the empty record. Does not unify the label spelling, and adds a delimiter pair. Not exclusive of this RFC. |
 | Bare projection lists | `Handle.{ fd, ..R }` | Simpler head rule, but then a list of labels is spelled two ways in one signature (`{ .fd, ..R }` and `Handle.{ fd, ..R }`), and RFC-0188's `!{.fd}` would differ from `.{ fd }`. Rejected. |
 | Dotted literals only | `{ .x = 1 }` literal, `{ x: T }` type | Cheaper in signatures. Keeps the second spelling at exactly the sites where a label variable is written. |
 | Zig-style | `.{ .x = 1 }` | Clashes with `..{` row-literal splices (RFC-0180) and dot paths (RFC-0099). Heavier. |
@@ -251,7 +250,7 @@ taken for the prototype, not estimated here.
   (`record_projection_expr`, `record_projection_type`, `open_record_projection_type`) take a `label`.
 - Spec: records, patterns, types and row bounds. Rules that say "a field `x`" of a record are restated in terms
   of the label `.x`.
-- RFC-0188 amended (Interactions). RFC-0187 left with no case, to be refused by its own review.
+- RFC-0188 amended (Interactions). RFC-0187 refused.
 - RFC-0151 §6 accepted with this RFC, or before it.
 - Error code for a bare record field, with a fixture each for literal, pattern, type and bound.
 - A migration tool or rewrite recipe, and fixtures and spec examples converted.

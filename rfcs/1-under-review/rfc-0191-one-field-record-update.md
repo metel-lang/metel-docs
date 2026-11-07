@@ -132,8 +132,8 @@ function the module writes, not a language feature.
   are read from the same declared bounds and equations as absence; nothing is inferred.
 - **RFC-0189 (negative row bounds).** `!x` proves absence (an addition); `x`, `x: T` prove
   presence. A bound with neither leaves `x` undetermined and the literal is rejected as before.
-- **RFC-0187 / RFC-0188 (delimiters and labels).** Examples use `{ }` and plain identifiers;
-  the rule is independent of both spellings.
+- **RFC-0188 / RFC-0221 (labels).** Examples use `{ }` and plain identifiers; under RFC-0221 a field is
+  `.a`. The rule is independent of the spelling.
 - **Field assignment.** `s.a := v` on an owned `var` place is unchanged and still the way to
   mutate in place. The update form builds a new record and does not require `var`.
 - **RFC-0117 / RFC-0137 (narrowing).** The result is a fresh anonymous record; no narrowing

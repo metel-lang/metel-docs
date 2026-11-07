@@ -1462,11 +1462,11 @@ implementation).
   respells the quantifier RFC-0125 reuses for packs; RFC-0146, RFC-0174 and RFC-0175 use the syntax it
   replaces. The single change to row declarations (RFC-0187 and RFC-0188 do not touch them). Tracked by
   metel-core#1597.
-- **RFC-0187** *(under review, v0.15.0; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
+- **RFC-0187** *(refused 2026-11-07; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
   written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
   the `({ x = 1 })` workaround). Syntax only: the semantics of records are unchanged. With RFC-0183's `=` assignment
   it also removes the `{ x = 1 }` record-versus-block collision. Label spelling is RFC-0188 and the row declaration
-  change is RFC-0186. Open: whether types and bounds also take `{| |}`, the transition policy, the empty-record spelling.
+  change is RFC-0186. Refused: RFC-0221 (dotted row labels) removes the single-pun collision and RFC-0151 §6 (`()` is `{}`) removes the empty-record case, so no delimiter is needed.
 - **RFC-0188** *(draft, split from RFC-0187 2026-10-26)* — Label syntax — labels as compile-time values written `.name`
   and label variables `.[L]` (the spelling RFC-0175 uses, RFC-0151's numeric labels and RFC-0174).
   A row field is a label too, `.x` (RFC-0221). Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped

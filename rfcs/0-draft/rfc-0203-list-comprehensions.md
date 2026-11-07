@@ -133,7 +133,7 @@ comprehension, matching the behaviour of `?` inside any block. Collecting `Resul
 
 1. There is no `FromIterator`/`collect` aspect in the corpus. Is that a prerequisite RFC, or
    part of this one?
-2. Is `{...}` for sets and maps acceptable given records already use `{...}` (RFC-0187)? A
+2. Is `{...}` for sets and maps acceptable given records already use `{...}` (RFC-0116)? A
    clash with anonymous-record delimiters is likely; the alternative is explicit
    `Set::from([... ])`.
 3. How should fallible element expressions collect: `[f(x)? for ...]` versus a

@@ -19,7 +19,7 @@ The semantics of label polymorphism (RFC-0175) and of rows (RFC-0121, RFC-0186) 
 here. This RFC is the syntax layer: it gives the spelling that RFC-0175's earlier draft left open, and RFC-0175 now
 defines the `Label` type that the spelling denotes.
 
-Examples write anonymous records as `{| … |}` (RFC-0187) so the empty record has a spelling, with dotted fields (RFC-0221), and row parameters as `record R` with `..R` (RFC-0186). The label spelling does not depend on either: with `{ … }` every non-empty example reads the same apart from those tokens.
+Examples write anonymous records as `{ … }` with dotted fields (RFC-0221) and row parameters as `record R` with `..R` (RFC-0186). The label spelling does not depend on either.
 
 This is a design draft. Nothing here is accepted, and the grammar is unchanged until it is.
 
@@ -60,19 +60,19 @@ A **label** is a compile-time atom, written with a leading dot where it appears 
 variable:
 
 - **`.name`** is a label literal.
-- **`.[L]`** is a label variable `L` (RFC-0175's kind), and `.[expr]` is reserved for a
+- **`.[L]`** is a label variable `L` (a `comptime` parameter of type `Label`, RFC-0175), and `.[expr]` is reserved for a
   compile-time label expression, to be defined by RFC-0174 if it needs one.
 
 They are used wherever a label appears as a value, an argument or a variable, and (as `.name`) as the label of a row field, which is RFC-0221's:
 
 ```metel
 // a label as an argument
-let id := get::<.id, _, i64>(record);
+let id := get(.id, record);
 
 // a label variable in a type, a literal and a selection
-fun get<L, R, T>(r: {| .[L]: T, ..R |}) -> T { r.[L] }
-fun single<L, T>(v: T) -> {| .[L]: T |} {| .[L] = v |}
-let one := single::<.id, i64>(5);
+fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T { r.[l] }
+fun single<V>(comptime l: Label, v: V) -> { .[l]: V } { { .[l] = v } }
+let one := single(.id, 5);
 ```
 
 The existing selection `r.x` is unchanged, and `r.[L]` is the computed form, the notation RFC-0175
@@ -84,11 +84,11 @@ compile time".
 
 ```metel
 // (a, b) is notation for the row below
-{| .0 = a, .1 = b |}
+{ .0 = a, .1 = b }
 ```
 
 **A field of a row is a label.** In an anonymous record literal, pattern, type, row bound, negative bound,
-row equation and projection list the field is written `.x`: `{| .x = 1 |}`, `Handle.{ .fd, ..R }`.
+row equation and projection list the field is written `.x`: `{ .x = 1 }`, `Handle.{ .fd, ..R }`.
 RFC-0221 owns that rule and its sites. Struct and enum construction, declarations and patterns keep bare
 names (RFC-0100).
 
@@ -103,21 +103,21 @@ so `m.put(.host, "a.com")` infers it from the argument. This example depends on 
 illustrative.
 
 ```metel
-record Rec<record R> { data: {| ..R |} }
+record Rec<record R> { data: { ..R } }
 
 extend<record R> Rec<..R> {
-        fun empty() -> Rec<..{| |}> { Rec(data = {| |}) }
+    fun empty() -> Rec<..{}> { Rec(data = {}) }
 
-    fun put<V>(self, comptime l: Label, v: V) -> Rec<..{| .[l]: V, ..R |}>
-    where R: !{| .[l] |}
+    fun put<V>(self, comptime l: Label, v: V) -> Rec<..{ .[l]: V, ..R }>
+    where R: !{ .[l] }
     {
-        Rec(data = {| .[l] = v, ..self.data |})
+        Rec(data = { .[l] = v, ..self.data })
     }
 
-    fun get<V, record Rest>(&self, comptime l: Label) -> &V where R = {| .[l]: V, ..Rest |} { &self.data.[l] }
+    fun get<V, record Rest>(&self, comptime l: Label) -> &V where R = { .[l]: V, ..Rest } { &self.data.[l] }
 }
 
-let m := Rec::empty().put(.host, "a.com").put(.port, 8080);   // Rec<..{| .host: String, .port: i64 |}>
+let m := Rec::empty().put(.host, "a.com").put(.port, 8080);   // Rec<..{ .host: String, .port: i64 }>
 ```
 
 Every `put` changes the type, so this is a persistent, statically keyed map, not a runtime dictionary.
@@ -144,7 +144,7 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 - **RFC-0174 (compile-time iteration over a row's fields):** a label value can be written `.name`.
 - **RFC-0186 (Rows as an operator on record parameters):** supplies the row spelling in the examples
   (`record R`, `..R`). A label binder needs no keyword: `.[L]` marks a label at its uses.
-- **RFC-0187 (Anonymous record delimiters):** supplies the `{| … |}` spelling in the examples.
+
 - **RFC-0221 (Dotted Row Labels):** makes a row field a label, `.x`, and answers this RFC's former open
   questions 1 and 2 (a dotted field is required, and label lists in projections and negative bounds are dotted).
 - **RFC-0121 (Open Rows):** a bare identifier in projection braces is "always a field label, never a
@@ -192,7 +192,7 @@ Before this leaves draft:
 
 - RFC-0175 — Label Polymorphism; RFC-0132 §3.6 — label parameters; RFC-0151 — Tuples as Numeric-Label Rows;
   RFC-0174 — Compile-time iteration over a row's fields; RFC-0091 — Linear Records.
-- RFC-0186 — Rows as an operator on record parameters; RFC-0187 — Anonymous record delimiters.
+- RFC-0186 — Rows as an operator on record parameters.
 - RFC-0121 — Open Rows (the projection-brace rule); RFC-0170 — Literal types and discriminated
   structural unions.
 - RFC-0099 — Dot-separated module paths; RFC-0100 — Constructor-call construction.

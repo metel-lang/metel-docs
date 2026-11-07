@@ -122,8 +122,8 @@ not declared generics, so they are neither counted nor pinnable.
 - **RFC-0138 (generic functions as first-class values).** Turbofish stays fused to the call
   (`spec.functions.turbofish.legality-3`); instantiation without a call remains out of scope.
 - **RFC-0099 (`::<` becomes `.<`).** Examples use `::<`; the rule does not depend on spelling.
-- **RFC-0187 / RFC-0188.** Records in type-argument position are written with whatever delimiter
-  RFC-0187 settles on (`{| … |}` if it extends to types, which is one of its open questions).
+- **RFC-0188 / RFC-0221.** Records in type-argument position are written `{ … }`, with fields spelled
+  `.x` under RFC-0221.
 - **RFC-0189.** Negative bounds are checked on the argument like positive ones.
 
 ---

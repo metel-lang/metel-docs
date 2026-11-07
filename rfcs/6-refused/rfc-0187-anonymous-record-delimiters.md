@@ -2,8 +2,8 @@
 id: rfc-0187
 title: "Anonymous record delimiters"
 date: '2026-10-21'
-status: under-review
-updated: '2026-10-30'
+status: refused
+updated: '2026-11-07'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 ---
 
@@ -12,6 +12,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1639'
 > **Scope (2026-10-26, revised 2026-10-27).** This RFC originally also proposed label syntax (`.name`,
 > `.[L]`) and rows as record types. The label spelling is now RFC-0188; the row declaration change is
 > RFC-0186. This RFC keeps only the record delimiters.
+
+> **Status — refused (2026-11-07).** No case remains: RFC-0221 (dotted row labels) removes the single-pun collision, RFC-0151 section 6 makes () and {} one type so the empty record needs no spelling, and RFC-0183 makes assignment a statement.
 
 ## Summary
 

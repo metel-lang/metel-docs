@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**221 RFCs total.** 38 draft, 57 under review, 15 accepted, 2 integrated (112 live), 79 implemented, 15 superseded, 15 refused (109 settled).
+**221 RFCs total.** 38 draft, 56 under review, 15 accepted, 2 integrated (111 live), 79 implemented, 15 superseded, 16 refused (110 settled).
 
 ## Draft (38)
 
@@ -56,7 +56,7 @@ the curated thematic map.
 - **RFC-0221** — Dotted Row Labels (`0-draft` ; rfcs/0-draft/rfc-0221-dotted-row-labels.md ; date 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
-## Under Review (57)
+## Under Review (56)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -98,7 +98,6 @@ the curated thematic map.
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-11-07)
 - **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-30)
-- **RFC-0187** — Anonymous record delimiters (`1-under-review` ; rfcs/1-under-review/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-10-30)
 - **RFC-0189** — Per-Label Negative Row Bounds (`1-under-review` ; rfcs/1-under-review/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
 - **RFC-0191** — One-Field Record Update (`1-under-review` ; rfcs/1-under-review/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-10-29)
@@ -239,7 +238,7 @@ the curated thematic map.
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
 
-## Refused (15)
+## Refused (16)
 
 - **RFC-0025** — Region Allocation (`6-refused` ; rfcs/6-refused/rfc-0025-region-allocation.md ; date 2026-05-24)
 - **RFC-0028** — Memory and Reference Model (`6-refused` ; rfcs/6-refused/rfc-0028-memory-and-reference-model.md ; date 2026-05-24)
@@ -256,3 +255,4 @@ the curated thematic map.
 - **RFC-0086** — Outlives-of-Bindings Sugar (`6-refused` ; rfcs/6-refused/rfc-0086-borrow-outlives-sugar.md ; date 2026-07-02)
 - **RFC-0087** — Universal Own Regions (`6-refused` ; rfcs/6-refused/rfc-0087-universal-own-regions.md ; date 2026-07-02)
 - **RFC-0135** — Multiplicity for Ordinary Types (`6-refused` ; rfcs/6-refused/rfc-0135-multiplicity-for-ordinary-types.md ; date 2026-08-13 ; updated 2026-11-02)
+- **RFC-0187** — Anonymous record delimiters (`6-refused` ; rfcs/6-refused/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-11-07)

@@ -156,9 +156,8 @@ literals or patterns.
   has contradictory entries across them (`x` against `!x`, or `x: T` against `!x: T`). A typed
   negative alone proves nothing against a positive entry of another type (`!x: T` and `x: U`
   overlap). No new coherence rule; the existing rule now reads entries instead of whole bounds.
-- **Delimiters and labels.** Row bounds are written with whichever delimiter RFC-0187 settles on
-  for records; entries use whatever label spelling RFC-0188 settles on. Examples here use `{ … }`
-  and plain identifiers.
+- **Delimiters and labels.** Row bounds use `{ … }`; entries use the label spelling of RFC-0188, and RFC-0221
+  writes a record field as `.x`, so an entry `!x` is `!.x` there. Examples here use plain identifiers.
 - **Field-wise bounds (RFC-0123, RFC-0186).** `..R: A` is a constraint on the members of a
   record parameter and is unaffected.
 
@@ -202,7 +201,7 @@ literals or patterns.
   example uses both.
 - RFC-0072 (Negative Bounds): the `!Aspect` form, whose `!` this reuses.
 - RFC-0165 (Structural Union Types): only for the later `!x: A | B` shorthand.
-- RFC-0187, RFC-0188: record delimiters and label spelling, independent of this RFC.
+- RFC-0188, RFC-0221: label spelling and dotted row labels, independent of this RFC.
 
 ---
 
