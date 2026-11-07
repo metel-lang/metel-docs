@@ -16,6 +16,8 @@ coverage:
   "3.4": { spec: "spec.declarations.structs.receiver-forms.legality-1" }
 ---
 
+> **Amended by RFC-0218 (2026-11-07).** Section 2 (`pub` to `public`) is reversed: the visibility keyword is `pub` again and `public` is its reserved legacy spelling. Sections 1 and 3 stand.
+
 > **Status — accepted (2026-07-14).** Reviewed and revised: extend Type / extend Type: Aspect (Swift-precedent, settles the inherent-impl gap an earlier with/without draft left open), negative impls folded into the same clause via the existing bound-negation !, identifier-collision audit noted for implementation. No open questions block it.
 
 > **Status — integrated (2026-07-14).** Integrated into spec: `public`/`var`/`extend` surface keyword renames

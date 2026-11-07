@@ -559,7 +559,7 @@ provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
 
 ## Visibility
 
-Declarations are module-private by default. [A declaration is accessible from outside its module only if it is annotated with `public`](#spec.modules.visibility.legality-1).
+Declarations are module-private by default. [A declaration is accessible from outside its module only if it is annotated with `pub`](#spec.modules.visibility.legality-1).
 
 ```metel
 public struct Token { public kind: i64, span: i64 }
@@ -580,7 +580,7 @@ fun main() -> i64 {
 
 > **Gap** GAP-MODULES-003
 
-Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; [add `public` on each field that should be accessible outside the declaring module](#spec.modules.visibility.legality-1).
+Struct field visibility is independent from the struct's own visibility. Fields are module-private by default; [add `pub` on each field that should be accessible outside the declaring module](#spec.modules.visibility.legality-1).
 
 ```metel
 public struct Token {
@@ -606,25 +606,31 @@ signature](#spec.modules.visibility.legality-8), so it never becomes part of the
 
 Within a module, all names defined in that module are accessible without qualification, including private names.
 
-Modules do not have their own visibility annotation. Module-level access control is handled entirely by `public` on individual items.
+Modules do not have their own visibility annotation. Module-level access control is handled entirely by `pub` on individual items.
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.modules.visibility.legality-1}
 
-Only declarations marked `public` are accessible from outside their declaring module; a
+Only declarations marked `pub` are accessible from outside their declaring module; a
 struct field is accessible outside that module only when both the field itself and its
-enclosing struct are public. A `public` field on a struct that is not itself `public`
+enclosing struct are `pub`. A `pub` field on a struct that is not itself `pub`
 never becomes reachable across a module boundary, regardless of how a value of that
-struct's type was obtained (e.g. returned from a public function that never names the
-struct type itself).
+struct's type was obtained (e.g. returned from a `pub` function that never names the
+struct type itself). `public` is a reserved legacy spelling and is a parse error.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1837" reason="RFC-0218: the grammar still spells the visibility keyword public until the pub sweep lands" -->
 
 <!-- rfc.py:last_reviewed fee29158f82d543baecf5b42642ccebeff2cfde8 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0218](../../rfcs/3-integrated/rfc-0218-spell-visibility-pub.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1837: RFC-0218: the grammar still spells the visibility keyword public until the pub sweep lands_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>

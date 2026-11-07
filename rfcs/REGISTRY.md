@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**221 RFCs total.** 37 draft, 57 under review, 15 accepted, 2 integrated (111 live), 79 implemented, 15 superseded, 16 refused (110 settled).
+**221 RFCs total.** 37 draft, 56 under review, 15 accepted, 3 integrated (111 live), 79 implemented, 15 superseded, 16 refused (110 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
-## Under Review (57)
+## Under Review (56)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -110,7 +110,6 @@ the curated thematic map.
 - **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
 - **RFC-0217** — Row Templates for Aspects on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0217-row-templates-for-aspects-on-residuals.md ; date 2026-11-06 ; updated 2026-11-06)
-- **RFC-0218** — Spell Visibility pub (`1-under-review` ; rfcs/1-under-review/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0221** — Dotted Row Labels (`1-under-review` ; rfcs/1-under-review/rfc-0221-dotted-row-labels.md ; date 2026-11-07 ; updated 2026-11-07)
@@ -133,10 +132,11 @@ the curated thematic map.
 - **RFC-0212** — Aspect Declaration Properties (`2-accepted` ; rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-05)
 - **RFC-0213** — Super-Aspects (`2-accepted` ; rfcs/2-accepted/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-05)
 
-## Integrated (2)
+## Integrated (3)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
+- **RFC-0218** — Spell Visibility pub (`3-integrated` ; rfcs/3-integrated/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-07 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1837)
 
 ## Implemented (79)
 
