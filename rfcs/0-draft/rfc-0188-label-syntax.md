@@ -11,16 +11,14 @@ status: draft
 
 ## Summary
 
-**A label as a compile-time value is written `.name`**, and a label variable `.[L]`. Ordinary
-fields keep their plain identifier. This is the spelling that label polymorphism (RFC-0175),
+**A label as a compile-time value is written `.name`**, and a label variable `.[L]`. A field of a row
+is a label, so it is written `.name` too (RFC-0221). This is the spelling that label polymorphism (RFC-0175),
 tuples as numeric-label rows (RFC-0151) and compile-time field iteration (RFC-0174) are missing.
 
 The semantics of label polymorphism (RFC-0175) and of rows (RFC-0121, RFC-0186) are not changed
 here. This RFC is the syntax layer, and it answers RFC-0175's open questions 1 to 4 on spelling.
 
-Examples write records as `{| … |}` (RFC-0187) and row parameters as `record R` with `..R`
-(RFC-0186). The label spelling does not depend on either: with the current `{ … }` and `row R`
-every example reads the same apart from those tokens.
+Examples write anonymous records as `{| … |}` (RFC-0187) so the empty record has a spelling, with dotted fields (RFC-0221), and row parameters as `record R` with `..R` (RFC-0186). The label spelling does not depend on either: with `{ … }` every non-empty example reads the same apart from those tokens.
 
 This is a design draft. Nothing here is accepted, and the grammar is unchanged until it is.
 
@@ -28,7 +26,7 @@ This is a design draft. Nothing here is accepted, and the grammar is unchanged u
 
 ## Motivation
 
-### Labels have no spelling of their own of their own
+### Labels have no spelling of their own
 
 A field name in a record is a bare identifier. That is unambiguous while labels are always fixed in
 the source. Three proposals need a label to be a value or a variable:
@@ -41,6 +39,9 @@ the source. Three proposals need a label to be a value or a variable:
   which today is not a record at all, since `0 = a` is not an identifier field.
 - **RFC-0174 (compile-time iteration over a row's fields, `1-under-review`)** needs a way to name a
   label as a value.
+
+Once a label has a spelling of its own, a row field written as a bare identifier is a second spelling of the
+same thing. RFC-0221 removes it, so there is one way to write a label wherever it appears.
 
 RFC-0116 and RFC-0121 hit the same wall once already. RFC-0121 §1 and RFC-0116's projection section record that a
 bare identifier in projection braces had to be "always a field label, never a row variable", because
@@ -60,7 +61,7 @@ variable:
 - **`.[L]`** is a label variable `L` (RFC-0175's kind), and `.[expr]` is reserved for a
   compile-time label expression, to be defined by RFC-0174 if it needs one.
 
-They are used in exactly the positions where a label is not simply the field's own name:
+They are used wherever a label appears as a value, an argument or a variable, and (as `.name`) as the label of a row field, which is RFC-0221's:
 
 ```metel
 // a label as an argument
@@ -73,8 +74,9 @@ let one := single::<.id, i64>(5);
 ```
 
 The existing selection `r.x` is unchanged, and `r.[L]` is the computed form, the notation RFC-0175
-and RFC-0091 already use. Reading is `r.x` and `r.[L]`, and declaring a literal label is `.x`, so
-the dot marks "a field" and the brackets mark "computed at compile time".
+and RFC-0091 already use. Selection is a value followed by a label: `r.x` is `r` and the label `.x`, and
+`r.[L]` is `r` and the label variable `.[L]`. The dot marks "a label" and the brackets mark "computed at
+compile time".
 
 **Numeric labels** (RFC-0151) are `.0`, `.1`, matching the existing `t.0` access:
 
@@ -83,9 +85,10 @@ the dot marks "a field" and the brackets mark "computed at compile time".
 {| .0 = a, .1 = b |}
 ```
 
-Ordinary field entries keep the plain identifier: `{| x = 1 |}` is not written `{| .x = 1 |}`.
-Under `{| … |}` a field is already distinguished from a block, so a mandatory prefix would mark
-everything twice. Whether `.x` should also be accepted in field position is open question 1.
+**A field of a row is a label.** In an anonymous record literal, pattern, type, row bound, negative bound,
+row equation and projection list the field is written `.x`: `{| .x = 1 |}`, `Handle.{ .fd, ..R }`.
+RFC-0221 owns that rule and its sites. Struct and enum construction, declarations and patterns keep bare
+names (RFC-0100).
 
 **This RFC does not define the label kind.** What `.[L]` ranges over, label equality, ownership of
 a drained field and the meaning of `r.[L]` for a non-`Copy` field are RFC-0175's, and its open
@@ -113,7 +116,7 @@ extend<record R> Rec<..R> {
     fun get<L, V, record Rest>(&self, l: .[L]) -> &V where R = {| .[L]: V, ..Rest |} { &self.data.[L] }
 }
 
-let m := Rec::empty().put(.host, "a.com").put(.port, 8080);   // Rec<..{| host: String, port: i64 |}>
+let m := Rec::empty().put(.host, "a.com").put(.port, 8080);   // Rec<..{| .host: String, .port: i64 |}>
 ```
 
 Every `put` changes the type, so this is a persistent, statically keyed map, not a runtime dictionary.
@@ -141,6 +144,8 @@ Every `put` changes the type, so this is a persistent, statically keyed map, not
 - **RFC-0186 (Rows as an operator on record parameters):** supplies the row spelling in the examples
   (`record R`, `..R`). A label binder needs no keyword: `.[L]` marks a label at its uses.
 - **RFC-0187 (Anonymous record delimiters):** supplies the `{| … |}` spelling in the examples.
+- **RFC-0221 (Dotted Row Labels):** makes a row field a label, `.x`, and answers this RFC's former open
+  questions 1 and 2 (a dotted field is required, and label lists in projections and negative bounds are dotted).
 - **RFC-0121 (Open Rows):** a bare identifier in projection braces is "always a field label, never a
   row variable"; a label variable `.[L]` carries its own marker for the same reason a row variable
   carries `..`.
@@ -158,7 +163,8 @@ nothing to migrate. It is a language-visible addition and so a minor version whe
 
 ## Changes on Acceptance
 
-- `grammar.pest` and the generated `grammar.md`: label literals and `.[ ]`.
+- `grammar.pest` and the generated `grammar.md`: label literals and `.[ ]`. Row-field positions take a label
+  under RFC-0221.
 - Spec: expressions (selection by label) and types (label literals).
 - RFC-0175 amended.
 - Fixtures for each label position, and `.[L]` once RFC-0175 is integrated.
@@ -167,13 +173,8 @@ nothing to migrate. It is a language-visible addition and so a minor version whe
 
 ## Open Questions
 
-1. **Dot in field position:** should a field entry also accept `.x` as an equivalent spelling of
-   `x`? Recommended no: one way to write a field.
-2. **Label lists:** projections `Handle.{ fd }` and negative bounds `!{| token |}` list label names
-   without values. Should they use `.fd`, or stay plain? Recommended plain, since `.{` and `!`
-   already mark them.
-3. **`.[expr]`:** is a computed label beyond a variable needed now, or only when RFC-0174 asks for it?
-4. **A label-typed parameter** (`l: .[L]`, a label literal being its own singleton type) so a call
+1. **`.[expr]`:** is a computed label beyond a variable needed now, or only when RFC-0174 asks for it?
+2. **A label-typed parameter** (`l: .[L]`, a label literal being its own singleton type) so a call
    can write `m.put(.host, v)`. Alternatives are the turbofish only, or a parameter pattern
    `fun put<L, V>(self, .[L], v: V)`. This interacts with RFC-0170's literal types.
 
