@@ -53,7 +53,7 @@ the curated thematic map.
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0214** — Aspect Impls for Residuals (`0-draft` ; rfcs/0-draft/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04)
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05)
-- **RFC-0221** — Dotted Field Entries (`0-draft` ; rfcs/0-draft/rfc-0221-dotted-field-entries.md ; date 2026-11-07)
+- **RFC-0221** — Dotted Record Fields (`0-draft` ; rfcs/0-draft/rfc-0221-dotted-record-fields.md ; date 2026-11-07)
 
 ## Under Review (57)
 

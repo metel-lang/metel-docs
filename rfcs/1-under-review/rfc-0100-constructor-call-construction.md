@@ -45,9 +45,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 
 `Type(args)` call-shaped syntax replaces `Type { field: value }` struct literals at construction sites. The RFC's real deliverable isn't the struct-literal rename — it's **general keyword arguments for function calls**, spelled `name = value`, since positional-only construction is unreadable beyond one or two fields, and struct construction is just the first, motivating use of that mechanism. Like RFC-0099, this is not a pure token/reordering change: keyword arguments occupy a grammar position already spoken for, and this RFC has to settle that before the feature is well-formed (§3) — though the `=` spelling adopted here trades the original, severe collision with type ascription (RFC-0023) for a much smaller one with assignment-as-an-expression. Raises (and resolves) a symmetry question against pattern-matching destructuring, which keeps its current syntax unchanged.
 
-The call is the only way to construct a struct: the brace form `Type { field = value }` is prohibited (§5), and
-`Type(args)` is a call of the constructor function that the `Construct` aspect (RFC-0114) provides (§7), with a
-compiler-synthesized default for types that have no invariant.
+The call is the only way to construct a struct or an enum struct-variant: the brace form `Type { field = value }`
+is prohibited (§5). For a struct, `Type(args)` is a call of the constructor function that the `Construct` aspect
+(RFC-0114) provides (§7), with a compiler-synthesized default for types that have no invariant. For an enum
+variant, `Enum::Variant(args)` builds the variant directly.
 
 ---
 
@@ -79,6 +80,15 @@ let t := Token(value = "x".to_string(), secret = "shh".to_string());
 
 The call is the only way to construct a struct. `IntBox { value = 42 }` is a compile error (§5), and the call
 is a call of the constructor function that the `Construct` aspect provides (§7).
+
+An enum variant with named fields is built the same way. Today it takes the brace form
+(`enum_variant = ident ~ ("{" ~ struct_fields ~ "}")?`, and `Result::Ok { value = "42" }` in the fixtures):
+
+```metel
+enum Shape { Circle { r: f64 }, Rect { w: f64, h: f64 } }
+let a := Shape::Rect(w = 2.0, h = 3.0);       // was Shape::Rect { w = 2.0, h = 3.0 }
+let b := Shape::Circle(1.5);                  // one-field positional sugar, as for a struct
+```
 
 **`=`, not `:`, and for a reason that is not aesthetic.** A keyword argument binds a value
 to a name — it *defines*, it does not *classify* — so it takes `=` under the separator
@@ -189,20 +199,24 @@ asymmetry argued below is therefore purely about braces-versus-parens.
 
 ## 5. Coexistence with the old literal syntax
 
-**Brace construction of a struct is prohibited.** `Type { field = value }` in expression position is a
-compile error with a targeted diagnostic ("construct a struct with a call: `Type(field = value)`"). The rule
-applies to every struct, whether or not it implements `Construct` (§7), for three reasons:
+**Brace construction of a struct or an enum struct-variant is prohibited.** `Type { field = value }` and
+`Enum::Variant { field = value }` in expression position are compile errors with a targeted diagnostic
+("construct with a call: `Type(field = value)`"). The rule applies to every struct, whether or not it
+implements `Construct` (§7), and to every enum variant, for these reasons:
 
-1. **One spelling per action** (below).
+1. **One spelling per action** (below). This covers structs and variants alike.
 2. **Braces read as inert data, but construction runs code.** `construct` may normalise or validate, so
    `SortedPair { small = 3, big = 1 }` can evaluate to `small = 1, big = 3`. RFC-0114 §2 records this as the
-   cost the brace form carries and the call form does not. A call reads as a call.
+   cost the brace form carries and the call form does not. A call reads as a call. (Structs only: a variant
+   has no `construct`.)
 3. **The spelling must not depend on whether a type has an invariant.** If only types with a non-default
    `Construct` impl required the call form (RFC-0114's fallback), adding an invariant to a type would change
-   every construction site of it. Under this rule it changes none.
+   every construction site of it. Under this rule it changes none. (Structs only.)
+4. **No brace expression is left except the anonymous record.** A brace group in expression position is then
+   always an anonymous record or a block, and never a construction that needs a type path to be read.
 
-Braces after a type name remain legal in declarations (`struct Point { … }`) and in patterns (§4). They are no
-longer an expression.
+Braces after a type name remain legal in declarations (`struct Point { … }`, `enum Shape { Rect { … } }`) and
+in patterns (§4). They are no longer an expression.
 
 **The old `Type { field: value }` literal syntax is retired, not kept as a second valid spelling.** Keeping both was considered (see Alternatives) and rejected: having two equally-valid ways to construct any struct is a worse ergonomic outcome than a one-time mechanical migration, and this project's own precedent (RFC-0042 §D1: "the language keeps only one binding introducer... does not carry a transition alias") already establishes that a clean single spelling is preferred over a permanent dual-syntax compromise when a rename like this ships.
 
@@ -298,6 +312,10 @@ field names here are parameter names, not labels.
    not changed here. RFC-0114 open question 8 asks whether that rule is enough once `construct` is
    public, and stays RFC-0114's.
 
+**Enum variants.** `Enum::Variant(args)` collects keyword and positional arguments exactly as items 1 and 6
+do, and builds the variant directly. Enums have no `Construct` (RFC-0114 §8 scopes it to structs), so items
+2 to 5 do not apply to them, and there is no spread form: a variant has no record to be built from.
+
 **Dependency on RFC-0114.** RFC-0114 is `0-draft`. This section states the contract the call has with it.
 If RFC-0114 is not accepted, `Type(args)` builds the struct directly, the synthesized default is the whole
 behaviour, and nothing else in this RFC changes. RFC-0114 stays independent of this RFC in the other
@@ -352,12 +370,9 @@ What actually remains open:
   Unaddressed throughout, and the one piece of this RFC that is pure mechanical work rather
   than design. The rewrite is `Type { f = v }` to `Type(f = v)`, and a bare brace form becomes the targeted
   error of §5.
-- **Enum struct-variants.** The grammar gives an enum variant a braced field list
-  (`enum_variant = ident ~ ("{" ~ struct_fields ~ "}")?`), and they are built with the brace form today
-  (`Result::Ok { value = "42" }` in the fixtures). This RFC prohibits the brace form for structs and says
-  nothing about variants. Recommended: the same prohibition and the same call, `Result::Ok(value = "42")`,
-  with no `Construct` involved (RFC-0114 §8 scopes it to structs). Leaving variants on braces would keep a
-  brace expression in the language for one case. This is the one question that changes the extent of §5.
+- **RFC-0216's residual construction.** `T.{ ..R } { entries }` (RFC-0216 §2) is a brace expression after a
+  type head, so §5 prohibits it. It should take the spread call, `T.{ ..R }(..record)`, with the same
+  defining-module restriction. RFC-0216 would be amended; this RFC does not decide it.
 - **Spread in call arguments (§7 item 5).** `Type(..r)` adds a spread argument to `call_arg`. It must be
   checked against RFC-0125's pack expansion, which also uses `..`, and the rule when it is combined with
   keyword arguments (`Type(..r, x = 5)`: override, or an error as RFC-0191's record update decides) is not
@@ -386,8 +401,8 @@ are now known to be separator-independent, so this revision does not reopen them
   `Type(args)` calls (§7), the synthesized default, and the result-handling rule. `0-draft`; a soft dependency
   (§7). RFC-0114 does not require this RFC (its §2), and its fallback of banning the literal only for types with
   a non-default impl is rejected here (§5).
-- RFC-0221 (Dotted Field Entries, draft) — dots the fields of anonymous records. Struct construction here
-  uses parameter names and is unaffected (§7).
+- RFC-0221 (Dotted Record Fields, draft) — dots the fields of anonymous records only. Struct and enum
+  construction here uses parameter names and is unaffected (§7); `Type(..r)` takes a dotted record.
 - RFC-0098 (Surface Keyword Renames) — sibling surface-syntax RFC from the same review; independent of this one (no shared grammar production, no shared open question).
 - RFC-0099 (Dot-Separated Module Paths) — sibling surface-syntax RFC from the same review; independent of this one.
 - RFC-0101 (Grammar-Enforced Naming Case Conventions) — reviewed alongside this RFC. It was cited as
