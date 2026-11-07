@@ -7,20 +7,22 @@ status: draft
 
 ## Summary
 
-**A field of an anonymous record is written as a label: `.name`.** In an anonymous record literal, pattern,
-type, row bound and row equation, the field is `.x`, never a bare `x`. Field selection is unchanged: `p.x` is
-`p` followed by the label `.x`.
+**A label of a row is written `.name`.** In an anonymous record literal, pattern, type, row bound and row
+equation, and in a projection list (`Handle.{ .fd, ..R }`), the label is `.x`, never a bare `x`. Field selection
+is unchanged: `p.x` is `p` followed by the label `.x`.
 
 ```metel
 let p := { .x = 1.0, .y = 2.0 };                 // was { x = 1.0, y = 2.0 }
 let { .x, .y } := p;                             // was let { x, y } := p;
 fun norm<record R>(v: { .x: f64, ..R }) -> f64   // was { x: f64, ..R }
+fun read<record R>(h: Handle.{ .fd, ..R })     // was Handle.{ fd, ..R }
 ```
 
-Structs and enums are **not** dotted. Their construction is the call of RFC-0100 (`Point(x = 1.0, y = 2.0)`),
-their declarations and their patterns keep bare field names, and a projection list with a nominal head
-(`Handle.{ fd, ..R }`) stays bare. The rule is that a field name is dotted when no nominal head says whose
-fields they are. An anonymous record has no head, and it is where a label can be a variable (`.[L]`, RFC-0188).
+The rule: **a name is dotted when it is a label of a row, and bare when it is a member that a nominal type
+declares for itself.** Struct and enum construction is the call of RFC-0100 (`Point(x = 1.0, y = 2.0)`), and
+struct and enum declarations and patterns keep bare names. Those names are the type's own parameters. An
+anonymous record and a projection list are views of a row, which is where a label can be a variable
+(`.[L]`, RFC-0188).
 
 This is the field-entry half of RFC-0188. RFC-0188 spells a label `.name` and `.[L]` but leaves the fields of an
 anonymous record bare. This RFC makes the label spelling the only spelling there. Nothing here changes the
@@ -72,13 +74,16 @@ RFC-0183 states the separator invariant: `:=` when the left-hand side is a name 
 it is a place, slot or label that already exists. In `{ x = x }` the same word appears twice with different
 roles. `{ .x = x }` shows the roles: the left is a label, the right is a variable.
 
-### Why records only
+### Where the dot applies
 
-A struct's field names are parameter names of its constructor (RFC-0100 §7), and the type path that heads every
-struct pattern, declaration and projection says whose fields they are. A bare name there is unambiguous and
-carries no extra information if dotted. An anonymous record has no head. Its fields are labels of a row, they
-can be label variables, and they take part in row bounds and equations (RFC-0121, RFC-0189). That is the only
-place where the dot says something the surrounding syntax does not.
+A struct's field names are parameter names of its constructor (RFC-0100 §7), and the type path that heads a
+struct declaration, call or pattern says whose members they are. A bare name there is unambiguous and carries no
+extra information if dotted.
+
+A row is different. An anonymous record has no head, and a projection list `Handle.{ … }` does not name the
+type's members but selects labels out of its row, and leaves a residual `..R`. In both, the names are labels,
+they can be label variables, and they take part in row bounds and equations (RFC-0121, RFC-0189). One list of
+labels is then spelled the same way wherever it appears: `{ .fd, ..R }` and `Handle.{ .fd, ..R }`.
 
 ---
 
@@ -98,6 +103,7 @@ In an **anonymous record**, each field is a label followed by what the site give
 | row bound entry | `{ x: T, .. }` | `{ .x: T, .. }` |
 | negative bound entry (RFC-0189) | `!{x}`, `{ !x: T }` | `!{.x}`, `{ !.x: T }` |
 | row equation | `R = { x: T, ..Rest }` | `R = { .x: T, ..Rest }` |
+| projection list (type and expression) | `Handle.{ fd, ..R }` | `Handle.{ .fd, ..R }` |
 
 A pun is a label with no value: `{ .x }` means `{ .x = x }`, and in a pattern binds `x`.
 
@@ -107,7 +113,6 @@ A pun is a label with no value: `{ .x }` means `{ .x = x }`, and in a pattern bi
 - Struct and enum construction, which is the call of RFC-0100: `Point(x = 1.0)`, `Shape::Rect(w = 2.0, h = 3.0)`.
 - Struct and enum declarations: `struct Point { x: f64 }`, `enum Shape { Rect { w: f64, h: f64 } }`.
 - Struct and enum patterns: `Point { x, y }`, `Shape::Rect { w, h }` (RFC-0100 §4).
-- Projection lists with a nominal head: `Handle.{ fd, ..R }` (Open Question 2).
 - Parameter lists, keyword arguments and associated-type bindings (`Deref<Target = Node>`). A parameter or an
   associated type is not a label of a row.
 - Tuple expressions and types `(a, b)` / `(A, B)`, which RFC-0151 treats as notation for a numeric-label row.
@@ -115,8 +120,8 @@ A pun is a label with no value: `{ .x }` means `{ .x = x }`, and in a pattern bi
 
 ### 2. Between a struct and a record
 
-A struct and its row are the same fields seen two ways (RFC-0137), and the two spellings meet in one place, the
-spread of RFC-0100 §7:
+A struct and its row are the same fields seen two ways (RFC-0137). The member spelling (`x`) and the label
+spelling (`.x`) meet in the spread of RFC-0100 §7, and a projection list `Handle.{ .fd }` is on the label side:
 
 ```metel
 let r := { .x = 1.0, .y = 2.0 };      // a record: labels
@@ -155,7 +160,8 @@ whose type is a record or struct and the group has no spread.
   the anonymous record the only brace expression. Its `Type(..r)` is the bridge from a dotted record to a struct
   (§2).
 - **RFC-0188 (Label syntax):** this RFC answers its Open Question 1 as "yes, required, not equivalent": a field
-  of an anonymous record is a label. RFC-0188's statement that "ordinary field entries keep the plain
+  of an anonymous record is a label. It also answers Open Question 2 the other way: label lists in projections
+  (`Handle.{ .fd }`) and negative bounds (`!{.fd}`) are dotted, not plain. RFC-0188's statement that "ordinary field entries keep the plain
   identifier" is replaced for records. RFC-0188 keeps the spelling of `.[L]`, numeric labels and its remaining
   open questions.
 - **RFC-0175 (Label Polymorphism):** a fixed label and a label variable share one slot, so `{ .[L]: T, ..R }`
@@ -176,8 +182,9 @@ whose type is a record or struct and the group has no spread.
   third spelling of a computed label; under this RFC it is `{ .[field.name] = expr }`. Its residual construction
   `T.{ ..R } { entries }` is a brace construction and falls under RFC-0100 §5 (see RFC-0100's open questions).
 - **RFC-0115 (Field initializer separator):** the separator stays `=`. Only the left-hand side changes.
-- **RFC-0121 / RFC-0186 / RFC-0208 (Open rows, `..R` operator, row binder):** the row splice `..R` and the
-  binder are unchanged. Only the labels inside the braces move.
+- **RFC-0121 / RFC-0137 / RFC-0186 / RFC-0208 (Open rows, branded rows, `..R` operator, row binder):** the row
+  splice `..R` and the binder are unchanged. Only the labels inside the braces move, including those in the
+  projections `Handle.{ fd }` that RFC-0121 and RFC-0137 write.
 
 ---
 
@@ -189,6 +196,7 @@ whose type is a record or struct and the group has no spread.
 | Dotted fields for structs and enums too | `Point { .x = 1 }` | The earlier form of this RFC. Dropped: RFC-0100 removes struct and enum brace construction, and a head already says whose fields they are, so the dot adds nothing there. |
 | Bare fields + statement-only assignment | `{ x = 1 }`, `{ x, }` for one pun | The smaller change. Leaves the pun needing a trailing comma and the label with two spellings. Viable if the label model is not adopted. |
 | `{\| … \|}` delimiters (RFC-0187) | `{\| x = 1 \|}` | Solves the pun and the empty record. Does not unify the label spelling, and adds a delimiter pair. Not exclusive of this RFC. |
+| Bare projection lists | `Handle.{ fd, ..R }` | Simpler head rule, but then a list of labels is spelled two ways in one signature (`{ .fd, ..R }` and `Handle.{ fd, ..R }`), and RFC-0188's `!{.fd}` would differ from `.{ fd }`. Rejected. |
 | Dotted literals only | `{ .x = 1 }` literal, `{ x: T }` type | Cheaper in signatures. Keeps the second spelling at exactly the sites where a label variable is written. |
 | Zig-style | `.{ .x = 1 }` | Clashes with `..{` row-literal splices (RFC-0180) and dot paths (RFC-0099). Heavier. |
 | `#{ … }` | `#{ x = 1 }` | Unambiguous and light, but a second sigil for the same idea and does nothing for the label spelling. |
@@ -213,8 +221,7 @@ taken for the prototype, not estimated here.
 
 - **Verbosity.** Every record field gains a character. Signatures with several fields are the heaviest case.
 - **The same field has two spellings across the struct/record boundary.** `Point(x = 1.0)` and `{ .x = 1.0 }`
-  differ, and a signature may mix `Handle.{ fd, ..R }` and `{ .x: i64, ..R }`. The head rule explains it, but
-  a reader has to learn the rule (Open Question 2).
+  differ. The rule explains it (members versus labels of a row), but a reader has to learn it.
 - **The one-dot slip** (§4). `.r` for `..r` is a valid pun. Mitigated by the row check and the lint, not
   eliminated.
 - **A second breaking pass** over record code (Migration).
@@ -224,7 +231,8 @@ taken for the prototype, not estimated here.
 ## Changes on Acceptance
 
 - `grammar.pest` and the generated `grammar.md`: the anonymous-record forms of `field_init`,
-  `record_type_field`, the record pattern, `row_field` and the negative-bound entry take a `label`.
+  `record_type_field`, the record pattern, `row_field`, the negative-bound entry, and the projection lists
+  (`record_projection_expr`, `record_projection_type`, `open_record_projection_type`) take a `label`.
 - Spec: records, patterns, types and row bounds. Rules that say "a field `x`" of a record are restated in terms
   of the label `.x`.
 - RFC-0188 amended (Interactions). RFC-0187 narrowed to the empty record or refused, by its own review.
@@ -239,11 +247,6 @@ taken for the prototype, not estimated here.
    cannot mark a field that does not exist. Candidates: leave `{}` position-dependent as today; give the empty
    record its own spelling; or keep RFC-0187's `{| |}` for the empty case alone. This belongs to RFC-0187's
    remainder, not here.
-2. **Projection lists.** `Handle.{ fd, ..R }` names fields of a nominal type and stays bare under the head rule,
-   while the row it leaves behind is written `..R` and, as a record, `{ .fd, ..R }`. The alternative is to dot
-   projection lists too, `Handle.{ .fd, ..R }`, so that every list of labels is dotted wherever it appears.
-   The head rule is simpler to state; the alternative is uniform at the sites where a label variable could
-   appear. Decide before acceptance.
 
 ---
 
