@@ -630,6 +630,13 @@ fun word_size() -> i64 {
 }
 ```
 
+**A condition that depends on a parameter.** When the condition mentions a comptime parameter, such as
+`l == .password` for a label (RFC-0175) or a comparison on a `comptime N: u64`, its value is not known at the
+definition, and §3.3's definition-site checking applies. Both arms are checked at the definition under the
+declared bounds, with no assumption that the condition holds or fails inside an arm, and each instantiation
+keeps the arm its condition selects and emits only that one. "Never type-checked or emitted" above applies to a
+condition whose value is known at the definition, as `IS_64BIT` is.
+
 This is the mechanism RFC-0095 Open Question 4 speculates might subsume `#cfg`; RFC-0055
 reached the same conclusion independently. Both converging is treated as confidence in
 the answer, not as work to reconcile.

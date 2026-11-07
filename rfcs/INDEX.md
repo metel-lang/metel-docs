@@ -259,8 +259,9 @@ above it are.
   `comptime l: Label` parameter (RFC-0132 §3.6) and uses `.[l]` in row fields, bounds and selection (`r.[l]`),
   so one `get`/`insert` helper works for any field. Owns the type, label equality, comptime-only use and
   diagnostics; spelling is RFC-0188, dotted fields RFC-0221, drain ownership RFC-0122. `field.name` in RFC-0174
-  is a `Label`. Open: field visibility in generic code, how a `comptime if` on a label is checked, and how a
-  signature says two labels differ.
+  is a `Label`. Settled: field visibility is checked where a row bound is discharged (a grant entitles the
+  template, not its callers); a `comptime if` that depends on a parameter checks both arms at the definition
+  (RFC-0132 §5); two sibling label parameters need `where a != b`.
 
 
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder

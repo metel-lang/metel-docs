@@ -242,7 +242,8 @@ which RFC-0216 specifies, or `emit` (RFC-0093).
    record literal `{ .[field.name] = v, .. }` and the residual construction. `emit` stays with RFC-0093.
 8. **Visibility.** Does a loop in module `m` see the private fields of a nominal record from
    another module? A `record` has only public fields (RFC-0120), a `struct` may not. For a label supplied
-   to generic code see RFC-0175 open question 1.
+   to generic code see RFC-0175 §9: a loop sees only the row its bounds expose, and a granted aspect template sees
+   the row it was granted.
 9. **Packs and tuples.** Confirm that a pack loop (RFC-0125 stage 2, spelled `static for` in
    the Rust draft it cites) and a tuple row (RFC-0151) are the same construct as this one, and
    which RFC owns the spelling for a pack.
@@ -252,7 +253,9 @@ which RFC-0216 specifies, or `emit` (RFC-0093).
 11. **Interaction with `comptime if`.** A `comptime if (field.type == i64)` inside the loop
     would let a body specialise per field type, which breaks the "only the declared bounds"
     check of D3 unless the branch is checked on both sides. Allowed, or deferred? A condition on a label
-    (`field.name == .password`) is the same question: RFC-0175 open question 2.
+    (`field.name == .password`) is settled: RFC-0132 §5 (as amended) checks both arms at the definition when the
+    condition depends on a parameter. A condition on `field.type` is checked the same way, so an arm cannot
+    assume `F = i64`, and the body cannot specialise per type; allowed with that limit, or deferred?
 
 ---
 

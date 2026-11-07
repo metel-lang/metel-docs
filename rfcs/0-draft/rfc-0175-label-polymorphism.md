@@ -126,7 +126,7 @@ particular:
    otherwise, with the diagnostic in §6.
 2. **Duplicate labels.** A row cannot contain two fields whose labels are equal. A bound `R: !{.[l]}` is how a
    signature states that `l` is absent from a row. How a signature states that two label parameters differ is
-   Open Question 3.
+   §10.
 3. **Unification.** Two label parameters unify when they are the same label. Two different literals do not unify.
    A parameter unifies with a literal at an instantiation.
 
@@ -146,7 +146,10 @@ depends on RFC-0091 and RFC-0122 and is expressed here only as `r.[l]` for whate
 A function body with a label parameter is checked once, against a symbolic label (RFC-0132 §3.3, RFC-0174 D3),
 not once per instantiation. The checker assumes nothing about the label's spelling. It can use only the bounds in
 the signature: `r.[l]` needs a bound that entails the field. A comptime condition on a label, such as
-`l == .password`, has no known value at the definition; how its branches are checked is Open Question 2.
+`l == .password`, has no known value at the definition. Both of its arms are checked at the definition under
+the declared bounds, with no assumption that the condition holds or fails inside an arm, and each instantiation
+keeps the arm the condition selects (RFC-0132 §5, as amended). An arm therefore cannot rely on a fact the
+condition would imply: in the `password` arm, `l` is still an unknown label.
 
 ### 6. Diagnostics
 
@@ -182,6 +185,51 @@ RFC-0174 and RFC-0216, which currently call the name a "compile-time string", ar
 
 A numeric label `.0` is a `Label`. `t.0` is selection by `.0`, and a tuple is a numeric-label row (RFC-0151).
 `fun nth<T, record R>(comptime n: Label, t: { .[n]: T, ..R }) -> T { t.[n] }` is generic over the position.
+
+### 9. Visibility
+
+A generic body reaches a field only through a bound in its signature (RFC-0173 D2, D6). Field privacy is
+therefore enforced where such a bound is discharged, which is at a call:
+
+1. **Discharge checks visibility.** When a call discharges a row bound that names a field, whether by a
+   literal label or by a label parameter instantiated to one, that field must be visible from the module
+   containing the call. Every field of an anonymous record or a `record` is public (RFC-0120). A field of a
+   nominal type has the visibility it was declared with (RFC-0032).
+2. **A grant entitles the template, not its callers.** `derives A` makes a type's row visible to `A`'s row
+   template (RFC-0209), so the template may read and build every field of the row it was granted, and calls
+   made inside the template are entitled to it. Code that calls the template's methods with a label, such as
+   `set(.secret, v)` on a builder (RFC-0222), is a caller: rule 1 applies to that call, and naming a private
+   field is an error.
+3. **No provenance.** A `Label` is a plain atom and carries no module. A wrapper that forwards a label to
+   another generic function states the bound in its own signature (RFC-0173), so the check happens at the
+   wrapper's call.
+
+This adds no rule to RFC-0032. It states where that rule is applied when a field is named by a label.
+
+### 10. Distinct labels
+
+A row cannot contain two fields with equal labels (§3). When a signature puts two labels into one row as
+sibling fields and they are not both literals, that is two label parameters or a parameter and a literal, the
+signature must state that they differ:
+
+```metel
+fun both<A, B, record R>(comptime a: Label, comptime b: Label, r: { .[a]: A, .[b]: B, ..R }) -> (A, B)
+where a != b {
+    (r.[a], r.[b])
+}
+```
+
+1. **A new fact in the bounds.** `where a != b` is a label inequality between two label parameters, or between
+   a parameter and a literal (`where l != .id`). Two different literals are known to differ, and two equal
+   ones are an error.
+2. **Required.** A signature that puts two such labels in one row without the clause is a definition error:
+   "labels `a` and `b` may be equal; add `where a != b`".
+3. **Decided at the call.** Both labels are comptime-known there (RFC-0132 §1.1), so the clause is checked
+   at each call, and equal labels are an error that names both.
+4. **Entailment.** The clause is a member of the bounds. The well-formedness of the row uses it, and it is
+   forwarded to a callee's `where x != y` for the same pair. There is no transitivity and no search
+   (RFC-0173 D6); RFC-0173 D6 gains this entry on acceptance.
+5. **Not needed for a row tail.** `R: !{.[l]}` already states that `l` is absent from `R`.
 
 ---
 
@@ -231,6 +279,7 @@ get(.name, user) + 1;                  // `name` is String, not i64
 insert(.host, cfg, "b.com");           // R already has `host`, violating `R: !{.host}`
 fun bad(comptime l: Label) { let x := l; }   // a Label is compile-time only
 fun f<T, record R>(comptime l: Label, r: { ..R }) -> T { r.[l] }   // `l` is not known to be a field of R
+both(.id, .id, rec);                   // `a` and `b` must differ; both are `.id`
 ```
 
 ---
@@ -307,28 +356,16 @@ still needs a checked mapping from the type to a field name.
 - Spec: types (`Label`), expressions (selection by label), generics (label parameters), row bounds.
 - RFC-0132 §3.6 reaches `2-accepted` first or together with this RFC.
 - RFC-0188, RFC-0174 and RFC-0216 amended as listed under Interactions.
-- Error codes for an unentailed `r.[l]`, a duplicate label, and a run-time use of a `Label`; a fixture each.
+- RFC-0132 §5 gains the rule for a condition that depends on a parameter (§5 here).
+- RFC-0173 D6 gains the label-inequality entry (§10).
+- Error codes for an unentailed `r.[l]`, a duplicate label, equal labels at a `where a != b`, a private field
+  named through a grant, and a run-time use of a `Label`; a fixture each.
 
 ---
 
 ## Open Questions
 
-1. **Whose module is field visibility checked in?** `r.[l]` inside a generic body in module M2, with `l` supplied
-   by a call in module M1 for a struct whose field is private to M1's module (RFC-0032). The proposal is that
-   visibility is checked at the call that supplies the label, against the caller's module: generic code is then
-   a way to pass along access the caller already has, never to gain it. Confirm against RFC-0032 and RFC-0114
-   open question 8 before acceptance.
-2. **How are the branches of a `comptime if` on a label checked?** RFC-0132 §5 says the untaken branch "is never
-   type-checked or emitted", and §3.3 says a body is checked once at its definition. For `comptime if
-   field.name == .password` inside a body generic over a row, the condition has no value at the definition. Two
-   readings: (a) check both arms at the definition and keep one per instantiation, which is a narrow exception
-   to §5 for conditions that depend on a parameter; (b) check each arm only at the instantiations that select it,
-   which keeps §5 exactly and gives up the definition-site guarantee for those arms. This decides whether a
-   mistake in the `password` arm is found before the first use. Decide with RFC-0132 and RFC-0174 D3.
-3. **How does a signature say two label parameters differ?** `{ .[a]: T, .[b]: U }` needs `a != b`, and so does a
-   rename. Proposal: a comptime clause `where a != b`, checked at each call because both labels are
-   comptime-known, and assumed in the body. The alternative is no such form, so that such signatures are written
-   with a negative bound on a row (`R: !{.[a]}`).
+None blocking.
 
 ---
 
@@ -339,8 +376,11 @@ Before this leaves draft:
 - `get`, `insert` and a numeric `nth` type-check as written, and each rejected case above gives its stated
   diagnostic.
 - A body with a label parameter is checked once with `l` symbolic, and instantiation substitutes a literal.
-- The `comptime if` on `l == .password` in the `Json` example is accepted, under whichever answer Open
-  Question 2 selects.
+- The `comptime if` on `l == .password` in the `Json` example is accepted, and a type error in the `password`
+  arm is reported at the definition, not at the first instantiation that selects it (§5).
+- A call that names a private field through a granted aspect's method is rejected at that call, and the
+  granted template itself may read and build every field (§9).
+- `both` is rejected without `where a != b`, and a call with equal labels is rejected naming both (§10).
 - A `Label` used in a run-time position is rejected.
 - A duplicate label is rejected both for two literals and for two parameters instantiated to the same label.
 

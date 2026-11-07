@@ -167,10 +167,11 @@ The last case is the ordinary affine rule: `set` takes `self` by value, so the b
 
 ### 7. Visibility
 
-`set(.secret, v)` names a field label at the call site. A label the caller cannot name, a private field of a
-struct used from outside its module, is rejected at that call, which is the rule RFC-0032 already applies to
-constructing a struct with a private field from outside its module (RFC-0100 §7 item 6; RFC-0114 open question 8
-asks whether that is enough once `construct` is public). The consequence is that a caller outside the module cannot
+`set(.secret, v)` names a field label at the call site. `derives Builder` grants the struct's row to the
+builder template (RFC-0209), which entitles the template and not its callers, so a call that names a private
+field is rejected at that call (RFC-0175 §9). That is the rule RFC-0032 already applies to constructing a struct
+with a private field from outside its module (RFC-0100 §7 item 6; RFC-0114 open question 8 asks whether that is
+enough once `construct` is public). The consequence is that a caller outside the module cannot
 complete the builder of a struct with a private field, because it cannot supply that field. Such a struct should
 offer its own constructor function in place of `derives Builder`. This RFC does not add a visibility rule of its
 own.
