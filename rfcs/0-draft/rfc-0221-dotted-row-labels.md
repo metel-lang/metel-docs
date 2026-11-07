@@ -41,13 +41,12 @@ them with calls. If that lands, a brace group in expression position is a block 
 nothing else. The collision RFC-0187 describes is then between those two alone:
 
 - A single pun `{ x }` is a block returning `x`. RFC-0187's workaround is the trailing comma `{ x, }`.
-- The empty literal `{}` is an empty block in statement position and an empty record elsewhere.
+- The empty literal `{}` is an empty block in body and arm positions and an empty record elsewhere (§5).
 - With RFC-0183, assignment is a statement and needs its `;`, so `{ x = 1 }` cannot be a block tail. That
   already removes the single-field assignment case without any new syntax.
 
 A block cannot start with `.`. A brace group whose first entry is `.x` is therefore a record in every position,
-with no lookahead, no trailing-comma rule and no parentheses. That removes the pun case. It does not remove the
-empty-record case (Open Question 1).
+with no lookahead, no trailing-comma rule and no parentheses. That removes the pun case. It does not help the empty record, which has no field to mark; §5 resolves that case another way.
 
 ### A label has two spellings
 
@@ -152,6 +151,22 @@ expected row that does not contain `r`, the field is rejected by the ordinary ro
 program is accepted and means a pun. An optional lint (not an error) warns when a pun names an in-scope variable
 whose type is a record or struct and the group has no spread.
 
+### 5. The empty record
+
+A dot cannot mark a field that does not exist, so the empty record has no dotted form. It needs none: `()` and
+`{}` are one type with one value (RFC-0151 §6), so an empty brace group is that value whether the parser reads it
+as an empty block or as an empty record.
+
+- `{}` stays legal in every position. As the body of a function, an `if` or `else`, a loop or a match arm it
+  parses as a block, and elsewhere as a record, which is the rule in force today. Both readings have type
+  `()`, which is `{}`, so the choice is not observable. `let a: () := {}` and `fun f() -> {} {}` both
+  type-check, and the workarounds `({})` and `{ {} }` are not needed.
+- No new delimiter is needed for the empty record (RFC-0187's `{| |}`).
+- The remaining mismatches are type errors on non-empty values, as before.
+
+This section depends on RFC-0151 §6. If that is not accepted, `{}` keeps today's position-dependent rule, where a
+mismatch is a type error and never a silent wrong meaning, and `({})` is the workaround.
+
 ---
 
 ## Interactions
@@ -166,9 +181,9 @@ whose type is a record or struct and the group has no spread.
   open questions.
 - **RFC-0175 (Label Polymorphism):** a fixed label and a label variable share one slot, so `{ .[L]: T, ..R }`
   and `{ .x: T, ..R }` are the same shape.
-- **RFC-0187 (Anonymous record delimiters):** the pun collision is removed without a new delimiter. What
-  remains of RFC-0187 is the empty record `{}` (Open Question 1). This RFC does not decide that and does not
-  supersede RFC-0187.
+- **RFC-0187 (Anonymous record delimiters):** the pun collision is removed without a new delimiter, and the
+  empty record needs none (§5), so no case for a delimiter remains. Whether to refuse RFC-0187 is its own
+  review's decision; this RFC does not supersede it.
 - **RFC-0183 (Initialization-only walrus):** unchanged and still needed. Statement-only assignment removes the
   `f(x = 1)` and `if (x = 1)` expression hazards, and with RFC-0100 `f(x = 1)` is unambiguously a keyword
   argument. RFC-0183's tail-assignment rule has no bare-field case left to cover.
@@ -177,7 +192,7 @@ whose type is a record or struct and the group has no spread.
 - **RFC-0189 (Per-label negative bounds):** entries become `!.x` / `!.x: T`. The whole-row form `!{ .a, .b: T }`
   is sugar for `{ !.a, !.b: T, .. }` as before.
 - **RFC-0151 (Tuples as numeric-label rows):** `{ .0 = a, .1 = b }` is what `(a, b)` denotes, with no special
-  lexical case.
+  lexical case. Its §6 makes `()` the empty row `{}`, which §5 below depends on.
 - **RFC-0216 (Constructing rows and residuals):** its computed-label literal `{ [field.name] = expr }` is a
   third spelling of a computed label; under this RFC it is `{ .[field.name] = expr }`. Its residual construction
   `T.{ ..R } { entries }` is a brace construction and falls under RFC-0100 §5 (see RFC-0100's open questions).
@@ -194,6 +209,7 @@ whose type is a record or struct and the group has no spread.
 |---|---|---|
 | **Dotted fields, anonymous records only** | `{ .x = 1 }` | **Proposed.** One spelling for a label, no pun collision, numeric labels uniform, nominal syntax untouched. Costs a dot on every record field. |
 | Dotted fields for structs and enums too | `Point { .x = 1 }` | The earlier form of this RFC. Dropped: RFC-0100 removes struct and enum brace construction, and a head already says whose fields they are, so the dot adds nothing there. |
+| A spelling for the empty record (`{\| \|}`) | `{\| \|}` for `{}` | Removes the position rule, but adds a special spelling for one value, and rewrites every `{}` value in current code. Unneeded once `()` and `{}` are one type (§5). |
 | Bare fields + statement-only assignment | `{ x = 1 }`, `{ x, }` for one pun | The smaller change. Leaves the pun needing a trailing comma and the label with two spellings. Viable if the label model is not adopted. |
 | `{\| … \|}` delimiters (RFC-0187) | `{\| x = 1 \|}` | Solves the pun and the empty record. Does not unify the label spelling, and adds a delimiter pair. Not exclusive of this RFC. |
 | Bare projection lists | `Handle.{ fd, ..R }` | Simpler head rule, but then a list of labels is spelled two ways in one signature (`{ .fd, ..R }` and `Handle.{ fd, ..R }`), and RFC-0188's `!{.fd}` would differ from `.{ fd }`. Rejected. |
@@ -235,7 +251,8 @@ taken for the prototype, not estimated here.
   (`record_projection_expr`, `record_projection_type`, `open_record_projection_type`) take a `label`.
 - Spec: records, patterns, types and row bounds. Rules that say "a field `x`" of a record are restated in terms
   of the label `.x`.
-- RFC-0188 amended (Interactions). RFC-0187 narrowed to the empty record or refused, by its own review.
+- RFC-0188 amended (Interactions). RFC-0187 left with no case, to be refused by its own review.
+- RFC-0151 §6 accepted with this RFC, or before it.
 - Error code for a bare record field, with a fixture each for literal, pattern, type and bound.
 - A migration tool or rewrite recipe, and fixtures and spec examples converted.
 
@@ -243,10 +260,7 @@ taken for the prototype, not estimated here.
 
 ## Open Questions
 
-1. **The empty record.** `{}` is an empty block in statement position and an empty record elsewhere. A dot
-   cannot mark a field that does not exist. Candidates: leave `{}` position-dependent as today; give the empty
-   record its own spelling; or keep RFC-0187's `{| |}` for the empty case alone. This belongs to RFC-0187's
-   remainder, not here.
+None blocking.
 
 ---
 
@@ -258,6 +272,8 @@ Before this leaves draft:
   allowed, and a group starting with a bare identifier never parses as a record.
 - `.x` is confirmed unambiguous against `..` spreads, float literals and every other brace-group entry.
 - A count of affected sites in fixtures and spec examples.
+- With RFC-0151 §6, `let a: () := {};`, `fun f() -> () { {} }` and `fun f() -> {} {}` type-check, and an
+  empty block and an empty record literal are the same value.
 - The `.r` / `..r` slip: the row check rejects it when the expected row is known, and the lint fires when it is
   not.
 
