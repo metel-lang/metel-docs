@@ -52,7 +52,7 @@ the curated thematic map.
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0214** — Aspect Impls for Residuals (`0-draft` ; rfcs/0-draft/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04)
-- **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05)
+- **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0221** — Dotted Row Labels (`0-draft` ; rfcs/0-draft/rfc-0221-dotted-row-labels.md ; date 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
@@ -96,7 +96,7 @@ the curated thematic map.
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-11-02)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
-- **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-10-03)
+- **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-11-07)
 - **RFC-0183** — Initialization-Only Walrus (`1-under-review` ; rfcs/1-under-review/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-10-30)
 - **RFC-0187** — Anonymous record delimiters (`1-under-review` ; rfcs/1-under-review/rfc-0187-anonymous-record-delimiters.md ; date 2026-10-21 ; updated 2026-10-30)
 - **RFC-0189** — Per-Label Negative Row Bounds (`1-under-review` ; rfcs/1-under-review/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28 ; updated 2026-10-28)
