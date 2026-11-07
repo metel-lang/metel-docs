@@ -119,7 +119,7 @@ closure is itself an error.
 
 A closure that captures a linear value must be declared `linear`, so every closure not declared `linear` captures only
 `Discard` values and is itself `Discard`. A written function type that is not `linear` therefore guarantees `Discard`
-(RFC-0089 section 2.2); a `linear` function type is not `Discard`.
+(RFC-0089 section 2.2); a `linear` function type is not `Discard`. A closure that captures a value of bare type `T` captures a possibly-linear value, so it must be declared `linear` or the function must bound `T: Discard`.
 
 ### No `Drop` for closures
 

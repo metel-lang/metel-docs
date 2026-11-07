@@ -181,7 +181,7 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
 
-A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is consumed whole only by its own methods, by total destructuring that suppresses the destructor, and is otherwise never destructured, partially moved or used in a record spread. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
+A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern consumes its scrutinee, so a field skipped with `..` or `_` must be `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is consumed whole only by its own methods (those authored in its defining module that take an owned whole `self`), by total destructuring that suppresses only the outer destructor, and is otherwise never destructured, partially moved or used in a record spread. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -193,7 +193,7 @@ A partial move out of a nominal aggregate is legal only when the aggregate is kn
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-7}
 
-A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field that is linear for every instantiation (linear when each type parameter is given a `Copy` type) forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
+A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field that is linear for every instantiation (linear with every type parameter assumed discardable; a projection of a parameter is parameter-dependent) forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -402,8 +402,8 @@ fun main() {
 }
 ```
 
-Tracking is at **field granularity**. Pattern destructuring may move several fields at once,
-under the same rules.
+Tracking is at **field granularity**. A destructuring pattern consumes its scrutinee instead (legality-4); only an explicit field move
+leaves a partially moved value.
 
 **A type implementing `Drop` may not be partially moved** — its destructor requires the whole
 value.
@@ -437,7 +437,7 @@ its narrowed residual type, including an empty residual, is legal.
 
 ##### Legality Rule {#spec.ownership.partial-moves.legality-2}
 
-A field of a `Drop` type may not be moved out.
+A field of a `Drop` type may not be moved out, except by the total destructuring with which a type's own methods consume it (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)).
 
 <!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
 
@@ -468,9 +468,15 @@ some of several moved-out fields is not enough.
 
 ##### Legality Rule {#spec.ownership.partial-moves.legality-4}
 
-A destructuring pattern consumes its scrutinee. Destructuring a struct, tuple or enum payload moves the bound fields. A field skipped by `..` or `_` is inaccessible afterwards, and where the aggregate is not known `Discard` each skipped field must itself be `Discard`. A pattern never leaves the scrutinee partially moved: a partial move comes only from an explicit field move. The `Drop`-type ban of [legality-2](#spec.ownership.partial-moves.legality-2) applies.
+An owning destructuring pattern consumes its scrutinee; matching through a reference consumes nothing. Destructuring a struct, tuple or enum payload moves the bound fields. A field skipped by `..` or `_` is inaccessible afterwards, and where the aggregate is not known `Discard` each skipped field must itself be `Discard`. A pattern never leaves the scrutinee partially moved: a partial move comes only from an explicit field move. The `Drop`-type rule of [legality-2](#spec.ownership.partial-moves.legality-2) applies. A whole-value `_` consumes nothing, ownership moves to the selected arm only, and a pattern on an already narrowed value is rejected.
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1843" reason="Patterns still leave a partially moved scrutinee (RFC-0071, RFC-0137 slice 2 pattern narrowing); consuming patterns land with metel-core#1843" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1843: Patterns still leave a partially moved scrutinee (RFC-0071, RFC-0137 slice 2 pattern narrowing); consuming patterns land with metel-core#1843_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -956,6 +962,8 @@ match that row exactly, with no implicit narrowing at the call site.
 ### Drop dispatch against a narrowed residual
 
 > **Gap** GAP-OWNERSHIP-003
+
+Stage note: the ban of [Ownership classes legality-6](#spec.ownership.ownership-classes.legality-6) governs types whose `drop` receiver is the whole row. The row-bounded permission below is the planned extension (RFC-0137 section 5, metel-core#949) for a type whose receiver names a narrower row, and is not superseded by it.
 
 A struct implementing `Drop` whose destructor needs a field that has since been narrowed
 away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`

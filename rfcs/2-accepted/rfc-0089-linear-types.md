@@ -156,8 +156,10 @@ diagnostic suggests the keyword. There is no `!Linear` opt-out (no negative impl
   (the keyword is not needed to admit a linear argument). `linear` on a generic type is **unconditional**: every
   instantiation is linear. `copy` states a capability: `Copy` exactly when the fields are. A type parameter written
   `T: Discard` forbids linear arguments. A field whose type is **linear for every instantiation** of the declaration's parameters forces `linear` on the
-  declaration, as for a non-generic type (the test: give each type parameter a `Copy` type and compute the field's
-  class; `Ticket<T>` stays linear, `Wrapper<T> { v: T }` becomes `Copy`). Adding such a field to a public generic type
+  declaration, as for a non-generic type (the test: evaluate the field's ownership condition with every type parameter assumed
+  discardable and the declared bounds kept; `Ticket<T>` stays linear, `Wrapper<T> { v: T }` has no linear component. A
+  projection of a parameter such as `T::Item` is parameter-dependent, so it is conditional and forces nothing; a
+  `Self`-recursive field uses the fixed-point solver of RFC-0206 section 2, not placeholder expansion). Adding such a field to a public generic type
   is therefore an explicit edit and not a silent change of every instantiation; only fields whose class depends on a
   parameter make the class conditional. Details in section 2.2.
 - **Types with no declaration site** (tuples, arrays, anonymous records) cannot carry the keyword. They are linear
@@ -177,14 +179,24 @@ not depend on how the class was determined.
   `_` is inaccessible afterwards and, where the aggregate is not known `Discard`, must itself be `Discard`. A pattern
   never leaves a partially moved residual: partial moves come only from explicit field moves. This holds for struct,
   tuple and enum-payload patterns, as it already does for a record rest binding (`{ x, ..rest }`). Skipped fields drop
-  at the scrutinee's scope end; whether they should drop at the pattern is open (metel-core#1843).
+  at the scrutinee's scope end; whether they should drop at the pattern is open (metel-core#1843). These rules
+  describe **owning** patterns: matching through a reference keeps the reference-matching rules and consumes nothing.
+  Ownership moves to the selected arm only, and a guard sees its bindings without moving them until it succeeds. A
+  whole-value `_` destructures nothing and consumes nothing (a linear scrutinee under `_ =>` stays unconsumed and is an
+  error); the skip check applies to `_` and `..` inside a destructuring pattern. A pattern on a value that an explicit
+  field move already narrowed is rejected, as is any whole use of it. A refutable form added later must keep ownership
+  on the non-matching path.
 - Assigning to a linear field would drop its old value, so it is an error; replace by destructuring and rebuilding.
 - Record spread (`{ ..r, n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
 - A type with a `Drop` impl, conditional or not, is consumed whole only by its own methods, by **total destructuring
-  that suppresses the destructor**: every field is bound or skipped (skipped fields `Discard`), and each bound field is
+  that suppresses the destructor**. A type's own methods are those authored in its defining module that take an owned
+  whole `self`: a `&self` or `&var self` receiver confers no permission, and an aspect default body never acquires it
+  through dispatch or instantiation (an aspect impl written in the defining module qualifies; a client's impl of its
+  own aspect on the type does not). Suppression affects only the outer destructor: a nested field's destructor still
+  runs when that field is skipped or dropped, and binding a field does not license dropping a bare `T`. Every field is bound or skipped (skipped fields `Discard`), and each bound field is
   moved on or dropped. This is how a wrapper such as `Logged<T>` is unwrapped (`into_inner`), including for a linear
   `T`, where no destructor applies. Outside its own methods such a type is never destructured, partially moved or used
   in a record spread.
