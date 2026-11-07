@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**221 RFCs total.** 37 draft, 55 under review, 15 accepted, 4 integrated (111 live), 79 implemented, 15 superseded, 16 refused (110 settled).
+**222 RFCs total.** 37 draft, 56 under review, 15 accepted, 4 integrated (112 live), 79 implemented, 15 superseded, 16 refused (110 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
-## Under Review (55)
+## Under Review (56)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -112,6 +112,7 @@ the curated thematic map.
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0221** — Dotted Row Labels (`1-under-review` ; rfcs/1-under-review/rfc-0221-dotted-row-labels.md ; date 2026-11-07 ; updated 2026-11-07)
+- **RFC-0223** — Keyword Arguments at Every Call (`1-under-review` ; rfcs/1-under-review/rfc-0223-keyword-arguments-at-every-call.md ; date 2026-11-07 ; updated 2026-11-07)
 
 ## Accepted (15)
 

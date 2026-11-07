@@ -46,22 +46,38 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 
 > **Previous Status — accepted (2026-07-14).** Reviewed and revised: found and fixed a real grammar collision between keyword arguments and type ascription (arg_list reordering fix), resolved all three remaining Unresolved Questions (evaluation order, aspect-method calls, overload resolution) against the actual implementation. No open questions block it.
 
+> **Split in two (2026-11-07, language owner).** This RFC was one proposal with two pieces that lead to the same form.
+> The first stays here: **`Type(args)` is the instantiation form of structs and enum variants**, positional like any
+> call, and the brace literal is retired. The second moved to **RFC-0223** (Keyword Arguments at Every Call): the optional
+> `Type(x = 0, y = 0)` keyword form, for every function call. Keyword arguments, their grammar position and the evaluation
+> order are RFC-0223's. This RFC is scheduled for v0.16.0 (metel-core#807, milestone 84).
+
 ## Summary
 
-`Type(args)` call-shaped syntax replaces `Type { field: value }` struct literals at construction sites. The RFC's real deliverable isn't the struct-literal rename — it's **general keyword arguments for function calls**, spelled `name = value`, since positional-only construction is unreadable beyond one or two fields, and struct construction is just the first, motivating use of that mechanism. Like RFC-0099, this is not a pure token/reordering change: keyword arguments occupy a grammar position already spoken for, and this RFC has to settle that before the feature is well-formed (§3) — though the `=` spelling adopted here trades the original, severe collision with type ascription (RFC-0023) for a much smaller one with assignment-as-an-expression. Raises (and resolves) a symmetry question against pattern-matching destructuring, which keeps its current syntax unchanged.
+**`Type(args)` is the instantiation form of structs and enum variants.** It is a call, so positional arguments bind
+fields in declaration order exactly as for a function, and the brace literal `Type { field = value }` is retired (§5):
 
-Keyword arguments are available at **every** call (section 2.1): free functions, associated functions, methods after the
-receiver, aspect methods, constructor calls and enum-variant calls. The call is the only way to construct a struct or an enum struct-variant: the brace form `Type { field = value }`
-is prohibited (§5). For a struct, `Type(args)` is a call of the constructor function that the `Construct` aspect
-(RFC-0114) provides (§7), with a compiler-synthesized default for types that have no invariant. In v0.16.0 only the
-synthesized default exists: the call builds the struct directly, and RFC-0114 is not part of the stage. For an enum
-variant, `Enum::Variant(args)` builds the variant directly.
+```metel
+struct Point { x: i64, y: i64 }
+let p := Point(1, 2);                // positional, like any call
+let q := Point(x = 1, y = 2);        // the keyword form of RFC-0223, which lands in the same release
+```
+
+For a struct, `Type(args)` is a call of the constructor function that the `Construct` aspect (RFC-0114) provides (§7),
+with a compiler-synthesized default for types that have no invariant. In v0.16.0 only the synthesized default exists: the
+call builds the struct directly, and RFC-0114 is not part of the stage. For an enum variant, `Enum::Variant(args)` builds the
+variant directly. The field shorthand `Type { x, y }` is retired with the brace form. Keyword arguments, `x = 0`, are
+RFC-0223's; this RFC needs nothing from them to work positionally.
 
 ---
 
 ## Motivation
 
-`Type { field: value }` free-standing struct literals are one of the more recognizable Rust tells in Metel's surface syntax — most languages, including every OOP-flavored one, construct values through a call-shaped constructor. But a naive rename to `Type(value1, value2, ...)` only reads well for one or two fields; anything larger needs field names at the call site to stay readable, which means this RFC can't just rename struct construction — it has to introduce keyword arguments as a real, general call-syntax feature, with struct construction as the first consumer rather than a special case bolted onto structs alone.
+`Type { field: value }` free-standing struct literals are one of the more recognizable Rust tells in Metel's surface syntax. Most
+languages, including every OOP-flavored one, construct values through a call-shaped constructor. A call is also what a later
+`Construct` aspect (RFC-0114) needs, and with the brace form gone the only brace expression left is the anonymous record, which
+RFC-0221's dotted labels depend on. Positional construction alone only reads well for one or two fields; the readable form for
+more fields is the keyword argument of RFC-0223, a general call feature that this RFC does not define.
 
 ---
 
@@ -97,126 +113,24 @@ let a := Shape::Rect(w = 2.0, h = 3.0);       // was Shape::Rect { w = 2.0, h = 
 let b := Shape::Circle(1.5);                  // one-field positional sugar, as for a struct
 ```
 
-**`=`, not `:`, and for a reason that is not aesthetic.** A keyword argument binds a value
-to a name — it *defines*, it does not *classify* — so it takes `=` under the separator
-invariant `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` audits the grammar against
-(`:` classifies: `x: T`, `T: Bound`; `=` defines or equates: `let x = e`,
-`type X = Concrete`, `Deref<Target = Node>`). **The invariant applies to keyword arguments
-on its own merits, independently of RFC-0115** — a keyword argument would take `=` whether
-or not `field_init` ever changes, because binding a value to a name is defining in either
-construct. The split does not weaken this section; it only means this RFC is no longer the
-vehicle that *completes* the invariant.
+**The keyword spelling is `=`, not `:`.** That decision and its reasoning (the separator invariant) moved with keyword
+arguments to RFC-0223.
 
-Field order at the construction site becomes non-load-bearing — `Token(secret = "shh".to_string(), value = "x".to_string())` is equally valid, matching keyword-argument semantics in every language that has them (Python, Kotlin, F#, Ada). Positional arguments remain available for the common one-or-two-field case: `IntBox(42)` is valid when there's exactly one field and no ambiguity about which one it binds to; mixing positional and keyword arguments in one call follows the same rule most languages use (positional arguments must precede keyword ones).
+**Positional rule.** A construction call follows the function rule (RFC-0223 section 2): positional arguments bind the fields in
+declaration order, at any arity. With RFC-0223's keyword form field order at the call site is not load-bearing:
+`Token(secret = "shh".to_string(), value = "x".to_string())` is equally valid. **Field shorthand is retired** (decided 2026-11-07):
+`Point { x, y }` builds by name from variables, but `Point(x, y)` binds by position, so the migration rewrites it to the keyword
+form `Point(x = x, y = y)` and the construction sweep runs after RFC-0223 is implemented.
 
 ## 2. Keyword arguments at every call
 
-**Keyword arguments are part of the call syntax of every function** (decided in principle 2026-11-07, language owner),
-not a feature of constructors. Struct construction was the first use that motivated the mechanism, and it is a call like any other:
-
-```metel
-fun connect(host: String, port: i64, timeout: i64) -> Connection { ... }
-
-connect(host = "db.local", port = 5432, timeout = 30);
-connect("db.local", port = 5432, timeout = 30);   // positional + keyword mix
-```
-
-Note that the declaration side is untouched and stays `:` — `host: String` classifies, as
-it always has. Only the *call* side, where a value is bound to a name, takes `=`. The two
-sides of a function reading differently is the invariant working, not a wart: they are
-doing genuinely different things.
-
-### 2.1 Rules (proposed 2026-11-07, for review)
-
-1. **Binding.** A keyword argument `name = value` binds the callee's parameter `name`. Positional arguments bind the leading
-   parameters in order; keyword arguments bind the rest by name. Positional arguments come first.
-2. **Each parameter once.** A keyword that names a parameter already bound positionally, a repeated keyword, and an unknown
-   name are errors. The unknown-name error lists the callee's parameter names.
-3. **Every parameter bound.** There are no default values here, so a call binds every parameter. Default values are a
-   separate decision.
-4. **Every callable with declared parameter names.** Free functions, associated functions (`Type::f`), methods after the
-   receiver, aspect methods, constructor calls (section 7), enum-variant calls and native std functions, whose declared
-   names are their keyword names. The receiver is never a keyword argument (`self` is reserved).
-5. **Calls through a function value are positional only.** A function type carries no parameter names, so a call
-   through a closure, a `|T| -> U` parameter or a `dyn` callable binds by position, and a keyword argument there is an error.
-   A function item passed as a value does not give the value names.
-6. **Aspect methods have one name set.** The parameter names are those of the aspect's method declaration, and an impl
-   method must declare the same names, checked at conformance as parameter types are. A call through a generic bound, a `dyn`
-   and a call on the concrete type all use that set.
-7. **Overloads** follow section 6: the call's keyword names must match some candidate's own parameter names.
-8. **Parameter names are public API.** Renaming a parameter of a `pub` function or aspect method breaks callers that use
-   it by keyword, so it is a breaking change of the declaring package, like changing a parameter's type. (Whether an author
-   may mark a parameter positional-only is open, see Unresolved Questions.)
-9. **Typing and evaluation** are unchanged: each argument is typed against its parameter, generic inference is
-   unaffected, and evaluation order is the written order (section 6).
-
-Parameter names become part of a function's public call-site surface, the same way they already are conceptually (every existing signature already names its parameters — this RFC exposes that naming at the call site rather than introducing new declaration syntax). Keyword arguments are optional at every call site — purely positional calls remain valid and unchanged for any function, including ones defined before this RFC.
+Moved to **RFC-0223** (Keyword Arguments at Every Call), 2026-11-07. This RFC no longer defines keyword arguments: the
+call form `Type(x, y)` is positional on its own (section 1), and `Type(x = 0, y = 0)` is the keyword form RFC-0223 adds for every
+call, constructors included. The two RFCs lead to the same final form and land in the same release.
 
 ## 3. The grammar position keyword arguments occupy, and what `=` costs
 
-**Rewritten 2026-07-24.** The previous version of this section fixed a collision with type
-ascription that the `=` spelling (§1) removes outright. That analysis is kept below, under
-"Superseded", because it is what the RFC was reopened over and the record should show why
-the reopening no longer bites — not because it still describes the design.
-
-Keyword arguments are still not a pure addition to the grammar. `arg_list = { expr ~ ("," ~
-expr)* ~ ","? }` (`grammar.pest:182`) makes every call argument a plain `expr`, and `expr =
-{ assign_expr }` (line 146) puts **assignment** at the very top of the expression chain:
-`assign_expr = { unary_expr ~ assign_op ~ assign_expr | or_expr }` (line 148), with
-`assign_op = { "+=" | "-=" | "*=" | "/=" | "%=" | ("=" ~ !"=") }` (line 149). So `f(x = 1)`
-already parses today — as one positional argument whose value is an assignment expression.
-
-**Fix: the same shape of fix the previous version designed, retargeted to `=`** —
-restructure `arg_list` to try a keyword-argument shape before falling through to plain
-`expr`:
-
-```
-arg_list    = { call_arg ~ ("," ~ call_arg)* ~ ","? }
-call_arg    = { keyword_arg | expr }
-keyword_arg = { ident ~ "=" ~ !"=" ~ expr }
-```
-
-The `!"="` lookahead mirrors `assign_op`'s own and keeps `f(x == y)` from even attempting
-the keyword alternative. It is a cheapness/style choice, not a correctness one — without
-it, PEG would try `ident ~ "="` against `x ==`, fail to parse `= y` as an `expr`, backtrack
-to the `expr` alternative, and reach the same answer by a longer route.
-
-**The cost, stated plainly and much smaller than the one this replaces: a bare assignment
-can no longer be passed as a positional argument.** `f(x = 1)` now means "pass `1` as the
-argument named `x`", never "assign `1` to `x` and pass the result." This is the C `if (x =
-5)` footgun, which several languages ban outright; Metel's assignment is an expression
-today (`assign_expr` is in the expression chain), so this is a real narrowing, but of a
-form with no known legitimate use. **Compound assignment is unaffected** — `f(x += 1)`
-never matches `ident ~ "="`, so it still parses as today.
-
-**What `=` refunds, relative to the previous fix.** Type ascription as a bare positional
-call argument comes back: `f(x: SomeType)` again means "pass the expression `x`, ascribed
-to `SomeType`", exactly as `asc_expr = { unary_expr ~ (":" ~ type_expr)? }` (line 167) has
-always allowed. RFC-0023 is not narrowed by this RFC at all any more, in any position.
-
-**RFC-0101 (Grammar-Enforced Naming Case Conventions) is no longer load-bearing here.**
-It was cited previously to make the ascription trade-off negligible in practice; with the
-trade-off gone, the two RFCs are simply independent. Nothing about `=` depends on
-PascalCase carrying meaning.
-
-<details>
-<summary><strong>Superseded — the ascription collision, as analysed 2026-07-14</strong></summary>
-
-Under the `name: value` spelling, every call argument resolved down through `asc_expr = {
-unary_expr ~ (":" ~ type_expr)? }` — the existing type-ascription expression (`expr: Type`,
-RFC-0023). Any bare identifier is a syntactically valid zero-arg `type_expr`, so
-`Foo(bar: Baz)` was genuinely ambiguous in the grammar's own terms: keyword argument `bar`
-bound to value `Baz`, or one positional argument `bar` ascribed to type `Baz`? PEG's
-ordered choice commits to the first match, so `bar: Baz` was always consumed as ascription,
-and `name: value` would never have parsed as intended without a fix.
-
-The fix was `call_arg = { (ident ~ ":" ~ expr) | expr }`, keyword shape first — with the
-accepted cost that a bare ascribed variable could no longer be a positional call argument.
-**That cost, and the reconsideration it triggered ("do keyword arguments belong in the spec
-at all?"), were both consequences of the separator, not of the feature.** Both are gone
-under `=`.
-
-</details>
+Moved to **RFC-0223** section 3, 2026-11-07.
 
 ## 4. Symmetry with pattern-matching destructuring
 
@@ -232,8 +146,7 @@ asymmetry argued below is therefore purely about braces-versus-parens.
 ## 5. Coexistence with the old literal syntax
 
 **Brace construction of a struct or an enum struct-variant is prohibited.** `Type { field = value }` and
-`Enum::Variant { field = value }` in expression position are compile errors with a targeted diagnostic
-("construct with a call: `Type(field = value)`"). The rule applies to every struct, whether or not it
+`Enum::Variant { field = value }` in expression position are errors (the ordinary parse error, see the scope note below). The rule applies to every struct, whether or not it
 implements `Construct` (§7), and to every enum variant, for these reasons:
 
 1. **One spelling per action** (below). This covers structs and variants alike.
@@ -246,6 +159,12 @@ implements `Construct` (§7), and to every enum variant, for these reasons:
    every construction site of it. Under this rule it changes none. (Structs only.)
 4. **No brace expression is left except the anonymous record.** A brace group in expression position is then
    always an anonymous record or a block, and never a construction that needs a type path to be read.
+
+**Scope for v0.16.0 (2026-11-07).** Reasons 2 and 3 assume a `construct` that can run code (RFC-0114), which is not part of the
+stage: with only the synthesized default, the brace form and the call form behave identically. The case for retiring braces in
+v0.16.0 therefore rests on reasons 1 and 4: one spelling per action, and no brace expression left but the anonymous record, which
+RFC-0221 needs. The call is also what a later `Construct` requires, so nothing is lost. Diagnostic (decided 2026-11-07): `Type { x = 1 }`
+in expression position is the ordinary parse error, with no promised targeted message, as for RFC-0218 and RFC-0183.
 
 Braces after a type name remain legal in declarations (`struct Point { … }`, `enum Shape { Rect { … } }`) and
 in patterns (§4). They are no longer an expression.
@@ -264,48 +183,7 @@ which is the ground it was originally proposed on. The split was made knowing th
 
 ## 6. Evaluation order, aspect methods, and overload resolution
 
-Three questions an earlier draft of this RFC left open, resolved here against the actual implementation
-rather than by analogy alone. **All three are separator-independent** — none of them turns on `:` versus
-`=` — so the 2026-07-24 revision leaves their substance untouched and only restates their examples in the
-adopted spelling:
-
-**Evaluation order.** `evaluator/mod.rs`'s existing `TypedExpr::Call` handling evaluates arguments via
-`args.iter().map(|a| eval_expr(a, ...))` — strict left-to-right over the stored argument list, which today
-(positional-only, no reordering possible) is naturally call-site text order. Keyword arguments break the
-assumption that "stored order" and "written order" are the same thing, since `f(port = getPort(), host =
-getHost())` writes `port` first but binds to a parameter declared second. **Resolution: evaluation happens
-in two separate steps, not one** — first, evaluate every argument expression strictly in the order written
-at the call site (left to right, exactly as today, regardless of position vs. keyword), producing a list of
-already-computed values; only then re-map those *values* (never the expressions) onto the callee's declared
-parameter positions for the actual call. Reordering the expressions themselves to declaration order before
-evaluating them, instead, would silently run `getPort()` before `getHost()` despite it being written second
-— an easy mistake to make, invisible to any type-only test, and exactly the mistake most languages with
-keyword arguments (Python, Swift, Kotlin) are careful to avoid.
-
-**Aspect-method calls.** No special case: the receiver (`self`) is always positional, supplied by the
-expression before the dot, and can never be targeted by a keyword argument — `self` is a reserved keyword,
-so it can't collide with an ordinary parameter name either. Every parameter after `self` is an ordinary
-named parameter, structurally identical to a free function's from this RFC's perspective. Keyword arguments
-apply to aspect-method calls exactly as they do to free functions, confirmed against RFC-0044's three
-receiver forms (`self`, `&self`, `&var self` post-RFC-0098) — none of which interact with argument naming at
-all.
-
-**Overload resolution.** `overload.rs`'s own doc comment settles the general rule already in force:
-resolution is "exact-match only... argument types must equal a candidate's parameter types exactly" — by
-full parameter type list, not merely argument count. Keyword arguments extend this rather than replace it:
-for each candidate overload, the call's keyword-named arguments must name-match some subset of *that
-candidate's own* declared parameter names (any remaining slots filled by leftover positional arguments, in
-order), and the resulting per-slot argument types must exact-match that candidate's parameter types — the
-same rule as today, with keyword names doing the slot assignment instead of pure position. A keyword name
-absent from a candidate's own parameter list disqualifies that candidate for the call, the same way an
-argument-count or type mismatch already does. Checked against the real overloaded natives this RFC's
-Unresolved Questions cited hypothetically: `assert(cond: boolean)` and `assert(cond: boolean, msg: String)`
-(`stdlib/core.mtl:336-337`) both have real, distinct declared parameter names, so `assert(cond = true, msg =
-"x")` resolves to the two-parameter overload by the rule above with no special-casing needed. (Those two
-signatures are quoted in *declaration* form, which keeps `:` — `cond: boolean` classifies. Only the call
-site takes `=`.)
-
----
+Moved to **RFC-0223** section 4, 2026-11-07. Construction calls follow those rules unchanged.
 
 ## 7. Construction is a call of `Construct::construct`
 
@@ -331,7 +209,7 @@ the draft that dots the fields of anonymous records). Structs are not affected b
 field names here are parameter names, not labels.
 
 1. **Collection.** Keyword arguments become the row's labels. A positional argument is assigned to a label
-   by the one-or-two-field rule of §1. The row must be exactly the type's complete row, no more and no
+   by declaration order, as for a function (§1). The row must be exactly the type's complete row, no more and no
    fewer. Evaluation order is §6's.
 2. **No impl to write.** A struct with no invariant gets the compiler-synthesized default
    (`type Error = !`, `construct(row) { Ok(row) }`, RFC-0114 §1), which compiles away. Its author writes
@@ -342,7 +220,8 @@ field names here are parameter names, not labels.
 4. **The only minting site.** A row becomes a `Self` inside `construct` and `construct_unchecked` and
    nowhere else (RFC-0114 §1.1). `Type::construct(row)` can be written explicitly and means the same as the
    call.
-5. **From a record.** A record value of exactly the type's row is passed with a spread:
+5. **From a record.** *(v0.16.0 scope, decided 2026-11-07: `Type(..r)` appears alone, as the only argument; `Type(..r, x = 5)`
+   is an error until RFC-0191's override semantics are settled.)* A record value of exactly the type's row is passed with a spread:
    `Type(..r)` is `Type::construct(r)`. The `..` marks the argument as a row and not as the value of a
    field, so `Wrapper(r)` for a one-field struct whose field is itself a record keeps its §1 meaning. This
    is the form RFC-0114 open question 9 left open for `FromRecord`, and like `construct` it has no
@@ -365,76 +244,40 @@ direction (its §2): it is satisfied by any surface form that desugars to `const
 
 ## Alternatives Considered
 
-- **Positional-only construction (`IntBox(42)`, no keyword arguments at all).** Rejected as the primary proposal — unreadable for any struct with more than two or three fields, and silently order-dependent in a way today's named-field literal never was. Kept as sugar for the single-field case (§1).
-- **Struct-only keyword arguments, not a general call-syntax feature.** Rejected: this would need its own separate desugaring/typechecking path distinct from ordinary function calls for no real benefit, when generalizing costs little extra and gives every function call the same ergonomic win.
+- **Positional-only construction, no keyword arguments at all.** Rejected as the end state: unreadable beyond two or three fields and silently order-dependent in a way the named-field literal never was. It is this RFC's own floor, and RFC-0223 adds the keyword form for every call.
+- **Struct-only keyword arguments.** Rejected; see RFC-0223 (keyword arguments are a property of every call).
 - **Keep `Type { field = value }` as a second valid spelling alongside `Type(field = value)`.** The lower-risk option, and the one worth revisiting if migration friction during review turns out to be worse than expected — noted here as the fallback, not the default, per RFC-0042's own precedent against carrying a permanent transition alias (§5). RFC-0114 §2 shows it would be sound, since a brace literal that desugars to `construct` is not a bypass. §5 prohibits it anyway, because braces hide that construction runs code and because the spelling should not change when a type gains an invariant.
 - **Prohibit the brace form only for types with a non-default `Construct` impl** (RFC-0114's fallback). Rejected (§5, reason 3): adding an invariant to a type would then change every construction site.
 - **Making destructuring call-shaped too, for symmetry with construction.** Rejected (§4) — `match Type(value) => ...` reads as invoking something, not matching against a shape, and would be a bigger, more confusing change than the asymmetry it "fixes."
-- **Keyword arguments spelled `name: value`** (the original proposal, 2026-07-13 through 2026-07-23).
-  Rejected 2026-07-24 in favour of `=`: it violates the separator invariant (§1), it collides head-on with
-  type ascription and forces the narrowing §3's superseded half describes, and that collision is what got
-  this RFC reopened. **Its one real advantage is precedent** — Swift and C# both spell keyword arguments
-  with `:`, and a reader arriving from either will find `=` less familiar. Python, Kotlin, F# and Ada split
-  the other way. Precedent alone does not outweigh a grammar-wide invariant plus a removed collision, but
-  the trade is genuine rather than one-sided.
-- **Keyword-argument-vs-ascription disambiguation alternatives** (casing-based, requiring parens around nested ascription, a distinct marker token) — considered while `:` was still the proposed separator; all are moot under `=`, which removes the ambiguity rather than disambiguating it. See §3's superseded half.
-
----
+- **The keyword spelling and its disambiguation alternatives** (`name: value`, casing, parenthesised ascription): moved with keyword arguments to RFC-0223.
 
 ## Unresolved Questions
 
-**Rewritten 2026-07-24.** The three questions this section carried are all downstream of the
-`:` spelling, and all three lapse under `=`:
+Open after the split of 2026-11-07 (the questions about keyword arguments, the `=` separator, the grammar prototype and positional-only
+parameters moved to RFC-0223):
 
-1. ~~Should Metel keep only constructor-call syntax and drop general keyword arguments?~~
-   **Lapsed.** The case for dropping them rested on the ascription collision, which was
-   separator-specific (§3).
-2. ~~Is removing bare type-ascription from positional call arguments an acceptable cost?~~
-   **Lapsed — the cost is not incurred.** Ascription is untouched in every position.
-3. ~~Should new surface syntax be admitted when it weakens an already-specified construct?~~
-   **Still a real question, but it no longer applies to this RFC**, which now weakens
-   nothing already specified. Worth carrying somewhere corpus-wide rather than dying here.
-
-What actually remains open:
-
-- **Is `=` the right separator?** This revision proposes it; review has not accepted it.
-  The honest case against is precedent (Swift, C#), stated in Alternatives.
-- ~~**Is losing `f(x = 1)` as a positional bare assignment acceptable?**~~ **Resolved 2026-11-07 by RFC-0183**
-  (accepted and integrated): assignment becomes a statement, never an argument, so `f(x = 1)` is unambiguously the keyword
-  argument of this RFC and there is no positional-assignment reading to lose. RFC-0183 lands before this RFC in the
-  v0.16.0 sweep order (`pub`, `:=`, construction calls, dotted labels). The §3 collision with `assign_expr` therefore
-  does not arise once RFC-0183 is implemented.
-- **The `arg_list`/`call_arg`/`keyword_arg` restructuring in §3 is designed from grammar
-  reading, not from a built prototype.** Same caveat the record-syntax work carries: pest's
-  behaviour under the new ordering is predicted, not observed.
-- **Does retiring the literal need a migration story for existing `.mtl` sources?**
-  Unaddressed throughout, and the one piece of this RFC that is pure mechanical work rather
-  than design. The rewrite is `Type { f = v }` to `Type(f = v)`, and a bare brace form becomes the targeted
-  error of §5.
-- **RFC-0216's residual construction.** `T.{ ..R } { entries }` (RFC-0216 §2) is a brace expression after a
-  type head, so §5 prohibits it. It should take the spread call, `T.{ ..R }(..record)`, with the same
-  defining-module restriction. RFC-0216 would be amended; this RFC does not decide it.
-- **Spread in call arguments (§7 item 5).** `Type(..r)` adds a spread argument to `call_arg`. It must be
-  checked against RFC-0125's pack expansion, which also uses `..`, and the rule when it is combined with
-  keyword arguments (`Type(..r, x = 5)`: override, or an error as RFC-0191's record update decides) is not
-  settled here.
-
-- **Positional-only parameters (section 2.1 rule 8).** Whether an author may declare that a parameter cannot be bound by
-  keyword (as Python's `/`), so that renaming it is not a breaking change. Not proposed here; the cost of not having it is
-  that every parameter name of a public function is API.
-- **Default parameter values (rule 3).** Out of scope for this RFC; keyword arguments are the usual prerequisite for them.
-- **Impl parameter names (rule 6).** Requiring an impl method to repeat the aspect's parameter names is proposed here and
-  has not been checked against the existing aspect impls in std and the corpus.
-- **Native std functions (rule 4).** Every native must declare stable parameter names before keyword arguments can be used
-  on it; the audit is part of the implementation.
-
-Evaluation order, aspect-method calls, and overload resolution stay resolved in §6 — and
-are now known to be separator-independent, so this revision does not reopen them.
+- ~~**Is losing `f(x = 1)` as a positional bare assignment acceptable?**~~ **Resolved 2026-11-07 by RFC-0183:** assignment is a statement,
+  so there is no positional-assignment reading to lose. RFC-0183 lands before this RFC in the v0.16.0 sweep order.
+- ~~**Field shorthand** `Type { x, y }`.~~ **Resolved 2026-11-07:** retired with the brace form; the migration produces the keyword form
+  `Type(x = x, y = y)` (§1).
+- ~~**The positional rule.**~~ **Resolved 2026-11-07:** the function rule, declaration order at any arity (§1).
+- ~~**Diagnostic for the old brace form.**~~ **Resolved 2026-11-07:** the ordinary parse error (§5).
+- **Spread in call arguments (§7 item 5).** v0.16.0: `Type(..r)` alone; `Type(..r, x = 5)` is an error until RFC-0191's override
+  semantics are settled. It must still be checked against RFC-0125's pack expansion, which also uses `..`.
+- **Migration.** The rewrite is `Type { f = v }` to `Type(f = v)` and `Type { x, y }` to `Type(x = x, y = y)`, by a parser-based tool
+  (struct literals, blocks and records look alike), swept after RFC-0223 is implemented. About 1378 brace-construction lines in 684
+  `.mtl` files in metel-core on 2026-11-07 (rough), plus the spec, docs and RFCs.
+- **RFC-0216's residual construction.** `T.{ ..R } { entries }` (RFC-0216 §2) is a brace expression after a type head, so §5 prohibits
+  it. It should take the spread call, `T.{ ..R }(..record)`, with the same defining-module restriction. RFC-0216 would be amended; this
+  RFC does not decide it.
+- **The `Construct` items of §7** (result handling, the minting site, an explicit `Type::construct(row)`) are RFC-0114's and dormant in v0.16.0.
 
 ---
 
 ## References
 
+- RFC-0223 (Keyword Arguments at Every Call) — the other half of this RFC's split, 2026-11-07: the optional `Type(x = 0, y = 0)` keyword form
+  for every call.
 - RFC-0023 (Type Ascription vs Turbofish) — the `expr: Type` production the `:` spelling collided with
   (§3, superseded half). **Under `=` this RFC does not touch RFC-0023 in any position.**
 - `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the separator invariant `=` is adopted from (§1),
