@@ -7,6 +7,11 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1822'
 ---
 
+> **Note (2026-11-07).** Sections 3 and 3.1 below (partial consumption through `ToRecord`, the generated explicit `impl Linear`
+> and the brand that preserves a fiat obligation) are historical. `Linear` is declared by keyword, partial moves out of an
+> aggregate that is not known `Discard` are not allowed, and destructuring a fiat linear aggregate totally is an explicit
+> consumption that discharges its obligation (RFC-0089 section 2).
+
 > **Note (2026-11-06, later).** Partial consumption is resolved differently: a declared linear aggregate (struct, enum, named
 > record) has no partial moves and is consumed by total destructuring (RFC-0089 section 2, "Consuming a linear aggregate");
 > structural types (anonymous records, tuples) narrow as usual. The `ToRecord` route of section 3 survives only as an explicit,

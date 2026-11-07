@@ -69,15 +69,16 @@ RFC-0207 the declaration clauses.
 ## 1. `declared`
 
 A `declared` aspect is satisfied by a named type only if the type's declaration says so, through the
-colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an error with a fix-it. `Linear` is `declared` but keyword-only: it is granted by the `linear` keyword (RFC-0089 section 2.1), not by the colon list or `derives`.
+colon list (`struct P: A`) or `derives A` (RFC-0207). An `extend T: A` is an error with a fix-it. `Linear` is `declared` but keyword-only: an unconditional declaration is granted by the `linear` keyword (RFC-0089 section 2.1), not by the colon list or `derives`; a generic instance or structural type that holds a linear value computes the obligation instead.
 
 - **Targets with no declaration** (primitives, tuples, arrays, anonymous records, references)
   cannot carry a clause. Impls for them are allowed, and only in the aspect's defining module (the
   orphan rule keeps them with the aspect's author). A named type can never be granted this way.
 - **The grant is in the type's own module,** so the orphan rule (`T0014`) holds trivially, and the
   aspect cannot be granted to a named type you do not own.
-- **Refinement of the condition is not provided.** The condition is the aspect's structural rule
-  (section 2), evaluated exactly, so there is nothing to refine.
+- **Refinement of the condition is not provided at this stage.** The condition is the aspect's structural rule
+  (section 2), evaluated exactly, so there is nothing to refine; the stated-condition rule for public generic types
+  (RFC-0206 section 6) is a later stage.
 
 ## 2. The structural rule is a template, not a property
 

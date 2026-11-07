@@ -73,9 +73,9 @@ aspects.
 5. A residual is a value of the same brand, so the brand's `Drop` rule is unchanged: a destructor is dispatched by the
    row-bounded rule of RFC-0137 section 5 and is outside this RFC.
 6. **Compiler-computed ownership capabilities** (`Discard`, RFC-0089) are not impls: they follow the surviving fields of
-   the residual. `Linear` is declared, not computed (RFC-0089 amendment, 2026-11-06), so there is **no residual of a
-   declared linear type**: partial moves out of a `linear` struct or named record are not allowed (RFC-0089 section 2,
-   "Consuming a linear aggregate"). A structural type (anonymous record, tuple) that holds a linear value narrows as
+   the residual. A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard`
+   (RFC-0089 section 2, "Consuming an aggregate that is not known `Discard`"), so a residual of a linear or possibly
+   linear aggregate does not arise. A structural type (anonymous record, tuple) that holds a linear value narrows as
    usual and its leftover class is recomputed from the surviving components.
 
 **Diagnostics.** The error is `T0012` at the use site. When a written whole-type impl exists, the note names it as the

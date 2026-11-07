@@ -30,7 +30,7 @@ fun duplicate_callback(f: copy |i64| -> i64) -> () {
 
 The Copy and Clone settlement (RFC-0206, RFC-0207, RFC-0089) answered the two questions RFC-0163 was waiting on. Regular values keep an implicit `Copy`, sealed and granted only in the declaration; and the declaration keyword (`copy struct P`) and the function-type qualifier name **one property** (RFC-0206 section 5). With that settled:
 
-- **There is a visible gap.** After v0.16.0 a type author can write `copy struct`, but an API author cannot write a function-typed parameter that the callee may copy. `fun apply_twice(f: |i64| -> i64)` takes a move-only `f`, so it can call it once as a move, and a "retry" or "fan-out" API cannot be typed.
+- **There is a visible gap.** After v0.16.0 a type author can write `copy struct`, but an API author cannot write a function-typed parameter that the callee may copy. `fun fanout(f: |i64| -> i64)` takes a move-only `f`: it can call `f` repeatedly (a reusable callback needs no copy to be called twice), but it cannot hand independent copies to two helpers or keep one while passing another on, so a fan-out API cannot be typed.
 - **The Copy migration already moves function-type `Copy`/`Clone` into std** (#739, #893, #894). A written spelling is the user-facing half of that work.
 - **The narrow slice is safe under every remaining design question.** RFC-0166's reasoning applies: a qualifier that only *requires* a property already carried by `Type::Fun.use_multiplicity` (RFC-0134) cannot disagree with how regular values behave.
 
@@ -43,7 +43,7 @@ The Copy and Clone settlement (RFC-0206, RFC-0207, RFC-0089) answered the two qu
 3. **Permission.** A value of type `copy |T| -> U` may be copied. A bare `|T| -> U` value may not (RFC-0166).
 4. **Directions.** A copyable value flows into a bare slot by moving (RFC-0166, RFC-0152's first-order direction). A `copy |T| -> U` value flows into a bare `|T| -> U` slot by moving. The reverse is rejected: a bare (move-only) value is not accepted where `copy` is required. Below the first function level the qualifier matches exactly, as `once` and `var` already do (RFC-0152).
 5. **Closure literals.** `copy` is rejected in the prefix of a closure literal (`[x] copy |y| { ... }`): a literal's copyability is derived from its captures, not asserted. The diagnostic says so (code assigned at `4-implemented`).
-6. **Aspects.** `copy |T| -> U` satisfies `Copy`, the provided `Clone` and `Discard` through the function-type impls of the Copy migration (#739, #893, #894): one property, two spellings (RFC-0206). Whether a bare function value is `Discard` is the open closure-discard question of RFC-0089 section 2.2, unchanged here.
+6. **Aspects.** `copy |T| -> U` satisfies `Copy`, the provided `Clone` and `Discard` through the function-type impls of the Copy migration (#739, #893, #894): one property, two spellings (RFC-0206). A bare (non-`linear`) function value is `Discard`: a closure that captures a linear value must be declared `linear` (RFC-0194).
 
 **Dynamic semantics.** Copying a `copy |T| -> U` value duplicates its environment. Every capture is `Copy` (rule 2), so this is a representation copy that runs no user code (RFC-0206 section 2).
 
@@ -52,15 +52,16 @@ The Copy and Clone settlement (RFC-0206, RFC-0207, RFC-0089) answered the two qu
 ## 2. Worked examples
 
 ```metel
-fun retry(f: copy || -> boolean) -> boolean {
-    if (f()) { return true; }
-    f()                          // f was copied at the first call site: it is usable again
+fun fanout(f: copy |i64| -> i64) -> i64 {
+    let g := f;                  // independent copies of the callback
+    let h := f;
+    g(1) + h(2)
 }
 
-let flag := true;
-retry([flag] || { flag });       // ok: the capture is Copy
+let k := 3;
+fanout([k] |x: i64| -> i64 { x + k });          // ok: the capture is Copy
 let name := "x";
-retry([name] || { name.len() > 0 });   // error: capturing `name` (String, not Copy) prevents `copy`
+fanout([name] |x: i64| -> i64 { x + name.len() });   // error: capturing `name` (String, not Copy) prevents `copy`
 
 fun double(x: i64) -> i64 { x * 2 }
 fun at_most_once(f: copy once |i64| -> i64) -> i64 { f(1) }   // accepts a copyable (hence reusable) callable; this slot calls it at most once

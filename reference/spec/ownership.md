@@ -96,7 +96,7 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | affine (the default) | at most once | yes | no |
 | copy | any number | yes | yes |
 
-A named type's class is declared, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records): the declared class must be at
+A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a concrete linear field forces `linear` on a generic type too): the declared class must be at
 least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
 linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
 `Drop` is compatible with
@@ -133,7 +133,7 @@ type may have a written `Clone`, and a derived `Clone` requires every field to s
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-1}
 
-`Discard` is computed by the compiler. For a concrete type it holds exactly when the type is not linear, and `T: Copy` entails `T: Discard`. Writing or negating a `Discard` impl is an error. A stated public condition may withhold `Discard` from generic code but cannot create it or suppress a structural linear obligation.
+`Discard` is computed by the compiler. For a concrete type it holds exactly when the type is not linear, and `T: Copy` entails `T: Discard`. Writing or negating a `Discard` impl is an error.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -181,10 +181,7 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
 
-A value of a declared `linear` struct, enum or named record is consumed only by total destructuring or by passing it to a
-function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern may skip with `..`
-only fields that are `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are
-allowed. An anonymous record or tuple that holds a linear value is not declared, and narrows when a field moves out.
+A partial move out of a nominal aggregate is legal only when the aggregate is known `Discard` in the current context. Otherwise it is consumed only by total destructuring or by passing it to a function that consumes it. A field of such a value cannot be moved out on its own, a destructuring pattern may skip with `..` only fields that are `Discard`, and assigning to a linear field is an error. Reading a `Copy` field and borrowing a field are allowed. A type with a `Drop` impl is never destructured or partially moved. An anonymous record or tuple that holds a linear value is not nominal, and narrows when a field moves out.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -196,7 +193,7 @@ allowed. An anonymous record or tuple that holds a linear value is not declared,
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-7}
 
-A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A type definition that needs `Discard`, such as a `Drop` impl, is an error that suggests `T: Discard`.
+A generic type's class is computed per instantiation from its owned fields. `linear` on a generic type is unconditional, and a field of a concrete linear type forces `linear` on the declaration. A type parameter written `T: Discard` forbids linear arguments, and naming such a type requires the bound. A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional `Drop` impl on a possibly-linear target is an error, and a conditional impl adds no bound to the type.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -496,12 +493,12 @@ A `Drop` type may still be partially *borrowed*; only moving out is restricted.
 
 | construct | partial move |
 |---|---|
-| struct fields | yes, at field granularity (not for a declared `linear` struct, see below) |
+| struct fields | yes, at field granularity (only when the struct is known `Discard`, see below) |
 | tuple elements | yes — positional fields are statically named |
 | record fields | [yes, at field granularity](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2) |
 | enum payloads | no — matching a variant and moving its payload consumes the enum wholly |
 | array elements | **no** |
-| declared `linear` struct or named record | **no** — consumed whole by total destructuring (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)) |
+| nominal aggregate that is not known `Discard` (linear, or possibly linear) | **no** — consumed whole by total destructuring (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)) |
 
 An array element cannot be moved out because the index may be computed at run time, so which
 element left is not a static fact.
