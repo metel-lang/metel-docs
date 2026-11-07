@@ -2,8 +2,12 @@
 id: rfc-0221
 title: "Dotted Row Labels"
 date: '2026-11-07'
-status: draft
+status: under-review
+tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
+updated: '2026-11-07'
 ---
+
+> **Status — under review (2026-11-07).** Committed to the v0.16.0 stage Call and record syntax (metel-core#1847); review still has open prerequisites (RFC-0151 section 6, the parser prototype).
 
 ## Summary
 

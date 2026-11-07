@@ -53,7 +53,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 Keyword arguments are available at **every** call (section 2.1): free functions, associated functions, methods after the
 receiver, aspect methods, constructor calls and enum-variant calls. The call is the only way to construct a struct or an enum struct-variant: the brace form `Type { field = value }`
 is prohibited (§5). For a struct, `Type(args)` is a call of the constructor function that the `Construct` aspect
-(RFC-0114) provides (§7), with a compiler-synthesized default for types that have no invariant. For an enum
+(RFC-0114) provides (§7), with a compiler-synthesized default for types that have no invariant. In v0.16.0 only the
+synthesized default exists: the call builds the struct directly, and RFC-0114 is not part of the stage. For an enum
 variant, `Enum::Variant(args)` builds the variant directly.
 
 ---
@@ -308,6 +309,14 @@ site takes `=`.)
 
 ## 7. Construction is a call of `Construct::construct`
 
+**Scope for v0.16.0 (decided 2026-11-07, language owner): construction goes through the compiler-synthesized default
+only.** `Type(args)` builds the struct directly, which is exactly what the synthesized default does (`Error = !`,
+`construct(row) { Ok(row) }`, compiled away). The `Construct` aspect, a written `construct`, fallible construction
+(item 3), the minting-site rule (item 4) and `ConstructUnchecked` are not part of v0.16.0 and stay with RFC-0114,
+which is not in the stage. Items 1, 2 (as the default), 5 (as a direct build from a record of exactly the type's row),
+6 and the enum rule apply. When RFC-0114 is accepted later, the call becomes a call of `Construct::construct`
+without changing any call site, because the default compiles away.
+
 `Type(args)` is not a special form. It is a call of the constructor function that the `Construct` aspect
 (RFC-0114) provides, after the arguments are collected into the type's row:
 
@@ -441,7 +450,7 @@ are now known to be separator-independent, so this revision does not reopen them
   `Type(args)` calls (§7), the synthesized default, and the result-handling rule. `0-draft`; a soft dependency
   (§7). RFC-0114 does not require this RFC (its §2), and its fallback of banning the literal only for types with
   a non-default impl is rejected here (§5).
-- RFC-0221 (Dotted Row Labels, draft) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
+- RFC-0221 (Dotted Row Labels, under review) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
   construction here uses parameter names and is unaffected (§7); `Type(..r)` takes a dotted record.
 - RFC-0098 (Surface Keyword Renames) — sibling surface-syntax RFC from the same review; independent of this one (no shared grammar production, no shared open question).
 - RFC-0099 (Dot-Separated Module Paths) — sibling surface-syntax RFC from the same review; independent of this one.
