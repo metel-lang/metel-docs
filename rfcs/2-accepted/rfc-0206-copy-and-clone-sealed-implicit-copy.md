@@ -205,8 +205,8 @@ direction depends on the property:
 5. **Expanding recursion is rejected.** `struct Grow<T> derives Clone { rest: Option<Grow<List<T>>> }` grows its
    argument at every step. A size and depth limit gives an error at the declaration with the fix-it "write the
    impl", and unknown in the abstract analysis.
-6. **Function requirements** (the `Discard` elaboration of RFC-0089 section 2.2) are a least fixed point: obligations
-   only accumulate, so a recursive helper group is solved by iterating from the empty set until nothing is added.
+6. **Function requirements** are written bounds checked by the ordinary rule (RFC-0089 section 2.2): nothing is inferred,
+   so no fixed point over recursive helpers is needed.
 7. **The derived body** is a per-field call, so a recursive `clone` recurses through the impl and needs no
    unrolling. A written impl whose where clause mentions its own type is the ordinary case: the impl exists and
    is not unrolled.
@@ -314,8 +314,8 @@ replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-
   fails safe. A `Copy` grant is a statement; it is never inferred from the fields (copy-by-default, section 8).
 - **Generic code with respect to `Linear`.** In v0.16.0 every type is discardable, so an unbounded type parameter
   behaves as affine: movable and droppable, not copyable. The long-term rule is RFC-0089 section 2.2 (decided 2026-11-05): a bare `T` is
-  possibly linear, the capability `Discard` is elaborated for the one implicit operation (drop), and a `pub` generic
-  function states it once `linear` ships. The generic-body analysis must record drop sites of parameter-dependent
+  possibly linear and dropping it requires a written `T: Discard`, as copying requires `T: Copy` (revised
+  2026-11-07; nothing is inferred). The generic-body analysis must record drop sites of parameter-dependent
   values now, so that nothing in v0.16.0 forecloses it. RFC-0089 must show the demonstration of section 2.2 before
   its sections 1 to 2.1 are accepted.
 - **`Share`** (RFC-0158) is unaffected, since the name `Clone` stays.
@@ -348,7 +348,7 @@ after comptime") tracks replacing it by the template with no change in accepted 
 | Native named-type `Clone` derivation | v0.16.0 | comptime derive (RFC-0092, RFC-0093) | #1829 |
 | Undecided abstract ownership is a diagnostic | v0.16.0 | obligation solver and stored interfaces | #1813, #1818, #1819, #1820 |
 | `Discard(List<T>) = Discard(T)` as a native rule | at `linear` | owning-storage kind distinct from the `[T]` view | #1826 |
-| Drop-site and callee-interface recording only (no elaboration yet) | v0.16.0 | `Discard` elaboration with `linear` | #1827, #1828 |
+| Drop-site recording only (no check yet) | v0.16.0 | the definition check of `T: Discard` bounds, an error at the `linear` release | #1827, #1828 |
 
 The permanent restrictions are not workarounds and are not in this table: `implicit`, `auto` and `deriving` are std-only
 by design, and `Discard` is the one inferred bound.
@@ -419,15 +419,16 @@ The route is incremental and nothing in v0.16.0 closes it:
    either keeps its stated condition sufficient or fails validation, so it cannot change the interface silently.
 Epic: metel-core#1821.
 
-**One rule for types and functions (decided 2026-11-05, repaired after review 5).** The stored ownership interface covers
-the **permissive** capabilities, the ones that grant an operation: `Copy`, `Discard`, and `Send`/`Sync` when their
-structural rules land. For a **type** it is the condition under which the capability holds; for a **function** it is
-the bounds, including the `Discard` that RFC-0089 section 2.2 elaborates. A `pub` item states it, a non-`pub` item
-gets it computed, and the diagnostic suggests the computed result as a fix-it. **`Linear` is not a stored
-capability.** It is an obligation, existential over fields (`Linear(Pair<A, B>)` is `Linear(A) or Linear(B)`), so it
-does not fit a conjunction. It is computed per instantiation from the exact predicate (a linear field or a fiat
-grant), and generic bodies never need it: a bare `T` is already possibly linear, so a body only needs to know whether
-`T` is known `Discard`.
+**One rule for types and functions (decided 2026-11-05, repaired after review 5, revised 2026-11-07).** The stored ownership
+interface covers the **permissive** capabilities, the ones that grant an operation: `Copy`, `Discard`, and `Send`/`Sync`
+when their structural rules land. For a **type** it is the condition under which the capability holds; for a
+**function** it is its **written bounds** (RFC-0089 section 2.2: capabilities are bounds, nothing is inferred). A `pub` item
+states its `Copy` and `Clone` conditions (the stated-condition rule below); its `Discard` condition is computed from the
+fields, and a generic function writes `T: Discard` where it drops, so there is no separate public annotation for
+`Discard`. **`Linear` is not a stored capability.** It is an obligation, existential over fields (`Linear(Pair<A, B>)` is
+`Linear(A) or Linear(B)`), so it does not fit a conjunction. It is computed per instantiation from the exact predicate (a
+linear field or a fiat grant), and generic bodies never need it: a bare `T` is already possibly linear, so a body
+only needs to know whether `T` is known `Discard`.
 
 **The condition language.** A stored or stated condition is a conjunction of atoms `Param: Marker` over the
 declaring item's own parameters, with the constants `true` (the empty conjunction) and `never`. It has no
@@ -442,10 +443,8 @@ rejected with a diagnostic naming the limitation; the language is closed under s
 admits.
 
 **`Discard` is exact and compiler-computed.** No user writes or negates a `Discard` impl; only a `linear` declaration
-removes it, and `T: Copy` entails `T: Discard` in the checker. A stated condition on a public type may **withhold**
-`Discard` from generic code (a conservative published interface) but can never create it or suppress a structural
-linear obligation, so a public annotation cannot make a linear value droppable. Concretely, the complement of `Linear`
-holds for the computed obligation; independently stated public conditions need not be complements.
+(or a linear component of a structural or generic instantiation) removes it, and `T: Copy` entails `T: Discard` in the
+checker. The complement of `Linear` holds for the computed obligation.
 
 **Recursive declarations.** See section 2, "Recursion and termination", which is the one authoritative rule:
 `Discard`, `Send` and `Sync` are coinductive over structural cycles, `Linear` is inductive and computed, `Copy` is
@@ -592,8 +591,8 @@ not ready; its repairs are applied, and a short second pass on the changed text 
 2. **The class keywords:** contextual spelling, their use on enums, and whether `copy struct` for a generic type
    needs the condition of section 6 in the header.
 3. **The default for an unbounded type parameter with respect to `Linear`**: decided in RFC-0089 section 2.2
-   (bare `T` possibly linear, `Discard` elaborated, `pub` states it once `linear` ships); this RFC ships the affine
-   behaviour, which is equivalent while no linear type exists.
+   (bare `T` possibly linear, dropping it requires a written `T: Discard`); this RFC ships the affine behaviour, which is
+   equivalent while no linear type exists.
 4. **Allocator-placed values and `Clone`.** Out of scope; the allocator RFCs (RFC-0063, RFC-0139) own them.
 5. **The spelling and home of the aspect properties** (RFC-0212) and of negative super-aspect entries (RFC-0213).
 6. **The `copy_value` native.** A native method inside an aspect impl is already accepted (the record `Clone` in

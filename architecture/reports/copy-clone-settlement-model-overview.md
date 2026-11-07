@@ -268,17 +268,18 @@ A generic body can copy or drop a `T` without writing a call. A copy happens at 
 implicit (scope end, early `return`/`?`, overwrite, unused argument, discarded statement, the rest of a partial
 move). If bare `T` were affine, linear types could never be used in generic code; if every dropping function had to
 write a bound, 30 to 40 % of generic functions would carry it (measured over std and the integration programs on
-2026-11-05; a floor).
+2026-11-05; a floor). That annotation cost was accepted on 2026-11-07, as `Copy` bounds are.
 
-**Decision.** Bare `T` is **possibly linear**. `Discard` is a positive, compiler-computed capability ("may be
-dropped"); the compiler elaborates `T: Discard` from bodies, and a `pub` function states it once `linear` ships.
+**Decision (revised 2026-11-07).** Bare `T` is **possibly linear** and assumes no capabilities. `Discard` is a positive,
+compiler-computed capability ("may be dropped"); dropping a `T` requires a written `T: Discard`, as copying requires
+`T: Copy`. Nothing is inferred.
 
 ```metel
 linear struct Tx { id: i64 }
 
 fun identity<T>(x: T) -> T { x }                  // x is moved into the result: no Discard; identity(tx) is accepted
-fun sink<T>(x: T) { }                             // drops x: elaborates T: Discard (silently, non-pub)
-pub fun api<T>(x: T) { sink(x) }                  // inherits T: Discard from the callee; must state it once linear ships
+fun sink<T: Discard>(x: T) { }                    // drops x: the bound is written
+fun api<T: Discard>(x: T) { sink(x) }             // forwarding needs the bound too, by the ordinary rule
 
 // Option<T>::unwrap_or(self, fallback: T) -> T: the Some arm drops `fallback`,
 // so the method needs T: Discard. Option<Tx> exists; Option<Tx>::unwrap_or does not.
@@ -288,16 +289,15 @@ extend Tx: Finish { fun finish(self) { commit(self) } }
 fun run<T: Finish>(x: T) { x.finish() }           // x is moved into the call: run(tx) is accepted
 ```
 
-- **Elaboration is transitive** (drops plus callee interfaces after substitution), a least fixed point for recursive
-  helpers, and never selects an implementation on a bound the selection itself would infer.
-- **Only `Discard` is elaborated**: a drop is the one implicit operation. Methods, operators, `Copy` and `Clone`
-  stay declared. This is a single named exception to RFC-0173's "declared bounds", amended in RFC-0173's file.
-- A compiler diagnostic on a `pub` function must **suggest the computed bound** (a fix-it), so the author confirms
-  instead of working it out.
-- `Discard` is **never user-writable**; a public stated condition may withhold it but never create it or suppress a
-  structural linear obligation.
-- **In v0.16.0 every type is `Discard`**, so no program changes. The generic-body analysis must record drop sites now
-  so the elaboration can be computed when `linear` lands.
+- **Bodies are checked once, against declared bounds** (RFC-0173, unchanged). A drop of a `T`-dependent value without a
+  `Discard` bound is an error at the drop site that suggests the bound, as omitting `once` on a consuming closure does.
+- A callee's `T: Discard` bound must be entailed by the caller's bounds, by the ordinary rule.
+- **Generic types are open by default**: a generic type's class is computed per instantiation, `linear` on it is
+  unconditional, and `T: Discard` on a parameter forbids linear arguments.
+- `Discard` is **never user-writable**; only a `linear` declaration (or a linear component) removes it.
+- **In v0.16.0 every type is `Discard`**, so no program changes and the bound is accepted and trivially true. The
+  generic-body analysis records drop sites now so the definition check can run when `linear` lands; it becomes an
+  error then, with no lint or migration-tool stage (Metel has no users yet).
 
 ### 6.3 Ending a container of linear values
 
@@ -387,7 +387,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | 8 | Generic bodies: exact predicate, sound approximation, undecided is a diagnostic | 11-05 | Undecided-as-move would let a later solver change accepted programs | Accepted set only grows as proof power grows (later stages may add intentional rejections, e.g. the `pub` rule) |
 | 9 | Hybrid end state: stored interfaces, solver as producer; the stated condition is the interface; `pub` must state | 11-05 | Stable public interfaces; use sites consult stored data only | Steps #1814, #1818, #1819, #1820, #1813 |
 | 10 | Stored conditions: permissive capabilities only, conjunctions with `true`/`never`; polarity for recursion | 11-05 | `Linear` is existential and cannot be a conjunction; termination by solving order | `Linear` is computed per instantiation |
-| 11 | Bare `T` possibly linear; `Discard` inferred, transitive, stated on `pub` once `linear` ships | 11-05 | Linear types stay usable in generic code without a written bound on 30 to 40 % of functions | One named exception to RFC-0173 |
+| 11 | Bare `T` possibly linear; dropping it requires a written `T: Discard`, as copying requires `T: Copy`; generic types open by default (revised 11-07, was inferred `Discard`) | 11-05, 11-07 | Generic code never opts in to accept linear values, and the signature states what the function does with them | A recurring annotation cost on generic code that drops (30 to 40 %), accepted as for `Copy`; std audit by hand |
 | 12 | `Discard` is compiler-computed, never user-writable | 11-05 | A user grant could make a linear value droppable | Only a `linear` declaration removes it |
 | 13 | RFC-0089 split; the lattice and keywords stay, partial consumption goes to RFC-0215 | 11-05 | The settlement needs the lattice, not the `ToRecord` coupling | Acceptance order 0089, 0206, 0207, 0213, 0212 |
 | 14 | `Clone` is not contraction; panic in a derived clone ends the process | 11-05 | Resource duplication must stay possible; the spec already ends the process on panic | Linear fields need no partial-clone cleanup |
@@ -407,7 +407,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 | Native named-type `Clone` derivation | v0.16.0 | comptime derive (RFC-0092, RFC-0093) | #1829 |
 | Undecided abstract ownership is a diagnostic | v0.16.0 | obligation solver and stored interfaces | #1813, #1818, #1819, #1820 |
 | `Discard(List<T>) = Discard(T)` as a native rule | at `linear` | owning-storage kind distinct from the `[T]` view | #1826 |
-| Drop-site and callee-interface recording only | v0.16.0 | `Discard` elaboration with `linear` | #1827, #1828 |
+| Drop-site recording only (no check yet) | v0.16.0 | the definition check of `T: Discard` bounds, an error at the `linear` release | #1827, #1828 |
 
 **Permanent restrictions** (design choices, not workarounds): `implicit`, `auto` and `deriving` are std-only (open question 9 for
 `deriving`; the RFC-0096 revision for `auto`), and `Discard` is the single inferred bound.
