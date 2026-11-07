@@ -193,7 +193,7 @@ direction depends on the property:
    general theorem: a new indirection that is `Copy` must revisit it.
 2. **The structural "every field" markers `Discard`, `Send` and `Sync` are coinductive**: a cycle through the
    declaration's own fields is assumed to hold, so `struct Node<T> { value: T, children: List<Node<T>> }` is `Discard`
-   exactly when `T` is (it must be declared `linear struct Node<T>` to admit a linear `T`; the recursion rule is the same). **`Linear` is existential and is never stored** (section 6): it is computed per
+   exactly when `T` is. **`Linear` is existential and is never stored** (section 6): it is computed per
    instantiation, inductively, seeded by real linear fields and fiat grants.
 3. **Derivation conditions are coinductive on goals that repeat exactly.** `enum Tree derives Clone {
    Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs `Tree: Clone`
@@ -351,7 +351,7 @@ after comptime") tracks replacing it by the template with no change in accepted 
 | Drop-site recording only (no check yet) | v0.16.0 | the definition check of `T: Discard` bounds, an error at the `linear` release | #1827, #1828 |
 
 The permanent restrictions are not workarounds and are not in this table: `implicit`, `auto` and `deriving` are std-only
-by design, and `Discard` is the one inferred bound.
+by design; `Discard` is a written bound, like `Copy`.
 
 There is no first stage that carries the semantics with an unnamed special case. The only special cases in this release
 are the named exceptions (native structural `Copy`, #1823; arrays and the record `Clone` hook, step 7; the
@@ -448,7 +448,7 @@ checker. The complement of `Linear` holds for the computed obligation.
 
 **Recursive declarations.** See section 2, "Recursion and termination", which is the one authoritative rule:
 `Discard`, `Send` and `Sync` are coinductive over structural cycles, `Linear` is inductive and computed, `Copy` is
-inductive, and function requirements are a least fixed point. The spike's rule "a marker cycle yields no" (#1815b) is
+inductive, and a function's requirements are its written bounds, checked by entailment (nothing is inferred). The spike's rule "a marker cycle yields no" (#1815b) is
 correct for `Copy` only and must not be carried into the computation phase (#1819).
 
 Work specific to this RFC and independent of that order:
@@ -548,7 +548,7 @@ extend Point: Copy;                                                       // err
 - **RFC-0089** — the multiplicity lattice, the `Linear` aspect and its exclusions, and the class keywords. A
   **design-level dependency** of this settlement (decided 2026-11-05); RFC-0089 is split so its sections 1 to 2.1
   can be accepted without section 3. See section 6.
-- **RFC-0096** — auto aspects, whose revision (including how `Linear` is inferred) is deferred.
+- **RFC-0096** — auto aspects, whose revision (including the computed class of generic instances) is deferred.
 - **RFC-0071 §2** — states the one predicate; its `Copy` stays `Copy`, with the grant moved to the declaration.
 - **RFC-0134 / RFC-0163 / RFC-0166 / RFC-0194** — closures and function types: copyable by captures; the `copy`
   qualifier; written function types move-only; linear closures.
@@ -573,7 +573,7 @@ novel parts and their risk:
 | `implicit` as a std-only property (RFC-0212) | Moderate: organises the compiler's privilege, does not remove it |
 | The undecided-ownership limitation (section 2 rule 3) | Moderate usability risk, acceptable if the diagnostics name the proof path |
 | A later observable hook | Reopened only on the named trigger and the four conditions of section 8; high unless `Copy`'s sealed guarantee stays intact |
-| Inferred `Discard` for generic code (RFC-0089 section 2.2) | Moderate: one named exception to "declared bounds", limited to the one implicit operation; transitive for non-`pub` functions, stated on `pub` ones once `linear` ships; reviewed once (review 5) and repaired; the paper demonstration still has an open dependency on a conditional std destructor and on closure discard |
+| Written `Discard` bounds and open generic types (RFC-0089 section 2.2) | Moderate: generic code that drops writes `T: Discard` (30 to 40 % of by-value generic functions, accepted as for `Copy`); a public generic type's class depends on its parameter-dependent fields (a concrete linear field forces the keyword); `dyn` erasure remains a linear-release gate (callable discard is settled: a non-`linear` function type is `Discard`); public stated conditions stabilise `Copy` and `Clone` only, computed `Discard` is not part of the stated interface, and a field that is linear for every instantiation requires the keyword; reviewed in reviews 8 and 9 |
 | Native structural `Copy` for named types | Low: a named, time-boxed exception, tracked as metel-core#1823 |
 
 **Acceptance (decided 2026-11-05): one ratification sweep.** The settlement is one cluster, as the allocator

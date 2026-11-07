@@ -7,6 +7,18 @@ updated: '2026-11-05'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
+> **Acceptance scope (2026-11-07, language owner): the linear-specific rules are reserved, not accepted.** Accepted and
+> binding for v0.16.0: the class keywords (`copy`, `linear` reserved), `Linear` as a declared aspect, `Discard` as a
+> compiler-computed capability written as a bound (`T: Discard`), bare `T` as possibly linear, and "every type is
+> `Discard`" until the `linear` release. **Reserved, kept as design text for review and not binding on implementation:**
+> the computed class of generic instantiations and the rule that a field linear for every instantiation forces the
+> keyword (section 2, "Generic types"); the elimination rules (partial moves need known `Discard`, consuming
+> patterns, the `Drop` dismantling rule, structural narrowing); and the `T: Discard` well-formedness rule for types.
+> They return for acceptance with the Linear types theme, after the decision register
+> (`architecture/reports/linear-types-decision-register.md`) and the generic-class comparison
+> (`architecture/reports/generic-class-computed-vs-explicit.md`) have been worked through. Nothing in v0.16.0 depends on
+> them, because every type is `Discard` there.
+
 > **Amendment (2026-11-06, language owner): a named type's class is declared and checked against its fields.** (Generic instantiations and structural types, such as tuples, arrays and anonymous records, compute their class from their components; generic code names the capabilities it needs in bounds, so a bare `T` is possibly linear and dropping it requires `T: Discard`, section 2.2.) `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
@@ -126,8 +138,8 @@ restrictive than `ω` (ω additionally allows duplication). `0` sits outside thi
 ordering — it's not "fewer uses," it's "not a runtime value," and behaves the way
 `PhantomBrand` (RFC-0074) and phantom type-state parameters already do.
 
-**A type's class is declared and checked against its fields (amendment 2026-11-06).** The class is never
-inferred. The declared class must be at least as restrictive as the class of every field (`1` more restrictive than
+**A type's class is declared and checked against its fields (amendment 2026-11-06).** For a named type with no type
+parameters the class is never inferred (a generic instance and a structural type compute theirs, section 2). The declared class must be at least as restrictive as the class of every field (`1` more restrictive than
 `affine`, `affine` more than `ω`): a `copy` type needs every field `Copy`; an undeclared (affine) type may hold no
 linear field; a `linear` type may hold anything, including no linear field at all (a capability token wrapping an
 `i64`). A mismatch is an error at the field, and the fix-it adds the missing keyword (`declare it \`linear struct\``).
@@ -147,37 +159,64 @@ declared aspect Linear;
 ```
 
 A marker aspect that is `declared` (RFC-0212), like `Copy`: it is granted only in a type's declaration by the
-`linear` keyword, never by `extend` and never inferred from the fields. There is no `#derive(Linear)` and no
-structural `auto` rule for named types. The check runs the other way: a struct, record or enum that holds a linear
+`linear` keyword, never by `extend`, and for a type with no type parameters never inferred from the fields. There is no
+`#derive(Linear)` and no structural `auto` rule for named types. The check runs the other way: a struct, record or enum that holds a linear
 field (or a closure that captures a linear value) and is not declared `linear` is an error at the field, and the
 diagnostic suggests the keyword. There is no `!Linear` opt-out (no negative impl), because nothing is inferred for it to opt out of. The negative *bound* `T: !Linear` of RFC-0072 remains a legal bound form.
 
 - **Generic types.** A generic type's class is **computed per instantiation** from its owned fields, as a tuple's is
   (the keyword is not needed to admit a linear argument). `linear` on a generic type is **unconditional**: every
   instantiation is linear. `copy` states a capability: `Copy` exactly when the fields are. A type parameter written
-  `T: Discard` forbids linear arguments. Details in section 2.2.
+  `T: Discard` forbids linear arguments. A field whose type is **linear for every instantiation** of the declaration's parameters forces `linear` on the
+  declaration, as for a non-generic type (the test: evaluate the field's ownership condition with every type parameter assumed
+  discardable and the declared bounds kept; `Ticket<T>` stays linear, `Wrapper<T> { v: T }` has no linear component. A
+  projection of a parameter such as `T::Item` is parameter-dependent, so it is conditional and forces nothing; a
+  `Self`-recursive field uses the fixed-point solver of RFC-0206 section 2, not placeholder expansion). Adding such a field to a public generic type
+  is therefore an explicit edit and not a silent change of every instantiation; only fields whose class depends on a
+  parameter make the class conditional. Details in section 2.2.
 - **Types with no declaration site** (tuples, arrays, anonymous records) cannot carry the keyword. They are linear
   when a component is, by a compiler rule like the existing tuple and array rules for `Copy`.
 - **Closures** are declared `linear` explicitly in the literal's prefix and in a function type (RFC-0194): a closure
   that captures a linear value without `linear` is an error whose fix-it adds it. `linear` implies `once`.
 
-**Consuming a linear aggregate (decided 2026-11-06).** A value of a **declared** linear type (struct, enum, named
-record) is consumed whole: by **total destructuring**, or by passing it to a function that consumes it. There are no
-partial moves and so no residuals of a declared linear type, which removes the question of whether a type was linear
-for its field or by fiat (the declaration records only "linear", not why, and a leftover could not be classified).
+**Consuming an aggregate that is not known `Discard` (decided 2026-11-06, revised 2026-11-07).** A partial move out of a
+nominal aggregate (struct, enum, named record) is legal only when the aggregate is **known `Discard`** in the current
+context, so the leftover can be dropped (as today, where every type is `Discard`). Otherwise the aggregate is linear,
+declared or computed, or possibly linear because it holds a parameter-dependent field of an unbounded `T`, and it is
+consumed whole: by **total destructuring**, or by passing it to a function that consumes it. There are no residuals of
+such an aggregate, which removes the question of whether a type was linear for its field or by fiat, and the rule does
+not depend on how the class was determined.
 - Reading a `Copy` field and borrowing a field (`&r.t`, `&var r.t`) change no ownership state and stay legal.
-- `..` in a destructuring pattern may skip only fields that are `Discard`; every other field is bound.
+- **A destructuring pattern consumes its scrutinee** (decided 2026-11-07). Bound fields move; a field skipped by `..` or
+  `_` is inaccessible afterwards and, where the aggregate is not known `Discard`, must itself be `Discard`. A pattern
+  never leaves a partially moved residual: partial moves come only from explicit field moves. This holds for struct,
+  tuple and enum-payload patterns, as it already does for a record rest binding (`{ x, ..rest }`). Skipped fields drop
+  at the scrutinee's scope end; whether they should drop at the pattern is open (metel-core#1843). These rules
+  describe **owning** patterns: matching through a reference keeps the reference-matching rules and consumes nothing.
+  Ownership moves to the selected arm only, and a guard sees its bindings without moving them until it succeeds. A
+  whole-value `_` destructures nothing and consumes nothing (a linear scrutinee under `_ =>` stays unconsumed and is an
+  error); the skip check applies to `_` and `..` inside a destructuring pattern. A pattern on a value that an explicit
+  field move already narrowed is rejected, as is any whole use of it. A refutable form added later must keep ownership
+  on the non-matching path.
 - Assigning to a linear field would drop its old value, so it is an error; replace by destructuring and rebuilding.
 - Record spread (`{ ..r, n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
-- This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly) and mirrors
-  the ban on partial moves out of a `Drop` type.
+- A type with a `Drop` impl, conditional or not, is consumed whole only by its own methods, by **total destructuring
+  that suppresses the destructor**. A type's own methods are those authored in its defining module that take an owned
+  whole `self`: a `&self` or `&var self` receiver confers no permission, and an aspect default body never acquires it
+  through dispatch or instantiation (an aspect impl written in the defining module qualifies; a client's impl of its
+  own aspect on the type does not). Suppression affects only the outer destructor: a nested field's destructor still
+  runs when that field is skipped or dropped, and binding a field does not license dropping a bare `T`. Every field is bound or skipped (skipped fields `Discard`), and each bound field is
+  moved on or dropped. This is how a wrapper such as `Logged<T>` is unwrapped (`into_inner`), including for a linear
+  `T`, where no destructor applies. Outside its own methods such a type is never destructured, partially moved or used
+  in a record spread.
+- This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly).
 **Structural types are the exception.** An anonymous record or a tuple has no declaration: its class is computed from
 its components (as `Copy` is for a tuple), so a field move narrows it and the leftover's class is recomputed, with the
-obligation travelling with the moved value. Destructuring a declared linear aggregate and rebuilding an anonymous
-record or tuple from the pieces is always available as an escape hatch.
+obligation travelling with the moved value. Destructuring any aggregate and rebuilding an anonymous record or tuple from
+the pieces is available as an escape hatch (except for a type with a `Drop` impl outside its own methods).
 
 **`Clone` is not contraction (decided 2026-11-05).** `Clone` is explicit creation of another value, not the
 implicit duplication that linearity forbids, so a linear type may have a **written** `Clone`: the author asserts that
@@ -231,7 +270,8 @@ author is told. A **drop** is implicit: scope end, an early `return` or `?`, an 
 argument, a discarded expression statement, the unmoved rest of a partial move. If a bare `T` were affine, a linear
 type could never instantiate it and generic code could not be used with linear types at all.
 
-**The decision (language owner, 2026-11-07).** A bare `T` is **possibly linear** and assumes no capabilities. Each
+**The decision (language owner, 2026-11-07).** A bare `T` is **possibly linear** and assumes no capabilities (Rust is not
+an exact precedent: its type parameters carry an implicit `Sized` bound). Each
 operation that needs one names it in a bound, as `Copy` already does:
 
 | Operation | Bound | Bare `T` |
@@ -260,18 +300,28 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   function that only forwards a `T` to a function that drops it needs the bound too.
 - **Generic types.** A generic type's parameters are **open by default** (they admit linear arguments), and its class
   is computed per instantiation from its owned fields, as a tuple's is. `linear` on a generic type is unconditional
-  (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A parameter written
-  `T: Discard` forbids linear arguments: instantiating it with one is an error naming the parameter. Naming such a type
-  requires its bound at every use, by the ordinary well-formedness rule. A type definition that needs `Discard`, such as
-  a `Drop` impl, a derived impl that requires it, or a field of a type whose parameter is `Discard`-bounded, is an
-  error that suggests `T: Discard`.
+  (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A field that is
+  linear for every instantiation forces `linear` on the declaration (section 2). A parameter written `T: Discard` forbids
+  linear arguments: instantiating it with one is an error naming the parameter. Naming such a type requires its bound at
+  every use, by the ordinary well-formedness rule. A derived impl that requires `Discard`, or a field of a type whose
+  parameter is `Discard`-bounded, is an error that suggests `T: Discard`.
+- **`Drop` impls.** A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional
+  `extend<T> Foo<T>: Drop` is rejected when `Discard` of the target cannot be proved (`View<T> { value: &T }` owns
+  no `T`, so its unconditional impl is legal), and a conditional `extend<T: Discard> Foo<T>: Drop` is the way to give a generic
+  type a destructor without closing it to linear arguments. A conditional impl adds no bound to the type declaration.
+  `Foo<Tx>` then exists, is linear and has no destructor. This is the same exclusion check as for `Copy` and `Drop` at
+  an instantiation (RFC-0213). A type with any `Drop` impl is consumed only by its own methods, by total destructuring that suppresses the destructor (section 2).
 - **Methods.** In a generic impl the bound attaches to the method (`where T: Discard`), so `Option<Tx>` exists and
   `unwrap_or` is available only when `T: Discard`.
 - **Conformance.** An impl method's requirements must be entailed by the impl's bounds, as for any aspect (an impl
   cannot silently strengthen an aspect contract).
-- **Closures and trait objects.** Whether a closure value is `Discard` depends on what it captures; a linear closure
-  is not `Discard` (RFC-0194). Before `linear` ships, erasing a possibly-linear capture behind a droppable closure value
-  or an existential must be forbidden or must retain the obligation.
+- **Function values.** A function value that is not declared `linear` is `Discard`: a closure that captures a linear
+  value must be declared `linear` (RFC-0194), so every captured value of a non-`linear` closure is droppable. A
+  function type that is not `linear` therefore guarantees `Discard`, and `Option::map` may drop its callback. A
+  `linear` function type is not `Discard`. A closure that captures a value of bare type `T` captures a possibly-linear
+  value, so it must be declared `linear`, or the function must bound `T: Discard`.
+- **Trait objects.** Coercing a possibly-linear value into `dyn Aspect` erases its class. Before `linear` ships this must
+  be rejected, or the `dyn` type must retain the obligation (the existential-erasure gate, metel-core#1828).
 
 **The cost, stated plainly.** `T: Discard` is needed whenever generic code drops a by-value `T`: `unwrap_or`, `ok`, an
 ignored argument, `print<T: Display>(x: T)`. A scan of std and the integration programs (2026-11-05) found that 30 to
@@ -298,9 +348,8 @@ v0.16.0 must do so that nothing is foreclosed:
    moves both fields out and rebuilds: nothing is dropped, so no bound. **Follows.**
 3. `Option<T>::unwrap_or(self, fallback: T) -> T where T: Discard`: the arm `Some { value } => value` drops
    `fallback`, so the bound is required and written; the arm `None => fallback` consumes it. `Option<Tx>::unwrap_or` is
-   therefore unavailable and `Option<i64>::unwrap_or` is unchanged. `Option<T>::map(self, f)` has no `T` drop, but its
-   `None` arm drops the closure `f`, so it depends on the open closure-discard rule. **Follows for `unwrap_or`; `map`
-   is open on closure discard.**
+   therefore unavailable and `Option<i64>::unwrap_or` is unchanged. `Option<T>::map(self, f)` has no `T` drop, and its
+   `None` arm drops the closure `f`, which is `Discard` because a non-`linear` function type is. **Follows.**
 4. A linear value ended through an author-named method: `fun commit(tx: Tx) { let Tx { id } := tx; flush(id); }` is
    checked in its own body (the destructured `i64` fields are `Discard`). Generic code reaches it through a declared
    aspect: `aspect Finish { fun finish(self); }`, `extend Tx: Finish { fun finish(self) { commit(self) } }` and
@@ -323,14 +372,18 @@ v0.16.0 must do so that nothing is foreclosed:
      element exactly once.
    - Emptying a list does **not** consume it: after a `pop` loop the value is still a `List<Tx>` and still has to be
      ended. `fun end_all(xs: List<Tx>) { xs.consume_each(|t| commit(t)); }` ends a list.
-   - **Depends on:** the closure `f` being droppable or consumed (the open closure-discard rule, RFC-0134, RFC-0153),
+   - **Depends on:** the closure `f` being `Discard` (a non-`linear` function type is, RFC-0194),
      the native's contract, and the temporary rule above; all tracked in metel-core#1826 and the linear-release gate
      #1828.
    **Follows, given the named rule, the std change, the native contract and the closure rule.**
 
-**Std audit list** (the functions that drop and so write `T: Discard`): `Option::unwrap_or`, `Option::ok_or`,
-`Result::unwrap_or`, `Result::unwrap_or_else`, `Result::ok`, `print` and `println` (or take `&T`), `__eq_array_item`,
-and for lists: the conditional destructor, `clear`, and the new native `consume_each` with its contract (item 6).
+**Std audit list** (the functions that drop and so write a bound, per parameter): `Option::unwrap_or` needs `T: Discard`
+(the unused fallback); `Option::ok_or` needs `E: Discard` (the unused error), not `T`; `Result::ok` needs `E: Discard`;
+`Result::unwrap_or` needs both `T: Discard` and `E: Discard`; `Result::unwrap_or_else` needs `E: Discard`;
+`map` and `and_then` need no bound (their callbacks are `Discard`); `print` and `println` (or take `&T`);
+`__eq_array_item`; and for lists: the conditional destructor, `clear`, and the native `consume_each`, which must **not**
+require element `Discard` since it is the linear teardown (item 6). Borrowing `Eq` and `Hash` need no discard capability;
+a helper taking compared values by value does.
 
 **Alternatives considered.** (a) *A written `T: ?Linear` opt-in on an affine default*: linear types are locked out of
 every generic function until its author opts in (Swift needed several releases, SE-0427). (b) *A `T: Discard` required
@@ -344,8 +397,7 @@ breaks callers and it contradicts RFC-0173. (e) *Let a generic drop of a linear 
 the value is then affine with a destructor, not linear.
 
 **Open (exit tracking: metel-core#1828, the linear-release gate).** The spelling `Discard`; whether an explicit
-`where T: !Discard` ("this parameter must be linear") is ever needed (probably not); closure discard (RFC-0134,
-RFC-0153); the rule that moving every field out consumes a struct (RFC-0215); whether `print` and `println` take `&T`.
+`where T: !Discard` ("this parameter must be linear") is ever needed (probably not); the rule that moving every field out consumes a struct (RFC-0215); whether `print` and `println` take `&T`.
 
 ---
 

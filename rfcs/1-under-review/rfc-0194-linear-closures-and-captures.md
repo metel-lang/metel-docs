@@ -115,6 +115,12 @@ Because the closure must be called, and calling runs the body, the "captured val
 consumed inside an uncalled closure" problem (RFC-0049 OQ-1) cannot arise: an uncalled linear
 closure is itself an error.
 
+### Function values are `Discard` unless `linear`
+
+A closure that captures a linear value must be declared `linear`, so every closure not declared `linear` captures only
+`Discard` values and is itself `Discard`. A written function type that is not `linear` therefore guarantees `Discard`
+(RFC-0089 section 2.2); a `linear` function type is not `Discard`. A closure that captures a value of bare type `T` captures a possibly-linear value, so it must be declared `linear` or the function must bound `T: Discard`.
+
 ### No `Drop` for closures
 
 A closure type is not `Drop` (function types satisfy no aspects today, #739), and this RFC does not
