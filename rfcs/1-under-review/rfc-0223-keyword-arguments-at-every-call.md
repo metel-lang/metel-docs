@@ -112,8 +112,19 @@ keyword_arg = { ident ~ "=" ~ !"=" ~ expr }
 
 The `!"="` lookahead keeps `f(x == y)` from attempting the keyword alternative. Compound assignment is unaffected (`f(x += 1)`
 never matches `ident ~ "="`), and type ascription is untouched in every position (`f(x: T)` stays an ascribed positional
-argument), because `=` replaced the original `:` spelling. The pest behaviour under the new ordering is predicted from
-the grammar, not observed: a throwaway prototype is part of acceptance.
+argument), because `=` replaced the original `:` spelling.
+
+**Prototype (built and run 2026-11-07).** A scratch crate on pest 2.9 used metel-frontend's real `grammar.pest` in four
+variants and parsed `expr` on each case, reporting whether the whole input was consumed and which rules matched:
+(0) the current grammar, (A) the current grammar plus `keyword_arg` (assignment is still `:=`), (B) plain assignment as `=` and
+still an expression, keyword-first, and (C) the same as B with the order reversed (`call_arg = expr | keyword_arg`).
+Results: in (0) no keyword form parses, as expected. In (A) every keyword form parses (`f(x = 1)`, `f(a, b = 2)`, `p.m(k = 1,)`,
+`Type(x = 1, y = 2)`, closures as keyword values and as positional neighbours), and `f(x: T)` and `f(x == y)` keep their
+meaning, so with assignment spelled `:=` today the change is additive. In (B) keyword-first still wins every case. In (C)
+every keyword argument is swallowed as an assignment expression, so **keyword-first ordering is mandatory whenever `=` is
+an assignment expression**; RFC-0183 removes that need by making assignment a statement. `f(a = 1, 2)` (a positional argument
+after a keyword) parses at the grammar level, so rule 1's "positional first" is a checker error, not a parse error. The
+prototype shows the two RFCs may land in either order.
 
 <details>
 <summary><strong>History: the original `name: value` spelling and why it was replaced (RFC-0100, 2026-07-14 to 2026-07-24)</strong></summary>
@@ -220,9 +231,10 @@ site takes `=`.)
 3. **Impl parameter names** (rule 6). Requiring an impl method to repeat the aspect's parameter names is proposed and has not
    been checked against the aspect impls in std and the corpus.
 4. **Native std functions** (rule 4). Every native must declare stable parameter names; the audit is part of the implementation.
-5. **A built prototype of the `arg_list`/`call_arg`/`keyword_arg` grammar** (section 3), before acceptance.
+5. ~~**A built prototype of the `arg_list`/`call_arg`/`keyword_arg` grammar** (section 3), before acceptance.~~ **Done 2026-11-07**:
+   see section 3. Remaining: the same cases as fixtures once implemented, and the checker error for a positional argument after a keyword.
 6. **Error codes** for the rejections of section 2 (unknown name, duplicate, missing parameter, positional after keyword, keyword on a call through a function value).
-7. **Is `=` the right separator?** This proposes it; review has not accepted it. The honest case against is precedent (Swift, C#).
+7. ~~**Is `=` the right separator?**~~ **Resolved 2026-11-07 (language owner): keep `=`**, for keyword arguments and for record literals. `:` for both (Swift and Rust style: a label followed by what belongs to it) was weighed and rejected. It would reverse RFC-0115 and the separator invariant, make a record type `{ .x: f64 }` and a record value `{ .x: 1.0 }` look alike, and bring back the ascription collision for `f(x: T)`. `=` keeps the ML-style distinction: values `=`, types `:`.
 
 ---
 
