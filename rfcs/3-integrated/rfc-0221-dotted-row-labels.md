@@ -2,12 +2,25 @@
 id: rfc-0221
 title: "Dotted Row Labels"
 date: '2026-11-07'
-status: under-review
+status: integrated
 tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
-updated: '2026-11-07'
+coverage:
+  "1": { kind: blocked, reason: "Record fields are still bare identifiers until the dotted-label grammar and sweep land.", ref: "metel-core#1847" }
+  "2": { kind: blocked, reason: "The struct-from-record spread is implemented with RFC-0100's construction call.", ref: "metel-core#1847" }
+  "3": { kind: blocked, reason: "The prototype cases become fixtures of the dotted-label grammar.", ref: "metel-core#1847" }
+  "4": { kind: blocked, reason: "The bare-field parse error and the slip lint get fixtures at implementation.", ref: "metel-core#1847" }
+  "5": { kind: blocked, reason: "The empty-record position fixtures arrive with the grammar change.", ref: "metel-core#1847" }
+  "6": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#1847" }
+updated: '2026-11-08'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-11-07).** Committed to the v0.16.0 stage Call and record syntax (metel-core#1847); review still has an open prerequisite (the parser prototype). It does not depend on RFC-0151 (decided 2026-11-07): the empty brace group keeps today's rule, section 5.
+
+> **Status — accepted (2026-11-08).** Reviewed 2026-11-07: prototype built on the real grammar and sites counted; ordinary parse error for a bare field; .[expr] not in v0.16.0; block-required positions stated; RFC-0183 lands first; named records follow structs.
+
+> **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec types.md Record labels (legality 1 to 3) states the dotted-label design, blocked-exempt on metel-core#1847 until implemented; prototype, site counts, worked examples and sibling cross-check recorded.
 
 ## Summary
 
@@ -32,7 +45,7 @@ This is the field-entry half of RFC-0188. RFC-0188 spells a label `.name` and `.
 anonymous record bare. This RFC makes the label spelling the only spelling there. Nothing here changes the
 semantics of records or rows.
 
-This is a design draft. Nothing here is accepted, and the grammar is unchanged until it is.
+Reviewed 2026-11-07 against the real grammar (prototype and site counts in section 3); the grammar is unchanged until the implementation (metel-core#1847) lands.
 
 ---
 
@@ -44,7 +57,7 @@ RFC-0100 prohibits `Type { x = 1 }` and `Enum::Variant { x = 1 }` in expression 
 them with calls. If that lands, a brace group in expression position is a block or an anonymous record, and
 nothing else. The collision that RFC-0187 (refused) described is then between those two alone:
 
-- A single pun `{ x }` is a block returning `x`. RFC-0187's workaround is the trailing comma `{ x, }`.
+- A single pun `{ x }` is a record pun in an expression position and a block only where a block is required (a function, `if` or loop body). RFC-0187's workaround is the trailing comma `{ x, }`.
 - The empty literal `{}` is an empty block in body and arm positions and an empty record elsewhere (§5).
 - With RFC-0183, assignment is a statement and needs its `;`, so `{ x = 1 }` cannot be a block tail. That
   already removes the single-field assignment case without any new syntax.
@@ -73,8 +86,8 @@ let t := { .0 = a, .1 = b }; // numeric labels need no special case (RFC-0151)
 
 ### The left of `=` is a label, not a name
 
-RFC-0183 states the separator invariant: `:=` when the left-hand side is a name the site introduces, `=` when
-it is a place, slot or label that already exists. In `{ x = x }` the same word appears twice with different
+RFC-0183 states the separator invariant: `:=` when the site introduces a name into scope, `=` everywhere else (an assignment to
+an existing place, a field or label of a value being built, a keyword argument). In `{ x = x }` the same word appears twice with different
 roles. `{ .x = x }` shows the roles: the left is a label, the right is a variable.
 
 ### Where the dot applies
@@ -94,7 +107,7 @@ labels is then spelled the same way wherever it appears: `{ .fd, ..R }` and `Han
 
 ### 1. The field form
 
-A **label** is `.name`, `.0` (a decimal integer) or `.[expr]`; the last is RFC-0188's and is not extended here.
+A **label** is `.name` or `.0` (a decimal integer). A label variable `.[expr]` is RFC-0188's and is **not part of v0.16.0** (decided 2026-11-07): it needs RFC-0188 and label polymorphism (RFC-0175), both drafts tied to the comptime theme, and extends this `label` later.
 In an **anonymous record**, each field is a label followed by what the site gives it:
 
 | site | today | proposed |
@@ -108,14 +121,15 @@ In an **anonymous record**, each field is a label followed by what the site give
 | row equation | `R = { x: T, ..Rest }` | `R = { .x: T, ..Rest }` |
 | projection list (type and expression) | `Handle.{ fd, ..R }` | `Handle.{ .fd, ..R }` |
 
-A pun is a label with no value: `{ .x }` means `{ .x = x }`, and in a pattern binds `x`.
+A pun is a label with no value: `{ .x }` means `{ .x = x }`, and in a pattern binds `x`. A pun of a numeric label (`{ .0 }`) parses but is an error, because no variable is named `0`.
 
 **Unchanged:**
 
 - Field selection and method calls: `p.x`, `p.0`, `p.f()`.
 - Struct and enum construction, which is the call of RFC-0100: `Point(x = 1.0)`, `Shape::Rect(w = 2.0, h = 3.0)`.
 - Struct and enum declarations: `struct Point { x: f64 }`, `enum Shape { Rect { w: f64, h: f64 } }`.
-- Struct and enum patterns: `Point { x, y }`, `Shape::Rect { w, h }` (RFC-0100 §4).
+- Struct and enum patterns: `Point { x, y }`, `Shape::Rect { w, h }` (RFC-0100 §4). Named records (RFC-0120) follow structs: their declarations
+  and patterns stay bare, and they are constructed by the call of RFC-0100.
 - Parameter lists, keyword arguments and associated-type bindings (`Deref<Target = Node>`). A parameter or an
   associated type is not a label of a row.
 - Tuple expressions and types `(a, b)` / `(A, B)`, which RFC-0151 treats as notation for a numeric-label row.
@@ -133,22 +147,30 @@ let q := Point(x = 1.0, y = 2.0);     // the same struct, by parameter name
 p.x == r.x                            // selection is the same on both
 ```
 
-### 3. Why this parses without lookahead
+### 3. Why this parses without lookahead, and the prototype
 
 In a brace group, an entry that starts with a single `.` is a field. Nothing else starts with a single `.` there:
-
 - `..` starts a spread or a rest, and is distinguished from `.x` by its second character.
 - A block statement or expression never starts with `.`; `float_lit` requires a leading digit.
 
-A brace group that starts with a field is a record in every position. It is not a block in an `if` arm, a `match`
-arm, a function body or a closure body, and a single-field literal needs no parentheses.
+A brace group that starts with a field is a record wherever a record can appear. Where the grammar **requires a block** (a function body, a
+closure body, a loop body) such a group is a parse error and the record is written inside the block: `|v: i64| { { .x = v } }`, as a
+record in those positions needed inner braces before. In an `if` arm, a `match` arm and any other expression position it is a record.
+
+**Prototype (built and run 2026-11-07).** A scratch crate on pest 2.9 took metel-frontend's real `grammar.pest` and replaced the field of the
+anonymous-record forms by `label = ${ "." ~ (ASCII_DIGIT+ | ident) }`: the record initializer, the record pattern field, the record type field,
+the row-bound field and the three projection lists. Results: `{ .x = 1, .y = 2 }`, the pun `{ .x }`, `{ ..r, .x = 1 }`, `{ .0 = a, .1 = b }`,
+nested records, `{ .x = 1 }.x`, `Handle.{ .fd }`, the pattern `{ .x, .y: _, ..rest }`, the types `{ .x: i64, ..R }` and the row bound
+`{ .x: i64, .. }` all parse, and every bare form (`{ x = 1 }`, `{ x }`, `{ x: i64 }`, `Handle.{ fd }`) is a parse error. `{}` is unchanged.
+`{ .x = 1, .r }` parses as a pun, the slip of section 4. Parsing every `.mtl` file in the stdlib and the fixtures with the current grammar
+counts the sites the sweep rewrites (1936 files parsed, 28 negative fixtures not): 414 record literals (659 field initializers, 227 files),
+89 record patterns (112 fields, 54 files), 131 closed and 401 open record types (334 fields, 175 files), 152 row bounds (162 fields, 97 files),
+139 projection lists and 34 row literals.
 
 ### 4. Diagnostics
 
-A bare field in an anonymous record becomes a targeted error, not a bare parse failure:
-
-- `{ x = 1 }` → "a record field is written `.x = 1`; to assign, end the statement with `;`" (the second half
-  applies when RFC-0183 is accepted and the group could be read as a block).
+A bare field in an anonymous record is the ordinary parse error (decided 2026-11-07, language owner, as for RFC-0218, RFC-0183 and
+RFC-0100); no targeted message is promised. A hint such as "a record field is written `.x = 1`" is optional and not part of the contract.
 
 The one-dot slip: `{ .a = 1, .r }` where `..r` was meant is a valid pun of a field `r`. When the group has an
 expected row that does not contain `r`, the field is rejected by the ordinary row check. When it does not, the
@@ -186,9 +208,9 @@ under either reading and the workarounds are no longer needed.
   and `{ .x: T, ..R }` are the same shape.
 - **RFC-0187 (Anonymous record delimiters, refused 2026-11-07):** this RFC removes the pun collision without a
   new delimiter, and the empty record needs none (§5), so no case for a delimiter remained.
-- **RFC-0183 (Initialization-only walrus):** unchanged and still needed. Statement-only assignment removes the
-  `f(x = 1)` and `if (x = 1)` expression hazards, and with RFC-0100 `f(x = 1)` is unambiguously a keyword
-  argument. RFC-0183's tail-assignment rule has no bare-field case left to cover.
+- **RFC-0183 (Initialization-only walrus):** integrated, and swept before this RFC (stage order `pub`, `:=`, keyword arguments, construction
+  calls, dotted labels), so its tail-assignment rules apply first. Once this RFC lands, `{ x = 1 }` is a parse error and a block ending in an
+  assignment needs its `;`.
 - **RFC-0191 (One-field record update):** `{ ..s, .a = 10 }`. Its open question on the replacement marker is
   unaffected: the replacement is a field in the new spelling.
 - **RFC-0189 (Per-label negative bounds):** entries become `!.x` / `!.x: T`. The whole-row form `!{ .a, .b: T }`
@@ -203,6 +225,33 @@ under either reading and the workarounds are no longer needed.
 - **RFC-0121 / RFC-0137 / RFC-0186 / RFC-0208 (Open rows, branded rows, `..R` operator, row binder):** the row
   splice `..R` and the binder are unchanged. Only the labels inside the braces move, including those in the
   projections `Handle.{ fd }` that RFC-0121 and RFC-0137 write.
+
+---
+
+## 6. Worked examples (integration, 2026-11-07)
+
+Each combines this RFC with an integrated feature or a sibling RFC of the stage. They become fixtures of the implementation
+(metel-core#1847); a hit means a contradiction.
+
+```metel
+let p := { .x = 1.0, .y = 2.0 };                       // a record: labels
+let q := Point(..p);                                    // RFC-0100: a struct from a record, spread alone
+let r := Point(x = 1.0, y = 2.0);                       // the same struct by parameter name (RFC-0223)
+fun norm<record R>(v: { .x: f64, ..R }) -> f64 { v.x }  // dotted row type
+fun read<record R>(h: Handle.{ .fd, ..R }) -> i64 { h.fd }
+let f := |v: i64| { { .x = v } };                       // a closure body is a block; the record needs inner braces
+let t := { .0 = a, .1 = b };                            // numeric labels
+```
+
+1. **Rejections.** `{ x = 1 }`, `{ x }` (as an expression), `{ x: i64 }` (as a type) and `Handle.{ fd }` are ordinary parse errors; `|v: i64| { .x = v }`
+   is a parse error (block required); `{ .0 }` parses and is a checker error.
+2. **Struct, enum and named record code is untouched.** `Point { x, y }` patterns, `struct Point { x: f64 }` declarations, `p.x` selection and keyword
+   arguments keep their spelling.
+3. **Siblings.** RFC-0183: `{ x = 1 }` is not a block tail; a block ending in an assignment takes its `;`. RFC-0100: `Type(..r)` takes a dotted
+   record. RFC-0223: keyword arguments are not labels. RFC-0191 and RFC-0189 are written in the dotted spelling (`{ ..s, .a = 10 }`, `!.x`).
+4. **`{}`** is unchanged: a block in a block position, a record elsewhere, with `({})` and `{ {} }` as before.
+
+Exit check: no contradiction with the integrated spec (records, patterns, row bounds, projections) or with RFC-0100, RFC-0183 and RFC-0223.
 
 ---
 
@@ -231,10 +280,11 @@ are syntactically identifiable by the productions in §1, so the rewrite is mech
 the targeted error in §4. Struct and enum code, selections, parameter lists and keyword arguments are untouched
 by this RFC. (RFC-0100 has its own rewrite for struct and enum construction.)
 
-This is a second pass over the same records as RFC-0115 (separator) and, if accepted, RFC-0183 (assignment), and
-should be scheduled with them. It is a breaking change to the most common record form, so it needs this RFC first
-(see `metel_rfc_before_implementation`). A count of affected sites in fixtures, spec examples and the blog is
-taken for the prototype, not estimated here.
+This is a second pass over the same records as RFC-0115 (separator) and RFC-0183 (assignment). It is the last sweep of the v0.16.0 surface
+stage, after `pub`, `:=`, keyword arguments and construction calls, by one parser-based tool (not a blind regex, line endings
+preserved, verified by compiling an example). Swept: stdlib, fixtures, spec, tutorials, live RFC worked examples, reports and the blog. Left
+alone: release notes, released-version snapshots, superseded and refused RFCs, ADRs and prose describing the old spelling (the RFC-0218 policy). It is a breaking change to the most common record form, so it needs this RFC first
+(see `metel_rfc_before_implementation`). The site counts are in section 3.
 
 ---
 
@@ -257,7 +307,7 @@ taken for the prototype, not estimated here.
 - Spec: records, patterns, types and row bounds. Rules that say "a field `x`" of a record are restated in terms
   of the label `.x`.
 - RFC-0188 amended (Interactions). RFC-0187 refused.
-- Error code for a bare record field, with a fixture each for literal, pattern, type and bound.
+- No new error code: a bare field is the ordinary parse error. A fixture each for literal, pattern, type, row bound and projection list.
 - A migration tool or rewrite recipe, and fixtures and spec examples converted.
 
 ---
@@ -270,16 +320,14 @@ None blocking.
 
 ## Acceptance Criteria for the Prototype
 
-Before this leaves draft:
+Met 2026-11-07 (section 3), except the checker-level items that become fixtures of the implementation:
 
-- A brace group starting with `.x`, `.0` or `.[e]` parses as a record in every position where a block is also
-  allowed, and a group starting with a bare identifier never parses as a record.
-- `.x` is confirmed unambiguous against `..` spreads, float literals and every other brace-group entry.
-- A count of affected sites in fixtures and spec examples.
-- `{}` behaves as it does today in every position: a block where a block is required, a record elsewhere, with the
-  workarounds `({})` and `{ {} }` unchanged, and a fixture for each position.
-- The `.r` / `..r` slip: the row check rejects it when the expected row is known, and the lint fires when it is
-  not.
+- A brace group starting with `.x` or `.0` parses as a record in every position where a record can appear, and a group starting with a bare
+  identifier never parses as a record. (Met.)
+- `.x` is unambiguous against `..` spreads, float literals and every other brace-group entry. (Met.)
+- A count of affected sites in fixtures and spec examples. (Met: section 3.)
+- `{}` behaves as it does today in every position, with a fixture for each position. (Met in the grammar; fixtures at implementation.)
+- The `.r` / `..r` slip: the row check rejects it when the expected row is known, and the lint fires when it is not. (Fixtures at implementation.)
 
 ---
 

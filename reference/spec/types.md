@@ -554,6 +554,52 @@ non-local aspect implementation, and as the target of a custom `Drop` implementa
 
 </details>
 
+### Record labels
+
+The fields of an anonymous record are **labels**, written with a leading dot: `{ .x = 1.0, .y = 2.0 }`, the pattern `{ .x, .y }`, the type
+`{ .x: f64, ..R }`, the row bound `{ .x: i64, .. }` and the projection list `Handle.{ .fd, ..R }`. A label is `.name` or `.0`. Field selection
+(`p.x`), struct and enum members, declarations, struct and enum patterns, parameter lists and keyword arguments keep their bare names.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.record-labels.legality-1}
+
+A field of an anonymous record, in a record literal, a record pattern, a record type, a row bound, a row equation and a projection list, is a
+label written `.name` or `.0` (a decimal integer). A bare identifier in that position is a parse error. A pun, a label with no value, means
+`{ .x = x }` in a literal and binds `x` in a pattern, and a pun of a numeric label is an error.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1847" reason="RFC-0221: record fields are still bare identifiers until the dotted-label grammar and sweep land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1847: RFC-0221: record fields are still bare identifiers until the dotted-label grammar and sweep land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.record-labels.legality-2}
+
+A brace group whose first entry starts with a single `.` is an anonymous record wherever a record can appear. Where the grammar requires a block, a
+function body, a closure body or a loop body, such a group is a parse error and the record is written inside the block. The empty group `{}` keeps
+its position rule: a block where a block is required and a record elsewhere.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1847" reason="RFC-0221: record fields are still bare identifiers until the dotted-label grammar and sweep land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1847: RFC-0221: record fields are still bare identifiers until the dotted-label grammar and sweep land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.record-labels.legality-3}
+
+`..` introduces a spread or a rest and is never part of a label. Struct, enum and named-record declarations, patterns and construction do not use
+labels. The label-variable form `.[expr]` is not part of the language.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1847" reason="RFC-0221: record fields are still bare identifiers until the dotted-label grammar and sweep land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1847: RFC-0221: record fields are still bare identifiers until the dotted-label grammar and sweep land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ## Arrays
 
 `Array<T>` is the built-in ordered sequence type. The shorthand `[T]` is preferred.

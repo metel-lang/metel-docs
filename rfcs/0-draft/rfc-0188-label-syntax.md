@@ -5,6 +5,8 @@ date: '2026-10-26'
 status: draft
 ---
 
+> **Amended by RFC-0221 (2026-11-07).** A field of an anonymous record is a label and is written `.x`, not a plain identifier; label lists in projections and negative bounds are dotted too. RFC-0221 takes `.name` and `.0` into v0.16.0; the label-variable form `.[L]` stays with this RFC and is not part of v0.16.0.
+
 > **Scope (2026-10-27).** This RFC was split out of RFC-0187 as "Label syntax and rows as record
 > types". The rows part is dropped: rows are RFC-0186's (`record R` and the `..R` operator), which
 > stays the single change to row declarations. This RFC is the label spelling only.
