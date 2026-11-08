@@ -2,12 +2,21 @@
 id: rfc-0189
 title: "Per-Label Negative Row Bounds"
 date: '2026-10-28'
-status: under-review
-updated: '2026-10-28'
+status: integrated
+updated: '2026-11-08'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
+coverage:
+  "1": { kind: blocked, reason: "Negative entries are not parsed until the grammar and the bound representation change.", ref: "metel-core#1661" }
+  "2": { kind: blocked, reason: "The coherence and sibling interactions become fixtures of the implementation.", ref: "metel-core#1661" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-10-28).** design drafted; tracked by metel-core#1661 (Records and surface syntax); one open question (negation before the type)
+
+> **Status — accepted (2026-11-08).** Reviewed 2026-11-07: grammar prototyped in the dotted spelling; one new code T0043 with variants; examples dotted; negation-before-type already rejected.
+
+> **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec row-bounds legality-8 and 9 and error T0043 state the entry forms (blocked-exempt on metel-core#1661); prototype, worked examples and sibling cross-check recorded.
 
 ## Summary
 
@@ -15,21 +24,21 @@ A row bound may carry **negative entries**: a label written with a leading `!`, 
 braces as the positive ones.
 
 ```metel
-fun route<record R: { path: String, !token, !session: u64, .. }>(r: R) -> String { r.path }
-//                    has a String `path`  ^        ^ no `token`   ^ no u64 `session`
+fun route<record R: { .path: String, !.token, !.session: u64, .. }>(r: R) -> String { r.path }
+//                    has a String `.path` ^        ^ no `.token`  ^ no u64 `.session`
 ```
 
 An entry is one of four forms:
 
 | entry | holds when the record has |
 |---|---|
-| `x` | a field `x`, of any type |
-| `x: T` | a field `x` of type `T` |
-| `!x` | no field `x`, of any type |
-| `!x: T` | no field `x` of type `T` (an `x` of another type is fine) |
+| `.x` | a field `.x`, of any type |
+| `.x: T` | a field `.x` of type `T` |
+| `!.x` | no field `.x`, of any type |
+| `!.x: T` | no field `.x` of type `T` (an `.x` of another type is fine) |
 
-The existing whole-row form `!{ a, b: T }` (RFC-0118 §2) is kept and is defined as sugar for
-`{ !a, !b: T, .. }`. Nothing already written changes meaning; the change is additive.
+The existing whole-row form `!{ .a, .b: T }` (RFC-0118 §2) is kept and is defined as sugar for
+`{ !.a, !.b: T, .. }`. Entries use the dotted label of RFC-0221 (integrated 2026-11-07); the examples below are written that way. Nothing already written changes meaning; the change is additive.
 
 This amends RFC-0118 (row bounds, implemented). It does not touch RFC-0186's `..R`, RFC-0123's
 field-wise bounds, or the semantics of negative *aspect* bounds (RFC-0072).
@@ -43,7 +52,7 @@ must carry; `!{ token }` says what it must not. They are different bounds, so a 
 needs both has to write two:
 
 ```metel
-fun route<record R: { path: String, .. } + !{ token }>(r: R) -> String { r.path }
+fun route<record R: { .path: String, .. } + !{ .token }>(r: R) -> String { r.path }
 ```
 
 This works (checked against the current build: a record with `token` is rejected with `T0012`,
@@ -59,7 +68,7 @@ locality and a place to put a per-label negative:
   generic in its rest requires the rest to be provably free of that label (`R: !{ host }`,
   spec, *Row arguments*), usually next to other requirements on the same `R`:
   ```metel
-  fun add_host<record R: { token, !host, .. }>(r: Req<..R>, h: String) -> Req<..{ host: String, ..R }>
+  fun add_host<record R: { .token, !.host, .. }>(r: Req<..R>, h: String) -> Req<..{ .host: String, ..R }>
   ```
 - **Row-conditional impls (RFC-0121 §3) are disjoint exactly when some label is present in one
   and absent in the other.** `extend<record R: { name, !id, .. }>` and `extend<record R: { name,
@@ -73,7 +82,7 @@ A row bound is a comma-separated list of entries, optionally followed by `..`:
 
 ```
 row_bound = { "{" ~ (row_entry ~ ("," ~ row_entry)*)? ~ ("," ~ "..")? ~ ","? ~ "}" }
-row_entry = { bang? ~ ident ~ (":" ~ type_expr)? }
+row_entry = { bang? ~ label ~ (":" ~ type_expr)? }
 ```
 
 (`bang?` is the only change; `{ .. }` alone still does not parse, so `<record T>` remains the one
@@ -92,9 +101,9 @@ with a fix-it ("add `..`, or drop the entry"). With the trailing `..` the row sa
 not these ones, and anything else".
 
 ```metel
-fun a<record R: { x: f64, !token, .. }>(r: R)   // ok
-fun b<record R: { x: f64, !token }>(r: R)       // error: closed row; `!token` is redundant
-fun c<record R: { !token, .. }>(r: R)           // ok: only a negative entry, still open
+fun a<record R: { .x: f64, !.token, .. }>(r: R)   // ok
+fun b<record R: { .x: f64, !.token }>(r: R)       // error: closed row; `!.token` is redundant
+fun c<record R: { !.token, .. }>(r: R)            // ok: only a negative entry, still open
 ```
 
 The sugar form needs no `..` because `!{ … }` is open by definition: it is the complement per
@@ -111,17 +120,17 @@ give it that meaning without a break.
 A label may appear **once positively** and **any number of times negatively**:
 
 ```metel
-{ x, !x: u8, .. }             // an `x` that is not a u8 (any other type)
-{ !x: u8, !x: u16, .. }       // no u8 `x` and no u16 `x`
+{ .x, !.x: u8, .. }           // an `.x` that is not a u8 (any other type)
+{ !.x: u8, !.x: u16, .. }     // no u8 `.x` and no u16 `.x`
 ```
 
-It is an error if the entries cannot all hold: `{ x, !x, .. }`, and `{ x: T, !x: T, .. }`. Two
-positive entries for one label stay a duplicate-field error. `{ x: f64, !x: u8, .. }` is
+It is an error if the entries cannot all hold: `{ .x, !.x, .. }`, and `{ .x: T, !.x: T, .. }`. Two
+positive entries for one label stay a duplicate-field error. `{ .x: f64, !.x: u8, .. }` is
 satisfiable, merely redundant, and is accepted without diagnostics.
 
 "Of type `T`" means the same type after substitution, with no widening, exactly as for a positive
 `x: T`. The contradiction check compares the written types, so it fires only when they are the
-same type as written; entries whose types are generic parameters (`{ x: A, !x: B, .. }`) are
+same type as written; entries whose types are generic parameters (`{ .x: A, !.x: B, .. }`) are
 checked when the bound is instantiated, like any other bound on a type parameter.
 
 ### Typed negative entries
@@ -156,10 +165,34 @@ literals or patterns.
   has contradictory entries across them (`x` against `!x`, or `x: T` against `!x: T`). A typed
   negative alone proves nothing against a positive entry of another type (`!x: T` and `x: U`
   overlap). No new coherence rule; the existing rule now reads entries instead of whole bounds.
-- **Delimiters and labels.** Row bounds use `{ … }`; entries use the label spelling of RFC-0188, and RFC-0221
-  writes a record field as `.x`, so an entry `!x` is `!.x` there. Examples here use plain identifiers.
+- **Delimiters and labels.** Row bounds use `{ … }`; entries use the dotted label of RFC-0221 (integrated), so an entry `!x` is `!.x`.
+  The grammar was prototyped on the real `grammar.pest` in that spelling (see the worked examples).
 - **Field-wise bounds (RFC-0123, RFC-0186).** `..R: A` is a constraint on the members of a
   record parameter and is unaffected.
+
+---
+
+## Resolved questions and diagnostics (2026-11-07)
+
+- **Negation before the type** (`x: !T`) is rejected in Alternatives; no question remains.
+- **Diagnostics.** One new code, **`T0043` Invalid row-bound entry**, with message variants for a closed row with a negative entry, contradictory
+  entries for one label, and a negative entry inside an outer `!{ }`. The last two forms parse (the entry grammar is shared) and are checker errors;
+  `!{ .a, .. }` stays the parse error of RFC-0118 §2.
+
+---
+
+## Worked examples (integration, 2026-11-07)
+
+Prototype on the real `grammar.pest` with `row_field = { bang? ~ label ~ (":" ~ type_expr)? }` (the bound-level `bang` is unchanged): these parse
+as row bounds in a parameter, a `where` constraint and next to an aspect bound: `{ .path: String, !.token, !.session: u64, .. }`, `{ !.token, .. }`,
+`{ .x, !.x: u8, .. }`, `{ .x, !.y: u8, !.y: u16, .. }`, `Show + { .x, !.y, .. }`, with the sugar `!{ .a, .b: T }` and the existing `{ .x: f64, .. } + !{ .token }`
+unchanged; `{ .. }` alone still does not parse. They become fixtures of the implementation (metel-core#1661); a hit means a contradiction.
+
+1. **Rejections (`T0043`).** `{ .x: f64, !.token }` (closed row), `{ .x, !.x, .. }` and `{ .x: T, !.x: T, .. }` (contradictory), and `!{ !.a, .b }` (nested negation).
+2. **Coherence.** `extend<record R: { .name, !.id, .. }>` and `extend<record R: { .name, .id, .. }>` are disjoint from the entries; `!.x: T` against `.x: U` overlaps.
+3. **Siblings.** `!.x` proves absence for a spread's addition and `.x`, `.x: T` prove presence for RFC-0191's replacement; the spelling is RFC-0221's.
+
+Exit check: no contradiction with the integrated spec (row bounds, open rows, coherence) or with RFC-0191 and RFC-0221.
 
 ---
 
@@ -188,8 +221,8 @@ literals or patterns.
 - `reference/spec/types.md`, *Row bounds*: the entry table, the openness rule, and the
   repeated-label rule, with rigor blocks and fixtures.
 - Grammar: `row_entry` takes an optional `!`; `row_field` is renamed accordingly.
-- Diagnostics: closed row with a negative entry; contradictory entries for one label;
-  negative entry inside an outer `!{ }`.
+- Diagnostics: `T0043` (closed row with a negative entry; contradictory entries for one label;
+  negative entry inside an outer `!{ }`).
 - RFC-0118 gains an amendment note pointing here.
 
 ## References

@@ -1785,22 +1785,24 @@ the pattern is rejected with a distinct “remainder type cannot be determined�
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
 `{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
 
-A record literal accepts at most one spread, including for concrete rows. Written labels must
-be proven absent from the spread row; collisions do not override. Initializers evaluate from
+A record literal accepts at most one spread, including for concrete rows. A written label is an
+addition when proven absent from the spread row, a replacement when proven present, and rejected when neither is proven. Initializers evaluate from
 left to right, while field order/layout is determined by the resulting row/type, not initializer
 order.
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-4}
 
-A record literal contains at most one spread; each explicitly initialized label must be
-entailed absent from the spread row, and an absent-label fact is required for abstract rows.
-An absent-label fact is a closed row without the label, a decomposition whose remainder
-excludes it, or a label-only negative bound (`R: !{ token }`). A typed negative bound such as
-`R: !{ token: String }` is not one: it only rules out that type, and `R` may still hold the
-label at another type. A collision is an error, not an override. Spreading an owned record moves its fields into
-the result and consumes the source. Spreading through a reference copies the fields only
-when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
-evaluate left-to-right, while the resulting record layout is determined by its row/type.
+A record literal contains at most one spread. Each explicitly initialized label is judged against the spread row: it is an addition when entailed
+absent, a replacement when entailed present with type `T` (the replacement must have type `T`, and the result row is the spread row), and is rejected
+when neither is entailed, which an abstract row requires a fact for. An absent-label fact is a closed row without the label, a decomposition whose
+remainder excludes it, a label-only negative bound (`R: !{ .token }`) or a negative entry `!.token`; a present-label fact is a concrete row, a
+decomposition, or a positive entry `.x` or `.x: T`. A typed negative bound such as `R: !{ .token: String }` is not an absent-label fact: it only rules
+out that type. Spreading an owned record moves its fields into the result except the replaced ones, whose old values are dropped, and consumes the
+source; when the record is not known `Discard`, every replaced field must be `Discard`. Spreading through a reference copies the fields only when every field that is
+not replaced is provably `Copy`; otherwise it is rejected with `T0033`. Initializers evaluate left-to-right, while the resulting record layout is
+determined by its row/type.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1663" reason="RFC-0191: a replacement in a spread is still rejected as a collision until the checker gains the presence query" -->
 
 <!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
 
@@ -1909,6 +1911,10 @@ a row parameter instead.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0178](../../rfcs/4-implemented/rfc-0178-row-remainder-construction.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1663: RFC-0191: a replacement in a spread is still rejected as a collision until the checker gains the presence query_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

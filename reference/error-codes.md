@@ -1359,6 +1359,18 @@ An impl method declares a parameter with a different name from the aspect's meth
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
+### T0043 — Invalid row-bound entry
+
+A row bound has an entry the language rejects ([RFC-0189](../rfcs/3-integrated/rfc-0189-per-label-negative-row-bounds.md)): a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
+
+**Fix:** add `..` to the bound, drop the contradictory entry, or write the positive spelling.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1661" reason="RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1661: RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 ### R0001 — No `main` function defined
 
 > **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs
