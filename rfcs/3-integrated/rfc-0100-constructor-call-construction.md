@@ -12,7 +12,7 @@ coverage:
   "4": { kind: blocked, reason: "Destructuring keeps its brace form; the fixtures arrive with the construction implementation.", ref: "metel-core#807" }
   "5": { kind: blocked, reason: "The brace retirement is implemented with the construction sweep.", ref: "metel-core#807" }
   "6": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
-  "7": { kind: blocked, reason: "The synthesized default and raw construction are implemented with the construction call.", ref: "metel-core#807" }
+  "7": { kind: blocked, reason: "The synthesized default is implemented with the construction call; the brace minting form waits for RFC-0114.", ref: "metel-core#807" }
   "8": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#807" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 impl_status: not-started
@@ -65,12 +65,14 @@ impl_status: not-started
 
 > **Status — accepted (2026-11-08).** Reviewed 2026-11-07: split in two (keyword arguments are RFC-0223); positional rule, shorthand retired, spread alone, ordinary parse error, raw construction syntax decided; zero-field both forms, generics, named records and Self stated; RFC-0114 stays out (default-only).
 
+> **Revised (2026-11-08, language owner).** The minting step `construct`'s own body builds with is the **brace literal `Self { field = value }`**, legal only in `construct` and `construct_unchecked` (§7), replacing the prefix form `raw Type(args)` decided on 2026-11-07. The v0.16.0 stage is unchanged: the brace production is not in the grammar and `Type { … }` stays the ordinary parse error.
+
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec struct and enum instantiation rules and the construction visibility rule state the call form (blocked-exempt on metel-core#807 until implemented); worked examples and sibling cross-check recorded.
 
 ## Summary
 
 **`Type(args)` is the instantiation form of structs and enum variants.** It is a call, so positional arguments bind
-fields in declaration order exactly as for a function, and the brace literal `Type { field = value }` is retired (§5):
+fields in declaration order exactly as for a function, and the brace literal `Type { field = value }` is retired (§5), save the minting form inside `construct` (§7):
 
 ```metel
 struct Point { x: i64, y: i64 }
@@ -116,7 +118,7 @@ struct Token { pub value: String, secret: String }
 let t := Token(value = "x".to_string(), secret = "shh".to_string());
 ```
 
-The call is the only way to construct a struct. `IntBox { value = 42 }` is a compile error (§5), and the call
+The call is the only way to construct a struct outside `construct`'s own body, where the brace minting form of §7 is the one exception. `IntBox { value = 42 }` is a parse error in v0.16.0 (§5), and the call
 is a call of the constructor function that the `Construct` aspect provides (§7).
 
 An enum variant with named fields is built the same way. Today it takes the brace form
@@ -183,7 +185,8 @@ implements `Construct` (§7), and to every enum variant, for these reasons:
    `Construct` impl required the call form (RFC-0114's fallback), adding an invariant to a type would change
    every construction site of it. Under this rule it changes none. (Structs only.)
 4. **No brace expression is left except the anonymous record.** A brace group in expression position is then
-   always an anonymous record or a block, and never a construction that needs a type path to be read.
+   always an anonymous record or a block, and never a construction that needs a type path to be read. The one exception
+   is the minting form of §7, `Self { … }` inside `construct`, which RFC-0114 adds and which is not in v0.16.0's grammar.
 
 **Scope for v0.16.0 (2026-11-07).** Reasons 2 and 3 assume a `construct` that can run code (RFC-0114), which is not part of the
 stage: with only the synthesized default, the brace form and the call form behave identically. The case for retiring braces in
@@ -192,7 +195,7 @@ RFC-0221 needs. The call is also what a later `Construct` requires, so nothing i
 in expression position is the ordinary parse error, with no promised targeted message, as for RFC-0218 and RFC-0183.
 
 Braces after a type name remain legal in declarations (`struct Point { … }`, `enum Shape { Rect { … } }`) and
-in patterns (§4). They are no longer an expression.
+in patterns (§4). They are no longer an expression, save the minting form inside `construct` (§7).
 
 **The old `Type { field: value }` literal syntax is retired, not kept as a second valid spelling.** Keeping both was considered (see Alternatives) and rejected: having two equally-valid ways to construct any struct is a worse ergonomic outcome than a one-time mechanical migration, and this project's own precedent (RFC-0042 §D1: "the language keeps only one binding introducer... does not carry a transition alias") already establishes that a clean single spelling is preferred over a permanent dual-syntax compromise when a rename like this ships.
 
@@ -214,7 +217,7 @@ Moved to **RFC-0223** section 4, 2026-11-07. Construction calls follow those rul
 
 **Scope for v0.16.0 (decided 2026-11-07, language owner): construction goes through the compiler-synthesized default
 only.** `Type(args)` builds the struct directly, which is exactly what the synthesized default does (`Error = !`,
-`construct(row) { Ok(raw Self(..row)) }`, compiled away; see *Raw construction* below). The `Construct` aspect, a written
+`construct(row) { Ok(Self { ..row }) }`, compiled away; see *The minting step* below). The `Construct` aspect, a written
 `construct`, fallible construction (item 3), the minting-site rule (item 4) and `ConstructUnchecked` are not part of v0.16.0 and stay with RFC-0114,
 which is not in the stage. Items 1, 2 (as the default), 5 (as a direct build from a record of exactly the type's row),
 6 and the enum rule apply. When RFC-0114 is accepted later, the call becomes a call of `Construct::construct`
@@ -237,12 +240,12 @@ field names here are parameter names, not labels.
    by declaration order, as for a function (§1). The row must be exactly the type's complete row, no more and no
    fewer. Evaluation order is §6's.
 2. **No impl to write.** A struct with no invariant gets the compiler-synthesized default
-   (`type Error = !`, `construct(row) { Ok(raw Self(..row)) }`, RFC-0114 §1), which compiles away. Its author writes
+   (`type Error = !`, `construct(row) { Ok(Self { ..row }) }`, RFC-0114 §1), which compiles away. Its author writes
    nothing and sees only the call.
 3. **Result handling** is RFC-0114 §5's, unchanged. When `Self::Error` is `!`, the call yields a bare `Self`.
    Otherwise it yields `Result<Self, Self::Error>` and the caller handles it with `?`, `match` or
    `.unwrap_or`.
-4. **The only minting site.** A row becomes a `Self` by raw construction (below), inside `construct` and
+4. **The only minting site.** A row becomes a `Self` by the minting form (below), inside `construct` and
    `construct_unchecked` and nowhere else (RFC-0114 §1.1). `Type::construct(row)` can be written explicitly and means the
    same as the call.
 5. **From a record.** *(v0.16.0 scope, decided 2026-11-07: `Type(..r)` appears alone, as the only argument; `Type(..r, x = 5)`
@@ -256,42 +259,52 @@ field names here are parameter names, not labels.
    not changed here. RFC-0114 open question 8 asks whether that rule is enough once `construct` is
    public, and stays RFC-0114's.
 
-### Raw construction: `raw Type(args)` (decided 2026-11-07, language owner)
+### The minting step: `Self { field = value }` inside `construct` (decided 2026-11-08, language owner)
 
-A construction call cannot be what `construct`'s own body builds with: it is a call of `construct`, so it would recurse, and the
-brace literal is retired (§5). The step that actually produces a `Self` is therefore a distinct form, **raw construction**, written
-with the prefix keyword `raw`:
+A construction call cannot be what `construct`'s own body builds with: it is a call of `construct`, so it would recurse. The
+step that actually produces a `Self` is therefore the one place the brace literal survives, as **the minting form**:
 
 ```metel
 extend SortedPair: Construct {
     type Error = SortError;
     fun construct(row: { small: i64, big: i64 }) -> Result<Self, SortError> {
         if row.small > row.big { return Err(SortError::Unordered); }
-        Ok(raw Self(small = row.small, big = row.big))      // the minting step
+        Ok(Self { small = row.small, big = row.big })       // the minting step
     }
 }
-// the synthesized default of a type with no invariant is: construct(row) { Ok(raw Self(..row)) }
+// the synthesized default of a type with no invariant is: construct(row) { Ok(Self { ..row }) }
 ```
 
-1. **Form.** `raw Type(args)` takes the same arguments as a construction call: positional arguments bind fields in declaration
-   order, keyword arguments (RFC-0223) bind by name, and `Type(..r)` takes a record of exactly the type's row. `raw Self(..row)` is
-   the usual form inside `construct`.
-2. **Where it is legal.** Only in the body of `Construct::construct` and `ConstructUnchecked::construct_unchecked`, in the defining
-   module (RFC-0114 §1.1: the privilege sits exactly where the responsibility sits). Anywhere else it is an error.
-3. **What it checks.** The row must be exactly the type's complete row, and every label it supplies must be nameable from the
-   site (field visibility applies, as for any construction). It runs no `construct` and no invariant.
-4. **It is not a function.** `raw` is a contextual keyword (RFC-0207): `raw` followed by a type path and `(` is a raw
-   construction, and `raw` remains an ordinary identifier everywhere else (`raw(x)`, `raw + 1`, `raw.field`). There is no
-   `Type::raw` item, so it cannot be named, imported or shadowed.
-5. **In v0.16.0.** `Type(args)` lowers to raw construction by the compiler-synthesized default, and no user code can write
-   `raw`, because there is no `construct` body to write it in. The form is specified now so that the default is described in
-   the language itself and RFC-0114 inherits a settled minting step instead of an implicit typing rule.
-6. **Grammar.** `raw_construct = { raw_kw ~ type_path ~ "(" ~ arg_list? ~ ")" }`, tried before the path alternatives in
-   `primary_expr`, with `raw_kw = @{ "raw" ~ !(ASCII_ALPHANUMERIC | "_") }` as its own atomic rule (a lookahead inside a
-   non-atomic rule skips the whitespace first and tests the wrong character). Prototyped 2026-11-07 on metel-frontend's
-   `grammar.pest` with pest 2.9: `raw Self(x = 1, y = 2)`, `raw Self(..row)`, `raw Point(1, 2)` and `Ok(raw Self(..row))` parse,
-   while `raw(x)`, `raw + 1`, `raw`, `raw.field`, `rawx(1)` and `raw::f(1)` keep their meaning and `raw Self` without parentheses is
-   rejected.
+This replaces the prefix form `raw Type(args)` decided on 2026-11-07. The reasons: braces read as inert data, and the minting step
+is exactly the operation that runs no code and no invariant, so the brace is the honest spelling for it, where the call is the
+honest spelling for what runs `construct` (§5, reason 2); it needs no new keyword, no contextual `raw` and no atomic `raw_kw`
+rule; and it matches the destructuring pattern `Self { small, big }` (§4) and the spread of RFC-0221 and RFC-0191. Rust, Haskell
+and Scala mint with the ordinary constructor and gate it by visibility; here the gate narrows to one function.
+
+1. **Form.** Keyword fields written with `=` (RFC-0115): `Self { small = a, big = b }`. The spread `Self { ..row }` takes a record of
+   exactly the type's row and appears alone; `Self { ..row, small = x }` is an error until RFC-0191's override semantics are settled,
+   as for `Type(..r, x = 5)`. There is no positional form and the shorthand `Self { small, big }` stays retired (§1).
+2. **Where it is legal.** Only `Self { … }`, or the impl's own target type written by path, in the body of `Construct::construct` and
+   `ConstructUnchecked::construct_unchecked` **of that impl**, in the defining module (RFC-0114 §1.1: the privilege sits exactly where
+   the responsibility sits). The body includes the blocks and closures written inside it, not nested `fun` items. The brace form of
+   any other type there is an error: the `construct` of `A` cannot mint a `B` without running `B`'s invariant. Anywhere else the
+   brace form is an error.
+3. **What it checks.** The row must be exactly the type's complete row, and every label it supplies must be nameable from the site
+   (field visibility applies). It runs no `construct` and no invariant. Its field expressions evaluate in the order written, and the
+   struct is built from the results.
+4. **It is syntax, not an item.** There is no `Type::raw` or other function to name, import or shadow, and no contextual keyword.
+5. **No recursion.** A construction call of `Self` directly inside `Self`'s own `construct` is an error, because it calls `construct`
+   again; the message names the brace form.
+6. **Structs only.** Enums have no `Construct` (RFC-0114 §8), so `Enum::Variant { … }` is never legal, and a unit or struct variant is
+   built by `Enum::Variant(args)` alone. A named record (RFC-0120) is treated as a struct.
+7. **In v0.16.0.** `Type(args)` lowers to the compiler-synthesized default, and `Type { … }` in expression position is the ordinary
+   parse error everywhere, because the grammar has no brace production. No user code can write the minting form, since there is no
+   `construct` body to write it in. RFC-0114 adds the production, legal only as item 2 states and rejected elsewhere with a targeted
+   message. The form is specified now so that the default is described in the language itself and RFC-0114 inherits a settled
+   minting step instead of an implicit typing rule.
+8. **Grammar.** Left to RFC-0114: the former `struct_literal` shape restricted to the impl's own type, plus the `..` spread element.
+   It must be prototyped against RFC-0221's brace disambiguation (a record literal's labels are dotted, a block's are not, and the
+   minting form's field names are undotted parameter names after a type head).
 
 **Enum variants.** `Enum::Variant(args)` collects keyword and positional arguments exactly as items 1 and 6
 do, and builds the variant directly. Enums have no `Construct` (RFC-0114 §8 scopes it to structs), so items
@@ -327,7 +340,7 @@ let p := Pair::<i64>(1, 2);                    // explicit type arguments by tur
 3. **Move and drop.** `Point(a, b)` moves its arguments into the fields exactly as a function call does; a `Drop` type is built the same way.
 4. **Calls as arguments.** `Wrapper(|v: i64| { v })` and `Point(f(), g())` evaluate left to right.
 5. **Spread.** `Point(..r)` builds from a record of exactly `Point`'s row; `Point(..r, x = 5)` is an error in v0.16.0.
-6. **Raw construction.** The synthesized default of `Point` is `construct(row) { Ok(raw Self(..row)) }`; `raw` appears nowhere in user code in v0.16.0.
+6. **The minting step.** The synthesized default of `Point` is `construct(row) { Ok(Self { ..row }) }`; the brace form appears nowhere in user code in v0.16.0, where it is a parse error like any other brace literal.
 7. **Siblings.** `f(x = 1)` is never an assignment (RFC-0183) and `Point(x = 1, y = 2)` is the same call form (RFC-0223); a brace group is a
    block or an anonymous record (RFC-0221).
 
@@ -362,8 +375,8 @@ None blocking. What remains is decided below, tracked as migration work, or belo
 - **RFC-0216's residual construction.** `T.{ ..R } { entries }` (RFC-0216 §2) is a brace expression after a type head, so §5 prohibits
   it. It should take the spread call, `T.{ ..R }(..record)`, with the same defining-module restriction. RFC-0216 would be amended; this
   RFC does not decide it.
-- **The `Construct` items of §7** (result handling, an explicit `Type::construct(row)`) are RFC-0114's and dormant in v0.16.0. The minting step is settled here (`raw Type(args)`, §7).
-- **Raw construction in `ConstructUnchecked`.** Whether `construct_unchecked` may use `raw` for the same row with the invariant skipped is RFC-0114's `unsafe` gate (its §6); this RFC only makes the form legal there.
+- **The `Construct` items of §7** (result handling, an explicit `Type::construct(row)`) are RFC-0114's and dormant in v0.16.0. The minting step is settled here (`Self { … }` inside `construct`, §7).
+- **The minting form in `ConstructUnchecked`.** Whether `construct_unchecked` may use `Self { … }` for the same row with the invariant skipped is RFC-0114's `unsafe` gate (its §6); this RFC only makes the form legal there.
 
 ---
 

@@ -160,7 +160,7 @@ representation generally — not a new promise, the same one recurring here.
 
 ### 1.1 What `construct`'s own body may build — the one privileged site
 
-> **Syntax (2026-11-07).** RFC-0100 §7 now defines the minting step as a form, `raw Type(args)` (`raw Self(..row)` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
+> **Syntax (2026-11-08).** RFC-0100 §7 defines the minting step as a form, the brace literal `Self { field = value }` (`Self { ..row }` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. It is legal only for the impl's own type, in `construct` and `construct_unchecked`; RFC-0114 adds its grammar production. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
 
 Correcting the syntax above exposed a hole the first draft's examples had papered over:
 its `construct` body wrote `SortedPair { small: …, big: … }`, **a bare struct literal that
