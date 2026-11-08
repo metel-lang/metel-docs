@@ -26,7 +26,7 @@ fun main() {
 
     var line := 0;
     for (text in raw) {
-        line := line + 1;
+        line = line + 1;
         println("${line}: ${text}");
     }
 }
@@ -46,7 +46,7 @@ cargo run -- metrics.mtl
 
 A few things this already shows:
 
-- `let` binds a value; `var` binds one you can reassign (`line := line + 1`). A
+- `let` binds a value; `var` binds one you can reassign (`line = line + 1`). A
   plain `let` binding cannot be reassigned.
 - `[ … ]` is an array literal. `for (text in raw)` walks it.
 - `${…}` interpolates any value with a `.to_string()` — every built-in scalar has one.

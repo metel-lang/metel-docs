@@ -343,7 +343,7 @@ fun log_path(view: &{ path: String }) {
 }
 
 fun release(view: &var { path: String }, fd: RawFd) -> &var FileHandle {
-    view.fd := fd;
+    view.fd = fd;
     FileHandle::from_record_mut(view)
 }
 ```

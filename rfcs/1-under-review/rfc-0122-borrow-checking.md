@@ -146,7 +146,7 @@ makes this a soundness rule rather than a hygiene one:
 ```metel
 struct P { v: i64 }
 
-fun both(a: &var P, b: &var P) { a.v := 10; b.v := 20; }
+fun both(a: &var P, b: &var P) { a.v = 10; b.v = 20; }
 
 // (1) two exclusive borrows of one place — accepted
 var x := P { v = 1 };
@@ -158,7 +158,7 @@ both(&var x, &var x);
 
 // (3) the owner writes through an outstanding exclusive borrow — accepted, prints 99
 let r := &var x;
-x.v := 99;
+x.v = 99;
 println(r.v.to_string());
 ```
 

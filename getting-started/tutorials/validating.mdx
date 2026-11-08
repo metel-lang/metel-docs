@@ -19,7 +19,7 @@ fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
     for (c in s.chars()) {
         let digit := (c as u32) - ('0' as u32);
         if (digit > 9u32) { return Err { error = ParseError { line = line, reason = "not a digit" } }; }
-        acc := acc * 10 + (digit as i64);
+        acc = acc * 10 + (digit as i64);
     }
     return Ok { value = acc };
 }

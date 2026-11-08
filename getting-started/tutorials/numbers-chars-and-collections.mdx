@@ -34,7 +34,7 @@ fun main() {
     let gain: f32 := 1.25;
     var retries: i32 := 0;
 
-    retries := 3;   // 3 is inferred as i32 from the binding
+    retries = 3;   // 3 is inferred as i32 from the binding
 }
 ```
 
@@ -145,7 +145,7 @@ fun main() {
 ```metel
 fun main() {
     var values: [i64; 3] := [10, 20, 30];
-    values[0u64] := 99;
+    values[0u64] = 99;
     println(values[0u64]);   // 99
 }
 ```
