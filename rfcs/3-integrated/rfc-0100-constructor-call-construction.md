@@ -2,9 +2,20 @@
 id: rfc-0100
 title: "Constructor-Call Construction"
 date: '2026-07-13'
-status: under-review
-updated: '2026-11-07'
+status: integrated
+updated: '2026-11-08'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
+coverage:
+  "1": { kind: blocked, reason: "Construction by call is not implemented until the call grammar and the brace retirement land.", ref: "metel-core#807" }
+  "2": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
+  "3": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
+  "4": { kind: blocked, reason: "Destructuring keeps its brace form; the fixtures arrive with the construction implementation.", ref: "metel-core#807" }
+  "5": { kind: blocked, reason: "The brace retirement is implemented with the construction sweep.", ref: "metel-core#807" }
+  "6": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
+  "7": { kind: blocked, reason: "The synthesized default and raw construction are implemented with the construction call.", ref: "metel-core#807" }
+  "8": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#807" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/807'
+impl_status: not-started
 ---
 
 > **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
@@ -51,6 +62,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 > call, and the brace literal is retired. The second moved to **RFC-0223** (Keyword Arguments at Every Call): the optional
 > `Type(x = 0, y = 0)` keyword form, for every function call. Keyword arguments, their grammar position and the evaluation
 > order are RFC-0223's. This RFC is scheduled for v0.16.0 (metel-core#807, milestone 84).
+
+> **Status — accepted (2026-11-08).** Reviewed 2026-11-07: split in two (keyword arguments are RFC-0223); positional rule, shorthand retired, spread alone, ordinary parse error, raw construction syntax decided; zero-field both forms, generics, named records and Self stated; RFC-0114 stays out (default-only).
+
+> **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec struct and enum instantiation rules and the construction visibility rule state the call form (blocked-exempt on metel-core#807 until implemented); worked examples and sibling cross-check recorded.
 
 ## Summary
 
@@ -121,6 +136,16 @@ declaration order, at any arity. With RFC-0223's keyword form field order at the
 `Token(secret = "shh".to_string(), value = "x".to_string())` is equally valid. **Field shorthand is retired** (decided 2026-11-07):
 `Point { x, y }` builds by name from variables, but `Point(x, y)` binds by position, so the migration rewrites it to the keyword
 form `Point(x = x, y = y)` and the construction sweep runs after RFC-0223 is implemented.
+
+### Other instantiation sites (decided 2026-11-07)
+
+- **Zero-field structs and named records.** A struct (or a named record, RFC-0120) with no fields is instantiated as its bare name or as the call
+  `Empty()`; the brace form `Empty {}` is retired. The bare name stays a value, as RFC-0106 made it and as a unit enum variant is (`Color::Red`).
+- **Generic structs.** `Pair(1, 2)` infers the type arguments; explicit arguments use the existing turbofish call, `Pair::<i64>(1, 2)`.
+- **Named records** (RFC-0120's `record`) are instantiated by the same call as structs: `Point(x = 1, y = 2)`. Anonymous records are not
+  constructed by a call; they keep the record literal (RFC-0221).
+- **`Self`.** Inside an impl, `Self(...)` is a construction call and replaces `Self { ... }`.
+- **Enum struct-variants** are `Enum::Variant(args)`, as above; unit variants stay bare.
 
 ## 2. Keyword arguments at every call
 
@@ -226,7 +251,7 @@ field names here are parameter names, not labels.
    field, so `Wrapper(r)` for a one-field struct whose field is itself a record keeps its §1 meaning. This
    is the form RFC-0114 open question 9 left open for `FromRecord`, and like `construct` it has no
    separate body, so it cannot bypass an invariant.
-6. **Visibility.** A call must be able to name every label it supplies. A struct with private fields cannot
+6. **Visibility.** A call must be able to name every label it supplies, and a positional argument supplies the label of the field it binds. A struct with private fields cannot
    be constructed by a call from outside its module, which is the rule the brace literal has today and is
    not changed here. RFC-0114 open question 8 asks whether that rule is enough once `construct` is
    public, and stays RFC-0114's.
@@ -279,6 +304,37 @@ direction (its §2): it is satisfied by any surface form that desugars to `const
 
 ---
 
+## 8. Worked examples (integration, 2026-11-07)
+
+Each combines this RFC with an integrated feature or a sibling RFC of the stage. They become fixtures of the implementation
+(metel-core#807); a hit means a contradiction.
+
+```metel
+struct Point { pub x: i64, pub y: i64 }
+let a := Point(1, 2);                          // positional, declaration order
+let b := Point(x = 1, y = 2);                  // keyword form (RFC-0223)
+let c := Point(y = 2, x = 1);                  // keyword order is free; arguments evaluate in written order
+struct Empty {}
+let e1 := Empty;  let e2 := Empty();           // zero-field: both forms, the same value
+enum Shape { Circle { r: f64 }, Rect { w: f64, h: f64 } }
+let s := Shape::Rect(w = 2.0, h = 3.0);        // struct variant by call; Shape::Circle(1.5) positional
+let p := Pair::<i64>(1, 2);                    // explicit type arguments by turbofish
+```
+
+1. **Retired forms.** `Point { x = 1, y = 2 }`, `Point { x, y }` and `Empty {}` are ordinary parse errors.
+2. **Visibility.** From outside the defining module, `Token("x", "shh")` is `T0009` if either field is private (a positional argument
+   supplies the label of the field it binds), as the brace literal was.
+3. **Move and drop.** `Point(a, b)` moves its arguments into the fields exactly as a function call does; a `Drop` type is built the same way.
+4. **Calls as arguments.** `Wrapper(|v: i64| { v })` and `Point(f(), g())` evaluate left to right.
+5. **Spread.** `Point(..r)` builds from a record of exactly `Point`'s row; `Point(..r, x = 5)` is an error in v0.16.0.
+6. **Raw construction.** The synthesized default of `Point` is `construct(row) { Ok(raw Self(..row)) }`; `raw` appears nowhere in user code in v0.16.0.
+7. **Siblings.** `f(x = 1)` is never an assignment (RFC-0183) and `Point(x = 1, y = 2)` is the same call form (RFC-0223); a brace group is a
+   block or an anonymous record (RFC-0221).
+
+Exit check: no contradiction with the integrated spec (structs, enums, visibility, move semantics) or the stage's sibling RFCs.
+
+---
+
 ## Alternatives Considered
 
 - **Positional-only construction, no keyword arguments at all.** Rejected as the end state: unreadable beyond two or three fields and silently order-dependent in a way the named-field literal never was. It is this RFC's own floor, and RFC-0223 adds the keyword form for every call.
@@ -290,8 +346,7 @@ direction (its §2): it is satisfied by any surface form that desugars to `const
 
 ## Unresolved Questions
 
-Open after the split of 2026-11-07 (the questions about keyword arguments, the `=` separator, the grammar prototype and positional-only
-parameters moved to RFC-0223):
+None blocking. What remains is decided below, tracked as migration work, or belongs to another RFC. (The questions about keyword arguments, the `=` separator, the grammar prototype and positional-only parameters moved to RFC-0223 on 2026-11-07.)
 
 - ~~**Is losing `f(x = 1)` as a positional bare assignment acceptable?**~~ **Resolved 2026-11-07 by RFC-0183:** assignment is a statement,
   so there is no positional-assignment reading to lose. RFC-0183 lands before this RFC in the v0.16.0 sweep order.

@@ -593,7 +593,7 @@ From outside the declaring module, `Token` is nameable, `token.kind` is accessib
 [reading or assigning `token.span` is a `T0009` visibility error](#spec.modules.visibility.legality-3);
 the declaring module retains access to all of its own fields.
 [Constructing `Token` directly outside its declaring module also requires visibility to
-every named field](#spec.modules.visibility.legality-4), so private fields force
+every field the call supplies](#spec.modules.visibility.legality-4), so private fields force
 construction through module-local helpers or constructors instead. Marking a field
 `public` on a struct that is not itself `public` doesn't expose that field to any other
 module — [the compiler warns on this combination](#spec.modules.visibility.legality-5),
@@ -695,15 +695,21 @@ outside the declaring module is the same `T0009`. A residual of public fields on
 
 ##### Legality Rule {#spec.modules.visibility.legality-4}
 
-Constructing a struct literal outside its declaring module is rejected with `T0009` if
-it names any private field. A module-local constructor or helper function may still
+A construction call outside its declaring module is rejected with `T0009` if it supplies any private field, whether by name or positionally (a positional
+argument supplies the field it binds). A module-local constructor or helper function may still
 construct the value.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#807" reason="RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land" -->
 
 <!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#807: RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

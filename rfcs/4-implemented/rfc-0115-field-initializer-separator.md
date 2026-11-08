@@ -299,7 +299,7 @@ question, and this RFC applies the invariant to one site whatever that document 
 - `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the invariant, the fourteen-site
   grammar audit, and the open question 4 ("what if RFC-0100 is refused?") this split
   answers
-- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — the parent
+- `public/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` — the parent
   RFC; keeps call-shaped construction and general keyword arguments, and is independent of
   this one in both directions
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` — its 2026-07-24
