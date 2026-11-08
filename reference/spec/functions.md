@@ -1382,6 +1382,89 @@ the uses in the body that contains it fix its type.
 
 </details>
 
+## Keyword Arguments
+
+A call may name some of its arguments: `connect("db.local", port = 5432, timeout = 30)` binds `port` and `timeout` by name. The
+declaration keeps `:` (`port: i64`); only the call side, where a value is bound to a name, takes `=`. Positional arguments bind the leading
+parameters in declaration order and keyword arguments bind the rest, so a purely positional call is unchanged. Each parameter is
+bound once, every parameter must be bound, and a call through a function value is positional only because a function type carries no names.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.functions.keyword-arguments.legality-1}
+
+A keyword argument `name = value` binds the callee's parameter `name`. Positional arguments bind the leading parameters in order and
+keyword arguments bind the rest by name, with every positional argument before the first keyword argument. A keyword that names a
+parameter already bound, a repeated keyword and an unknown name are errors (T0039), as is a positional argument after a keyword argument
+(T0040). Every parameter must be bound, and a missing or extra argument is an arity error (T0004).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.keyword-arguments.legality-2}
+
+Keyword arguments are available at every call whose callee declares parameter names: free functions, associated functions, methods after the
+receiver, aspect methods, constructor calls, enum-variant calls and native std functions. The receiver is never a keyword argument, and a
+pack parameter is positional only.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.keyword-arguments.legality-3}
+
+A call through a function value, such as a closure binding, a parameter of function type or a function item bound to a local, is positional
+only, because a function type carries no parameter names. A keyword argument in such a call is an error (T0041).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.keyword-arguments.legality-4}
+
+An aspect method has one set of parameter names, the names of the aspect's declaration. An impl method must declare the same names (T0042), and
+a call through a bound, a `dyn` or the concrete type binds by that set. Parameter names are part of a function's public interface: renaming a
+parameter of a `pub` function or aspect method changes the calls that name it.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.keyword-arguments.legality-5}
+
+Overload resolution takes keyword names into account: for each candidate, the call's keyword names must match some of that candidate's own
+parameter names, the remaining arguments fill the other slots in order, and the resulting per-slot argument types must equal the candidate's
+parameter types. A keyword absent from a candidate's parameter list disqualifies that candidate.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics {#spec.functions.keyword-arguments.dynamics-1}
+
+The argument expressions of a call are evaluated strictly in the order written, left to right, whether positional or keyword, and only then
+are the resulting values bound to the callee's parameters. A keyword argument never reorders evaluation.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ## Turbofish
 
 > **Availability:** Since v0.8.0.
