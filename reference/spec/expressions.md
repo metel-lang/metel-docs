@@ -1219,7 +1219,7 @@ nothing outside the expression can alias that cell.
 
 ```metel
 > fun takes_ref(l: &List<i64>) -> i64 { l.len() }
-> fun bump(x: &var i64) -> i64 { *x := *x + 1; *x }
+> fun bump(x: &var i64) -> i64 { *x = *x + 1; *x }
 > fun main() -> i64 {
 >     let a := takes_ref(&List::from([1, 2, 3]));   // no `let` needed for the argument
 >     let b := bump(&var 41);                        // &var works on a temporary too
