@@ -2601,6 +2601,30 @@ bound lists. Naming a field the bound doesn't list is rejected regardless of `..
 </details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.types.generics.row-bounds.legality-8}
+
+A row bound is a list of entries, optionally followed by `..` (RFC-0189). An entry is `.x` (a field `.x` of any type), `.x: T` (a field `.x` of type `T`), `!.x` (no field
+`.x`) or `!.x: T` (no field `.x` of type `T`), and the bound holds when every entry holds. The whole-row form `!{ .a, .b: T }` is sugar for
+`{ !.a, !.b: T, .. }`, and `{ .. }` alone is not a bound.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1661" reason="RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1661: RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-9}
+
+A bound with a negative entry must end in `..`: in a closed bound the entry states nothing and is an error (T0043). A label may appear once positively and any number of times
+negatively; entries that cannot all hold, such as `{ .x, !.x, .. }` and `{ .x: T, !.x: T, .. }`, are an error (T0043), and a negative entry inside an outer `!{ }` is an error
+(T0043).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1661" reason="RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1661: RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 </details>
 
 ## Never Type
