@@ -81,8 +81,8 @@ Plain fields (no annotation) behave exactly as today.
 var conn := Connection { host = "db.local", port = 5432, retries = 0 };
 
 conn.retries += 1;   // OK — plain field, binding is var
-conn.host := "other"; // ERROR: field `host` is declared `let` and cannot be reassigned
-conn.port := 443;     // ERROR: field `port` is declared `let` and cannot be reassigned
+conn.host = "other"; // ERROR: field `host` is declared `let` and cannot be reassigned
+conn.port = 443;     // ERROR: field `port` is declared `let` and cannot be reassigned
 ```
 
 **`var self` methods cannot reassign `let` fields:**

@@ -55,7 +55,7 @@ Every attempt to fill the body fails at present (metel-core#1399):
 - Building the result from the whole, `Session { id = self.id, data = self.data }`, is
   rejected. Declared parameters are rigid (RFC-0173), so `{ token: Token, ..Rest }` is not
   `{ ..Rest }`, and no coercion removes a field.
-- Writing a removed label back (`value.data.token := ...`) is rejected by design: a
+- Writing a removed label back (`value.data.token = ...`) is rejected by design: a
   remainder cannot regain a label by assignment inside the generic definition.
 - There is no value-level spelling of "this record without `token`". A record pattern's
   bare `..` discards the rest rather than binding it, and a record literal has no
@@ -184,7 +184,7 @@ It is well-formed only if no label occurs twice, so each written label must be p
 
 A literal whose absence cannot be shown is rejected (`T0012`, naming the label). A written
 label that is *present* in the spread is rejected too: there is **no override** — a
-spread adds fields, and replacing one is a field assignment (`r.x := v`) on an owned
+spread adds fields, and replacing one is a field assignment (`r.x = v`) on an owned
 value, as today. A literal has **at most one** spread: combining two abstract rows needs a fact that the two
 are disjoint as wholes, which per-label bounds cannot state (`GAP-TYPES-008`). A leading
 `..expr` cannot collide with a range, since the grammar has no prefix range, and `{ ..rest }`

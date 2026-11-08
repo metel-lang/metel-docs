@@ -415,7 +415,7 @@ struct SortedPair { small: Box, big: Box }   // invariant: small.value <= big.va
 fun main() {
     var p := SortedPair::new(Box { value = 1 }, Box { value = 10 });
     let old_small := p.small;   // p narrows to .{ big }
-    p.small := Box { value = 999_999 };   // p widens back to full SortedPair -- no call
+    p.small = Box { value = 999_999 };   // p widens back to full SortedPair -- no call
                                           // to `new`, invariant possibly broken
 }
 ```

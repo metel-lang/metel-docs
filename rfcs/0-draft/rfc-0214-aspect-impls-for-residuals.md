@@ -91,7 +91,7 @@ extend Doc: Display<record R> where ..R: Display {      // spelling provisional 
     fun fmt(&self: Self.{ ..R }) -> String {
         var out := "";
         comptime for field in fields(R) {
-            out := out + field.name + " = " + self.[field.name].fmt() + ", ";
+            out = out + field.name + " = " + self.[field.name].fmt() + ", ";
         }
         return out;
     }

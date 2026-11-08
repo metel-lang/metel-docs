@@ -83,7 +83,7 @@ fun main() {
     var cart := Cart { user = 7, note = "cart abandoned" };
 
     let n := peek(cart.note);        // `note` moved; cart : Cart.{ user }
-    cart.note := "cart restored";    // reassigned — cart : Cart again
+    cart.note = "cart restored";    // reassigned — cart : Cart again
 
     println("${cart.note} for user ${cart.user} (was ${n} chars)");
 }

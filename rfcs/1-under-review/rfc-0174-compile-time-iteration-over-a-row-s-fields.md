@@ -19,7 +19,7 @@ extend<record R> { ..R }: Display where ..R: Display {
     fun to_string(&self) -> String {
         var out := "{ ";
         comptime for field in fields(R) {
-            out := out + field.name.to_string() + " = " + self.[field.name].to_string() + ", ";
+            out = out + field.name.to_string() + " = " + self.[field.name].to_string() + ", ";
         }
         out + "}"
     }
@@ -129,7 +129,7 @@ reads the field of `self` whose label is the `Label` `field.name`. It is selecti
 defines it (§3, §4), and means what `self.x` means for that field. Its type is `field.type`. The label must be
 comptime-known (RFC-0132 §1.1): a `field.name` of the enclosing `comptime for`, or another comptime-known
 `Label`; anything else is an error. Reads only in the
-first version; assignment through a computed access (`self.[name] := v`) and moves out of one
+first version; assignment through a computed access (`self.[name] = v`) and moves out of one
 are open question 6.
 
 ### D3: The checking rule: once, against a symbolic field

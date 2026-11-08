@@ -87,24 +87,25 @@ BlockItem           → BlockExprStmt
                     | RecordPatternDeclaration
                     | Declaration
 BlockExprStmt       → ( IfExpression | MatchExpression | LoopExpression ) ";"? !"}"
-ExpressionStatement → Expression ";"
+ExpressionStatement → StatementExpression ";"
 WhileStatement      → "while" "(" Expression ")" Block
-ForStatement        → "for" "(" ForInit Expression? ";" Expression? ")" Block
+ForStatement        → "for" "(" ForInit Expression? ";" StatementExpression? ")" Block
 ForInit             → ExpressionStatement
                     | VarDeclaration
                     | LetDeclaration
                     | ";"
 ForInStatement      → "for" "(" ( "let" "var"? | "var" )? IDENTIFIER "in" Expression ")" Block
 
-Expression           → AssignmentExpression
-AssignmentExpression → UnaryExpression AssignOp AssignmentExpression
-                     | LogicalOrExpression
+Expression           → LogicalOrExpression
+StatementExpression  → AssignmentExpression
+                     | Expression
+AssignmentExpression → UnaryExpression AssignOp Expression
 AssignOp             → "+="
                      | "-="
                      | "*="
                      | "/="
                      | "%="
-                     | ":="
+                     | "=" !( "=" | ">" )
 LogicalOrExpression  → LogicalAndExpression ( "||" LogicalAndExpression )*
 LogicalAndExpression → ComparisonExpression ( "&&" ComparisonExpression )*
 ComparisonExpression → RangeExpression ( ( "==" | "!=" | "<=" | ">=" | "<" | ">" ) RangeExpression )?
@@ -151,7 +152,7 @@ TupleOrParen         → "(" Expression ( "," Expression )+ ")"
 RepeatArray          → "[" Expression ";" INT "]"
 ArrayLiteral         → "[" ( Expression ( "," Expression )* ","? )? "]"
 MatchExpression      → "match" ( "()" | TupleOrParen ) "{" ( MatchArm ( "," MatchArm )* ","? )? "}"
-MatchArm             → Pattern ( "if" Expression )? "=>" ( Block | Expression )
+MatchArm             → Pattern ( "if" Expression )? "=>" ( Block | StatementExpression )
 IfExpression         → "if" "(" Expression ")" ( Block | Expression ) ( "else" ( IfExpression | Block | Expression ) )?
 LoopExpression       → "loop" Block
 ClosureExpression    → CaptureList? "once"? "var"? "|" Params? "|" ( "->" Type )? Block

@@ -112,7 +112,7 @@ to them; the update adds one rule, about the replaced field.
 - **The replaced field is not moved into the result.** Spreading an owned record moves every
   field except the replaced ones; each replaced field's old value is dropped, as the old value
   of an assignment is. A replaced field with a `Drop` impl therefore runs its destructor, the
-  same as `s.a := v` on an owned place.
+  same as `s.a = v` on an owned place.
 - **The right-hand side may read the source like any other initializer.** After the spread has
   consumed `line`, reading a `Copy` field is accepted (`{ ..line, .total = line.price * 2 }`
   runs today) and reading a non-`Copy` field is a use of a moved value (`T0019`). The discount

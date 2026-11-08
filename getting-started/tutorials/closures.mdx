@@ -60,9 +60,9 @@ fun main() {
             let entry := totals.get(i).yolo();
             if (entry.user == user) {
                 totals.set(i, Tally { user = user, total = entry.total + weight });
-                found := true;
+                found = true;
             }
-            i := i + 1;
+            i = i + 1;
         }
         if (!found) { totals.push(Tally { user = user, total = weight }); }
     };
@@ -101,7 +101,7 @@ fun main() {
     let name := "sum";
     var running := 40;
 
-    let add := [&var running] var |n: i64| -> () { running := running + n; };
+    let add := [&var running] var |n: i64| -> () { running = running + n; };
     add(2);
 
     let report := [name, running] once || -> String { name + " = " + running.to_string() };

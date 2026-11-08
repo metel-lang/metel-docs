@@ -175,7 +175,7 @@ Where text is needed it is `field.name.to_string()`:
 
 ```metel
 comptime for field in fields(R) {
-    out := out + field.name.to_string() + " = " + self.[field.name].to_string() + ", ";
+    out = out + field.name.to_string() + " = " + self.[field.name].to_string() + ", ";
 }
 ```
 

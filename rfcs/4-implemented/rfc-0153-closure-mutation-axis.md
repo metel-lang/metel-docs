@@ -468,7 +468,7 @@ without this RFC (see RFC-0134 §5). Worked:
 ```metel
 fun make_counter() -> var || -> i64 {
     let n := 0;
-    [n] var || -> i64 { n := n + 1; n }   // `n` moved in; writes persist (§1a); closure returnable
+    [n] var || -> i64 { n = n + 1; n }   // `n` moved in; writes persist (§1a); closure returnable
 }
 
 fun main() {

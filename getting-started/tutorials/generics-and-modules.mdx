@@ -15,7 +15,7 @@ bound makes a reducer that doesn't care what else an event carries:
 ```metel
 fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
-    for (e in events) { sum := sum + e.weight; }
+    for (e in events) { sum = sum + e.weight; }
     return sum;
 }
 
@@ -63,7 +63,7 @@ pub fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
 ```metel
 pub fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
-    for (e in events) { sum := sum + e.weight; }
+    for (e in events) { sum = sum + e.weight; }
     return sum;
 }
 ```
