@@ -18,6 +18,8 @@ updated: '2026-07-24'
 > touch construction at all. Depends on RFC-0100 (now `3-integrated`, 2026-11-07) for
 > removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
 > deferred) as the foundation for §6's escape hatch.
+
+> **Revised (2026-11-08, language owner).** Construction no longer fires automatically when a narrowed row is completed (§3 is rewritten): widening on reassignment stays as RFC-0137 and the spec define it, and the guarantee this RFC gives is about values *produced by a construction expression*. The enum extension of §9 and the brace minting form of RFC-0100 §7 are drafted in the same pass.
 >
 > **Revised 2026-07-23, later the same day.** §5's fallibility question — left with
 > three unadopted candidates in the first draft — is resolved: `construct` returns
@@ -66,18 +68,18 @@ updated: '2026-07-24'
 ## Summary
 
 A `Construct` aspect makes producing a value of a nominal type canonical: every `Self`
-value, whether built fresh or reassembled after a partial move narrowed it away, comes
-into existence through exactly one function, `Construct::construct(row) ->
+value produced by a construction expression (`Type(args)`, `Type(..r)`, `from_record`)
+comes into existence through exactly one function, `Construct::construct(row) ->
 Result<Self, Self::Error>`. This closes RFC-0090's open question 10 (`FromRecord`
-bypassing constructor invariants) in its original scope and in the more general form
-`reports/substructural-types/nominal-types-as-branded-rows.md` §6 found — automatic
-widening after an ordinary partial move, not just an explicit conversion call. A
+bypassing constructor invariants) in its original scope. It does not fire when a narrowed
+row is completed by assignment (§3): that route, like plain field assignment, is bounded
+by field privacy. A
 type author who has no invariant to enforce writes nothing; the compiler synthesizes a
 trivial default, `Self::Error = !`, and RFC-0078's already-implemented coercion rules
 make the resulting `Result<Self, !>` collapse to bare `Self` with no unwrap, no match,
 and no runtime branch — provably, not by convention. A type whose invariant can
-genuinely reject gets a real, typed error instead, and loses the automatic-firing sugar
-in exchange — the same rule, applied uniformly, decides both. A separate, opt-in aspect,
+genuinely reject gets a real, typed error instead, and its construction call yields a
+`Result` the caller handles — the same rule decides both. A separate, opt-in aspect,
 `ConstructUnchecked`, gives performance-sensitive code an explicit, `unsafe`-gated way to
 skip validation entirely when it already knows the invariant holds — mirroring Rust's
 `new`/`new_unchecked` convention directly.
@@ -92,20 +94,24 @@ violated if `FromRecord` is auto-derived, because "auto-derived reconstruction c
 silently skip validation a hand-written constructor enforces." Its own text limits the
 concern to that one conversion function.
 
-`nominal-types-as-branded-rows.md` §6 found the same bypass reachable through nothing
-more than ordinary code, once narrowing and widening are both automatic and structural:
+`nominal-types-as-branded-rows.md` §6 found a second route to the same bypass through ordinary
+code, once narrowing and widening are both automatic and structural:
 
 ```metel
-fun mess_with_it(p: &var SortedPair) {
-    let old_small := p.small;   // move small out; p narrows to SortedPair.{ big }
-    p.small = 999_999;         // assign an arbitrary value back in; p widens to full SortedPair
+fun mess_with_it() {
+    var p := SortedPair::new(Box { value = 1 }, Box { value = 10 });
+    let old_small := p.small;          // move small out; p narrows to SortedPair.{ big }
+    p.small = Box { value = 999_999 }; // assign an arbitrary value back in; p widens to full SortedPair
     // no call to SortedPair::new, anywhere. invariant possibly broken.
 }
 ```
 
 That document was explicit that plain mutable-field reassignment already has this
-problem today, with zero row machinery involved — the finding is not a new hole, it is
-that OQ10 was mis-scoped as `FromRecord`-specific when the underlying problem is general.
+problem today, with zero row machinery involved. **This RFC does not close that route** (§3):
+it needs code that can name the field, which for a private field is the defining module, the same
+trust Rust places in the author of a type's own module. What this RFC guarantees is narrower
+and uniform: every `Self` *produced by a construction expression* satisfies the invariant at that
+moment, whichever surface form wrote it.
 
 A second, independent motivation: without a single canonical path, a type with several
 surface constructors (`new`, `from_str`, …) has no structural guarantee they stay in
@@ -220,7 +226,7 @@ call-shaped form has to collect keyword arguments into a row first. Both work; t
 form is the more transparent of the two, which is the opposite of what the first draft
 assumed.
 
-Fresh construction and post-narrowing reconstruction (§3) become the *same* operation, not
+Fresh construction and `from_record` (§4) become the *same* operation, not
 two mechanisms that happen to need the same validation. Positional construction
 (`SortedPair(3, 1)`, RFC-0100 §1's one-or-two-field sugar) desugars identically after
 positional-to-label assignment, if RFC-0100 lands.
@@ -247,19 +253,34 @@ open question 1 records the same tension from the other side.
 
 ---
 
-## 3. Row-completion firing `construct()` automatically
+## 3. Row completion does not fire `construct()` (decided 2026-11-08)
 
-The mechanism `nominal-types-as-branded-rows.md` §6 needed: any assignment that completes
-a narrowed row — every label present again — is sugar for calling `construct()` on the
-completed row and replacing the narrowed value with the result, rather than a bare
-in-place write.
+*An earlier draft made any assignment that completes a narrowed row sugar for calling `construct()` on the completed row and
+replacing the value with the result. The language owner dropped it.* Assigning the last missing field of a narrowed struct widens it
+as RFC-0137 and the spec's `ownership.widening` rules define, with no call to `construct`.
 
-**Piecewise building composes the same way.** A value built up field by field —
-`structural-records.md`'s `MaybeUninit`-avoidance example, `let partial = { a =
-compute_a() }; let partial = { ..partial, b = compute_b() }; …` — only calls
-`construct()` once, at the point the row becomes complete, exactly as a single literal
-would. Intermediate partial states are ordinary, fully-valid values of a narrower type;
-nothing fires until nothing is missing.
+**Why.**
+
+1. **It closed one of two routes.** Plain `p.small = x` on a whole value bypasses an invariant just the same, and RFC-0137 §6 says
+   it always did. Firing on completion protected the less common route and left the common one open.
+2. **An assignment would run user code,** and `construct` may rewrite the assigned value (`SortedPair` swaps its fields), so a write
+   would not leave what was written.
+3. **Fallible types fell outside it,** so the language had two behaviours for completion depending on `Error` (§5's old second half).
+4. **Both routes need code that can name the field.** For a private field that is the defining module, where the author is trusted
+   as in Rust. A `pub` field with an invariant already contradicts itself.
+
+**What is guaranteed.** Every `Self` produced by a construction expression (`Type(args)`, `Type(..r)`, `from_record`) satisfies the
+invariant when produced. Code that can name a field may change it afterwards; an invariant that must survive mutation belongs behind
+private fields and methods. The `mess_with_it` example stands as the accepted limit, reachable only from the defining module or
+through `pub` fields.
+
+**Piecewise building.** A value built field by field, `let partial = { a = compute_a() }; let partial = { ..partial, b = compute_b() };`,
+is an ordinary anonymous record, with no brand. Turning the complete record into a `Self` is the explicit `Type(..partial)` (RFC-0100
+§7), which calls `construct` once; nothing fires on completion.
+
+**Alternatives considered.** Keeping the firing, rejected for the reasons above. Letting a type with a non-default `Construct`
+refuse to widen, so completion is a type error and reassembly is `Type(..row)`, rejected: it closes the narrowing route while plain
+assignment stays open, and it makes widening depend on the type's impl.
 
 ---
 
@@ -282,10 +303,9 @@ two, not decided unilaterally here.
 reorders. Not every invariant can be repaired that way. A `NonEmptyList<T>` cannot
 manufacture an element out of nothing if its row completes empty; its invariant must be
 able to *reject*, not just normalize. `construct` therefore returns
-`Result<Self, Self::Error>` (§1) rather than bare `Self` — but that alone would leave the
-same problem §2 already names: **an ordinary field assignment looks syntactically
-infallible.** `p.small = 999_999` reads as plain mutation; if `construct` can genuinely
-fail, what does the automatic firing (§3) do with an `Err`?
+`Result<Self, Self::Error>` (§1) rather than bare `Self`. What a construction call yields then has to be
+decided: a bare `Self` that can hide a rejection would be wrong, and a `Result` on every call
+would tax the types that cannot fail.
 
 **The resolution reuses two already-*implemented* rules from RFC-0078 (Bottom Type,
 `4-implemented`, integrated 2026-07-10), rather than inventing a new one:**
@@ -301,28 +321,23 @@ fail, what does the automatic firing (§3) do with an `Err`?
 
 **For the default case (`Self::Error = !`), these two rules together mean the compiler
 already, today, implicitly coerces `Result<Self, !>` to bare `Self` — no unwrap, no
-match, no runtime branch, and *provably* safe rather than trusted.** The automatic firing
-in §3 needs no special casing: it calls `construct`, the result coerces silently, the
-assignment stays exactly as ordinary as it looks.
+match, no runtime branch, and *provably* safe rather than trusted.** A construction call
+`Type(args)` therefore needs no special casing: it calls `construct`, the result coerces
+silently, and it reads and costs exactly like a bare literal.
 
 **For a genuinely fallible type** (`type Error = NonEmptyListError;`),
 `Result<Self, Error>` has two inhabited variants, so §3.3's coercion simply does not
-trigger — there is no silent path to bare `Self`. Concretely, this means **the
-automatic-firing sugar in §3 is not available for such a type**: completing its row
-cannot happen through a bare assignment at all: the compiler has no implicit coercion to
-insert, so the assignment is rejected, and reconstruction must go through an explicit
-call to `construct`, handled with the same already-existing machinery ordinary fallible
-calls already use (`?`, `match`, `.unwrap_or`) — the `?` operator with `From`-based error
+trigger — there is no silent path to bare `Self`. Concretely, this means **a construction call of such a type yields `Result<Self, Error>`**: there is no
+silent path to bare `Self`, and the caller handles it with the same already-existing machinery ordinary
+fallible calls already use (`?`, `match`, `.unwrap_or`) — the `?` operator with `From`-based error
 coercion has been live since v0.4.0 (noted in RFC-0079's own refusal record, which
 otherwise only confirms `Result<T, E>` and `Option<T>` are already implemented and
 spec'd, not that anything about them needs inventing here).
 
-**One rule decides both halves, and it is not a new rule.** Whether a type gets the
-automatic-firing convenience or requires explicit result-handling falls entirely out of
-whether `Self::Error` is uninhabited — the same declaration that expresses "can this
-fail" also decides "does this get silent re-widening," with no separate flag to keep in
-sync. This applies uniformly to fresh construction and post-narrowing reconstruction
-alike (§2) — the same rule, not two rules that happen to agree.
+**One rule decides, and it is not a new rule.** Whether a construction call yields a bare `Self` or a
+`Result` falls entirely out of whether `Self::Error` is uninhabited, the same declaration that expresses "can
+this fail", with no separate flag to keep in sync. It applies uniformly to `Type(args)`, `Type(..r)` and
+`from_record`.
 
 **`ConstructUnchecked` (§6) is a genuinely different flavor of trust, not made redundant
 by this.** `Construct`'s infallibility, when claimed, is *proven* by the type system
@@ -337,7 +352,8 @@ out of implicit narrow/widen entirely; *(b)* `construct` stays infallible by con
 genuine rejection lives only in separate explicit constructors; *(c)* `construct` panics
 on failure, treated as infallible at the type level. Reading them back, (a) is what the
 resolution above actually *is*, made precise and automatic via RFC-0078 rather than left
-as a design choice to enforce by hand; (b) and (c) are no longer needed.
+as a design choice to enforce by hand; (b) and (c) are no longer needed. (Automatic firing itself
+was later dropped, §3.)
 
 ---
 
@@ -355,8 +371,8 @@ aspect ConstructUnchecked {
 
 **Separate from `Construct`, deliberately.** Not auto-derived, not implied by
 implementing `Construct` — a type author writes it explicitly, taking on the
-responsibility the `unsafe` block already signals elsewhere in the language. Ordinary
-row-completion (§3) never calls it; only code that explicitly reaches for
+responsibility the `unsafe` block already signals elsewhere in the language. Nothing
+calls it implicitly; only code that explicitly reaches for
 `construct_unchecked` inside an `unsafe` block does.
 
 **It gets §1.1's privileged site too, necessarily.** `construct_unchecked` returns bare
@@ -400,8 +416,8 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 
 ## 9. Enums — a draft extension (2026-11-08)
 
-*Raised by the language owner and sketched here, not decided.* §8 kept enums out because the mechanism's motivation is rows:
-narrowing and widening can reassemble a struct without a constructor call (§3), and an enum has neither. The rest of the mechanism
+*Raised by the language owner and sketched here, not decided.* §8 kept enums out because the mechanism was framed around rows,
+where narrowing and widening reassemble a struct, and an enum has neither. The rest of the mechanism
 does not depend on rows, and an enum can want an invariant of its own: `Interval::Closed { lo, hi }` with `lo > hi` should be
 `Interval::Empty`, a choice of *variant* that a wrapper struct cannot express.
 
@@ -429,7 +445,7 @@ extend Interval: Construct {
 3. **Minting.** Inside `construct` and `construct_unchecked` of the enum's own impl, the brace form `Self::Variant { field = value }`
    and the bare `Self::Unit` mint a `Self`, under RFC-0100 §7's minting rules (own type only, keyword fields, no recursion through
    the call form).
-4. **No row-completion firing.** An enum has no narrowed state, so §3 does not apply: only explicit calls reach `construct`.
+4. **Nothing fires implicitly,** as for structs (§3): only explicit calls reach `construct`.
 5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and
    `ConstructUnchecked` (§6) are as for structs, so every existing `Enum::Variant(...)` call keeps compiling.
 6. **The gap.** Variant fields have no visibility, and a `match` on `&var` can write a payload field from anywhere. So an enum
@@ -445,7 +461,7 @@ extend Interval: Construct {
 1. ~~Fallibility.~~ **Resolved 2026-07-23, §5:** `construct` returns
    `Result<Self, Self::Error>`; RFC-0078's already-implemented uninhabited-variant and
    inhabited-singleton-coercion rules make the default (`Error = !`) collapse to bare
-   `Self` provably, and a real `Error` type loses the automatic-firing sugar in exchange,
+   `Self` provably, and a real `Error` type makes a construction call yield a `Result` instead,
    both by the same mechanism. Kept as a struck-through entry rather than removed, per
    this corpus's convention of leaving resolved questions visible.
 2. ~~Does this RFC need its own literal-banning rule independent of RFC-0100 (§2)?~~
@@ -483,7 +499,7 @@ extend Interval: Construct {
 6. **Is RFC-0026 a solid enough foundation for §6?** Its own cited blockers are both
    already refused, not open — which may mean it is closer to revisitable than its
    current text suggests, but that is RFC-0026's maintenance question, not settled here.
-7. **Does a fallible type's narrowed-but-incomplete row ever get stuck**, the same
+7. **Moot 2026-11-08 (§3 no longer fires on completion).** **Does a fallible type's narrowed-but-incomplete row ever get stuck**, the same
    liveness-not-safety gap RFC-0090 §8 already accepts for `restore` ("nothing stops code
    from never calling `restore`")? Presumably yes, and presumably fine for the same
    reason — not checked against a concrete example here.
@@ -533,7 +549,7 @@ extend Interval: Construct {
    sub-question has to be answered before the syntax rather than after. Nothing in this RFC
    depends on it: §2 already states that every surface form producing a `Self` desugars to
    `construct`, and that holds whatever `FromRecord` ends up being spelled as.
-10. ~~§3's automatic firing has no story for the borrowed case.~~ **Closed 2026-07-24, and
+10. ~~§3's automatic firing has no story for the borrowed case.~~ **Moot 2026-11-08: §3 no longer fires, so this has no subject.** *(Earlier note.)* **Closed 2026-07-24, and
     §3 is the half that survived.** The contradiction was between §3 (any assignment
     completing a narrowed row is sugar for `construct()`) and RFC-0119's `from_record_mut`
     path, which completed a row behind a `&var` view and claimed nothing beyond structural

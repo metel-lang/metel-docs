@@ -123,8 +123,8 @@ so the tree is finite.
 ## Non-Goals
 
 - Flat narrowing (whole-field moves) — RFC-0117.
-- Widening a nested residual back — RFC-0114's row-completion / `Construct`, one level
-  or many.
+- Widening a nested residual back — RFC-0137's widening, one level or many; RFC-0114 does not
+  fire `construct` on row completion (its §3, 2026-11-08).
 - Borrowed nested narrowing (`&var` views) — RFC-0109 / RFC-0119.
 - Abstracting over *which* nested residual a function accepts — that is row
   polymorphism, RFC-0121.
