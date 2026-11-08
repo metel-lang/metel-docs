@@ -295,8 +295,9 @@ and Scala mint with the ordinary constructor and gate it by visibility; here the
 4. **It is syntax, not an item.** There is no `Type::raw` or other function to name, import or shadow, and no contextual keyword.
 5. **No recursion.** A construction call of `Self` directly inside `Self`'s own `construct` is an error, because it calls `construct`
    again; the message names the brace form.
-6. **Structs only.** Enums have no `Construct` (RFC-0114 §8), so `Enum::Variant { … }` is never legal, and a unit or struct variant is
-   built by `Enum::Variant(args)` alone. A named record (RFC-0120) is treated as a struct.
+6. **Structs only, for now.** Enums have no `Construct` in this RFC's scope (RFC-0114 §8), so `Enum::Variant { … }` is not legal, and a unit or
+   struct variant is built by `Enum::Variant(args)` alone. RFC-0114 §9 drafts an extension that would extend the minting form to the
+   variants of the impl's own enum; until it is accepted this rule stands. A named record (RFC-0120) is treated as a struct.
 7. **In v0.16.0.** `Type(args)` lowers to the compiler-synthesized default, and `Type { … }` in expression position is the ordinary
    parse error everywhere, because the grammar has no brace production. No user code can write the minting form, since there is no
    `construct` body to write it in. RFC-0114 adds the production, legal only as item 2 states and rejected elsewhere with a targeted

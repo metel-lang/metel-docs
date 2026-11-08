@@ -387,14 +387,56 @@ here rather than being separate. Not worked through in either document.
 
 ## 8. Scope
 
-**Enums are out of scope**, consistent with RFC-0090 §6/§9 and
-`nominal-types-as-branded-rows.md` — this is a structs-only mechanism. Stated explicitly
-rather than left to be assumed.
+**Enums are out of scope of the base mechanism**, consistent with RFC-0090 §6/§9 and
+`nominal-types-as-branded-rows.md` — §§1–7 are a structs-only mechanism. Stated explicitly
+rather than left to be assumed. §9 drafts an extension to enums, not yet reviewed.
 
 This RFC does not propose changes to `Drop` dispatch (`nominal-types-as-branded-rows.md`
 §4) beyond noting the parallel: `Construct`/`ConstructUnchecked` govern how a value is
 *born*, the same way `Drop` governs how it is *torn down* — two ends of the same
 lifecycle, addressed by two separate, independently-motivated RFCs rather than one.
+
+---
+
+## 9. Enums — a draft extension (2026-11-08)
+
+*Raised by the language owner and sketched here, not decided.* §8 kept enums out because the mechanism's motivation is rows:
+narrowing and widening can reassemble a struct without a constructor call (§3), and an enum has neither. The rest of the mechanism
+does not depend on rows, and an enum can want an invariant of its own: `Interval::Closed { lo, hi }` with `lo > hi` should be
+`Interval::Empty`, a choice of *variant* that a wrapper struct cannot express.
+
+```metel
+enum Interval { Closed { lo: i64, hi: i64 }, Empty }
+
+extend Interval: Construct {
+    type Error = !;
+    fun construct(raw: Self::Raw) -> Result<Self, !> {
+        match (raw) {
+            Self::Raw::Closed { lo, hi } => {
+                if lo <= hi { Ok(Self::Closed { lo = lo, hi = hi }) } else { Ok(Self::Empty) }
+            },
+            Self::Raw::Empty => Ok(Self::Empty),
+        }
+    }
+}
+```
+
+1. **`Self::Raw`.** A compiler-provided closed enum with the same variants and payload rows as `Self`, unbranded. There is one per
+   enum, so exhaustiveness stays ordinary closed-world checking: RFC-0090 §6's objection to "variant rows" was to a general
+   structural mechanism, and this is neither general nor open.
+2. **Collection.** `Enum::Variant(args)` collects the variant's row exactly as RFC-0100 §7 items 1 and 6 do for a struct, wraps it
+   as `Self::Raw::Variant`, and calls `construct`. A unit variant, written bare, is `Self::Raw::Unit`.
+3. **Minting.** Inside `construct` and `construct_unchecked` of the enum's own impl, the brace form `Self::Variant { field = value }`
+   and the bare `Self::Unit` mint a `Self`, under RFC-0100 §7's minting rules (own type only, keyword fields, no recursion through
+   the call form).
+4. **No row-completion firing.** An enum has no narrowed state, so §3 does not apply: only explicit calls reach `construct`.
+5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and
+   `ConstructUnchecked` (§6) are as for structs, so every existing `Enum::Variant(...)` call keeps compiling.
+6. **The gap.** Variant fields have no visibility, and a `match` on `&var` can write a payload field from anywhere. So an enum
+   `Construct` guarantees *checked construction* and nothing after it, unless variant fields gain visibility (not proposed here).
+   A struct invariant leans on private fields for the rest.
+7. **Scope.** None of this is in v0.16.0, where only the synthesized default exists, and RFC-0100 keeps the brace minting form struct-only
+   until this section is accepted.
 
 ---
 
@@ -502,6 +544,12 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
     The asymmetry that made this hard is worth recording: `construct` returns an owned
     `Self`, so it could never have been what fires behind a borrow, and any future proposal
     to complete a row through a borrow has to answer that first.
+
+11. **Should `Construct` extend to enums (§9)?** *(New 2026-11-08.)* The sketch uses a compiler-provided closed `Self::Raw` and the
+    brace minting form for variants. Open: the spelling of `Self::Raw`; whether a struct's row is also `Self::Raw`, so one name
+    covers both; and whether the guarantee is acceptable without variant field visibility (§9 item 6).
+
+---
 
 ---
 
