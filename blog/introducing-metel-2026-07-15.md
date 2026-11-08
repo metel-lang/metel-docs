@@ -86,7 +86,7 @@ personal cultural baggage, not political support or affiliation.
 Metel already has an interpreter, modules, generics, aspects, exhaustive pattern
 matching, a standard library, and a growing specification and RFC process. Recent
 releases have also brought coherence rules, associated types, structural bounds,
-and the `public`/`var`/`extend` surface syntax into the implementation.
+and the `pub`/`var`/`extend` surface syntax into the implementation.
 
 The deepest ownership and allocation model is still ahead of the runtime. **The
 interpreter is a feedback mechanism, not a finished semantic engine**: it lets

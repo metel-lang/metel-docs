@@ -56,7 +56,7 @@ This is the function-type analogue of the coercions the language already has —
 
 ## Motivation
 
-RFC-0134 §3's own worked example: `public fun each<T>(&self, f: once fun(T) -> ())`
+RFC-0134 §3's own worked example: `pub fun each<T>(&self, f: once fun(T) -> ())`
 promises "I call `f` at most once." A caller holding a `many`, `Copy` closure —
 the common case, a closure that captures nothing but reads — cannot pass it,
 because exact-match unification sees `many ≠ once`. The caller's options are to

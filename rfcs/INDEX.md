@@ -941,7 +941,7 @@ implementation).
   Aspect` for Consistency with `extend` — renames the anonymous-type-parameter
   (RFC-0035) and return-position (RFC-0037) `impl Aspect` keyword to `extends
   Aspect`, closing the one spot RFC-0098's own Rust-tell sweep (`impl`→`extend`,
-  `pub`→`public`, `mut`→`var`) left untouched: the block form already reads
+  `pub`→`pub`, `mut`→`var`) left untouched: the block form already reads
   `extend Type: Aspect { ... }`, but the anonymous/opaque-type form still said
   `impl Aspect`, spelling the same underlying claim two unrelated ways depending
   on grammatical position. Pure lexical rename — RFC-0035/0037's desugaring,
@@ -1490,7 +1490,7 @@ implementation).
   type is written and an omitted return type means `()` for every named declaration (free functions, methods, aspect-method declarations); there is no
   inference marker. For a private free function the compiler suggests a `let`-bound closure when it applies (not generic,
   recursive, used before its declaration, or extending a parameter's record). Function values in public signatures are written;
-  there is no `public` closure binding. Amends `functions.md` dynamics-1, RFC-0181 §1.1 and the `T0032` advice. Open: hard cut or warning window.
+  there is no `pub` closure binding. Amends `functions.md` dynamics-1, RFC-0181 §1.1 and the `T0032` advice. Open: hard cut or warning window.
 - **RFC-0194** *(under-review 2026-10-29, #1670; opened 2026-10-29)* — Linear closures and captures — a closure that captures a
   `Linear` value (RFC-0089) is itself linear: called exactly once, never dropped, body consumes the capture. Derived from the
   captures like `Copy`; no new syntax or type. Supersedes RFC-0049. Open: how "must-call" is written in a function type (with RFC-0163).
@@ -1621,7 +1621,7 @@ implementation).
   issue #561; aspect-dispatch design fix at #259 / RFC-0062.
 - **RFC-0098** *(implemented)* — Surface Keyword Renames — `extend Type` /
   `extend Type: Aspect` (reordered target-first, Swift precedent — not `impl X with Y`
-  as first drafted), `pub` → `public`, `mut` → `var` (bindings, reference types, and
+  as first drafted), `public` → `pub`, `mut` → `var` (bindings, reference types, and
   reference expressions together). Three independent, purely lexical renames with no
   semantic change. Amends RFC-0032/0042/0044/0067A's surface syntax only — each
   already-implemented RFC's actual semantics (field-visibility enforcement, binding

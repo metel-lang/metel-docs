@@ -329,7 +329,7 @@ path) before it can use that name.
 
 ### 2. Private imported names report a visibility error
 
-Referencing a declaration that exists in the source module but is not `public`
+Referencing a declaration that exists in the source module but is not `pub`
 is rejected as `T0009`, rather than being reported as an undefined name.
 
 ### 3. Public declarations require explicit type annotations

@@ -82,7 +82,7 @@ Neither is a program that depends on capture. The other 13 are items.
 
 ### Why a function does not capture
 
-- **A `fun` is an item.** It is hoisted, exportable (`public fun`), usable in methods and aspects, and has a
+- **A `fun` is an item.** It is hoisted, exportable (`pub fun`), usable in methods and aspects, and has a
   written signature (RFC-0193). Giving it an environment adds an exception to each: a capturing `fun` cannot be
   hoisted, needs a capture list on a declaration, and has a type that depends on what it captured.
 - **Captures are already specified for closures** (RFC-0050, RFC-0153, RFC-0157). Making a `fun` capture means

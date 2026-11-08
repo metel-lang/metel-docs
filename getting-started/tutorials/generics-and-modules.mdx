@@ -44,15 +44,15 @@ covered "and whatever else". Add a `bucket` field next month and it still compil
 
 ## Modules
 
-Each `.mtl` file is a module. `import` brings names in; `public` is what a module
+Each `.mtl` file is a module. `import` brings names in; `pub` is what a module
 exposes. `::` in a path maps to `/` on disk.
 
 `metrics/parse.mtl`:
 
 ```metel
-public struct ParseError { public line: i64, public reason: String }
+pub struct ParseError { pub line: i64, pub reason: String }
 
-public fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
+pub fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
     // ...as written on page 3
     return Ok { value = 0 };
 }
@@ -61,7 +61,7 @@ public fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
 `metrics/report.mtl`:
 
 ```metel
-public fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
+pub fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
     for (e in events) { sum := sum + e.weight; }
     return sum;
@@ -87,7 +87,7 @@ Run the entrypoint:
 cargo run -- metrics/main.mtl
 ```
 
-Struct **fields** are private by default even when the struct is `public` — hence
+Struct **fields** are private by default even when the struct is `pub` — hence
 `public line` / `public reason` on `ParseError` so `main` can read `error.line`.
 
 :::note

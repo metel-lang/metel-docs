@@ -49,14 +49,14 @@ Implemented 2026-10-01, tracked by metel-core#1300, landed in metel-core#1303
 (merge commit `3797758d6dc2fa068939f9ca8877c144555fe2cc`). `metel-frontend/src/
 grammar.pest` gained a `record_decl` production (`decl`'s alternatives now include
 `record_decl`); `Decl::Struct` carries a `StructKind::{Struct, Record}` discriminant,
-and the parser rejects a non-`public` field inside a `record` as `P0001`. A new
+and the parser rejects a non-`pub` field inside a `record` as `P0001`. A new
 `TypeDefinitionRegistry::record_structs: HashSet<SymbolId>` tracks which struct ids
 were declared `record`, and `visible_type_kind` resolves `VisibleTypeKind::Record`
 for them (by brand name, uniformly for `Type::Named` and `Type::Residual`, per
 RFC-0137 §3) — a `record`'s row is now structurally visible to row bounds exactly as
 this record's "Impact" section described it should be. Row-conditional impl
 resolution is implemented by RFC-0121. Verified directly: `record Handle { fd: i64 }` parses
-and typechecks (a record's fields are public by construction), a `public` written on a
+and typechecks (a record's fields are public by construction), a `pub` written on a
 record field is rejected as `P0001`, and a function generic over `<record T: { fd: i64, .. }>` accepts `Handle` and its
 narrowed residuals but rejects an equivalent `struct`. This record's exemptions on
 the four affected rules below are removed now that real fixtures cover them

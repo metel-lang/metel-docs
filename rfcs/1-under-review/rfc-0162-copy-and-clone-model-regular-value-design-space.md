@@ -417,7 +417,7 @@ every use site downstream changes meaning.
   structural values are far commoner than closures.
 
 - **S3p. S3, required in public signatures.** S3, with one addition: a structural type that
-  appears in a `public` item's signature (a parameter, a return type, a field of a `public`
+  appears in a `pub` item's signature (a parameter, a return type, a field of a `pub`
   type) must state its copyness, `copy` or `once`, just as such a signature must already
   write its function types in full (`T0010`, `spec.modules.visibility.legality-2`). Inside
   a body everything stays inferred. The boundary is where a change of copyness reaches other
@@ -492,7 +492,7 @@ and Mojo's `Tuple` is conditionally `Copyable` over a variadic pack.
 Each was run against the implementation for S1 (today). The other positions are reasoned,
 the syntax not existing.
 
-1. **API evolution.** `lib.mtl`: `public fun origin() -> { x: i64, y: i64 }`; `main.mtl`
+1. **API evolution.** `lib.mtl`: `pub fun origin() -> { x: i64, y: i64 }`; `main.mtl`
    calls `show(o)` twice on its result. Someone adds `label: String`. *S1:* the edit is in
    `lib.mtl`; the error is in `main.mtl`, `use of moved value 'o'`, and does not say the
    new field is the cause. *S2:* nothing breaks, because the double use never compiled; the

@@ -276,7 +276,7 @@ special `name/mod.mtl` entry file is used.
 
 ### 4. Only public items are accessible across a module boundary
 
-Declarations are module-private unless marked `public`; modules themselves have
+Declarations are module-private unless marked `pub`; modules themselves have
 no separate visibility modifier. An import or qualified reference to a private
 item is rejected with the visibility error `T0009`.
 

@@ -126,7 +126,7 @@ keyword collision.
   (trying a keyword-argument shape before falling through to plain `expr` inside `arg_list`). This RFC
   makes that fix's remaining edge case negligible in practice; it doesn't make the fix itself unnecessary.
 - **RFC-0098 (Surface Keyword Renames) — no conflict.** All three new/renamed keywords (`extend`,
-  `public`, `var`) are lowercase, consistent with this RFC's non-type casing — nothing to reconcile.
+  `pub`, `var`) are lowercase, consistent with this RFC's non-type casing — nothing to reconcile.
 
 ---
 

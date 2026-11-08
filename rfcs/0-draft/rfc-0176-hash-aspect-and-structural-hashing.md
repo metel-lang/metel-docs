@@ -50,7 +50,7 @@ the not-yet-designed `Ord` API.
 The standard library declares:
 
 ```metel
-public aspect Hash {
+pub aspect Hash {
     fun hash(&self) -> u64;
 }
 ```

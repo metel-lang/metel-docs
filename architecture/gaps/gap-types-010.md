@@ -20,7 +20,7 @@ The cases that motivate it are covered by other forms:
 
 - a private function omits its return type and the exact record is inferred, so the caller reads
   every field;
-- a `public` function must write a return type (`T0010`) and writes the record in full,
+- a `pub` function must write a return type (`T0010`) and writes the record in full,
   `-> { x: i64, y: i64 }`;
 - a function whose row comes from an argument names it, `-> { x: i64, ..R }`.
 

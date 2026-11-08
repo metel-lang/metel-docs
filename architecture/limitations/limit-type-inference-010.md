@@ -11,7 +11,7 @@ review: null
 
 ## Limitation
 
-Importing `public type EmptyPacket := Packet<{}>` without separately importing
+Importing `pub type EmptyPacket := Packet<{}>` without separately importing
 `Packet` previously reported `unknown type Packet` in the consuming module.
 Alias expansion now materializes a synthetic import for nominal dependencies
 from the defining module. The two-module regression
