@@ -353,7 +353,7 @@ implementation.
 2. ~~**Should method-call arguments get hints at all?**~~ **They already do**, via
    `construct_method_args`. The premise was my error — see §1.3. Nothing to decide.
 3. ~~**`Result`'s variants.**~~ **Confirmed, falls out for free.** `Result<T, E>` is an
-   ordinary `public enum` in `stdlib/core.mtl:86` with no `Literal` special case, and bare
+   ordinary `pub enum` in `stdlib/core.mtl:86` with no `Literal` special case, and bare
    `Ok`/`Err` already work in *pattern* position through RFC-0107's general mechanism.
    Expression position needs nothing beyond §1.
 

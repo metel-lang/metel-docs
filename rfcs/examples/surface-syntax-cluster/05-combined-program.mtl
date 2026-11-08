@@ -10,8 +10,8 @@ aspect Area {
     fun area(&self) -> f64;
 }
 
-public struct Circle {
-    public radius: f64,
+pub struct Circle {
+    pub radius: f64,
 }
 
 // Aspect impl, target first, `: Aspect` trailing clause (RFC-0098).
@@ -27,9 +27,9 @@ extend Circle: Display {
     }
 }
 
-public struct Rectangle {
-    public width: f64,
-    public height: f64,
+pub struct Rectangle {
+    pub width: f64,
+    pub height: f64,
 }
 
 extend Rectangle: Area {

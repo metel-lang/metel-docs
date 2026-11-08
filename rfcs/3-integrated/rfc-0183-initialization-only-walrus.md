@@ -167,7 +167,7 @@ always an anonymous record, in every position that admits one (finding 5).
 ### Diagnostics
 
 Both old spellings are rejected with the ordinary parse error (decided 2026-11-07, language owner), as
-RFC-0218 decides for `public`: `let x = 1;` is not a binding, and `x := 1;` where `x` is not being declared is
+RFC-0218 decides for `pub`: `let x = 1;` is not a binding, and `x := 1;` where `x` is not being declared is
 not an assignment. RFC-0136's own cut shipped no tailored message for its old spelling, and none is promised
 here. A hint on `if (x = 1)` ("`=` assigns; did you mean `==`?") is optional and not part of the contract.
 

@@ -48,10 +48,10 @@ All major statically-typed languages with module/package systems support field-l
 | Language | Default field visibility | Opt-in for visibility |
 |---|---|---|
 | **Rust** | Private to enclosing module | `pub` on field |
-| **Swift** | `internal` (module-level) | `private`, `public`, etc. |
-| **Kotlin** | `public` | `private`, `internal`, etc. |
-| **Java** | Package-private | `public`, `private`, etc. |
-| **C#** | `private` | `public`, `internal`, etc. |
+| **Swift** | `internal` (module-level) | `private`, `pub`, etc. |
+| **Kotlin** | `pub` | `private`, `internal`, etc. |
+| **Java** | Package-private | `pub`, `private`, etc. |
+| **C#** | `private` | `pub`, `internal`, etc. |
 
 Metel's current all-public-or-nothing model is an outlier. The Rust model (fields private by default, `pub` to expose) is the right fit given Metel's Rust-inspired syntax and module system.
 
@@ -304,7 +304,7 @@ RFC's own prose, not here.
 
 ### 1. Struct fields are module-private unless declared public
 
-Field visibility is independent of the enclosing struct's visibility. A `public`
+Field visibility is independent of the enclosing struct's visibility. A `pub`
 field of a public struct may be accessed from another module, while an unmarked
 field may not.
 
@@ -344,10 +344,10 @@ positional variant shape.
 
 ### 7. Public fields on a private struct do not expose the struct externally
 
-Marking a field `public` does not make its enclosing private struct nameable from
+Marking a field `pub` does not make its enclosing private struct nameable from
 another module, so that field remains inaccessible through the private type.
 
 ### 8. A public field on a private struct produces a warning
 
-The compiler warns when a field is declared `public` on a struct that is not
+The compiler warns when a field is declared `pub` on a struct that is not
 public, because the field cannot be accessed across a module boundary.

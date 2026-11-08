@@ -2,14 +2,14 @@
 //
 // Three independent, purely lexical renames: impl-block spelling
 // (`impl` -> `extend`, aspect-implementing form reordered target-first with
-// a trailing `: Aspect` clause), `pub` -> `public`, `mut` -> `var`
+// a trailing `: Aspect` clause), `public` -> `pub`, `mut` -> `var`
 // (bindings, reference types, reference expressions, for-loop bindings).
 // Function/method names below stay snake_case, today's convention — RFC-0101
 // (camelCase for `fun` declarations) is a separate, still-draft proposal not
 // assumed here. Illustrative only — see the cluster README.
 
-public struct Token {
-    public value: String,
+pub struct Token {
+    pub value: String,
     secret: String,
 }
 
@@ -17,11 +17,11 @@ public struct Token {
 // exactly mirroring today's optional `for` clause. No change in shape
 // from today's `impl Token { ... }` beyond the keyword itself.
 extend Token {
-    public fun new_token(value: String, secret: String) -> Token {
+    pub fun new_token(value: String, secret: String) -> Token {
         Token(value: value, secret: secret)   // RFC-0100 construction, see file 03
     }
 
-    public fun value(&self) -> String {
+    pub fun value(&self) -> String {
         self.value
     }
 }

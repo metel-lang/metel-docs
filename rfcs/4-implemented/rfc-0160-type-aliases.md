@@ -86,7 +86,7 @@ closure's capture list (see §"Function and closure types").
 ### 1. Declaration
 
 ```
-type_alias = "public"? "type" IDENT type_params? ":=" type ";"
+type_alias = "pub"? "type" IDENT type_params? ":=" type ";"
 ```
 
 **The separator is `:=`.** An alias name is a *kept* binding — referenceable throughout its
@@ -94,8 +94,8 @@ scope — so RFC-0136's invariant puts it on `:=`, not `=`. This also matches
 `assoc_type_def` (`type Item := T;`, RFC-0082), which §4 notes shares the `type` keyword:
 the two `type … := …` sites now differ only by position, never by token.
 
-Allowed at **module scope or inside a function / block body** (Open Question 1). `public`
-is module-scope only. A module-level `public type` participates in the module's public
+Allowed at **module scope or inside a function / block body** (Open Question 1). `pub`
+is module-scope only. A module-level `pub type` participates in the module's public
 surface exactly like a `struct` / `enum` / `fun` declaration; a **function-local alias is
 never exported**, may reference the enclosing function's generic parameters, and follows
 block-local `fun`'s scoping and shadowing rules — visible throughout its block regardless
@@ -254,14 +254,14 @@ stay disjoint (RFC-0039 §Relationship).
 1. **Function-body-local aliases.** **✓ Resolved — allowed.** `type X := T;` may appear as
    a block statement, scoped to that block, as well as at module scope. A local alias may
    reference enclosing generic parameters (`fun f<T>() { type Pair := (T, T); … }` — a
-   reason to have it: a module alias would need its own `<T>`). It cannot carry `public`
+   reason to have it: a module alias would need its own `<T>`). It cannot carry `pub`
    (nothing local is exported). Shadowing and visibility follow block-local `fun`: an
    inner `type` shadows an outer alias / type of the same name within its block, and it is
    visible throughout its block regardless of textual position (types have no
    initialisation-order hazard — the same reason RFC-0131 hoists `fun`). The motivating
    case is the complex one-off closure type used only inside one function.
 2. **Visibility granularity.** **✓ Resolved — no alias-specific design.** A module-level
-   `public type` participates in the public surface exactly like `public struct` / `fun` /
+   `pub type` participates in the public surface exactly like `pub struct` / `fun` /
    `enum`; whatever finer visibility the module system grows, aliases inherit. A
    function-local alias is never exported (OQ1).
 3. **Alias in `extend` target position.** **✓ Resolved — forbidden for v0.13.0.**

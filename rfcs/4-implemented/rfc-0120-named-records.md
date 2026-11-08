@@ -217,7 +217,7 @@ it contains (RFC-0118 §3). Two consequences the framing above misses:
 - **Private fields become public.** A `struct`'s unmarked field is module-private; a
   `record`'s fields are all public (§5). Converting publishes every field the type has,
   including ones that were private. Converting back gives each field the `struct` default,
-  so a field that must stay visible needs an explicit `public` again.
+  so a field that must stay visible needs an explicit `pub` again.
 
 So `struct` → `record` should be read as *publishing a contract*, not as *enabling a
 feature*. A record has no per-field modifier, so the keyword is the whole of that
@@ -274,32 +274,32 @@ row-bounded dispatch, now spec text.
 **Every field of a `record` is public, by construction, and a record's fields carry no
 visibility modifier.** `record Point { x: f64, y: f64 }` declares a type whose row is its
 published interface (§2); the `record` keyword is the whole of that declaration, so the
-fields are written bare. A `public` modifier on a `record` field is a compile error: the
+fields are written bare. A `pub` modifier on a `record` field is a compile error: the
 fields already are, and a second spelling of the same fact would only raise the question
 of what leaving it off means. There is no way to make a record field private.
 
-**Guardrail: a stray `public` is rejected, and the rejection explains the default.** A
-`public` written on a `record` field is a hard syntax error, not a lint or a warning,
+**Guardrail: a stray `pub` is rejected, and the rejection explains the default.** A
+`pub` written on a `record` field is a hard syntax error, not a lint or a warning,
 reported at the modifier itself and raised before any type checking. It is a hard error
 because the alternative is two spellings of one fact, and an author who has just moved
 from `struct` is the person most likely to write the second one out of habit. The
 diagnostic must say three things, in whatever words the compiler uses: which field of
 which record it is about; that every field of a `record` is public and so takes no
-modifier, and that the fix is to remove `public`; and, for an author who wrote `public`
+modifier, and that the fix is to remove `pub`; and, for an author who wrote `pub`
 because they were thinking in `struct` terms and wanted the opposite, that a field which
 should stay private belongs in a `struct`.
 
 <!-- doc-example: skip reason="illustrates the amended rule, which the compiler does not enforce yet" -->
 ```metel
 record Point {
-    public x: f64,   // error: `public` is not written on a record field
+    pub x: f64,   // error: `pub` is not written on a record field
     y: f64,
 }
 ```
 
-An accepted `public` on some records but not others would carry no meaning, so the rule
+An accepted `pub` on some records but not others would carry no meaning, so the rule
 has no opt-out and applies to every `record`, generic or not, whatever the field's type.
-It never fires on a `struct`, where `public` keeps its ordinary meaning.
+It never fires on a `struct`, where `pub` keeps its ordinary meaning.
 
 This is not a restriction so much as what the declaration *means*: §2 already establishes
 that `record X` publishes its row as the type's interface — "a record's API is what it

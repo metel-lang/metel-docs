@@ -32,7 +32,7 @@ A body edit changes every caller's type for a private function, and the same omi
 for a function and a method. Fixtures that test inference of a named signature
 (`typechecking/functions/80_named_function_inferred_signature`, `abstract_inferred_operand_*`, `limit_01`,
 `limit_03`, `typechecking/functions/06_let_polymorphism`) cite the rule above and pass today; they are
-rewritten by the implementation change. A `public let`/`public var` is a parse error today where the spec
+rewritten by the implementation change. A `pub let`/`pub var` is a parse error today where the spec
 asks for a targeted message that names the fix.
 
 ## Affects
@@ -42,4 +42,4 @@ asks for a targeted message that names the fix.
 
 ## Resolution
 
-Resolved by RFC-0193 (`4-implemented`): a parameter of a named function or method with no type is `T0010`; an omitted return type means `()` at every declaration kind, so a non-unit body is a `T0001` that names the omitted annotation; `public let` is a targeted parse error. Evidence: `evaluator/functions/v0_15_0_neg_named_function_no_return_type_offers_closure`, `v0_15_0_neg_named_function_no_return_type_names_the_type`, `v0_15_0_neg_named_function_literal_body_no_return_type`, `v0_15_0_neg_method_no_return_type`, `v0_15_0_neg_named_function_unannotated_parameter`, `v0_15_0_neg_method_unannotated_parameter`, `v0_15_0_neg_public_let_is_not_valid` and the positive `v0_15_0_named_function_signature_written_or_unit`.
+Resolved by RFC-0193 (`4-implemented`): a parameter of a named function or method with no type is `T0010`; an omitted return type means `()` at every declaration kind, so a non-unit body is a `T0001` that names the omitted annotation; `pub let` is a targeted parse error. Evidence: `evaluator/functions/v0_15_0_neg_named_function_no_return_type_offers_closure`, `v0_15_0_neg_named_function_no_return_type_names_the_type`, `v0_15_0_neg_named_function_literal_body_no_return_type`, `v0_15_0_neg_method_no_return_type`, `v0_15_0_neg_named_function_unannotated_parameter`, `v0_15_0_neg_method_unannotated_parameter`, `v0_15_0_neg_public_let_is_not_valid` and the positive `v0_15_0_named_function_signature_written_or_unit`.

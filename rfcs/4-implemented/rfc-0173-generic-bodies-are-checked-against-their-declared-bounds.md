@@ -32,7 +32,7 @@ fun f<T>(x: T) -> i64 { x.show() }     // rejected: T has no Show bound
 ```
 
 ```metel
-struct P { public x: i64 }
+struct P { pub x: i64 }
 fun gx<T>(a: T) -> i64 { a.x }         // rejected: T has no fields
 ```
 

@@ -32,23 +32,23 @@ Declaration              → FunDeclaration
                          | Statement
                          | VarDeclaration
                          | LetDeclaration
-TypeAliasDeclaration     → "public"? "type" IDENTIFIER GenericParams? ":=" Type ";"
+TypeAliasDeclaration     → "pub"? "type" IDENTIFIER GenericParams? ":=" Type ";"
 LetDeclaration           → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
 VarDeclaration           → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
 RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) RecordPattern ":=" Expression ";"
-FunDeclaration           → NativeBinding? "public"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
+FunDeclaration           → NativeBinding? "pub"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
 NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
-StructDeclaration        → "public"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+StructDeclaration        → "pub"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
 StructFields             → ( StructField "," )* StructField?
-StructField              → "public"? IDENTIFIER ":" ( OpenRecordType | Type )
-RecordDeclaration        → "public"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
-EnumDeclaration          → "public"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
+StructField              → "pub"? IDENTIFIER ":" ( OpenRecordType | Type )
+RecordDeclaration        → "pub"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+EnumDeclaration          → "pub"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
 EnumVariants             → ( EnumVariant "," )* EnumVariant?
 EnumVariant              → IDENTIFIER ( "{" StructFields "}" )?
 ExtendBlock              → "extend" GenericParams? ( OpenRecordType | Type ) ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
 ExtendAspect             → "!"? NamedType
 AssocTypeDef             → "type" IDENTIFIER ":=" Type ";"
-AspectDeclaration        → "public"? "aspect" IDENTIFIER GenericParams? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
+AspectDeclaration        → "pub"? "aspect" IDENTIFIER GenericParams? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
 AspectMethod             → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
 AssocTypeDecl            → "type" IDENTIFIER ( ":" BoundList )? ";"
 

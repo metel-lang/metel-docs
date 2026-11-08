@@ -33,7 +33,7 @@ impl_status: implemented
 ## Summary
 
 A named declaration writes the type of each of its parameters and states its return type or
-returns `()`. This holds for **every** named declaration: free functions (private or `public`),
+returns `()`. This holds for **every** named declaration: free functions (private or `pub`),
 methods, and aspect-method declarations. The checker never infers a named declaration's signature
 from its body or from its callers. (This is Rust's rule for `fn` items.)
 
@@ -54,7 +54,7 @@ the closure form (when it applies, §2). Nothing is added to the grammar: there 
 "infer this".
 
 The other half is a guard on the module boundary: a function value that crosses it, as a
-`public` function's parameter or return type, as a field of a `public` struct, or as any
+`pub` function's parameter or return type, as a field of a `pub` struct, or as any
 future public binding, has a **written** function type (§3).
 
 This amends `spec.functions.named-function-declarations.dynamics-1` (which the implementation
@@ -74,7 +74,7 @@ Measured on `develop` (metel-core#1544):
 |---|---|
 | private free function | inferred from the body: `fun f() { 1 }` returns `1` |
 | closure | inferred |
-| `public` free function | `T0010`: an explicit return type is required |
+| `pub` free function | `T0010`: an explicit return type is required |
 | method (inherent or in `extend`) | `()`: a non-unit body fails with `T0001: cannot unify i64 with ()` at the body |
 | aspect-method declaration | `()` |
 | `native` function | `()`; exempt from `T0010` (ADR-0039) |
@@ -151,9 +151,9 @@ no `->` is an ordinary mismatch.
 
 Private free functions no longer infer, and a named declaration writes every parameter's type
 (the receiver `self` excepted). `named-function-declarations.legality-2` changes from "annotations
-may be omitted when their types can be inferred from context" to the rule above; `public`
+may be omitted when their types can be inferred from context" to the rule above; `pub`
 declarations already required both (`T0010`, `modules.md`), so this makes private declarations
-match them. An unannotated parameter on a named declaration is `T0010`, as on a `public` one.
+match them. An unannotated parameter on a named declaration is `T0010`, as on a `pub` one.
 Closures keep omitting parameter types, below.
 
 **Closures are unchanged.** A closure's parameter and return types are inferred within the declaration that
@@ -166,8 +166,8 @@ name that other code is checked against.
 |---|---|
 | no return type, body has type `T ≠ ()` | `` `get` has no return type, so it returns `()`, but its body evaluates to `i64` ``; help: write `-> i64` (omitted when the body's type has an unsolved part) |
 | as above, and the closure form applies (§2) | adds the closure rewrite of the same declaration |
-| a named declaration's parameter has no type | `T0010`, now for every named declaration and not only a `public` one; help: write the type, and if the parameter is used at several types make the function generic (`fun id<T>(x: T) -> T`). No closure is suggested: a closure has one type (RFC-0196) |
-| `T0010` on a `public` declaration | unchanged; names the body's type where it can be computed |
+| a named declaration's parameter has no type | `T0010`, now for every named declaration and not only a `pub` one; help: write the type, and if the parameter is used at several types make the function generic (`fun id<T>(x: T) -> T`). No closure is suggested: a closure has one type (RFC-0196) |
+| `T0010` on a `pub` declaration | unchanged; names the body's type where it can be computed |
 | `T0010` and `T0032` where the type is an anonymous record | also point at a named `record` or a type alias (RFC-0160) as the short spelling |
 
 ---
@@ -179,7 +179,7 @@ binding a closure instead, in the same help block as the written type. The sugge
 when the rewrite keeps the program's meaning, which means the function must satisfy all of:
 
 1. **It is private and a free function.** A method has a receiver and belongs to a type; a closure
-   cannot replace it. A `public` declaration needs its type written (`T0010`).
+   cannot replace it. A `pub` declaration needs its type written (`T0010`).
 2. **It has no generic parameter list, `where` clause or bounds.** A closure has no generics list, so
    it cannot name a type parameter, a bound or a row fact (GAP-FUNCTIONS-007; RFC-0197 proposes a binder, and the suggestion is revisited if it is accepted).
 3. **It does not call itself, directly or through other functions.** A closure cannot refer to its
@@ -215,21 +215,21 @@ without writing its type.
 
 Nothing here makes it possible for an inferred type to cross a module boundary. The rule is
 stated so that it keeps holding. Items 1 and 3 restate `T0010` and constrain a future RFC; item 2
-(a targeted error for `public let`) is separable polish and can land on its own:
+(a targeted error for `pub let`) is separable polish and can land on its own:
 
-1. **In a public signature, a function type is written in full.** A `public fun` already annotates
+1. **In a public signature, a function type is written in full.** A `pub fun` already annotates
    every parameter and its return type (`T0010`), and a function-typed parameter or return type
    is a written type with written parameter and return types. The same holds for the field of a
-   `public struct`. The closure literal passed or
+   `pub struct`. The closure literal passed or
    returned through that type may infer its own return type; it is checked against the written
    one.
-2. **There is no `public` closure binding.** `public` is valid on `struct`, `enum`, `fun` and
+2. **There is no `pub` closure binding.** `pub` is valid on `struct`, `enum`, `fun` and
    `aspect` only, and a top-level `let` or `var` is module-private (`modules.md`, visibility). The
-   attempt (`public let f := |x| x;`) is a parse error today; it becomes a targeted error:
-   "top-level bindings are private; to export a function, write `public fun` with its parameter and
+   attempt (`pub let f := |x| x;`) is a parse error today; it becomes a targeted error:
+   "top-level bindings are private; to export a function, write `pub fun` with its parameter and
    return types".
 3. **If a later RFC makes a closure binding exportable,** it must require the parameter types and
-   return type written, by the same `T0010` rule as a `public fun`. A closure is never a way to
+   return type written, by the same `T0010` rule as a `pub fun`. A closure is never a way to
    avoid it, and this RFC's closure suggestion never produces one.
 
 ---
@@ -289,8 +289,8 @@ This lands as a hard cut (Open Questions, 1).
    design avoids.
 4. **Only the form of the body decides (Kotlin `=`).** Metel's bodies are blocks, and a block with
    a tail value is ordinary. A separate expression-body syntax is a larger change.
-5. **Allow a `public` closure binding with annotations required.** Adds a way to export a function
-   other than `public fun`, with no use it enables that `public fun` lacks. Left to a later RFC
+5. **Allow a `pub` closure binding with annotations required.** Adds a way to export a function
+   other than `pub fun`, with no use it enables that `pub fun` lacks. Left to a later RFC
    (§3.3 states the constraint it would have to meet).
 6. **Suggest closures for every private function.** Misleads for recursive, generic, row-bounded
    and used-before-declared functions (§2).
@@ -322,7 +322,7 @@ Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Named Fu
 Declarations* (`dynamics-1` now correct; `legality-2` rewritten so a named declaration writes every
 parameter's type and its return type, or returns `()`), *Closures* (inference unchanged; the known limit that a stand-alone closure
 cannot name a row parameter in a written return annotation). `reference/spec/modules.md`
-visibility: the targeted error for `public let`, and the written-function-type rule (§3).
+visibility: the targeted error for `pub let`, and the written-function-type rule (§3).
 `reference/spec/types.md`: *Type Inference* (GAP-TYPES-001) says "Hindley-Milner with let-polymorphism.
 Annotations are optional for all bindings, including function parameters and return types"; it is
 narrowed to local bindings, closure parameters and closure return types, with named declarations
@@ -333,7 +333,7 @@ the existing `T0010`, now for every named declaration; the new messages are help
 ## Acceptance criteria for a prototype
 
 - An unannotated parameter on a private free function, a method and an aspect-method declaration is `T0010`; a
-  `public` one is unchanged.
+  `pub` one is unchanged.
 - `fun triple(x: i64) { x * 3 }` reports the missing return type with the `-> i64` help and, when the five
   conditions hold, the closure rewrite; each condition that fails withholds the rewrite (one fixture per condition).
 - A module-level closure produced by the rewrite is passed by value to two calls and called (Open Question 2).
@@ -346,7 +346,7 @@ the existing `T0010`, now for every named declaration; the new messages are help
 Implementation detail goes in an ADR at `3-integrated`. The constraints:
 
 - Checker, parameters: an unannotated parameter on a named declaration is `T0010` at every declaration
-  kind (today only `public` ones). The fresh-variable path that gives a private free function's
+  kind (today only `pub` ones). The fresh-variable path that gives a private free function's
   unannotated parameters a type variable is removed with the return-type one; closures keep it.
 - Checker: absent return type means the unit type at every declaration kind, in `registry.rs`, the
   function-signature path and the method path; the fresh-variable path for private free functions
@@ -372,7 +372,7 @@ Worked against the integrated spec, the implemented RFCs it touches, and the sib
   two diagnostics.
 - **A method or aspect-method declaration with no return type** returns `()`, as before; the free-function and
   method paths now agree, which is the inconsistency the RFC was opened for.
-- **`public fun`**: still requires its return type written (`T0010`, `modules.visibility.legality-2`), including `()`;
+- **`pub fun`**: still requires its return type written (`T0010`, `modules.visibility.legality-2`), including `()`;
   a private function may omit it. The asymmetry is existing behaviour and is kept.
 - **`native` functions** are unchanged (ADR-0039).
 - **RFC-0195**: a local `fun` is a named declaration and writes its signature; it does not capture, so the

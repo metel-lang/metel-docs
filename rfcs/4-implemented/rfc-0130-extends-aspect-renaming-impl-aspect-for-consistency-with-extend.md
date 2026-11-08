@@ -24,7 +24,7 @@ lexical rename with zero semantic change: desugaring, monomorphization, opacity
 rules, and permitted positions (including the T0022 restriction just added this
 session, metel-core#240/#622) are all untouched. This follows the exact precedent
 and rationale RFC-0098 already established for `impl` (block form) → `extend`,
-`pub` → `public`, and `mut` → `var` — except it targets the one spot that sweep
+`public` → `pub`, and `mut` → `var` — except it targets the one spot that sweep
 left out.
 
 ---

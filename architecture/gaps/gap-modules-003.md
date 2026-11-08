@@ -11,7 +11,7 @@ review: null
 
 ## Gap
 
-`public` is valid on `struct`, `enum`, `fun` and `aspect` declarations. A top-level `let` or `var` binding is always module-private, so a module cannot export a constant or a mutable value; public value exports are not supported in the current version.
+`pub` is valid on `struct`, `enum`, `fun` and `aspect` declarations. A top-level `let` or `var` binding is always module-private, so a module cannot export a constant or a mutable value; public value exports are not supported in the current version.
 
 ## Impact
 
