@@ -2,9 +2,18 @@
 id: rfc-0223
 title: "Keyword Arguments at Every Call"
 date: '2026-11-07'
-status: under-review
-updated: '2026-11-07'
+status: integrated
+updated: '2026-11-08'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1854'
+coverage:
+  "1": { kind: blocked, reason: "Keyword arguments are not implemented until the call grammar and checker land.", ref: "metel-core#1854" }
+  "2": { kind: blocked, reason: "The rules become fixtures of the keyword-argument implementation.", ref: "metel-core#1854" }
+  "3": { kind: blocked, reason: "The grammar cases of the prototype become fixtures of the implementation.", ref: "metel-core#1854" }
+  "4": { kind: blocked, reason: "Evaluation order, aspect-method calls and overloads become fixtures of the implementation.", ref: "metel-core#1854" }
+  "5": { kind: blocked, reason: "The error codes T0039 to T0042 get a fixture each in the implementation.", ref: "metel-core#1854" }
+  "6": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#1854" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1854'
+impl_status: not-started
 ---
 
 > **Split out of RFC-0100 (2026-11-07, language owner).** RFC-0100 was one proposal with two pieces that lead to the same
@@ -13,6 +22,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1854'
 > (the rules) proposed and unreviewed.
 
 > **Status — under review (2026-11-07).** Split out of RFC-0100 on 2026-11-07 and committed to the v0.16.0 stage Call and record syntax (metel-core#1854); the rules of section 2 are proposed and review is open.
+
+> **Status — accepted (2026-11-08).** Reviewed 2026-11-07: rules reviewed against the corpus (156 natives named; From::from impls to rename), prototype built, error codes allocated (T0039 to T0042), positional-only parameters left out, impl names repeat the aspect's.
+
+> **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec section Keyword Arguments (legality 1 to 5, dynamics 1) and error codes T0039 to T0042 state the design, blocked-exempt on metel-core#1854 until implemented; worked examples and sibling cross-check recorded.
 
 ## Summary
 
@@ -199,6 +212,51 @@ site takes `=`.)
 
 ---
 
+## 5. Rule 10, diagnostics and error codes (decided 2026-11-07)
+
+10. **Pack parameters are positional only.** A pack parameter (RFC-0125) binds the remaining positional arguments and has no name a
+    keyword can target.
+
+Diagnostics: a missing or extra argument reuses `T0004` (arity mismatch) and lists the unbound parameter names. New codes
+(numbers allocated here, after `T0038`): **`T0039`** a keyword that binds no free parameter (the name is unknown or the parameter is
+already bound; the message lists the callee's parameter names); **`T0040`** a positional argument after a keyword argument;
+**`T0041`** a keyword argument in a call through a function value; **`T0042`** an impl method whose parameter names differ from the
+aspect's (a conformance error). Decisions of the 2026-11-07 review: no positional-only parameters in v0.16.0 (every parameter name of a
+public function is API); an impl method repeats the aspect's names (the 92 `From::from` impls in `stdlib/core.mtl` that name the
+parameter `x` where the aspect says `value` are renamed, the only mismatches in std and the fixtures); the native std functions already
+declare named parameters (156 of 156 scanned), so rule 4 needs only an optional pass over the terse names.
+
+---
+
+## 6. Worked examples (integration, 2026-11-07)
+
+Each combines this RFC with an integrated feature or a sibling RFC of the stage. They become fixtures of the implementation
+(metel-core#1854); a hit means a contradiction.
+
+```metel
+fun connect(host: String, port: i64, timeout: i64) -> Connection { ... }
+connect("db.local", port = 5432, timeout = 30);      // positional then keyword: rule 1
+connect(port = 5432, host = "db.local", timeout = 1);  // keyword order is free; evaluated in written order (section 4)
+let c := Point(1, 2);                                // RFC-0100: a construction call, positional
+let d := Point(x = 1, y = 2);                        // the keyword form of the same call
+assert(cond = true, msg = "x");                      // overloads: the two-parameter assert (rule 7)
+```
+
+1. **Rejections.** `connect(host = "a", host = "b", ...)` and `connect("a", host = "b", ...)` are `T0039` (parameter already bound);
+   `connect(hots = "a", ...)` is `T0039` listing `host`, `port`, `timeout`; `connect(port = 1, "a")` is `T0040`; `connect("a")` is `T0004`
+   naming `port` and `timeout`.
+2. **Function values.** `let g := connect; g(host = "a", ...)` and a call through a closure parameter `f(x = 1)` are `T0041`: a function
+   type carries no names.
+3. **Receivers and packs.** `s.len(self = s)` is rejected (`self` is reserved); a pack parameter takes positional arguments only.
+4. **Aspects.** `extend Meters: From<f64> { fun from(x: f64) -> Meters { ... } }` is `T0042` while the aspect declares `value`; with
+   `value` it conforms, and `Meters::from(value = 1.5)` binds by the aspect's name through a bound, a `dyn` and the concrete type alike.
+5. **Siblings.** `f(x = 1)` is a keyword argument whether RFC-0183 has landed or not (prototype: keyword-first ordering, section 3),
+   `f(x: T)` is still an ascribed positional argument, and `Type(..r)` (RFC-0100) is a spread argument that takes no keywords.
+
+Exit check: no contradiction with the integrated spec (calls, overloads, aspects, closures) or with RFC-0100, RFC-0183 and RFC-0221.
+
+---
+
 ## Alternatives considered
 
 - **Struct-only keyword arguments, not a general call-syntax feature.** Rejected: a separate desugaring and checking path
@@ -224,16 +282,17 @@ site takes `=`.)
 
 ## Unresolved Questions
 
-1. **Positional-only parameters** (section 2 rule 8). Whether an author may declare that a parameter cannot be bound by
-   keyword (Python's `/`), so renaming it is not a breaking change. Not proposed: every parameter name of a public function
-   is API.
+None blocking.
+
+1. ~~**Positional-only parameters** (section 2 rule 8).~~ **Resolved 2026-11-07: none in v0.16.0.** Every parameter name of a public
+   function is API; an underscore-prefix convention and a `/` marker were weighed and left for later.
 2. **Default parameter values** (rule 3). Out of scope.
-3. **Impl parameter names** (rule 6). Requiring an impl method to repeat the aspect's parameter names is proposed and has not
-   been checked against the aspect impls in std and the corpus.
-4. **Native std functions** (rule 4). Every native must declare stable parameter names; the audit is part of the implementation.
+3. ~~**Impl parameter names** (rule 6).~~ **Resolved 2026-11-07:** an impl method repeats the aspect's names. Measured: 92 mismatches
+   in 494 matched impl methods, all the `From::from` impls in `stdlib/core.mtl`, to be renamed (section 5).
+4. ~~**Native std functions** (rule 4).~~ **Resolved 2026-11-07:** 156 of 156 scanned native declarations already name every parameter.
 5. ~~**A built prototype of the `arg_list`/`call_arg`/`keyword_arg` grammar** (section 3), before acceptance.~~ **Done 2026-11-07**:
    see section 3. Remaining: the same cases as fixtures once implemented, and the checker error for a positional argument after a keyword.
-6. **Error codes** for the rejections of section 2 (unknown name, duplicate, missing parameter, positional after keyword, keyword on a call through a function value).
+6. ~~**Error codes**~~ **Resolved 2026-11-07:** reuse `T0004`; new `T0039` to `T0042` (section 5).
 7. ~~**Is `=` the right separator?**~~ **Resolved 2026-11-07 (language owner): keep `=`**, for keyword arguments and for record literals. `:` for both (Swift and Rust style: a label followed by what belongs to it) was weighed and rejected. It would reverse RFC-0115 and the separator invariant, make a record type `{ .x: f64 }` and a record value `{ .x: 1.0 }` look alike, and bring back the ascription collision for `f(x: T)`. `=` keeps the ML-style distinction: values `=`, types `:`.
 
 ---

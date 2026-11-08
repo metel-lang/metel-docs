@@ -1311,6 +1311,54 @@ the name, and the types `std::core` declares (`List`, `Option`, `Result`, ...) a
 </details>
 <!-- rfc.py:fixtures:end -->
 
+### T0039 — Keyword argument binds no free parameter
+
+A keyword argument names a parameter the callee does not declare, a parameter that a positional argument or an earlier keyword already bound, or the same keyword twice ([RFC-0223](../rfcs/3-integrated/rfc-0223-keyword-arguments-at-every-call.md)). The message lists the callee's parameter names.
+
+**Fix:** use one of the callee's parameter names, once.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+### T0040 — Positional argument after a keyword argument
+
+A call writes a positional argument after a keyword argument. Positional arguments bind the leading parameters in order, so they must all come first.
+
+**Fix:** move the positional arguments before the keyword arguments.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+### T0041 — Keyword argument in a call through a function value
+
+A keyword argument appears in a call whose callee is a function value: a closure binding, a parameter of function type, or a function item bound to a local. A function type carries no parameter names.
+
+**Fix:** pass the arguments positionally, or call the named function directly.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+### T0042 — Impl parameter name differs from the aspect's
+
+An impl method declares a parameter with a different name from the aspect's method declaration. An aspect method has one set of parameter names, used by every call through a bound, a `dyn` or the concrete type.
+
+**Fix:** rename the impl parameter to the aspect's name.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1854" reason="RFC-0223: keyword arguments are not implemented until the call grammar and checker land" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1854: RFC-0223: keyword arguments are not implemented until the call grammar and checker land_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 ### R0001 — No `main` function defined
 
 > **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs
