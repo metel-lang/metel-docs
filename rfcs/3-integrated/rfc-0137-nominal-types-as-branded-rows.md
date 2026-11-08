@@ -443,9 +443,10 @@ bypasses a struct's own constructor today, with zero row machinery involved. Wha
 narrowing/widening does is make the general shape of the problem impossible to keep
 scoping narrowly to one conversion function, since move-then-reassign becomes
 structurally identical to what a hand-written `from_record`-style conversion already
-does. **This RFC does not solve it** — RFC-0114 (Constructor Aspect and Canonical
-Construction) is the proposed fix, routing every value of a nominal type through one
-`construct`/`construct_unchecked` path, fresh or reassembled.
+does. **This RFC does not solve it.** RFC-0114 (Constructor Aspect and Canonical
+Construction) routes every value produced by a construction expression through one
+`construct` path; since 2026-11-08 it does **not** fire on widening, so this route stays open
+and is bounded by field privacy (RFC-0114 §3).
 
 **Widening on reassignment is automatic for an owned binding (resolved 2026-08-27 —
 see Open Question 5):** `p.small = Box { value = 999_999 };` in the corrected example
@@ -875,8 +876,8 @@ this corpus's append-only convention for exactly this situation.*
   real, tested, `--move-check`-enforced behavior today (move-check itself is
   implemented, gated off by default — corrected 2026-08-25, see §8); also the
   move-tracking foundation §2 and §8 depend on
-- RFC-0114 (Constructor Aspect and Canonical Construction, draft) — the fix for the
-  pre-existing constructor-invariant bypass risk §6 discusses; not a dependency for
+- RFC-0114 (Constructor Aspect and Canonical Construction, draft) — the answer for the construction half of the
+  constructor-invariant bypass risk §6 discusses (it does not close the widening route, RFC-0114 §3); not a dependency for
   widening itself since Open Question 5's resolution (2026-08-27), only for closing
   the bypass risk that predates and is independent of this RFC
 - RFC-0008 (Aspect Objects, `4-implemented`, tracked metel-core#837) — §5's new

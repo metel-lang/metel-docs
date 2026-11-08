@@ -423,10 +423,10 @@ by-reference mode (§2).*
    owned-`Self` signature.
 8. ~~§2 and RFC-0114 §3 contradict each other.~~ **Dissolved 2026-07-24, same cause.**
    §2 claimed reassembly needed nothing beyond structural row-matching while RFC-0114 §3
-   requires row completion to fire `construct()`. With no by-reference reassembly, the
+   required row completion to fire `construct()` (RFC-0114 §3 dropped that firing on 2026-11-08; the dissolution below is unaffected). With no by-reference reassembly, the
    contradiction has no site: rebuilding a struct now always goes through
-   `from_record` — that is, through `construct` — by value. **RFC-0114 §3's rule stands
-   unamended and is now the only story**, which is what it was written to be.
+   `from_record` — that is, through `construct` — by value. **Rebuilding a struct goes through
+   `from_record`, that is `construct`, by value, and that is the only story**, which is what it was written to be.
    RFC-0114's own open question 10 is closed by this.
 9. ~~Reassembly needs provenance, not shape.~~ **Dissolved 2026-07-24 by adopting the
    third of its own three options.** The question was whether `from_record_mut` could know
