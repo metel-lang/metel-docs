@@ -387,7 +387,7 @@ None blocking. What remains is decided below, tracked as migration work, or belo
   `Type(args)` calls (§7), the synthesized default, and the result-handling rule. `0-draft`; a soft dependency
   (§7). RFC-0114 does not require this RFC (its §2), and its fallback of banning the literal only for types with
   a non-default impl is rejected here (§5).
-- RFC-0221 (Dotted Row Labels, under review) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
+- RFC-0221 (Dotted Row Labels, integrated) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
   construction here uses parameter names and is unaffected (§7); `Type(..r)` takes a dotted record.
 - RFC-0098 (Surface Keyword Renames) — sibling surface-syntax RFC from the same review; independent of this one (no shared grammar production, no shared open question).
 - RFC-0099 (Dot-Separated Module Paths) — sibling surface-syntax RFC from the same review; independent of this one.
