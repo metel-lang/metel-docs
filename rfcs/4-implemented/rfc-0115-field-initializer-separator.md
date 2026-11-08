@@ -57,7 +57,7 @@ coverage:
 >   desugaring is transparent rather than a re-spelling.
 > - **RFC-0071 (Ownership and Move Semantics)** — separator-neutral. Whether the
 >   initializer expression moves or copies is unaffected by the token before it.
-> - **RFC-0100 (Constructor-Call Construction, `1-under-review`)** — the one live conflict,
+> - **RFC-0100 (Constructor-Call Construction, `3-integrated`)** — the one live conflict,
 >   already recorded as an accepted risk: if it lands, `field_init` ceases to exist and
 >   these sites migrate twice.
 >

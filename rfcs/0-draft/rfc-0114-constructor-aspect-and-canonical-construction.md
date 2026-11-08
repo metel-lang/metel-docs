@@ -15,7 +15,7 @@ updated: '2026-07-24'
 > question 10) without proposing this fix; RFC-0096 owns the *auto-impl* pattern
 > (`Send`/`Sync`/`Linear`, a closed, compiler-intrinsic list) which this RFC's default
 > derivation resembles in spirit but does not reuse directly (§7); none of the others
-> touch construction at all. Depends on RFC-0100 (still `1-under-review`, reopened) for
+> touch construction at all. Depends on RFC-0100 (now `3-integrated`, 2026-11-07) for
 > removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
 > deferred) as the foundation for §6's escape hatch.
 >
