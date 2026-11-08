@@ -1785,22 +1785,24 @@ the pattern is rejected with a distinct “remainder type cannot be determined�
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
 `{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
 
-A record literal accepts at most one spread, including for concrete rows. Written labels must
-be proven absent from the spread row; collisions do not override. Initializers evaluate from
+A record literal accepts at most one spread, including for concrete rows. A written label is an
+addition when proven absent from the spread row, a replacement when proven present, and rejected when neither is proven. Initializers evaluate from
 left to right, while field order/layout is determined by the resulting row/type, not initializer
 order.
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-4}
 
-A record literal contains at most one spread; each explicitly initialized label must be
-entailed absent from the spread row, and an absent-label fact is required for abstract rows.
-An absent-label fact is a closed row without the label, a decomposition whose remainder
-excludes it, or a label-only negative bound (`R: !{ token }`). A typed negative bound such as
-`R: !{ token: String }` is not one: it only rules out that type, and `R` may still hold the
-label at another type. A collision is an error, not an override. Spreading an owned record moves its fields into
-the result and consumes the source. Spreading through a reference copies the fields only
-when every field is provably `Copy`; otherwise it is rejected with `T0033`. Initializers
-evaluate left-to-right, while the resulting record layout is determined by its row/type.
+A record literal contains at most one spread. Each explicitly initialized label is judged against the spread row: it is an addition when entailed
+absent, a replacement when entailed present with type `T` (the replacement must have type `T`, and the result row is the spread row), and is rejected
+when neither is entailed, which an abstract row requires a fact for. An absent-label fact is a closed row without the label, a decomposition whose
+remainder excludes it, a label-only negative bound (`R: !{ .token }`) or a negative entry `!.token`; a present-label fact is a concrete row, a
+decomposition, or a positive entry `.x` or `.x: T`. A typed negative bound such as `R: !{ .token: String }` is not an absent-label fact: it only rules
+out that type. Spreading an owned record moves its fields into the result except the replaced ones, whose old values are dropped, and consumes the
+source; when the record is not known `Discard`, every replaced field must be `Discard`. Spreading through a reference copies the fields only when every field that is
+not replaced is provably `Copy`; otherwise it is rejected with `T0033`. Initializers evaluate left-to-right, while the resulting record layout is
+determined by its row/type.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1663" reason="RFC-0191: a replacement in a spread is still rejected as a collision until the checker gains the presence query" -->
 
 <!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
 
@@ -1909,6 +1911,10 @@ a row parameter instead.
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0178](../../rfcs/4-implemented/rfc-0178-row-remainder-construction.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1663: RFC-0191: a replacement in a spread is still rejected as a collision until the checker gains the presence query_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2594,6 +2600,30 @@ bound lists. Naming a field the bound doesn't list is rejected regardless of `..
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjUiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJyb3dfYm91bmRfcGF0dGVybl93aXRob3V0X3Jlc3Rfb25fb3Blbl9ib3VuZF9pc190MDAwMS5tdGwiLCJzb3VyY2UiOiIvLyAjNjQ2OiBhbiBvcGVuIHJvdyBib3VuZCdzIGZ1bGwgZmllbGQgc2V0IGlzbid0IGtub3duIGhlcmUsIHNvIGEgcmVjb3JkIHBhdHRlcm4gdGhhdFxuLy8gZG9lc24ndCBlbmQgaW4gYC4uYCBjYW4gbmV2ZXIgYmUgZXhoYXVzdGl2ZSBhZ2FpbnN0IGl0LlxuZnVuIGRlc2NyaWJlPHJlY29yZCBUOiB7IHg6IGY2NCwgLi4gfT4ocDogVCkgLT4gZjY0IHtcbiAgICBtYXRjaCAocCkge1xuICAgICAgICB7IHggfSA9PiB4LFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgcHJpbnRsbihkZXNjcmliZSh7IHggPSAxLjAgfSkpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZ2VuZXJpY3Mvcm93X2JvdW5kX3BhdHRlcm5fd2l0aG91dF9yZXN0X29uX29wZW5fYm91bmRfaXNfdDAwMDEubXRsIiwibmFtZSI6InJvd19ib3VuZF9wYXR0ZXJuX3dpdGhvdXRfcmVzdF9vbl9vcGVuX2JvdW5kX2lzX3QwMDAxLm10bCJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-8}
+
+A row bound is a list of entries, optionally followed by `..` (RFC-0189). An entry is `.x` (a field `.x` of any type), `.x: T` (a field `.x` of type `T`), `!.x` (no field
+`.x`) or `!.x: T` (no field `.x` of type `T`), and the bound holds when every entry holds. The whole-row form `!{ .a, .b: T }` is sugar for
+`{ !.a, !.b: T, .. }`, and `{ .. }` alone is not a bound.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1661" reason="RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1661: RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-9}
+
+A bound with a negative entry must end in `..`: in a closed bound the entry states nothing and is an error (T0043). A label may appear once positively and any number of times
+negatively; entries that cannot all hold, such as `{ .x, !.x, .. }` and `{ .x: T, !.x: T, .. }`, are an error (T0043), and a negative entry inside an outer `!{ }` is an error
+(T0043).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1661" reason="RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1661: RFC-0189: negative entries in a row bound are not parsed until the grammar and the bound representation change_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
