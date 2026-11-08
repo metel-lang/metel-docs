@@ -234,7 +234,7 @@ site takes `=`.)
 5. ~~**A built prototype of the `arg_list`/`call_arg`/`keyword_arg` grammar** (section 3), before acceptance.~~ **Done 2026-11-07**:
    see section 3. Remaining: the same cases as fixtures once implemented, and the checker error for a positional argument after a keyword.
 6. **Error codes** for the rejections of section 2 (unknown name, duplicate, missing parameter, positional after keyword, keyword on a call through a function value).
-7. **Is `=` the right separator?** This proposes it; review has not accepted it. The honest case against is precedent (Swift, C#).
+7. ~~**Is `=` the right separator?**~~ **Resolved 2026-11-07 (language owner): keep `=`**, for keyword arguments and for record literals. `:` for both (Swift and Rust style: a label followed by what belongs to it) was weighed and rejected. It would reverse RFC-0115 and the separator invariant, make a record type `{ .x: f64 }` and a record value `{ .x: 1.0 }` look alike, and bring back the ascription collision for `f(x: T)`. `=` keeps the ML-style distinction: values `=`, types `:`.
 
 ---
 

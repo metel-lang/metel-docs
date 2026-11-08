@@ -208,6 +208,8 @@ under either reading and the workarounds are no longer needed.
 
 ## Alternatives Considered
 
+- **`:` instead of `=` for record values** (`{ .x: 1.0 }`, with keyword arguments `f(x: 1)`), considered 2026-11-07 and rejected by the language owner: it reverses RFC-0115, makes record types and values look alike, and brings back the ascription collision for call arguments. Record values keep `=`.
+
 | Option | Record | Verdict |
 |---|---|---|
 | **Dotted fields, anonymous records only** | `{ .x = 1 }` | **Proposed.** One spelling for a label, no pun collision, numeric labels uniform, nominal syntax untouched. Costs a dot on every record field. |
