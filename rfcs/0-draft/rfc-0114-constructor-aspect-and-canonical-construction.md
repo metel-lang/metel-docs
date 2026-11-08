@@ -15,7 +15,7 @@ updated: '2026-07-24'
 > question 10) without proposing this fix; RFC-0096 owns the *auto-impl* pattern
 > (`Send`/`Sync`/`Linear`, a closed, compiler-intrinsic list) which this RFC's default
 > derivation resembles in spirit but does not reuse directly (§7); none of the others
-> touch construction at all. Depends on RFC-0100 (still `1-under-review`, reopened) for
+> touch construction at all. Depends on RFC-0100 (now `3-integrated`, 2026-11-07) for
 > removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
 > deferred) as the foundation for §6's escape hatch.
 >
@@ -525,7 +525,7 @@ lifecycle, addressed by two separate, independently-motivated RFCs rather than o
 - `public/rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
-- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — call-shaped
+- `public/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` — call-shaped
   construction and general keyword arguments. **No longer a dependency of this RFC** (§2,
   open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
   brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was

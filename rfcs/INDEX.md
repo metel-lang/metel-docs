@@ -1641,7 +1641,7 @@ implementation).
   grammar, reserved path roots (`root::`/`std::`/`self::`/`super::` → `.`-spelled), and
   RFC-0023's turbofish syntax. Reopened after acceptance to compare the full-dot design
   against a narrower context-limited dotted-path alternative before any integration.
-- **RFC-0100** *(under review again, reopened 2026-07-14; split 2026-07-24; split again 2026-11-07, keyword arguments moved to RFC-0223; #807)* — Constructor-Call Construction — `Type { field: value }` struct
+- **RFC-0100** *(integrated 2026-11-07; earlier: under review again, reopened 2026-07-14; split 2026-07-24; split again 2026-11-07, keyword arguments moved to RFC-0223; #807)* — Constructor-Call Construction — `Type { field: value }` struct
   literals → `Type(field = value)` call-shaped construction. Real deliverable is general
   keyword arguments for function calls, not a struct-only rename — struct construction
   is just the first consumer. Like RFC-0099, not a pure addition: keyword arguments

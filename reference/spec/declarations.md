@@ -763,16 +763,19 @@ let b := Empty {};
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-1}
 
-A struct-literal field initializer is `ident`, optionally followed by `= expr`. When `=
-expr` is present, `ident` names the field and `expr` its value. When omitted, `ident` must
-name both the field and a local binding in scope at the literal (shorthand/punning field
-init). Shorthand and explicit fields may be freely mixed within one struct literal.
+A struct, or a named record, is instantiated by a call `Type(args)`. Positional arguments bind the fields in declaration order and keyword arguments bind by name (RFC-0223's call rules), and the call supplies every field. The brace literal `Type { ... }` and the field shorthand are not accepted. Inside an impl `Self(...)` is the same call, and explicit type arguments use turbofish, `Type::<T>(args)`.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#807" reason="RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land" -->
 
 <!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#807: RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -785,15 +788,19 @@ init). Shorthand and explicit fields may be freely mixed within one struct liter
 
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-1}
 
-A shorthand field `ident` in a struct literal evaluates identically to the explicit form
-`ident = ident`: the field takes the value of the local binding named `ident` that is in
-scope at the literal.
+The arguments of a construction call are evaluated in the order written, left to right, whether positional or keyword, and only then bound to the fields. Each argument is moved into its field as for any call.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#807" reason="RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land" -->
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#807: RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -802,13 +809,19 @@ scope at the literal.
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-2}
 
-A zero-field struct may be constructed either as its bare type name or with empty braces.
+A zero-field struct may be instantiated either as its bare type name or with the call `Type()`. The brace form `Type {}` is not accepted.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#807" reason="RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land" -->
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#807: RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -817,14 +830,19 @@ A zero-field struct may be constructed either as its bare type name or with empt
 
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-2}
 
-For a zero-field struct, the bare and empty-brace constructor forms evaluate to the same
-struct value.
+For a zero-field struct, the bare form and the call `Type()` evaluate to the same struct value.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#807" reason="RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land" -->
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#807: RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1376,13 +1394,19 @@ fun main() -> i64 {
 
 ##### Legality Rule {#spec.declarations.enums.instantiation.legality-1}
 
-A struct-like enum variant with fields cannot omit its constructor fields.
+A struct-like enum variant is instantiated by a call `Enum::Variant(args)` that binds every field, positionally in declaration order or by name; it cannot omit a field. The brace form is not accepted. A unit variant is written bare.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#807" reason="RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land" -->
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#807: RFC-0100: construction by call is not implemented until the call grammar and the brace retirement land_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
