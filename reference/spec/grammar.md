@@ -119,7 +119,9 @@ UnaryExpression      → ( "!" | "-" | "*" | "&" "var"? ) UnaryExpression
 PostfixExpression    → PrimaryExpression ( "::<" TypeArgs ">" "(" Arguments? ")" | "(" Arguments? ")" | "." INT | "." IDENTIFIER "::<" TypeArgs ">" "(" Arguments? ")" | "." IDENTIFIER "(" Arguments? ")" | "." IDENTIFIER | "[" Expression "]" | "?" )*
 Arguments            → Argument ( "," Argument )* ","?
 Argument             → KeywordArgument
+                     | SpreadArgument
                      | Expression
+SpreadArgument       → ".." Expression
 KeywordArgument      → IDENTIFIER "=" !"=" Expression
 PrimaryExpression    → SUFFIXED_FLOAT
                      | FLOAT
