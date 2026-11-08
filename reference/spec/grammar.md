@@ -116,7 +116,10 @@ AscribeExpression    → UnaryExpression ( ":" Type )?
 UnaryExpression      → ( "!" | "-" | "*" | "&" "var"? ) UnaryExpression
                      | PostfixExpression
 PostfixExpression    → PrimaryExpression ( "::<" TypeArgs ">" "(" Arguments? ")" | "(" Arguments? ")" | "." INT | "." IDENTIFIER "::<" TypeArgs ">" "(" Arguments? ")" | "." IDENTIFIER "(" Arguments? ")" | "." IDENTIFIER | "[" Expression "]" | "?" )*
-Arguments            → Expression ( "," Expression )* ","?
+Arguments            → Argument ( "," Argument )* ","?
+Argument             → KeywordArgument
+                     | Expression
+KeywordArgument      → IDENTIFIER "=" !"=" Expression
 PrimaryExpression    → SUFFIXED_FLOAT
                      | FLOAT
                      | SUFFIXED_INT
