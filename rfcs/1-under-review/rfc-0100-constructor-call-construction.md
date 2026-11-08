@@ -189,8 +189,8 @@ Moved to **RFC-0223** section 4, 2026-11-07. Construction calls follow those rul
 
 **Scope for v0.16.0 (decided 2026-11-07, language owner): construction goes through the compiler-synthesized default
 only.** `Type(args)` builds the struct directly, which is exactly what the synthesized default does (`Error = !`,
-`construct(row) { Ok(row) }`, compiled away). The `Construct` aspect, a written `construct`, fallible construction
-(item 3), the minting-site rule (item 4) and `ConstructUnchecked` are not part of v0.16.0 and stay with RFC-0114,
+`construct(row) { Ok(raw Self(..row)) }`, compiled away; see *Raw construction* below). The `Construct` aspect, a written
+`construct`, fallible construction (item 3), the minting-site rule (item 4) and `ConstructUnchecked` are not part of v0.16.0 and stay with RFC-0114,
 which is not in the stage. Items 1, 2 (as the default), 5 (as a direct build from a record of exactly the type's row),
 6 and the enum rule apply. When RFC-0114 is accepted later, the call becomes a call of `Construct::construct`
 without changing any call site, because the default compiles away.
@@ -212,14 +212,14 @@ field names here are parameter names, not labels.
    by declaration order, as for a function (§1). The row must be exactly the type's complete row, no more and no
    fewer. Evaluation order is §6's.
 2. **No impl to write.** A struct with no invariant gets the compiler-synthesized default
-   (`type Error = !`, `construct(row) { Ok(row) }`, RFC-0114 §1), which compiles away. Its author writes
+   (`type Error = !`, `construct(row) { Ok(raw Self(..row)) }`, RFC-0114 §1), which compiles away. Its author writes
    nothing and sees only the call.
 3. **Result handling** is RFC-0114 §5's, unchanged. When `Self::Error` is `!`, the call yields a bare `Self`.
    Otherwise it yields `Result<Self, Self::Error>` and the caller handles it with `?`, `match` or
    `.unwrap_or`.
-4. **The only minting site.** A row becomes a `Self` inside `construct` and `construct_unchecked` and
-   nowhere else (RFC-0114 §1.1). `Type::construct(row)` can be written explicitly and means the same as the
-   call.
+4. **The only minting site.** A row becomes a `Self` by raw construction (below), inside `construct` and
+   `construct_unchecked` and nowhere else (RFC-0114 §1.1). `Type::construct(row)` can be written explicitly and means the
+   same as the call.
 5. **From a record.** *(v0.16.0 scope, decided 2026-11-07: `Type(..r)` appears alone, as the only argument; `Type(..r, x = 5)`
    is an error until RFC-0191's override semantics are settled.)* A record value of exactly the type's row is passed with a spread:
    `Type(..r)` is `Type::construct(r)`. The `..` marks the argument as a row and not as the value of a
@@ -230,6 +230,43 @@ field names here are parameter names, not labels.
    be constructed by a call from outside its module, which is the rule the brace literal has today and is
    not changed here. RFC-0114 open question 8 asks whether that rule is enough once `construct` is
    public, and stays RFC-0114's.
+
+### Raw construction: `raw Type(args)` (decided 2026-11-07, language owner)
+
+A construction call cannot be what `construct`'s own body builds with: it is a call of `construct`, so it would recurse, and the
+brace literal is retired (§5). The step that actually produces a `Self` is therefore a distinct form, **raw construction**, written
+with the prefix keyword `raw`:
+
+```metel
+extend SortedPair: Construct {
+    type Error = SortError;
+    fun construct(row: { small: i64, big: i64 }) -> Result<Self, SortError> {
+        if row.small > row.big { return Err(SortError::Unordered); }
+        Ok(raw Self(small = row.small, big = row.big))      // the minting step
+    }
+}
+// the synthesized default of a type with no invariant is: construct(row) { Ok(raw Self(..row)) }
+```
+
+1. **Form.** `raw Type(args)` takes the same arguments as a construction call: positional arguments bind fields in declaration
+   order, keyword arguments (RFC-0223) bind by name, and `Type(..r)` takes a record of exactly the type's row. `raw Self(..row)` is
+   the usual form inside `construct`.
+2. **Where it is legal.** Only in the body of `Construct::construct` and `ConstructUnchecked::construct_unchecked`, in the defining
+   module (RFC-0114 §1.1: the privilege sits exactly where the responsibility sits). Anywhere else it is an error.
+3. **What it checks.** The row must be exactly the type's complete row, and every label it supplies must be nameable from the
+   site (field visibility applies, as for any construction). It runs no `construct` and no invariant.
+4. **It is not a function.** `raw` is a contextual keyword (RFC-0207): `raw` followed by a type path and `(` is a raw
+   construction, and `raw` remains an ordinary identifier everywhere else (`raw(x)`, `raw + 1`, `raw.field`). There is no
+   `Type::raw` item, so it cannot be named, imported or shadowed.
+5. **In v0.16.0.** `Type(args)` lowers to raw construction by the compiler-synthesized default, and no user code can write
+   `raw`, because there is no `construct` body to write it in. The form is specified now so that the default is described in
+   the language itself and RFC-0114 inherits a settled minting step instead of an implicit typing rule.
+6. **Grammar.** `raw_construct = { raw_kw ~ type_path ~ "(" ~ arg_list? ~ ")" }`, tried before the path alternatives in
+   `primary_expr`, with `raw_kw = @{ "raw" ~ !(ASCII_ALPHANUMERIC | "_") }` as its own atomic rule (a lookahead inside a
+   non-atomic rule skips the whitespace first and tests the wrong character). Prototyped 2026-11-07 on metel-frontend's
+   `grammar.pest` with pest 2.9: `raw Self(x = 1, y = 2)`, `raw Self(..row)`, `raw Point(1, 2)` and `Ok(raw Self(..row))` parse,
+   while `raw(x)`, `raw + 1`, `raw`, `raw.field`, `rawx(1)` and `raw::f(1)` keep their meaning and `raw Self` without parentheses is
+   rejected.
 
 **Enum variants.** `Enum::Variant(args)` collects keyword and positional arguments exactly as items 1 and 6
 do, and builds the variant directly. Enums have no `Construct` (RFC-0114 §8 scopes it to structs), so items
@@ -270,7 +307,8 @@ parameters moved to RFC-0223):
 - **RFC-0216's residual construction.** `T.{ ..R } { entries }` (RFC-0216 §2) is a brace expression after a type head, so §5 prohibits
   it. It should take the spread call, `T.{ ..R }(..record)`, with the same defining-module restriction. RFC-0216 would be amended; this
   RFC does not decide it.
-- **The `Construct` items of §7** (result handling, the minting site, an explicit `Type::construct(row)`) are RFC-0114's and dormant in v0.16.0.
+- **The `Construct` items of §7** (result handling, an explicit `Type::construct(row)`) are RFC-0114's and dormant in v0.16.0. The minting step is settled here (`raw Type(args)`, §7).
+- **Raw construction in `ConstructUnchecked`.** Whether `construct_unchecked` may use `raw` for the same row with the invariant skipped is RFC-0114's `unsafe` gate (its §6); this RFC only makes the form legal there.
 
 ---
 
