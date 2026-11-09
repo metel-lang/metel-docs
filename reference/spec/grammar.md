@@ -48,7 +48,9 @@ EnumVariant              → IDENTIFIER ( "{" StructFields "}" )?
 ExtendBlock              → "extend" GenericParams? ( OpenRecordType | Type ) ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
 ExtendAspect             → "!"? NamedType
 AssocTypeDef             → "type" IDENTIFIER ":=" Type ";"
-AspectDeclaration        → "pub"? "aspect" IDENTIFIER GenericParams? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
+SuperAspects             → ":" SuperAspect ( "," SuperAspect )*
+SuperAspect              → "!"? "deriving"? TypePath
+AspectDeclaration        → "pub"? "aspect" IDENTIFIER GenericParams? SuperAspects? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
 AspectMethod             → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
 AssocTypeDecl            → "type" IDENTIFIER ( ":" BoundList )? ";"
 
