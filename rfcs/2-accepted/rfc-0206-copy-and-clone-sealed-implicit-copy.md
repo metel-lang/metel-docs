@@ -124,7 +124,7 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
 **Legality.**
 1. *Granted only in the declaration.* A named type is `Copy` only through its declaration:
    `copy struct P { … }` or, equivalently, `struct P derives Copy { … }` (RFC-0207, section 5). An
-   `extend T: Copy;` is an error with a fix-it that moves it (a deprecation for one minor release, section 5).
+   `extend T: Copy;` is an error with a fix-it that moves it.
 2. *`Clone` is provided and cannot be written.* `derives Copy` derives the marker and the `Clone` (RFC-0213
    section 4); the provided `clone` is the representation copy. A written `extend P: Clone` for a `Copy` type
    overlaps the provided impl and is an error (`T0015`). A type that needs a custom duplicate is not `Copy`.
@@ -297,8 +297,8 @@ replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-
 
 - **`Clone`** keeps its name, its Rust signature and its ownership shape (section 1).
 - **`Copy`** keeps its name and its place in bounds (`T: Copy`); what changes is where it is granted (the
-  declaration) and that `Clone` comes with it. `extend X: Copy;` is accepted for one minor release with a
-  deprecation warning and a fix-it that rewrites it to `copy struct X`, then becomes an error. An `extend X: Clone`
+  declaration) and that `Clone` comes with it. `extend X: Copy;` is an error with a fix-it that rewrites it to
+  `copy struct X` (amended 2026-11-09, language owner: there is no deprecation window, since the language has no users). An `extend X: Clone`
   next to a `Copy` type must be removed (or the type made non-`Copy`). The name `ImplicitClone` of earlier drafts is
   not used.
 - **Class keywords** before `struct` and `enum` (RFC-0089 section 2.1), contextual and not reserved globally, sugar
