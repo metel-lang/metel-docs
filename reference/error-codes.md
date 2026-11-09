@@ -1419,7 +1419,7 @@ A row bound has an entry the language rejects ([RFC-0189](../rfcs/4-implemented/
 
 ### T0044 — Invalid super-aspect list
 
-An aspect's super-aspect list is rejected ([RFC-0213](../rfcs/2-accepted/rfc-0213-super-aspects.md)): the relation has a cycle (`aspect A: B;` with `aspect B: A;`), an aspect names itself (`aspect A: !A;`), or `deriving` marks an entry of a user aspect (only std aspects may carry the mark in v0.16.0). A name that is not a visible aspect is `T0003`.
+An aspect's super-aspect list is rejected (RFC-0213): the relation has a cycle (`aspect A: B;` with `aspect B: A;`), an aspect names itself (`aspect A: !A;`), or `deriving` marks an entry of a user aspect (only std aspects may carry the mark in v0.16.0). A name that is not a visible aspect is `T0003`.
 
 **Fix:** break the cycle, drop the self-entry, or remove `deriving` and write both impls by hand.
 
