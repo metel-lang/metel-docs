@@ -4034,7 +4034,7 @@ The properties of an aspect are read from its declaration by identity. A re-expo
 ### Declaration Clauses
 
 A struct or enum declaration may carry two clauses after its name, and a class keyword before `struct` or `enum`
-([RFC-0207](../rfcs/2-accepted/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)):
+(RFC-0207):
 
 ```metel
 copy struct Point { x: i64, y: i64 }            // class keyword: one-word form of `derives Copy`
