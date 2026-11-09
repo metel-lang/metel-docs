@@ -70,7 +70,7 @@ bracket elision for constructors that actually carry data.
 struct Empty {}
 
 let a := Empty;
-let b := Empty {};
+let b := Empty();
 
 enum Flag {
     On {},
@@ -78,7 +78,7 @@ enum Flag {
 }
 
 let x := Flag::On;
-let y := Flag::On {};
+let y := Flag::On();
 ```
 
 ## Implementation Notes

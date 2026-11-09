@@ -88,7 +88,7 @@ struct Holder { r: &i64 }
 
 fun make() -> Holder {
     let local: i64 := 42;
-    return Holder { r = &local };
+    return Holder(r = &local);
 }
 
 fun main() {

@@ -52,7 +52,7 @@ fun headline(part: Doc.{ title }) -> i64 { part.title.len() }
 fun render(part: Doc.{ body }) -> i64    { part.body.len() }
 
 fun main() {
-    let d := Doc { title = "Metel", body = "the spec", sig = "v0.13" };
+    let d := Doc(title = "Metel", body = "the spec", sig = "v0.13");
 
     let a := headline(d.{ title });   // moves `title`
     let b := render(d.{ body });      // disjoint — moves `body`
@@ -80,7 +80,7 @@ struct Cart { user: i64, note: String }
 fun peek(s: String) -> i64 { s.len() }
 
 fun main() {
-    var cart := Cart { user = 7, note = "cart abandoned" };
+    var cart := Cart(user = 7, note = "cart abandoned");
 
     let n := peek(cart.note);        // `note` moved; cart : Cart.{ user }
     cart.note = "cart restored";    // reassigned — cart : Cart again

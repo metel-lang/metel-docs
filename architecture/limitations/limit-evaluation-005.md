@@ -20,7 +20,7 @@ that is not empty. Reproduced against current `develop`:
 ```metel
 struct G { n: i64 }
 extend G: Drop { fun drop(&var self) { println("dropped"); } }
-fun main() { let g := G { n = 1 }; }
+fun main() { let g := G(n = 1); }
 ```
 
 ```

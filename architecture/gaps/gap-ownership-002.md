@@ -28,7 +28,7 @@ struct Inner { b: String, c: String }
 struct Outer { a: Inner, d: String }
 fun take(o: Outer) -> i64 { 1 }
 fun main() {
-    let o := Outer { a = Inner { b = "b", c = "c" }, d = "d" };
+    let o := Outer(a = Inner(b = "b", c = "c"), d = "d");
     let x := o.a.b;      // deeper move
     take(o);             // whole use after the partial move
 }

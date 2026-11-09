@@ -37,7 +37,7 @@ return type left off:
 record Req<row R> { data: { ..R } }
 
 fun add_host<row R: !{ host }>(r: Req<..R>, h: String) {
-    Req { data = { host = h, ..r.data } }
+    Req(data = { host = h, ..r.data })
 }
 
 extend<row R: { host: String, .. }> Req<..R> {
