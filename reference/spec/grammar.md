@@ -144,7 +144,6 @@ PrimaryExpression    → SUFFIXED_FLOAT
                      | ContinueExpression
                      | RecordProjectionExpr
                      | RecordLiteral
-                     | StructLiteral
                      | PathExpr
 ReturnExpression     → "return" Expression?
 BreakExpression      → "break" Expression?
@@ -163,7 +162,6 @@ CaptureItem          → "&" "var" IDENTIFIER
                      | "&" IDENTIFIER
                      | IDENTIFIER "." "clone" "(" ")"
                      | IDENTIFIER
-StructLiteral        → TypePath "{" ( FieldInit ( "," FieldInit )* ","? )? "}"
 RecordLiteral        → "{" ( RecordInitializer ( "," RecordInitializer )* ","? )? "}"
 RecordProjectionExpr → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
 FieldInit            → IDENTIFIER ( "=" Expression )?

@@ -63,7 +63,7 @@ keyword with an optional clause):
 
 ```metel
 extend IntBox {
-    fun new(value: i64) -> IntBox { return IntBox { value }; }
+    fun new(value: i64) -> IntBox { return IntBox(value = value); }
 }
 
 extend IntBox: Container {

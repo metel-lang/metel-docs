@@ -20,9 +20,9 @@ fun split_event(text: String, line: i64)
 {
     let parts := text.split(" ");
     if (parts.len() != 3) {
-        return Err { error = ParseError { line = line, reason = "want <user> <kind> <arg>" } };
+        return Err(error = ParseError(line = line, reason = "want <user> <kind> <arg>"));
     }
-    return Ok { value = { user = parts[0u64], kind = parts[1u64], arg = parts[2u64] } };
+    return Ok(value = { user = parts[0u64], kind = parts[1u64], arg = parts[2u64] });
 }
 
 fun main() {
@@ -56,17 +56,17 @@ struct ParseError { line: i64, reason: String }
 
 fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
     if (s.is_empty()) {
-        return Err { error = ParseError { line = line, reason = "empty number" } };
+        return Err(error = ParseError(line = line, reason = "empty number"));
     }
     var acc := 0;
     for (c in s.chars()) {
         let digit := (c as u32) - ('0' as u32);
         if (digit > 9u32) {
-            return Err { error = ParseError { line = line, reason = "not a digit: " + c.to_string() } };
+            return Err(error = ParseError(line = line, reason = "not a digit: " + c.to_string()));
         }
         acc = acc * 10 + (digit as i64);
     }
-    return Ok { value = acc };
+    return Ok(value = acc);
 }
 
 fun main() {

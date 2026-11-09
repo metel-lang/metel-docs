@@ -50,7 +50,7 @@ bit copy; `Clone` is the one you ask for, and it may be anything.* `copy struct 
 ```metel
 struct P { n: i64 }
 extend P: Copy;
-fun main() { let p := P { n = 1 }; let q := p.clone(); }   // no method `clone` on `P`
+fun main() { let p := P(n = 1); let q := p.clone(); }   // no method `clone` on `P`
 ```
 
 `T: Clone` rejects such a `P`, and a bodyless `extend P: Clone;` is rejected because the method is required. A
@@ -168,7 +168,7 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
 **Where an implicit copy happens (copy sites).**
 1. A **place read in value position** is a copy site when the place's type is `Copy`, and a move otherwise. Value
    position means a use that would otherwise take the value out of the place: `let b := a`, `f(a)`,
-   `return a`, `S { f = a }`, `[a, a]`, a by-value `self` argument, a by-copy capture, and the same for a field
+   `return a`, `S(f = a)`, `[a, a]`, a by-value `self` argument, a by-copy capture, and the same for a field
    `a.x`, an index `a[i]` and a dereference `*r`. A borrow (`&a`, a `&self` receiver) reads nothing. A temporary
    (a call, a literal, a constructor, a block result) is transferred.
 2. Every other by-value form (patterns and `match` bindings, `for` iteration, record spread, closure creation,

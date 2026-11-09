@@ -18,7 +18,7 @@ Here is a small taste of the language:
 ```metel
 fun main() {
     let name := "Metel";
-    let answer: Option<i64> := Some { value = 42 };
+    let answer: Option<i64> := Some(value = 42);
     println("${name} says the answer is ${answer.yolo()}");
 }
 ```

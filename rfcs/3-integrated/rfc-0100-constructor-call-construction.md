@@ -6,14 +6,14 @@ status: integrated
 updated: '2026-11-08'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 coverage:
-  "1": { kind: blocked, reason: "Construction by call is not implemented until the call grammar and the brace retirement land.", ref: "metel-core#807" }
+  "1": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-1" }
   "2": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
   "3": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
-  "4": { kind: blocked, reason: "Destructuring keeps its brace form; the fixtures arrive with the construction implementation.", ref: "metel-core#807" }
-  "5": { kind: blocked, reason: "The brace retirement is implemented with the construction sweep.", ref: "metel-core#807" }
+  "4": { kind: untestable, reason: "Destructuring keeps its brace form, unchanged by this RFC; a fixture records that patterns and record literals keep their braces." }
+  "5": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-2" }
   "6": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
-  "7": { kind: blocked, reason: "The synthesized default is implemented with the construction call; the brace minting form waits for RFC-0114.", ref: "metel-core#807" }
-  "8": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#807" }
+  "7": { spec: "spec.declarations.enums.instantiation.legality-1" }
+  "8": { kind: untestable, reason: "The worked examples are fixtures of the implementation, each citing the instantiation rules above." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 impl_status: not-started
 ---

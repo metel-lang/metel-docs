@@ -294,7 +294,7 @@ struct Wrapper { data: [i64], tag: String }
 extend Wrapper: Drop { fun drop(self) {} }
 
 fun main() {
-    let w := Wrapper { data = [1, 2, 3], tag = "x" };
+    let w := Wrapper(data = [1, 2, 3], tag = "x");
     let d := w.data;
     let d2 := w.data;   // today: T0019, use of moved value `w.data`
 }

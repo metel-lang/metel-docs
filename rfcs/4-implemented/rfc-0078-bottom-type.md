@@ -149,7 +149,7 @@ enum Wrapper<T> {
     Absent  { _: ! },
 }
 
-fun infallible() -> Wrapper<i64> { Wrapper::Present { value = 42 } }
+fun infallible() -> Wrapper<i64> { Wrapper::Present(value = 42) }
 
 let x: i64 := infallible();  // implicit coercion via inhabited-singleton rule
 ```
@@ -183,7 +183,7 @@ be used wherever `T` is expected with no explicit match:
 
 ```metel
 fun infallible() -> Result<i64, !> {
-    Result::Ok { value = 42 }
+    Result::Ok(value = 42)
 }
 
 fun main() -> i64 {
