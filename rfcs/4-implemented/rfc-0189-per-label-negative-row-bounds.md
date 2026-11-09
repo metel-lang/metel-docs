@@ -2,14 +2,14 @@
 id: rfc-0189
 title: "Per-Label Negative Row Bounds"
 date: '2026-10-28'
-status: integrated
-updated: '2026-11-08'
+status: implemented
+updated: '2026-11-09'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
 coverage:
   "1": { spec: "spec.types.generics.row-bounds.legality-8" }
   "2": { spec: "spec.types.generics.row-bounds.legality-9" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-28).** design drafted; tracked by metel-core#1661 (Records and surface syntax); one open question (negation before the type)
@@ -17,6 +17,8 @@ impl_status: not-started
 > **Status — accepted (2026-11-08).** Reviewed 2026-11-07: grammar prototyped in the dotted spelling; one new code T0043 with variants; examples dotted; negation-before-type already rejected.
 
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec row-bounds legality-8 and 9 and error T0043 state the entry forms (blocked-exempt on metel-core#1661); prototype, worked examples and sibling cross-check recorded.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 
@@ -38,7 +40,7 @@ An entry is one of four forms:
 | `!.x: T` | no field `.x` of type `T` (an `.x` of another type is fine) |
 
 The existing whole-row form `!{ .a, .b: T }` (RFC-0118 §2) is kept and is defined as sugar for
-`{ !.a, !.b: T, .. }`. Entries use the dotted label of RFC-0221 (integrated 2026-11-07); the examples below are written that way. Nothing already written changes meaning; the change is additive.
+`{ !.a, !.b: T, .. }`. Entries use the dotted label of RFC-0221 (implemented 2026-11-07); the examples below are written that way. Nothing already written changes meaning; the change is additive.
 
 This amends RFC-0118 (row bounds, implemented). It does not touch RFC-0186's `..R`, RFC-0123's
 field-wise bounds, or the semantics of negative *aspect* bounds (RFC-0072).
@@ -165,7 +167,7 @@ literals or patterns.
   has contradictory entries across them (`x` against `!x`, or `x: T` against `!x: T`). A typed
   negative alone proves nothing against a positive entry of another type (`!x: T` and `x: U`
   overlap). No new coherence rule; the existing rule now reads entries instead of whole bounds.
-- **Delimiters and labels.** Row bounds use `{ … }`; entries use the dotted label of RFC-0221 (integrated), so an entry `!x` is `!.x`.
+- **Delimiters and labels.** Row bounds use `{ … }`; entries use the dotted label of RFC-0221 (implemented), so an entry `!x` is `!.x`.
   The grammar was prototyped on the real `grammar.pest` in that spelling (see the worked examples).
 - **Field-wise bounds (RFC-0123, RFC-0186).** `..R: A` is a constraint on the members of a
   record parameter and is unaffected.

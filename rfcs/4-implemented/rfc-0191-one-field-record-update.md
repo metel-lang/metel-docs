@@ -2,14 +2,14 @@
 id: rfc-0191
 title: "One-Field Record Update"
 date: '2026-10-29'
-status: integrated
-updated: '2026-11-08'
+status: implemented
+updated: '2026-11-09'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1663'
 coverage:
   "1": { spec: "spec.types.generics.open-rows.legality-4" }
   "2": { kind: untestable, reason: "The interactions are fixtures of the implementation, each citing the open-rows rule." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1663'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-10-29).** design drafted; tracked by metel-core#1663 (Records and surface syntax); one open question (replacement marker)
@@ -17,6 +17,8 @@ impl_status: not-started
 > **Status — accepted (2026-11-08).** Reviewed 2026-11-07: no marker at the site; examples in the dotted spelling and = assignment; replaced fields must be Discard (effective with linear); named records re-brand with Type(..{ ..r, .x = 5 }) and Type(..r, x = 5) stays an error in v0.16.0.
 
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec open-rows legality-4 states addition, replacement and rejection (blocked-exempt on metel-core#1663); worked examples and sibling cross-check recorded.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 
@@ -147,7 +149,7 @@ function the module writes, not a language feature.
   are read from the same declared bounds and equations as absence; nothing is inferred.
 - **RFC-0189 (negative row bounds).** `!x` proves absence (an addition); `x`, `x: T` prove
   presence. A bound with neither leaves `x` undetermined and the literal is rejected as before.
-- **RFC-0221 (dotted labels, integrated).** A field of an anonymous record is `.a`; the examples use that spelling. The rule is
+- **RFC-0221 (dotted labels, implemented).** A field of an anonymous record is `.a`; the examples use that spelling. The rule is
   independent of it.
 - **Field assignment.** `s.a = v` on an owned `var` place is unchanged and still the way to
   mutate in place. The update form builds a new record and does not require `var`.

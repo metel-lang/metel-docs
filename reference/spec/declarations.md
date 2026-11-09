@@ -763,7 +763,7 @@ A struct, or a named record, is instantiated by a call `Type(args)`. Positional 
 <!-- rfc.py:last_reviewed ffccaecc7dfdc10479ec3cd29a837f77b03ed936 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md), [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md), [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -808,7 +808,7 @@ A zero-field struct may be instantiated either as its bare type name or with the
 <!-- rfc.py:last_reviewed ffccaecc7dfdc10479ec3cd29a837f77b03ed936 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md), [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md), [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1388,7 +1388,7 @@ A struct-like enum variant is instantiated by a call `Enum::Variant(args)` that 
 <!-- rfc.py:last_reviewed ffccaecc7dfdc10479ec3cd29a837f77b03ed936 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md), [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md), [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

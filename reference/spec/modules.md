@@ -623,7 +623,7 @@ struct type itself). `public` is a reserved legacy spelling and is a parse error
 <!-- rfc.py:last_reviewed e2696db88d165cae993399b2813a5e2d321d62e0 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0218](../../rfcs/3-integrated/rfc-0218-spell-visibility-pub.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0218](../../rfcs/4-implemented/rfc-0218-spell-visibility-pub.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

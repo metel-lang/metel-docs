@@ -365,7 +365,7 @@ not questions:
 - RFC-0106 (Optional Braces for Empty Constructors, implemented) — the other recent
   enum-variant ergonomics RFC; scoped to construction only, doesn't touch pattern
   position at all (see "Resolved while drafting").
-- RFC-0100 (Constructor-Call Construction, integrated) §4 — a related but orthogonal
+- RFC-0100 (Constructor-Call Construction, implemented) §4 — a related but orthogonal
   axis (destructuring *shape*, `{ field }` vs. call-parens) explicitly kept unchanged by
   that RFC; this RFC only touches *qualification*, not shape.
 - RFC-0099 (Dot-Separated Module Paths, under review) — proposes `::` → `.` for

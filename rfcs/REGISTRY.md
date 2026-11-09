@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-08'
+generated_on: '2026-11-09'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**222 RFCs total.** 37 draft, 51 under review, 15 accepted, 9 integrated (112 live), 79 implemented, 15 superseded, 16 refused (110 settled).
+**222 RFCs total.** 37 draft, 51 under review, 15 accepted, 2 integrated (105 live), 86 implemented, 15 superseded, 16 refused (117 settled).
 
 ## Draft (37)
 
@@ -127,19 +127,12 @@ the curated thematic map.
 - **RFC-0212** — Aspect Declaration Properties (`2-accepted` ; rfcs/2-accepted/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-05)
 - **RFC-0213** — Super-Aspects (`2-accepted` ; rfcs/2-accepted/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-05)
 
-## Integrated (9)
+## Integrated (2)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
-- **RFC-0100** — Constructor-Call Construction (`3-integrated` ; rfcs/3-integrated/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-11-08 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/807)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
-- **RFC-0183** — Initialization-Only Walrus (`3-integrated` ; rfcs/3-integrated/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-11-07 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1594)
-- **RFC-0189** — Per-Label Negative Row Bounds (`3-integrated` ; rfcs/3-integrated/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28 ; updated 2026-11-08 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1661)
-- **RFC-0191** — One-Field Record Update (`3-integrated` ; rfcs/3-integrated/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-11-08 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1663)
-- **RFC-0218** — Spell Visibility pub (`3-integrated` ; rfcs/3-integrated/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-07 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1837)
-- **RFC-0221** — Dotted Row Labels (`3-integrated` ; rfcs/3-integrated/rfc-0221-dotted-row-labels.md ; date 2026-11-07 ; updated 2026-11-08 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1847)
-- **RFC-0223** — Keyword Arguments at Every Call (`3-integrated` ; rfcs/3-integrated/rfc-0223-keyword-arguments-at-every-call.md ; date 2026-11-07 ; updated 2026-11-08 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1854)
 
-## Implemented (79)
+## Implemented (86)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -178,6 +171,7 @@ the curated thematic map.
 - **RFC-0082** — Associated Types (`4-implemented` ; rfcs/4-implemented/rfc-0082-associated-types.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/546)
 - **RFC-0097** — Orphan Rule for Bare-Parameter Blanket Impls (`4-implemented` ; rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md ; date 2026-07-11 ; updated 2026-07-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/555)
 - **RFC-0098** — Surface Keyword Renames (`4-implemented` ; rfcs/4-implemented/rfc-0098-surface-keyword-renames.md ; date 2026-07-13 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
+- **RFC-0100** — Constructor-Call Construction (`4-implemented` ; rfcs/4-implemented/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/807)
 - **RFC-0102** — Bodyless Extend Blocks for Marker Aspects and Negative Impls (`4-implemented` ; rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
 - **RFC-0103** — Bodyless Aspect Declarations (`4-implemented` ; rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
 - **RFC-0106** — Optional Braces for Empty Constructors (`4-implemented` ; rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented)
@@ -214,12 +208,18 @@ the curated thematic map.
 - **RFC-0180** — Literal rows in row arguments (`4-implemented` ; rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md ; date 2026-10-16 ; updated 2026-10-16 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1473)
 - **RFC-0181** — Anonymous open rows in return and function types (`4-implemented` ; rfcs/4-implemented/rfc-0181-open-rows-in-every-type-position.md ; date 2026-10-16 ; updated 2026-11-01 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1480)
 - **RFC-0182** — Question Mark on Option (`4-implemented` ; rfcs/4-implemented/rfc-0182-question-mark-on-option.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1635)
+- **RFC-0183** — Initialization-Only Walrus (`4-implemented` ; rfcs/4-implemented/rfc-0183-initialization-only-walrus.md ; date 2026-10-24 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1594)
 - **RFC-0184** — Rename Perhaps to Option (`4-implemented` ; rfcs/4-implemented/rfc-0184-rename-perhaps-to-option.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1625)
 - **RFC-0185** — Remove Type-Directed Dereference (`4-implemented` ; rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md ; date 2026-10-24 ; updated 2026-10-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1631)
 - **RFC-0186** — Rows as an Operator on Record Parameters (`4-implemented` ; rfcs/4-implemented/rfc-0186-rows-as-an-operator-on-record-parameters.md ; date 2026-10-24 ; updated 2026-10-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1644)
+- **RFC-0189** — Per-Label Negative Row Bounds (`4-implemented` ; rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md ; date 2026-10-28 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1661)
+- **RFC-0191** — One-Field Record Update (`4-implemented` ; rfcs/4-implemented/rfc-0191-one-field-record-update.md ; date 2026-10-29 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1663)
 - **RFC-0193** — Named Declarations Write Their Signature (`4-implemented` ; rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md ; date 2026-10-29 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1713)
 - **RFC-0195** — Local Functions Do Not Capture (`4-implemented` ; rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md ; date 2026-10-30 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1714)
 - **RFC-0196** — Remove Inferred Let-Polymorphism (`4-implemented` ; rfcs/4-implemented/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1718)
+- **RFC-0218** — Spell Visibility pub (`4-implemented` ; rfcs/4-implemented/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1837)
+- **RFC-0221** — Dotted Row Labels (`4-implemented` ; rfcs/4-implemented/rfc-0221-dotted-row-labels.md ; date 2026-11-07 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1847)
+- **RFC-0223** — Keyword Arguments at Every Call (`4-implemented` ; rfcs/4-implemented/rfc-0223-keyword-arguments-at-every-call.md ; date 2026-11-07 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1854)
 
 ## Superseded (15)
 

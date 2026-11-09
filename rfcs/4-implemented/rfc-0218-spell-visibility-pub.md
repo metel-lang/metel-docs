@@ -2,11 +2,11 @@
 id: rfc-0218
 title: "Spell Visibility pub"
 date: '2026-11-06'
-status: integrated
-updated: '2026-11-07'
+status: implemented
+updated: '2026-11-09'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1837'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1837'
-impl_status: not-started
+impl_status: implemented
 coverage:
   "1": { spec: "spec.modules.visibility.legality-1" }
   "2": { kind: untestable, reason: "The migration plan and sweep policy are process, not language behavior." }
@@ -20,6 +20,8 @@ coverage:
 > **Status — accepted (2026-11-07).** Reviewed 2026-11-07: every open question resolved (reserved-word parse error for public; one-shot sweep script; blog swept, release notes left; marker spelling moved to RFC-0089 and #1828).
 
 > **Status — integrated (2026-11-07).** Integrated 2026-11-07: spec keyword list and visibility legality-1 state pub; worked examples and sibling cross-check recorded; sweep and implementation tracked in metel-core#1837.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 

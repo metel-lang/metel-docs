@@ -211,7 +211,7 @@ A struct-literal field initializer is `ident`, optionally followed by `= expr`. 
 <!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md), [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md), [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
