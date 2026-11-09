@@ -1481,6 +1481,17 @@ An entry of a struct's or enum's colon list or `derives` clause is rejected (RFC
 </details>
 <!-- rfc.py:fixtures:end -->
 
+### T0047 — Undecided ownership in a generic body
+
+A generic body reuses a value whose copy-or-move status depends on a condition the analysis of a generic body cannot decide, for example `Token<T>` where `Token<T>` is `Copy` only under bounds on `T` that the body does not state. The error names the type. It is a documented limitation of generic bodies: the use is never read as a move.
+
+**Fix:** add a bound that decides the condition, or take a reference and call `.clone()`.
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ3IiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCBkZWNpZGUgd2hldGhlciBgVG9rZW48Xz5gIGlzIGNvcGllZCBvciBtb3ZlZCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InVuZGVjaWRlZF9vd25lcnNoaXBfaW5fYV9nZW5lcmljX2JvZHlfaXNfdDAwNDcubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxODE0OiB3aGV0aGVyIGBUb2tlbjxUPmAgaXMgY29waWVkIG9yIG1vdmVkIGRlcGVuZHMgb24gYSBjb25kaXRpb24gdGhlIGFuYWx5c2lzIG9mIGEgZ2VuZXJpY1xuLy8gYm9keSBjYW5ub3QgZGVjaWRlLCBzbyByZXVzaW5nIGl0IHRoZXJlIGlzIGEgZGlhZ25vc3RpYywgbmV2ZXIgYSBzaWxlbnQgbW92ZS5cbmFzcGVjdCBNYXJrZXI7XG5hc3BlY3QgT3RoZXI7XG5zdHJ1Y3QgVG9rZW48VD4geyBjb3VudDogaTY0IH1cbmV4dGVuZDxUPiBUb2tlbjxUPjogQ29weSB3aGVyZSBUOiBNYXJrZXIsIFQ6IE90aGVyO1xuXG5mdW4gdW5rbm93bl90b2tlbjxUOiBNYXJrZXI+KHZhbHVlOiBUb2tlbjxUPikgeyAvLyBFUlJPUltUMDA0N11cbiAgICBsZXQgZmlyc3QgOj0gdmFsdWU7XG4gICAgbGV0IGFnYWluIDo9IHZhbHVlO1xufVxuXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9tb3ZlX2NoZWNrL3VuZGVjaWRlZF9vd25lcnNoaXBfaW5fYV9nZW5lcmljX2JvZHlfaXNfdDAwNDcubXRsIiwibmFtZSI6InVuZGVjaWRlZF9vd25lcnNoaXBfaW5fYV9nZW5lcmljX2JvZHlfaXNfdDAwNDcubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy9vd25lcnNoaXAubWQjc3BlYy5vd25lcnNoaXAuY29weS5sZWdhbGl0eS0yIiwiaWQiOiJzcGVjLm93bmVyc2hpcC5jb3B5LmxlZ2FsaXR5LTIiLCJsYWJlbCI6IkNvcHkgTDIifV19"></details>
+<!-- rfc.py:fixtures:end -->
+
 ### R0001 — No `main` function defined
 
 > **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs
