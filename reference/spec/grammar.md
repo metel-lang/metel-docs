@@ -67,7 +67,7 @@ Bound               → "!"? BoundHead
 BoundHead           → RowBound
                     | TypePath ( "<" BoundArg ( "," BoundArg )* ","? ">" )?
 RowBound            → "{" ( RowField ( "," RowField )* )? ( "," ".." )? ","? "}"
-RowField            → Label ( ":" Type )?
+RowField            → "!"? Label ( ":" Type )?
 BoundArg            → AssocBinding
                     | Type
 AssocBinding        → IDENTIFIER "=" Type
