@@ -41,7 +41,7 @@ NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
 StructDeclaration        → "pub"? ClassKeyword? "struct" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" StructFields "}"
 StructFields             → ( StructField "," )* StructField?
 StructField              → "pub"? IDENTIFIER ":" ( OpenRecordType | Type )
-RecordDeclaration        → "pub"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+RecordDeclaration        → "pub"? ClassKeyword? "record" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" StructFields "}"
 EnumDeclaration          → "pub"? ClassKeyword? "enum" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" EnumVariants "}"
 EnumVariants             → ( EnumVariant "," )* EnumVariant?
 EnumVariant              → IDENTIFIER ( "{" StructFields "}" )?
