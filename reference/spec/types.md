@@ -831,9 +831,23 @@ the element type and literal length both participate in type identity, including
 </details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.types.fixed-size-arrays.legality-10}
+
+In a repeat array expression `[expr; N]` with `N` greater than one, the type of `expr` must be `Copy`: the element is duplicated without running any `clone`. With `N` of zero or one it is not duplicated and needs no bound.
+
+<!-- rfc.py:last_reviewed 84836ff64e1b638440f5255418acd18a0e1ef9fd -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFycmF5X3JlcGVhdF9vZl9hX2NvcHlfZWxlbWVudF9vcl9sZW5ndGhfb25lX2lzX2FjY2VwdGVkLm10bCIsInNvdXJjZSI6InN0cnVjdCBUb2tlbiB7IGlkOiBpNjQgfVxuY29weSBzdHJ1Y3QgQ2VsbCB7IHY6IGk2NCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhIDo9IFswOyAzXTtcbiAgICBsZXQgYiA6PSBbQ2VsbCh2ID0gMik7IDJdO1xuICAgIGxldCBjIDo9IFtUb2tlbihpZCA9IDEpOyAxXTtcbiAgICBhc3NlcnQoYVsyXSA9PSAwICYmIGJbMV0udiA9PSAyICYmIGNbMF0uaWQgPT0gMSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9hc3BlY3RzL2FycmF5X3JlcGVhdF9vZl9hX2NvcHlfZWxlbWVudF9vcl9sZW5ndGhfb25lX2lzX2FjY2VwdGVkLm10bCIsIm5hbWUiOiJhcnJheV9yZXBlYXRfb2ZfYV9jb3B5X2VsZW1lbnRfb3JfbGVuZ3RoX29uZV9pc19hY2NlcHRlZC5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6Im11c3QgYmUgYENvcHlgIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiYXJyYXlfcmVwZWF0X29mX2Ffbm9uX2NvcHlfZWxlbWVudF9pc190MDAxMi5tdGwiLCJzb3VyY2UiOiJzdHJ1Y3QgVG9rZW4geyBpZDogaTY0IH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGEgOj0gW1Rva2VuKGlkID0gMSk7IDNdOyAvLyBFUlJPUltUMDAxMl1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2FzcGVjdHMvYXJyYXlfcmVwZWF0X29mX2Ffbm9uX2NvcHlfZWxlbWVudF9pc190MDAxMi5tdGwiLCJuYW1lIjoiYXJyYXlfcmVwZWF0X29mX2Ffbm9uX2NvcHlfZWxlbWVudF9pc190MDAxMi5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
 ##### Dynamic Semantics {#spec.types.fixed-size-arrays.dynamics-1}
 
-A repeat array expression `[expr; N]` evaluates `expr` once, then clones that result to
+A repeat array expression `[expr; N]` evaluates `expr` once, then copies that result to
 produce all `N` elements.
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
