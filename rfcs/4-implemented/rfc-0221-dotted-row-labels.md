@@ -2,7 +2,7 @@
 id: rfc-0221
 title: "Dotted Row Labels"
 date: '2026-11-07'
-status: integrated
+status: implemented
 tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
 coverage:
   "1": { spec: "spec.types.record-labels.legality-1" }
@@ -11,9 +11,9 @@ coverage:
   "4": { spec: "spec.types.record-labels.legality-1" }
   "5": { spec: "spec.types.record-labels.legality-2" }
   "6": { kind: untestable, reason: "The worked examples are fixtures of the implementation, each citing the record-label rules." }
-updated: '2026-11-08'
+updated: '2026-11-09'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-11-07).** Committed to the v0.16.0 stage Call and record syntax (metel-core#1847); review still has an open prerequisite (the parser prototype). It does not depend on RFC-0151 (decided 2026-11-07): the empty brace group keeps today's rule, section 5.
@@ -21,6 +21,8 @@ impl_status: not-started
 > **Status — accepted (2026-11-08).** Reviewed 2026-11-07: prototype built on the real grammar and sites counted; ordinary parse error for a bare field; .[expr] not in v0.16.0; block-required positions stated; RFC-0183 lands first; named records follow structs.
 
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec types.md Record labels (legality 1 to 3) states the dotted-label design, blocked-exempt on metel-core#1847 until implemented; prototype, site counts, worked examples and sibling cross-check recorded.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 

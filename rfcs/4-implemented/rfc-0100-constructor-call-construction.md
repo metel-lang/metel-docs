@@ -2,8 +2,8 @@
 id: rfc-0100
 title: "Constructor-Call Construction"
 date: '2026-07-13'
-status: integrated
-updated: '2026-11-08'
+status: implemented
+updated: '2026-11-09'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 coverage:
   "1": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-1" }
@@ -15,7 +15,7 @@ coverage:
   "7": { spec: "spec.declarations.enums.instantiation.legality-1" }
   "8": { kind: untestable, reason: "The worked examples are fixtures of the implementation, each citing the instantiation rules above." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/807'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
@@ -68,6 +68,8 @@ impl_status: not-started
 > **Revised (2026-11-08, language owner).** The minting step `construct`'s own body builds with is the **brace literal `Self { field = value }`**, legal only in `construct` and `construct_unchecked` (§7), replacing the prefix form `raw Type(args)` decided on 2026-11-07. The v0.16.0 stage is unchanged: the brace production is not in the grammar and `Type { … }` stays the ordinary parse error.
 
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec struct and enum instantiation rules and the construction visibility rule state the call form (blocked-exempt on metel-core#807 until implemented); worked examples and sibling cross-check recorded.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 
@@ -401,7 +403,7 @@ None blocking. What remains is decided below, tracked as migration work, or belo
   `Type(args)` calls (§7), the synthesized default, and the result-handling rule. `0-draft`; a soft dependency
   (§7). RFC-0114 does not require this RFC (its §2), and its fallback of banning the literal only for types with
   a non-default impl is rejected here (§5).
-- RFC-0221 (Dotted Row Labels, integrated) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
+- RFC-0221 (Dotted Row Labels, implemented) — dots the labels of rows (anonymous records and projection lists) only. Struct and enum
   construction here uses parameter names and is unaffected (§7); `Type(..r)` takes a dotted record.
 - RFC-0098 (Surface Keyword Renames) — sibling surface-syntax RFC from the same review; independent of this one (no shared grammar production, no shared open question).
 - RFC-0099 (Dot-Separated Module Paths) — sibling surface-syntax RFC from the same review; independent of this one.

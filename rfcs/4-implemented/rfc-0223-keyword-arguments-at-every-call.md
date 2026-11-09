@@ -2,8 +2,8 @@
 id: rfc-0223
 title: "Keyword Arguments at Every Call"
 date: '2026-11-07'
-status: integrated
-updated: '2026-11-08'
+status: implemented
+updated: '2026-11-09'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1854'
 coverage:
   "1": { kind: blocked, reason: "Keyword arguments are not implemented until the call grammar and checker land.", ref: "metel-core#1854" }
@@ -13,7 +13,7 @@ coverage:
   "5": { kind: blocked, reason: "The error codes T0039 to T0042 get a fixture each in the implementation.", ref: "metel-core#1854" }
   "6": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#1854" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1854'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Split out of RFC-0100 (2026-11-07, language owner).** RFC-0100 was one proposal with two pieces that lead to the same
@@ -26,6 +26,8 @@ impl_status: not-started
 > **Status — accepted (2026-11-08).** Reviewed 2026-11-07: rules reviewed against the corpus (156 natives named; From::from impls to rename), prototype built, error codes allocated (T0039 to T0042), positional-only parameters left out, impl names repeat the aspect's.
 
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec section Keyword Arguments (legality 1 to 5, dynamics 1) and error codes T0039 to T0042 state the design, blocked-exempt on metel-core#1854 until implemented; worked examples and sibling cross-check recorded.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 

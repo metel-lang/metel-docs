@@ -1336,7 +1336,7 @@ the name, and the types `std::core` declares (`List`, `Option`, `Result`, ...) a
 
 ### T0039 — Keyword argument binds no free parameter
 
-A keyword argument names a parameter the callee does not declare, a parameter that a positional argument or an earlier keyword already bound, or the same keyword twice ([RFC-0223](../rfcs/3-integrated/rfc-0223-keyword-arguments-at-every-call.md)). The message lists the callee's parameter names.
+A keyword argument names a parameter the callee does not declare, a parameter that a positional argument or an earlier keyword already bound, or the same keyword twice ([RFC-0223](../rfcs/4-implemented/rfc-0223-keyword-arguments-at-every-call.md)). The message lists the callee's parameter names.
 
 **Fix:** use one of the callee's parameter names, once.
 
@@ -1392,7 +1392,7 @@ An impl method declares a parameter with a different name from the aspect's meth
 
 ### T0043 — Invalid row-bound entry
 
-A row bound has an entry the language rejects ([RFC-0189](../rfcs/3-integrated/rfc-0189-per-label-negative-row-bounds.md)): a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
+A row bound has an entry the language rejects ([RFC-0189](../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)): a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
 
 **Fix:** add `..` to the bound, drop the contradictory entry, or write the positive spelling.
 

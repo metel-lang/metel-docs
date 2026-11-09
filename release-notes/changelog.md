@@ -4,6 +4,54 @@ title: "Metel Language Changelog"
 
 # Changelog
 
+## v0.16.0 (unreleased)
+
+The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
+spelled, how values are assigned, how types are built and how rows are written; most of them are breaking
+spelling changes with a mechanical migration, and the repository's own sources, fixtures and documentation
+were migrated with parser-driven tools.
+
+**Breaking changes:**
+
+- The visibility keyword is `pub` (RFC-0218, `metel-core#1850`). `public` is a reserved legacy spelling and a
+  plain parse error. Migrate with a token rewrite of `public` to `pub` before `fun`, `struct`, `enum`, `aspect`,
+  `record`, `type` and a field.
+- Plain reassignment is `=` and assignment is a statement (RFC-0183, `metel-core#1852`). `x := e;` where `x` is
+  not being declared is a parse error; `:=` only introduces a name (`let`, `var`, record-pattern declarations,
+  `type`). An assignment is written as a block statement ending in `;`, as a match-arm body or in a `for`
+  header's init and update clauses; it is not an operand, argument, initializer, condition, closure body or block
+  tail, so a block ending in an assignment needs its `;`, `{ x = 1 }` is a record and a closure that assigns is
+  `|v| { total = v; }`. Migrate with `metel-frontend/examples/assign_migrate`, run under the old grammar.
+- A struct, a named record or an enum struct-variant is built by a call (RFC-0100, `metel-core#1860`,
+  `#1861`): `Point(x = 1, y = 2)`, `Point(1, 2)`, `Shape::Rect(w = 2.0, h = 3.0)`, `Empty()`, `Pair::<i64>(1, 2)`,
+  `Self(..)` in an `extend` block and `Type(..r)` from a record binding. The brace literal `Type { f = v }`, the
+  shorthand `Type { x, y }` and `Empty {}` are parse errors; braces after a type name remain in declarations and
+  patterns. Migrate with `construct_migrate`. A type and a function may share a name: `Name(args)` is the
+  function call exactly when its arguments bind to the function's parameters.
+- A label of a row is written `.name` (RFC-0221, `metel-core#1863`): in an anonymous record literal, pattern,
+  type and row bound and in a projection list, `{ .x = 1, .y }`, `{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
+  field there is a parse error, and a pun of a numeric label is an error. Migrate with `label_migrate`.
+- `aspect`, `extends` and `public` are now reserved words (`metel-core#1876`): the keyword rule matched a keyword
+  that is a prefix of another first, so they had parsed as identifiers.
+- The `From::from` parameter of the aspect and its impls is named `value` (`metel-core#1859`), so impls repeat the
+  aspect's parameter names (T0042).
+
+**New features:**
+
+- Keyword arguments at every call (RFC-0223, `metel-core#1857`, `#1858`): `connect("db", port = 5432)` binds by
+  name for free functions, methods, associated functions, aspect methods, overloads and constructors. Positional
+  arguments come first, every parameter is bound once, a call through a function value is positional only, and
+  arguments evaluate in the order written. New codes: T0039 (keyword binds no free parameter), T0040 (positional
+  after keyword), T0041 (keyword in a call through a function value), T0042 (impl parameter name differs from the
+  aspect's).
+- Row-bound entries may be negative (RFC-0189, `metel-core#1866`): `{ .path: String, !.token, !.session: u64, .. }`.
+  The whole-row `!{ .. }` is sugar for the entry form. New code T0043 (invalid row-bound entry).
+- A record literal that spreads a record may replace a field the spread's row proves present (RFC-0191,
+  `metel-core#1867`): `{ ..s, .a = 10 }`.
+
+**Known limits:** `.[expr]` label variables are not part of v0.16.0; the construction call's spread must be a plain
+binding; the minting form of RFC-0100 section 7 and `Construct` belong to RFC-0114 and are not implemented.
+
 ## v0.15.0
 
 **Released 2026-11-02.** The first language-visible release after v0.14.1. It makes named declarations write

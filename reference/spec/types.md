@@ -572,7 +572,7 @@ label written `.name` or `.0` (a decimal integer). A bare identifier in that pos
 <!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/3-integrated/rfc-0221-dotted-row-labels.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -597,7 +597,7 @@ its position rule: a block where a block is required and a record elsewhere.
 <!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/3-integrated/rfc-0221-dotted-row-labels.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1931,7 +1931,7 @@ a row parameter instead.
 <summary>Formal rules</summary>
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0178](../../rfcs/4-implemented/rfc-0178-row-remainder-construction.md), [rfc-0191](../../rfcs/3-integrated/rfc-0191-one-field-record-update.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0178](../../rfcs/4-implemented/rfc-0178-row-remainder-construction.md), [rfc-0191](../../rfcs/4-implemented/rfc-0191-one-field-record-update.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -2632,7 +2632,7 @@ A row bound is a list of entries, optionally followed by `..` (RFC-0189). An ent
 <!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/3-integrated/rfc-0189-per-label-negative-row-bounds.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -2655,7 +2655,7 @@ negatively; entries that cannot all hold, such as `{ .x, !.x, .. }` and `{ .x: T
 <!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/3-integrated/rfc-0189-per-label-negative-row-bounds.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

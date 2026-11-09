@@ -2,11 +2,11 @@
 id: rfc-0183
 title: "Initialization-Only Walrus"
 date: '2026-10-24'
-status: integrated
-updated: '2026-11-07'
+status: implemented
+updated: '2026-11-09'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1594'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1594'
-impl_status: not-started
+impl_status: implemented
 coverage:
   "1": { kind: blocked, reason: "The rule is spec.expressions.assignment.legality-3, which has no fixture until the := implementation lands.", ref: "metel-core#1594" }
   "2": { kind: untestable, reason: "Records how this RFC changes RFC-0136's resolved side effect; no new language rule." }
@@ -20,6 +20,8 @@ coverage:
 > **Status — accepted (2026-11-07).** Reviewed 2026-11-07 against RFC-0136's invariant (reworded), RFC-0100 (f(x = 1) is a keyword argument) and RFC-0221 (this RFC first, tail rules required); open questions resolved; ordinary parse errors; closure bodies need a block.
 
 > **Status — integrated (2026-11-07).** Integrated 2026-11-07: spec assignment legality-3 and the mutable-bindings rule state the design (blocked-exempt on metel-core#1594 until the sweep lands); worked examples and sibling cross-check recorded.
+
+> **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
 ## Summary
 
