@@ -38,19 +38,25 @@ VarDeclaration           → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":
 RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) RecordPattern ":=" Expression ";"
 FunDeclaration           → NativeBinding? "pub"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
 NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
-StructDeclaration        → "pub"? "struct" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
+StructDeclaration        → "pub"? ClassKeyword? "struct" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" StructFields "}"
 StructFields             → ( StructField "," )* StructField?
 StructField              → "pub"? IDENTIFIER ":" ( OpenRecordType | Type )
 RecordDeclaration        → "pub"? "record" IDENTIFIER GenericParams? WhereClause? "{" StructFields "}"
-EnumDeclaration          → "pub"? "enum" IDENTIFIER GenericParams? WhereClause? "{" EnumVariants "}"
+EnumDeclaration          → "pub"? ClassKeyword? "enum" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" EnumVariants "}"
 EnumVariants             → ( EnumVariant "," )* EnumVariant?
 EnumVariant              → IDENTIFIER ( "{" StructFields "}" )?
 ExtendBlock              → "extend" GenericParams? ( OpenRecordType | Type ) ( ":" ExtendAspect ( "," ExtendAspect )* WhereClause? ";" | ( ":" ExtendAspect )? WhereClause? "{" ( AssocTypeDef | FunDeclaration )* "}" )
 ExtendAspect             → "!"? NamedType
 AssocTypeDef             → "type" IDENTIFIER ":=" Type ";"
 AspectProperty           → "declared"
+                         | "derivable"
                          | "implicit"
                          | "auto"
+ClassKeyword             → "copy"
+                         | "linear"
+ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
+DerivesClause            → "derives" ClauseEntry ( "," ClauseEntry )*
+ClauseEntry              → "!"? TypePath
 SuperAspects             → ":" SuperAspect ( "," SuperAspect )*
 SuperAspect              → "!"? "deriving"? TypePath
 AspectDeclaration        → "pub"? AspectProperty* "aspect" IDENTIFIER GenericParams? SuperAspects? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
