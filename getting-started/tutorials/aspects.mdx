@@ -118,7 +118,7 @@ fun log_it<T: Loggable>(x: T) { }
 
 fun main() {
     log_it(Wrapper(value = 42));      // Wrapper is Loggable — fine
-    // log_it(Secret { value = 42 });    // rejected: Secret is !Loggable
+    // log_it(Secret(value = 42));    // rejected: Secret is !Loggable
     println("ok");
 }
 ```

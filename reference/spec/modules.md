@@ -205,8 +205,8 @@ import parser::*;
 import root::lexer::Token as Tok;
 
 fun main() -> i64 {
-    let ast := Ast { token = Token { value = 1 } };
-    let tok: Tok := dbg(Tok { value = 2 });
+    let ast := Ast(token = Token(value = 1));
+    let tok: Tok := dbg(Tok(value = 2));
     return ast.token.value + tok.value + parse(ast.token);
 }
 

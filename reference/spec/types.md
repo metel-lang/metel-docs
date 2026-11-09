@@ -1099,7 +1099,7 @@ fun main() {
     xs.push(2);
     xs.push(3);
     println(xs.len().to_string());   // 3
-    let last := xs.pop();             // Some { value = 3 }
+    let last := xs.pop();             // Some(value = 3)
 }
 ```
 

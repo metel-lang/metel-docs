@@ -250,8 +250,8 @@ which enum `Red` belongs to here"); a name no enum declares stays
 callee (whose parameter types are not known until the arguments are), and the body of a
 closure with no declared return type. The last is the only closure case: a closure whose
 return type is known resolves its body's bare variants, whether it is written
-(`|a: i64| -> Option<i64> { Some { value = a } }`), taken from a function-typed binding
-(`let f: |i64| -> Option<i64> := |a: i64| { Some { value = a } }`) or from a function-typed
+(`|a: i64| -> Option<i64> { Some(value = a) }`), taken from a function-typed binding
+(`let f: |i64| -> Option<i64> := |a: i64| { Some(value = a) }`) or from a function-typed
 parameter. `None` without a determinable type is reported the same way.
 
 <details>
