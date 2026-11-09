@@ -67,7 +67,7 @@ Bound               → "!"? BoundHead
 BoundHead           → RowBound
                     | TypePath ( "<" BoundArg ( "," BoundArg )* ","? ">" )?
 RowBound            → "{" ( RowField ( "," RowField )* )? ( "," ".." )? ","? "}"
-RowField            → IDENTIFIER ( ":" Type )?
+RowField            → Label ( ":" Type )?
 BoundArg            → AssocBinding
                     | Type
 AssocBinding        → IDENTIFIER "=" Type
@@ -121,6 +121,7 @@ Arguments            → Argument ( "," Argument )* ","?
 Argument             → KeywordArgument
                      | SpreadArgument
                      | Expression
+Label                → "." ( INT | IDENTIFIER )
 SpreadArgument       → ".." Expression
 KeywordArgument      → IDENTIFIER "=" !"=" Expression
 PrimaryExpression    → SUFFIXED_FLOAT
@@ -163,8 +164,8 @@ CaptureItem          → "&" "var" IDENTIFIER
                      | IDENTIFIER "." "clone" "(" ")"
                      | IDENTIFIER
 RecordLiteral        → "{" ( RecordInitializer ( "," RecordInitializer )* ","? )? "}"
-RecordProjectionExpr → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* ","? "}"
-FieldInit            → IDENTIFIER ( "=" Expression )?
+RecordProjectionExpr → TypePath ".{" Label ( "," Label )* ","? "}"
+FieldInit            → Label ( "=" Expression )?
 RecordInitializer    → RecordSpread
                      | FieldInit
 RecordSpread         → ".." Expression
@@ -184,7 +185,7 @@ ArrayPatternBody       → ( Pattern ( "," Pattern )* ( "," RestPattern )? | Res
 RestPattern            → ".." IDENTIFIER
 RecordRest             → ".."
 RecordRestBinding      → ".." IDENTIFIER
-RecordFieldPattern     → IDENTIFIER ( ":" "_" )?
+RecordFieldPattern     → Label ( ":" "_" )?
 RecordFieldPatternList → RecordFieldPattern ( "," RecordFieldPattern )* ( "," ( RecordRestBinding | RecordRest ) )? ","?
                        | RecordRestBinding
                        | RecordRest
@@ -220,13 +221,13 @@ ExtendsType              → "extends" NamedType
 DynType                  → "dyn" NamedType
 TupleType                → "(" Type ( "," Type )+ ")"
 RecordType               → "{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
-RecordTypeField          → IDENTIFIER ":" Type
+RecordTypeField          → Label ":" Type
 OpenRecordType           → "{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"
                          | "{" RowTail "," RecordTypeField ( "," RecordTypeField )* ","? "}"
                          | "{" RowTail ","? "}"
 RowTail                  → ".." IDENTIFIER?
-RecordProjectionType     → TypePath ".{" ( IDENTIFIER ( "," IDENTIFIER )* ","? )? "}"
-OpenRecordProjectionType → TypePath ".{" IDENTIFIER ( "," IDENTIFIER )* "," RowTail ","? "}"
+RecordProjectionType     → TypePath ".{" ( Label ( "," Label )* ","? )? "}"
+OpenRecordProjectionType → TypePath ".{" Label ( "," Label )* "," RowTail ","? "}"
                          | TypePath ".{" RowTail ","? "}"
 FunType                  → FunTypeQualifier* "|" TypeList? "|" "->" Type
 FunTypeQualifier         → "once"
