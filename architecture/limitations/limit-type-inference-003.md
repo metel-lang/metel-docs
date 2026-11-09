@@ -17,9 +17,9 @@ anonymous record. Reproduced against current `develop`:
 
 ```metel
 fun main() {
-    let r := { x = 1, y = 2 };
+    let r := { .x = 1, .y = 2 };
     match (r) {
-        { x, .. } => { assert(x == 1); },
+        { .x, .. } => { assert(x == 1); },
     }
 }
 ```
@@ -28,7 +28,7 @@ fun main() {
 [T0001] type error: `..` is not yet supported in an anonymous record pattern -- name every field, or match a named struct instead
 ```
 
-The row-bounded generic case (`fun f<record T: { x: f64, .. }>(p: T)`) is
+The row-bounded generic case (`fun f<record T: { .x: f64, .. }>(p: T)`) is
 handled separately and works.
 
 ## Impact

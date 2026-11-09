@@ -9,7 +9,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/888'
 
 > **New RFC, split from RFC-0147 on 2026-08-28.** RFC-0147 (Projection-Receiver
 > Destructors) originally covered both the fixed projected `drop` receiver
-> (`fun drop(&var self: Self.{ fd })`) and the row-parametric one
+> (`fun drop(&var self: Self.{ .fd })`) and the row-parametric one
 > (`fun drop<row R>(&var self: Self.R) where R: { fd, .. }`). Those depend on different
 > feature RFCs — RFC-0109 for the fixed form, RFC-0146 → RFC-0121 for the parametric
 > one — and land in different releases, so they are separate RFCs. RFC-0147 keeps the
@@ -58,8 +58,8 @@ being unaffected. This RFC changes only how the required set is *spelled*.
 
 ## Motivation
 
-RFC-0147's fixed projection `fun drop(&var self: Self.{ fd })` requires the caller's
-residual to be *exactly* `.{ fd }`-or-wider and forces a destructor author who wants to
+RFC-0147's fixed projection `fun drop(&var self: Self.{ .fd })` requires the caller's
+residual to be *exactly* `.{ .fd }`-or-wider and forces a destructor author who wants to
 tolerate several residual widths to pick one. A destructor that genuinely only needs
 `{ fd }` and does not care what else is present should say exactly that once:
 
@@ -134,7 +134,7 @@ is inherited unresolved, exactly as in RFC-0147 §3.
    be accepted before RFC-0146 is, and RFC-0146 before RFC-0121 (v0.14.0). Both this RFC
    and RFC-0146 are milestoned **v0.18.1**, the point release after RFC-0121's v0.14.0;
    RFC-0147's fixed form covers the `Drop` narrowed-receiver need in v0.18.1.
-2. **Does this subsume RFC-0147's fixed form?** A fixed `Self.{ fd }` receiver is
+2. **Does this subsume RFC-0147's fixed form?** A fixed `Self.{ .fd }` receiver is
    `Self.R where R: { fd }` with an exact (no `..`) bound and `R` unused. Decide whether
    the fixed spelling stays permanently (it needs no `row` kind, ships a release earlier)
    or becomes sugar once this RFC lands. Mirrors RFC-0146 Open Question 5 and RFC-0147

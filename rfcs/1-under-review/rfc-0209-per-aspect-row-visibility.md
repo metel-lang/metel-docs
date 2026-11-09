@@ -169,7 +169,7 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 1. **Constructing `Self` in a template body**: a spread, a native intrinsic, or `comptime for`
    over the row (RFC-0174).
 2. **Records gated or automatic** (section 2).
-3. **Residuals**: whether a template applies to a narrowed residual `Doc.{ title }`, and the
+3. **Residuals**: whether a template applies to a narrowed residual `Doc.{ .title }`, and the
    `Drop` and move interactions (a follow-up RFC).
 4. **Field privacy**: a template in the aspect's module reads fields the type's module may
    keep private (RFC-0116's rule for record fields); whether visibility overrides privacy for

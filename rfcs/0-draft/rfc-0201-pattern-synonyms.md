@@ -13,7 +13,7 @@ interface that differs from its representation, for use in `match`, `let` destru
 
 ```metel
 pattern Cartesian { x: f64, y: f64 } for Polar {
-    match (p)      => { x = p.r * cos(p.theta), y = p.r * sin(p.theta) }
+    match (p)      => { .x = p.r * cos(p.theta), .y = p.r * sin(p.theta) }
     build (x, y)   => Polar { r = sqrt(x*x + y*y), theta = atan2(y, x) }
 }
 ```

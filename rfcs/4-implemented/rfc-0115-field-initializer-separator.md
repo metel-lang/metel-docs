@@ -44,15 +44,15 @@ coverage:
 >
 > - **RFC-0116 (Anonymous Record Types)** — no collision, and this is the pairing that
 >   motivated pulling this RFC into the release: `struct_literal = { type_path ~ "{" … }`
->   requires a preceding path, so `Point { x = 1.0 }` and bare `{ x = 1.0 }` are
+>   requires a preceding path, so `Point { x = 1.0 }` and bare `{ .x = 1.0 }` are
 >   distinguishable by the path alone, and now differ only by that path rather than also by
 >   separator.
-> - **RFC-0118 (Row Bounds)** — no interaction. A row *type* (`{ x: f64 }`) and a row bound
->   (`T: { x: f64, .. }`) both classify and keep `:`; only initialization moves to `=`.
+> - **RFC-0118 (Row Bounds)** — no interaction. A row *type* (`{ .x: f64 }`) and a row bound
+>   (`T: { .x: f64, .. }`) both classify and keep `:`; only initialization moves to `=`.
 >   The two constructs becoming visually distinct is the separator invariant working, not a
 >   clash.
 > - **RFC-0114 (Construct)** — a positive interaction worth recording. RFC-0114 §2 desugars
->   `Point { x = 1.0 }` to `Point::construct({ x = 1.0 })`; with this RFC the literal's
+>   `Point { x = 1.0 }` to `Point::construct({ .x = 1.0 })`; with this RFC the literal's
 >   inner form is now *character-identical* to the record it desugars to, so the
 >   desugaring is transparent rather than a re-spelling.
 > - **RFC-0071 (Ownership and Move Semantics)** — separator-neutral. Whether the
@@ -125,17 +125,17 @@ A second, independent motivation surfaced from RFC-0090's 2026-07-24 amendment, 
 the stronger of the two:
 
 **It aligns nominal struct literals with anonymous record values.** RFC-0090 now spells an
-anonymous record `{ x = 1.0, y = 2.0 }`. Under this RFC a nominal struct literal is
+anonymous record `{ .x = 1.0, .y = 2.0 }`. Under this RFC a nominal struct literal is
 `Point { x = 1.0, y = 2.0 }` — *the same form with a brand prefix.* That is exactly the
 relationship RFC-0090 tier 3 claims holds semantically (a named record is a row plus a
 brand), now visible in the surface syntax rather than contradicted by it. Without this
 RFC, the two would differ by separator for no reason a reader could recover:
 
 ```metel
-{ x = 1.0, y = 2.0 }         // anonymous record          (RFC-0090, settled)
+{ .x = 1.0, .y = 2.0 }         // anonymous record          (RFC-0090, settled)
 Point { x: 1.0, y: 2.0 }     // nominal struct — today, gratuitously different
 Point { x = 1.0, y = 2.0 }   // nominal struct — this RFC, the same form plus a brand
-Point.{ x }                  // projection from a receiver (RFC-0090 §3.5, settled)
+Point.{ .x }                  // projection from a receiver (RFC-0090 §3.5, settled)
 ```
 
 ---
@@ -245,7 +245,7 @@ spellings during a migration window is not proposed.
   re-bundling: keyword arguments carry a real grammar hazard (§2) and an open question
   about whether they belong in the spec at all. Keeping them in RFC-0100 is the point of
   the split.
-- **Keep `:` and instead change the anonymous record former to match it** (`{ x: 1.0 }` as
+- **Keep `:` and instead change the anonymous record former to match it** (`{ .x: 1.0 }` as
   a value). Rejected — it fixes the mismatch in the wrong direction, preserving the
   grammar's only invariant violation and propagating it to a new construct rather than
   retiring it.
@@ -303,11 +303,11 @@ question, and this RFC applies the invariant to one site whatever that document 
   RFC; keeps call-shaped construction and general keyword arguments, and is independent of
   this one in both directions
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` — its 2026-07-24
-  amendment settles `{ x = 1.0 }` for anonymous record values, the form this RFC aligns
+  amendment settles `{ .x = 1.0 }` for anonymous record values, the form this RFC aligns
   nominal struct literals with
 - `public/rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md` — its
   §2 desugars a literal to `Self::construct(row)`; under this RFC that desugaring reads
-  directly off the surface (`Point { x = 1.0 }` → `Point::construct({ x = 1.0 })`)
+  directly off the surface (`Point { x = 1.0 }` → `Point::construct({ .x = 1.0 })`)
 - `public/rfcs/4-implemented/rfc-0098-surface-keyword-renames.md`,
   `public/rfcs/4-implemented/rfc-0042-let-mut-bindings.md` §D1 — precedent
   for a surface rename shipping without a transition alias (§3)

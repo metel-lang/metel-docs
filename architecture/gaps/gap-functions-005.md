@@ -12,7 +12,7 @@ review: null
 
 ## Gap
 
-A function whose signature has an open-record parameter, `fun get_x<record R>(p: { x: i64, ..R })`, quantifies a synthetic type variable for `p`'s own type in addition to the declared `R`. The scheme's quantified variables are ordered by `TypeVar`, not by declaration, so written type arguments cannot be matched to the declared generics. Pinning `R` alone also leaves the synthetic variable unbound when the call's function type is instantiated.
+A function whose signature has an open-record parameter, `fun get_x<record R>(p: { .x: i64, ..R })`, quantifies a synthetic type variable for `p`'s own type in addition to the declared `R`. The scheme's quantified variables are ordered by `TypeVar`, not by declaration, so written type arguments cannot be matched to the declared generics. Pinning `R` alone also leaves the synthetic variable unbound when the call's function type is instantiated.
 
 Until a design exists, a call with explicit type arguments on such a function is `T0004`: "explicit type arguments are not supported on `get_x`: it takes an open-record parameter (a row). Remove the `::<…>`; the row is inferred from the arguments". The parser separately rejects a `..R` splice in an explicit argument list on purpose.
 

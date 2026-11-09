@@ -30,7 +30,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 >   RFC-0121's `<row R>`.
 > - **RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`)** lets a method
 >   name a *fixed* residual and take it as its receiver — `view V for S { a }` then
->   `self: &V`, which it defines as exactly `self: &S.{ a }`. This RFC generalizes that
+>   `self: &V`, which it defines as exactly `self: &S.{ .a }`. This RFC generalizes that
 >   fixed residual to a parametric one; it builds directly on RFC-0109's
 >   residual-typed-receiver form.
 > - **RFC-0144 (Reference-Destructuring Patterns, `1-under-review`, `metel-core#843`)**
@@ -63,8 +63,8 @@ extend Handle {
 
 `Self.R` is "some residual of `Self`, same brand, whose row contains *at least* the
 fields named in the `where` clause." One method body type-checks once, against that
-lower bound, and becomes callable on the full struct, on `Self.{ fd, name }`, on
-`Self.{ fd }` — any residual wide enough. `R` is a compile-time-only row variable: it is
+lower bound, and becomes callable on the full struct, on `Self.{ .fd, .name }`, on
+`Self.{ .fd }` — any residual wide enough. `R` is a compile-time-only row variable: it is
 **erased, never monomorphized**, and carries zero runtime cost beyond what a fixed
 residual receiver (RFC-0109) already costs.
 
@@ -78,23 +78,23 @@ exactly one shape (a lower bound). It is the enabling mechanism behind RFC-0148'
 
 RFC-0137 (integrated) makes every struct value carry a `(brand, row)`, and a partial
 move or a field projection narrows a value's static type to a residual of the same brand
-(`Handle` → `Handle.{ fd }`). RFC-0109 lets a method name a *fixed* residual —
+(`Handle` → `Handle.{ .fd }`). RFC-0109 lets a method name a *fixed* residual —
 `view FdView for Handle { fd }` — and take it as `self: &FdView`, defined there as
-exactly `self: &Handle.{ fd }`.
+exactly `self: &Handle.{ .fd }`.
 
 Between them there is a gap. Consider a method that genuinely does not care which extra
 fields are present — it reads `self.fd` and nothing else, and should work identically on
 a freshly constructed `Handle`, on a `Handle` that has had `name` moved out, and on an
-explicit projection `h.{ fd }`. Today its author must pick one of three unsatisfactory
+explicit projection `h.{ .fd }`. Today its author must pick one of three unsatisfactory
 options:
 
 - **`fun close_fd(&var self)`** — receiver typed as the whole `Self`. Over-constrains
-  every caller who has already narrowed: after `let n = h.name;`, `h: Handle.{ fd }` and
+  every caller who has already narrowed: after `let n = h.name;`, `h: Handle.{ .fd }` and
   the call no longer type-checks, even though the method never touches `name`.
-- **`fun close_fd(&var self: Self.{ fd })`** or the RFC-0109 named-view equivalent —
+- **`fun close_fd(&var self: Self.{ .fd })`** or the RFC-0109 named-view equivalent —
   receiver typed as a *fixed* residual. The integrated spec's "Passing a residual to a
   function" rule permits no implicit truncation at the call boundary, so every caller
-  must narrow to *exactly* `.{ fd }` first, discarding width they may still want after
+  must narrow to *exactly* `.{ .fd }` first, discarding width they may still want after
   the call.
 - Write **one overload per residual width** the method should accept — combinatorial,
   and most of the widths are not nameable in advance.
@@ -147,7 +147,7 @@ time with `self: Self.<lower-bound-row>`. Two rules:
 
 1. Every `self.<field>` access (read or write) must name a field in the `where` lower
    bound. A field outside it is a compile error at the access site — *"`close_fd`
-   declares it needs `Self.{ fd, .. }`; `self.name` is not in that row"*.
+   declares it needs `Self.{ .fd, .. }`; `self.name` is not in that row"*.
 2. Every call `self.other_method(...)` must have `other_method`'s own receiver lower
    bound ⊆ this method's `where` lower bound. Composition is **local**: each callee
    states its own bound in its own signature; there is no whole-call-graph fixed point.
@@ -211,7 +211,7 @@ extend Handle {
 }
 
 fun demo(h: Handle) {
-    let n = h.name;          // h: Handle.{ fd }
+    let n = h.name;          // h: Handle.{ .fd }
     let x = h.raw_fd();       // OK: { fd } ⊇ { fd }
 }
 
@@ -225,7 +225,7 @@ fun demo_wide(h: Handle) {
 extend Handle {
     // rejected: body names `self.name`, not in the declared lower bound
     fun bad<row R>(&self: Self.R) -> str where R: { fd, .. } { self.name }
-    //                                                          ^^^^^^^^^ E: `name` ∉ Self.{ fd, .. }
+    //                                                          ^^^^^^^^^ E: `name` ∉ Self.{ .fd, .. }
 }
 ```
 
@@ -235,7 +235,7 @@ extend Handle {
 
     fun caller<row R>(&self: Self.R) where R: { fd, .. } {
         self.helper();   // OK: { fd } ⊆ { fd }
-        self.whole();    // E: `whole` needs Self.{ fd, name, .. }, not covered by { fd, .. }
+        self.whole();    // E: `whole` needs Self.{ .fd, .name, .. }, not covered by { fd, .. }
     }
     fun whole(&self) { let _ = self.name; }
 }
@@ -318,7 +318,7 @@ RFC-0121's own status blockquote when it happens.
 - RFC-0123 (Field-Wise Row Constraints, `4-implemented`, `metel-core#793`) — the other
   `<row R>` consumer; per-field aspect bounds, orthogonal to this RFC
 - RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`) — fixed named
-  residual receivers (`view V for S { a }`, `self: &V` = `self: &S.{ a }`); this RFC
+  residual receivers (`view V for S { a }`, `self: &V` = `self: &S.{ .a }`); this RFC
   generalizes the residual to a parameter
 - RFC-0144 (Reference-Destructuring Patterns, `1-under-review`, `metel-core#843`) —
   RFC-0109's split-off sibling; pattern work, unrelated to receiver typing

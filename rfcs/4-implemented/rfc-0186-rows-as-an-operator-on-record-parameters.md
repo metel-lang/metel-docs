@@ -36,7 +36,7 @@ rest patterns, pack splices); in a bound, `..R: A` says every member of that unp
 
 ```metel
 // before                                              // after
-fun get_x<row R>(p: { x: f64, ..R }) -> f64            fun get_x<record R>(p: { x: f64, ..R }) -> f64
+fun get_x<row R>(p: { .x: f64, ..R }) -> f64            fun get_x<record R>(p: { .x: f64, ..R }) -> f64
 fun consume<row R>(r: { ..R }) where all R: Copy       fun consume<record R>(r: { ..R }) where ..R: Copy
 extend<row R> { ..R }: Display where all R: Display    extend<record R> { ..R }: Display where ..R: Display
 record Packet<row R> { data: { ..R } }                 record Packet<record R> { data: { ..R } }
@@ -61,8 +61,8 @@ needs this RFC first (see `metel_rfc_before_implementation`).
 Today a generic parameter that stands for a record comes in two forms
 (`generic_param = (record_kw | row_kw)? ~ ident …`):
 
-- `record T` (optionally `: { x: f64, .. }`): a type variable that is *a record*. The body
-  can use `T` as a type: `fun f<record T: { x: f64, .. }>(p: T)`.
+- `record T` (optionally `: { .x: f64, .. }`): a type variable that is *a record*. The body
+  can use `T` as a type: `fun f<record T: { .x: f64, .. }>(p: T)`.
 - `row R`: a variable that is *the rest of a record's fields*. The body cannot name `R` as a
   type; it can only write `..R` inside a record type or a nominal type's argument list.
 
@@ -72,7 +72,7 @@ labelled fields, and the spec says an anonymous record *is* its row, while a `st
 `record` declaration is a brand paired with a row. The second kind exists because the first has no way to say
 "the fields of T", not because the two describe different things.
 
-Measured against the current build: `fun get_x<record R>(p: { x: i64, ..R })` is rejected
+Measured against the current build: `fun get_x<record R>(p: { .x: i64, ..R })` is rejected
 with `T0012: R is not a row parameter; declare it <row R>`, so the two kinds are not
 interchangeable today even though both stand for a set of fields.
 
@@ -81,9 +81,9 @@ interchangeable today even though both stand for a set of fields.
 RFC-0178 added value-level `..` forms that all read as "the fields of this record":
 
 - a rest pattern `{ token, ..rest }` binds the remaining fields;
-- a record-literal spread `{ ..rest, auth = a }` places a record's fields into a new one.
+- a record-literal spread `{ ..rest, .auth = a }` places a record's fields into a new one.
 
-The type level uses the same token (`{ x: f64, ..R }`), but with a different grammar:
+The type level uses the same token (`{ .x: f64, ..R }`), but with a different grammar:
 `..` followed by a *row variable*, which can only be declared with the special `row` binder.
 If `..` is an operator on a record, the value level and the type level say the same thing:
 `..r` is the fields of the value `r`, and `..R` is the fields of the type `R`.
@@ -128,7 +128,7 @@ A generic parameter is a type, or `record`-kinded. The `row` kind is removed. A 
 parameter stands for a record type: an anonymous record or a `record` declaration (not a
 `struct` or `enum`, whose rows are not visible to bounds and impls, per the same section).
 Everything the spec already says about `record T` applies unchanged, including row bounds
-(`record R: { x: f64, .. }`) and negative bounds (`record R: !{ token }`).
+(`record R: { .x: f64, .. }`) and negative bounds (`record R: !{ token }`).
 
 ### `..R` is an operator on a record parameter
 
@@ -137,12 +137,12 @@ where a row is wanted, and `R` must be `record`-kinded:
 
 | position | meaning |
 |---|---|
-| the tail of a record type: `{ x: f64, ..R }` | the fields of `R`, spliced after `x` |
+| the tail of a record type: `{ .x: f64, ..R }` | the fields of `R`, spliced after `x` |
 | the argument of a nominal type: `Packet<..R>` | the anonymous record `{ ..R }` |
-| a struct's residual tail: `Handle.{ fd, ..R }` | as today, the remaining fields |
+| a struct's residual tail: `Handle.{ .fd, ..R }` | as today, the remaining fields |
 
 `..R` anywhere else, or on a parameter that is not `record`-kinded, is an error. Anonymous
-`..` (`{ x: f64, .. }`) is unchanged.
+`..` (`{ .x: f64, .. }`) is unchanged.
 
 `R` itself remains usable as a type. If `R` is an anonymous record, `R` and `{ ..R }` are the
 same type. If `R` is a branded `record` declaration, `R` keeps its brand and `{ ..R }` is
@@ -170,7 +170,7 @@ fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                  // the recor
 ### What does not change
 
 - Row bounds (`record R: { x, .. }`), negative bounds (`!{ token }`), and row equations
-  (`where R = { token: Token, ..Rest }`). Equation sides are record types, so `Rest` is now
+  (`where R = { .token: Token, ..Rest }`). Equation sides are record types, so `Rest` is now
   declared `record Rest`.
 - Disjointness: a label written next to `..R` must be absent from `R`, as for rows today.
 - The field-wise constraint's meaning, positions and forwarding rule (RFC-0123); only the spelling changes.
@@ -235,7 +235,7 @@ parameter; declare `record R`".
 
 ## Review findings (2026-10-27)
 
-1. **Claims checked against the build and the corpus.** `fun get_x<record R>(p: { x: i64, ..R })` is
+1. **Claims checked against the build and the corpus.** `fun get_x<record R>(p: { .x: i64, ..R })` is
    rejected today with `T0012`, "`R` is not a row parameter; declare it `<row R>`", as stated.
    192 fixtures bind a `row` parameter (410 sites), 45 use `all` (73 sites), 46 Markdown files
    mention either form (25 of them RFC examples). The cost estimates in §3 stand.

@@ -159,7 +159,7 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
    type. The justification is operational, and RFC-0089 section 1 states it with the lattice: a representation copy
    cannot perform the per-owner cleanup bookkeeping that a destructor needs, and a linear value is never implicitly
    discarded (RFC-0071 section 4's `Copy`/`Drop` exclusion is the first fact). `Clone` on a `Drop` type is allowed.
-6. *Residuals.* A residual `T.{ fields }` of a `Copy` type is `Copy` when the present fields are `Copy`
+6. *Residuals.* A residual `T.{ .fields }` of a `Copy` type is `Copy` when the present fields are `Copy`
    (RFC-0211 rule 1) and has the provided `Clone`; there is no dependence on how `Clone` was written, because it
    cannot be.
 7. *Entailment.* `T: Copy` entails `T: Clone` in the checker and in the abstract analysis of generic bodies, by
@@ -199,7 +199,7 @@ direction depends on the property:
    Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs `Tree: Clone`
    again. The solver assumes the impl being derived while it checks the fields. This is the recursive-derivation case of Haskell's smallest derived context, computed by fixed point (Haskell Report section 11); Rust's coinduction applies to auto traits, not to derives, so it is not a precedent for this rule. The
    derived `clone` is a recursive function over finite values, so termination comes from the data and not from the
-   proof. This covers regular recursion such as `Node<T> { next: Option<Node<T>>, v: T }`.
+   proof. This covers regular recursion such as `Node<T> { .next: Option<Node<T>>, .v: T }`.
 4. **Coinduction never applies to a negative goal** (`!Drop`, `T: !B`) **or to a granted marker** (`Copy`): a cycle
    through one is unknown or "no", never a proof. The structural markers of rule 2 are the only exception.
 5. **Expanding recursion is rejected.** `struct Grow<T> derives Clone { rest: Option<Grow<List<T>>> }` grows its
@@ -324,7 +324,7 @@ replaces the native one when RFC-0092 and RFC-0093 allow (exit tracked in metel-
 
 ## 6. Implementation staging and dependencies
 
-**Scope of projections in v0.16.0 (decided 2026-11-05).** A residual `T.{ fields }` gets exactly two things:
+**Scope of projections in v0.16.0 (decided 2026-11-05).** A residual `T.{ .fields }` gets exactly two things:
 `Copy`, structurally and sealed, **together with its provided `Clone`** (section 2 rules 2 and 6), and the existing
 `Drop` dispatch (RFC-0137 section 5). Every other aspect that needs an impl is `T0012` on a projection; compiler-computed ownership capabilities (`Discard`, and `Linear` once it exists) are not impls and follow the surviving fields. The use-site diagnostic
 distinguishes the two causes: a written whole-type impl is named as the cause when one exists, and a derived aspect
@@ -342,7 +342,7 @@ after comptime") tracks replacing it by the template with no change in accepted 
 
 | Workaround | Where | Exit | Tracked |
 |---|---|---|---|
-| Structural `Copy` for named types is native | v0.16.0 | std row template; must keep residuals such as `W<String>.{ n }` `Copy` | #1823 |
+| Structural `Copy` for named types is native | v0.16.0 | std row template; must keep residuals such as `W<String>.{ .n }` `Copy` | #1823 |
 | Arrays and the record `Clone` hook are compiler rules | v0.16.0 | std impls over a compile-time `N`, `comptime for` | #1811, #1390, #702 |
 | Tuple structural arms are native | v0.16.0 | variadics (RFC-0125) | #794 |
 | Native named-type `Clone` derivation | v0.16.0 | comptime derive (RFC-0092, RFC-0093) | #1829 |
@@ -458,7 +458,7 @@ condition. Consequences:
   the fields support (`Tx` is linear, so the type is never `Discard`). The error is at the declaration and suggests
   `linear struct`. This is what protects a public type when a field such as `Ticket<T>` mentions a parameter but is
   linear for every `T`, which the syntactic keyword rule of RFC-0089 section 2 (D10) does not catch.
-- A public type that does not own its parameter (`View<T> { v: &T }`) must state `Discard` (`true`) to be droppable
+- A public type that does not own its parameter (`View<T> { .v: &T }`) must state `Discard` (`true`) to be droppable
   for a linear `T`. Without the statement `View<Tx>` is linear for outside users, which is over-conservative but
   harmless, and the author fixes it with one statement.
 The statement is an assertion verified against the fields, like the sealed `Copy` grant. It is not an impl, so no user

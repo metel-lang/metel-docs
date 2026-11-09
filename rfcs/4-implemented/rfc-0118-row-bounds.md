@@ -48,7 +48,7 @@ coverage:
 > **The design questions that were open at review are settled, two of them by building the
 > change rather than reasoning about it.** `wildcard_type` and a `row_bound` alternative to
 > `bound_head` were added to the grammar, run against the suite (755 green), and reverted:
-> `T: { x: f64, y: f64, .. }` and `T: !{ token: … }` both parse, `T: Show + Clone` is
+> `T: { .x: f64, .y: f64, .. }` and `T: !{ token: … }` both parse, `T: Show + Clone` is
 > unaffected. The prototype also settled a detail the RFC had not specified — the trailing
 > `..` is admitted only after at least one field, so bare `{ .. }` does not parse.
 >
@@ -116,7 +116,7 @@ coverage:
 
 ## Summary
 
-A bound written as a bare row: `record T: { x: f64, y: f64, .. }` means "any type carrying at
+A bound written as a bare row: `record T: { .x: f64, .y: f64, .. }` means "any type carrying at
 least these fields." A field may omit its type (`{ x }`) to constrain the label only.
 Negation reuses the bound grammar's existing `!` and is the complement of the positive
 bound: `T: !{ token }` means "any type carrying no field named `token`." **Any nominal struct with matching
@@ -148,7 +148,7 @@ exists for an unrelated reason.
 ## 1. Positive bounds, and the `..` that makes them open
 
 ```metel
-fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 { ... }
+fun magnitude<record T: { .x: f64, .y: f64, .. }>(p: T) -> f64 { ... }
 ```
 
 **The `record` kind marker is required; a bare `<T: { … }>` is an error.** *(Adopted
@@ -190,7 +190,7 @@ is an optional further constraint on an already-record-kinded parameter:
 
 ```metel
 fun labels<record T>(x: T) -> Symbol[]                  // any record
-fun magnitude<record T: { x: f64, y: f64, .. }>(p: T)   // a record with at least x and y
+fun magnitude<record T: { .x: f64, .y: f64, .. }>(p: T)   // a record with at least x and y
 ```
 
 ### Where the marker may be written
@@ -200,9 +200,9 @@ same way an aspect bound may be written in either place. The two are equivalent,
 it in both is redundant but legal:
 
 ```metel
-fun f<record T: { x: f64, .. }>(p: T) -> f64 { ... }
-fun g<record T>(p: T) -> f64 where T: { x: f64, .. } { ... }
-fun h<T>(p: T) -> f64 where record T: { x: f64, .. } { ... }   // kind declared in `where`
+fun f<record T: { .x: f64, .. }>(p: T) -> f64 { ... }
+fun g<record T>(p: T) -> f64 where T: { .x: f64, .. } { ... }
+fun h<T>(p: T) -> f64 where record T: { .x: f64, .. } { ... }   // kind declared in `where`
 ```
 
 **A parameter is record-kinded iff `record` precedes its name in at least one of those two
@@ -238,9 +238,9 @@ unlike RFC-0098's `var`/`std::env::var` collision.
 not naming" — and its presence is what makes the bound open:
 
 ```metel
-fun f(p: { x: f64 })              // a closed type: exactly x
-fun g<record T: { x: f64 }>(p: T)        // a closed bound: T's row is exactly x
-fun h<record T: { x: f64, .. }>(p: T)    // an open bound: T has at least x
+fun f(p: { .x: f64 })              // a closed type: exactly x
+fun g<record T: { .x: f64 }>(p: T)        // a closed bound: T's row is exactly x
+fun h<record T: { .x: f64, .. }>(p: T)    // an open bound: T has at least x
 ```
 
 Without the marker, the closed and open readings would be spelled identically and told
@@ -268,8 +268,8 @@ So `!{ x: f64 }` **is satisfied by a record whose `x` is an `i64`** — it has n
 label outright.
 
 **The complement is taken per listed field, not against the row as a whole.** Reading it the
-other way — "T does not satisfy the closed bound `{ x: f64 }`" — would make `!{ x: f64 }`
-hold for `{ x: f64, y: i64 }`, since a two-field record does not satisfy a closed one-field
+other way — "T does not satisfy the closed bound `{ .x: f64 }`" — would make `!{ x: f64 }`
+hold for `{ .x: f64, .y: i64 }`, since a two-field record does not satisfy a closed one-field
 bound. That is plainly not the intent, and the distinction is invisible until someone writes
 a wider record, so it is fixed here rather than left to the implementation.
 
@@ -290,11 +290,11 @@ replacing a type-position wildcard — see open question 1.)*
 
 ```metel
 fun f<record T: { x, .. }>(p: T)            // has an `x`; its type is unconstrained
-fun g<record T: { x, y: f64, .. }>(p: T)    // mixed: any-typed `x`, f64 `y`
+fun g<record T: { .x, .y: f64, .. }>(p: T)    // mixed: any-typed `x`, f64 `y`
 fun h<record T: !{ token }>(t: T)           // carries no `token`, whatever its type
 ```
 
-Earlier drafts spelled the any-type case `{ x: _ }`, with `_` a new type-position wildcard.
+Earlier drafts spelled the any-type case `{ .x: _ }`, with `_` a new type-position wildcard.
 Omitting the annotation says the same thing with no new construct, and it matches the shape
 the language already uses when a part is inferable — a record literal's `{ x }` likewise
 drops what need not be written. **The wildcard is therefore not introduced.**
@@ -311,9 +311,9 @@ its fields are shaped. To pass a struct where a row bound is expected, convert i
 granted.
 
 ```metel
-fun magnitude<record T: { x: f64, y: f64, .. }>(p: T) -> f64 { … }
+fun magnitude<record T: { .x: f64, .y: f64, .. }>(p: T) -> f64 { … }
 
-magnitude({ x = 3.0, y = 4.0 });    // a record — satisfies the bound
+magnitude({ .x = 3.0, .y = 4.0 });    // a record — satisfies the bound
 magnitude(some_point);              // a struct — does not, whatever its fields
 magnitude(some_point.to_record());  // explicit conversion, once RFC-0119 lands
 ```
@@ -334,13 +334,13 @@ far as it goes, and it is why RFC-0090 §2 and §7 both stated the implicit rule
 claimed implicit satisfaction creates "ambient structural compatibility — the TypeScript
 collapse." That conflates two different things. TypeScript's collapse is *subtyping*: a
 `ScreenPos` **is** a `Point`, substitutable wherever one is expected. A row bound does
-nothing of the kind — under `record T: { x: f64, .. }`, `Point` and `ScreenPos` both satisfy
+nothing of the kind — under `record T: { .x: f64, .. }`, `Point` and `ScreenPos` both satisfy
 the bound and remain **completely unrelated to each other**. The function is polymorphic;
 the types do not collapse. Constrained genericity is not substitutability.
 
 **The two arguments that do hold:**
 
-- **Privacy.** Under implicit struct satisfaction, `{ secret: i64, .. }` becomes an oracle
+- **Privacy.** Under implicit struct satisfaction, `{ .secret: i64, .. }` becomes an oracle
   for private structure: outside code can learn which fields a struct has by observing which
   bounds it satisfies. That defeats RFC-0032, and it is what forced the awkward
   "public projection" rule this RFC briefly carried and then withdrew. Records-only makes
@@ -426,7 +426,7 @@ position admits both readings.
    resolution is retracted.
 
    **Why it was wrong:** adding the alternative to `type_expr` makes `_` writable in *every*
-   type position — `let x: _ = 5`, `fun f(x: _)`, `{ x: _ }` as a record type — while this
+   type position — `let x: _ = 5`, `fun f(x: _)`, `{ .x: _ }` as a record type — while this
    RFC defined its meaning in exactly one of them. It would have shipped a construct whose
    semantics were undefined almost everywhere it could be written, to be settled later by
    whoever first hit it.
@@ -447,7 +447,7 @@ position admits both readings.
 
    **Both were built, run and reverted**, rather than reasoned about:
    - **755 tests green** with both additions.
-   - `fun magnitude<T: { x: f64, y: f64, .. }>(p: T)` **parses** — the failure is
+   - `fun magnitude<T: { .x: f64, .y: f64, .. }>(p: T)` **parses** — the failure is
      `path: unexpected rule row_field`, a missing parser arm, not a grammar conflict.
    - `fun send<T: !{ token: _ }>(t: T)` **parsed**, exercising the negative bound and the
      then-proposed wildcard together. The wildcard has since been withdrawn (open question 1);

@@ -12,7 +12,7 @@ Add comprehension syntax as sugar over iterator adapters:
 ```metel
 let squares := [x * x for (x in 1..=10) if (x % 2 == 0)];
 let pairs   := [(a, b) for (a in 1..=3) for (b in a..=3) if (a + b == 4)];
-let lookup  := {w: w.len() for (w in words)};
+let lookup  := {.w: w.len() for (w in words)};
 ```
 
 A comprehension has a result expression, one or more `for` generators, and optional `if`
@@ -75,7 +75,7 @@ with the pattern bound by an ordinary closure parameter. A refutable pattern in 
 ### 3. Result collection
 
 The collection is chosen from the delimiter: `[...]` is `List`, `{...}` is `Set`,
-`{k: v ...}` is `Map`. The collect target requires a `FromIterator`-style aspect (not yet
+`{.k: v ...}` is `Map`. The collect target requires a `FromIterator`-style aspect (not yet
 specified; see Open Question 1). An annotation (`let xs: List<i64> := [...]`) overrides it.
 
 ### 4. Evaluation order and laziness

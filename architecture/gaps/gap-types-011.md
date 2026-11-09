@@ -12,10 +12,10 @@ review: "revisit if a real function must apply one callback to two differently s
 
 ## Gap
 
-`|{ x: i64, .. }| -> i64` is rejected with `T0032`. Read as a fresh row of the enclosing signature
+`|{ .x: i64, .. }| -> i64` is rejected with `T0032`. Read as a fresh row of the enclosing signature
 it would let the caller choose the row, so the callee could not call the function on records of
 its own; read as "accepts every wider record" it is a rank-2 type, which the checker does not
-model. A named row, `|{ x: i64, ..R }| -> i64`, is supported and fixes `R` for the signature.
+model. A named row, `|{ .x: i64, ..R }| -> i64`, is supported and fixes `R` for the signature.
 
 A closure with an open-row parameter already generalizes, so a value of the rank-2 kind exists
 (one closure accepts records of different shapes); only its written type does not.

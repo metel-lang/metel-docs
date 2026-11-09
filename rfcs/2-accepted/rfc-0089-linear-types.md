@@ -73,10 +73,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > **Revised 2026-07-24 — mechanical syntax sweep, no semantic change.** RFC-0090 dropped
 > the `record` keyword from the anonymous type-former, so every `record { … }` here is now
 > `{ … }`. This touches §3.1's branded-shape notation most visibly: the fiat-linear
-> conversion's output is now written `{ id: i64 } @ 'receipt-origin` rather than
+> conversion's output is now written `{ .id: i64 } @ 'receipt-origin` rather than
 > `record { id: i64 } @ 'receipt-origin`, and the emitted impl targets
 > `extend { id: i64 }: Linear @ 'receipt-origin`. **The brand is doing more visual work
-> now that the keyword is gone** — `{ id: i64 }` and `{ id: i64 } @ 'receipt-origin` differ
+> now that the keyword is gone** — `{ .id: i64 }` and `{ .id: i64 } @ 'receipt-origin` differ
 > only by the tag, which is exactly §3.1's point (unrelated same-shaped records carry no
 > such brand and so do not match the impl), but it is less obvious at a glance than it was.
 > No change to the mechanism.
@@ -205,7 +205,7 @@ not depend on how the class was determined.
   field move already narrowed is rejected, as is any whole use of it. A refutable form added later must keep ownership
   on the non-matching path.
 - Assigning to a linear field would drop its old value, so it is an error; replace by destructuring and rebuilding.
-- Record spread (`{ ..r, n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
+- Record spread (`{ ..r, .n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
@@ -313,7 +313,7 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   every use, by the ordinary well-formedness rule. A derived impl that requires `Discard`, or a field of a type whose
   parameter is `Discard`-bounded, is an error that suggests `T: Discard`.
 - **`Drop` impls.** A `Drop` impl must prove its target `Discard` under the impl's bounds: an unconditional
-  `extend<T> Foo<T>: Drop` is rejected when `Discard` of the target cannot be proved (`View<T> { value: &T }` owns
+  `extend<T> Foo<T>: Drop` is rejected when `Discard` of the target cannot be proved (`View<T> { .value: &T }` owns
   no `T`, so its unconditional impl is legal), and a conditional `extend<T: Discard> Foo<T>: Drop` is the way to give a generic
   type a destructor without closing it to linear arguments. A conditional impl adds no bound to the type declaration.
   `Foo<Tx>` then exists, is linear and has no destructor. This is the same exclusion check as for `Copy` and `Drop` at

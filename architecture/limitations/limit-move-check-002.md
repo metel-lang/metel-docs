@@ -15,13 +15,13 @@ Move-check analyses a generic body by constructing it against symbolic
 arguments, one `__metel_move_check_generic_N` placeholder per generic
 parameter. The placeholder carries no row bound, and some bound-provided
 methods are not registered on it, so a body that reads a row-bound field
-(`value.y` with `T: { y: i64, .. }`) or calls a method supplied by a
+(`value.y` with `T: { .y: i64, .. }`) or calls a method supplied by a
 `match`/`extend` bound cannot be constructed. Move-check then records the body
 as skipped (`record_skipped_generic_body`) and prints a warning instead of
 analysing it. Reproduced against current `develop`:
 
 ```metel
-fun f<record T: { y: i64, .. }>(value: T) -> (T, T, i64) {
+fun f<record T: { .y: i64, .. }>(value: T) -> (T, T, i64) {
     let n := value.y;
     let a := value;
     let b := value;

@@ -18,13 +18,13 @@ binder**, `<..R>`. `record R` is kept for parameters that are used as types.
 extend<record R> { ..R }: Display where ..R: Display    // today: R is never used as a type
 extend<..R> { ..R }: Display where ..R: Display         // proposed: the binder says "a row"
 
-fun get_x<..R>(p: { x: i64, ..R }) -> i64 { p.x }
+fun get_x<..R>(p: { .x: i64, ..R }) -> i64 { p.x }
 fun sum<record T>(p: T) -> T { p }                      // unchanged: T is used as a type
 ```
 
 A row parameter is written `..R` at every use, as today: in a record type's tail
-(`{ x: f64, ..R }`), in a nominal type's argument list (`Packet<..R>`), in a struct's residual
-tail (`Handle.{ fd, ..R }`) and in a field-wise bound (`where ..R: A`). A bare `R` is not a type,
+(`{ .x: f64, ..R }`), in a nominal type's argument list (`Packet<..R>`), in a struct's residual
+tail (`Handle.{ .fd, ..R }`) and in a field-wise bound (`where ..R: A`). A bare `R` is not a type,
 and naming it is an error. The change adds a binder and removes nothing: `record R` keeps its
 current meaning, and `row` does not return as a keyword.
 
@@ -48,7 +48,7 @@ the code means:
   `record R` instantiated by a branded record keeps the brand, and `..R` forgets it. A
   parameter that is only ever spliced can never observe a brand, so the keyword promises a
   distinction the code cannot use.
-- **A struct's residual tail is not a record.** `Handle.{ fd, ..R }` splices the remaining
+- **A struct's residual tail is not a record.** `Handle.{ .fd, ..R }` splices the remaining
   fields of a struct. `R` there is the tail of a branded row, and declaring it `record R`
   suggests a standalone record. Impls that are generic over a struct's row (the Copy/Clone
   derivation in RFC-0209) are written entirely in these tails.
@@ -121,7 +121,7 @@ labels, and the two binders merge into one kind. This RFC does not depend on tha
    from a plain type parameter. It would be safe only where the parameter is used under `..`
    exclusively, which is when the brand cannot matter.
 3. **Keep `record R` and document it.** No churn. The misleading name stays, and the residual
-   tail `Handle.{ fd, ..R }` is still declared as a record.
+   tail `Handle.{ .fd, ..R }` is still declared as a record.
 
 ---
 
@@ -155,15 +155,15 @@ labels, and the two binders merge into one kind. This RFC does not depend on tha
 ## Open questions
 
 1. **Turbofish for a row parameter** (RFC-0192): is the argument written as a record type
-   (`{ name: i64 }`), or with the dots (`..{ name: i64 }`)? The first matches RFC-0192 as it
+   (`{ .name: i64 }`), or with the dots (`..{ name: i64 }`)? The first matches RFC-0192 as it
    stands.
-2. **Row equations** (`where R = { token: Token, ..Rest }`, RFC-0121): how the left side is
+2. **Row equations** (`where R = { .token: Token, ..Rest }`, RFC-0121): how the left side is
    written when `R` is declared `..R`. Presumably `..R = { … }`.
 3. **A lint or rewrite** for `record R` parameters used only as `..R`.
 4. **Whether a row parameter may carry a lower bound in the binder**, as `record R` does with
-   `record R: { x: f64, .. }`.
+   `record R: { .x: f64, .. }`.
 5. **Merging with packs** if RFC-0151 is accepted: one `..X` kind with a shared binder.
-6. **Residual tails**: whether `Handle.{ fd, ..R }` with `R` declared `..R` needs a rule about
+6. **Residual tails**: whether `Handle.{ .fd, ..R }` with `R` declared `..R` needs a rule about
    the brand being the struct's, and how it interacts with RFC-0146's `Self.R`.
 
 ---

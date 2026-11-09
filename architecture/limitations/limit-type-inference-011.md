@@ -11,7 +11,7 @@ review: null
 
 ## Limitation
 
-A generic function with an owned parameter `{ id: i64, ..R }` and
+A generic function with an owned parameter `{ .id: i64, ..R }` and
 `where each R: Clone` was rejected with `T0035` when its body called
 `value.clone()`. Generic method entailment now accounts for the fixed row fields
 and carries the declared field-wise requirement to the open tail. The regression

@@ -267,18 +267,18 @@ above it are.
 - **RFC-0178** *(implemented 2026-10-07 — metel-core#1399, v0.14.0)* — Row Remainder
   Construction — the value-level half of RFC-0121's removal-by-decomposition: a record
   **rest pattern** (`{ token, ..rest }`, binding the unnamed remainder as an owned record)
-  and a **row spread** in record literals (`{ ..rest, auth = a }`), so a generic body can
+  and a **row spread** in record literals (`{ ..rest, .auth = a }`), so a generic body can
   take an abstract row apart and rebuild one (typestate over a row, `authenticate`/`with_token`).
   Presence and absence of labels are entailments of the declared bounds and equations
   (RFC-0173); no override, at most one spread; owned scrutinees only, with borrowed
   patterns deferred to RFC-0122. Fixed-label case that RFC-0175's label polymorphism builds on.
 
 - **RFC-0179** *(under-review 2026-10-16, #1471; opened 2026-10-16)* — By-value open-row parameters take the whole
-  record — a by-value parameter with an open row tail (`{ x: f64, ..R }`, `Handle.{ fd, ..R }`)
+  record — a by-value parameter with an open row tail (`{ .x: f64, ..R }`, `Handle.{ .fd, ..R }`)
   owns the entire argument, so the unnamed fields are the callee's to move, return or drop, not
   forgotten at the call boundary. Replaces RFC-0121 §4's Copy-only by-value width-subtyping rule,
-  and makes the inline spelling `{ f: T, ..Rest }` equivalent to the row equation
-  `{ ..R } where R = { f: T, ..Rest }`. Opened from metel-core#1469/#1471; linear fields (RFC-0091) and `Drop`-impl
+  and makes the inline spelling `{ .f: T, ..Rest }` equivalent to the row equation
+  `{ ..R } where R = { .f: T, ..Rest }`. Opened from metel-core#1469/#1471; linear fields (RFC-0091) and `Drop`-impl
   brands (#949) are constraints it states and does not decide; no open questions remain.
 
 - **RFC-0180** *(under-review 2026-10-16, #1473; opened 2026-10-16)* — Literal rows in row arguments — a row argument may
@@ -349,8 +349,8 @@ above it are.
   metel-core#274; RFC-0067 and its removal are downstream in v0.19.1 under
   metel-core#848.
 
-- **RFC-0116** *(implemented in v0.12.0, was #576)* — Anonymous Record Types — the closed `{ x: f64 }` type-former,
-  `{ x = 1.0 }` values, `Handle.{ fd }` projection, structural identity, and where records
+- **RFC-0116** *(implemented in v0.12.0, was #576)* — Anonymous Record Types — the closed `{ .x: f64 }` type-former,
+  `{ .x = 1.0 }` values, `Handle.{ .fd }` projection, structural identity, and where records
   are usable (no inherent impls, no non-local aspect impls, no custom `Drop`, not an
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
@@ -362,9 +362,9 @@ above it are.
   deliberately unfolded by that document's own Open Question 7 so it would not gate this
   cluster's nearer review. Proposes that **every** `struct`, not only RFC-0120's opt-in
   `record` kind, is represented as `(brand, row)`: narrowing via partial move produces a
-  residual of the *same brand* (`Handle` → `Handle.{ fd }`), and a struct's own field
+  residual of the *same brand* (`Handle` → `Handle.{ .fd }`), and a struct's own field
   projection (RFC-0116 §4) is recognizably still that struct for impl-resolution
-  purposes — closing the gap where `Self.{ fd }`/`Handle.{ fd }` today accepts an
+  purposes — closing the gap where `Self.{ .fd }`/`Handle.{ .fd }` today accepts an
   unrelated anonymous record of the same shape exactly as readily as a value actually
   derived from the struct. Keeps RFC-0116/RFC-0090's non-ambient-structural-matching
   guarantee by separating "has a row" (universal under this RFC) from "row is visible to
@@ -418,7 +418,7 @@ above it are.
   narrowing — `o.inner.a` narrowing `o.inner` in place — is split to **RFC-0150**.
 - **RFC-0150** *(under review, opened 2026-08-29)* — Nested Row Narrowing — the recursive
   extension of RFC-0117: a nested partial move (`o.inner.a`) narrows the inner field's
-  type *in place*, so `o : Outer.{ inner: Inner.{ b }, tag }`. Split from RFC-0117's
+  type *in place*, so `o : Outer.{ inner: Inner.{ .b }, .tag }`. Split from RFC-0117's
   pre-acceptance review, which established this needs machinery RFC-0117 avoids: a type
   grammar for a branded row whose field type differs from the declaration, recursive
   `(brand, field-map)` identity, tuple-field residuals (RFC-0071 §9a tracks tuple
@@ -456,7 +456,7 @@ above it are.
   arbitrary comptime expressions, and proposes RFC-0165 choose **untagged** unions: the
   declared literal field, not a wrapper tag, identifies the value. Its sole acceptance
   blocker is RFC-0165's representation decision; it has no schedule or tracker.
-- **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { x: f64, .. }>` and `!{ token }`,
+- **RFC-0118** *(implemented in v0.12.0, was #577)* — Row Bounds — `<record T: { .x: f64, .. }>` and `!{ token }`,
   replacing the `HasField`/`Lacks` family that never parsed. The trailing `..` is an
   anonymous row variable and is what makes a bound *open*; without it the bound is closed,
   a reading that previously could not be written at all. Explains why implicit structural
@@ -499,7 +499,7 @@ closures / concurrency**, below) and RFC-0109 (under review, listed here since i
 part of the same records/views substrate review):
 
 - **RFC-0090** *(superseded 2026-07-24 by RFC-0116–0121)* — Structural Records — Rows and Tiers — bare-row bounds (`HasField`/
-  `Lacks` retired 2026-07-23, replaced by `T: { x: f64 }` / `T: !{ tag: _ }`), `record`
+  `Lacks` retired 2026-07-23, replaced by `T: { .x: f64 }` / `T: !{ tag: _ }`), `record`
   type-former, three-tier capability model. No dependency on comptime. §1 calls the
   row-bound mechanism an extension of RFC-0080's auto-impl pattern; RFC-0096 §7
   (2026-07-11) works out that it's a family with existential satisfaction, not the same
@@ -517,7 +517,7 @@ part of the same records/views substrate review):
   Self-View Narrowing — closes the gap found comparing the records cluster against
   Rust's (unshipped) view-types proposal: a named **view** —
   `view TicketView for Ticketing { golden_tickets }` — is a **name for an RFC-0137
-  residual type** (`Ticketing.{ golden_tickets }`), not a separate mechanism that
+  residual type** (`Ticketing.{ .golden_tickets }`), not a separate mechanism that
   happens to reuse the same `(brand, row)` representation. `self: &TicketView` is
   RFC-0137 §4's residual-typed-parameter rule, spelled through the alias — zero
   call-site syntax, no tier opt-in, no reopening "no implicit coercion." `self` may
@@ -575,7 +575,7 @@ part of the same records/views substrate review):
   receiver. This is RFC-0121's `<row R>` kind scoped to exactly one position (the
   receiver) and one shape (a lower bound), with none of the row algebra or
   row-conditional impls. Generalizes RFC-0109's *fixed* named residual (`self: &V` =
-  `self: &S.{ a }`) to a *parametric* one. Depends on RFC-0137's integrated
+  `self: &S.{ .a }`) to a *parametric* one. Depends on RFC-0137's integrated
   representation, RFC-0109's residual-typed-receiver form, and either RFC-0121's
   acceptance or a carved-out minimal lower-bounded-row-variable slice (Open Question 1).
   **v0.18.1** (issue #886) — a dedicated "row-polymorphism consumers" point release
@@ -589,12 +589,12 @@ part of the same records/views substrate review):
   inferred from its body (§5 amended 2026-08-28).
 - **RFC-0147** *(under review, opened 2026-08-28)* — Projection-Receiver Destructors — the
   **fixed** projected `drop` receiver form of RFC-0137 §5's declared-receiver `Drop`
-  required set (`fun drop(&var self: Self.{ fd })`), plus the `drop`-specific rules
+  required set (`fun drop(&var self: Self.{ .fd })`), plus the `drop`-specific rules
   (required set, body containment check, move-check relaxation, `dyn Aspect` coercion
   checkpoint, one-impl-per-type) and the rationale for the 2026-08-28 §5 amendment. §5 no
   longer computes a `Drop` impl's required field set from the destructor body (a fixed
   point over `self`-method calls, resolved 2026-08-25, now superseded) — it is declared:
-  `fun drop(&var self)` (whole row), or `fun drop(&var self: Self.{ fd })` (this RFC,
+  `fun drop(&var self)` (whole row), or `fun drop(&var self: Self.{ .fd })` (this RFC,
   receiver via RFC-0109). **Depends on RFC-0109** (Self-View Narrowing, `metel-core#842`,
   **v0.18.1**) — the minimum for §5 to do anything beyond RFC-0071 §7's blanket ban. One
   unchanged dispatch rule (`residual row ⊇ required set`) and unchanged `dyn Aspect`
@@ -1464,15 +1464,15 @@ implementation).
   metel-core#1597.
 - **RFC-0187** *(refused 2026-11-07; opened 2026-10-21)* — Anonymous record delimiters — anonymous records
   written `{| … |}` so they never collide with a block (retiring RFC-0116's "the block wins" rule and
-  the `({ x = 1 })` workaround). Syntax only: the semantics of records are unchanged. With RFC-0183's `=` assignment
-  it also removes the `{ x = 1 }` record-versus-block collision. Label spelling is RFC-0188 and the row declaration
+  the `({ .x = 1 })` workaround). Syntax only: the semantics of records are unchanged. With RFC-0183's `=` assignment
+  it also removes the `{ .x = 1 }` record-versus-block collision. Label spelling is RFC-0188 and the row declaration
   change is RFC-0186. Refused: RFC-0221 (dotted row labels) removes the single-pun collision and RFC-0151 §6 (`()` is `{}`) removes the empty-record case, so no delimiter is needed.
 - **RFC-0188** *(draft, split from RFC-0187 2026-10-26)* — Label syntax — labels as compile-time values written `.name`
   and label variables `.[L]` (the spelling RFC-0175 uses, RFC-0151's numeric labels and RFC-0174).
   A row field is a label too, `.x` (RFC-0221). Syntax layer only: the semantics of label polymorphism are unchanged. The rows part of the original split was dropped
   in favour of RFC-0186.
 - **RFC-0189** *(under-review 2026-10-28, #1661; opened 2026-10-28)* — Per-label negative row bounds — negative entries inside a row bound
-  (`record R: { x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
+  (`record R: { .x: f64, !token, !id: u64, .. }`), so one braces carries both polarities; `!{ … }` stays as sugar for
   an all-negative open row. Amends RFC-0118 and is additive. Settled 2026-10-28: no nested negation, typed negatives allowed, repeat the entry
   for several types. Negation before the type (`x: !T`) rejected 2026-10-28.
 - **RFC-0190** *(under-review 2026-10-28, #1637; opened 2026-10-28)* — Try aspect — `?` defined over `Try` (operand: `Output`,
@@ -1480,7 +1480,7 @@ implementation).
   closed rule generalises additively and user types can take part. The `From` error conversion becomes a bound on the core
   `Result` impl. Closes GAP-FUNCTIONS-004. Settled 2026-10-28: reflexive `From<T> for T` added to core, nothing in the prelude, no inference
   defaulting for user types, residuals are `Result<!, E>` / `Option<!>`.
-- **RFC-0191** *(under-review 2026-10-29, #1663; opened 2026-10-29)* — One-field record update — `{ ..s, a = e }` replaces a
+- **RFC-0191** *(under-review 2026-10-29, #1663; opened 2026-10-29)* — One-field record update — `{ ..s, .a = e }` replaces a
   field the checker can see is present, with a value of the field's type; an absent label stays an addition and an undetermined
   one stays `T0012`. Amends RFC-0178 §2 ("no override"); no new syntax. Open: whether a replacement needs a marker at the site.
 - **RFC-0192** *(under-review 2026-10-29, #1664; opened 2026-10-29)* — Explicit type arguments for record parameters —
@@ -1671,7 +1671,7 @@ implementation).
   `ident ~ "="` directly, so the label never routes through `expr` and nothing can shadow
   it. Second motivation, and the stronger one: it aligns nominal struct literals with
   RFC-0090's settled anonymous record values, making `Point { x = 1.0 }` literally
-  `{ x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
+  `{ .x = 1.0 }` plus a brand — the relationship RFC-0090 tier 3 claims holds
   semantically, now visible in the syntax.
 - **RFC-0136** *(implemented 2026-08-31; accepted, integrated, and shipped the same day after two Codex adversarial-review rounds; opened 2026-08-23)* — Walrus for Kept Bindings — extends
   the classify/define invariant with a third token: `let`/`var` declarations, plain
@@ -1888,7 +1888,7 @@ generated file as the exact source of truth.
 - **RFC-0208** *(under review 2026-11-03, #1789)* — Row-only generic parameters. A binder `<..R>` for a parameter that stands only for a row, never a type; `record R` stays for parameters used as types. Additive to RFC-0186, shares the `..` binder with packs (RFC-0125), merges with them if RFC-0151 lands; motivated by the row-generic derivation of RFC-0207.
 - **RFC-0209** *(under review 2026-11-04)* — Per-aspect row visibility. A header entry makes a nominal type's row visible to the row-conditional impls of that one aspect, so header aspects (`Copy`, `Clone`) are derived from the aspect's own row template. No new parameter kind; refines RFC-0137's tiers; R2 falls out.
 - **RFC-0210** *(under review 2026-11-04)* — Enum parameters and variant rows. An `enum E` parameter kind and a variant row `..E`, so an aspect's template is written once for every enum that grants it in its header; the bound `..E: A` reuses the field-wise bound one level down. Completes RFC-0209 for sum types; depends on RFC-0174 for bodies.
-- **RFC-0211** *(accepted 2026-11-05, split 2026-11-06; #1792)* — Aspects on residuals. What a residual `T.{ fields }` satisfies in v0.16.0: structural `Copy` with its provided `Clone` when the brand grants `Copy` and the present fields are `Copy`, the existing `Drop` dispatch, and `T0012` for everything else (a written impl never applies to a residual; a derived impl waits for RFC-0217). The row-template half is RFC-0217.
+- **RFC-0211** *(accepted 2026-11-05, split 2026-11-06; #1792)* — Aspects on residuals. What a residual `T.{ .fields }` satisfies in v0.16.0: structural `Copy` with its provided `Clone` when the brand grants `Copy` and the present fields are `Copy`, the existing `Drop` dispatch, and `T0012` for everything else (a written impl never applies to a residual; a derived impl waits for RFC-0217). The row-template half is RFC-0217.
 - **RFC-0217** *(under review 2026-11-06, #1834)* — Row templates for aspects on residuals. The end state: a granted aspect's row template applies to every residual of the granted brand, replacing the native structural `Copy` of v0.16.0. Needs RFC-0209 and RFC-0210. Not a dependency of the Copy/Clone settlement.
 - **RFC-0212** *(accepted 2026-11-05, #1795)* — Aspect declaration properties. What an aspect declaration may state: `declared` (granted only in a type's declaration), `auto` (deferred), and the std-only `implicit` (a by-value use copies the representation instead of moving). Lets `Copy`, `Send`, `Sync` and `Linear` be ordinary declarations instead of special cases by name.
 - **RFC-0213** *(accepted 2026-11-05, #1796)* — Super-aspects. The nominal refinement relation `aspect A: B` split from RFC-0168: a proof of `A` proves `B`, an impl of `A` requires `B`, negative closure, and a `deriving` mark making the derivation of the sub-aspect derive the super-aspect.

@@ -49,7 +49,7 @@ impl_status: implemented
 ## Summary
 
 Moving a field out of a record narrows the record's type to exactly the fields that
-remain. `{ fd: i64, path: String }` with `path` moved out becomes `{ fd: i64 }` — not a
+remain. `{ .fd: i64, .path: String }` with `path` moved out becomes `{ .fd: i64 }` — not a
 partially-valid value, not an opaque "moved-from" marker, but an ordinary value of a
 narrower record type.
 
@@ -87,8 +87,8 @@ per-field multiplicity, which is deferred until records are implemented).
 ## 1. The rule
 
 ```metel
-let r := { fd = 3, path = "/tmp/x" };   // { fd: i64, path: String }
-let p := r.path;                         // r : { fd: i64 } -- moving a non-Copy field
+let r := { .fd = 3, .path = "/tmp/x" };   // { fd: i64, path: String }
+let p := r.path;                         // r : { .fd: i64 } -- moving a non-Copy field
                                          // out is implicit, no separate `move` syntax
 ```
 
@@ -115,18 +115,18 @@ struct Handle { fd: i64, name: String }
 
 fun main() {
     let h := Handle(fd = 3, name = "x");
-    let n := h.name;   // h : Handle.{ fd } from this point on, same brand as Handle
+    let n := h.name;   // h : Handle.{ .fd } from this point on, same brand as Handle
 }
 ```
 
-`Handle.{ fd }` is a real, ordinary value of the *same brand* as `Handle` — not a
+`Handle.{ .fd }` is a real, ordinary value of the *same brand* as `Handle` — not a
 coincidentally-shaped anonymous record. RFC-0137 (Nominal Types as Branded Rows,
 `3-integrated`) supplies the `(brand, row)` representation this depends on; the rule
 itself, the subset-lattice bound, and "the residual is an ordinary value" all apply
 exactly as stated above, for either kind.
 
 **A record-typed field is moved as a unit.** `let i = o.inner` removes the whole `inner`
-label, giving `o : Outer.{ tag }` — the residual's row never carries a *narrower* type
+label, giving `o : Outer.{ .tag }` — the residual's row never carries a *narrower* type
 for a field it still holds. Narrowing a field *of* `inner` in place is nested narrowing,
 deferred to RFC-0150 (§3).
 
@@ -150,13 +150,13 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   question narrowing does not: whether the reassembled value satisfies whatever invariant
   its type was built with. That is RFC-0114's (`Construct`), which specifies that row
   completion fires a constructor rather than being a bare write.
-- ~~**Narrowing a *nominal* type.** Whether `Handle` narrows to `Handle.{ fd }` on partial
+- ~~**Narrowing a *nominal* type.** Whether `Handle` narrows to `Handle.{ .fd }` on partial
   move — as opposed to a record narrowing to a record — depends on nominal types carrying
   rows at all, which is RFC-0120's question and, in its strong form, an open exploration
   (`reports/substructural-types/nominal-types-as-branded-rows.md`).~~ **Dependency
   discharged, 2026-08-25 — RFC-0137 (Nominal Types as Branded Rows)
   answers this directly:** every `struct` carries `(brand, row)` unconditionally, and
-  narrows to `Handle.{ fd }` on partial move by exactly this RFC's own mechanism, at the
+  narrows to `Handle.{ .fd }` on partial move by exactly this RFC's own mechanism, at the
   same brand. This RFC's own scope should now be understood as extending to nominal
   narrowing via RFC-0137 as the supplying dependency, not excluding it — full
   nominal-type worked examples in this RFC's own "Proposed Design" are a real follow-up
@@ -170,7 +170,7 @@ accepts is a genuinely different capability and belongs to RFC-0121.
   append-only convention, but nominal narrowing is now within this RFC's own stated
   scope, not excluded from it.
 - **Nested narrowing.** Narrowing a field *of* a record-typed field in place
-  (`o.inner.a`, so `o : Outer.{ inner: Inner.{ b }, tag }`) — as opposed to moving the
+  (`o.inner.a`, so `o : Outer.{ inner: Inner.{ .b }, .tag }`) — as opposed to moving the
   whole `inner` field as a unit — is **RFC-0150 (Nested Row Narrowing)**. It needs a
   recursive residual type system this RFC deliberately avoids: a type grammar for a
   branded row whose field type differs from the declaration, residual types for tuple
@@ -223,7 +223,7 @@ accepts is a genuinely different capability and belongs to RFC-0121.
    whose field is itself a record has residuals in both dimensions. Believed fine —
    narrowing is per-value, not recursive — but not checked.~~ **Resolved 2026-08-29 —
    this RFC is flat; nesting does not arise.** A record-typed field is moved as a **unit**
-   (`let i = o.inner` → `o : Outer.{ tag }`); a residual's row never carries a narrower
+   (`let i = o.inner` → `o : Outer.{ .tag }`); a residual's row never carries a narrower
    type for a field it still holds. So the bound is exactly `2^N` over the value's own
    fields, and `R` never recurses. The moved-out `inner` is then its own value with its
    own independent `2^M` lattice — no interaction, no product. **Recursive (nested)

@@ -36,11 +36,11 @@ return type left off:
 ```metel
 record Req<row R> { data: { ..R } }
 
-fun add_host<row R: !{ host }>(r: Req<..R>, h: String) {
-    Req(data = { host = h, ..r.data })
+fun add_host<row R: !{ .host }>(r: Req<..R>, h: String) {
+    Req(data = { .host = h, ..r.data })
 }
 
-extend<row R: { host: String, .. }> Req<..R> {
+extend<row R: { .host: String, .. }> Req<..R> {
     fun build(self) -> String { "GET " + self.data.host }
 }
 ```
@@ -83,9 +83,9 @@ marks "this is a row" (RFC-0121 §1), so no new marker is needed, and the existi
 
 `Req<..{ f₁: T₁, …, ..R }>` denotes `Req` instantiated at the row with those fields extended
 by `R`. It is the same type the checker already builds for a record literal with a spread
-(`{ f₁ = e₁, …, ..d }`), so an inferred return type and its written form agree and unify.
+(`{ .f₁ = e₁, …, ..d }`), so an inferred return type and its written form agree and unify.
 `Req<..{ f₁: T₁, … }>` denotes `Req` at exactly those fields: the type of
-`Req { data = { f₁ = e₁, … } }`, and `Req<..{}>` the type of `Req { data = {} }`.
+`Req { data = { .f₁ = e₁, … } }`, and `Req<..{}>` the type of `Req { data = {} }`.
 
 ### 1.3 Disjointness
 
@@ -127,10 +127,10 @@ an ordinary type argument inside the alias body, so this needs a fixture and no 
 
 ## 3. Alternatives considered
 
-- **A bare record type in the row position, `Req<{ host: String, ..R }>`.** Shorter, but the
+- **A bare record type in the row position, `Req<{ .host: String, ..R }>`.** Shorter, but the
   parameter's kind would decide whether a record type is a type or a row, which hides the
   distinction that `..` makes visible everywhere else.
-- **Make an equation-defined row transparent in its body**, so `where S = { host: String, ..R }`
+- **Make an equation-defined row transparent in its body**, so `where S = { .host: String, ..R }`
   lets `S` and its right-hand side be used interchangeably. More general, and it also helps
   equations used inside bodies, but it changes how rigid parameters are solved in both
   directions. It is not needed to write the return type, and it can follow later without

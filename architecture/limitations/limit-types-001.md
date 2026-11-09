@@ -34,7 +34,7 @@ At the time, row-polymorphic code over a nominal type worked, including
 typestate (`authenticate` / `send_data` as separate impls), and a local aspect can be
 implemented for every record of a given shape. The standard library provides
 the blanket `Display` and `Copy` impls for records. Row extension now also permits the
-tail before newly-added fields, such as `{ ..R, auth: String }`.
+tail before newly-added fields, such as `{ ..R, .auth: String }`.
 
 ## Affects
 
