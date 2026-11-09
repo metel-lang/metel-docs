@@ -6,8 +6,8 @@ status: integrated
 updated: '2026-11-08'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1663'
 coverage:
-  "1": { kind: blocked, reason: "The replacement rule is not implemented until the checker gains the presence query.", ref: "metel-core#1663" }
-  "2": { kind: blocked, reason: "The interactions become fixtures of the implementation.", ref: "metel-core#1663" }
+  "1": { spec: "spec.types.generics.open-rows.legality-4" }
+  "2": { kind: untestable, reason: "The interactions are fixtures of the implementation, each citing the open-rows rule." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1663'
 impl_status: not-started
 ---

@@ -6,8 +6,8 @@ status: integrated
 updated: '2026-11-08'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
 coverage:
-  "1": { kind: blocked, reason: "Negative entries are not parsed until the grammar and the bound representation change.", ref: "metel-core#1661" }
-  "2": { kind: blocked, reason: "The coherence and sibling interactions become fixtures of the implementation.", ref: "metel-core#1661" }
+  "1": { spec: "spec.types.generics.row-bounds.legality-8" }
+  "2": { spec: "spec.types.generics.row-bounds.legality-9" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1661'
 impl_status: not-started
 ---
