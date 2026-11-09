@@ -3960,7 +3960,7 @@ The `deriving` mark on a super-aspect entry is accepted only on an aspect declar
 
 ### Aspect Declaration Properties
 
-> **Pending** metel-core#1803 aspect declaration properties are accepted by the language but not yet by the checker.
+> **Pending** metel-core#1800 the declaration clauses that grant a `declared` aspect (`struct T: A`, `derives A`) are accepted by the language but not yet by the checker; the properties themselves are checked.
 
 An aspect declaration may state properties that replace behaviour the compiler otherwise hardcodes for a named
 aspect. The compiler reads them from the aspect's declaration, never from its spelling.
@@ -3971,7 +3971,7 @@ aspect. The compiler reads them from the aspect's declaration, never from its sp
 | `auto` | granted structurally with no entry; a type opts out with a negative impl | std only (reserved) |
 | `implicit` | a by-value use of a type satisfying the aspect copies its representation instead of moving | std only |
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1800 (the colon list)" -->
 ```metel
 declared aspect Validated;          // a user marker: granted in the declaration of the type
 
@@ -3994,11 +3994,14 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: the declared property and the declaration clauses are not yet implemented" -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: the declared property and the declaration clauses are not yet implemented_</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImlzIGEgYGRlY2xhcmVkYCBhc3BlY3QiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJkZWNsYXJlZF9hc3BlY3RfZXh0ZW5kX29uX2FfbmFtZWRfdHlwZV9pc190MDA0NS5tdGwiLCJzb3VyY2UiOiJkZWNsYXJlZCBhc3BlY3QgVmFsaWRhdGVkO1xuc3RydWN0IFRva2VuIHsgaWQ6IGk2NCB9XG5leHRlbmQgVG9rZW46IFZhbGlkYXRlZDsgLy8gRVJST1JbVDAwNDVdXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL2RlY2xhcmVkX2FzcGVjdF9leHRlbmRfb25fYV9uYW1lZF90eXBlX2lzX3QwMDQ1Lm10bCIsIm5hbWUiOiJkZWNsYXJlZF9hc3BlY3RfZXh0ZW5kX29uX2FfbmFtZWRfdHlwZV9pc190MDA0NS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImRlY2xhcmVkX2FzcGVjdF9pc19ncmFudGFibGVfZm9yX2FfaGVhZGVybGVzc190eXBlX2luX2l0c19tb2R1bGUubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMTIgc2VjdGlvbiAxOiBhIHR5cGUgd2l0aCBubyBkZWNsYXJhdGlvbiBvZiBpdHMgb3duIGNhbiBiZSBncmFudGVkIGEgZGVjbGFyZWQgYXNwZWN0IGluIHRoZVxuLy8gYXNwZWN0J3MgZGVmaW5pbmcgbW9kdWxlOyB0aGUgYXNwZWN0J3MgcHJvcGVydGllcyBkbyBub3Qgc3RvcCBpdCBiZWluZyBkZWNsYXJlZCBvciB1c2VkIGFzIGEgYm91bmQuXG5kZWNsYXJlZCBhc3BlY3QgVGFnZ2VkIHsgZnVuIHRhZygmc2VsZikgLT4gaTY0OyB9XG5leHRlbmQgaTY0OiBUYWdnZWQgeyBmdW4gdGFnKCZzZWxmKSAtPiBpNjQgeyBzZWxmICsgMSB9IH1cbnB1YiBkZWNsYXJlZCBhc3BlY3QgTWFya2VkO1xuXG5mdW4gdGFnX29mPFQ6IFRhZ2dlZD4oeDogJlQpIC0+IGk2NCB7IHgudGFnKCkgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQodGFnX29mKCY0KSA9PSA1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2FzcGVjdHMvZGVjbGFyZWRfYXNwZWN0X2lzX2dyYW50YWJsZV9mb3JfYV9oZWFkZXJsZXNzX3R5cGVfaW5faXRzX21vZHVsZS5tdGwiLCJuYW1lIjoiZGVjbGFyZWRfYXNwZWN0X2lzX2dyYW50YWJsZV9mb3JfYV9oZWFkZXJsZXNzX3R5cGVfaW5faXRzX21vZHVsZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE0IiwiY29sIjpudWxsLCJjb250YWlucyI6Im9ycGhhbiBpbXBsZW1lbnRhdGlvbiIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGhlbHBlcjo6TWFya2VyO1xuZXh0ZW5kIGk2NDogTWFya2VyOyAvLyBFUlJPUltUMDAxNF1cbmZ1biBtYWluKCkge31cbiJ9LHsibmFtZSI6ImhlbHBlci5tdGwiLCJzb3VyY2UiOiJwdWIgZGVjbGFyZWQgYXNwZWN0IE1hcmtlcjtcbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvbW9kdWxlX3NlbWFudGljcy9kZWNsYXJlZF9hc3BlY3RfaGVhZGVybGVzc19ncmFudF9vdXRzaWRlX2l0c19tb2R1bGUiLCJuYW1lIjoiZGVjbGFyZWRfYXNwZWN0X2hlYWRlcmxlc3NfZ3JhbnRfb3V0c2lkZV9pdHNfbW9kdWxlIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-declaration-properties.legality-2}
 
@@ -4006,11 +4009,14 @@ The properties `implicit` and `auto` are accepted only on an aspect declared in 
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: aspect properties are not yet parsed" -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: aspect properties are not yet parsed_</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ1IiwiY29sIjpudWxsLCJjb250YWlucyI6IndyaXR0ZW4gdHdpY2UiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJhc3BlY3RfcHJvcGVydHlfd3JpdHRlbl90d2ljZV9pc190MDA0NS5tdGwiLCJzb3VyY2UiOiJkZWNsYXJlZCBkZWNsYXJlZCBhc3BlY3QgTWluZTsgLy8gRVJST1JbVDAwNDVdXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL2FzcGVjdF9wcm9wZXJ0eV93cml0dGVuX3R3aWNlX2lzX3QwMDQ1Lm10bCIsIm5hbWUiOiJhc3BlY3RfcHJvcGVydHlfd3JpdHRlbl90d2ljZV9pc190MDA0NS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImFjY2VwdGVkIG9ubHkgb24gYW4gYXNwZWN0IGRlY2xhcmVkIGluIHRoZSBzdGFuZGFyZCBsaWJyYXJ5IiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiYXV0b19wcm9wZXJ0eV9vbl9hX3VzZXJfYXNwZWN0X2lzX3QwMDQ1Lm10bCIsInNvdXJjZSI6ImF1dG8gYXNwZWN0IE1pbmU7IC8vIEVSUk9SW1QwMDQ1XVxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9hdXRvX3Byb3BlcnR5X29uX2FfdXNlcl9hc3BlY3RfaXNfdDAwNDUubXRsIiwibmFtZSI6ImF1dG9fcHJvcGVydHlfb25fYV91c2VyX2FzcGVjdF9pc190MDA0NS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImFjY2VwdGVkIG9ubHkgb24gYW4gYXNwZWN0IGRlY2xhcmVkIGluIHRoZSBzdGFuZGFyZCBsaWJyYXJ5IiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoiaW1wbGljaXRfcHJvcGVydHlfb25fYV91c2VyX2FzcGVjdF9pc190MDA0NS5tdGwiLCJzb3VyY2UiOiJpbXBsaWNpdCBhc3BlY3QgTWluZTsgLy8gRVJST1JbVDAwNDVdXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL2ltcGxpY2l0X3Byb3BlcnR5X29uX2FfdXNlcl9hc3BlY3RfaXNfdDAwNDUubXRsIiwibmFtZSI6ImltcGxpY2l0X3Byb3BlcnR5X29uX2FfdXNlcl9hc3BlY3RfaXNfdDAwNDUubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-declaration-properties.legality-3}
 
@@ -4018,11 +4024,10 @@ The properties of an aspect are read from its declaration by identity. A re-expo
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: aspect properties are not yet parsed; the by-identity lookup of Copy (metel-core#1799) is in place" -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: aspect properties are not yet parsed; the by-identity lookup of Copy (metel-core#1799) is in place_</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImlzIGEgYGRlY2xhcmVkYCBhc3BlY3QiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJtYWluLm10bCIsInNvdXJjZSI6ImltcG9ydCBoZWxwZXI6Ok1hcmtlciBhcyBNYXJrO1xuc3RydWN0IFRva2VuIHsgaWQ6IGk2NCB9XG5leHRlbmQgVG9rZW46IE1hcms7IC8vIEVSUk9SW1QwMDQ1XVxuZnVuIG1haW4oKSB7fVxuIn0seyJuYW1lIjoiaGVscGVyLm10bCIsInNvdXJjZSI6InB1YiBkZWNsYXJlZCBhc3BlY3QgTWFya2VyO1xuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9tb2R1bGVfc2VtYW50aWNzL2RlY2xhcmVkX2FzcGVjdF9hbGlhc19pbXBvcnRfa2VlcHNfaXRzX3Byb3BlcnR5IiwibmFtZSI6ImRlY2xhcmVkX2FzcGVjdF9hbGlhc19pbXBvcnRfa2VlcHNfaXRzX3Byb3BlcnR5In0="></details>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
