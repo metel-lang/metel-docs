@@ -13,7 +13,7 @@ value and its *type* changes to reflect what's left.
 fun store(s: String) -> i64 { s.len() }
 
 fun main() {
-    let fields := { user = "7", kind = "click", arg = "/home" };
+    let fields := { .user = "7", .kind = "click", .arg = "/home" };
 
     let k := store(fields.kind);   // `kind` moved out; fields : { user, arg }
     let a := store(fields.arg);    // disjoint — `arg` moved out; fields : { user }
@@ -27,7 +27,7 @@ fun main() {
 ```
 
 `store(fields.kind)` moves `kind` out. From that point `fields` has type
-`{ user: String, arg: String }` — reading `fields.kind` again is a compile error
+`{ .user: String, .arg: String }` — reading `fields.kind` again is a compile error
 (`no field kind on { user, arg }`), not a runtime surprise. The two moves are of
 different fields, so the checker allows both. `Copy` types (`i64`, `boolean`, `Char`,
 …) are copied on use and never move.
@@ -41,21 +41,21 @@ It's opt-in while the older example corpus migrates; new code should run with it
 
 ## Structs: hand two disjoint projections to two functions
 
-A `struct` supports a **projection type** `T.{ field }` — a view of just those
-fields. Passing `d.{ title }` moves that field out, so two disjoint projections go
+A `struct` supports a **projection type** `T.{ .field }` — a view of just those
+fields. Passing `d.{ .title }` moves that field out, so two disjoint projections go
 to two functions cleanly:
 
 ```metel
 struct Doc { title: String, body: String, sig: String }
 
-fun headline(part: Doc.{ title }) -> i64 { part.title.len() }
-fun render(part: Doc.{ body }) -> i64    { part.body.len() }
+fun headline(part: Doc.{ .title }) -> i64 { part.title.len() }
+fun render(part: Doc.{ .body }) -> i64    { part.body.len() }
 
 fun main() {
     let d := Doc(title = "Metel", body = "the spec", sig = "v0.13");
 
-    let a := headline(d.{ title });   // moves `title`
-    let b := render(d.{ body });      // disjoint — moves `body`
+    let a := headline(d.{ .title });   // moves `title`
+    let b := render(d.{ .body });      // disjoint — moves `body`
 
     println("${a} ${b} ${d.sig}");    // `sig` untouched
 }
@@ -65,8 +65,8 @@ fun main() {
 5 8 v0.13
 ```
 
-`headline` can't reach `body` or `sig` — it asked for `Doc.{ title }` and that's all
-it gets. A second `d.{ title }` after the move is `T0003`. (Anonymous records narrow
+`headline` can't reach `body` or `sig` — it asked for `Doc.{ .title }` and that's all
+it gets. A second `d.{ .title }` after the move is `T0003`. (Anonymous records narrow
 the same way when a field moves out, but the `.{ … }` projection *syntax* is
 struct-only.)
 
@@ -82,7 +82,7 @@ fun peek(s: String) -> i64 { s.len() }
 fun main() {
     var cart := Cart(user = 7, note = "cart abandoned");
 
-    let n := peek(cart.note);        // `note` moved; cart : Cart.{ user }
+    let n := peek(cart.note);        // `note` moved; cart : Cart.{ .user }
     cart.note = "cart restored";    // reassigned — cart : Cart again
 
     println("${cart.note} for user ${cart.user} (was ${n} chars)");

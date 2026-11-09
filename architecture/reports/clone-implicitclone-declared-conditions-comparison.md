@@ -190,7 +190,7 @@ A codex spike prototyped E for the existing `Copy` aspect on branch `spike/1815-
 |---|---|
 | Header grammar and AST | Worked. `struct W<T>: Copy when T: Copy { .. }`; `when` is contextual; the struct-level `where` stays separate; about 212 lines |
 | Desugaring | Worked. The parser lowers each entry to an ordinary bodyless impl (`extend<T> W<T>: Copy where T: Copy;`) before name resolution and coherence |
-| Sufficiency validation | Worked, reusing `check_copy_impl_eligibility`: nested fields accepted under the declared condition, an unconditional `Bad<T> { value: T }` and a `String` field rejected. The missing-condition fix-it was not implemented |
+| Sufficiency validation | Worked, reusing `check_copy_impl_eligibility`: nested fields accepted under the declared condition, an unconditional `Bad<T> { .value: T }` and a `String` field rejected. The missing-condition fix-it was not implemented |
 | Generic bodies | **Partial.** Bounded `Wrapper<T>` and unconditional `View<T>` accepted. The unbounded case and both nested cases still give `I0011`; nothing flipped from `I0011` to definite |
 | Condition computation (`derives`) | Not implemented; the spike stopped at the generic-body limit |
 | Coherence | Generated impls go through the positional bound collection; disjointness still compares direct aspect names, so the signed closure (RFC-0213 section 3) is additional work; no header-versus-written overlap test |

@@ -16,13 +16,13 @@ can fail returns one:
 struct ParseError { line: i64, reason: String }
 
 fun split_event(text: String, line: i64)
-    -> Result<{ user: String, kind: String, arg: String }, ParseError>
+    -> Result<{ .user: String, .kind: String, .arg: String }, ParseError>
 {
     let parts := text.split(" ");
     if (parts.len() != 3) {
         return Err(error = ParseError(line = line, reason = "want <user> <kind> <arg>"));
     }
-    return Ok(value = { user = parts[0u64], kind = parts[1u64], arg = parts[2u64] });
+    return Ok(value = { .user = parts[0u64], .kind = parts[1u64], .arg = parts[2u64] });
 }
 
 fun main() {

@@ -26,25 +26,25 @@ fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
 
 // Every event leaves as { user, kind, weight, line }. `weight` is the buy amount,
 // or 1 for a click.
-fun normalize(raw: { user: String, kind: String, arg: String }, line: i64)
-    -> Result<{ user: i64, kind: String, weight: i64, line: i64 }, ParseError>
+fun normalize(raw: { .user: String, .kind: String, .arg: String }, line: i64)
+    -> Result<{ .user: i64, .kind: String, .weight: i64, .line: i64 }, ParseError>
 {
     let user := parse_int(raw.user, line)?;
 
     if (raw.kind == "click") {
-        return Ok(value = { user = user, kind = "click", weight = 1, line = line });
+        return Ok(value = { .user = user, .kind = "click", .weight = 1, .line = line });
     }
     if (raw.kind == "buy") {
         let amount := parse_int(raw.arg, line)?;
-        return Ok(value = { user = user, kind = "buy", weight = amount, line = line });
+        return Ok(value = { .user = user, .kind = "buy", .weight = amount, .line = line });
     }
     return Err(error = ParseError(line = line, reason = "unknown kind: " + raw.kind));
 }
 
 fun main() {
-    let click := { user = "7", kind = "click", arg = "/home" };
-    let buy   := { user = "7", kind = "buy",   arg = "42" };
-    let junk  := { user = "7", kind = "wave",  arg = "hi" };
+    let click := { .user = "7", .kind = "click", .arg = "/home" };
+    let buy   := { .user = "7", .kind = "buy",   .arg = "42" };
+    let junk  := { .user = "7", .kind = "wave",  .arg = "hi" };
 
     println(normalize(click, 1).yolo().weight);   // 1
     println(normalize(buy, 2).yolo().weight);     // 42
@@ -79,7 +79,7 @@ fields* regardless of kind. That's the next page. (Enums are covered in the
 
 ## By the end you'll have
 
-`normalize`: a validated `{ user: i64, kind: String, weight: i64, line: i64 }` for
+`normalize`: a validated `{ .user: i64, .kind: String, .weight: i64, .line: i64 }` for
 every accepted line.
 
 **Next:** [Ask for less than the whole record](row-bounds) — functions that need only a slice.

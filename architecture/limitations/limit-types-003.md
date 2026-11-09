@@ -22,7 +22,7 @@ intercepted by label in `call_runtime_callable` because it needs the runtime to 
 field's own `to_string`) formats the receiver at runtime, fields in label order:
 
 ```metel
-let p := { x = 1, y = 2.5, s = "hi" };
+let p := { .x = 1, .y = 2.5, .s = "hi" };
 println("${p}");        // { s: hi, x: 1, y: 2.5 }
 ```
 

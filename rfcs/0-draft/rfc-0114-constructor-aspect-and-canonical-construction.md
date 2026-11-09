@@ -32,7 +32,7 @@ updated: '2026-07-24'
 > **Revised 2026-07-24 — surface syntax corrected, and one hole closed.** The first draft
 > spelled rows `.{ … }` in freestanding positions, which was already stale when written:
 > `reports/substructural-types/access-and-presence-rows.md` §3.5 keeps the dot **only**
-> where a receiver is projected from (`Handle.{ fd }`), and this RFC's rows are all
+> where a receiver is projected from (`Handle.{ .fd }`), and this RFC's rows are all
 > freestanding. They are restated here in RFC-0090's normative `record { … }` former (§1),
 > with record *values* separated by `=` per
 > `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` and RFC-0100 §1 — the same invariant,
@@ -50,8 +50,8 @@ updated: '2026-07-24'
 > revision above used RFC-0090's then-normative `record { … }` former and noted that
 > `access-and-presence-rows.md` §3.5 recommended bare braces instead, declining to adopt
 > an unadopted spelling unilaterally. **RFC-0090 has since been amended to drop the
-> keyword from anonymous records**, so this RFC follows: rows are `{ small: i32, big: i32 }`
-> as types and `{ small = 3, big = 1 }` as values. `record` now appears in this RFC not at
+> keyword from anonymous records**, so this RFC follows: rows are `{ .small: i32, .big: i32 }`
+> as types and `{ .small = 3, .big = 1 }` as values. `record` now appears in this RFC not at
 > all — it survives only as RFC-0090 tier 3's *declaration* keyword, which this RFC has no
 > occasion to use.
 >
@@ -100,7 +100,7 @@ code, once narrowing and widening are both automatic and structural:
 ```metel
 fun mess_with_it() {
     var p := SortedPair::new(Box { value = 1 }, Box { value = 10 });
-    let old_small := p.small;          // move small out; p narrows to SortedPair.{ big }
+    let old_small := p.small;          // move small out; p narrows to SortedPair.{ .big }
     p.small = Box { value = 999_999 }; // assign an arbitrary value back in; p widens to full SortedPair
     // no call to SortedPair::new, anywhere. invariant possibly broken.
 }
@@ -130,9 +130,9 @@ aspect Construct {
 
 extend SortedPair: Construct {
     type Error = !;
-    fun construct(row: { small: i32, big: i32 }) -> Result<Self, !> {
+    fun construct(row: { .small: i32, .big: i32 }) -> Result<Self, !> {
         if row.small <= row.big { Ok(row) }                    // §1.1
-        else { Ok({ small = row.big, big = row.small }) }
+        else { Ok({ .small = row.big, .big = row.small }) }
     }
 }
 ```
@@ -143,9 +143,9 @@ extend SortedPair: Construct {
 works through.
 
 **Syntax note.** Rows are bare braces in every position this RFC uses, per RFC-0090's
-2026-07-24 amendment and `access-and-presence-rows.md` §3.5: `{ small: i32, big: i32 }` as
-a type, `{ small = row.big }` as a value (the `=` per RFC-0100 §1's separator invariant),
-and `SortedPair.{ big }` for projection — the dot surviving only where there is a receiver
+2026-07-24 amendment and `access-and-presence-rows.md` §3.5: `{ .small: i32, .big: i32 }` as
+a type, `{ .small = row.big }` as a value (the `=` per RFC-0100 §1's separator invariant),
+and `SortedPair.{ .big }` for projection — the dot surviving only where there is a receiver
 to project from. `construct`'s parameter is a **closed** record type, not a bound: it names
 the type's exact complete row, and a caller supplying a wider row does not satisfy it.
 RFC-0090's open question 13 records that closed types and bounds now share a spelling and
@@ -215,7 +215,7 @@ mattering to this RFC at all:
 SortedPair { small = 3, big = 1 }      // brace literal (today's form, RFC-0115's separator)
 SortedPair(small = 3, big = 1)         // call-shaped   (if RFC-0100 lands)
 // both desugar to
-SortedPair::construct({ small = 3, big = 1 })
+SortedPair::construct({ .small = 3, .big = 1 })
 ```
 
 **The brace form's desugaring reads directly off the surface, which is worth noting rather
@@ -274,7 +274,7 @@ invariant when produced. Code that can name a field may change it afterwards; an
 private fields and methods. The `mess_with_it` example stands as the accepted limit, reachable only from the defining module or
 through `pub` fields.
 
-**Piecewise building.** A value built field by field, `let partial = { a = compute_a() }; let partial = { ..partial, b = compute_b() };`,
+**Piecewise building.** A value built field by field, `let partial = { .a = compute_a() }; let partial = { ..partial, .b = compute_b() };`,
 is an ordinary anonymous record, with no brand. Turning the complete record into a `Self` is the explicit `Type(..partial)` (RFC-0100
 §7), which calls `construct` once; nothing fires on completion.
 
@@ -392,7 +392,7 @@ may in fact be closer to revisitable than its own header currently states.
 
 ## 7. Generics and monomorphization
 
-A generic struct's row depends on its type parameter — `Pair<T> { a: T, b: T }`'s row
+A generic struct's row depends on its type parameter — `Pair<T> { .a: T, .b: T }`'s row
 isn't fully known until `T` is concrete. Whether `construct()` resolution needs to defer
 to monomorphization time, the way Metel's generic function bodies already do
 (`FunBody::Generic`/`TypedExpr::GenericClosure`, constructed from runtime values), is the
@@ -597,13 +597,13 @@ extend Interval: Construct {
 - `public/rfcs/4-implemented/rfc-0115-field-initializer-separator.md` — the separator half
   split out of RFC-0100 the same day; keeps brace literals and changes only `field_init`'s
   `:` to `=`, which is what makes `SortedPair { small = 3, big = 1 }` desugar so directly
-  to `SortedPair::construct({ small = 3, big = 1 })` (§2). Also not a dependency
+  to `SortedPair::construct({ .small = 3, .big = 1 })` (§2). Also not a dependency
 - `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the `:` classifies / `=` defines
   invariant that fixes the separator in this RFC's record values and RFC-0100's keyword
   arguments identically
 - `reports/substructural-types/access-and-presence-rows.md` §3.5 — the settled row-former
   rules this RFC now follows in full: dot only where a receiver is projected
-  (`SortedPair.{ big }`), bare braces everywhere else (§1's syntax note)
+  (`SortedPair.{ .big }`), bare braces everywhere else (§1's syntax note)
 - `public/rfcs/4-implemented/rfc-0098-surface-keyword-renames.md` — `extend Type: Aspect`
   and `&var`, the spellings this RFC's examples were corrected to on 2026-07-24
 - `public/rfcs/0-draft/rfc-0026-unsafe-blocks.md` — the foundation for

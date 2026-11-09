@@ -15,7 +15,7 @@ status: draft
 
 ## Summary
 
-A residual type `T.{ fields }` (RFC-0137) is the same brand as `T` with some fields narrowed away. Today
+A residual type `T.{ .fields }` (RFC-0137) is the same brand as `T` with some fields narrowed away. Today
 a written aspect impl for `T` never applies to a residual, because its body may read a field the
 residual no longer has, and the language has no way to write an impl whose receiver is a residual.
 Only `Drop` has such a route: RFC-0137 section 5 dispatches a destructor against any residual whose row
@@ -28,7 +28,7 @@ those fields. An impl for one exact shape is also allowed, and may build its own
 ```metel
 struct Doc { title: String, n: i64, }
 
-view DocTitle for Doc { title }                 // RFC-0109: a name for Doc.{ title }
+view DocTitle for Doc { title }                 // RFC-0109: a name for Doc.{ .title }
 
 extend Doc: Display {                           // the whole type
     fun fmt(&self) -> String { return self.title.clone() + ": " + self.n.to_string(); }
@@ -41,12 +41,12 @@ extend DocTitle: Display {                      // the residual: needs only `tit
 
 ## Motivation
 
-1. **A residual cannot carry a written impl.** `d.{ title }` is a value of a type with the same brand
+1. **A residual cannot carry a written impl.** `d.{ .title }` is a value of a type with the same brand
    as `Doc`, yet an author who wrote `Doc: Clone` by hand has no way to say what cloning a projection
    means. RFC-0211 and RFC-0217 give the author two options only: derive the impl (a template then covers every
    residual) or accept that the projection has no impl. For a non-`Copy` type with a written `Clone` the
    projection simply has no `Clone` (RFC-0211 rule 2); a `Copy` type needs none, since its `Clone` is provided.
-2. **A bound call on a residual silently skips the written impl today.** `dup(&d.{ title })` with
+2. **A bound call on a residual silently skips the written impl today.** `dup(&d.{ .title })` with
    `T: Clone` is accepted and runs a structural copy instead of the user's `clone` (metel-core#1788).
    RFC-0211 turns that into `T0012`. A written residual impl would give it a defined meaning.
 3. **`Drop` already works this way** and is the only aspect that does. The mechanism is not specific to
@@ -65,13 +65,13 @@ residual receiver.
 
 ```metel
 extend Doc: Display {
-    fun fmt(&self: Self.{ title }) -> String { return self.title.clone(); }
+    fun fmt(&self: Self.{ .title }) -> String { return self.title.clone(); }
 }
-// applies to Doc, Doc.{ title }, Doc.{ title, n }; not to Doc.{ n }
+// applies to Doc, Doc.{ .title }, Doc.{ .title, .n }; not to Doc.{ .n }
 ```
 
 **Exact-shape impl.** The impl target is one residual type or one named view (RFC-0109):
-`extend DocTitle: A { .. }` or `extend Doc.{ title }: A { .. }`. It applies to exactly that shape and
+`extend DocTitle: A { .. }` or `extend Doc.{ .title }: A { .. }`. It applies to exactly that shape and
 `Self` is that shape. It is the form for a method that returns `Self`, because a row-bounded impl cannot
 build a value of an unknown width.
 
@@ -160,16 +160,16 @@ view CacheData for Cache { data }
 extend CacheData: Clone {
     fun clone(&self) -> Self { /* a CacheData from self.data */ }
 }
-// cache.{ data } is Clone through the residual impl (Cache is affine, so it is never Copy).
+// cache.{ .data } is Clone through the residual impl (Cache is affine, so it is never Copy).
 
 struct Id derives Clone { n: i64, }
-extend Id.{ n }: Clone { /* .. */ }             // error T0015: overlaps the template of `derives Clone`
+extend Id.{ .n }: Clone { /* .. */ }             // error T0015: overlaps the template of `derives Clone`
 
 struct Row { key: i64, payload: String, }
 extend Row: PartialEq {
-    fun eq(&self: Self.{ key }, other: &Self.{ key }) -> boolean { return self.key == other.key; }
+    fun eq(&self: Self.{ .key }, other: &Self.{ .key }) -> boolean { return self.key == other.key; }
 }
-// Row, Row.{ key }, Row.{ key, payload } all compare by key
+// Row, Row.{ .key }, Row.{ .key, .payload } all compare by key
 ```
 
 ## 4. Relationship to existing RFCs
@@ -219,14 +219,14 @@ extend Row: PartialEq {
 3. **Enums.** Enums are atomic for narrowing and have no residuals (RFC-0150, RFC-0217), so this RFC
    does not apply to them unless that changes (variant rows, RFC-0210).
 4. **Default methods** of the aspect and their receiver rows.
-5. **Spelling:** `extend DocTitle: A` through a view, `extend Doc.{ f }: A` inline, or both.
+5. **Spelling:** `extend DocTitle: A` through a view, `extend Doc.{ .f }: A` inline, or both.
 6. **Whether row-bounded impls are needed at all** if exact-shape impls and templates suffice; the
    `Display`/`PartialEq` examples are the case for them.
 7. **Per-field customisation of a derive** (`derives Clone` with one field's behaviour overridden) as
    a lighter alternative to the row-generic form for the common "reset one field" case (RFC-0213
    open question 8).
 8. **Receiver narrowing as tooling.** Inferring a required field set from a body is rejected as a
-   language rule (RFC-0137 section 5); an editor suggestion that proposes `Self.{ title }` for a body
+   language rule (RFC-0137 section 5); an editor suggestion that proposes `Self.{ .title }` for a body
    that reads only `title` is not.
 9. **Compile-time refinement of a symbolic field.** Whether `comptime if (field.name == "hits")` refines
    `field.type` inside the branch, so a loop body can treat one named field specially while keeping the others

@@ -36,7 +36,7 @@ impl_status: implemented
 >    *and* RFC-0123's field-wise constraints. Until then no record can be printed.
 > 2. **Decomposition has no substitute.** RFC-0118's bounds are expressively a strict subset
 >    of this RFC — every bound is writable as a row — but the reverse fails: `T` is atomic,
->    so `{ extra: i64, ..R }` and `where R = { token, ..Rest }` cannot be expressed with a
+>    so `{ .extra: i64, ..R }` and `where R = { token, ..Rest }` cannot be expressed with a
 >    bounded type variable. `drain_field`, which RFC-0109 cites as the thing records give
 >    that Rust's view types cannot, needs decomposition.
 > 3. **The width-subtyping rule is unstatable without it** (open question 1, resolved
@@ -68,7 +68,7 @@ impl_status: implemented
 
 Row-kinded generic parameters — `<row R>` at the binder, `..R` at every use — letting code
 abstract over "the rest of a row" rather than naming a concrete shape. Adds a row equation
-form in `where` clauses (`where R = { token: Token, ..Rest }`) which serves as row
+form in `where` clauses (`where R = { .token: Token, ..Rest }`) which serves as row
 *decomposition*, and row-conditional impls, which realize typestate directly in the row.
 
 This is the only piece of the records cluster that introduces a **row kind** and
@@ -93,10 +93,10 @@ row-shape conditions with no new dispatch mechanism.
 ## 1. `row` declares, `..` marks every use
 
 ```metel
-fun get_x<row R>(p: { x: f64, ..R }) -> f64 { p.x }
+fun get_x<row R>(p: { .x: f64, ..R }) -> f64 { p.x }
 ```
 
-A row variable is written `..R` **wherever it appears in a type** — `{ x: f64, ..R }`,
+A row variable is written `..R` **wherever it appears in a type** — `{ .x: f64, ..R }`,
 `Handle.{ ..R }`, `Session<..R>`. A bare identifier in type position is therefore always a
 *type* variable, never a row.
 
@@ -105,7 +105,7 @@ A row variable is written `..R` **wherever it appears in a type** — `{ x: f64,
 into the parameter list rather than declaring.
 
 **The forcing case was a genuine ambiguity, not a preference.** Inside projection braces a
-bare identifier could be either a field label or a row variable — `Handle.{ fd }` projects a
+bare identifier could be either a field label or a row variable — `Handle.{ .fd }` projects a
 field, `Handle.{ R }` a row — separated only by case convention, which would have made the
 design depend on RFC-0101 (`0-draft`) to disambiguate.
 
@@ -115,10 +115,10 @@ is the same mechanism with the rest named.
 ## 2. Row algebra: extension is a literal, removal is a decomposition
 
 **Extension needs no operator.** The new label goes in the row literal, exactly as PureScript
-(`{ x :: Int | r }`), Koka (`<div|e>`) and OCaml (`< x : int; .. >`) all do it:
+(`{ .x :: Int | r }`), Koka (`<div|e>`) and OCaml (`< x : int; .. >`) all do it:
 
 ```metel
-RequestBuilder<{ ..R, auth: String }>
+RequestBuilder<{ ..R, .auth: String }>
 ```
 
 **Removal has no literal form and gets a decomposition instead of a subtraction.** Name both
@@ -126,7 +126,7 @@ halves and state how they compose:
 
 ```metel
 extend<row R, row Rest> Session<..R>
-where R = { token: Token, ..Rest }
+where R = { .token: Token, ..Rest }
 {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
@@ -137,7 +137,7 @@ where R = { token: Token, ..Rest }
 which types `Record.delete` by using it backwards — rather than Ur/Web's `--` operator.
 
 Three things this buys beyond parsing: the equation **subsumes the bound** (it already
-implies `R: { token: Token, .. }` and additionally names the remainder); `=` is the correct
+implies `R: { .token: Token, .. }` and additionally names the remainder); `=` is the correct
 separator because it *equates* two rows, matching `assoc_binding` (`Deref<Target = Node>`),
 an equation already living in this channel; and **no label kind or label literal is
 required**, unlike any operator-based design.
@@ -152,7 +152,7 @@ confirm before citing as precedent.)
 ## 3. Typestate via row-conditional impls
 
 ```metel
-extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
+extend<row R, row Rest> Session<..R> where R = { .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
 
@@ -191,7 +191,7 @@ difference is the selection rule:
 Nothing in this RFC's acceptance depends on ruling the other one out.
 
 **Priority against brand-keyed impls, resolved 2026-08-25.** The moment this RFC lets an
-impl be written against a row (`extend<row R: { x: f64, y: f64, .. }> T: Display`), it
+impl be written against a row (`extend<row R: { .x: f64, .y: f64, .. }> T: Display`), it
 creates the first real instance of a question the corpus has carried since RFC-0090 §9
 without a written answer: an ordinary nominal impl (`extend Point: Display`) is keyed on
 brand identity, this RFC's row-conditional impl is keyed on shape, and if a concrete value's
@@ -261,7 +261,7 @@ rather than treating it as still-open.
   PureScript. None of them have affine or linear ownership, so none had to ask what
   happens when a forgotten field is not garbage. **The rule splits on whether the
   narrowing takes ownership:**
-  - **Borrow position never has a drop obligation to violate.** `&{ x: f64, ..R }` (or
+  - **Borrow position never has a drop obligation to violate.** `&{ .x: f64, ..R }` (or
     `&mut`) over a wider record does not move the value — the extra fields stay owned
     exactly where they always were, `Copy` or not. Width subtyping through a reference is
     therefore always sound and needs no `Copy` restriction; this is the same reasoning
@@ -317,7 +317,7 @@ RowLiteral → RecordType   // an open or closed record type, RFC-0180
 
 **Row body — `RecordType` and `RecordProjectionType` both gain a tail**, distinct from
 `RowBound` (bound position, RFC-0118, already implemented and unchanged): this is *type*
-position, e.g. `{ x: f64, ..R }` or `Handle.{ ..R }`.
+position, e.g. `{ .x: f64, ..R }` or `Handle.{ ..R }`.
 
 ```
 RecordType           → "{" ( RecordTypeField ( "," RecordTypeField )*
@@ -328,7 +328,7 @@ RowTail              → ".." IDENTIFIER?
 ```
 
 **`where` — `WhereConstraint` gains the `RowEquation` alternative** §2's decomposition
-needs (`where R = { token: Token, ..Rest }`); `=` rather than `:=`, matching RFC-0136's
+needs (`where R = { .token: Token, ..Rest }`); `=` rather than `:=`, matching RFC-0136's
 invariant (a one-shot type equation, not a kept binding — see PROCESS.md's acceptance-review
 check on this point):
 

@@ -80,7 +80,7 @@ canonical form, and derived `Ord` is:
 The numeric ordering is the point — a tuple `(a₀ … a₁₀)` must keep `0 < … < 10`,
 not the lexicographic `0 < 1 < 10 < 2` that string labels would give.
 
-A row may mix the two (`{ 0: A, name: B }`); it is legal and simply unusual.
+A row may mix the two (`{ 0: A, .name: B }`); it is legal and simply unusual.
 Constructing one requires the `{ … }` form — the `(…)` sugar only produces
 integer labels `0 .. N-1` with no gaps.
 
@@ -151,7 +151,7 @@ as a record.
 - **Abstracting over arity.** `(...Ts)` folding a type pack is RFC-0125; this RFC
   gives it a row to fold *into*, nothing more.
 - **Labelled tuples / named-positional hybrids.** A row already does this
-  (`{ 0: A, name: B }`); no new surface syntax for it here.
+  (`{ 0: A, .name: B }`); no new surface syntax for it here.
 - **Removing the `(…)` surface syntax.** It stays as sugar indefinitely.
 
 ## Representation and migration
@@ -197,12 +197,12 @@ ad-hoc returns and argument lists.
 
 1. ~~**`()` vs `Unit`** (§6).~~ **Resolved:** unify. `()` is the empty row `{}` and `Unit` is retired as a
    separate type.
-2. **Mixed-label rows.** Are `{ 0: A, name: B }` rows worth allowing at all, or
+2. **Mixed-label rows.** Are `{ 0: A, .name: B }` rows worth allowing at all, or
    should integer and identifier labels be mutually exclusive per row (tuples
    integer-only, records identifier-only, and a row is one or the other)? The
    latter is simpler to reason about and to print; the former is more uniform.
 3. **Cross-shape row bounds.** Should `<record T: { 0: i64, .. }>` accept a
-   hand-written `{ 0: i64, name: … }`, and should a bound written for named data
+   hand-written `{ 0: i64, .name: … }`, and should a bound written for named data
    ever accidentally accept a tuple? Probably harmless given structural identity,
    but worth a decision.
 4. **Staging** (§Representation). Weak alias first (step 2) then delete, or go

@@ -14,7 +14,7 @@ review: null
 
 Row narrowing (RFC-0117 for anonymous records, RFC-0137 for structs) narrows a
 binding's type when a field is moved directly out of it: after `let x := o.a;`,
-`o : Outer.{ d }`. Only a **depth-1** projection narrows. The type checker reads
+`o : Outer.{ .d }`. Only a **depth-1** projection narrows. The type checker reads
 `moved_shallow_projections`, which keeps just moves whose place has exactly one
 projection, and `record_move_of_place` returns early for anything deeper. The
 Language Spec states the boundary: "A record-typed **field** is moved as a
@@ -37,7 +37,7 @@ fun main() {
 Without flags this type-checks (exit 0). With `--move-check` it is rejected
 (`T0019 use of partially moved value o`). For contrast, a depth-1 move
 (`let x := o.a;` then `take(o)`) is always a type error: "a partially-moved
-`Outer` (now `Outer.{ d }`) cannot be used where the whole `Outer` is required".
+`Outer` (now `Outer.{ .d }`) cannot be used where the whole `Outer` is required".
 
 ## Impact
 

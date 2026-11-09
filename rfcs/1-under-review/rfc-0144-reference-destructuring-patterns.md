@@ -54,7 +54,7 @@ multiple call sites.
 ## Motivation
 
 RFC-0116/RFC-0137's records-and-narrowing cluster solves the *reusable, named* half
-of splitting a struct's fields for independent use (a `.{ field }` projection, or a
+of splitting a struct's fields for independent use (a `.{ .field }` projection, or a
 named `view` declaration per RFC-0109). Neither gives a caller a way to split a
 reference into several disjoint live sub-references **in one statement, without
 naming a type for it** — the case that's used once and doesn't merit declaring
@@ -62,7 +62,7 @@ anything:
 
 ```metel
 fun rebalance(h: &var Handle) {
-    &var { golden_tickets, bars } = h;
+    &var { .golden_tickets, .bars } = h;
     // golden_tickets: &var Token, bars: &var Vec<Bar> — both live, disjoint borrows
     golden_tickets.redeem();
     bars.push(Bar::default());
@@ -93,7 +93,7 @@ that is *already* `&var`-typed:
 
 ```metel
 fun rebalance(h: &var Handle) {
-    &var { golden_tickets, bars } = h;
+    &var { .golden_tickets, .bars } = h;
     golden_tickets.redeem();          // &var Token
     bars.push(Bar::default());        // &var Vec<Bar>
 }
@@ -107,7 +107,7 @@ right-hand side of a plain, non-reference value:
 
 ```metel
 fun peek(point: Point) {
-    { x, y } = &point;
+    { .x, .y } = &point;
     // x: &i32, y: &i32 — point itself still usable afterward
 }
 ```

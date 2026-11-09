@@ -32,7 +32,7 @@ rule (#1826), drop-site recording (#1827).
 | **Super-aspects** | `aspect A: B`; a `deriving` mark (std-only) makes a derivation generate the super; exclusions (`!Drop`) are grant-time checks. | RFC-0213 |
 | **Generic code** | Exact per-instantiation predicate; a sound approximation in generic bodies (yes / no / undecided, and undecided is a diagnostic, not a move); stored ownership interfaces as the end state. | RFC-0206 sections 2 and 6 |
 | **Discard** | A positive capability meaning "may be dropped". Bare `T` is possibly linear; `Discard` is inferred from bodies and stated on `pub` functions once `linear` ships. | RFC-0089 section 2.2 |
-| **Projections** | A residual `T.{ fields }` gets structural `Copy` (with its provided `Clone`) and the `Drop` dispatch in v0.16.0; the rest is later. | RFC-0206 section 6, RFC-0211 |
+| **Projections** | A residual `T.{ .fields }` gets structural `Copy` (with its provided `Clone`) and the `Drop` dispatch in v0.16.0; the rest is later. | RFC-0206 section 6, RFC-0211 |
 
 The one-sentence design: **ownership class is a declaration-site fact, implicit duplication is sealed to a
 representation copy, and everything else that looks like a special case is a property of an aspect declaration.**
@@ -320,19 +320,19 @@ supplies a written one, and a wrapper of a field with a valid `Clone` derives no
 
 ## 7. Projections and residuals
 
-A residual `T.{ fields }` (RFC-0137) is the same brand with some fields narrowed away.
+A residual `T.{ .fields }` (RFC-0137) is the same brand with some fields narrowed away.
 
 ```metel
 struct Doc { title: String, n: i64 }
 copy struct Point { x: i64, y: i64 }
 
 let p := Point { x = 1, y = 2 };
-let q := p.{ x };               // Point.{ x }: Copy (structural, sealed) with its provided Clone
+let q := p.{ .x };               // Point.{ .x }: Copy (structural, sealed) with its provided Clone
 let r := q; let s := q;         // accepted: copies
 
 fun dup<T: Clone>(x: &T) -> (T, T) { (x.clone(), x.clone()) }
 let d := Doc { title = "t", n = 1 };
-let t := d.{ title };           // a projection moves the field out (a borrowed projection of a non-Copy field is rejected, RFC-0137)
+let t := d.{ .title };           // a projection moves the field out (a borrowed projection of a non-Copy field is rejected, RFC-0137)
 dup(&t);                        // T0012 in v0.16.0: Clone has no impl for the projection (metel-core#1788)
 ```
 
@@ -348,7 +348,7 @@ written residual impls (RFC-0214).
 
 **Native for now.** The structural `Copy` rule for named types is compiler logic in v0.16.0, so the Row machinery is
 not on the critical path. It is a named, time-boxed exception tracked by #1823, whose replacement must keep residuals such as
-`W<String>.{ n }` of `copy struct W<T> { n: i64, value: T }` `Copy` (the stored interface must be row-sensitive). Scope B
+`W<String>.{ .n }` of `copy struct W<T> { n: i64, value: T }` `Copy` (the stored interface must be row-sensitive). Scope B
 means ordinary impl availability; compiler-computed ownership capabilities (`Discard`) follow the surviving fields.
 
 ### 7.1 Drafts (not dependencies)
@@ -401,7 +401,7 @@ a symbolic row (a compile-time refinement or per-field customisation of a derive
 
 | Workaround | Where | Exit | Tracked |
 |---|---|---|---|
-| Structural `Copy` for named types is native | v0.16.0 | std row template; residuals such as `W<String>.{ n }` stay `Copy` | #1823 |
+| Structural `Copy` for named types is native | v0.16.0 | std row template; residuals such as `W<String>.{ .n }` stay `Copy` | #1823 |
 | Arrays and the record `Clone` hook are compiler rules | v0.16.0 | std impls over a compile-time `N`, `comptime for` | #1811, #1390, #702 |
 | Tuple structural arms are native | v0.16.0 | variadics (RFC-0125) | #794 |
 | Native named-type `Clone` derivation | v0.16.0 | comptime derive (RFC-0092, RFC-0093) | #1829 |

@@ -47,7 +47,7 @@ field-wise bounds, or the semantics of negative *aspect* bounds (RFC-0072).
 
 ## Motivation
 
-A row bound today is positive or negative as a **whole**. `{ x: f64, .. }` says what a record
+A row bound today is positive or negative as a **whole**. `{ .x: f64, .. }` says what a record
 must carry; `!{ token }` says what it must not. They are different bounds, so a function that
 needs both has to write two:
 
@@ -141,7 +141,7 @@ way to say "an `x`, but not this type" (`{ x, !x: u8, .. }`).
 
 Several types for one label are written by **repeating the entry** (`{ !x: u8, !x: u16, .. }`).
 There is no list form in the type position: the comma already separates entries, so
-`{ x: u8, u16 }` is an entry followed by a label-only entry. A union shorthand (`!x: u8 | u16`)
+`{ .x: u8, .u16 }` is an entry followed by a label-only entry. A union shorthand (`!x: u8 | u16`)
 can be added later as sugar for the repeated form if structural unions (RFC-0165) land; it needs
 no change to the semantics here.
 

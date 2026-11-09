@@ -23,12 +23,12 @@ impl_status: implemented
 
 ## Summary
 
-A by-value parameter whose type has an open row tail (`{ x: f64, ..R }`, `Handle.{ fd, ..R }`)
+A by-value parameter whose type has an open row tail (`{ .x: f64, ..R }`, `Handle.{ .fd, ..R }`)
 owns the whole argument. The fields the parameter does not name are the callee's to move,
 return or drop; they are not forgotten at the call boundary. This replaces RFC-0121 §4's rule
 that by-value width subtyping is sound only when every unnamed field is `Copy`, and it makes
-the inline spelling `{ f: T, ..Rest }` mean the same as the row equation
-`{ ..R } where R = { f: T, ..Rest }`.
+the inline spelling `{ .f: T, ..Rest }` mean the same as the row equation
+`{ ..R } where R = { .f: T, ..Rest }`.
 
 ---
 
@@ -39,14 +39,14 @@ record and keep the rest. They are accepted or rejected differently:
 
 ```metel
 // rejected today (T0033) when `Rest` holds a `String`
-fun strip<row Rest>(d: { token: String, ..Rest }) -> { ..Rest } {
-    let { token: _, ..rest } := d;
+fun strip<row Rest>(d: { .token: String, ..Rest }) -> { ..Rest } {
+    let { .token: _, ..rest } := d;
     rest
 }
 
 // accepted today, same meaning
-fun strip<row R, row Rest>(d: { ..R }) -> { ..Rest } where R = { token: String, ..Rest } {
-    let { token: _, ..rest } := d;
+fun strip<row R, row Rest>(d: { ..R }) -> { ..Rest } where R = { .token: String, ..Rest } {
+    let { .token: _, ..rest } := d;
     rest
 }
 ```
@@ -67,7 +67,7 @@ argument, the owner exists: the callee. It can return the remainder, destructure
 remainder pattern, or let it drop at the end of its scope, as it can for any owned value.
 
 **The restriction has a visible cost.** The `forgets field` error (`T0033`) fires on the most
-natural generic signature, `fun get_x<row R>(p: { x: f64, ..R }) -> f64`, whenever a caller
+natural generic signature, `fun get_x<row R>(p: { .x: f64, ..R }) -> f64`, whenever a caller
 passes a record with a `String` in it, and the only fix is to rewrite the signature in the
 equation form.
 
@@ -77,8 +77,8 @@ equation form.
 
 ### 1.1 The rule
 
-For a by-value parameter whose declared type is an open record (`{ f₁: T₁, …, ..R }`) or an
-open projection (`Handle.{ f₁, …, ..R }`):
+For a by-value parameter whose declared type is an open record (`{ .f₁: T₁, …, ..R }`) or an
+open projection (`Handle.{ .f₁, …, ..R }`):
 
 - the argument is moved into the parameter whole;
 - inside the body the parameter has the named fields at their declared types and the
@@ -98,9 +98,9 @@ documentation is retitled for that rule alone.
 
 ### 1.2 Equivalence with the equation form
 
-`{ f: T, ..R }` in a by-value parameter position is defined as `{ ..S }` with the equation
-`S = { f: T, ..R }`. Both spellings then accept and reject the same programs. An anonymous
-tail (`{ x: f64, .. }`) is the same with a fresh tail name the body cannot mention; the
+`{ .f: T, ..R }` in a by-value parameter position is defined as `{ ..S }` with the equation
+`S = { .f: T, ..R }`. Both spellings then accept and reject the same programs. An anonymous
+tail (`{ .x: f64, .. }`) is the same with a fresh tail name the body cannot mention; the
 callee still owns, and drops, what it cannot name.
 
 ### 1.3 Positions that do not change
@@ -136,11 +136,11 @@ them, not decided here:
   over an unknown remainder cannot drop it. Once linear fields exist, an open-row parameter
   over a remainder that may contain one must be required to consume or return the remainder.
 - **Types with a `Drop` impl (RFC-0137 §5, #949).** A by-value parameter whose type is a nominal
-  residual of a brand that has a `Drop` impl, such as `Handle.{ fd, ..R }`, receives the whole
+  residual of a brand that has a `Drop` impl, such as `Handle.{ .fd, ..R }`, receives the whole
   `Handle`, and dropping it needs drop dispatch against a narrowed residual, which is not
   implemented. Until it is, such a parameter is rejected with a diagnostic of its own, a new error
   code allocated at implementation, whose message names `Drop` and #949: "passing `Handle` by value
-  to an open row parameter would drop a narrowed `Handle.{ fd }`; drop dispatch against a narrowed
+  to an open row parameter would drop a narrowed `Handle.{ .fd }`; drop dispatch against a narrowed
   residual is not implemented (RFC-0137 §5, #949)". A plain record that only contains a `Drop`
   value in its remainder is not affected, because dropping a whole value is ordinary. Today a
   `Drop` impl can only be empty (non-empty bodies are rejected until #261), so this restriction

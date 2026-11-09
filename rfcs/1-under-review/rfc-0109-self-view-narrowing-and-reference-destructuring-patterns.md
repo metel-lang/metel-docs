@@ -66,12 +66,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 > direct consequence rather than being separately resolved.
 
 > **Status — under review (2026-08-27).** Committed to v0.18.1 (issue #842, milestoned 2026-08-27) — after RFC-0137's own (v0.13.0, metel-core#827), since this RFC's foundation is now RFC-0137's specifics directly, not just its theme.
-> **New downstream dependent, 2026-08-28 — milestone unchanged (v0.18.1).** RFC-0137 §5 was amended so that a `Drop` impl's required field set is *declared on the `drop` receiver type* rather than inferred from the body. The fixed form of that receiver — `fun drop(&var self: Self.{ fd })`, specified by **RFC-0147 (Projection-Receiver Destructors, metel-core#887)** — is precisely this RFC's residual-typed-receiver mechanism (§2). RFC-0147 therefore depends on this RFC and follows it into **v0.18.1** — the "view frontier" milestone the roadmap already places self-view narrowing in, alongside RFC-0121 and RFC-0144. (An intermediate move of #842 to v0.13.0 was reverted: v0.13.0 is records-core and does not include the view work.) RFC-0137's own branded-rows representation stays v0.13.0; only §5's narrowed `Drop` receiver forms wait for this RFC. The row-parametric form is **RFC-0148**, later still, via RFC-0146 → RFC-0121.
+> **New downstream dependent, 2026-08-28 — milestone unchanged (v0.18.1).** RFC-0137 §5 was amended so that a `Drop` impl's required field set is *declared on the `drop` receiver type* rather than inferred from the body. The fixed form of that receiver — `fun drop(&var self: Self.{ .fd })`, specified by **RFC-0147 (Projection-Receiver Destructors, metel-core#887)** — is precisely this RFC's residual-typed-receiver mechanism (§2). RFC-0147 therefore depends on this RFC and follows it into **v0.18.1** — the "view frontier" milestone the roadmap already places self-view narrowing in, alongside RFC-0121 and RFC-0144. (An intermediate move of #842 to v0.13.0 was reverted: v0.13.0 is records-core and does not include the view work.) RFC-0137's own branded-rows representation stays v0.13.0; only §5's narrowed `Drop` receiver forms wait for this RFC. The row-parametric form is **RFC-0148**, later still, via RFC-0146 → RFC-0121.
 
 ## Summary
 
 `view TicketView for Ticketing { golden_tickets }` declares a name for a **residual
-type** RFC-0137 already produces — `Ticketing.{ golden_tickets }` — nothing more.
+type** RFC-0137 already produces — `Ticketing.{ .golden_tickets }` — nothing more.
 **Self-view narrowing** — an inherent method's `self` parameter declared as
 `&TicketView`/`&var TicketView` — is the primary application: a `self` parameter
 typed as the struct's own residual, checked by the compiler with no call-site syntax
@@ -90,10 +90,10 @@ original draft), not this document.
 ## Motivation
 
 RFC-0117/RFC-0119/RFC-0137, as currently scoped, solve the *reusable, generic* half
-of Rust's view-types motivation — `.{ field }` projection and RFC-0137's own residual
+of Rust's view-types motivation — `.{ .field }` projection and RFC-0137's own residual
 types work across any struct — but give a *caller* no way to name and reuse a
 specific sub-shape across multiple call sites without repeating the field list (an
-inline `Self.{ fd }` parameter type) or losing the brand entirely (RFC-0119's
+inline `Self.{ .fd }` parameter type) or losing the brand entirely (RFC-0119's
 `to_record()`, which strips it on purpose, RFC-0119 §3). Rust's own example:
 
 ```rust
@@ -106,7 +106,7 @@ self.should_insert_ticket(&other);     // works with view types: self's other fi
 ```
 
 Metel's residual types (RFC-0137) already make the *callee* side of this work — a
-method can already declare `self: Self.{ golden_tickets }` and get exactly the
+method can already declare `self: Self.{ .golden_tickets }` and get exactly the
 narrowing this needs. What's missing is a **name** for that shape, reusable across
 every method that wants the same narrowing, instead of repeating the field list at
 every declaration and hoping they stay in sync by eye. That's the entire remaining
@@ -125,7 +125,7 @@ view TicketView for Ticketing { golden_tickets }
 The field list is bare — no re-declared types; `golden_tickets`'s type is looked up
 from `Ticketing`'s own declaration, not restated, avoiding the divergence risk a
 re-typed field list would create. This declares `TicketView` as a name for
-`Ticketing.{ golden_tickets }` (RFC-0137 §2's residual type of `Ticketing`, narrowed
+`Ticketing.{ .golden_tickets }` (RFC-0137 §2's residual type of `Ticketing`, narrowed
 to that one field) — nothing about the representation is new; only the name is.
 
 ```metel
@@ -170,7 +170,7 @@ fun example(t: &var Ticketing) {
 The caller writes nothing beyond an ordinary method call. No `.to_record()` appears
 anywhere; the promise lives entirely in `should_insert_ticket`'s own signature. This
 is RFC-0137 §4 ("Passing a residual to a function") applied to `self` specifically —
-`self: &TicketView` is exactly `self: &Ticketing.{ golden_tickets }`, spelled through
+`self: &TicketView` is exactly `self: &Ticketing.{ .golden_tickets }`, spelled through
 the alias, checked the same way any residual-typed parameter already is. Because this
 never touches `ToRecord`/`FromRecord`/coherence at all (RFC-0137 §3 again — a plain
 struct's row is never visible to impl resolution), self-view narrowing needs **no
@@ -179,7 +179,7 @@ opt-in-tier ones.
 
 **Field-access accuracy is ordinary type-checking, not a bespoke pass.** If
 `should_insert_ticket`'s body read `self.bars`, that's a plain type error — `self`'s
-declared type (`Ticketing.{ golden_tickets }`, via the alias) doesn't have `bars` in
+declared type (`Ticketing.{ .golden_tickets }`, via the alias) doesn't have `bars` in
 its row. The original draft framed this as a soundness-relevant checking pass this
 RFC needed to specify (mirroring RFC-0091 §1's `uses(fd)` checking discipline); under
 the RFC-0137 reading it's not a new checking philosophy at all, just the field-access
@@ -397,7 +397,7 @@ should also be composable per-field as Niko proposes, is open for this RFC.
 
 ## Alternatives considered
 
-- **Anonymous, brandless self-views** (`self: &{ golden_tickets: Token }`, this
+- **Anonymous, brandless self-views** (`self: &{ .golden_tickets: Token }`, this
   RFC's own original spelling before its first revision). Superseded, not merely
   rejected: it worked, but required re-deriving the ambient-typing safety argument
   from "declared inside an inherent impl" each time, gave no free reversibility or

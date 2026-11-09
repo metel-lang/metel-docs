@@ -15,7 +15,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 
 ## Summary
 
-A value narrowed by a partial move or a projection has a **residual** type, `Doc.{ title }`: the same brand with
+A value narrowed by a partial move or a projection has a **residual** type, `Doc.{ .title }`: the same brand with
 fewer fields (RFC-0137). The language did not say which aspects a residual satisfies, and the implementation answered
 inconsistently. In v0.16.0 the rule is:
 
@@ -27,12 +27,12 @@ inconsistently. In v0.16.0 the rule is:
 copy struct Point { x: i64, y: i64 }
 struct Doc derives Clone { title: String, n: i64 }
 
-let p2 := p.{ x };           // Point.{ x }: Copy, because x is
-let t := d.{ title };        // the projection moves the field out
+let p2 := p.{ .x };           // Point.{ .x }: Copy, because x is
+let t := d.{ .title };        // the projection moves the field out
 t.clone()                     // T0012: Clone has no impl for the projection (derived: template not yet available)
 ```
 
-A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ title }`; its body may read any field.
+A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ .title }`; its body may read any field.
 
 ---
 
@@ -41,11 +41,11 @@ A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ title }`; it
 Measured against the build of 2026-11-02:
 
 - **Methods do not apply to a residual.** After `let n := h.name;`, a method of `Handle` called on `h` gives
-  `T0002: cannot infer receiver type`. The narrowed-`self` form of RFC-0109 (`&Self.{ fd }`) does not parse yet.
-- **Bounds look through the brand.** `Point.{ x }` of a `Copy` struct satisfies `T: Copy` today and can be used twice
-  under `--move-check`; `Doc.{ title }` satisfies `T: Clone` when `Doc` has a user impl.
+  `T0002: cannot infer receiver type`. The narrowed-`self` form of RFC-0109 (`&Self.{ .fd }`) does not parse yet.
+- **Bounds look through the brand.** `Point.{ .x }` of a `Copy` struct satisfies `T: Copy` today and can be used twice
+  under `--move-check`; `Doc.{ .title }` satisfies `T: Clone` when `Doc` has a user impl.
 - **Dispatch does not follow the bound.** Through `fun dup<T: Clone>(t: &T) -> T { t.clone() }`, a full `Doc` runs
-  the user's `clone`, and the residual `Doc.{ title }` returns a value without running it (metel-core#1788). A user
+  the user's `clone`, and the residual `Doc.{ .title }` returns a value without running it (metel-core#1788). A user
   `Clone` that encodes an invariant is bypassed.
 
 So bound satisfaction treats a residual as its brand, while dispatch does not. One of the two must change, and the
@@ -58,10 +58,10 @@ aspects.
 ## 1. The rule (v0.16.0)
 
 **Legality.**
-1. A residual `T.{ fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` (RFC-0206,
+1. A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` (RFC-0206,
    RFC-0207) and the residual's **present** fields are `Copy`. It then has the provided `Clone` that `Copy` brings. The
    rule is native compiler logic in v0.16.0 (metel-core#1823). It must be evaluated over the present fields: for
-   `copy struct W<T> { n: i64, value: T }`, `W<String>.{ n }` is `Copy`.
+   `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`.
 2. A residual does **not** satisfy `A` through a hand-written impl of `A` for `T` (an `extend T: A { … }`), because the
    body may read a field the residual no longer has. A bound `T: A` on a residual is `T0012` unless rule 1 or rule 5
    applies.
@@ -82,7 +82,7 @@ aspects.
 cause; when the aspect is derived, the note says the template is not yet available. The language keeps no edit
 history, so there is no warning at the edit.
 
-**Marker aspects.** `Point.{ x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A
+**Marker aspects.** `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A
 residual of a type that cannot grant `Copy` (a field is not) never is, even if the remaining fields are: the
 declaration says so, not the shape. A type whose `Clone` is written is not `Copy` (RFC-0206 section 2), so its
 projections move like the value itself.
@@ -95,11 +95,11 @@ projections move like the value itself.
 
 1. **A written clone.** `extend Doc: Clone { fun clone(&self) -> Doc { … self.n … } }`: the residual does not satisfy
    `Clone`. The program of metel-core#1788 is `T0012` at the call.
-2. **A derived clone.** `Doc derives Clone`, `t := d.{ title }`, `t.clone()`: `T0012`, "template not yet available".
+2. **A derived clone.** `Doc derives Clone`, `t := d.{ .title }`, `t.clone()`: `T0012`, "template not yet available".
 3. **A custom duplicate and `Copy` do not mix.** `struct Cache { data: i64, hits: i64 }` with a written `clone` that
-   resets `hits` is not `Copy`, so `cache.{ data }` moves; it is not `Clone` either (rule 2).
-4. **Copy of a projection.** `copy struct Point { x: i64, y: i64 }`, `p.{ x }` used twice: accepted, by rule 1.
-5. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `Copy`; `H.{ fd }` is not `Copy`
+   resets `hits` is not `Copy`, so `cache.{ .data }` moves; it is not `Clone` either (rule 2).
+4. **Copy of a projection.** `copy struct Point { x: i64, y: i64 }`, `p.{ .x }` used twice: accepted, by rule 1.
+5. **A non-grantable brand.** `struct H { fd: i64, name: String }` cannot grant `Copy`; `H.{ .fd }` is not `Copy`
    although `fd` is. A copyable projection of it needs a separate type.
 6. **Widening.** A cloned residual is widened by restoring the missing fields (RFC-0137 section 6). That restores the
    width and does not validate the relation between the restored and the retained fields: RFC-0137 section 6
@@ -110,7 +110,7 @@ projections move like the value itself.
 ## 3. Alternatives considered
 
 1. **Residuals satisfy nothing.** Declined: it breaks implicitly copied projections, which work today and are what
-   `p.{ x }` is for.
+   `p.{ .x }` is for.
 2. **Residuals satisfy whatever the brand does** (today's bounds) and dispatch calls the brand's impl. Declined:
    unsound for hand-written impls, which would read fields the residual lacks.
 3. **Derive a required field set from each hand-written impl's body.** Declined by RFC-0137 section 5.

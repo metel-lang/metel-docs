@@ -5,12 +5,12 @@ date: '2026-11-07'
 status: integrated
 tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
 coverage:
-  "1": { kind: blocked, reason: "Record fields are still bare identifiers until the dotted-label grammar and sweep land.", ref: "metel-core#1847" }
-  "2": { kind: blocked, reason: "The struct-from-record spread is implemented with RFC-0100's construction call.", ref: "metel-core#1847" }
-  "3": { kind: blocked, reason: "The prototype cases become fixtures of the dotted-label grammar.", ref: "metel-core#1847" }
-  "4": { kind: blocked, reason: "The bare-field parse error and the slip lint get fixtures at implementation.", ref: "metel-core#1847" }
-  "5": { kind: blocked, reason: "The empty-record position fixtures arrive with the grammar change.", ref: "metel-core#1847" }
-  "6": { kind: blocked, reason: "The worked examples become fixtures of the implementation.", ref: "metel-core#1847" }
+  "1": { spec: "spec.types.record-labels.legality-1" }
+  "2": { kind: untestable, reason: "The meeting of a struct and a record is RFC-0100 section 7 spread, covered by that RFC rules and fixtures." }
+  "3": { spec: "spec.types.record-labels.legality-2" }
+  "4": { spec: "spec.types.record-labels.legality-1" }
+  "5": { spec: "spec.types.record-labels.legality-2" }
+  "6": { kind: untestable, reason: "The worked examples are fixtures of the implementation, each citing the record-label rules." }
 updated: '2026-11-08'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
 impl_status: not-started

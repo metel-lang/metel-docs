@@ -17,7 +17,7 @@ impl_status: implemented
 ## Summary
 
 Open rows (RFC-0121) let a signature name *the rest* of a record, and a `where` equation
-(`R = { token: Token, ..Rest }`) names what is left after removing a field. Nothing in the
+(`R = { .token: Token, ..Rest }`) names what is left after removing a field. Nothing in the
 language lets a generic **body** produce or consume a value of that remainder. This RFC
 adds the two missing value-level forms, each the mirror of a form that already exists at
 the type level:
@@ -25,15 +25,15 @@ the type level:
 - a **rest pattern** that binds the unnamed remainder of a record — `{ token, ..rest }` —
   which moves the named fields out and gives the rest an owner;
 - a **row spread** in a record literal that places a record's fields into a new one —
-  `{ ..rest, auth = a }`.
+  `{ ..rest, .auth = a }`.
 
 With both, the typestate step that RFC-0121 §3 uses as its motivating example can be
 written:
 
 ```metel
-extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
+extend<row R, row Rest> Session<..R> where R = { .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let { token: _, ..rest } := self.data;      // rest : { ..Rest }
+        let { .token: _, ..rest } := self.data;      // rest : { ..Rest }
         Session(id = self.id, data = rest)
     }
 }
@@ -53,19 +53,19 @@ settled the *types*. It left the body as `{ ... }`.
 Every attempt to fill the body fails at present (metel-core#1399):
 
 - Building the result from the whole, `Session(id = self.id, data = self.data)`, is
-  rejected. Declared parameters are rigid (RFC-0173), so `{ token: Token, ..Rest }` is not
+  rejected. Declared parameters are rigid (RFC-0173), so `{ .token: Token, ..Rest }` is not
   `{ ..Rest }`, and no coercion removes a field.
 - Writing a removed label back (`value.data.token = ...`) is rejected by design: a
   remainder cannot regain a label by assignment inside the generic definition.
 - There is no value-level spelling of "this record without `token`". A record pattern's
   bare `..` discards the rest rather than binding it, and a record literal has no
-  `..`-form at all (`{ ..p, id = 1 }` is a parse error), even though the same tail is
-  written freely in a record *type* (`{ ..R, id: i64 }`).
+  `..`-form at all (`{ ..p, .id = 1 }` is a parse error), even though the same tail is
+  written freely in a record *type* (`{ ..R, .id: i64 }`).
 
 The consequence is that the headline use of open rows — typestate over a row, where a step
 consumes a field and returns the session at a smaller row — is expressible in its
 signature and inexpressible in its implementation. The symmetric operation, extending a
-record by a field inside a generic body (`{ ..R, auth: String }` as a *value*), has the
+record by a field inside a generic body (`{ ..R, .auth: String }` as a *value*), has the
 same gap. Concrete rows are unaffected: with known fields a literal can be rebuilt by
 hand. The problem exists only for an abstract row, where the fields are not nameable.
 
@@ -97,7 +97,7 @@ alternative. This RFC supplies the operation that makes that sentence true: a wa
   is the fixed-label case it builds on.
 - Iterating a row's fields (RFC-0174).
 - Narrowing *inside* a field (RFC-0150).
-- Changing what `{ x: T, ..R }` as a *type* means, or the by-value width-subtyping rule.
+- Changing what `{ .x: T, ..R }` as a *type* means, or the by-value width-subtyping rule.
 
 ---
 
@@ -109,8 +109,8 @@ A record pattern may end in `..name`, binding every field the pattern did not na
 record:
 
 ```metel
-let { token, ..rest } := value;          // value : { token: Token, extra: i64, flag: boolean }
-// token : Token, rest : { extra: i64, flag: boolean }
+let { .token, ..rest } := value;          // value : { .token: Token, .extra: i64, .flag: boolean }
+// token : Token, rest : { .extra: i64, .flag: boolean }
 ```
 
 This is the record counterpart of the array pattern's `..name`, and a refinement of the
@@ -125,9 +125,9 @@ named fields.
 - For an abstract row, use the strongest decomposition entailed by the facts in scope,
   remove the labels named by the pattern, and retain every other known field and the
   remaining open tail. For example, if the scrutinee has type `{ ..S }` and the declaration
-  states `S = { token: Token, extra: i64, ..Rest }`, then `{ token, ..rest }` gives
-  `rest: { extra: i64, ..Rest }`. If the decomposition is
-  `S = { token: Token, ..Rest }`, it gives `{ ..Rest }`.
+  states `S = { .token: Token, .extra: i64, ..Rest }`, then `{ token, ..rest }` gives
+  `rest: { .extra: i64, ..Rest }`. If the decomposition is
+  `S = { .token: Token, ..Rest }`, it gives `{ ..Rest }`.
 - If the named field is not entailed to be present, reject the pattern with a presence
   diagnostic ("`token` is not known to be present in `R`; add a bound or an equation"). If
   presence is entailed but the facts do not determine the remainder type — for example, a
@@ -164,10 +164,10 @@ A record literal may contain `..expr` among its field initializers, placing ever
 `expr` into the new record:
 
 ```metel
-{ ..rest, auth = a }          // rest : { ..R }  ⇒  { ..R, auth: String }
+{ ..rest, .auth = a }          // rest : { ..R }  ⇒  { ..R, auth: String }
 ```
 
-This is the value-level form of the type-level tail `{ ..R, auth: String }`; the position of
+This is the value-level form of the type-level tail `{ ..R, .auth: String }`; the position of
 `..expr` among the initializers is not significant, matching record field order everywhere
 else.
 
@@ -178,7 +178,7 @@ It is well-formed only if no label occurs twice, so each written label must be p
 - if the spread's row is concrete, by inspection;
 - if it is abstract, by a fact the checker already holds for the body: a negative bound
   (`row R: !{ auth }`), or the label a decomposition removed — a remainder `Rest` from
-  `R = { token: Token, ..Rest }` lacks `token`, since `R` contains `token` once. The checker
+  `R = { .token: Token, ..Rest }` lacks `token`, since `R` contains `token` once. The checker
   installs both when it checks a generic definition (RFC-0173's implementation), so a spread's
   absence proof is a lookup, not new inference.
 
@@ -206,9 +206,9 @@ identity.
 The typestate step (signature unchanged from RFC-0121):
 
 ```metel
-extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
+extend<row R, row Rest> Session<..R> where R = { .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let { token: _, ..rest } := self.data; // §1 case 2: rest : { ..Rest }
+        let { .token: _, ..rest } := self.data; // §1 case 2: rest : { ..Rest }
         Session(id = self.id, data = rest)
     }
 }
@@ -217,9 +217,9 @@ extend<row R, row Rest> Session<..R> where R = { token: Token, ..Rest } {
 The reverse step, adding a field (the equation here is for the *result*):
 
 ```metel
-extend<row R: !{ token }> Session<..R> {
-    fun with_token(self, t: Token) -> Session<{ ..R, token: Token }> {
-        Session(id = self.id, data = { ..self.data, token = t })   // §2: token ∉ R
+extend<row R: !{ .token }> Session<..R> {
+    fun with_token(self, t: Token) -> Session<{ ..R, .token: Token }> {
+        Session(id = self.id, data = { ..self.data, .token = t })   // §2: token ∉ R
     }
 }
 ```
@@ -227,8 +227,8 @@ extend<row R: !{ token }> Session<..R> {
 A generic utility, taking one known field out and handing back the rest:
 
 ```metel
-fun take_id<row R>(r: { id: i64, ..R }) -> (i64, { ..R }) {
-    let { id, ..rest } := r;
+fun take_id<row R>(r: { .id: i64, ..R }) -> (i64, { ..R }) {
+    let { .id, ..rest } := r;
     (id, rest) // §1 case 1
 }
 ```
@@ -237,12 +237,12 @@ Must **not** compile:
 
 ```metel
 fun bad<row R>(r: { ..R }) -> i64 {
-    let { id, ..rest } := r;       // error: `id` is not known to be present in `R`
+    let { .id, ..rest } := r;       // error: `id` is not known to be present in `R`
     id
 }
 
-fun bad2<row R>(r: { ..R }, a: String) -> { ..R, auth: String } {
-    { ..r, auth = a }             // error: `auth` is not known to be absent from `R`
+fun bad2<row R>(r: { ..R }, a: String) -> { ..R, .auth: String } {
+    { ..r, .auth = a }             // error: `auth` is not known to be absent from `R`
 }
 
 fun bad3<row R>(r: &{ ..R }) -> { ..R } {

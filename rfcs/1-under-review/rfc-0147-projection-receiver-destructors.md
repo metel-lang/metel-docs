@@ -19,7 +19,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 > *computed* a `Drop` impl's required field set from the destructor body — a fixed point
 > over `self`-method calls, resolved 2026-08-25. That was amended: **the required set is
 > now declared on the `drop` receiver type.** This RFC covers the **fixed projection**
-> form of that receiver — `fun drop(&var self: Self.{ fd })` — and carries the
+> form of that receiver — `fun drop(&var self: Self.{ .fd })` — and carries the
 > `drop`-specific rules (body check, move-check relaxation, `dyn Aspect` checkpoint,
 > one-impl-per-type) and the rationale for the change. The *row-parametric* form
 > (`fun drop<row R>(&var self: Self.R) where R: { fd, .. }`) is **RFC-0148**, and depends
@@ -28,7 +28,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 > **Overlap check (`rfc.py new` similarity + `INDEX.md` + `REGISTRY.md`):**
 > - **RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`, v0.18.1)** —
 >   supplies the residual-typed `self` receiver (`view V for S { a }`, `self: &V` =
->   `self: &S.{ a }`, and the anonymous `self: &S.{ a }` form). **Hard dependency.**
+>   `self: &S.{ .a }`, and the anonymous `self: &S.{ .a }` form). **Hard dependency.**
 > - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership.md` own the dispatch
 >   *rule*, amended 2026-08-28 to the declared-receiver required set this RFC's fixed
 >   form plugs into.
@@ -49,7 +49,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 
 ```metel
 extend Handle: Drop {
-    fun drop(&var self: Self.{ fd }) {
+    fun drop(&var self: Self.{ .fd }) {
         sys_close(self.fd)
     }
 }
@@ -66,7 +66,7 @@ RFC-0148):
 | Form | Required field set | Partial move of a `Drop` value |
 |---|---|---|
 | `fun drop(&var self)` | the whole declared row | always rejected (RFC-0071 §7 status quo) |
-| `fun drop(&var self: Self.{ fd })` *(this RFC; receiver via RFC-0109)* | `{ fd }`, exact | allowed iff residual ⊇ `{ fd }` |
+| `fun drop(&var self: Self.{ .fd })` *(this RFC; receiver via RFC-0109)* | `{ fd }`, exact | allowed iff residual ⊇ `{ fd }` |
 | `fun drop<row R>(&var self: Self.R) where R: { fd, .. }` *(RFC-0148)* | `{ fd }`, lower bound | allowed iff residual ⊇ `{ fd }` |
 
 The dispatch rule — **residual row ⊇ required set** — is the spec's
@@ -220,7 +220,7 @@ receiver, and carries the rationale for the amendment.
    becomes sugar once RFC-0148 lands. Mirrors RFC-0146 Open Question 5.
 3. **`reject_inert_destructor` interaction.** Today (`metel-core#292`/`#261`) a non-empty
    `drop` body is rejected outright. The declared-receiver required set does not depend
-   on the body, so `fun drop(&var self: Self.{ fd, name }) {}` with an *empty* body is
+   on the body, so `fun drop(&var self: Self.{ .fd, .name }) {}` with an *empty* body is
    still checkable and meaningful — the *projection* is the contract — which lets
    `metel-core#858`'s reject-path test be written before destructor invocation lands
    (`let n = h.name;` still rejected because `{ fd }` ⊉ `{ fd, name }`). Confirm this is

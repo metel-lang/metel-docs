@@ -93,10 +93,10 @@ Every `struct` — not only an opt-in declaration kind — is represented intern
 `(brand, row)`: a fixed nominal identity plus the set of fields currently present. As
 long as a value has all its original fields, nothing observable changes; `Handle` reads,
 writes, and prints exactly as it does today. Moving a field out narrows the value's
-*type* to a smaller row of the *same brand* — `Handle` becomes `Handle.{ fd }` — rather
+*type* to a smaller row of the *same brand* — `Handle` becomes `Handle.{ .fd }` — rather
 than leaving the value's type unchanged while a separate, compiler-internal bookkeeping
 mechanism remembers what was consumed. Because the residual's brand is exactly `Handle`,
-a parameter typed `Handle.{ fd }` (or, inside `Handle`'s own `extend` block, `Self.{ fd
+a parameter typed `Handle.{ .fd }` (or, inside `Handle`'s own `extend` block, `Self.{ fd
 }`) is understood as "still recognizably a `Handle`, narrowed" — not as a plain
 structural record indistinguishable from an unrelated anonymous record of the same
 shape.
@@ -106,14 +106,14 @@ shape.
 Two gaps in the currently-shipped design motivate this:
 
 **1. A struct's own projection type accepts values that never came from that struct.**
-`extend Handle { fun f(h: Self.{ fd }) -> … }` currently typechecks a call passing a
-bare anonymous record literal (`{ fd = 3 }`) exactly as readily as a value actually
-projected from a real `Handle` (`h.{ fd }`) — confirmed directly against the shipped
+`extend Handle { fun f(h: Self.{ .fd }) -> … }` currently typechecks a call passing a
+bare anonymous record literal (`{ .fd = 3 }`) exactly as readily as a value actually
+projected from a real `Handle` (`h.{ .fd }`) — confirmed directly against the shipped
 v0.13.0 interpreter. RFC-0116 §4 states plainly that this is the intended behavior as
 specified: "projection yields a record type" — a genuinely plain, unbranded one, with no
 tracking of where it came from. That is a real design choice, not an oversight, but it
 means a struct's own projected-field parameter type currently states no more than "has
-these fields, whatever their origin" — the same thing `{ fd: i64 }` written directly
+these fields, whatever their origin" — the same thing `{ .fd: i64 }` written directly
 would say, with no benefit from naming the struct at all beyond avoiding repetition of
 field types.
 
@@ -155,7 +155,7 @@ struct Handle { fd: i64, name: String }
 
 fun main() {
     let h := Handle(fd = 3, name = "x");
-    let n := h.name;   // h : Handle.{ fd } from this point on -- moving a non-Copy
+    let n := h.name;   // h : Handle.{ .fd } from this point on -- moving a non-Copy
                        // field out is implicit, no `move` keyword exists (verified
                        // 2026-08-27: `move h.name` is a parse error, not a spelling
                        // this grammar has ever had)
@@ -180,11 +180,11 @@ recovering the plain nominal type when every field is restored. Full-width
 normalization remains unchanged, including a genuinely zero-field nominal type.
 
 **A struct's own field projection expression (RFC-0116 §4) produces exactly the same
-residual type as a partial move does.** `h.{ fd }` and `h.name` moved out (leaving only
-`fd`) both yield `Handle.{ fd }` — projection is a move of the named fields that keeps
+residual type as a partial move does.** `h.{ .fd }` and `h.name` moved out (leaving only
+`fd`) both yield `Handle.{ .fd }` — projection is a move of the named fields that keeps
 the brand: `Copy` fields are copied, non-`Copy` fields are moved out of the operand and it
 narrows by them. It is therefore rejected through a reference for a non-`Copy` field, and a
-borrowed projection (`&h.{ name }`) of one is rejected too, since it would move. Lending a
+borrowed projection (`&h.{ .name }`) of one is rejected too, since it would move. Lending a
 sub-row without consuming it needs a borrowing form, which belongs to RFC-0109 and
 RFC-0122.
 
@@ -202,7 +202,7 @@ row-conditional impl resolution stays exactly as opt-in as it is under RFC-0120'
 three-tier model:
 
 - A plain `struct` has a row, but that row is never visible to structural matching.
-  `Handle.{ fd }` remains a distinct type from `{ fd: i64 }` for every purpose that
+  `Handle.{ .fd }` remains a distinct type from `{ .fd: i64 }` for every purpose that
   matters to a caller — it is still, unambiguously, `Handle`'s own row — but neither
   `Handle` nor any residual or view produced from it ever satisfies a row bound or a
   row-conditional `extend`.
@@ -233,18 +233,18 @@ declared `struct` and one declared `record` (RFC-0120):
 struct Handle { fd: i64, name: String }
 record NamedHandle { fd: i64, name: String }   // RFC-0120 — different declaration, different brand
 
-fun wants_a_record<record T: { fd: i64, name: String, .. }>(t: T) -> i64 { t.fd }
+fun wants_a_record<record T: { .fd: i64, .name: String, .. }>(t: T) -> i64 { t.fd }
 
 fun main() {
     let h = Handle { fd = 3, name = "x" };
     let r = NamedHandle { fd = 3, name = "x" };
 
     wants_a_record(r);            // OK — NamedHandle opted in at declaration
-    wants_a_record(h.{ fd, name }); // REJECTED — every field named, still not a record
+    wants_a_record(h.{ .fd, .name }); // REJECTED — every field named, still not a record
 }
 ```
 
-`h.{ fd, name }` names every field `Handle` has. Its row, at that point, is *identical*
+`h.{ .fd, .name }` names every field `Handle` has. Its row, at that point, is *identical*
 in content to `r`'s. It is still rejected, for exactly the reason §"Resolution" states:
 eligibility was fixed the moment `struct Handle` was declared, not `record NamedHandle`,
 and projection — at any width, including full width — narrows or restates a row without
@@ -254,7 +254,7 @@ explicit, one-way opt-in — RFC-0120 itself states plainly that "the upgrade is
 one-way door," `struct`-to-`record` only, precisely because declaring `record`
 publishes the type's fields as public interface in a way a `struct` never does —
 rather than something reachable by manipulating an ordinary struct's projection
-syntax. If `h.{ fd, name }` satisfied the bound, declaring `record` would buy nothing
+syntax. If `h.{ .fd, .name }` satisfied the bound, declaring `record` would buy nothing
 a `struct` didn't already have for free.
 
 ## 4. Passing a residual to a function
@@ -266,12 +266,12 @@ regardless of tier, and needs nothing from §3's eligibility gate:
 struct Handle { fd: i64, name: String }
 
 extend Handle {
-    fun describe(h: Self.{ fd }) -> i64 { h.fd }
+    fun describe(h: Self.{ .fd }) -> i64 { h.fd }
 }
 
 fun main() {
     let handle := Handle(fd = 3, name = "x");
-    Handle::describe(handle.{ fd });   // ordinary type-matching: the parameter names
+    Handle::describe(handle.{ .fd });   // ordinary type-matching: the parameter names
                                         // exactly this shape, at this brand
 }
 ```
@@ -282,9 +282,9 @@ impl-resolution coherence, and is unaffected by whether the struct in question e
 opts into RFC-0120's `record` kind.
 
 **A caller must match the parameter's row exactly; there is no implicit truncation at
-the call boundary.** Passing `Handle.{ fd, name }` where `Handle.{ fd }` is expected
+the call boundary.** Passing `Handle.{ .fd, .name }` where `Handle.{ .fd }` is expected
 requires the caller to narrow itself first (`let n = handle.name;`, or the
-equivalent projection `handle.{ fd }`) — the call never silently discards `name` on the
+equivalent projection `handle.{ .fd }`) — the call never silently discards `name` on the
 caller's behalf. This matches RFC-0119 §3's existing "no implicit coercion at call
 sites" stance, applied one level down: narrowing only ever happens through the caller's
 own explicit move or projection, never as a side effect of argument-passing. A future
@@ -301,7 +301,7 @@ that gate.
 > **Amended 2026-08-28.** The required field set is no longer *inferred from the
 > destructor body*. It is **declared on the `drop` method's receiver type** — a narrowed
 > receiver states exactly which fields teardown requires, in one of two forms:
-> `fun drop(&var self: Self.{ fd })` (fixed field projection, via an RFC-0109 named view;
+> `fun drop(&var self: Self.{ .fd })` (fixed field projection, via an RFC-0109 named view;
 > **RFC-0147**) or `fun drop<row R>(&var self: Self.R) where R: { fd, .. }` (lower-bounded
 > row parameter, via RFC-0146; **RFC-0148**). A plain `fun drop(&var self)` requires the
 > whole row. The 2026-08-25 resolution of Open Question 2 (a fixed point over
@@ -404,7 +404,7 @@ per-call-site timing, not a confirmed fact.
 
 ## 6. Widening, and the constructor-invariant risk
 
-Assigning a moved-out field back onto a residual widens its type — `Handle.{ fd }`
+Assigning a moved-out field back onto a residual widens its type — `Handle.{ .fd }`
 becomes `Handle` again once `name` is reassigned. If narrowing and widening are both
 fully automatic, an invariant a struct's constructor enforces can be bypassed through
 nothing more than ordinary field mutation:
@@ -414,7 +414,7 @@ struct SortedPair { small: Box, big: Box }   // invariant: small.value <= big.va
 
 fun main() {
     var p := SortedPair::new(Box(value = 1), Box(value = 10));
-    let old_small := p.small;   // p narrows to .{ big }
+    let old_small := p.small;   // p narrows to .{ .big }
     p.small = Box(value = 999_999);   // p widens back to full SortedPair -- no call
                                           // to `new`, invariant possibly broken
 }
@@ -471,7 +471,7 @@ RFC-0114 landing first.
 Which fields a struct declares is fixed at declaration and does not vary with a generic
 parameter — only the field's *type* does. Narrowing a generic struct's value therefore
 needs nothing beyond what generic field access already provides: `Pair<T> { a: T, b: T
-}` narrows to `Pair<T>.{ b }` (with `b: T` still symbolic) the same way `pair.a`'s type
+}` narrows to `Pair<T>.{ .b }` (with `b: T` still symbolic) the same way `pair.a`'s type
 is already tracked symbolically pre-monomorphization. `Drop`'s row-bounded dispatch
 (§5) composes the same way — a `drop` impl's declared receiver row is written in field
 names, never in `T`, so the required set stays fixed across every instantiation.
@@ -576,7 +576,7 @@ need a corresponding revision if this RFC is accepted:
   this RFC does not itself define. The two receiver forms are separate RFCs, each
   depending only on the feature RFC it needs:
   - **RFC-0147 (Projection-Receiver Destructors)** — the fixed form
-    `fun drop(&var self: Self.{ fd })`. **Depends on RFC-0109 (Self-View Narrowing)** for
+    `fun drop(&var self: Self.{ .fd })`. **Depends on RFC-0109 (Self-View Narrowing)** for
     the residual-typed `self` receiver (§2 there). This is the *minimum* dependency:
     without it there is no narrowed `drop` receiver at all, and §5 reduces to RFC-0071
     §7's blanket ban. RFC-0147 carries the `drop`-specific rules and the rationale for
@@ -606,7 +606,7 @@ first for widening — see §6's Open Question 5 resolution. RFC-0114 remains th
 the constructor-invariant-bypass risk itself, which predates and is independent of
 this RFC.
 **Updated 2026-08-28:** §5's amended row-bounded `Drop` dispatch depends on
-**RFC-0147 → RFC-0109** (for the fixed `fun drop(&var self: Self.{ fd })` receiver form —
+**RFC-0147 → RFC-0109** (for the fixed `fun drop(&var self: Self.{ .fd })` receiver form —
 the minimum; both land in **v0.14.0**, one release after this RFC's own branded-rows
 representation) and, for the parametric `fun drop<row R>(…)` form only, on **RFC-0148 →
 RFC-0146 → RFC-0121** (later still; RFC-0146 and RFC-0148 share v0.14.1, after RFC-0121's v0.14.0). The rest of this RFC — narrowing,
@@ -761,9 +761,9 @@ this corpus's append-only convention for exactly this situation.*
    automatically widens `p`'s type back to `SortedPair` (this is the "automatic
    widening" §6 explicitly says isn't safe to enable yet — contradicting the premise
    that it's deferred); (b) the assignment type-errors because `small` is absent from
-   `p`'s current row `.{ big }` (a real new constraint ordinary field mutation has
+   `p`'s current row `.{ .big }` (a real new constraint ordinary field mutation has
    never had before this RFC, not stated anywhere as a consequence); or (c) the
-   assignment is accepted but `p`'s static type stays `.{ big }` regardless (leaving
+   assignment is accepted but `p`'s static type stays `.{ .big }` regardless (leaving
    the type-checker's belief about `p`'s row diverging from its actual runtime
    fields — its own soundness argument, not given). #836 (the implementation issue)
    cannot proceed past this point without an explicit choice.

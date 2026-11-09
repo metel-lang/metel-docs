@@ -18,7 +18,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1834'
 
 ## Summary
 
-A value narrowed by a partial move or a projection has a **residual** type, `Doc.{ title }`: the same brand with
+A value narrowed by a partial move or a projection has a **residual** type, `Doc.{ .title }`: the same brand with
 fewer fields (RFC-0137). RFC-0211 says what a residual satisfies in v0.16.0. This RFC sets the end state:
 
 > A **granted aspect's row template** (RFC-0209) applies to every residual of the granted brand, with the
@@ -29,9 +29,9 @@ fewer fields (RFC-0137). RFC-0211 says what a residual satisfies in v0.16.0. Thi
 struct Doc derives Clone { title: String, n: i64 }   // the derives entry: the Clone template applies
 copy struct Point { x: i64, y: i64 }
 
-let q := d.{ title };        // q : Doc.{ title }
-q.clone()                     // Doc.{ title }: the template clones the present field
-let p2 := p.{ x };            // p2 : Point.{ x }, Copy because x is
+let q := d.{ .title };        // q : Doc.{ .title }
+q.clone()                     // Doc.{ .title }: the template clones the present field
+let p2 := p.{ .x };            // p2 : Point.{ .x }, Copy because x is
 ```
 
 ---
@@ -39,7 +39,7 @@ let p2 := p.{ x };            // p2 : Point.{ x }, Copy because x is
 ## Motivation
 
 - **A derived aspect should reach residuals.** After RFC-0211, `Doc derives Clone` has a whole-type `Clone` but
-  `d.{ title }` is `T0012` ("template not yet available"). The derivation is field-wise, so the clone of a residual is
+  `d.{ .title }` is `T0012` ("template not yet available"). The derivation is field-wise, so the clone of a residual is
   well defined: clone the present fields.
 - **The native `Copy` rule should become ordinary.** In v0.16.0 the rule that makes a named `Copy` type and its
   residuals `Copy` is compiler logic (metel-core#1823). The std row template of RFC-0209 replaces it with no change
@@ -52,7 +52,7 @@ let p2 := p.{ x };            // p2 : Point.{ x }, Copy because x is
 ## 1. The rule
 
 **Legality.**
-1. A residual `T.{ fields }` of a nominal type `T` satisfies aspect `A` through a **row template** exactly when
+1. A residual `T.{ .fields }` of a nominal type `T` satisfies aspect `A` through a **row template** exactly when
    `T`'s header grants `A` (RFC-0207, RFC-0209), the template's `where` bound holds over the residual's present
    fields, and rule 4 holds.
 2. `Self` in a template denotes the matched type, here the residual. A template method that returns `Self` returns
@@ -64,9 +64,9 @@ let p2 := p.{ x };            // p2 : Point.{ x }, Copy because x is
    residual shape once the language can express one (RFC-0214). An entailment `T: A` implies `T: B` is never assumed
    across the residual boundary.
 
-**Marker aspects.** `Copy` follows rules 1 and 4: `Point.{ x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`,
+**Marker aspects.** `Copy` follows rules 1 and 4: `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`,
 whether or not `y` is, and it has the `Clone` that `Copy` brings. **The stored interface must be row-sensitive**: for
-`copy struct W<T> { n: i64, value: T }`, the projection `W<String>.{ n }` is `Copy` although `W<String>` is not, so
+`copy struct W<T> { n: i64, value: T }`, the projection `W<String>.{ .n }` is `Copy` although `W<String>` is not, so
 the condition of a residual is evaluated over the present fields and not as the whole-type condition. The template must
 keep this when it replaces the native rule (metel-core#1823, #1818).
 
@@ -77,11 +77,11 @@ well defined at every width.
 
 ## 2. Worked examples
 
-1. **A derived clone of a residual.** `Doc derives Clone`, `q := d.{ title }`: `q.clone()` is `Doc.{ title }`, built
+1. **A derived clone of a residual.** `Doc derives Clone`, `q := d.{ .title }`: `q.clone()` is `Doc.{ .title }`, built
    from the present field.
 2. **Replacing a derivation by a written impl.** `derives Clone` to a hand-written `Clone` keeps whole-type behaviour
-   and drops `Clone` from `Doc.{ title }` (RFC-0211 rule 2). A row-generic written impl (RFC-0214) is the remedy.
-3. **A residual of a generic type.** `copy struct W<T> { n: i64, value: T }`, `w: W<String>`, `w.{ n }` is `Copy`.
+   and drops `Clone` from `Doc.{ .title }` (RFC-0211 rule 2). A row-generic written impl (RFC-0214) is the remedy.
+3. **A residual of a generic type.** `copy struct W<T> { n: i64, value: T }`, `w: W<String>`, `w.{ .n }` is `Copy`.
 
 ---
 

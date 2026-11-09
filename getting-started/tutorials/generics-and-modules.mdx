@@ -13,7 +13,7 @@ You've already used row bounds on single events ([page 5](row-bounds)). The same
 bound makes a reducer that doesn't care what else an event carries:
 
 ```metel
-fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
+fun total_weight<record T: { .user: i64, .weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
     for (e in events) { sum = sum + e.weight; }
     return sum;
@@ -21,12 +21,12 @@ fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
 
 fun main() {
     let a := [
-        { user = 7, weight = 42 },
-        { user = 3, weight = 1 },
+        { .user = 7, .weight = 42 },
+        { .user = 3, .weight = 1 },
     ];
     let b := [
-        { user = 7, weight = 8, kind = "buy", line = 4 },   // wider — extra fields
-        { user = 3, weight = 1, kind = "click", line = 5 },
+        { .user = 7, .weight = 8, .kind = "buy", .line = 4 },   // wider — extra fields
+        { .user = 3, .weight = 1, .kind = "click", .line = 5 },
     ];
 
     println(total_weight(a));   // 43
@@ -61,7 +61,7 @@ pub fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
 `metrics/report.mtl`:
 
 ```metel
-pub fun total_weight<record T: { user: i64, weight: i64, .. }>(events: [T]) -> i64 {
+pub fun total_weight<record T: { .user: i64, .weight: i64, .. }>(events: [T]) -> i64 {
     var sum := 0;
     for (e in events) { sum = sum + e.weight; }
     return sum;
@@ -76,7 +76,7 @@ import parse::{parse_int, ParseError};
 import report::total_weight;
 
 fun main() {
-    let events := [{ user = 7, weight = 42 }, { user = 3, weight = 1 }];
+    let events := [{ .user = 7, .weight = 42 }, { .user = 3, .weight = 1 }];
     println("total ${total_weight(events)}");
 }
 ```

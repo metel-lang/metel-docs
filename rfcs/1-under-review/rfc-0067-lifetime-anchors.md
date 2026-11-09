@@ -210,7 +210,7 @@ annotation, or a revised anchor syntax is intentionally open. The current `<&r>`
 ### Relationship to rows, views, and interior references
 
 Branded residual rows already express which **owned** fields of a nominal value remain
-usable: after a partial move, `Handle.{ fd }` records the residual shape. Views and
+usable: after a partial move, `Handle.{ .fd }` records the residual shape. Views and
 row-polymorphic receivers express which fields a borrowed operation may require. Origins
 would supply the complementary fact for references: which **borrowed places** support a
 reference's validity.
