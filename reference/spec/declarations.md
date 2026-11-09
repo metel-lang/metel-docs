@@ -4018,10 +4018,10 @@ The properties of an aspect are read from its declaration by identity. A re-expo
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1799" reason="RFC-0212: aspects are still resolved by name at about 38 sites" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1803" reason="RFC-0212: aspect properties are not yet parsed; the by-identity lookup of Copy (metel-core#1799) is in place" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1799: RFC-0212: aspects are still resolved by name at about 38 sites_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1803: RFC-0212: aspect properties are not yet parsed; the by-identity lookup of Copy (metel-core#1799) is in place_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
