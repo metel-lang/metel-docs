@@ -308,13 +308,52 @@ marks as unverified are marked so here.
 - **RFC-0206** (integrated). Section 6's stored interface, condition language and recursion rules are used unchanged.
   Amended if this RFC is accepted: the `when` placeholder in the "End state" paragraph and step 2 becomes the flow
   list; section 2 gains rules 8 and 9 above; the unstated-condition error of step 4 becomes rule 3 here. Section 2
-  rule 3 (exact predicate) and the undecided diagnostic stay.
+  rule 3 (exact predicate) stays; its undecided diagnostic narrows to the cases with no stored flow (Prototype result).
 - **RFC-0207.** The `derives` entry gains an optional `via` list (and `copy struct` the same clause). Open question 6
   ("whether `copy struct` on a generic type needs the condition in the header") is answered by rules 3 and 5.
 - **RFC-0212, RFC-0213.** Unchanged: `declared`, `Copy: deriving Clone, !Drop` and the colon list are not touched.
 - **RFC-0089.** Section 1's lattice and section 2.2's capabilities are unchanged; this RFC does not compute a class.
 - **Spike metel-core#1815.** Its header grammar and desugaring work carry over with `via` for `when`. Its three
   fixtures that still hit `I0011` (`unbounded`, `nested`, `nested_unbounded`) are the first experiment (open question 2).
+
+---
+
+## Prototype result (2026-11-10)
+
+A reference prototype (branch `proto/rfc-0224-flow` of metel-core, about 40 lines in `ownership_rules.rs`, not for merge)
+changes only how a stored `Copy` rule is consumed in a generic body: a parameter atom is true when a bound grants
+`Copy` and no negative bound forbids it, and otherwise is not known `Copy` (the value moves); a nested application
+reduces through its own stored rule; a concrete argument is asked directly. The existing stored rules, which
+`derives Copy` already produces, are the flow sets. `via` is not implemented; the prototype exercises consumption only.
+
+| Program (move check on) | Before | After |
+|---|---|---|
+| `Wrapper<T>`, `T: Copy`, use twice | accepted | accepted |
+| `Wrapper<T>`, `T` unbounded, use twice | T0047 undecided | **T0019 use of moved value** |
+| `View<T> { r: &T }`, `T` unbounded, use twice | accepted | accepted |
+| `Pair<Wrapper<T>, i64>`, `T: Copy`, use twice | T0047 undecided | **accepted** |
+| `Pair<Wrapper<T>, i64>`, `T` unbounded, use twice | T0047 undecided | **T0019** |
+| `Pair<A, B>`, `A: Copy`, `B` unbounded | not run | T0019 (B is not known `Copy`) |
+| `Pair<T, String>`, `T: Copy` | not run | T0019 (`String` is not `Copy`) |
+| `View<Wrapper<T>>`, `T` unbounded | not run | accepted (a view is always `Copy`) |
+| `Option<T>`, `T: Copy` | not run | T0019 (`Option` is not `Copy`, RFC-0206) |
+
+These are the three #1815 fixtures that hit `I0011` (`unbounded`, `nested`, `nested_unbounded`); all now give the
+expected result. **Regressions.** The full `metel` integration suite: 1893 passed, 1 failed. The frontend `move_check`
+unit tests: 189 passed, 4 failed. Each failure encodes behaviour this RFC changes on purpose, none accepts a copy
+the exact predicate forbids:
+- *Undecided becomes a definite move* (three failures): a nominal whose flow parameter has no `Copy` bound
+  (`Token<T>` with `T: Marker`, `Holder<T>` with `T` unbounded, the `undecided_ownership_in_a_generic_body_is_t0047`
+  fixture) is now a use of a moved value instead of T0047, matching a bare unbounded `T`. RFC-0206 section 2
+  rule 3's *undecided* applies from here on only where no stored flow exists (projections, residuals, `dyn`, row-kinded
+  parameters, rule 6 and 7 above).
+- *Conditional `!Copy` overrides* (two of the unit tests): they are the grant rule 8 forbids. Reclassified, not kept.
+
+**Not exercised.** Residual types (the residual syntax I tried did not parse), `via` itself and its sufficiency check,
+the recursive-declaration fixed point, public-type interfaces across modules, and the computed set for an unstated
+type; the prototype reads the existing per-declaration rules, which carry the flow only where `derives Copy`
+generated them. The impl-selection path was not changed: `abstract_nominal_aspect`'s only callers are the
+move-check ownership facts, so "not copy under these bounds" does not reach impl selection (rule 9).
 
 ---
 
@@ -334,11 +373,7 @@ marks as unverified are marked so here.
 ## Open questions
 
 1. **`Discard`, `Send`, `Sync` surfaces.** Deferred to the RFCs that land them (section 3). Not blocking acceptance.
-2. **Verification.** Run the three #1815 fixtures against a prototype that stores and consumes flow sets, and check
-   that the fixtures deleted by the Copy migration still have an equivalent. Gate for acceptance: the first
-   experiment, not a design question.
-
-Resolved: the grammar (2026-11-10: `derives Copy via A + B`, only on `derives`, contextual `via`, `+` as in a bound list); the flow is stated on `derives` (not the colon list); mandatory on `pub` only when non-empty
+Resolved: the verification experiment (see "Prototype result"); the grammar (2026-11-10: `derives Copy via A + B`, only on `derives`, contextual `via`, `+` as in a bound list); the flow is stated on `derives` (not the colon list); mandatory on `pub` only when non-empty
 (rule 3); enums have a whole-type flow and no per-variant flow; function and closure types follow RFC-0206's compiler
 rules (they are not nominal types and have no flow); projections are rejected (rule 6); conditional negative grants on a
 Copy type are rejected (rule 8); the amendment of RFC-0206 is the list in "Relationship".
