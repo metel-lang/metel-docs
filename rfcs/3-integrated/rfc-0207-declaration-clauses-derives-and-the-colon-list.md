@@ -176,6 +176,8 @@ struct E derives Clone { s: NoClone }                        // error at the fie
    grantable marker may also appear in the colon list is not proposed.
 6. **The class keywords:** their contextual spelling, their use on enums, and whether `copy struct` on a generic
    type needs the condition in the header (RFC-0206 section 6).
+   *Resolved 2026-11-10 by RFC-0224:* a `derives Copy` entry takes an optional `via A + B` flow list; `copy struct` takes
+   none, and a `pub` generic type states a non-empty flow.
 
 ---
 

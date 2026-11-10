@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**222 RFCs total.** 37 draft, 51 under review, 11 accepted, 6 integrated (105 live), 86 implemented, 15 superseded, 16 refused (117 settled).
+**223 RFCs total.** 37 draft, 51 under review, 11 accepted, 7 integrated (106 live), 86 implemented, 15 superseded, 16 refused (117 settled).
 
 ## Draft (37)
 
@@ -123,7 +123,7 @@ the curated thematic map.
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 - **RFC-0211** — Aspects on Residuals (`2-accepted` ; rfcs/2-accepted/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-06)
 
-## Integrated (6)
+## Integrated (7)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
@@ -131,6 +131,7 @@ the curated thematic map.
 - **RFC-0207** — Declaration Clauses: derives and the Colon List (`3-integrated` ; rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1800)
 - **RFC-0212** — Aspect Declaration Properties (`3-integrated` ; rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1803)
 - **RFC-0213** — Super-Aspects (`3-integrated` ; rfcs/3-integrated/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1801)
+- **RFC-0224** — Stated flow for the ownership markers of generic types (`3-integrated` ; rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-10 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1941)
 
 ## Implemented (86)
 
