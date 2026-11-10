@@ -253,6 +253,24 @@ marks as unverified are marked so here.
 1. **Is policy narrowing (section 5) a requirement?** If yes, this RFC is the wrong shape and a boolean form is needed,
    with the overlap with `where` resolved. Evidence to gather: how many removed fixtures (the `extend<T> X<T>: Copy
    where ...` family in `f6d6aad9`) and std types used it.
+   Prior-art evidence (searched 2026-11-10 from search snippets and one fetched thread, not full pages):
+   - *Rust* permits a narrower `Copy` (`impl<T: Copy + Marker> Copy for W<T>`), but no issue, post or thread found asks for
+     it or shows real use of it; that is an absence in the searches, not proof. The documented pain runs the other way:
+     `derive(Copy)` and `derive(Clone)` put a bound on every parameter whatever the fields hold, which over-constrains
+     `PhantomData<T>` and references ([rust-lang/rust#26925](https://github.com/rust-lang/rust/issues/26925),
+     [forum thread](https://users.rust-lang.org/t/how-to-copy-phantomdata-of-un-clone-able-types/82229)). The proposed
+     fix, "perfect derive" ([Matsakis](https://smallcultfollowing.com/babysteps/blog/2022/04/12/implied-bounds-and-perfect-derive/)),
+     computes the obligation from the field types, which is what a computed flow set does.
+   - *Rust* treats `Copy` as public API: removing it is breaking ([std docs](https://doc.rust-lang.org/std/marker/trait.Copy.html)),
+     and tightening a generic bound is breaking ([Cargo SemVer](https://doc.rust-lang.org/cargo/reference/semver.html)).
+     This supports section 1 rule 3 (a public type states its flow).
+   - *Swift* forbids it on purpose (SE-0427: conditional `Copyable` depends only on the type's own parameters being
+     `Copyable`). In the [second review](https://forums.swift.org/t/second-review-se-0427-noncopyable-generics/72881) no
+     visible post asked for broader conditions. Reviewers asked for explicit requirements, which supports stating the
+     flow in the declaration. The main criticism (Slava Pestov) was that the `where` rule is another special case, so
+     regularity of the rule matters more than its width.
+   - *Not yet counted for Metel:* the fixtures deleted in `f6d6aad9` that used `extend<T> X<T>: Copy where ...`, and std
+     types that did. The evidence above favours "no", the count decides it for this language.
 2. **Is the flow mandatory on `pub` generic types?** Recommended yes, computed otherwise.
 3. **Spelling.** `Copy via T` is a placeholder. Alternatives: `Copy of T`, `Copy(T)`, a modifier on the parameter
    (`struct W<copy T>`), a class keyword taking parameters (`copy<T> struct W`). Choose after question 1.
