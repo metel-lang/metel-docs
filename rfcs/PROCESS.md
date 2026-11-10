@@ -336,6 +336,16 @@ lands, write it as a real ` ```metel ` fence and mark it
 never let an uncompilable example run through `check_doc_examples.py` unmarked, and never
 invent pseudo-code that looks like a fenced example but isn't one.
 
+**Implementation gate *(stated explicitly 2026-11-10, language owner)*.** Implementation of an RFC starts only
+after it reaches `3-integrated`: no code, fixture or migration is written against an RFC at `0-draft`,
+`1-under-review` or `2-accepted`. `2-accepted` means the design is agreed; `3-integrated` means it has been
+written into the spec and checked against the rest of it, and that is the text implementation is built from.
+Spec text is never hand-edited ahead of the transition; it lands with `rfc.py transition <id> --to integrated`.
+An implementation issue for an RFC below `3-integrated` is not started: take the RFC through the missing stages
+first, or ask the owner to fast-track it in writing. A change that turns out to need a decision the integrated
+spec does not make goes back to the RFC for amendment (this stage's exit criterion), not forward into code.
+`/start-issue` and `metel-core/AGENTS.md` check this at the start of every issue.
+
 **4-implemented.** Built against the integrated spec, not against the accepted RFC text
 directly — by the time something reaches this stage, "the spec" and "the RFC" should
 agree, because §3-integrated is what makes them agree.
