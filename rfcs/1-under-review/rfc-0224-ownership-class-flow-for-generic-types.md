@@ -2,8 +2,12 @@
 id: rfc-0224
 title: "Ownership class flow for generic types"
 date: '2026-11-10'
-status: draft
+status: under-review
+updated: '2026-11-10'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1940'
 ---
+
+> **Status — under review (2026-11-10).** Policy-narrowed Copy decided out by the language owner; design settlement tracked in metel-core#1940
 
 ## Summary
 
@@ -17,7 +21,7 @@ struct Pair<A, B>: Copy via A, B { a: A, b: B }
 copy struct View<T> { r: &T }                          // flows from no parameter: Copy for every T
 ```
 
-`Copy via T` is a placeholder spelling (open question 3). The rest of this RFC is about the behaviour.
+`Copy via T` is a placeholder spelling (open question 2). The rest of this RFC is about the behaviour.
 
 This RFC revises one part of RFC-0206. RFC-0206 section 6 plans to answer "is `Wrapper<T>` `Copy` in this generic
 body?" with a stored boolean condition (`when`, RFC-0206 end state) produced by an obligation solver (metel-core#1813).
@@ -122,7 +126,7 @@ fun g<T>(v: View<T>) -> (View<T>, View<T>) {
 
 The question is answered for every nominal application whose type arguments are parameters, other nominals, tuples,
 references and the other structural kinds, because each has a class function. A question the interface cannot answer
-(for example, a field whose class depends on a projection `T.Item`, open question 5) is reported as undecided exactly as
+(for example, a field whose class depends on a projection `T.Item`, open question 4) is reported as undecided exactly as
 RFC-0206 section 2 rule 3 says; this RFC does not weaken that rule.
 
 **Recursion.** A flow set is a set of parameters, so evaluation over a stored interface terminates by construction.
@@ -187,7 +191,9 @@ The practical routes are a newtype wrapper that is itself `copy`, or putting the
 the type. A bound on the type's own parameter (`struct Token<T: Marker>`) is a different statement: it restricts which
 `Token`s exist, not when one is `Copy`.
 
-This is a deliberate narrowing. Whether it is acceptable is the central open question (open question 1).
+This is a deliberate narrowing, **decided 2026-11-10 (language owner): policy-narrowed `Copy` is not a requirement.**
+The prior art below (Rust, Swift) shows no demand for it, and Metel's own tests that used it exercised then-existing
+functionality, not demand.
 
 ---
 
@@ -206,6 +212,28 @@ condition language and the sufficiency check that goes with it.
 | `Copy` as a property of the `Clone` impl | conditions only on `Clone` | Inverts RFC-0206's "Copy implies the provided Clone"; least understood |
 | Compile-time Boolean | `Copy where comptime(..)` | Waits on comptime, which follows v0.16.0; proving an arbitrary expression sufficient is hard |
 | Computed interface only | no syntax | A public interface changes with a field edit; policy narrowing gone as well; solver stays on the critical path |
+
+### Evidence on policy-narrowed `Copy`
+
+Prior-art evidence (searched 2026-11-10 from search snippets and one fetched thread, not full pages):
+- *Rust* permits a narrower `Copy` (`impl<T: Copy + Marker> Copy for W<T>`), but no issue, post or thread found asks for
+  it or shows real use of it; that is an absence in the searches, not proof. The documented pain runs the other way:
+  `derive(Copy)` and `derive(Clone)` put a bound on every parameter whatever the fields hold, which over-constrains
+  `PhantomData<T>` and references ([rust-lang/rust#26925](https://github.com/rust-lang/rust/issues/26925),
+  [forum thread](https://users.rust-lang.org/t/how-to-copy-phantomdata-of-un-clone-able-types/82229)). The proposed
+  fix, "perfect derive" ([Matsakis](https://smallcultfollowing.com/babysteps/blog/2022/04/12/implied-bounds-and-perfect-derive/)),
+  computes the obligation from the field types, which is what a computed flow set does.
+- *Rust* treats `Copy` as public API: removing it is breaking ([std docs](https://doc.rust-lang.org/std/marker/trait.Copy.html)),
+  and tightening a generic bound is breaking ([Cargo SemVer](https://doc.rust-lang.org/cargo/reference/semver.html)).
+  This supports section 1 rule 3 (a public type states its flow).
+- *Swift* forbids it on purpose (SE-0427: conditional `Copyable` depends only on the type's own parameters being
+  `Copyable`). In the [second review](https://forums.swift.org/t/second-review-se-0427-noncopyable-generics/72881) no
+  visible post asked for broader conditions. Reviewers asked for explicit requirements, which supports stating the
+  flow in the declaration. The main criticism (Slava Pestov) was that the `where` rule is another special case, so
+  regularity of the rule matters more than its width.
+- *Metel's own fixtures are not evidence.* The fixtures deleted in `f6d6aad9` that used `extend<T> X<T>: Copy where ...`
+  tested the functionality that existed then; they were not written to show demand, so they are not counted
+  (language owner, 2026-11-10). The prior art above is the evidence.
 
 ### Prior art
 
@@ -250,41 +278,20 @@ marks as unverified are marked so here.
 
 ## Open questions
 
-1. **Is policy narrowing (section 5) a requirement?** If yes, this RFC is the wrong shape and a boolean form is needed,
-   with the overlap with `where` resolved.
-   Prior-art evidence (searched 2026-11-10 from search snippets and one fetched thread, not full pages):
-   - *Rust* permits a narrower `Copy` (`impl<T: Copy + Marker> Copy for W<T>`), but no issue, post or thread found asks for
-     it or shows real use of it; that is an absence in the searches, not proof. The documented pain runs the other way:
-     `derive(Copy)` and `derive(Clone)` put a bound on every parameter whatever the fields hold, which over-constrains
-     `PhantomData<T>` and references ([rust-lang/rust#26925](https://github.com/rust-lang/rust/issues/26925),
-     [forum thread](https://users.rust-lang.org/t/how-to-copy-phantomdata-of-un-clone-able-types/82229)). The proposed
-     fix, "perfect derive" ([Matsakis](https://smallcultfollowing.com/babysteps/blog/2022/04/12/implied-bounds-and-perfect-derive/)),
-     computes the obligation from the field types, which is what a computed flow set does.
-   - *Rust* treats `Copy` as public API: removing it is breaking ([std docs](https://doc.rust-lang.org/std/marker/trait.Copy.html)),
-     and tightening a generic bound is breaking ([Cargo SemVer](https://doc.rust-lang.org/cargo/reference/semver.html)).
-     This supports section 1 rule 3 (a public type states its flow).
-   - *Swift* forbids it on purpose (SE-0427: conditional `Copyable` depends only on the type's own parameters being
-     `Copyable`). In the [second review](https://forums.swift.org/t/second-review-se-0427-noncopyable-generics/72881) no
-     visible post asked for broader conditions. Reviewers asked for explicit requirements, which supports stating the
-     flow in the declaration. The main criticism (Slava Pestov) was that the `where` rule is another special case, so
-     regularity of the rule matters more than its width.
-   - *Metel's own fixtures are not evidence.* The fixtures deleted in `f6d6aad9` that used `extend<T> X<T>: Copy where ...`
-     tested the functionality that existed then; they were not written to show demand, so they are not counted
-     (language owner, 2026-11-10). The prior art above is the evidence.
-2. **Is the flow mandatory on `pub` generic types?** Recommended yes, computed otherwise.
-3. **Spelling.** `Copy via T` is a placeholder. Alternatives: `Copy of T`, `Copy(T)`, a modifier on the parameter
-   (`struct W<copy T>`), a class keyword taking parameters (`copy<T> struct W`). Choose after question 1.
-4. **Amendment of RFC-0206.** Whether this is a separate accepted design that amends RFC-0206 section 6, or replaces its
+1. **Is the flow mandatory on `pub` generic types?** Recommended yes, computed otherwise.
+2. **Spelling.** `Copy via T` is a placeholder. Alternatives: `Copy of T`, `Copy(T)`, a modifier on the parameter
+   (`struct W<copy T>`), a class keyword taking parameters (`copy<T> struct W`). Choose by review.
+3. **Amendment of RFC-0206.** Whether this is a separate accepted design that amends RFC-0206 section 6, or replaces its
    end state; and the migration of metel-core#1813, #1815 and #1818.
-5. **Projections.** A field of type `T.Item` has a class that depends on an associated type, not on a parameter's class.
+4. **Projections.** A field of type `T.Item` has a class that depends on an associated type, not on a parameter's class.
    The flow form cannot say it. Likely answer: undecided, as today, until associated-type conditions are designed.
-6. **Other markers.** Whether `Discard`, `Send`, `Sync` and `Share` should take the same flow form. They are structural
+5. **Other markers.** Whether `Discard`, `Send`, `Sync` and `Share` should take the same flow form. They are structural
    "every field" markers (RFC-0206 section 2), which a flow set describes exactly, but they are not lattice classes.
-7. **Function and closure types.** A field of type `fn(T) -> U` or a closure type: whether the copy-ness of function
+6. **Function and closure types.** A field of type `fn(T) -> U` or a closure type: whether the copy-ness of function
    types flows from anything (RFC-0166, RFC-0219).
-8. **Enums.** Narrowing treats an enum as atomic (RFC-0137); whether a per-variant flow is ever wanted. Assumed no.
-9. **Verification.** The claim that the three failing fixtures of #1815 (`I0011`) pass under class arithmetic has not
-   been run. It is the first experiment to do before this RFC moves to review.
+7. **Enums.** Narrowing treats an enum as atomic (RFC-0137); whether a per-variant flow is ever wanted. Assumed no.
+8. **Verification.** The claim that the three failing fixtures of #1815 (`I0011`) pass under class arithmetic has not
+   been run. It is the first experiment, to run during review.
 
 ---
 
