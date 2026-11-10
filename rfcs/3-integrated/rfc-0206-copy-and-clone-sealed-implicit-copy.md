@@ -151,7 +151,7 @@ semantic and not a constraint is `implicit` (RFC-0212 section 3): it is std only
    only what the abstract analysis decides today (conditions on parameters, and the compiler rules for
    references, tuples, arrays, closures and function types) and reports every other abstract ownership as
    **undecided**: a read of such a value in a generic body is a diagnostic (a named limitation), never a guess in
-   either direction. Reusing a `View<T>` in a generic body is therefore rejected until the obligation solver,
+   either direction. **Amended 2026-11-10 (RFC-0224):** for a nominal type with a stored flow set (`derives Copy via ...`, or the computed set) the question is decided by the bounds in scope: a value moves unless every flow argument is known `Copy`, and *undecided* applies only where no flow set exists (a projection, a residual, `dyn`, a row-kinded parameter). Reusing a `View<T>` in a generic body is therefore rejected until the obligation solver,
    which is deferred to a later minor (metel-core#1813; section 6, step 2); today it is rejected with an internal
    error (`I0011`). Because undecided is an error and not a move, the accepted set only grows when proof power
    improves, and the copy-or-move behaviour of an accepted program never changes with it. Adding proofs must also not change overload
@@ -415,7 +415,7 @@ exact predicate holds; that condition is stored as the type's interface (an impl
 instantiation patterns); every use, including generic bodies, consults only stored interfaces. The invariant is
 that a stored interface implies the exact predicate of rule 3 and equals it whenever the condition language can
 express it, so rule 3 stays the meaning and the generic-body analysis becomes complete for markers on nominal
-types. **The stated condition is the interface.** An optional `when` clause, checked as sufficient against the
+types. **The stated condition is the interface.** (**Amended 2026-11-10, RFC-0224:** the stated condition is the flow list `derives Copy via T + U`, not a `when` clause; the sentence below describes the same stored conjunction.) An optional `when` clause, checked as sufficient against the
 computed one, is what other code sees; the computed condition is the interface only when none is stated (a
 non-`pub` type). A stronger stated condition therefore keeps the published interface stable when a
 representation change would weaken the computed one. Use sites evaluate only stored interfaces, and the stored

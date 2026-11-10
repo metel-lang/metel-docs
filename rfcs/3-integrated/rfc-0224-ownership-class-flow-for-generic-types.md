@@ -2,9 +2,17 @@
 id: rfc-0224
 title: "Stated flow for the ownership markers of generic types"
 date: '2026-11-10'
-status: under-review
+status: integrated
 updated: '2026-11-10'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1940'
+coverage:
+  "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
+  "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-12" }
+  "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-10" }
+  "4": { kind: untestable, reason: "The worked examples are fixtures citing the stated-flow rules." }
+  "5": { kind: untestable, reason: "Section 5 states what the RFC does not do (policy-narrowed Copy); it adds no rule." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1941'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-11-10).** Policy-narrowed Copy decided out by the language owner; design settlement tracked in metel-core#1940
@@ -15,6 +23,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1940'
 > specifies the condition language. This version states the flow for one marker at a time, normatively for `Copy`, and
 > is a surface and rules document for RFC-0206's stored interface, not a new mechanism. Scope decided by the language
 > owner: a general mechanism for the "every field" markers, normative for `Copy` only in v0.16.0.
+
+> **Status — accepted (2026-11-10).** Accepted by the language owner 2026-11-10 after the adversarial review, the grammar decision and the prototype experiment
+
+> **Status — integrated (2026-11-10).** Integrated into reference/spec/declarations.md (declaration-clauses legality-11 to 15); RFC-0206 and RFC-0207 amended; implementation tracked in metel-core#1941
 
 ## Summary
 

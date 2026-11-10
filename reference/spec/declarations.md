@@ -4077,6 +4077,16 @@ asks the compiler to write the impl of an aspect that has a derivation (`Copy`, 
 `derives Copy`, and `linear` is reserved. Derivation is always explicit: a type with neither a `derives` entry nor
 an `extend` of an aspect does not have it.
 
+A generic type that derives `Copy` states, when it is `pub`, which of its type parameters its copy-ness depends on
+(RFC-0224, the stated flow of the stored condition of RFC-0206):
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+```metel
+struct Wrapper<T> derives Copy via T { value: T }                  // Wrapper<X> is Copy exactly when X is
+struct Pair<A, B> derives Copy via A + B, Clone { a: A, b: B }     // `+` joins parameters, `,` separates entries
+copy struct View<T> { r: &T }                                        // no flow: Copy for every T
+```
+
 <details>
 <summary>Formal rules</summary>
 
@@ -4226,6 +4236,10 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 <!-- rfc.py:last_reviewed 2d68dfef6b1b7d2b91161c675d6707dfcf5db033 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -4233,6 +4247,103 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImNvbmZsaWN0aW5nIGltcGxlbWVudGF0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoid3JpdHRlbl9jbG9uZV9iZXNpZGVfYV9jb3B5X3R5cGVfaXNfdDAwMTUubXRsIiwic291cmNlIjoiLy8gQSBgQ29weWAgdHlwZSdzIGBDbG9uZWAgaXMgdGhlIHByb3ZpZGVkIG9uZSBhbmQgY2Fubm90IGJlIHdyaXR0ZW4gKFJGQy0wMjEzIHNlY3Rpb24gNCBydWxlIDIpLlxuY29weSBzdHJ1Y3QgRiB7IG46IGk2NCB9XG5leHRlbmQgRjogQ2xvbmUgeyBmdW4gY2xvbmUoJnNlbGYpIC0+IEYgeyBGKG4gPSAwKSB9IH0gLy8gRVJST1JbVDAwMTVdXG5cbnN0cnVjdCBHIGRlcml2ZXMgQ29weSB7IG46IGk2NCB9XG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL3dyaXR0ZW5fY2xvbmVfYmVzaWRlX2FfY29weV90eXBlX2lzX3QwMDE1Lm10bCIsIm5hbWUiOiJ3cml0dGVuX2Nsb25lX2Jlc2lkZV9hX2NvcHlfdHlwZV9pc190MDAxNS5tdGwifQ=="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-11}
+
+A `Copy` entry of a `derives` clause may be followed by `via` and one or more type parameters of the declaration joined by `+`. The named parameters are the type's **flow set** for `Copy`: `N<A..>` is `Copy` exactly when `N` derives `Copy`, the exclusions of `Copy` hold at the instantiation, and every argument at a position in the flow set is `Copy`. `copy struct` and `copy enum` take no `via` clause. A `via` clause on any other entry, on a negative entry, or naming something that is not a type parameter of the declaration is an error. A parameter of row or record kind is not accepted in the flow set.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+```metel
+struct Wrapper<T> derives Copy via T { value: T }
+copy struct Local<T> via T { value: T }   // error: `copy struct` takes no `via` clause; write `derives Copy via T`
+```
+
+<!-- rfc.py:last_reviewed 110aa3b350379407f80188d0b14deda099c28956 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1941" reason="RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1941: RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-12}
+
+The stated flow set must contain every type parameter that a field's `Copy` depends on, and may contain more. The dependence of a field type is: a type parameter `P` depends on `{P}`; a nominal application `N<A..>` depends on the union of the dependences of its arguments at the positions in the flow set of `N`, and is an error at the field if `N` is not `Copy` for any arguments; a tuple or array depends on the union of its components; a reference and the `T[]` view depend on nothing; a primitive depends on nothing. A written function type is move-only, so a `Copy` type cannot hold one. A parameter missing from the stated set is an error at the field, with a fix-it that adds it. A set larger than needed is accepted and makes the type `Copy` only when those arguments are.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+```metel
+struct Bad<A, B> derives Copy via A { a: A, b: B }   // error: field `b` depends on `B`, which `via A` does not cover
+struct Handle<T> derives Copy via T { id: i64 }      // accepted: Copy only when T is, whatever the fields become
+```
+
+<!-- rfc.py:last_reviewed 110aa3b350379407f80188d0b14deda099c28956 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1941" reason="RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented" -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1941: RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-13}
+
+A `derives Copy` entry without `via` states the flow set the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit `via`. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+```metel
+pub struct W<T> derives Copy { value: T }   // error: a public generic type must state its flow: `derives Copy via T`
+pub copy struct V<T> { r: &T }              // accepted: the computed flow set is empty
+```
+
+<!-- rfc.py:last_reviewed 110aa3b350379407f80188d0b14deda099c28956 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1941" reason="RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1941: RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-14}
+
+The flow set describes a whole nominal type. A residual type `N<A..>.{ .f }` is `Copy` by the structural rule over its visible field types, whatever the flow set of `N` is. A `Copy` declaration with a field whose copy-ness depends on an associated type (`value: T.Item`) is an error, and so is one that depends on a parameter of row or record kind. A type that derives `Copy` has no negative grant of `Copy` and no `Drop` impl, conditional or not.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+```metel
+copy struct Payload<T: Source> { value: T.Item }   // error: a Copy declaration cannot depend on an associated type
+```
+
+<!-- rfc.py:last_reviewed 110aa3b350379407f80188d0b14deda099c28956 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1941" reason="RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1941: RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-15}
+
+In a generic body, whether a value of a nominal type with a stored flow set is copied or moved is decided by the bounds in scope: it is copied exactly when every argument at a position in the flow set is known `Copy` (a type parameter by a bound that grants `Copy`, a nested application by its own flow set, a concrete type directly) and otherwise it moves. That a value moves under the bounds in scope is not evidence that its type argument is not `Copy`: it does not select an implementation guarded by a negative bound, and for selection and coherence the fact stays undecided. The undecided-ownership diagnostic applies to a nominal type only when it has no stored flow set.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+```metel
+fun twice<T: Copy>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }   // accepted
+fun bad<T>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }           // error: use of moved value `w`
+```
+
+<!-- rfc.py:last_reviewed 110aa3b350379407f80188d0b14deda099c28956 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1941" reason="RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented" -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1941: RFC-0224: the via flow clause and the stored Copy flow are accepted and integrated, not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
