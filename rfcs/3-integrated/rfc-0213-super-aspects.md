@@ -29,7 +29,7 @@ impl_status: in-progress
 
 > **Status — integrated (2026-11-10).**
 
-> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Differences: the `deriving` super of an `implicit` aspect (`Copy: deriving Clone`) is provided by the compiler, so an `extend T: Copy;` for a std type needs no written `Clone` (section 2 otherwise stands); an exclusion is checked at the grant with the existing overlap test, so disjoint conditional impls pass; the error codes are T0044 (invalid list) and T0015 (exclusion or negative super).
+> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Section 2 is amended (language owner, 2026-11-10): the `deriving` super of an `implicit` aspect is provided by the compiler, so an explicit `extend T: A;` of such an aspect needs no written impl of that super (`Copy: deriving Clone`). Everything else follows the text; the error codes are T0044 (invalid list) and T0015 (exclusion or negative super).
 
 ## Summary
 
@@ -79,6 +79,10 @@ entry is only an obligation.
 For an explicit `extend T: A`, every direct and transitive super-aspect obligation must be satisfied
 by a coherent impl for `T`, written or derived (section 4). The compiler does not manufacture one
 from the sub-aspect's impl by the compiler; deriving is the job of `derives` (section 4).
+
+**Exception: an `implicit` aspect (amended 2026-11-10).** The `deriving` super of an `implicit` aspect is provided by
+the compiler (RFC-0212 section 3, RFC-0206 section 2): `extend T: Copy;` needs no written `Clone`, because every
+`Copy` type has the provided one. This is the only case in which an obligation is met without an impl.
 
 ## 3. Negative implementations and exclusions
 

@@ -9,6 +9,7 @@ coverage:
   "1": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-1" }
   "2": { kind: untestable, reason: "The structural rule is a std template that waits for the row machinery (metel-core#1823); the native rule is covered by the Copy rules." }
   "3": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-2" }
+  "4": { spec: "spec.declarations.aspects.declaration-clauses.legality-3" }
   "5": { kind: untestable, reason: "A table of how the existing aspects are declared; the std declarations are the evidence." }
   "6": { kind: untestable, reason: "The worked examples are fixtures citing the property rules." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1803'
@@ -28,17 +29,18 @@ impl_status: in-progress
 
 > **Status — integrated (2026-11-10).**
 
-> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Differences: a fourth property, `derivable` (RFC-0207 section 2), is accepted on std aspects only; `auto` parses and is std-only but has no semantics; an `extend` of a `declared` aspect is T0045 for a type with a declaration and, for a type without one, rejected outside the defining module (T0014 from the orphan rule); `Copy` is `declared implicit derivable`.
+> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). The implementation follows the text, with this addition and these limits: `derivable` is a documented fourth property (section 4, added at integration, language owner); `auto` parses and is std only but has no semantics, because the text defers it with the Send/Sync revision; an `extend` of a `declared` aspect is T0045 for a type with a declaration and, for a type without one, rejected outside the defining module (T0014 from the orphan rule). `Copy` is `declared derivable implicit`.
 
 ## Summary
 
-An aspect declaration may state three properties (`declared`, `auto`, `implicit`; `auto` is deferred). Each one replaces behaviour that is hardcoded for
+An aspect declaration may state four properties (`declared`, `derivable`, `auto`, `implicit`; `auto` is deferred). Each one replaces behaviour that is hardcoded for
 a named aspect today.
 
 | Property | Meaning | Replaces |
 |---|---|---|
 | `declared` | granted only through a type's declaration clauses (RFC-0207), never by `extend` | the `"Copy"` special case in coherence and `check_copy_impl_eligibility` |
 | `auto` | granted structurally with no entry; a type opts out with a negative impl (`extend T: !A;`) | RFC-0096's closed list for `Send`, `Sync` (**deferred**: the Send/Sync/Linear revision is not part of the Copy settlement; `Copy` does not use `auto`, it is opt-in) |
+| `derivable` | **std only until comptime**: the aspect has a compiler-written derivation, so `derives A` is legal (section 4) | the unchecked list of derivable names in the compiler |
 | `implicit` | **std only**: a by-value use of a type satisfying the aspect copies its representation instead of moving | the implicit-copy semantics of `Copy` |
 
 ```metel
@@ -155,6 +157,15 @@ exclusion facts keep their meaning, and a hook cannot replace a provided `Clone`
 that needs observable behaviour on an implicit copy which an explicit `.clone()` cannot express).
 
 ---
+
+## 4. `derivable` (std only)
+
+An aspect states that the compiler can write its implementation with `derivable` (`pub derivable aspect Clone { .. }`). A
+`derives A` entry (RFC-0207 section 2) is legal exactly when `A` is `derivable`, or when `A` marks a super-aspect
+`deriving` (RFC-0213 section 4), because deriving `A` then derives the super with it. A derivation is native code:
+only std declares `derivable` until comptime (RFC-0092, RFC-0093) lets a user supply one, and the property on a user
+aspect is an error (`T0045`). The property says nothing about how the implementation is written; the derivation of
+`Clone` is the host clone every record already uses, and `Copy` is derivable with no body of its own.
 
 ## 5. Existing aspects, expressed
 

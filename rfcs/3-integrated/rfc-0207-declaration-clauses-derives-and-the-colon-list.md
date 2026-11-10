@@ -27,7 +27,7 @@ impl_status: in-progress
 
 > **Status — integrated (2026-11-10).**
 
-> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Differences: the clauses are also accepted on a named `record`; `linear` is a parse error until `Linear` exists; a negative colon-list entry is a parse error; clause impls are written after name resolution (`pipeline/clause_expansion.rs`); the error codes are T0046 (invalid entry) and T0003 (unknown aspect).
+> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). The implementation follows the text except: the generic derive bounds each type parameter a field holds by value, not the exact per-instantiation condition of section 2 rule 2 (metel-core#1938). Details the text left open: the clauses are accepted on a named `record` as on a struct (RFC-0206 section 3), `linear` is a parse error until `Linear` exists, a negative colon-list entry is a parse error, and the clause impls are written after name resolution (`pipeline/clause_expansion.rs`). The error codes are T0046 (invalid entry) and T0003 (unknown aspect).
 
 ## Summary
 

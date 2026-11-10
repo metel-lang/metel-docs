@@ -3982,6 +3982,7 @@ aspect. The compiler reads them from the aspect's declaration, never from its sp
 | Property | Meaning | Who may use it |
 |---|---|---|
 | `declared` | granted to a named type only through its declaration clauses, never by `extend` | any aspect |
+| `derivable` | the compiler writes its implementation, so `derives A` is legal | std only |
 | `auto` | granted structurally with no entry; a type opts out with a negative impl | std only (reserved) |
 | `implicit` | a by-value use of a type satisfying the aspect copies its representation instead of moving | std only |
 
@@ -4118,7 +4119,7 @@ A declaration clause has no negative entries. An opt-out of an `auto` aspect is 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0212](../../rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

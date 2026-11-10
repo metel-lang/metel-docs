@@ -31,7 +31,7 @@ impl_status: in-progress
 
 > **Status — integrated (2026-11-10).**
 
-> **Implementation note (2026-11-10).** Implemented in the v0.16.0 Copy and Clone stage before this integration step (a process slip; PROCESS.md now states the gate). Differences from the text above: `extend T: Copy;` is an error at once (no deprecation window, section 5, language owner); a `deriving` super of an `implicit` aspect is provided, not required as a written impl; `Clone` is also provided for the unit type, tuples of `Clone` parts and `Copy` closures, and `Option`, `Result` and `List` derive or write theirs; a generic derive bounds the parameters a field holds by value (a parameter no field mentions is unbounded); the residual rule (section 2 rule 6) waits for RFC-0211.
+> **Implementation note (2026-11-10).** Implemented in the v0.16.0 Copy and Clone stage before this integration step (a process slip; PROCESS.md now states the gate). The implementation follows the text except: `extend T: Copy;` is an error at once, with no deprecation window (section 5; language owner, 2026-11-09, since the language has no users); a generic derive bounds each type parameter a field holds by value instead of evaluating the exact per-instantiation condition (section 2 rule 3; metel-core#1938, which needs the row machinery); and the residual rule (section 2 rule 6) waits for RFC-0211. `Clone` is provided for the unit type, tuples of `Clone` parts and `Copy` closures, and `Option`, `Result` and `List` have it in std, as section 3 plans.
 
 ## Summary
 
