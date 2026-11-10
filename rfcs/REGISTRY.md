@@ -108,7 +108,7 @@ the curated thematic map.
 - **RFC-0217** — Row Templates for Aspects on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0217-row-templates-for-aspects-on-residuals.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
-- **RFC-0224** — Ownership class flow for generic types (`1-under-review` ; rfcs/1-under-review/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-10)
+- **RFC-0224** — Stated flow for the ownership markers of generic types (`1-under-review` ; rfcs/1-under-review/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-10)
 
 ## Accepted (11)
 
