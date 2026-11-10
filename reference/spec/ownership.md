@@ -278,6 +278,10 @@ A named type is `Copy` only through its declaration: `copy struct P { .. }` or `
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (2)</summary>
@@ -386,6 +390,10 @@ a consequence of its fields.
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImRlcml2ZXNfY2xvbmVfY2xvbmVzX2ZpZWxkc192YXJpYW50c19hbmRfZ2VuZXJpY3MubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMDcgc2VjdGlvbiAyOiBgZGVyaXZlcyBDbG9uZWAgY2xvbmVzIGVhY2ggZmllbGQgdGhyb3VnaCBpdHMgb3duIGBjbG9uZWAsIGtlZXBzIHRoZSBhY3RpdmUgdmFyaWFudFxuLy8gb2YgYW4gZW51bSwgYW5kIGlzIENsb25lIGZvciBhIGdlbmVyaWMgdHlwZSB3aGVuIGl0cyBvd25lZCBwYXJhbWV0ZXJzIGFyZSAoYSBwYXJhbWV0ZXIgYmVoaW5kIGEgc2hhcmVkXG4vLyByZWZlcmVuY2UgaXMgbm90IGJvdW5kZWQpLlxuc3RydWN0IERvYyBkZXJpdmVzIENsb25lIHsgdGl0bGU6IFN0cmluZywgcGFnZXM6IGk2NCB9XG5zdHJ1Y3QgVmlldzxUPiBkZXJpdmVzIENsb25lIHsgcjogJlQgfVxuc3RydWN0IFdyYXBwZXI8VD4gZGVyaXZlcyBDbG9uZSB7IHY6IFQgfVxuZW51bSBTaGFwZSBkZXJpdmVzIENsb25lIHsgQ2lyY2xlIHsgcjogaTY0IH0sIFJlY3QgeyB3OiBpNjQsIGg6IGk2NCB9LCBFbXB0eSB9XG5mdW4gdHdpY2U8VDogQ2xvbmU+KHg6ICZUKSAtPiBUIHsgeC5jbG9uZSgpIH1cbmZ1biBtYWluKCkge1xuICAgIGxldCBkIDo9IERvYyh0aXRsZSA9IFwiYVwiLCBwYWdlcyA9IDMpO1xuICAgIGxldCBlIDo9IGQuY2xvbmUoKTtcbiAgICBhc3NlcnQoZS5wYWdlcyA9PSAzICYmIGQudGl0bGUgPT0gZS50aXRsZSk7XG4gICAgbGV0IHcgOj0gV3JhcHBlcih2ID0gNSk7XG4gICAgYXNzZXJ0KHcuY2xvbmUoKS52ID09IDUpO1xuICAgIGxldCBuIDo9IDc7XG4gICAgbGV0IHYgOj0gVmlldyhyID0gJm4pO1xuICAgIGxldCB2MiA6PSB0d2ljZSgmdik7XG4gICAgYXNzZXJ0KCp2Mi5yID09IDcpO1xuICAgIGxldCBzIDo9IFNoYXBlOjpSZWN0KHcgPSAyLCBoID0gMyk7XG4gICAgbWF0Y2ggKHMuY2xvbmUoKSkgeyBTaGFwZTo6UmVjdCB7IHcsIGggfSA9PiBhc3NlcnQodyAqIGggPT0gNiksIF8gPT4gYXNzZXJ0KGZhbHNlKSB9XG4gICAgbWF0Y2ggKHR3aWNlKCZTaGFwZTo6RW1wdHkpKSB7IFNoYXBlOjpFbXB0eSA9PiBhc3NlcnQodHJ1ZSksIF8gPT4gYXNzZXJ0KGZhbHNlKSB9XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9hc3BlY3RzL2Rlcml2ZXNfY2xvbmVfY2xvbmVzX2ZpZWxkc192YXJpYW50c19hbmRfZ2VuZXJpY3MubXRsIiwibmFtZSI6ImRlcml2ZXNfY2xvbmVfY2xvbmVzX2ZpZWxkc192YXJpYW50c19hbmRfZ2VuZXJpY3MubXRsIn0="></details>
@@ -414,6 +422,10 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InN0ZF9vcHRpb25fcmVzdWx0X2FuZF9saXN0X2FyZV9jbG9uZS5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzI3MDogdGhlIHN0ZCB0eXBlcyBjbG9uZSB0aHJvdWdoIHRoZSBzdGFuZGFyZCBib3VuZDogYE9wdGlvbmAgYW5kIGBSZXN1bHRgIGRlcml2ZSBgQ2xvbmVgLCBhIGBMaXN0YFxuLy8gY2xvbmVzIGVhY2ggZWxlbWVudCB0aHJvdWdoIHRoYXQgZWxlbWVudCdzIG93biBgY2xvbmVgLCBpbiBpbmRleCBvcmRlciwgaW50byBhbiBpbmRlcGVuZGVudCBsaXN0Llxuc3RydWN0IFRva2VuIHsgaWQ6IGk2NCB9XG5leHRlbmQgVG9rZW46IENsb25lIHsgZnVuIGNsb25lKCZzZWxmKSAtPiBUb2tlbiB7IFRva2VuKGlkID0gc2VsZi5pZCArIDEwMCkgfSB9XG5mdW4gbmVlZF9jbG9uZTxUOiBDbG9uZT4oeDogJlQpIC0+IFQgeyB4LmNsb25lKCkgfVxuZnVuIGlkX29mKG86IE9wdGlvbjxUb2tlbj4pIC0+IGk2NCB7IG1hdGNoIChvKSB7IE9wdGlvbjo6U29tZSB7IHZhbHVlIH0gPT4gdmFsdWUuaWQsIE9wdGlvbjo6Tm9uZSA9PiAwIC0gMSB9IH1cbmZ1biBpbnRfb2YobzogT3B0aW9uPGk2ND4pIC0+IGk2NCB7IG1hdGNoIChvKSB7IE9wdGlvbjo6U29tZSB7IHZhbHVlIH0gPT4gdmFsdWUsIE9wdGlvbjo6Tm9uZSA9PiAwIC0gMSB9IH1cbmZ1biBtYWluKCkge1xuICAgIGxldCBvOiBPcHRpb248aTY0PiA6PSBPcHRpb246OlNvbWUodmFsdWUgPSAzKTtcbiAgICBhc3NlcnQoaW50X29mKG8uY2xvbmUoKSkgPT0gMyk7XG4gICAgbGV0IHQ6IE9wdGlvbjxUb2tlbj4gOj0gT3B0aW9uOjpTb21lKHZhbHVlID0gVG9rZW4oaWQgPSAxKSk7XG4gICAgYXNzZXJ0KGlkX29mKG5lZWRfY2xvbmUoJnQpKSA9PSAxMDEpO1xuICAgIGxldCByOiBSZXN1bHQ8aTY0LCBTdHJpbmc+IDo9IFJlc3VsdDo6T2sodmFsdWUgPSA0KTtcbiAgICBtYXRjaCAoci5jbG9uZSgpKSB7IFJlc3VsdDo6T2sgeyB2YWx1ZSB9ID0+IGFzc2VydCh2YWx1ZSA9PSA0KSwgUmVzdWx0OjpFcnIgeyBlcnJvciB9ID0+IGFzc2VydChmYWxzZSkgfVxuICAgIHZhciBsOiBMaXN0PGk2ND4gOj0gTGlzdDo6bmV3KCk7XG4gICAgbC5wdXNoKDEpOyBsLnB1c2goMik7XG4gICAgdmFyIG0gOj0gbC5jbG9uZSgpO1xuICAgIG0ucHVzaCgzKTtcbiAgICBhc3NlcnQobC5sZW4oKSA9PSAyKTtcbiAgICBhc3NlcnQobS5sZW4oKSA9PSAzKTtcbiAgICB2YXIgbHQ6IExpc3Q8VG9rZW4+IDo9IExpc3Q6Om5ldygpO1xuICAgIGx0LnB1c2goVG9rZW4oaWQgPSA1KSk7XG4gICAgbGV0IGxjIDo9IGx0LmNsb25lKCk7XG4gICAgYXNzZXJ0KGlkX29mKGxjLmdldCgwKSkgPT0gMTA1KTtcbiAgICBsZXQgbjogT3B0aW9uPGk2ND4gOj0gT3B0aW9uOjpOb25lO1xuICAgIGFzc2VydChpbnRfb2Yobi5jbG9uZSgpKSA9PSAwIC0gMSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9hc3BlY3RzL3N0ZF9vcHRpb25fcmVzdWx0X2FuZF9saXN0X2FyZV9jbG9uZS5tdGwiLCJuYW1lIjoic3RkX29wdGlvbl9yZXN1bHRfYW5kX2xpc3RfYXJlX2Nsb25lLm10bCJ9"></details>
@@ -424,6 +436,10 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 `struct P derives Clone` requires every field type to be `Clone`; a field that is not is an error at the field. The derived impl applies at an instantiation exactly when every field type is `Clone` there. A written `extend P: Clone` beside it overlaps and is an error (`T0015`).
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>

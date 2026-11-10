@@ -2,9 +2,19 @@
 id: rfc-0206
 title: "Copy and Clone: A Sealed Implicit Copy and an Explicit Clone"
 date: '2026-11-02'
-status: accepted
-updated: '2026-11-05'
+status: integrated
+updated: '2026-11-10'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
+coverage:
+  "1": { spec: "spec.ownership.clone.legality-1" }
+  "2": { spec: "spec.ownership.copy.legality-3" }
+  "3": { spec: "spec.ownership.clone.legality-3" }
+  "4": { spec: "spec.ownership.clone.legality-4" }
+  "5": { spec: "spec.declarations.aspects.declaration-clauses.legality-6" }
+  "6": { kind: untestable, reason: "Implementation staging and dependencies are not a language rule." }
+  "7": { kind: untestable, reason: "The worked examples are fixtures citing the Copy and Clone rules." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1808'
+impl_status: in-progress
 ---
 
 > **Extracted from RFC-0080 on 2026-11-02**, the way RFC-0162 was extracted from RFC-0157, **redesigned on
@@ -18,6 +28,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
 > **Status — under review (2026-11-05).** Committed to v0.16.0 as the Copy and Clone half of the settlement.
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
+
+> **Status — integrated (2026-11-10).**
+
+> **Implementation note (2026-11-10).** Implemented in the v0.16.0 Copy and Clone stage before this integration step (a process slip; PROCESS.md now states the gate). The implementation follows the text except: `extend T: Copy;` is an error at once, with no deprecation window (section 5; language owner, 2026-11-09, since the language has no users); a generic derive bounds each type parameter a field holds by value instead of evaluating the exact per-instantiation condition (section 2 rule 3; metel-core#1938, which needs the row machinery); and the residual rule (section 2 rule 6) waits for RFC-0211. `Clone` is provided for the unit type, tuples of `Clone` parts and `Copy` closures, and `Option`, `Result` and `List` have it in std, as section 3 plans.
 
 ## Summary
 

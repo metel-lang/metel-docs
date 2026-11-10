@@ -826,11 +826,11 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   two framings if P4 advances.
 - **RFC-0095 (Attributes and Metadata, `1-under-review`)** — supplies Axis C's C3
   (`#copy`), listed and not recommended.
-- **RFC-0206 (Copy and Clone, `2-accepted`)** — specifies `Clone`, the sealed `Copy`
+- **RFC-0206 (Copy and Clone, `3-integrated`)** — specifies `Clone`, the sealed `Copy`
   and their relationship (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten
   `Clone` to independent-duplication-only; add `Share`). This RFC's direction leaves `Clone`
   otherwise untouched.
-- **RFC-0207 (Declaration Clauses: derives and the Colon List, `2-accepted`)** — the colon list
+- **RFC-0207 (Declaration Clauses: derives and the Colon List, `3-integrated`)** — the colon list
   that carries the marker, and the `derives` clause (this RFC's Axis C,
   cut down).
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
