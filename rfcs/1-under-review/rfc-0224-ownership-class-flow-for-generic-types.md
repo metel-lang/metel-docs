@@ -29,7 +29,7 @@ struct Pair<A, B> derives Copy via A + B { a: A, b: B }
 copy struct View<T> { r: &T }                               // no flow: Copy for every T
 ```
 
-`via` and the `+` separator are placeholder spellings (open question 1). The flow set is the same object as the
+`via` is a contextual keyword and `+` separates parameters, as in a bound list (settled 2026-11-10, section 1). The flow set is the same object as the
 conjunction of RFC-0206, written as a parameter list, so there is no second condition language and no keyword that
 competes with the struct-level `where`.
 
@@ -77,19 +77,27 @@ For `Copy`, "N has M by its own rule" is the declaration (`copy struct`, `derive
 of RFC-0206 and RFC-0213 at the instantiation (not `Drop`, not `Linear`). The flow set is the stored conjunction
 `P1: Copy, P2: Copy, ...` of RFC-0206 section 6, nothing more.
 
-**Where it is stated.** On the `derives Copy` entry (RFC-0207). `copy struct P` is `struct P derives Copy`, so the
-keyword form takes the same clause after the generics:
+**Where it is stated (settled 2026-11-10).** On the `derives Copy` entry (RFC-0207), and only there:
 
 ```metel
 struct Wrapper<T> derives Copy via T { value: T }
-copy struct Wrapper2<T> via T { value: T }              // the same declaration
 enum Maybe<T> derives Copy via T { None, Some { value: T } }
-struct Pair<A, B> derives Copy via A + B { a: A, b: B }
-copy struct View<T> { r: &T }                            // empty flow
+struct Pair<A, B> derives Copy via A + B, Clone { a: A, b: B }     // `+` joins parameters, `,` separates entries
+copy struct View<T> { r: &T }                                        // empty flow
+copy struct Local<T> { value: T }                                    // non-pub: flow computed
 ```
 
-The clause lives on `derives`, not in the colon list: RFC-0207 rejects `Copy` in the colon list because `Copy`
-generates `Clone`, and RFC-0213 says colon entries generate nothing. No change to either.
+- `copy struct P` is the form for an empty or unstated (computed) flow. It never takes `via`; to state a flow, write
+  `derives Copy via ...`. So `copy struct P` and `struct P derives Copy` coincide exactly when no flow is stated.
+- `via` is a contextual keyword like `derives`, `deriving` and the class keywords (RFC-0207); it is not reserved.
+- The clause lives on `derives`, not in the colon list: RFC-0207 rejects `Copy` in the colon list because `Copy`
+  generates `Clone`, and RFC-0213 says colon entries generate nothing. No change to either.
+- Grammar (`grammar.pest`): `derives_clause = { derives_kw ~ clause_entry ~ via_clause? ~ ("," ~ clause_entry ~ via_clause?)* }`,
+  `via_clause = { via_kw ~ ident ~ ("+" ~ ident)* }`, `via_kw = @{ "via" ~ !(ASCII_ALPHANUMERIC | "_") }`. The names after
+  `via` must be the declaration's own type parameters (checked after parsing), so `,` never needs name resolution to
+  tell an entry from a parameter.
+- In v0.16.0 only a `Copy` entry may take `via`; a `via` on any other entry, or on a negative entry, is an error naming
+  this rule. The other markers adopt it in their own RFCs (section 3).
 
 **The interface.** The stated set, or the computed one for a non-`pub` type that omits it, is stored as the type's
 interface. Use sites read only the stored interface.
@@ -98,9 +106,13 @@ interface. Use sites read only the stored interface.
 
 ## 2. Rules
 
-1. *Sufficient.* The stated set must contain every parameter the fields' markers depend on. A field of type `T`,
-   `Option<T>`, `(T, i64)` or `Wrapper<T>` depends on `T`; `&T` does not (a reference is always `Copy`, RFC-0206);
-   `i64` does not. A missing parameter is an error at the field, with the fix-it that adds it.
+1. *Sufficient.* The stated set must contain every parameter the fields' `Copy` depends on. The dependence of a field
+   type is computed from the `Copy` rule of that type (RFC-0206 section 2): a type parameter `P` depends on `{P}`; a
+   nominal application `N<A..>` depends on the union of the dependences of the arguments at `F(N)`, and is an error at the
+   field if `N` is not `Copy` for any arguments; a tuple or array depends on the union of its components; `&T` and the
+   `T[]` view depend on nothing (always `Copy`); a primitive depends on nothing; a written function type is move-only
+   (RFC-0166), so a `Copy` type cannot have one as a field. A missing parameter is an error at the field, with the
+   fix-it that adds it.
 2. *May be larger.* The stated set may contain parameters the fields do not need. `struct Handle<T> derives Copy via T
    { id: i64 }` is `Copy` only when `T` is. This is the direction of a variance annotation that is more restrictive than
    the inferred one, and it lets a public type pin its interface against a later field edit.
@@ -116,10 +128,16 @@ interface. Use sites read only the stored interface.
    (`value: T.Item`) is an error: whether `Payload<A>` is `Copy` depends on `A.Item`, which no set of parameters
    expresses, and an oversized set is not sufficient (`B: Copy` does not imply `B.Item: Copy`). A named limitation
    with a removal condition: associated-type conditions (RFC-0206's condition language rejects them today).
-7. *No conditional exclusion on a Copy type.* A conditional negative grant of `Copy` (`extend<T: Marker> Token<T>:
-   !Copy`) on a type that derives `Copy` is an error at the grant: a type is `Copy` exactly by its flow. The fixture
+7. *Type parameters only.* A name after `via` must be a type parameter of the declaration. A `Copy` declaration with a
+   field whose copy-ness depends on a row- or record-kinded parameter (RFC-0121) is rejected until a kind-specific rule
+   exists (no such declaration is in std today). Named limitation, like rule 6.
+8. *No conditional exclusion on a Copy type.* A conditional negative grant of `Copy` (`extend<T: Marker> Token<T>:
+   !Copy`) on a type that derives `Copy` is an error at the grant: a type is `Copy` exactly by its flow. The same
+   holds for `Drop`: `Copy: !Drop` is a grant-time exclusion (RFC-0213 section 3), so a type that derives `Copy` has no
+   `Drop` impl at all, conditional or not (a conditional one would make `Copy` hold for some instantiations and not
+   others for a reason the flow cannot state). The fixture
    `abstract_ownership_proves_conditional_negative_override` is reclassified at implementation.
-8. *Arithmetic is not negative evidence.* In a generic body, "`Wrapper<T>` is not `Copy` under the bounds in scope"
+9. *Arithmetic is not negative evidence.* In a generic body, "`Wrapper<T>` is not `Copy` under the bounds in scope"
    means the value moves. It is **not** evidence that `T: !Copy` and it does not select an implementation guarded by
    a negative bound; for selection and coherence an unavailable fact stays *undecided* (RFC-0206 section 2 rule 3,
    RFC-0213 section 3).
@@ -289,31 +307,41 @@ marks as unverified are marked so here.
 
 - **RFC-0206** (integrated). Section 6's stored interface, condition language and recursion rules are used unchanged.
   Amended if this RFC is accepted: the `when` placeholder in the "End state" paragraph and step 2 becomes the flow
-  list; section 2 gains rules 7 and 8 above; the unstated-condition error of step 4 becomes rule 3 here. Section 2
+  list; section 2 gains rules 8 and 9 above; the unstated-condition error of step 4 becomes rule 3 here. Section 2
   rule 3 (exact predicate) and the undecided diagnostic stay.
 - **RFC-0207.** The `derives` entry gains an optional `via` list (and `copy struct` the same clause). Open question 6
   ("whether `copy struct` on a generic type needs the condition in the header") is answered by rules 3 and 5.
 - **RFC-0212, RFC-0213.** Unchanged: `declared`, `Copy: deriving Clone, !Drop` and the colon list are not touched.
 - **RFC-0089.** Section 1's lattice and section 2.2's capabilities are unchanged; this RFC does not compute a class.
 - **Spike metel-core#1815.** Its header grammar and desugaring work carry over with `via` for `when`. Its three
-  fixtures that still hit `I0011` (`unbounded`, `nested`, `nested_unbounded`) are the first experiment (open question 3).
+  fixtures that still hit `I0011` (`unbounded`, `nested`, `nested_unbounded`) are the first experiment (open question 2).
+
+---
+
+## Migration and staging
+
+- **No change for non-`pub` types** and for `copy struct` with an empty flow: the flow is computed.
+- **A `pub` generic type with a non-empty computed flow** gains the error of rule 3, with a fix-it showing the set.
+  Std has no generic `Copy` type today; the fixture corpus is swept when rule 3 takes effect.
+- **When rule 3 takes effect.** With the stored-interface work (metel-core#1818), not before: until interfaces are
+  stored there is nothing for a stated flow to be checked against. RFC-0206's step 4 ("an unstated condition on a `pub`
+  generic type is an error", #1820) is this rule, so #1820 becomes the implementation issue for it.
+- **Parser.** `via_clause` and the contextual keyword land with the stated-flow implementation; until then a `via`
+  clause is a parse error naming the staging, so no program silently ignores a flow.
 
 ---
 
 ## Open questions
 
-1. **Grammar.** `,` separates `derives` entries, so a multi-parameter flow needs another separator; `+` is proposed
-   (`via A + B`), as in a bound list. Whether `copy struct W<T> via T` places the clause before or after the generics, and
-   whether `via` should instead be a keyword of the class entry. Settleable now by choosing.
-2. **`Discard`, `Send`, `Sync` surfaces.** Deferred to the RFCs that land them (section 3). Not blocking acceptance.
-3. **Verification.** Run the three #1815 fixtures against a prototype that stores and consumes flow sets, and check
+1. **`Discard`, `Send`, `Sync` surfaces.** Deferred to the RFCs that land them (section 3). Not blocking acceptance.
+2. **Verification.** Run the three #1815 fixtures against a prototype that stores and consumes flow sets, and check
    that the fixtures deleted by the Copy migration still have an equivalent. Gate for acceptance: the first
    experiment, not a design question.
 
-Resolved by this revision: the flow is stated on `derives` (not the colon list); mandatory on `pub` only when non-empty
+Resolved: the grammar (2026-11-10: `derives Copy via A + B`, only on `derives`, contextual `via`, `+` as in a bound list); the flow is stated on `derives` (not the colon list); mandatory on `pub` only when non-empty
 (rule 3); enums have a whole-type flow and no per-variant flow; function and closure types follow RFC-0206's compiler
 rules (they are not nominal types and have no flow); projections are rejected (rule 6); conditional negative grants on a
-Copy type are rejected (rule 7); the amendment of RFC-0206 is the list in "Relationship".
+Copy type are rejected (rule 8); the amendment of RFC-0206 is the list in "Relationship".
 
 ---
 
