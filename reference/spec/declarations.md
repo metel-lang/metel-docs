@@ -3888,6 +3888,10 @@ An aspect lists its direct super-aspects after its name, each a visible aspect. 
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (6)</summary>
@@ -3917,6 +3921,10 @@ An explicit `extend T: A` requires a coherent impl of every direct and transitiv
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (5)</summary>
@@ -3934,6 +3942,10 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (3)</summary>
@@ -3948,6 +3960,10 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 The `deriving` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an obligation.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -3992,6 +4008,10 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (4)</summary>
@@ -4007,6 +4027,10 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 The properties `implicit` and `auto` are accepted only on an aspect declared in the standard library. An `implicit` aspect must refine `Clone` through a `deriving` super-aspect, and at most one `implicit` aspect exists in a program. A violation is an error at the aspect declaration.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -4061,6 +4085,10 @@ A colon-list entry names a visible aspect that is `declared` and has no methods,
 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<!-- rfc.py:origins:end -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
 <summary>Tested by (5)</summary>
@@ -4088,6 +4116,10 @@ A declaration clause has no negative entries. An opt-out of an `auto` aspect is 
 `derives A` is legal exactly when `A` has a derivation. An entry naming no aspect, or an aspect without a derivation, is an error.
 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -4134,6 +4166,10 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 `copy` before `struct` or `enum` is `derives Copy`. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented.
 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>

@@ -2,9 +2,17 @@
 id: rfc-0207
 title: "Declaration Clauses: derives and the Colon List"
 date: '2026-11-02'
-status: accepted
-updated: '2026-11-05'
+status: integrated
+updated: '2026-11-10'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
+coverage:
+  "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-1" }
+  "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-3" }
+  "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-6" }
+  "4": { kind: untestable, reason: "Section 4 states what the RFC does not do; it adds no rule." }
+  "5": { kind: untestable, reason: "The worked examples are fixtures citing the declaration-clause rules." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1800'
+impl_status: in-progress
 ---
 
 > **Extracted from RFC-0162 on 2026-11-02** (its Axis C), and **cut down on 2026-11-03** when the
@@ -16,6 +24,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 > **Status — under review (2026-11-03).** Tracking metel-core#1786, v0.16.0.
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
+
+> **Status — integrated (2026-11-10).**
+
+> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Differences: the clauses are also accepted on a named `record`; `linear` is a parse error until `Linear` exists; a negative colon-list entry is a parse error; clause impls are written after name resolution (`pipeline/clause_expansion.rs`); the error codes are T0046 (invalid entry) and T0003 (unknown aspect).
 
 ## Summary
 

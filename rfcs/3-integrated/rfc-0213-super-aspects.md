@@ -2,9 +2,17 @@
 id: rfc-0213
 title: "Super-Aspects"
 date: '2026-11-04'
-status: accepted
-updated: '2026-11-05'
+status: integrated
+updated: '2026-11-10'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
+coverage:
+  "1": { spec: "spec.declarations.aspects.super-aspects.legality-1" }
+  "2": { spec: "spec.declarations.aspects.super-aspects.legality-3" }
+  "3": { spec: "spec.declarations.aspects.super-aspects.legality-4" }
+  "4": { spec: "spec.declarations.aspects.super-aspects.legality-5" }
+  "5": { kind: untestable, reason: "The worked examples are fixtures citing the super-aspect rules." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1801'
+impl_status: in-progress
 ---
 
 > **Split from RFC-0168 on 2026-11-04.** RFC-0168 defines the equality model and, in one section,
@@ -18,6 +26,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
 > **Amendment (2026-11-06, language owner).** The mark on a super-aspect entry is spelled `deriving` (`aspect Copy: deriving Clone, !Drop;`), distinct from the `derives` clause of RFC-0207: `derives` is a request on a type declaration, `deriving` is a fact about an aspect that extends what a `derives` request generates. `deriving` attaches only to the entry that follows it, so `aspect Eq: deriving PartialEq, Debug` marks `PartialEq` only. The earlier spelling `derived` is superseded.
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
+
+> **Status — integrated (2026-11-10).**
+
+> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Differences: the `deriving` super of an `implicit` aspect (`Copy: deriving Clone`) is provided by the compiler, so an `extend T: Copy;` for a std type needs no written `Clone` (section 2 otherwise stands); an exclusion is checked at the grant with the existing overlap test, so disjoint conditional impls pass; the error codes are T0044 (invalid list) and T0015 (exclusion or negative super).
 
 ## Summary
 

@@ -2,9 +2,17 @@
 id: rfc-0212
 title: "Aspect Declaration Properties"
 date: '2026-11-04'
-status: accepted
-updated: '2026-11-05'
+status: integrated
+updated: '2026-11-10'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
+coverage:
+  "1": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-1" }
+  "2": { kind: untestable, reason: "The structural rule is a std template that waits for the row machinery (metel-core#1823); the native rule is covered by the Copy rules." }
+  "3": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-2" }
+  "5": { kind: untestable, reason: "A table of how the existing aspects are declared; the std declarations are the evidence." }
+  "6": { kind: untestable, reason: "The worked examples are fixtures citing the property rules." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1803'
+impl_status: in-progress
 ---
 
 > **Written 2026-11-04** as part of the `Copy`/`Clone` settlement (RFC-0206). The compiler today
@@ -17,6 +25,10 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
 > **Amendment (2026-11-06, language owner).** The properties are spelled as contextual keywords in front of `aspect` (`declared aspect Validated;`, `declared implicit aspect Copy: deriving Clone, !Drop;`, `auto aspect Send;`), with `pub` outermost, and the mark on a super-aspect entry is `deriving` (RFC-0213 section 4), distinct from the `derives` clause of RFC-0207. The trailing forms and `derived` of the ratified text are superseded.
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05
+
+> **Status — integrated (2026-11-10).**
+
+> **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Differences: a fourth property, `derivable` (RFC-0207 section 2), is accepted on std aspects only; `auto` parses and is std-only but has no semantics; an `extend` of a `declared` aspect is T0045 for a type with a declaration and, for a type without one, rejected outside the defining module (T0014 from the orphan rule); `Copy` is `declared implicit derivable`.
 
 ## Summary
 
