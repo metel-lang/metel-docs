@@ -49,6 +49,29 @@ were migrated with parser-driven tools.
 - A record literal that spreads a record may replace a field the spread's row proves present (RFC-0191,
   `metel-core#1867`): `{ ..s, .a = 10 }`.
 
+**Copy and Clone (RFC-0206, RFC-0207, RFC-0212, RFC-0213):**
+
+- **Breaking:** `Copy` is granted in a type's declaration. `extend T: Copy;` for a struct, enum or record is an error
+  (T0045) with a fix-it: write `copy struct T { .. }` (or `struct T derives Copy`). There is no deprecation window
+  (`metel-core#1806`). A conditional or specialised user `Copy` impl (`extend<T> W<T>: Copy where ..`) can no longer be
+  written; `copy struct W<T>` is `Copy` when `T` is.
+- Declaration clauses and class keywords (RFC-0207): a struct, enum or record may carry a colon list of `declared`
+  marker aspects (`struct Ticket: Validated`) and a `derives` clause (`struct Doc derives Clone`); `copy` before the
+  keyword is `derives Copy`, `linear` is reserved. New codes: T0046 (invalid clause entry); an unknown aspect is T0003.
+- Aspect declaration properties (RFC-0212): `declared`, `derivable`, `implicit` (std only) and `auto` (reserved),
+  written before `aspect`. T0045 is a misused property.
+- Super-aspects (RFC-0213): `aspect Ord: Eq`, exclusions `aspect Copy: !Drop`, and `deriving` on a std super. A
+  bound proves its supers; an impl needs a coherent impl of each; T0044 is an invalid super-aspect list. `Copy` and
+  `Drop` can no longer be granted to one type (T0015, was T0001).
+- `Clone` is derivable and provided: `derives Clone` clones each field in declaration order (enum payloads by
+  variant, anonymous records by label); `Copy` brings the `Clone` the compiler provides, so `T: Copy` proves
+  `T: Clone`. Built-in kinds: the unit type, tuples of `Clone` parts, `Copy` closures and shared references are
+  `Clone`; `Option`, `Result` and `List` are `Clone` in std (`metel-core#270`).
+- The unit type is `Copy` under `--move-check` as in a bound (`metel-core#1784`). `[e; N]` with `N > 1` needs a `Copy`
+  element (T0012).
+- `--move-check` no longer fails with the internal error I0011 when a generic body's ownership is undecided: it is
+  T0047, naming the type (`metel-core#1814`).
+
 **Known limits:** `.[expr]` label variables are not part of v0.16.0; the construction call's spread must be a plain
 binding; the minting form of RFC-0100 section 7 and `Construct` belong to RFC-0114 and are not implemented.
 
