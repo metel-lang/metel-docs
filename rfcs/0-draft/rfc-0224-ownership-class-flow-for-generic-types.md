@@ -251,8 +251,7 @@ marks as unverified are marked so here.
 ## Open questions
 
 1. **Is policy narrowing (section 5) a requirement?** If yes, this RFC is the wrong shape and a boolean form is needed,
-   with the overlap with `where` resolved. Evidence to gather: how many removed fixtures (the `extend<T> X<T>: Copy
-   where ...` family in `f6d6aad9`) and std types used it.
+   with the overlap with `where` resolved.
    Prior-art evidence (searched 2026-11-10 from search snippets and one fetched thread, not full pages):
    - *Rust* permits a narrower `Copy` (`impl<T: Copy + Marker> Copy for W<T>`), but no issue, post or thread found asks for
      it or shows real use of it; that is an absence in the searches, not proof. The documented pain runs the other way:
@@ -269,8 +268,9 @@ marks as unverified are marked so here.
      visible post asked for broader conditions. Reviewers asked for explicit requirements, which supports stating the
      flow in the declaration. The main criticism (Slava Pestov) was that the `where` rule is another special case, so
      regularity of the rule matters more than its width.
-   - *Not yet counted for Metel:* the fixtures deleted in `f6d6aad9` that used `extend<T> X<T>: Copy where ...`, and std
-     types that did. The evidence above favours "no", the count decides it for this language.
+   - *Metel's own fixtures are not evidence.* The fixtures deleted in `f6d6aad9` that used `extend<T> X<T>: Copy where ...`
+     tested the functionality that existed then; they were not written to show demand, so they are not counted
+     (language owner, 2026-11-10). The prior art above is the evidence.
 2. **Is the flow mandatory on `pub` generic types?** Recommended yes, computed otherwise.
 3. **Spelling.** `Copy via T` is a placeholder. Alternatives: `Copy of T`, `Copy(T)`, a modifier on the parameter
    (`struct W<copy T>`), a class keyword taking parameters (`copy<T> struct W`). Choose after question 1.
