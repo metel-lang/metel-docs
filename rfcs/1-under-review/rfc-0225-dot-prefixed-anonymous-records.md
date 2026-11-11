@@ -70,13 +70,15 @@ still determine an anonymous structural record, rather than a nominal constructo
 | Empty type or value | `.{}` |
 | Row bound | `record R: .{ .x: i64, .. }` |
 | Negative row entry | `record R: .{ !.token, .. }` |
-| Whole-row negative bound | `record R: !.{ .token: i64, .. }` |
+| Whole-row negative bound | `record R: !{ .token: i64, .. }` |
 | Row equation | `where R = .{ .x: i64, ..Rest }` |
 | Anonymous structural impl target | `extend<record R> .{ ..R }: Aspect ...` |
 
 Only forms already allowed at each site remain allowed. In particular this RFC
 adds neither empty patterns nor new spread, row-bound or impl capabilities.
-A dot is required even for an empty, tail-only or spread-only form.
+A dot is required even for an empty, tail-only or spread-only anonymous record
+form. Whole-row negative bounds retain their dedicated `!{ ... }` introducer
+(section 3), just as literal-row arguments retain `..{ ... }`.
 
 Named declarations and nominal patterns keep their brace bodies, for example
 `struct Point { x: i64 }` and `Point { x }`. Named construction remains a call,
@@ -134,6 +136,21 @@ ordinary record types a bare-brace alias. The introducer is contiguous, just as
 `.{` is. Neither `Req<.. .{ .x: i64 }>` nor `Req<...{ .x: i64 }>` is introduced
 as an alternative spelling.
 
+**Whole-row negative bounds keep `!{ ... }`.** Write
+`record R: !{ .token: i64, .. }`, not `record R: !.{ .token: i64, .. }`.
+The `!{` introducer identifies a negative row bound in bound position; it does
+not compose a general negation operator with an anonymous record type. Preserve
+RFC-0189's existing expansion into per-entry negative bounds, including its
+legality rules. This changes no negative-bound semantics and introduces no
+general-purpose record-negation operator. Labels inside remain dotted, and mixed
+positive/negative entry bounds retain `record R: .{ .x: i64, !.token, .. }`.
+
+The grammar must recognise whole-row negative bounds with their own `!{`
+introducer and the existing row-bound body, rather than requiring `!` followed by
+the new positive `.{` production. Like `.{` and `..{`, the introducer is
+contiguous. `!.{ ... }` is not an alternative spelling. The parser prototype
+must verify this bound-specific production and unchanged per-entry expansion.
+
 RFC-0099's proposed `parser.{Ast, Token}` is a path-headed import group in
 import/export grammar, not a headless record. It stays a proposal independent of
 this RFC. These distinctions must be confirmed by a parser prototype; this RFC
@@ -171,8 +188,9 @@ whether the existing parser-error machinery can provide the targeted suggestion.
   reintroduce assignment expressions.
 - **RFC-0180 / RFC-0186:** `record R`, `..R`, field-wise bounds and literal-row
   arguments keep their meaning; only the anonymous record operand changes.
-- **RFC-0189 / RFC-0191:** negative row bounds and record updates use the new
-  opener, including `!.{ ... }` and `.{ ..p, .x = e }`.
+- **RFC-0189 / RFC-0191:** whole-row negative bounds keep `!{ ... }` and their
+  existing per-entry expansion; mixed entry bounds use `.{ ... }` and keep
+  `!.label` entries. Record updates use `.{ ..p, .x = e }`.
 - **RFC-0151:** numeric labels retain `.0`, for example `.{ .0 = a, .1 = b }`.
   Tuple-to-row equivalence and unit-to-empty-record equivalence remain undecided
   by this RFC.
@@ -205,7 +223,9 @@ switching grammars, implement a migration against the old parser that inserts a
 single dot at each anonymous record opening delimiter, including patterns and
 empty records. The tool must preserve comments, strings and line endings,
 recognise nested sites, and leave blocks, nominal declaration/pattern braces,
-projection lists and literal-row arguments (`..{ ... }`) untouched. Run it a
+projection lists, literal-row arguments (`..{ ... }`) and whole-row negative
+bound introducers (`!{ ... }`) untouched. Nested anonymous record types inside
+those forms still gain their own prefix. Run it a
 second time to verify that it makes no additional edits. The migration tool must
 be available before the single grammar cutover; old anonymous record forms are
 rejected from that cutover onward.
@@ -229,7 +249,9 @@ The parser prototype and later regression fixtures must cover:
 
 - Closed, open, empty, tail-only and nested types; values with explicit fields,
   puns, numeric labels, spreads and updates; existing pattern forms and rests.
-- Positive and negative row bounds, row equations, anonymous impl targets, and
+- Positive row bounds, mixed negative entries, whole-row `!{ ... }` bounds
+  (with unchanged expansion and rejection of `!.{ ... }`), row equations,
+  anonymous impl targets, and
   empty/nonempty literal-row arguments in the retained `..{ ... }` spelling;
   rejection of `.. .{ ... }` and `...{ ... }` as row arguments.
 - Record return values in function/closure blocks and expression arms; empty
@@ -250,14 +272,15 @@ unverified; agreement on the design does not supply that evidence.
 ## Costs and remaining verification
 
 The prefix adds a character to every anonymous record. Literal-row arguments
-keep their spelling, at the cost of a dedicated grammar production rather than
-pure composition of `..` and an anonymous record type. Migrating immediately after the dotted-label
+and whole-row negative bounds keep their spelling, at the cost of dedicated
+grammar productions rather than pure operator composition. Migrating immediately after the dotted-label
 change would require another syntax sweep. These costs must be weighed against
 uniform empty-record syntax and clearer separation from blocks.
 
 No design question remains open in this draft. The remaining prerequisite is a
-parser prototype verifying the dedicated `..{ ... }` row-literal production
-alongside `.{ ... }` record types and the other cases listed above.
+parser prototype verifying the dedicated `..{ ... }` row-literal and `!{ ... }`
+negative-bound productions alongside `.{ ... }` record types and the other cases
+listed above.
 
 ## References
 
@@ -275,6 +298,8 @@ update), RFC-0151 (proposed tuples as rows), RFC-0188 (label syntax), RFC-0175
 
 - Use `.{ ... }` for anonymous record values, types, patterns, open types, row
   bounds and row equations, including empty and tail-only forms.
+- Keep `!{ ... }` for whole-row negative bounds with their existing per-entry
+  expansion; keep `!.label` for negative entries inside a `.{ ... }` bound.
 - Keep `..{ ... }` for literal-row arguments, `..R` for row parameters, and
   `T.{ ... }` / `value.{ ... }` for existing projections.
 - Make a single breaking cutover, with a parser-based migration tool available
