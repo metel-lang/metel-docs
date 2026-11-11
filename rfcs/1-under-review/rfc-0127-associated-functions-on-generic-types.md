@@ -65,7 +65,7 @@ the pattern and it fails.
 ### It is the only remaining way to write a constructor with a name
 
 RFC-0114 (`Construct` aspect) gives canonical construction through an *aspect method*.
-RFC-0100 gives call-shaped construction, `Point(x = 1.0)`. Neither offers a **named**
+RFC-0100 proposes explicit construction, `new Point(x = 1.0)`, and expected-target `.(...)`. Neither offers a **named**
 alternative constructor — `Rect::square(4)`, `Chan::bounded(16)`, `Date::from_iso(s)` — and
 for a generic type there is currently no way to write one at all.
 

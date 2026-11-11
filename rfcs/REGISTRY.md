@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**225 RFCs total.** 37 draft, 54 under review, 11 accepted, 7 integrated (109 live), 85 implemented, 15 superseded, 16 refused (116 settled).
+**225 RFCs total.** 37 draft, 53 under review, 11 accepted, 7 integrated (108 live), 85 implemented, 16 superseded, 16 refused (117 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
-## Under Review (54)
+## Under Review (53)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -69,7 +69,7 @@ the curated thematic map.
 - **RFC-0095** — Attributes and Metadata (`1-under-review` ; rfcs/1-under-review/rfc-0095-attributes-and-metadata.md ; date 2026-07-09 ; updated 2026-09-01)
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
-- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-11-11)
+- **RFC-0100** — Explicit and inferred nominal construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-11-11 ; updated 2026-11-11)
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
@@ -110,7 +110,6 @@ the curated thematic map.
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0225** — Dot-prefixed anonymous records (`1-under-review` ; rfcs/1-under-review/rfc-0225-dot-prefixed-anonymous-records.md ; date 2026-11-11 ; updated 2026-11-11)
-- **RFC-0226** — Explicit and inferred nominal construction (`1-under-review` ; rfcs/1-under-review/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Accepted (11)
 
@@ -224,7 +223,7 @@ the curated thematic map.
 - **RFC-0221** — Dotted Row Labels (`4-implemented` ; rfcs/4-implemented/rfc-0221-dotted-row-labels.md ; date 2026-11-07 ; updated 2026-11-11 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1847)
 - **RFC-0223** — Keyword Arguments at Every Call (`4-implemented` ; rfcs/4-implemented/rfc-0223-keyword-arguments-at-every-call.md ; date 2026-11-07 ; updated 2026-11-11 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1854)
 
-## Superseded (15)
+## Superseded (16)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -241,6 +240,7 @@ the curated thematic map.
 - **RFC-0083** — Public Value Exports (`5-superseded` ; rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/539)
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
+- **RFC-0226** — Explicit and inferred nominal construction (`5-superseded` ; rfcs/5-superseded/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Refused (16)
 

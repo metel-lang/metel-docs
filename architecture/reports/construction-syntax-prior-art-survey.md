@@ -26,7 +26,7 @@ This report separates three properties:
 3. **Semantics:** every designated construction expression routes through the
    intended construction policy, rather than bypassing invariants.
 
-RFC-0226 addresses the first. The language owner's subsequent concern is the
+RFC-0100 addresses the first. The language owner's subsequent concern is the
 second. Neither determines the third by itself.
 
 ## Primary-source findings
@@ -108,7 +108,7 @@ scope. Sources: [universal apply methods](https://docs.scala-lang.org/scala3/ref
 **Metel assessment:** strong precedent for concise construction-as-call and for
 handling namespace interactions explicitly. These forms do not satisfy the newly
 stated requirement that construction be recognisable independently of knowing the
-callee. They support RFC-0226's original direction, not a distinctive marker.
+callee. They support RFC-0100's original direction, not a distinctive marker.
 
 ### Enforced lexical distinction: OCaml
 
@@ -127,7 +127,7 @@ These ratings are design assessments, not claims measured by the cited sources.
 
 | Candidate | Empty form | Recognition without casing | Main cost |
 |---|---|---|---|
-| `Ticket(value = 1)` + RFC-0226 | `Empty()` | No: ordinary call shape | Constructor value bindings and collision restrictions |
+| `Ticket(value = 1)` + earlier call-shaped RFC-0100 design | `Empty()` | No: ordinary call shape | Same-name function collisions and weak visual distinction |
 | Mandatory `new Ticket(value = 1)` | `new Empty()` | Yes, dedicated keyword | New syntax, keyword and migration |
 | Mandatory `construct Ticket(value = 1)` | `construct Empty()` | Yes, dedicated keyword | Longer; less directly supported by surveyed precedent |
 | Mandatory `Ticket { value = 1 }` | `Empty {}` | Yes, type head plus braces | Reverses RFC-0100; must settle block parsing and policy routing |
@@ -160,7 +160,7 @@ meaning is possible but obscures the distinction; alternatively the minting form
 would need another explicit spelling. That is a real interaction requiring a
 joint decision with RFC-0114, not grounds to assume braces cannot work.
 
-## Questions to settle before revising RFC-0226
+## Questions to settle before revising RFC-0100
 
 1. Is the goal a unique syntactic marker, or an explicit named operation? This
    chooses keyword/braces versus a constructor member.
@@ -187,7 +187,7 @@ new expression syntax matters more than distinguishing construction grammaticall
 from every other associated call.
 
 This survey makes no lifecycle transition. Following the survey, the language-owner
-discussion selected `new T(...)` paired with inferred `.(...)`; RFC-0226 was
+discussion selected `new T(...)` paired with inferred `.(...)`; RFC-0100 was
 revised under review to record that direction and explicit whole-row `..r` /
 `..{ ... }` arguments. This is a proposed design, not implemented behaviour.
 No performance, user-study or cross-language collision tests were run.

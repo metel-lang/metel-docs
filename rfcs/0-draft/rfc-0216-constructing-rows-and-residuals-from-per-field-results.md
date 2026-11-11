@@ -67,7 +67,7 @@ symbolic field of RFC-0174 D3, from the bound `..R: Clone` (RFC-0123), not per i
 
 `T.{ ..R }(..record)` builds a residual of the brand `T` from a record, with these rules. The brace form
 `T.{ ..R } { entries }` is a brace construction and is prohibited by RFC-0100 §5; the record is passed by the
-spread of RFC-0100 §7, as `Type(..r)` is for a struct.
+spread of RFC-0100 §7, as `new Type(..r)` is for a struct.
 
 1. **Defining module only.** It may be written only in the module that defines `T` (RFC-0214 rule 1).
    A brand with private fields therefore cannot be forged from outside.
@@ -83,7 +83,7 @@ spread of RFC-0100 §7, as `Type(..r)` is for a struct.
 ## 3. Relationship to existing RFCs
 
 - **RFC-0175 / RFC-0188** — the `Label` type and the spelling `.[e]` of a computed label.
-- **RFC-0100** — the spread call `T(..r)` this RFC's residual construction uses, and the prohibition of the
+- **RFC-0100** — the whole-row construction expression `new T(..r)` this RFC's residual construction uses, and the prohibition of the
   brace form (§5).
 - **RFC-0174** — supplies the loop and computed access; this RFC closes its open question 7 for rows
   and residuals. Whether `emit` (RFC-0093) is still needed for other outputs is left to RFC-0093.
