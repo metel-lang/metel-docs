@@ -64,8 +64,8 @@ The first revision reserved constructors in the value namespace. That removed
 argument-dependent lookup but left construction visually identical to a call.
 The language owner also found bare `Empty` unclear. The revised design makes the
 operation explicit and offers a compact form that infers only its target type.
-The [prior-art survey](../../architecture/reports/construction-syntax-prior-art-survey.md)
-compares keyword, brace, associated-operation and ordinary-call alternatives.
+The accompanying prior-art survey compares keyword, brace, associated-operation
+and ordinary-call alternatives.
 
 ## 1. Explicit construction
 
