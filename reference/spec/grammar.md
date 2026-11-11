@@ -130,10 +130,8 @@ UnaryExpression      → ( "!" | "-" | "*" | "&" "var"? ) UnaryExpression
 PostfixExpression    → PrimaryExpression ( "::<" TypeArgs ">" "(" Arguments? ")" | "(" Arguments? ")" | "." INT | "." IDENTIFIER "::<" TypeArgs ">" "(" Arguments? ")" | "." IDENTIFIER "(" Arguments? ")" | "." IDENTIFIER | "[" Expression "]" | "?" )*
 Arguments            → Argument ( "," Argument )* ","?
 Argument             → KeywordArgument
-                     | SpreadArgument
                      | Expression
 Label                → "." ( INT | IDENTIFIER )
-SpreadArgument       → ".." Expression
 KeywordArgument      → IDENTIFIER "=" !"=" Expression
 PrimaryExpression    → SUFFIXED_FLOAT
                      | FLOAT
@@ -156,6 +154,7 @@ PrimaryExpression    → SUFFIXED_FLOAT
                      | ContinueExpression
                      | RecordProjectionExpr
                      | RecordLiteral
+                     | StructLiteral
                      | PathExpr
 ReturnExpression     → "return" Expression?
 BreakExpression      → "break" Expression?
@@ -174,6 +173,7 @@ CaptureItem          → "&" "var" IDENTIFIER
                      | "&" IDENTIFIER
                      | IDENTIFIER "." "clone" "(" ")"
                      | IDENTIFIER
+StructLiteral        → TypePath "{" ( StructFieldInit ( "," StructFieldInit )* ","? )? "}"
 RecordLiteral        → "{" ( RecordInitializer ( "," RecordInitializer )* ","? )? "}"
 RecordProjectionExpr → TypePath ".{" Label ( "," Label )* ","? "}"
 FieldInit            → Label ( "=" Expression )?
@@ -182,6 +182,7 @@ RecordInitializer    → RecordSpread
 RecordSpread         → ".." Expression
 PathExpr             → PathRoot ( "::" IDENTIFIER )*
 TypePath             → PathRoot ( "::" IDENTIFIER )*
+StructFieldInit      → IDENTIFIER ( "=" Expression )?
 
 Pattern                → "_"
                        | ArrayPattern

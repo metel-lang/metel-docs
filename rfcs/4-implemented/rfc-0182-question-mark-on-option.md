@@ -60,7 +60,7 @@ import std::env::get;
 
 fun config_path() -> Option<String> {
     let home := get("HOME")?;            // T0001: cannot unify Option<String> with Result<?1, ?2>
-    Some(value = home + "/.config")
+    Some { value = home + "/.config" }
 }
 ```
 
@@ -114,7 +114,7 @@ mismatched pairing is `T0001` with the message in §6.
 fun port(env_name: String) -> Option<u16> {
     let raw := get(env_name)?;           // Option<String>, in an Option-returning fn
     let n   := parse_u16(raw)?;          // Option<u16>
-    Some(value = n)
+    Some { value = n }
 }
 ```
 

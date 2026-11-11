@@ -54,7 +54,7 @@ pub struct ParseError { pub line: i64, pub reason: String }
 
 pub fun parse_int(s: String, line: i64) -> Result<i64, ParseError> {
     // ...as written on page 3
-    return Ok(value = 0);
+    return Ok { value = 0 };
 }
 ```
 

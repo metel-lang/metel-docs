@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**225 RFCs total.** 37 draft, 53 under review, 11 accepted, 7 integrated (108 live), 86 implemented, 15 superseded, 16 refused (117 settled).
+**225 RFCs total.** 37 draft, 54 under review, 11 accepted, 7 integrated (109 live), 85 implemented, 15 superseded, 16 refused (116 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
-## Under Review (53)
+## Under Review (54)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -69,6 +69,7 @@ the curated thematic map.
 - **RFC-0095** — Attributes and Metadata (`1-under-review` ; rfcs/1-under-review/rfc-0095-attributes-and-metadata.md ; date 2026-07-09 ; updated 2026-09-01)
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
+- **RFC-0100** — Constructor-Call Construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-11-11)
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
@@ -109,7 +110,7 @@ the curated thematic map.
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0225** — Dot-prefixed anonymous records (`1-under-review` ; rfcs/1-under-review/rfc-0225-dot-prefixed-anonymous-records.md ; date 2026-11-11 ; updated 2026-11-11)
-- **RFC-0226** — Constructors in the value namespace (`1-under-review` ; rfcs/1-under-review/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
+- **RFC-0226** — Explicit and inferred nominal construction (`1-under-review` ; rfcs/1-under-review/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Accepted (11)
 
@@ -135,7 +136,7 @@ the curated thematic map.
 - **RFC-0213** — Super-Aspects (`3-integrated` ; rfcs/3-integrated/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1801)
 - **RFC-0224** — Stated flow for the ownership markers of generic types (`3-integrated` ; rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-10 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1941)
 
-## Implemented (86)
+## Implemented (85)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -174,7 +175,6 @@ the curated thematic map.
 - **RFC-0082** — Associated Types (`4-implemented` ; rfcs/4-implemented/rfc-0082-associated-types.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/546)
 - **RFC-0097** — Orphan Rule for Bare-Parameter Blanket Impls (`4-implemented` ; rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md ; date 2026-07-11 ; updated 2026-07-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/555)
 - **RFC-0098** — Surface Keyword Renames (`4-implemented` ; rfcs/4-implemented/rfc-0098-surface-keyword-renames.md ; date 2026-07-13 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
-- **RFC-0100** — Constructor-Call Construction (`4-implemented` ; rfcs/4-implemented/rfc-0100-constructor-call-construction.md ; date 2026-07-13 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/807)
 - **RFC-0102** — Bodyless Extend Blocks for Marker Aspects and Negative Impls (`4-implemented` ; rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
 - **RFC-0103** — Bodyless Aspect Declarations (`4-implemented` ; rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
 - **RFC-0106** — Optional Braces for Empty Constructors (`4-implemented` ; rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented)

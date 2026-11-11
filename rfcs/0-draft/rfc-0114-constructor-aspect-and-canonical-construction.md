@@ -15,7 +15,7 @@ updated: '2026-07-24'
 > question 10) without proposing this fix; RFC-0096 owns the *auto-impl* pattern
 > (`Send`/`Sync`/`Linear`, a closed, compiler-intrinsic list) which this RFC's default
 > derivation resembles in spirit but does not reuse directly (§7); none of the others
-> touch construction at all. Depends on RFC-0100 (now `4-implemented`, 2026-11-07) for
+> touch construction at all. Depends on RFC-0100 (reopened under review, 2026-11-11) for
 > removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
 > deferred) as the foundation for §6's escape hatch.
 
@@ -64,6 +64,18 @@ updated: '2026-07-24'
 > with §1.1 the only exception — which every candidate syntax satisfies. Open question 2 is
 > resolved by dissolving its premise, and this RFC now has no blocking dependency on any
 > under-review RFC.
+
+> **Surface proposal — RFC-0226 (under review, 2026-11-11).** Explicit
+> `new T(...)` and expected-target `.(...)` would collect positional/keyword
+> arguments into the same canonical row used here. A whole-row argument is
+> explicitly `..r` or `..{ .field = value }`, never an ordinary record argument
+> implicitly reinterpreted by shape. For example, proposed
+> `new Point(..{ .x = 1, .y = 2 })` supplies one complete construction row;
+> `new Wrapper(.{ .x = 1, .y = 2 })` supplies a record as one field value.
+> Both routes must use the same validation and result policy. Inferred targets
+> for fallible construction require reconciliation before that extension;
+> compact syntax must introduce no implicit unwrap. RFC-0226's dedicated literal
+> spelling does not itself accept arbitrary expressions after `..`.
 
 ## Summary
 
@@ -589,7 +601,7 @@ extend Interval: Construct {
 - `public/rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
-- `public/rfcs/4-implemented/rfc-0100-constructor-call-construction.md` — call-shaped
+- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — call-shaped
   construction and general keyword arguments. **No longer a dependency of this RFC** (§2,
   open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
   brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was

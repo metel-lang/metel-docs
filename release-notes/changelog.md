@@ -22,12 +22,11 @@ were migrated with parser-driven tools.
   header's init and update clauses; it is not an operand, argument, initializer, condition, closure body or block
   tail, so a block ending in an assignment needs its `;`, `{ x = 1 }` is a record and a closure that assigns is
   `|v| { total = v; }`. Migrate with `metel-frontend/examples/assign_migrate`, run under the old grammar.
-- A struct, a named record or an enum struct-variant is built by a call (RFC-0100, `metel-core#1860`,
-  `#1861`): `Point(x = 1, y = 2)`, `Point(1, 2)`, `Shape::Rect(w = 2.0, h = 3.0)`, `Empty()`, `Pair::<i64>(1, 2)`,
-  `Self(..)` in an `extend` block and `Type(..r)` from a record binding. The brace literal `Type { f = v }`, the
-  shorthand `Type { x, y }` and `Empty {}` are parse errors; braces after a type name remain in declarations and
-  patterns. Migrate with `construct_migrate`. A type and a function may share a name: `Name(args)` is the
-  function call exactly when its arguments bind to the function's parameters.
+- RFC-0100's constructor-call experiment is withdrawn (`metel-core#1945`): structs,
+  named records and fieldful enum variants again use nominal braces such as
+  `Point { x = 1, y = 2 }`, with shorthand fields permitted. Ordinary function
+  keyword arguments remain supported. RFC-0100 is back under review; explicit
+  and inferred construction are proposed separately in RFC-0226.
 - A label of a row is written `.name` (RFC-0221, `metel-core#1863`): in an anonymous record literal, pattern,
   type and row bound and in a projection list, `{ .x = 1, .y }`, `{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
   field there is a parse error, and a pun of a numeric label is an error. Migrate with `label_migrate`.

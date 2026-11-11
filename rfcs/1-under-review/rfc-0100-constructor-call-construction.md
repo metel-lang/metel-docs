@@ -2,20 +2,9 @@
 id: rfc-0100
 title: "Constructor-Call Construction"
 date: '2026-07-13'
-status: implemented
-updated: '2026-11-09'
+status: under-review
+updated: '2026-11-11'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
-coverage:
-  "1": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-1" }
-  "2": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
-  "3": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
-  "4": { kind: untestable, reason: "Destructuring keeps its brace form, unchanged by this RFC; a fixture records that patterns and record literals keep their braces." }
-  "5": { spec: "spec.declarations.structs.instantiation-and-field-access.legality-2" }
-  "6": { kind: elsewhere, reason: "Moved to RFC-0223 on 2026-11-07." }
-  "7": { spec: "spec.declarations.enums.instantiation.legality-1" }
-  "8": { kind: untestable, reason: "The worked examples are fixtures of the implementation, each citing the instantiation rules above." }
-impl_tracking: 'https://github.com/metel-lang/metel-core/issues/807'
-impl_status: implemented
 ---
 
 > **Tracking added retroactively (2026-08-23).** This RFC reached under-review before
@@ -70,6 +59,20 @@ impl_status: implemented
 > **Status — integrated (2026-11-08).** Integrated 2026-11-07: spec struct and enum instantiation rules and the construction visibility rule state the call form (blocked-exempt on metel-core#807 until implemented); worked examples and sibling cross-check recorded.
 
 > **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
+
+> **Status — under review (2026-11-11).** Language owner requested reopening and rollback of constructor-call construction, tracked by metel-core#1945; keyword arguments remain RFC-0223.
+
+> **Rollback decision (2026-11-11, language owner).** This RFC is reopened;
+> metel-core#1945 restores pre-RFC-0100 nominal brace construction and withdraws
+> the constructor-call implementation. Keyword arguments remain RFC-0223. The
+> coordinated rollback restores the specification and examples to brace forms;
+> RFC-0226's distinct construction forms remain under review, not implemented.
+
+> **Replacement proposal — RFC-0226.** The exact whole-row contract remains
+> relevant to the replacement: `new T(..r)` / `.(..r)` distinguish a complete
+> construction row from a record passed as one field value; literals use
+> `..{ .field = value }`. These are under-review replacement forms, not syntax
+> added by restoring the pre-RFC-0100 implementation.
 
 ## Summary
 

@@ -81,8 +81,9 @@ form. Whole-row negative bounds retain their dedicated `!{ ... }` introducer
 (section 3), just as literal-row arguments retain `..{ ... }`.
 
 Named declarations and nominal patterns keep their brace bodies, for example
-`struct Point { x: i64 }` and `Point { x }`. Named construction remains a call,
-`Point(x = 0)` or `Point(..p)` (RFC-0100). Field selection remains `p.x`.
+`struct Point { x: i64 }` and `Point { x }`. Nominal construction is separate: the RFC-0100 rollback (#1945) restores
+`Point { x = 0 }`; RFC-0226 proposes `new Point(...)` and inferred `.(...)`.
+This RFC changes neither nominal construction policy nor field selection `p.x`.
 
 ### 2. Blocks and empty records
 
@@ -173,6 +174,14 @@ switch. No new semantic error code is proposed; diagnostic coverage must establi
 whether the existing parser-error machinery can provide the targeted suggestion.
 
 ## Interactions and prior decisions
+
+- **RFC-0226 (under review):** proposed inferred nominal construction uses
+  `.(...)`, so `.{ ... }` remains structural regardless of expected type.
+  Whole-row literal constructor arguments use `..{ .x = 1 }`, retaining the
+  dedicated `..{` introducer rather than composing `..` with `.{`. This is value
+  argument syntax, distinct by context from the existing `..{ .x: i64 }` type
+  argument. Its implementation belongs to RFC-0226.
+
 
 - **RFC-0221:** retains dotted labels and revisits only the outer delimiter.
   Its alternatives table rejects the Zig-style `.{ .x = 1 }` as heavier and as

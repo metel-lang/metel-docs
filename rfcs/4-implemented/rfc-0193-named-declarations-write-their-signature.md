@@ -247,7 +247,7 @@ stated so that it keeps holding. Items 1 and 3 restate `T0010` and constrain a f
   withholds the suggestion for such a body.
 - **RFC-0037 (return-position `impl Aspect`).** Unaffected; `-> impl Aspect` is a written type.
 - **Unqualified variant constructors.** A named function body now always has an expected type, its
-  written return type or `()`, so `Some(value = a)` resolves when the type is written. A
+  written return type or `()`, so `Some { value = a }` resolves when the type is written. A
   closure with no annotation still has none and needs the qualified form.
 - **RFC-0195 (local functions do not capture).** A local `fun` is a named declaration and writes its
   signature like any other, and it does not capture, so a closure that captures cannot be rewritten as one.

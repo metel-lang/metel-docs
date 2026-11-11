@@ -49,7 +49,7 @@ struct Point { x: i64, y: i64 }
 fun x_of<record T: { .x: i64, .. }>(v: T) -> i64 { v.x }
 
 fun main() {
-    let p := Point(x = 1, y = 2);
+    let p := Point { x = 1, y = 2 };
     let n := x_of(p);   // rejected: Point is a struct, not a record
 }
 ```
@@ -68,7 +68,7 @@ record Point { x: i64, y: i64 }
 fun x_of<record T: { .x: i64, .. }>(v: T) -> i64 { v.x }
 
 fun main() {
-    let p := Point(x = 1, y = 2);
+    let p := Point { x = 1, y = 2 };
     println(x_of(p));           // a named record satisfies the bound
 }
 ```

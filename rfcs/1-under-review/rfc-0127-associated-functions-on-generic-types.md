@@ -16,7 +16,7 @@ the type's path already works — for a **non-generic** type:
 
 ```metel
 struct Counter { n: i64 }
-extend Counter { fun new() -> Counter { return Counter(n = 0); } }
+extend Counter { fun new() -> Counter { return Counter { n = 0 }; } }
 
 let c := Counter::new();          // works today
 ```
@@ -25,7 +25,7 @@ The same declaration on a **generic** type parses, typechecks and is unreachable
 
 ```metel
 struct Tok<T> { v: T }
-extend<T> Tok<T> { fun make(v: T) -> Tok<T> { return Tok(v = v); } }
+extend<T> Tok<T> { fun make(v: T) -> Tok<T> { return Tok { v = v }; } }
 
 let t := Tok::make(7);            // [T0003] unresolved path `Tok::make`
 ```
@@ -122,7 +122,7 @@ an `extend` block whose target head is `Type`, for generic and non-generic types
 ```metel
 struct Tok<T> { v: T }
 extend<T> Tok<T> {
-    fun make(v: T) -> Tok<T> { return Tok(v = v); }
+    fun make(v: T) -> Tok<T> { return Tok { v = v }; }
 }
 
 let t := Tok::make(7);            // t : Tok<i64>

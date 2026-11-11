@@ -149,7 +149,7 @@ struct P { v: i64 }
 fun both(a: &var P, b: &var P) { a.v = 10; b.v = 20; }
 
 // (1) two exclusive borrows of one place — accepted
-var x := P(v = 1);
+var x := P { v = 1 };
 let c := &var x;
 let d := &var x;
 
@@ -469,7 +469,7 @@ liveness model, no diagnostic, and no worked example. It is also unenforced:
 
 ```metel
 fun leak() -> &P {
-    let local := P(v = 1);
+    let local := P { v = 1 };
     return &local;          // accepted today; prints 1
 }
 ```
@@ -486,8 +486,8 @@ survives a stored reference:
 ```metel
 struct Holder { r: &P }
 fun make() -> Holder {
-    let local := P(v = 42);
-    return Holder(r = &local);   // accepted today; prints 42
+    let local := P { v = 42 };
+    return Holder { r = &local };   // accepted today; prints 42
 }
 ```
 
@@ -507,7 +507,7 @@ checking needs the analogue: a closure capturing a place while a borrow of it is
 Accepted today:
 
 ```metel
-var c := C(v = 0);
+var c := C { v = 0 };
 let r := &var c;
 let f := || -> i64 { c.v };   // captures c while r borrows it exclusively
 ```

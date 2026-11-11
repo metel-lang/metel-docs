@@ -28,8 +28,8 @@ extend Prefixed: Sink {
 }
 
 fun main() {
-    let a := Console( );
-    let b := Prefixed(tag = "metrics");
+    let a := Console { };
+    let b := Prefixed { tag = "metrics" };
     a.emit("user 7: 51");
     b.emit("user 7: 51");
 }
@@ -59,7 +59,7 @@ fun main() {
     lines.push("user 7: 51");
     lines.push("user 3: 2");
 
-    let out := Console( );
+    let out := Console { };
     report(&out, lines);
 }
 ```
@@ -84,8 +84,8 @@ extend Prefixed: Sink { fun emit(&self, line: String) { println("[" + self.tag +
 
 fun main() {
     var sinks: List<dyn Sink> := List::new();
-    sinks.push(Console( ));
-    sinks.push(Prefixed(tag = "metrics"));
+    sinks.push(Console { });
+    sinks.push(Prefixed { tag = "metrics" });
 
     for (s in sinks.as_slice()) {
         s.emit("(report complete)");
@@ -117,8 +117,8 @@ extend<T> Secret<T>: !Loggable;      // ...except Secret, which opts out
 fun log_it<T: Loggable>(x: T) { }
 
 fun main() {
-    log_it(Wrapper(value = 42));      // Wrapper is Loggable — fine
-    // log_it(Secret(value = 42));    // rejected: Secret is !Loggable
+    log_it(Wrapper { value = 42 });      // Wrapper is Loggable — fine
+    // log_it(Secret { value = 42 });    // rejected: Secret is !Loggable
     println("ok");
 }
 ```

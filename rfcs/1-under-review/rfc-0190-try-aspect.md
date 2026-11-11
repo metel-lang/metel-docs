@@ -26,8 +26,8 @@ extend<T> Lookup<T>: Try {
     type Residual := Missed;
     fun branch(self) -> ControlFlow<Missed, T> {
         match (self) {
-            Found { value } => ControlFlow::Continue(value = value),
-            Missing => ControlFlow::Break(value = Missed()),
+            Found { value } => ControlFlow::Continue { value },
+            Missing => ControlFlow::Break { value = Missed {} },
         }
     }
 }
@@ -36,7 +36,7 @@ extend<T> Lookup<T>: FromResidual<Missed> {
 }
 
 fun both(a: Lookup<i64>, b: Lookup<i64>) -> Lookup<i64> {
-    Found(value = a? + b?)          // either Missing leaves `both` with Missing
+    Found { value = a? + b? }          // either Missing leaves `both` with Missing
 }
 ```
 

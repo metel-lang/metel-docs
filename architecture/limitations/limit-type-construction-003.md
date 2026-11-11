@@ -19,8 +19,8 @@ Reproduced against current `develop`:
 ```metel
 struct P { x: i64 }
 fun main() {
-    let a := P(x = 1);
-    let b := P(x = 1);
+    let a := P { x = 1 };
+    let b := P { x = 1 };
     assert(a == b);
 }
 ```
