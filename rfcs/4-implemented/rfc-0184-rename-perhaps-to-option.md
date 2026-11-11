@@ -30,7 +30,7 @@ Rename the core absence type `Perhaps<T>` to `Option<T>`. The variants `Some { v
 ```metel
 fun first(xs: [i64]) -> Option<i64> {     // was Perhaps<i64>
     if (xs.len() == 0) { return None; }
-    Some(value = xs[0])
+    Some { value = xs[0] }
 }
 ```
 

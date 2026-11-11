@@ -142,7 +142,7 @@ messages when aliasing is relevant.
 ### 2.1 Allocation
 
 ```metel
-let a: Rc<Node> := Rc::new(Node(val = 1));
+let a: Rc<Node> := Rc::new(Node { val = 1 });
 ```
 
 `Rc::new` allocates `Node` on the global heap, prepends a reference count initialised
@@ -152,7 +152,7 @@ governed by the reference count, not a lexical scope.
 ### 2.2 Clone — acquiring a second owner
 
 ```metel
-let a: Rc<Node> := Rc::new(Node(val = 1));
+let a: Rc<Node> := Rc::new(Node { val = 1 });
 let b := a.clone();   // reference count: 2; a and b are both owners of the same Node
 ```
 
@@ -169,7 +169,7 @@ let b := a;   // b is the only owner; a is consumed; count unchanged
 `Rc<T>` implements `Deref<Target = T>`. Any borrow of an `Rc<T>` yields `&T`:
 
 ```metel
-let a: Rc<Node> := Rc::new(Node(val = 1));
+let a: Rc<Node> := Rc::new(Node { val = 1 });
 let r: &Node := &*a;   // borrow; lifetime tied to binding `a`
 ```
 

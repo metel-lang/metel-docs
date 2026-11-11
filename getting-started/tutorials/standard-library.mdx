@@ -48,7 +48,7 @@ use their combinators:
 
 ```metel
 fun main() {
-    let maybe := Option::Some(value = 21);
+    let maybe := Option::Some { value = 21 };
     fun double(x: i64) -> i64 { x * 2 }
 
     // Transform inside the Option, then supply a fallback.
@@ -64,7 +64,7 @@ fun main() {
 the `Err` through untouched:
 
 ```metel
-let r: Result<i64, String> := Ok(value = 10);
+let r: Result<i64, String> := Ok { value = 10 };
 let n := r.map(|x: i64| -> i64 { x + 5 }).unwrap_or(0);  // 15
 ```
 

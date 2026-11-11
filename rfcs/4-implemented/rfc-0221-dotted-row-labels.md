@@ -24,6 +24,13 @@ impl_status: implemented
 
 > **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
+> **Interaction update (2026-11-11).** RFC-0100 is reopened and its
+> constructor-call implementation is being rolled back under metel-core#1945.
+> Nominal brace construction uses undotted member names; this RFC's dotted
+> anonymous-row labels remain implemented. RFC-0225 proposes new anonymous
+> delimiters and RFC-0226 proposes a distinct nominal construction surface;
+> neither changes the current label rule merely by being under review.
+
 ## Summary
 
 **A label of a row is written `.name`.** In an anonymous record literal, pattern, type, row bound and row

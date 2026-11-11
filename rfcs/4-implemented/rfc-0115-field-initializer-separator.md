@@ -57,7 +57,7 @@ coverage:
 >   desugaring is transparent rather than a re-spelling.
 > - **RFC-0071 (Ownership and Move Semantics)** — separator-neutral. Whether the
 >   initializer expression moves or copies is unaffected by the token before it.
-> - **RFC-0100 (Constructor-Call Construction, `4-implemented`)** — the one live conflict,
+> - **RFC-0100 (Constructor-Call Construction, under review)** — the one live conflict,
 >   already recorded as an accepted risk: if it lands, `field_init` ceases to exist and
 >   these sites migrate twice.
 >
@@ -299,7 +299,7 @@ question, and this RFC applies the invariant to one site whatever that document 
 - `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the invariant, the fourteen-site
   grammar audit, and the open question 4 ("what if RFC-0100 is refused?") this split
   answers
-- `public/rfcs/4-implemented/rfc-0100-constructor-call-construction.md` — the parent
+- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — the parent
   RFC; keeps call-shaped construction and general keyword arguments, and is independent of
   this one in both directions
 - `public/rfcs/5-superseded/rfc-0090-structural-records.md` — its 2026-07-24

@@ -251,7 +251,7 @@ fun first<T: Clone>(arr: [T]) -> Option<T> {
     // at this definition, exactly as RFC-0061's bound checker already does today —
     // not deferred to whichever call site happens to instantiate T
     if (array_len(arr) == 0) { return None; }
-    return Option::Some(value = arr[0]);
+    return Option::Some { value = arr[0] };
 }
 ```
 

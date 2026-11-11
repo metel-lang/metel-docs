@@ -34,7 +34,7 @@ written:
 extend<row R, row Rest> Session<..R> where R = { .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
         let { .token: _, ..rest } := self.data;      // rest : { ..Rest }
-        Session(id = self.id, data = rest)
+        Session { id = self.id, data = rest }
     }
 }
 ```
@@ -52,7 +52,7 @@ settled the *types*. It left the body as `{ ... }`.
 
 Every attempt to fill the body fails at present (metel-core#1399):
 
-- Building the result from the whole, `Session(id = self.id, data = self.data)`, is
+- Building the result from the whole, `Session { id = self.id, data = self.data }`, is
   rejected. Declared parameters are rigid (RFC-0173), so `{ .token: Token, ..Rest }` is not
   `{ ..Rest }`, and no coercion removes a field.
 - Writing a removed label back (`value.data.token = ...`) is rejected by design: a
@@ -209,7 +209,7 @@ The typestate step (signature unchanged from RFC-0121):
 extend<row R, row Rest> Session<..R> where R = { .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
         let { .token: _, ..rest } := self.data; // §1 case 2: rest : { ..Rest }
-        Session(id = self.id, data = rest)
+        Session { id = self.id, data = rest }
     }
 }
 ```
@@ -219,7 +219,7 @@ The reverse step, adding a field (the equation here is for the *result*):
 ```metel
 extend<row R: !{ .token }> Session<..R> {
     fun with_token(self, t: Token) -> Session<{ ..R, .token: Token }> {
-        Session(id = self.id, data = { ..self.data, .token = t })   // §2: token ∉ R
+        Session { id = self.id, data = { ..self.data, .token = t } }   // §2: token ∉ R
     }
 }
 ```

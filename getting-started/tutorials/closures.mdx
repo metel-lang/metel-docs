@@ -59,12 +59,12 @@ fun main() {
         while (i < totals.len()) {
             let entry := totals.get(i).yolo();
             if (entry.user == user) {
-                totals.set(i, Tally(user = user, total = entry.total + weight));
+                totals.set(i, Tally { user = user, total = entry.total + weight });
                 found = true;
             }
             i = i + 1;
         }
-        if (!found) { totals.push(Tally(user = user, total = weight)); }
+        if (!found) { totals.push(Tally { user = user, total = weight }); }
     };
 
     tally(7, 42);
