@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**224 RFCs total.** 37 draft, 52 under review, 11 accepted, 7 integrated (107 live), 86 implemented, 15 superseded, 16 refused (117 settled).
+**225 RFCs total.** 37 draft, 53 under review, 11 accepted, 7 integrated (108 live), 86 implemented, 15 superseded, 16 refused (117 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 
-## Under Review (52)
+## Under Review (53)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -109,6 +109,7 @@ the curated thematic map.
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0225** — Dot-prefixed anonymous records (`1-under-review` ; rfcs/1-under-review/rfc-0225-dot-prefixed-anonymous-records.md ; date 2026-11-11 ; updated 2026-11-11)
+- **RFC-0226** — Constructors in the value namespace (`1-under-review` ; rfcs/1-under-review/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Accepted (11)
 
