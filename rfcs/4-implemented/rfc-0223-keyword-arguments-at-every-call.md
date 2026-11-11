@@ -3,7 +3,7 @@ id: rfc-0223
 title: "Keyword Arguments at Every Call"
 date: '2026-11-07'
 status: implemented
-updated: '2026-11-09'
+updated: '2026-11-11'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1854'
 coverage:
   "1": { kind: blocked, reason: "Keyword arguments are not implemented until the call grammar and checker land.", ref: "metel-core#1854" }
@@ -42,8 +42,7 @@ connect(host = "db.local", port = 5432, timeout = 30);
 connect("db.local", port = 5432, timeout = 30);   // positional + keyword mix
 ```
 
-It applies to free functions, associated functions, methods after the receiver, aspect methods and constructor calls
-(RFC-0100). It depends on RFC-0183 (assignment is a statement), so that `f(x = 1)` is never an assignment.
+It applies to free functions, associated functions, methods after the receiver, aspect methods and native std functions. It depends on RFC-0183 (assignment is a statement), so that `f(x = 1)` is never an assignment.
 
 ---
 
@@ -60,7 +59,7 @@ desugaring path for structs and gives the call form of RFC-0100 its readable hal
 
 
 **Keyword arguments are part of the call syntax of every function** (decided in principle 2026-11-07, language owner),
-not a feature of constructors. Struct construction was the first use that motivated the mechanism, and it is a call like any other:
+not a feature of constructors. Struct construction was the first motivation, but its call-shaped surface is withdrawn with RFC-0100; ordinary function keyword arguments remain:
 
 ```metel
 fun connect(host: String, port: i64, timeout: i64) -> Connection { ... }
@@ -94,7 +93,7 @@ construct.
 3. **Every parameter bound.** There are no default values here, so a call binds every parameter. Default values are a
    separate decision.
 4. **Every callable with declared parameter names.** Free functions, associated functions (`Type::f`), methods after the
-   receiver, aspect methods, constructor calls (section 7), enum-variant calls and native std functions, whose declared
+   receiver, aspect methods and native std functions, whose declared
    names are their keyword names. The receiver is never a keyword argument (`self` is reserved).
 5. **Calls through a function value are positional only.** A function type carries no parameter names, so a call
    through a closure, a `|T| -> U` parameter or a `dyn` callable binds by position, and a keyword argument there is an error.
@@ -239,8 +238,9 @@ Each combines this RFC with an integrated feature or a sibling RFC of the stage.
 fun connect(host: String, port: i64, timeout: i64) -> Connection { ... }
 connect("db.local", port = 5432, timeout = 30);      // positional then keyword: rule 1
 connect(port = 5432, host = "db.local", timeout = 1);  // keyword order is free; evaluated in written order (section 4)
-let c := Point(1, 2);                                // RFC-0100: a construction call, positional
-let d := Point(x = 1, y = 2);                        // the keyword form of the same call
+fun point(x: i64, y: i64) -> Point { Point { x, y } } // ordinary factory around nominal braces
+let c := point(1, 2);                               // positional function call
+let d := point(x = 1, y = 2);                        // keyword form of the same function call
 assert(cond = true, msg = "x");                      // overloads: the two-parameter assert (rule 7)
 ```
 
@@ -274,11 +274,11 @@ Exit check: no contradiction with the integrated spec (calls, overloads, aspects
 
 ## Relationship to existing RFCs
 
-- **RFC-0100** — the other half: `Type(args)` instantiation. Its constructor calls take keyword arguments by this RFC; the brace
-  rewrite produces the keyword form.
+- **RFC-0100** — reopened under review; its constructor-call implementation is rolled back by metel-core#1945.
+  This RFC's ordinary function keyword arguments remain independently implemented. Replacement construction is RFC-0226.
 - **RFC-0183** — assignment is a statement; this RFC depends on it (section 3).
 - **RFC-0023** (type ascription) — untouched. **RFC-0115** (field initializer separator) — `=` stays.
-- **RFC-0125** — pack expansion also uses `..`; spread in call arguments is RFC-0100's section 7.
+- **RFC-0125** — pack expansion also uses `..`; construction-call spread was withdrawn with RFC-0100; replacement whole-row construction is proposed in RFC-0226.
 
 ---
 

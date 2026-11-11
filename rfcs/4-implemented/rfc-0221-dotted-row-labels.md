@@ -11,7 +11,7 @@ coverage:
   "4": { spec: "spec.types.record-labels.legality-1" }
   "5": { spec: "spec.types.record-labels.legality-2" }
   "6": { kind: untestable, reason: "The worked examples are fixtures of the implementation, each citing the record-label rules." }
-updated: '2026-11-09'
+updated: '2026-11-11'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1847'
 impl_status: implemented
 ---

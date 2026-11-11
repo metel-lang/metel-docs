@@ -22,11 +22,7 @@ were migrated with parser-driven tools.
   header's init and update clauses; it is not an operand, argument, initializer, condition, closure body or block
   tail, so a block ending in an assignment needs its `;`, `{ x = 1 }` is a record and a closure that assigns is
   `|v| { total = v; }`. Migrate with `metel-frontend/examples/assign_migrate`, run under the old grammar.
-- RFC-0100's constructor-call experiment is withdrawn (`metel-core#1945`): structs,
-  named records and fieldful enum variants again use nominal braces such as
-  `Point { x = 1, y = 2 }`, with shorthand fields permitted. Ordinary function
-  keyword arguments remain supported. RFC-0100 is back under review; explicit
-  and inferred construction are proposed separately in RFC-0226.
+
 - A label of a row is written `.name` (RFC-0221, `metel-core#1863`): in an anonymous record literal, pattern,
   type and row bound and in a projection list, `{ .x = 1, .y }`, `{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
   field there is a parse error, and a pun of a numeric label is an error. Migrate with `label_migrate`.
@@ -38,7 +34,7 @@ were migrated with parser-driven tools.
 **New features:**
 
 - Keyword arguments at every call (RFC-0223, `metel-core#1857`, `#1858`): `connect("db", port = 5432)` binds by
-  name for free functions, methods, associated functions, aspect methods, overloads and constructors. Positional
+  name for free functions, methods, associated functions, aspect methods, and overloads. Positional
   arguments come first, every parameter is bound once, a call through a function value is positional only, and
   arguments evaluate in the order written. New codes: T0039 (keyword binds no free parameter), T0040 (positional
   after keyword), T0041 (keyword in a call through a function value), T0042 (impl parameter name differs from the
@@ -71,8 +67,14 @@ were migrated with parser-driven tools.
 - `--move-check` no longer fails with the internal error I0011 when a generic body's ownership is undecided: it is
   T0047, naming the type (`metel-core#1814`).
 
-**Known limits:** `.[expr]` label variables are not part of v0.16.0; the construction call's spread must be a plain
-binding; the minting form of RFC-0100 section 7 and `Construct` belong to RFC-0114 and are not implemented.
+**Development note:** RFC-0100's constructor-call experiment is withdrawn (`metel-core#1945`): structs,
+  named records and fieldful enum variants again use nominal braces such as
+  `Point { x = 1, y = 2 }`, with shorthand fields permitted. Ordinary function
+  keyword arguments remain supported. RFC-0100 is back under review; explicit
+  and inferred construction are proposed separately in RFC-0226.
+
+**Known limits:** `.[expr]` label variables are not part of v0.16.0; the minting form and
+`Construct` belong to RFC-0114 and are not implemented.
 
 ## v0.15.0
 
