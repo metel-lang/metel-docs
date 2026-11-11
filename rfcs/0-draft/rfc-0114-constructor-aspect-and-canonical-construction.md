@@ -3,7 +3,7 @@ id: rfc-0114
 title: "Constructor Aspect and Canonical Construction"
 date: '2026-07-23'
 status: draft
-updated: '2026-07-24'
+updated: '2026-11-11'
 ---
 
 > **New RFC, split out 2026-07-23** from `reports/substructural-types/nominal-types-as-branded-rows.md`
