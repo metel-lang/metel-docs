@@ -253,7 +253,7 @@ assert(cond = true, msg = "x");                      // overloads: the two-param
 4. **Aspects.** `extend Meters: From<f64> { fun from(x: f64) -> Meters { ... } }` is `T0042` while the aspect declares `value`; with
    `value` it conforms, and `Meters::from(value = 1.5)` binds by the aspect's name through a bound, a `dyn` and the concrete type alike.
 5. **Siblings.** `f(x = 1)` is a keyword argument whether RFC-0183 has landed or not (prototype: keyword-first ordering, section 3),
-   `f(x: T)` is still an ascribed positional argument, and `Type(..r)` (RFC-0100) is a spread argument that takes no keywords.
+   `f(x: T)` is still an ascribed positional argument, and `new Type(..r)` (RFC-0100) is a spread argument that takes no keywords.
 
 Exit check: no contradiction with the integrated spec (calls, overloads, aspects, closures) or with RFC-0100, RFC-0183 and RFC-0221.
 
@@ -275,10 +275,10 @@ Exit check: no contradiction with the integrated spec (calls, overloads, aspects
 ## Relationship to existing RFCs
 
 - **RFC-0100** — reopened under review; its constructor-call implementation is rolled back by metel-core#1945.
-  This RFC's ordinary function keyword arguments remain independently implemented. Replacement construction is RFC-0226.
+  This RFC's ordinary function keyword arguments remain independently implemented. Replacement construction is proposed in RFC-0100.
 - **RFC-0183** — assignment is a statement; this RFC depends on it (section 3).
 - **RFC-0023** (type ascription) — untouched. **RFC-0115** (field initializer separator) — `=` stays.
-- **RFC-0125** — pack expansion also uses `..`; construction-call spread was withdrawn with RFC-0100; replacement whole-row construction is proposed in RFC-0226.
+- **RFC-0125** — pack expansion also uses `..`; construction-call spread was withdrawn with RFC-0100; replacement whole-row construction is proposed in RFC-0100.
 
 ---
 

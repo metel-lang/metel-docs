@@ -117,8 +117,8 @@ keyword collision.
   at a glance.
 - **RFC-0100 (Constructor-Call Construction) — narrows, but does not replace, the grammar-ordering fix.**
   Once a bare PascalCase identifier reliably means "type reference, never a standalone value" (since
-  RFC-0100's own call-shaped construction means a *bare* type name with no trailing `(args)` never
-  constructs anything), the one residual ambiguity case for `ident: expr` inside a call's argument
+  RFC-0100's explicit `new` and expected-target `.(...)` forms distinguish
+  construction from a bare type-name read), the one residual ambiguity case for `ident: expr` inside a call's argument
   list — a bare capitalized value on the right of the colon — essentially can't arise in legitimate code.
   But the actual grammar collision (an argument shaped `ident : expr` being greedily consumed by the
   existing `asc_expr` ascription production before a keyword-argument alternative is ever tried) is

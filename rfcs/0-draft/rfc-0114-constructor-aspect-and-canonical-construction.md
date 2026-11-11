@@ -65,7 +65,7 @@ updated: '2026-11-11'
 > resolved by dissolving its premise, and this RFC now has no blocking dependency on any
 > under-review RFC.
 
-> **Surface proposal — RFC-0226 (under review, 2026-11-11).** Explicit
+> **Surface proposal — RFC-0100 (under review, consolidated 2026-11-12).** Explicit
 > `new T(...)` and expected-target `.(...)` would collect positional/keyword
 > arguments into the same canonical row used here. A whole-row argument is
 > explicitly `..r` or `..{ .field = value }`, never an ordinary record argument
@@ -74,13 +74,13 @@ updated: '2026-11-11'
 > `new Wrapper(.{ .x = 1, .y = 2 })` supplies a record as one field value.
 > Both routes must use the same validation and result policy. Inferred targets
 > for fallible construction require reconciliation before that extension;
-> compact syntax must introduce no implicit unwrap. RFC-0226's dedicated literal
+> compact syntax must introduce no implicit unwrap. RFC-0100's dedicated literal
 > spelling does not itself accept arbitrary expressions after `..`.
 
 ## Summary
 
 A `Construct` aspect makes producing a value of a nominal type canonical: every `Self`
-value produced by a construction expression (`Type(args)`, `Type(..r)`, `from_record`)
+value produced by a construction expression (`new Type(args)`, `new Type(..r)`, `from_record`)
 comes into existence through exactly one function, `Construct::construct(row) ->
 Result<Self, Self::Error>`. This closes RFC-0090's open question 10 (`FromRecord`
 bypassing constructor invariants) in its original scope. It does not fire when a narrowed
@@ -251,7 +251,7 @@ caller must handle otherwise — ordinary, unsurprising behavior either way.
 **What this RFC actually needs, stated precisely now that it is not "RFC-0100 must land":**
 every surface form that produces a `Self` must desugar to `construct`, and §1.1's
 privileged row-to-`Self` admission must be the only exception. Nothing more. RFC-0115
-(separator only, braces kept) satisfies this; RFC-0100 (call-shaped, literal retired)
+(separator only, braces kept) satisfies this; RFC-0100 (explicit `new` / inferred `.(...)`, literal retired)
 satisfies it; today's grammar with neither would satisfy it too, since `field_init`'s
 separator is irrelevant to whether a literal desugars. **This RFC has no blocking
 dependency on either.**
@@ -281,17 +281,17 @@ as RFC-0137 and the spec's `ownership.widening` rules define, with no call to `c
 4. **Both routes need code that can name the field.** For a private field that is the defining module, where the author is trusted
    as in Rust. A `pub` field with an invariant already contradicts itself.
 
-**What is guaranteed.** Every `Self` produced by a construction expression (`Type(args)`, `Type(..r)`, `from_record`) satisfies the
+**What is guaranteed.** Every `Self` produced by a construction expression (`new Type(args)`, `new Type(..r)`, `from_record`) satisfies the
 invariant when produced. Code that can name a field may change it afterwards; an invariant that must survive mutation belongs behind
 private fields and methods. The `mess_with_it` example stands as the accepted limit, reachable only from the defining module or
 through `pub` fields.
 
 **Piecewise building.** A value built field by field, `let partial = { .a = compute_a() }; let partial = { ..partial, .b = compute_b() };`,
-is an ordinary anonymous record, with no brand. Turning the complete record into a `Self` is the explicit `Type(..partial)` (RFC-0100
+is an ordinary anonymous record, with no brand. Turning the complete record into a `Self` is the explicit `new Type(..partial)` (RFC-0100
 §7), which calls `construct` once; nothing fires on completion.
 
 **Alternatives considered.** Keeping the firing, rejected for the reasons above. Letting a type with a non-default `Construct`
-refuse to widen, so completion is a type error and reassembly is `Type(..row)`, rejected: it closes the narrowing route while plain
+refuse to widen, so completion is a type error and reassembly is `new Type(..row)`, rejected: it closes the narrowing route while plain
 assignment stays open, and it makes widening depend on the type's impl.
 
 ---
@@ -348,7 +348,7 @@ spec'd, not that anything about them needs inventing here).
 
 **One rule decides, and it is not a new rule.** Whether a construction call yields a bare `Self` or a
 `Result` falls entirely out of whether `Self::Error` is uninhabited, the same declaration that expresses "can
-this fail", with no separate flag to keep in sync. It applies uniformly to `Type(args)`, `Type(..r)` and
+this fail", with no separate flag to keep in sync. It applies uniformly to `Type(args)`, `new Type(..r)` and
 `from_record`.
 
 **`ConstructUnchecked` (§6) is a genuinely different flavor of trust, not made redundant

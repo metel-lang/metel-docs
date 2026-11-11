@@ -42,11 +42,11 @@ let partial := { ..partial, .b = compute_b() };
 let full := Type(..partial);                         // RFC-0100 §7
 ```
 
-A record is a typestate builder, and `Type(..r)` is the final step. What it lacks is a method-call form that can
+A record is a typestate builder, and `new Type(..r)` is the final step. What it lacks is a method-call form that can
 be chained, can be handed across a function boundary with a type that says what is still missing, and can be
 requested by a struct with one word.
 
-### What this adds over a record plus `Type(..r)`
+### What this adds over a record plus `new Type(..r)`
 
 - **A named, nominal state.** `Building<Server, { .host: String }, { .host: String, .port: i64 }>` tells a reader
   and the checker which fields remain. A bare record's type says which are present but not which are required.
@@ -127,13 +127,13 @@ extend<T, record Need, record Have> Building<T, ..Need, ..Have> {
 ```metel
 extend<T, record R> Building<T, ..R, ..R> {
     fun build(self) -> T {
-        T(..self.fields)
+        new T(..self.fields)
     }
 }
 ```
 
 `build` exists only on `Building<T, ..R, ..R>`: the `Have` row equals `Need`. The result is exactly what
-`T(..self.fields)` yields (RFC-0114 §5): a bare `T` when `T::Error` is `!`, and `Result<T, T::Error>` otherwise.
+`new T(..self.fields)` yields (RFC-0114 §5): a bare `T` when `T::Error` is `!`, and `Result<T, T::Error>` otherwise.
 This RFC adds no result-handling rule. A struct with an invariant therefore validates once, inside `construct`,
 when the builder completes.
 
@@ -200,7 +200,7 @@ own.
 | **Std row template, generic `set`** | **Proposed.** No per-struct code, no compiler privilege beyond RFC-0207/0209, and the state is a type. Setters are keyed by label, not by name. |
 | Compiler-provided derive (like `Copy`/`Clone`) | Would allow `.host(v)`, but is a compiler special case that cannot be written by a library, against the settlement's aim. |
 | Generated builder struct (`ServerBuilder`, `.host(v)`) | The usual shape in other languages. Needs `emit` (RFC-0092/0094), which is not close. A later layer, not a replacement. |
-| No builder: record plus `Type(..r)` | Works today in outline (Motivation). Lacks the chained form and a nominal state. A reasonable position if this RFC is declined. |
+| No builder: record plus `new Type(..r)` | Works today in outline (Motivation). Lacks the chained form and a nominal state. A reasonable position if this RFC is declined. |
 | Keyword-argument construction only (RFC-0100) | Covers complete construction. Does not cover partial construction passed between functions. |
 | Runtime-checked `&var` builder | Weaker: failure at run time. Not proposed. |
 
@@ -208,7 +208,7 @@ own.
 
 ## Interactions
 
-- **RFC-0100 / RFC-0114:** `build` is `T(..fields)`, i.e. `T::construct`. A brace literal for `Building` itself is
+- **RFC-0100 / RFC-0114:** `build` is `new T(..fields)`, i.e. `T::construct`. A brace literal for `Building` itself is
   prohibited like any struct's, hence `Building(fields = …)`.
 - **RFC-0132 §3, RFC-0175, RFC-0188, RFC-0221:** `set` needs a comptime `Label` parameter in a method, a label
   variable `.[l]` in a row field, and dotted row fields. These are the label model.
@@ -268,7 +268,7 @@ Before this leaves draft:
   repeated parameter in an impl head is not legal, the equality is expressed with a `where` row equation and the
   prototype says which.
 - Each rejected case in §6 gives the stated error.
-- A struct with an invariant: `build` returns what `T(..fields)` returns.
+- A struct with an invariant: `build` returns what `new T(..fields)` returns.
 - The diagnostic for an incomplete `build` names the missing labels.
 
 ---

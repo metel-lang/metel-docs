@@ -2,15 +2,17 @@
 id: rfc-0226
 title: "Explicit and inferred nominal construction"
 date: '2026-11-11'
-status: under-review
+status: superseded
 updated: '2026-11-11'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1944'
 ---
 
-> **Status — under review (2026-11-11).** Review tracked by metel-core#1944.
+> **Previous status — under review (2026-11-11).** Review was tracked by metel-core#1944.
 > Revised after the language-owner discussion: explicit `new T(...)` and inferred
 > `.(...)` replace the earlier constructor-binding proposal. Prototype evidence
 > and interaction review remain required before acceptance.
+
+> **Status — superseded (2026-11-11).** Its explicit and inferred nominal construction proposal is consolidated into RFC-0100.
 
 ## Summary
 

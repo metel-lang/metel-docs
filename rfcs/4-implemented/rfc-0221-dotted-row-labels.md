@@ -24,12 +24,11 @@ impl_status: implemented
 
 > **Status — implemented (2026-11-09).** Implemented in the v0.16.0 surface stage (metel-core#1869).
 
-> **Interaction update (2026-11-11).** RFC-0100 is reopened and its
-> constructor-call implementation is being rolled back under metel-core#1945.
-> Nominal brace construction uses undotted member names; this RFC's dotted
-> anonymous-row labels remain implemented. RFC-0225 proposes new anonymous
-> delimiters and RFC-0226 proposes a distinct nominal construction surface;
-> neither changes the current label rule merely by being under review.
+> **Interaction update (2026-11-11).** The RFC-0100 constructor-call implementation
+> was rolled back under metel-core#1945. Nominal brace construction uses undotted
+> member names; this RFC's dotted anonymous-row labels remain implemented.
+> RFC-0225 proposes new anonymous delimiters; RFC-0100 proposes explicit
+> `new T(...)` and expected-target `.(...)`. Neither changes the current label rule.
 
 ## Summary
 
@@ -135,7 +134,7 @@ A pun is a label with no value: `{ .x }` means `{ .x = x }`, and in a pattern bi
 **Unchanged:**
 
 - Field selection and method calls: `p.x`, `p.0`, `p.f()`.
-- Struct and enum construction, which is the call of RFC-0100: `Point(x = 1.0)`, `Shape::Rect(w = 2.0, h = 3.0)`.
+- Struct and enum construction, which is the proposed construction of RFC-0100: `new Point(x = 1.0)`, `Shape::Rect(w = 2.0, h = 3.0)`.
 - Struct and enum declarations: `struct Point { x: f64 }`, `enum Shape { Rect { w: f64, h: f64 } }`.
 - Struct and enum patterns: `Point { x, y }`, `Shape::Rect { w, h }` (RFC-0100 §4). Named records (RFC-0120) follow structs: their declarations
   and patterns stay bare, and they are constructed by the call of RFC-0100.
@@ -151,7 +150,7 @@ spelling (`.x`) meet in the spread of RFC-0100 §7, and a projection list `Handl
 
 ```metel
 let r := { .x = 1.0, .y = 2.0 };      // a record: labels
-let p := Point(..r);                  // a struct from a record: Point::construct(r)
+let p := new Point(..r);                  // a struct from a record: Point::construct(r)
 let q := Point(x = 1.0, y = 2.0);     // the same struct, by parameter name
 p.x == r.x                            // selection is the same on both
 ```
@@ -206,7 +205,7 @@ under either reading and the workarounds are no longer needed.
 ## Interactions
 
 - **RFC-0100 (Constructor-call construction):** removes struct and enum brace construction, which is what makes
-  the anonymous record the only brace expression. Its `Type(..r)` is the bridge from a dotted record to a struct
+  the anonymous record the only brace expression. Its `new Type(..r)` is the bridge from a dotted record to a struct
   (§2).
 - **RFC-0188 (Label syntax):** this RFC answers its Open Question 1 as "yes, required, not equivalent": a field
   of an anonymous record is a label. It also answers Open Question 2 the other way: label lists in projections
@@ -244,7 +243,7 @@ Each combines this RFC with an integrated feature or a sibling RFC of the stage.
 
 ```metel
 let p := { .x = 1.0, .y = 2.0 };                       // a record: labels
-let q := Point(..p);                                    // RFC-0100: a struct from a record, spread alone
+let q := new Point(..p);                                    // RFC-0100: a struct from a record, spread alone
 let r := Point(x = 1.0, y = 2.0);                       // the same struct by parameter name (RFC-0223)
 fun norm<record R>(v: { .x: f64, ..R }) -> f64 { v.x }  // dotted row type
 fun read<record R>(h: Handle.{ .fd, ..R }) -> i64 { h.fd }
@@ -256,7 +255,7 @@ let t := { .0 = a, .1 = b };                            // numeric labels
    is a parse error (block required); `{ .0 }` parses and is a checker error.
 2. **Struct, enum and named record code is untouched.** `Point { x, y }` patterns, `struct Point { x: f64 }` declarations, `p.x` selection and keyword
    arguments keep their spelling.
-3. **Siblings.** RFC-0183: `{ x = 1 }` is not a block tail; a block ending in an assignment takes its `;`. RFC-0100: `Type(..r)` takes a dotted
+3. **Siblings.** RFC-0183: `{ x = 1 }` is not a block tail; a block ending in an assignment takes its `;`. RFC-0100: `new Type(..r)` takes a dotted
    record. RFC-0223: keyword arguments are not labels. RFC-0191 and RFC-0189 are written in the dotted spelling (`{ ..s, .a = 10 }`, `!.x`).
 4. **`{}`** is unchanged: a block in a block position, a record elsewhere, with `({})` and `{ {} }` as before.
 
@@ -300,7 +299,7 @@ alone: release notes, released-version snapshots, superseded and refused RFCs, A
 ## Costs
 
 - **Verbosity.** Every record field gains a character. Signatures with several fields are the heaviest case.
-- **The same field has two spellings across the struct/record boundary.** `Point(x = 1.0)` and `{ .x = 1.0 }`
+- **The same field has two spellings across the struct/record boundary.** `new Point(x = 1.0)` and `{ .x = 1.0 }`
   differ. The rule explains it (members versus labels of a row), but a reader has to learn it.
 - **The one-dot slip** (§4). `.r` for `..r` is a valid pun. Mitigated by the row check and the lint, not
   eliminated.
