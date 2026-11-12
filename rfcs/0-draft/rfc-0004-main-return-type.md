@@ -73,7 +73,7 @@ complexity. The error type `E` is left open (see Open Questions).
 
 ### C. Introduce a dedicated `main() -> ()` with a `yolo` block / scope
 
-A scoped construct (e.g. `yolo { ... }` block) propagates any `?`-derived error
+A scoped construct (e.g. `yolo .{ ... }` block) propagates any `?`-derived error
 inside it as a panic, making the intent explicit at the block level rather than per
 call. Keeps `main` returning `()` while allowing `?` within designated "yolo" regions.
 

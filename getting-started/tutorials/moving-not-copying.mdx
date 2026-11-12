@@ -13,7 +13,7 @@ value and its *type* changes to reflect what's left.
 fun store(s: String) -> i64 { s.len() }
 
 fun main() {
-    let fields := { .user = "7", .kind = "click", .arg = "/home" };
+    let fields := .{ .user = "7", .kind = "click", .arg = "/home" };
 
     let k := store(fields.kind);   // `kind` moved out; fields : { user, arg }
     let a := store(fields.arg);    // disjoint — `arg` moved out; fields : { user }
@@ -27,7 +27,7 @@ fun main() {
 ```
 
 `store(fields.kind)` moves `kind` out. From that point `fields` has type
-`{ .user: String, .arg: String }` — reading `fields.kind` again is a compile error
+`.{ .user: String, .arg: String }` — reading `fields.kind` again is a compile error
 (`no field kind on { user, arg }`), not a runtime surprise. The two moves are of
 different fields, so the checker allows both. `Copy` types (`i64`, `boolean`, `Char`,
 …) are copied on use and never move.

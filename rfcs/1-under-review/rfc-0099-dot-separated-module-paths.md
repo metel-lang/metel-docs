@@ -83,7 +83,7 @@ has, in expression position (not an import statement, where a keyword already di
 let x := std::core::Option::Some { value = 42 };
 ```
 
-Under the dot rename this is `std.core.Option.Some { ... }` — leading segment `std` is lowercase. A
+Under the dot rename this is `std.core.Option.Some .{ ... }` — leading segment `std` is lowercase. A
 leading-segment-only check misreads this as ordinary value/field access on a (nonexistent) local `std`.
 This isn't a contrived edge case — the RFC's own §2 example (`root.parser.Ast.new()`) has the identical
 shape: two lowercase segments (`root`, `parser`) before reaching the PascalCase type. Repairing the rule

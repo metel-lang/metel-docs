@@ -13,9 +13,9 @@ name takes a `comptime` parameter of type `Label` (RFC-0132 §3.6) and uses it i
 selection. There is no label kind, and labels are not strings or types.
 
 ```metel
-fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T { r.[l] }
+fun get<T, record R>(comptime l: Label, r: .{ .[l]: T, ..R }) -> T { r.[l] }
 
-let id: i64 := get(.id, { .id = 7, .name = "ana" });
+let id: i64 := get(.id, .{ .id = 7, .name = "ana" });
 ```
 
 This RFC owns the semantics: the `Label` type, label equality, what a label parameter may do in a row, and what
@@ -39,14 +39,14 @@ RFC-0121 makes the *remainder* of a record generic. The label in a row equation 
 
 ```metel
 fun take_token<record R, record Rest>(s: Session<..R>) -> Session<..Rest>
-where R = { .token: Token, ..Rest } { ... }
+where R = .{ .token: Token, ..Rest } { ... }
 ```
 
 Code that should do the same thing for an arbitrary field has to be written once per field:
 
 ```metel
-fun drain_token<record R>(s: &var { .token: Token, ..R }) -> ... { ... }
-fun drain_alloc<record R>(s: &var { .alloc: Buffer, ..R }) -> ... { ... }
+fun drain_token<record R>(s: &var .{ .token: Token, ..R }) -> ... { ... }
+fun drain_alloc<record R>(s: &var .{ .alloc: Buffer, ..R }) -> ... { ... }
 ```
 
 The unknown is not only the tail `R` but also the field name. That matters for generic record utilities, a
@@ -95,8 +95,8 @@ needs one, and RFC-0170's literal types need not extend to labels.
 A label parameter is a `comptime` parameter of type `Label`, per RFC-0132 §3.6:
 
 ```metel
-fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T          // as a parameter
-fun get<comptime l: Label, T, record R>(r: { .[l]: T, ..R }) -> T          // the same, in the generic list
+fun get<T, record R>(comptime l: Label, r: .{ .[l]: T, ..R }) -> T          // as a parameter
+fun get<comptime l: Label, T, record R>(r: .{ .[l]: T, ..R }) -> T          // the same, in the generic list
 extend<comptime l: Label, T> Wrapper<T> { … }                              // on an impl
 ```
 
@@ -110,12 +110,12 @@ A label parameter or literal may stand in any row-field position:
 
 | position | form |
 |---|---|
-| record type | `{ .[l]: T, ..R }` |
-| record literal | `{ .[l] = v, ..r }` |
+| record type | `.{ .[l]: T, ..R }` |
+| record literal | `.{ .[l] = v, ..r }` |
 
-| row bound entry | `R: { .[l]: T, .. }` |
+| row bound entry | `R: .{ .[l]: T, .. }` |
 | negative bound entry (RFC-0189) | `R: !{.[l]}`, `{ !.[l]: T, .. }` |
-| row equation | `R = { .[l]: T, ..Rest }` |
+| row equation | `R = .{ .[l]: T, ..Rest }` |
 | selection | `r.[l]` |
 
 The row rules are RFC-0121's, RFC-0123's and RFC-0189's, with a label variable in place of a literal. In
@@ -162,7 +162,7 @@ field `token` is not present in this row
 For a label parameter the diagnostic names the missing entailment and not a missing field:
 
 ```text
-`l` is not known to be a field of this row; add the bound `R: { .[l]: T, .. }`
+`l` is not known to be a field of this row; add the bound `R: .{ .[l]: T, .. }`
 ```
 
 A `Label` used where a run-time value is needed reports that a label is compile-time only, and where it was
@@ -184,7 +184,7 @@ RFC-0174 and RFC-0216, which currently call the name a "compile-time string", ar
 ### 8. Tuples
 
 A numeric label `.0` is a `Label`. `t.0` is selection by `.0`, and a tuple is a numeric-label row (RFC-0151).
-`fun nth<T, record R>(comptime n: Label, t: { .[n]: T, ..R }) -> T { t.[n] }` is generic over the position.
+`fun nth<T, record R>(comptime n: Label, t: .{ .[n]: T, ..R }) -> T { t.[n] }` is generic over the position.
 
 ### 9. Visibility
 
@@ -213,7 +213,7 @@ sibling fields and they are not both literals, that is two label parameters or a
 signature must state that they differ:
 
 ```metel
-fun both<A, B, record R>(comptime a: Label, comptime b: Label, r: { .[a]: A, .[b]: B, ..R }) -> (A, B)
+fun both<A, B, record R>(comptime a: Label, comptime b: Label, r: .{ .[a]: A, .[b]: B, ..R }) -> (A, B)
 where a != b {
     (r.[a], r.[b])
 }
@@ -238,15 +238,15 @@ where a != b {
 ### Projection and insertion
 
 ```metel
-fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T { r.[l] }
+fun get<T, record R>(comptime l: Label, r: .{ .[l]: T, ..R }) -> T { r.[l] }
 
-fun insert<V, record R>(comptime l: Label, r: { ..R }, v: V) -> { .[l]: V, ..R }
+fun insert<V, record R>(comptime l: Label, r: .{ ..R }, v: V) -> .{ .[l]: V, ..R }
 where R: !{.[l]} {
-    { .[l] = v, ..r }
+    .{ .[l] = v, ..r }
 }
 
 fun main() {
-    let cfg := insert(.port, insert(.host, {}, "a.com"), 8080);   // { .host: String, .port: i64 }
+    let cfg := insert(.port, insert(.host, {}, "a.com"), 8080);   // .{ .host: String, .port: i64 }
     assert(get(.port, cfg) == 8080);
 }
 ```
@@ -256,7 +256,7 @@ fun main() {
 ### Branching on a label
 
 ```metel
-extend<record R> { ..R }: Json where ..R: Json {
+extend<record R> .{ ..R }: Json where ..R: Json {
     fun to_json(&self) -> String {
         var parts: [String] := [];
         comptime for field in fields(R) {
@@ -278,7 +278,7 @@ get(.missing, user);                   // field `missing` is not present in this
 get(.name, user) + 1;                  // `name` is String, not i64
 insert(.host, cfg, "b.com");           // R already has `host`, violating `R: !{.host}`
 fun bad(comptime l: Label) { let x := l; }   // a Label is compile-time only
-fun f<T, record R>(comptime l: Label, r: { ..R }) -> T { r.[l] }   // `l` is not known to be a field of R
+fun f<T, record R>(comptime l: Label, r: .{ ..R }) -> T { r.[l] }   // `l` is not known to be a field of R
 both(.id, .id, rec);                   // `a` and `b` must differ; both are `.id`
 ```
 
@@ -331,7 +331,7 @@ still needs a checked mapping from the type to a field name.
 - **RFC-0174 (Compile-time iteration):** `field.name` is a `Label` (§7). Its row syntax (`row R`, `where all R`)
   is also stale against RFC-0186 and is amended with it.
 - **RFC-0216 (Constructing rows and residuals):** its computed-label literal `{ [field.name] = expr }` is
-  `{ .[field.name] = expr }`.
+  `.{ .[field.name] = expr }`.
 - **RFC-0189 (Per-label negative bounds):** `!.x` generalises to `!.[l]`. The entailment table is the same.
 - **RFC-0151 (Tuples as numeric-label rows):** numeric labels are `Label` values (§8).
 - **RFC-0091 / RFC-0122:** own the ownership of draining a field (§4).

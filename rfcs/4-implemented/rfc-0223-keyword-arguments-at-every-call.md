@@ -250,7 +250,7 @@ assert(cond = true, msg = "x");                      // overloads: the two-param
 2. **Function values.** `let g := connect; g(host = "a", ...)` and a call through a closure parameter `f(x = 1)` are `T0041`: a function
    type carries no names.
 3. **Receivers and packs.** `s.len(self = s)` is rejected (`self` is reserved); a pack parameter takes positional arguments only.
-4. **Aspects.** `extend Meters: From<f64> { fun from(x: f64) -> Meters { ... } }` is `T0042` while the aspect declares `value`; with
+4. **Aspects.** `extend Meters: From<f64> { fun from(x: f64) -> Meters .{ ... } }` is `T0042` while the aspect declares `value`; with
    `value` it conforms, and `Meters::from(value = 1.5)` binds by the aspect's name through a bound, a `dyn` and the concrete type alike.
 5. **Siblings.** `f(x = 1)` is a keyword argument whether RFC-0183 has landed or not (prototype: keyword-first ordering, section 3),
    `f(x: T)` is still an ascribed positional argument, and `new Type(..r)` (RFC-0100) is a spread argument that takes no keywords.
@@ -295,7 +295,7 @@ None blocking.
 5. ~~**A built prototype of the `arg_list`/`call_arg`/`keyword_arg` grammar** (section 3), before acceptance.~~ **Done 2026-11-07**:
    see section 3. Remaining: the same cases as fixtures once implemented, and the checker error for a positional argument after a keyword.
 6. ~~**Error codes**~~ **Resolved 2026-11-07:** reuse `T0004`; new `T0039` to `T0042` (section 5).
-7. ~~**Is `=` the right separator?**~~ **Resolved 2026-11-07 (language owner): keep `=`**, for keyword arguments and for record literals. `:` for both (Swift and Rust style: a label followed by what belongs to it) was weighed and rejected. It would reverse RFC-0115 and the separator invariant, make a record type `{ .x: f64 }` and a record value `{ .x: 1.0 }` look alike, and bring back the ascription collision for `f(x: T)`. `=` keeps the ML-style distinction: values `=`, types `:`.
+7. ~~**Is `=` the right separator?**~~ **Resolved 2026-11-07 (language owner): keep `=`**, for keyword arguments and for record literals. `:` for both (Swift and Rust style: a label followed by what belongs to it) was weighed and rejected. It would reverse RFC-0115 and the separator invariant, make a record type `.{ .x: f64 }` and a record value `.{ .x: 1.0 }` look alike, and bring back the ascription collision for `f(x: T)`. `=` keeps the ML-style distinction: values `=`, types `:`.
 
 ---
 

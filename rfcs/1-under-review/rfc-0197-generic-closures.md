@@ -29,8 +29,8 @@ let first_or := <T: Copy>|xs: [T], d: T| -> T { if (xs.len() == 0) { d } else { 
 first_or([1, 2], 0);          // T = i64
 first_or(["a"], "z");         // T = String
 
-let add_host := <record R: !{ host }>|r: { ..R }| -> { ..R, .host: String } {
-    { ..r, .host = "h" }
+let add_host := <record R: !{ host }>|r: .{ ..R }| -> .{ ..R, .host: String } {
+    .{ ..r, .host = "h" }
 };
 ```
 
@@ -62,8 +62,8 @@ A closure has `[captures] once? var? |params| (-> ret)? { body }` and no generic
 (`closure_expr` in `grammar.pest`). It cannot declare a type parameter, a bound, a `where` clause
 or a row fact (GAP-FUNCTIONS-007). The measured consequences:
 
-- `let add_host := |r| { { ..r, host = "h" } };` is `T0012`: the absence of `host` is not provable.
-  `fun add_host<record R: !{ host }>(r: { ..R }) -> { ..R, .host: String }` states it.
+- `let add_host := |r| { .{ ..r, host = "h" } };` is `T0012`: the absence of `host` is not provable.
+  `fun add_host<record R: !{ host }>(r: .{ ..R }) -> .{ ..R, .host: String }` states it.
 - A function that needs `T: Copy`, or an associated-type bound, cannot be a closure.
 - A closure cannot tie a written return annotation to a parameter's row, except inside a generic
   function, where it can use the enclosing `R`.

@@ -12,9 +12,9 @@ review: null
 
 ## Gap
 
-`{ ..a, ..b }` places two rows in one record. Its row is well-formed only if the two rows
+`.{ ..a, ..b }` places two rows in one record. Its row is well-formed only if the two rows
 share no label. For concrete rows that is a check by inspection; for abstract rows
-(`{ ..R }` and `{ ..S }`) the declared bounds can state per-label absence (`R: !{ x }`) but
+(`.{ ..R }` and `.{ ..S }`) the declared bounds can state per-label absence (`R: !{ x }`) but
 not that two rows are disjoint as wholes. RFC-0178 therefore allows one spread per literal.
 Nesting does not work around it, since each spread still needs its own absence proof.
 

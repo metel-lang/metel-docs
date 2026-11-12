@@ -14,8 +14,8 @@ compiler-invented runtime tag:
 
 ```metel
 type Reply<T, E> :=
-    { .kind: "ok", .value: T }
-  | { .kind: "error", .error: E };
+    .{ .kind: "ok", .value: T }
+  | .{ .kind: "error", .error: E };
 ```
 
 `reply.kind == "ok"` narrows `reply` to the first member; matching both literal values
@@ -35,8 +35,8 @@ field's **value** identifies the case:
 
 ```metel
 type Message :=
-    { .op: "ping", .id: i64 }
-  | { .op: "publish", .topic: String, .body: String };
+    .{ .op: "ping", .id: i64 }
+  | .{ .op: "publish", .topic: String, .body: String };
 ```
 
 Without singleton types, both `op` fields are `String`. The checker cannot infer that
@@ -96,7 +96,7 @@ retained only when expected:
 ```metel
 let label: "ok" := "ok";             // accepted
 let label: "ok" := "error";          // rejected
-let r: { .kind: "ok", .value: i64 } := { .kind = "ok", .value = 7 };
+let r: .{ .kind: "ok", .value: i64 } := .{ .kind = "ok", .value = 7 };
 ```
 
 This deliberately omits a TypeScript `const`/`as const` inference mode. Ascription and
@@ -109,8 +109,8 @@ literal type:
 
 ```metel
 type Reply<T, E> :=
-    { .kind: "ok", .value: T }
-  | { .kind: "error", .error: E };
+    .{ .kind: "ok", .value: T }
+  | .{ .kind: "error", .error: E };
 ```
 
 After RFC-0165 normalization, `kind` maps each literal to exactly one final member. The
@@ -128,8 +128,8 @@ Record-pattern fields accept a subpattern; a bare field remains a binding:
 
 ```metel
 match reply {
-    { .kind: "ok", .value } => use(value),
-    { .kind: "error", .error } => recover(error),
+    .{ .kind: "ok", .value } => use(value),
+    .{ .kind: "error", .error } => recover(error),
 }
 ```
 
@@ -142,9 +142,9 @@ Direct equality narrows a base path:
 
 ```metel
 if (reply.kind == "ok") {
-    use(reply.value);       // reply: { .kind: "ok", .value: T }
+    use(reply.value);       // reply: .{ .kind: "ok", .value: T }
 } else {
-    recover(reply.error);   // reply: { .kind: "error", .error: E }
+    recover(reply.error);   // reply: .{ .kind: "error", .error: E }
 }
 ```
 
@@ -169,7 +169,7 @@ amended with this RFC if accepted.
 
 - **RFC-0165:** direct dependency and joint representation decision; literal members
   compare by full singleton identity.
-- **RFC-0116:** records remain exact; `{ .kind: "ok" }` and `{ .kind: String }` differ.
+- **RFC-0116:** records remain exact; `.{ .kind: "ok" }` and `.{ .kind: String }` differ.
 - **RFC-0160:** transparent aliases name public discriminated-union contracts.
 - **RFC-0109:** this is flow narrowing of an anonymous union, not branded self-view
   narrowing.

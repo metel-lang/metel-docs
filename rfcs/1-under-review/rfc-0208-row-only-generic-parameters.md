@@ -15,15 +15,15 @@ A generic parameter that stands only for a row, never for a type, is declared wi
 binder**, `<..R>`. `record R` is kept for parameters that are used as types.
 
 ```metel
-extend<record R> { ..R }: Display where ..R: Display    // today: R is never used as a type
-extend<..R> { ..R }: Display where ..R: Display         // proposed: the binder says "a row"
+extend<record R> .{ ..R }: Display where ..R: Display    // today: R is never used as a type
+extend<..R> .{ ..R }: Display where ..R: Display         // proposed: the binder says "a row"
 
-fun get_x<..R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<..R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 fun sum<record T>(p: T) -> T { p }                      // unchanged: T is used as a type
 ```
 
 A row parameter is written `..R` at every use, as today: in a record type's tail
-(`{ .x: f64, ..R }`), in a nominal type's argument list (`Packet<..R>`), in a struct's residual
+(`.{ .x: f64, ..R }`), in a nominal type's argument list (`Packet<..R>`), in a struct's residual
 tail (`Handle.{ .fd, ..R }`) and in a field-wise bound (`where ..R: A`). A bare `R` is not a type,
 and naming it is an error. The change adds a binder and removes nothing: `record R` keeps its
 current meaning, and `row` does not return as a keyword.
@@ -41,7 +41,7 @@ both stand for a set of fields. That argument holds when the parameter is a reco
 hold when the parameter is only ever the *row* of something, and `record R` then says more than
 the code means:
 
-- **It misleads at the binder.** In `extend<record R> { ..R }: Display where ..R: Display`,
+- **It misleads at the binder.** In `extend<record R> .{ ..R }: Display where ..R: Display`,
   `R` is never a type. It appears only as `..R`. A reader of `<record R>` expects a record
   type they can name.
 - **It names a brand the code never uses.** RFC-0186 §Open Question 5 records that a
@@ -155,13 +155,13 @@ labels, and the two binders merge into one kind. This RFC does not depend on tha
 ## Open questions
 
 1. **Turbofish for a row parameter** (RFC-0192): is the argument written as a record type
-   (`{ .name: i64 }`), or with the dots (`..{ name: i64 }`)? The first matches RFC-0192 as it
+   (`.{ .name: i64 }`), or with the dots (`..{ name: i64 }`)? The first matches RFC-0192 as it
    stands.
-2. **Row equations** (`where R = { .token: Token, ..Rest }`, RFC-0121): how the left side is
+2. **Row equations** (`where R = .{ .token: Token, ..Rest }`, RFC-0121): how the left side is
    written when `R` is declared `..R`. Presumably `..R = { … }`.
 3. **A lint or rewrite** for `record R` parameters used only as `..R`.
 4. **Whether a row parameter may carry a lower bound in the binder**, as `record R` does with
-   `record R: { .x: f64, .. }`.
+   `record R: .{ .x: f64, .. }`.
 5. **Merging with packs** if RFC-0151 is accepted: one `..X` kind with a shared binder.
 6. **Residual tails**: whether `Handle.{ .fd, ..R }` with `R` declared `..R` needs a rule about
    the brand being the struct's, and how it interacts with RFC-0146's `Self.R`.

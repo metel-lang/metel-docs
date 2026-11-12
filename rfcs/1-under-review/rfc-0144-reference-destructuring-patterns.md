@@ -62,7 +62,7 @@ anything:
 
 ```metel
 fun rebalance(h: &var Handle) {
-    &var { .golden_tickets, .bars } = h;
+    &var .{ .golden_tickets, .bars } = h;
     // golden_tickets: &var Token, bars: &var Vec<Bar> — both live, disjoint borrows
     golden_tickets.redeem();
     bars.push(Bar::default());
@@ -75,7 +75,7 @@ and doesn't read as one operation) or RFC-0109's named-view machinery, dispropor
 ceremony for a split used exactly once.
 
 **Deliberately not built on `to_record_mut()`.** Going through an intermediate
-`{ ... }` value would force a tier-2 `ToRecord`/`FromRecord` derive requirement onto
+`.{ ... }` value would force a tier-2 `ToRecord`/`FromRecord` derive requirement onto
 every struct that wants to use this pattern — disproportionate to what the pattern
 actually needs (structural field access, already legal on any struct via ordinary
 `.field` syntax; this just does several disjoint borrows of it in one statement
@@ -93,7 +93,7 @@ that is *already* `&var`-typed:
 
 ```metel
 fun rebalance(h: &var Handle) {
-    &var { .golden_tickets, .bars } = h;
+    &var .{ .golden_tickets, .bars } = h;
     golden_tickets.redeem();          // &var Token
     bars.push(Bar::default());        // &var Vec<Bar>
 }
@@ -107,7 +107,7 @@ right-hand side of a plain, non-reference value:
 
 ```metel
 fun peek(point: Point) {
-    { .x, .y } = &point;
+    .{ .x, .y } = &point;
     // x: &i32, y: &i32 — point itself still usable afterward
 }
 ```

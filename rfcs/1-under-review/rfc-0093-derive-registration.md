@@ -91,7 +91,7 @@ trades a small amount of that separation for one fewer concept to learn.
 
 This gives an "open/extensible" derive mechanism an actual implementation: a
 third-party library makes its own aspect derivable by writing
-`#derive(MyAspect) comptime fun derive_my_aspect(comptime T: type) { ... }` in its own
+`#derive(MyAspect) comptime fun derive_my_aspect(comptime T: type) .{ ... }` in its own
 module, with no special compiler support beyond the registration lookup itself.
 
 ### Worked example

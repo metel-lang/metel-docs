@@ -15,7 +15,7 @@ worked-example version.
 
 | | written | has a name | row visible to bounds | can have methods |
 |---|---|---|---|---|
-| anonymous record | `{ .x = 1, .y = 2 }` | no | yes | no (aspect impls only, for a local aspect) |
+| anonymous record | `.{ .x = 1, .y = 2 }` | no | yes | no (aspect impls only, for a local aspect) |
 | `record` declaration | `record Point { x: i64, … }` | yes | **yes** | yes |
 | `struct` | `struct Point { x: i64, … }` | yes | **no** | yes |
 | row variable | `record R`, used as `..R` | — | stands for "the rest" | — |
@@ -29,11 +29,11 @@ what the rest of this page is about.
 
 ```metel
 fun main() {
-    let p := { .x = 1, .y = 2 };
+    let p := .{ .x = 1, .y = 2 };
     let q := p;                          // a record of Copy fields is copied, not moved
     println(p.x + q.x);
     println("${p}");                     // a record of Display fields is Display
-    let c := { .name = "ada", .n = 1 }.clone();   // a record of Clone fields is Clone
+    let c := .{ .name = "ada", .n = 1 }.clone();   // a record of Clone fields is Clone
     println(c.name);
 }
 ```
@@ -57,11 +57,11 @@ field must be `pub`:
 ```metel
 record Point { x: i64, y: i64 }
 
-fun x_of<record T: { .x: i64, .. }>(v: T) -> i64 { v.x }
+fun x_of<record T: .{ .x: i64, .. }>(v: T) -> i64 { v.x }
 
 fun main() {
     let p := Point { x = 1, y = 2 };   // a named record
-    let q := { .x = 5, .z = 9 };         // an anonymous record
+    let q := .{ .x = 5, .z = 9 };         // an anonymous record
     println(x_of(p));
     println(x_of(q));
 }
@@ -79,7 +79,7 @@ and the error tells you the fix:
 ```metel
 struct Point { x: i64, y: i64 }
 
-fun x_of<record T: { .x: i64, .. }>(v: T) -> i64 { v.x }
+fun x_of<record T: .{ .x: i64, .. }>(v: T) -> i64 { v.x }
 
 fun main() {
     println(x_of(Point { x = 1, y = 2 }));
@@ -96,13 +96,13 @@ points at them. Choose `record` only when the field names really are the contrac
 A bound on a `record`-kinded parameter says which labels the argument must carry:
 
 ```metel
-fun user_of<record T: { .user: i64, .. }>(e: T) -> i64 { e.user }   // at least `user: i64`
-fun has_user<record T: { .user, .. }>(e: T) -> i64 { 1 }            // an `user` of any type
+fun user_of<record T: .{ .user: i64, .. }>(e: T) -> i64 { e.user }   // at least `user: i64`
+fun has_user<record T: .{ .user, .. }>(e: T) -> i64 { 1 }            // an `user` of any type
 fun no_token<record T: !{ .token }>(e: T) -> i64 { 2 }              // no `token` at all
 fun any_record<record T>(e: T) -> i64 { 3 }                        // any record whatsoever
 
 fun main() {
-    let ev := { .user = 7, .kind = "buy" };
+    let ev := .{ .user = 7, .kind = "buy" };
     println(user_of(ev));
     println(has_user(ev));
     println(no_token(ev));
@@ -117,8 +117,8 @@ fun main() {
 3
 ```
 
-Inside the body only the fields the bound lists are readable. `{ .user: i64, .. }` is
-*open* (more fields allowed); `{ .user: i64 }` without the `..` is *closed* (exactly
+Inside the body only the fields the bound lists are readable. `.{ .user: i64, .. }` is
+*open* (more fields allowed); `.{ .user: i64 }` without the `..` is *closed* (exactly
 those). A pattern against an open bound must end in `..`.
 
 ## Open rows: naming "the rest"
@@ -127,14 +127,14 @@ A row bound names which fields you need. A **row variable** names *everything el
 the rest can appear in the signature:
 
 ```metel
-fun get_x<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
-fun keep<record R>(p: { .x: i64, ..R }) -> { .x: i64, ..R } { p }   // the rest flows through
+fun keep<record R>(p: .{ .x: i64, ..R }) -> .{ .x: i64, ..R } { p }   // the rest flows through
 
 fun main() {
-    let wide := { .x = 1, .y = 20, .flag = true };
+    let wide := .{ .x = 1, .y = 20, .flag = true };
     println(get_x(wide));
-    let same := keep({ .x = 2, .tag = 7 });
+    let same := keep(.{ .x = 2, .tag = 7 });
     println(same.tag);
 }
 ```
@@ -150,16 +150,16 @@ mentions it.
 
 ### The by-value rule
 
-Passing a wider record **by value** to a `{ .x: i64, ..R }` parameter hands over the
+Passing a wider record **by value** to a `.{ .x: i64, ..R }` parameter hands over the
 **whole** record. The parameter names `x`; the callee owns everything else `R` stands for
 and may return it, destructure it, or let it drop at the end of its scope. The extra fields
 need not be `Copy`:
 
 ```metel
-fun get_x<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
-    let wide := { .x = 1, .name = "ada" };   // `name` is a String: not Copy, and that is fine
+    let wide := .{ .x = 1, .name = "ada" };   // `name` is a String: not Copy, and that is fine
     println(get_x(wide));
 }
 ```
@@ -171,10 +171,10 @@ fun main() {
 Borrow it instead and the caller keeps every field:
 
 ```metel
-fun get_x<record R>(p: &{ .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: &.{ .x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
-    let wide := { .x = 1, .name = "ada" };
+    let wide := .{ .x = 1, .name = "ada" };
     println(get_x(&wide));
     println(wide.name);         // still owned here
 }
@@ -190,14 +190,14 @@ parameter on by value with no bound. A [field-wise constraint](#field-wise-const
 only needed to *use* the row more than once:
 
 ```metel
-fun consume<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun consume<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
-fun outer<record R>(s: { .x: i64, ..R }) -> i64 {
+fun outer<record R>(s: .{ .x: i64, ..R }) -> i64 {
     consume(s) + 1
 }
 
 fun main() {
-    println(outer({ .x = 1, .k = "kept", .flag = true }));
+    println(outer(.{ .x = 1, .k = "kept", .flag = true }));
 }
 ```
 
@@ -211,14 +211,14 @@ A `where` equation splits a row variable into a named field and the remainder. I
 implies the bound, and names the remainder (`Rest`) so a signature can mention it:
 
 ```metel
-fun split<record R, record Rest>(p: { .token: i64, ..R }) -> i64
-where R = { .extra: i64, ..Rest }
+fun split<record R, record Rest>(p: .{ .token: i64, ..R }) -> i64
+where R = .{ .extra: i64, ..Rest }
 {
     p.token + p.extra          // `extra` is readable: the equation promised it
 }
 
 fun main() {
-    println(split({ .token = 1, .extra = 2, .other = 3 }));
+    println(split(.{ .token = 1, .extra = 2, .other = 3 }));
 }
 ```
 
@@ -229,20 +229,20 @@ fun main() {
 The equation also lets the body consume the named field and return its remainder:
 
 ```metel
-fun strip<record R, record Rest>(p: { ..R }) -> { ..Rest }
-where R = { .token: String, ..Rest } {
-    let { .token: _, ..rest } := p;
+fun strip<record R, record Rest>(p: .{ ..R }) -> .{ ..Rest }
+where R = .{ .token: String, ..Rest } {
+    let .{ .token: _, ..rest } := p;
     rest
 }
 
 fun main() {
-    println(strip({ .token = "t", .user = 3 }).user);
+    println(strip(.{ .token = "t", .user = 3 }).user);
 }
 ```
 
 This prints `3`. The discarded `token` is consumed; `rest` owns every other field.
 The same pattern works inside a row-conditional impl, allowing a typestate method
-to construct a result such as `Session<..Rest>`. With only `token`, the remainder is `{}`.
+to construct a result such as `Session<..Rest>`. With only `token`, the remainder is `.{}`.
 
 ## Rows on nominal types
 
@@ -250,20 +250,20 @@ A `struct` or `record` can take a row parameter, spliced as `..R` in the type's 
 argument list. That is how a type carries "whatever else the caller put in here":
 
 ```metel
-record Builder<record R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: .{ ..R } }
 
 fun describe<record R>(b: Builder<..R>) -> String { b.name }
 
-fun auth_of<record R>(b: Builder<..R>) -> String where R = { .auth: String, .. } {
+fun auth_of<record R>(b: Builder<..R>) -> String where R = .{ .auth: String, .. } {
     b.data.auth
 }
 
 fun main() {
-    let b := Builder { name = "req", data = { .auth = "tok", .retries = 3 } };
+    let b := Builder { name = "req", data = .{ .auth = "tok", .retries = 3 } };
     println(describe(b));
     println(auth_of(b));
 
-    let bare := Builder { name = "bare", data = { .retries = 1 } };
+    let bare := Builder { name = "bare", data = .{ .retries = 1 } };
     println(describe(bare));       // fine: `describe` asks for nothing
     // auth_of(bare)               // rejected: no `auth` field (T0012)
 }
@@ -281,9 +281,9 @@ An `extend` block may carry a row condition, and its methods exist only for rece
 whose row meets it. Disjoint conditions may reuse a method name:
 
 ```metel
-record Session<record R> { id: i64, data: { ..R } }
+record Session<record R> { id: i64, data: .{ ..R } }
 
-extend<record R: { .token: String, .. }> Session<..R> {
+extend<record R: .{ .token: String, .. }> Session<..R> {
     fun send(self) -> i64 { self.id * 10 }          // only once a token is present
 }
 
@@ -292,8 +292,8 @@ extend<record R: !{ .token }> Session<..R> {
 }
 
 fun main() {
-    let authed: Session<{ .token: String }> := Session { id = 1, data = { .token = "t" } };
-    let anon: Session<{ .user: i64 }> := Session { id = 2, data = { .user = 1 } };
+    let authed: Session<.{ .token: String }> := Session { id = 1, data = .{ .token = "t" } };
+    let anon: Session<.{ .user: i64 }> := Session { id = 2, data = .{ .user = 1 } };
     println(authed.send());
     println(anon.login());
     // anon.send()    // rejected: `anon`'s row has no `token`
@@ -321,13 +321,13 @@ extend f64: Mark { fun mark(&self) -> i64 { 2 } }
 
 aspect Label { fun label(&self) -> String; }
 
-extend<record R> { ..R }: Label where ..R: Mark {
+extend<record R> .{ ..R }: Label where ..R: Mark {
     fun label(&self) -> String { "all marked".to_string() }
 }
 
 fun main() {
-    println({ .a = 1, .b = 2.0 }.label());
-    println({ .a = 1 }.label());
+    println(.{ .a = 1, .b = 2.0 }.label());
+    println(.{ .a = 1 }.label());
 }
 ```
 
@@ -346,8 +346,8 @@ An aspect local to your module may be implemented three ways, from narrowest to 
 
 ```metel
 // extend { x: f64, y: f64 }: MyAspect { … }                  one concrete row
-// extend<record R: { .x: f64, .. }> { ..R }: MyAspect { … }      every row with an `x: f64`
-// extend<record R> { ..R }: MyAspect { … }                      every row
+// extend<record R: .{ .x: f64, .. }> .{ ..R }: MyAspect { … }      every row with an `x: f64`
+// extend<record R> .{ ..R }: MyAspect { … }                      every row
 ```
 
 Two row-conditional impls of the same aspect must be provably disjoint — some label
@@ -356,16 +356,16 @@ that one requires and the other forbids. Overlapping ones are `T0015`:
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
-extend<record R: { .name: String, .. }> { ..R }: Describe {
+extend<record R: .{ .name: String, .. }> .{ ..R }: Describe {
     fun describe(&self) -> String { "named ${self.name}" }
 }
-extend<record R: !{ .name }> { ..R }: Describe {
+extend<record R: !{ .name }> .{ ..R }: Describe {
     fun describe(&self) -> String { "anonymous" }
 }
 
 fun main() {
-    println({ .name = "ada", .age = 36 }.describe());
-    println({ .age = 36 }.describe());
+    println(.{ .name = "ada", .age = 36 }.describe());
+    println(.{ .age = 36 }.describe());
 }
 ```
 
@@ -382,10 +382,10 @@ record Handle { id: i64, name: String }
 
 aspect Describe { fun state(&self) -> String; }
 
-extend<record R: !{ .name }> { ..R }: Describe {
+extend<record R: !{ .name }> .{ ..R }: Describe {
     fun state(&self) -> String { "no name" }
 }
-extend<record R: { .name: String, .. }> { ..R }: Describe {
+extend<record R: .{ .name: String, .. }> .{ ..R }: Describe {
     fun state(&self) -> String { "has name" }
 }
 
@@ -414,8 +414,8 @@ and `record`s alike. Reading a moved-out field is a compile error:
 {/* doc-example: expect-fail reason="reading a field after it was moved out — T0003, the type no longer has it" */}
 ```metel
 fun main() {
-    let r := { .left = "l", .right = "r" };
-    let l := r.left;       // moves `left`; r : { .right: String }
+    let r := .{ .left = "l", .right = "r" };
+    let l := r.left;       // moves `left`; r : .{ .right: String }
     println(r.right);
     println(r.left);       // error: no field `left` on { right: String }
 }

@@ -42,7 +42,7 @@ let result = unsafe {
 };
 ```
 
-The return type of `unsafe { ... }` is the type of the last expression in the block, same as any other block.
+The return type of `unsafe .{ ... }` is the type of the last expression in the block, same as any other block.
 
 `unsafe` blocks may appear anywhere an expression is valid. They do not require a special function context — you can write an `unsafe` block in the middle of a safe function. However, calling an `unsafe fun` requires being inside an `unsafe` block.
 

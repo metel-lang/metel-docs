@@ -842,7 +842,7 @@ outcome. The settled shape:
   duplicable callback and `copy` does not touch RFC-0162's model. A declared generic
   parameter is **rigid against a function-type ascription** unless its own declared
   constraints (`where F: Bound`, an assoc-type equality, an RFC-0036 obligation) prove the
-  shape — impossible in v0.13.0 without RFC-0161, so `fun adapt<F>(f: F) -> |…| { .f : |…| }`
+  shape — impossible in v0.13.0 without RFC-0161, so `fun adapt<F>(f: F) -> |…| .{ .f : |…| }`
   is always rejected; Migration sweeps for the pattern (F2, F7, H1, H6, I3, J4). ("Store a
   callback and call it repeatedly" — `fun later(f: |i64| -> i64) -> i64 { f(1) + f(2) }` —
   still works; only *retaining independent copies* needs `copy`, I4.)

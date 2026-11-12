@@ -13,7 +13,7 @@ review: null
 
 ## Gap
 
-A closure is written `[captures] |params| -> ret { body }` and has no generics list. It generalizes over unannotated parameters and takes an anonymous open record as a parameter, but it cannot declare or name a type parameter, a bound, a `where` clause or a row fact. `let add_host := |r| { { ..r, host = "h" } };` is `T0012` (the absence of `host` is not provable), where `fun add_host<record R: !{ host }>(r: { ..R }) -> { ..R, .host: String }` states the bound. For the same reason a stand-alone closure cannot tie a written return annotation to a parameter's row; inside a generic function it can use the enclosing `R`.
+A closure is written `[captures] |params| -> ret { body }` and has no generics list. It generalizes over unannotated parameters and takes an anonymous open record as a parameter, but it cannot declare or name a type parameter, a bound, a `where` clause or a row fact. `let add_host := |r| { .{ ..r, host = "h" } };` is `T0012` (the absence of `host` is not provable), where `fun add_host<record R: !{ host }>(r: .{ ..R }) -> .{ ..R, .host: String }` states the bound. For the same reason a stand-alone closure cannot tie a written return annotation to a parameter's row; inside a generic function it can use the enclosing `R`.
 
 ## Impact
 

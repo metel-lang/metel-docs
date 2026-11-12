@@ -333,8 +333,8 @@ AssignTarget::Deref(object, span) => {
 For field/index targets (§4.1), `*(obj.field) = v` and `obj.field = v` would likewise
 be synonyms — the same harmless redundancy already tolerated elsewhere in this design
 (`&var T` implicitly coercing to `&T` while a narrower explicit annotation achieves the
-same thing; §7 below, where `match *c { .. }` and RFC-0108's auto-transparent
-`match c { .. }` will coexist the same way). For a **bare identifier** target,
+same thing; §7 below, where `match *c .{ .. }` and RFC-0108's auto-transparent
+`match c .{ .. }` will coexist the same way). For a **bare identifier** target,
 `*p = v` is not redundant with anything after §4.2 — it is the only spelling that
 writes through, since bare `p = v` now means repoint.
 
@@ -358,7 +358,7 @@ Complementary, not overlapping — RFC-0108's own Alternatives Considered sectio
 drew this line: general `*expr` was "rejected as the primary fix" for match
 scrutinees specifically, but explicitly left open to be "proposed separately on its own
 merits." This RFC does that, independent of match entirely. Once both ship,
-`match *c { .. }` and RFC-0108's auto-transparent `match c { .. }` are both legal and
+`match *c .{ .. }` and RFC-0108's auto-transparent `match c .{ .. }` are both legal and
 produce the same result — the same harmless redundancy §5 already describes for
 writes. Neither RFC needs the other; sequencing is immaterial between them.
 
@@ -493,7 +493,7 @@ Worked examples combining this RFC with each sibling it can interact with, per P
 `3-integrated` exit criterion. Two of the four turned up something.
 
 **RFC-0108 (Reference-Transparent Match Scrutinees, implemented) — no conflict, confirmed
-redundant by design.** `match *c { .. }` and `match c { .. }` for `c: &Colour` both work
+redundant by design.** `match *c .{ .. }` and `match c .{ .. }` for `c: &Colour` both work
 and produce the same result: RFC-0108 peels the scrutinee, and `*c` peels it explicitly
 first. §7 predicted this; nothing changes. Checked that RFC-0108's peel runs on the
 scrutinee's constructed type, so an explicit `*` simply arrives having already done the

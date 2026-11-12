@@ -125,7 +125,7 @@ as `(i64, String)`, `{ 0: i64, 1: String }` written by hand prints the same, and
 spellings denote one type with one value:
 
 - **Type.** `()` and `{}` are the same type. `-> ()`, `Result<(), E>` and a closed empty row are
-  interchangeable. The tuple sugar has arity 0 as well: `(A, B)` is `{ .0: A, .1: B }`, and no elements give
+  interchangeable. The tuple sugar has arity 0 as well: `(A, B)` is `.{ .0: A, .1: B }`, and no elements give
   `{}`.
 - **Value.** The unit value is the empty record. A literal `()` and an empty record literal `{}` denote it, and
   an empty block, or a block with no tail, has this type.

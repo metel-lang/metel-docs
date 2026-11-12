@@ -12,14 +12,14 @@ review: "revisit together with GAP-TYPES-010 if existential rows are ever added"
 
 ## Gap
 
-`record W { d: { .x: i64, .. } }` is rejected with `T0032`. The field's type would be existential,
+`record W { d: .{ .x: i64, .. } }` is rejected with `T0032`. The field's type would be existential,
 so two values of one nominal type could hide different rows, which does not fit a nominal type.
 The same applies to the anonymous splice (`record W { s: Session<..> }`).
 
 ## Impact
 
 A field cannot hold an arbitrary wider record. The use is covered by a row parameter on the
-record, `record W<record R> { d: { .x: i64, ..R } }`, at the cost of making `W` generic over the row.
+record, `record W<record R> { d: .{ .x: i64, ..R } }`, at the cost of making `W` generic over the row.
 
 ## Affects
 

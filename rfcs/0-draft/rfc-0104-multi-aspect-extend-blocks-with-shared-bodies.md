@@ -62,7 +62,7 @@ rejected — at the list level, independent of what the body actually contains. 
 ... }` is a compile error if `Aspect3` and `Aspect4` both declare (say) `fun display(&self) -> String;`,
 even before looking at whether the body provides one.
 
-No qualified-declaration syntax (e.g. `fun Aspect3::foo(&self) { ... }`) is introduced to resolve such a
+No qualified-declaration syntax (e.g. `fun Aspect3::foo(&self) .{ ... }`) is introduced to resolve such a
 collision — the combination is simply disallowed, and the fix is to stop sharing the body: write `extend A:
 Aspect3 { ... }` and `extend A: Aspect4 { ... }` separately, exactly as today, unaffected by this RFC. This
 keeps the feature safe by construction: every method name in a body that's accepted at all maps to at most
@@ -106,7 +106,7 @@ what's already stated in either RFC — the two features compose without needing
 
 ## Alternatives Considered
 
-- **A qualified method-declaration syntax** (e.g. `fun Aspect3::foo(&self) { ... }`) to disambiguate a
+- **A qualified method-declaration syntax** (e.g. `fun Aspect3::foo(&self) .{ ... }`) to disambiguate a
   shared body when two named aspects' method names collide. Rejected in favor of simply disallowing the
   colliding combination — smaller, and the same information a qualifier would carry (which aspect owns
   which method) is exactly what's already unambiguous by name whenever no collision exists.

@@ -20,8 +20,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/934'
 > not demonstrated. It doesn't hold: `@` is the sigil of the *accepted*
 > allocator/region cluster (RFC-0063, RFC-0065, RFC-0073 — all `2-accepted`), used
 > across roughly 400 lines in 42 RFC files, in at least seven distinct grammatical
-> positions (`@a T` type-prefix, `@a Node {...}` literal-prefix, `(@a: A)` parameter,
-> `<@a>` generic tag, `(@a) -> {...}` closure parameter, `wrap(@a, ...)` call argument,
+> positions (`@a T` type-prefix, `@a Node .{...}` literal-prefix, `(@a: A)` parameter,
+> `<@a>` generic tag, `(@a) -> .{...}` closure parameter, `wrap(@a, ...)` call argument,
 > bare `@a val`). `@a T` is also cited as a stable scoping boundary inside
 > already-*implemented* RFCs (e.g. RFC-0067a: "This RFC does not include ... any
 > allocator-pointer (`@a T`)"), and RFC-0063 §4 gives `@` a real mnemonic rationale for

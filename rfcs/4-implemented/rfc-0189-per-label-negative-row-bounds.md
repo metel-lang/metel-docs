@@ -26,7 +26,7 @@ A row bound may carry **negative entries**: a label written with a leading `!`, 
 braces as the positive ones.
 
 ```metel
-fun route<record R: { .path: String, !.token, !.session: u64, .. }>(r: R) -> String { r.path }
+fun route<record R: .{ .path: String, !.token, !.session: u64, .. }>(r: R) -> String { r.path }
 //                    has a String `.path` ^        ^ no `.token`  ^ no u64 `.session`
 ```
 
@@ -49,12 +49,12 @@ field-wise bounds, or the semantics of negative *aspect* bounds (RFC-0072).
 
 ## Motivation
 
-A row bound today is positive or negative as a **whole**. `{ .x: f64, .. }` says what a record
+A row bound today is positive or negative as a **whole**. `.{ .x: f64, .. }` says what a record
 must carry; `!{ token }` says what it must not. They are different bounds, so a function that
 needs both has to write two:
 
 ```metel
-fun route<record R: { .path: String, .. } + !{ .token }>(r: R) -> String { r.path }
+fun route<record R: .{ .path: String, .. } + !{ .token }>(r: R) -> String { r.path }
 ```
 
 This works (checked against the current build: a record with `token` is rejected with `T0012`,
@@ -70,7 +70,7 @@ locality and a place to put a per-label negative:
   generic in its rest requires the rest to be provably free of that label (`R: !{ host }`,
   spec, *Row arguments*), usually next to other requirements on the same `R`:
   ```metel
-  fun add_host<record R: { .token, !.host, .. }>(r: Req<..R>, h: String) -> Req<..{ .host: String, ..R }>
+  fun add_host<record R: .{ .token, !.host, .. }>(r: Req<..R>, h: String) -> Req<..{ .host: String, ..R }>
   ```
 - **Row-conditional impls (RFC-0121 §3) are disjoint exactly when some label is present in one
   and absent in the other.** `extend<record R: { name, !id, .. }>` and `extend<record R: { name,
@@ -87,7 +87,7 @@ row_bound = { "{" ~ (row_entry ~ ("," ~ row_entry)*)? ~ ("," ~ "..")? ~ ","? ~ "
 row_entry = { bang? ~ label ~ (":" ~ type_expr)? }
 ```
 
-(`bang?` is the only change; `{ .. }` alone still does not parse, so `<record T>` remains the one
+(`bang?` is the only change; `.{ .. }` alone still does not parse, so `<record T>` remains the one
 spelling of "any record".) After `{` or `,` a `!` can only begin a negative entry, so the grammar
 stays unambiguous with the bound-level `!` (`T: !{ … }`), which precedes the brace.
 
@@ -103,8 +103,8 @@ with a fix-it ("add `..`, or drop the entry"). With the trailing `..` the row sa
 not these ones, and anything else".
 
 ```metel
-fun a<record R: { .x: f64, !.token, .. }>(r: R)   // ok
-fun b<record R: { .x: f64, !.token }>(r: R)       // error: closed row; `!.token` is redundant
+fun a<record R: .{ .x: f64, !.token, .. }>(r: R)   // ok
+fun b<record R: .{ .x: f64, !.token }>(r: R)       // error: closed row; `!.token` is redundant
 fun c<record R: { !.token, .. }>(r: R)            // ok: only a negative entry, still open
 ```
 
@@ -122,17 +122,17 @@ give it that meaning without a break.
 A label may appear **once positively** and **any number of times negatively**:
 
 ```metel
-{ .x, !.x: u8, .. }           // an `.x` that is not a u8 (any other type)
+.{ .x, !.x: u8, .. }           // an `.x` that is not a u8 (any other type)
 { !.x: u8, !.x: u16, .. }     // no u8 `.x` and no u16 `.x`
 ```
 
-It is an error if the entries cannot all hold: `{ .x, !.x, .. }`, and `{ .x: T, !.x: T, .. }`. Two
-positive entries for one label stay a duplicate-field error. `{ .x: f64, !.x: u8, .. }` is
+It is an error if the entries cannot all hold: `.{ .x, !.x, .. }`, and `.{ .x: T, !.x: T, .. }`. Two
+positive entries for one label stay a duplicate-field error. `.{ .x: f64, !.x: u8, .. }` is
 satisfiable, merely redundant, and is accepted without diagnostics.
 
 "Of type `T`" means the same type after substitution, with no widening, exactly as for a positive
 `x: T`. The contradiction check compares the written types, so it fires only when they are the
-same type as written; entries whose types are generic parameters (`{ .x: A, !.x: B, .. }`) are
+same type as written; entries whose types are generic parameters (`.{ .x: A, !.x: B, .. }`) are
 checked when the bound is instantiated, like any other bound on a type parameter.
 
 ### Typed negative entries
@@ -143,7 +143,7 @@ way to say "an `x`, but not this type" (`{ x, !x: u8, .. }`).
 
 Several types for one label are written by **repeating the entry** (`{ !x: u8, !x: u16, .. }`).
 There is no list form in the type position: the comma already separates entries, so
-`{ .x: u8, .u16 }` is an entry followed by a label-only entry. A union shorthand (`!x: u8 | u16`)
+`.{ .x: u8, .u16 }` is an entry followed by a label-only entry. A union shorthand (`!x: u8 | u16`)
 can be added later as sugar for the repeated form if structural unions (RFC-0165) land; it needs
 no change to the semantics here.
 
@@ -186,12 +186,12 @@ literals or patterns.
 ## Worked examples (integration, 2026-11-07)
 
 Prototype on the real `grammar.pest` with `row_field = { bang? ~ label ~ (":" ~ type_expr)? }` (the bound-level `bang` is unchanged): these parse
-as row bounds in a parameter, a `where` constraint and next to an aspect bound: `{ .path: String, !.token, !.session: u64, .. }`, `{ !.token, .. }`,
-`{ .x, !.x: u8, .. }`, `{ .x, !.y: u8, !.y: u16, .. }`, `Show + { .x, !.y, .. }`, with the sugar `!{ .a, .b: T }` and the existing `{ .x: f64, .. } + !{ .token }`
-unchanged; `{ .. }` alone still does not parse. They become fixtures of the implementation (metel-core#1661); a hit means a contradiction.
+as row bounds in a parameter, a `where` constraint and next to an aspect bound: `.{ .path: String, !.token, !.session: u64, .. }`, `{ !.token, .. }`,
+`.{ .x, !.x: u8, .. }`, `.{ .x, !.y: u8, !.y: u16, .. }`, `Show + .{ .x, !.y, .. }`, with the sugar `!{ .a, .b: T }` and the existing `.{ .x: f64, .. } + !{ .token }`
+unchanged; `.{ .. }` alone still does not parse. They become fixtures of the implementation (metel-core#1661); a hit means a contradiction.
 
-1. **Rejections (`T0043`).** `{ .x: f64, !.token }` (closed row), `{ .x, !.x, .. }` and `{ .x: T, !.x: T, .. }` (contradictory), and `!{ !.a, .b }` (nested negation).
-2. **Coherence.** `extend<record R: { .name, !.id, .. }>` and `extend<record R: { .name, .id, .. }>` are disjoint from the entries; `!.x: T` against `.x: U` overlaps.
+1. **Rejections (`T0043`).** `.{ .x: f64, !.token }` (closed row), `.{ .x, !.x, .. }` and `.{ .x: T, !.x: T, .. }` (contradictory), and `!{ !.a, .b }` (nested negation).
+2. **Coherence.** `extend<record R: .{ .name, !.id, .. }>` and `extend<record R: .{ .name, .id, .. }>` are disjoint from the entries; `!.x: T` against `.x: U` overlaps.
 3. **Siblings.** `!.x` proves absence for a spread's addition and `.x`, `.x: T` prove presence for RFC-0191's replacement; the spelling is RFC-0221's.
 
 Exit check: no contradiction with the integrated spec (row bounds, open rows, coherence) or with RFC-0191 and RFC-0221.

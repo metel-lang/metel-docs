@@ -20,7 +20,7 @@ the brand of the record it came from, and brand-exact impl dispatch runs first
 aspect Describe { fun describe(&self) -> String; }
 record Point { x: i64, y: i64 }
 extend Point: Describe { fun describe(&self) -> String { "point".to_string() } }
-extend<record R> { ..R }: Describe where each R: Copy { fun describe(&self) -> String { "copy-row".to_string() } }
+extend<record R> .{ ..R }: Describe where each R: Copy { fun describe(&self) -> String { "copy-row".to_string() } }
 fun erase(p: Point) -> {} {
     let { x: _, y: _, ..rest } := p;
     rest
@@ -34,7 +34,7 @@ fun main() {
 ## Impact
 
 Which impl runs for a `{}` depends on how the value was built, not on its type, so a
-function generic over `{ ..R }` can observe a brand its signature does not mention. The
+function generic over `.{ ..R }` can observe a brand its signature does not mention. The
 same happens through `dyn Aspect`. Tracked by metel-core#1446 (v0.14.1).
 
 ## Affects

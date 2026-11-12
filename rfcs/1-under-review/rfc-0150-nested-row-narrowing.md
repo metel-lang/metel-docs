@@ -65,7 +65,7 @@ the surface grammar, the printer, and structural comparison all need the case.
 Two nested residuals of the same brand and the same recursively-canonical field map
 must compare **equal**, regardless of the narrowing history that produced them
 (`o.inner.a` then `o.inner` re-narrowed elsewhere, versus a projection that lands on
-the same shape). An anonymous record `{ .inner: Inner.{ .b }, .tag: i64 }` of the same
+the same shape). An anonymous record `.{ .inner: Inner.{ .b }, .tag: i64 }` of the same
 shape must **not** compare equal — it is brandless (RFC-0137's core invariant). The
 rule: identity is `(brand, canonical field map)` computed recursively; history is not
 part of it; anonymous records never acquire a brand.
@@ -103,8 +103,8 @@ This RFC must lift those join/fixpoint rules into the spec for the nested case.
 ### 6. Interaction with RFC-0119 round-tripping
 
 For `o : Outer.{ inner: Inner.{ .b }, .tag }`, `o.to_record()` should produce
-`{ .inner: Inner.{ .b }, .tag: i64 }` — the nested residual field type carried through —
-not `{ .inner: Inner, .tag: i64 }` (which would silently widen) and not a loss of the
+`.{ .inner: Inner.{ .b }, .tag: i64 }` — the nested residual field type carried through —
+not `.{ .inner: Inner, .tag: i64 }` (which would silently widen) and not a loss of the
 nesting. This requires residual field types to be legal inside an anonymous record row,
 and RFC-0119's "current row" rule to recurse. `from_record` back to the full nominal
 type stays widening / `Construct` territory (RFC-0114) unless the record is already

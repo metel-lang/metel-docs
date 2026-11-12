@@ -282,7 +282,7 @@ other — which is evidence for the decomposition thesis rather than an extra ru
 
 1. **Syntax.** `context(name: T)` is taken from Kotlin because it is the closest
    post-revision prior art, not because it has been weighed against Metel's own grammar. It
-   collides with nothing today, but `with (heap) { .. }` (§2) is a new block form and
+   collides with nothing today, but `with (heap) .{ .. }` (§2) is a new block form and
    `context alloc = x` (§2) a new argument form; both need a real grammar pass.
 2. **Do context parameters propagate implicitly through intermediate frames?** If `a` calls
    `b` calls `c`, and only `c` declares `context(alloc: Heap)`, must `b` declare it too?
@@ -301,7 +301,7 @@ other — which is evidence for the decomposition thesis rather than an extra ru
      literal is written is an ordinary free binding the closure closes over at creation,
      the same as any other outer binding. The closure's type stays plain (`(T) -> U`) and
      carries no context requirement. This is the only regime consistent with §3's static
-     resolution, and it is what `BumpAlloc::scoped((@a) -> { .. })` (RFC-0065) relies on.
+     resolution, and it is what `BumpAlloc::scoped((@a) -> .{ .. })` (RFC-0065) relies on.
    - **Deferral — a context function type.** `context(c: C) (T) -> U` is a closure type
      whose *caller* must supply `c` from scope at each call. This is Scala 3's context
      functions (`(using T) ?=> R`). It is genuine type information — an alias carries it,

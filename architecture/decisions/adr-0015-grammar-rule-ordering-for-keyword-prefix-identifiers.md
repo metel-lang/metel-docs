@@ -19,7 +19,7 @@ Add atomic rules like `kw_break = @{ "break" ~ !(ASCII_ALPHANUMERIC | "_") }` an
 
 **Why it fails in practice:** pest inserts the `WHITESPACE` rule before every token in a non-atomic parent rule. Because `WHITESPACE` can match zero bytes, the `!(ASCII_ALPHANUMERIC | "_")` lookahead runs _after_ optional whitespace has been consumed, not immediately after the keyword literal. This causes `let x = 5` to fail because after `"let"` the lookahead sees `x` (which is alphanumeric) in the next token, even though there's whitespace in between.
 
-Making the _parent_ rule atomic (`@{ ... }`) would fix the whitespace issue but would require rewriting the entire `stmt` rule as atomic, losing all pest whitespace handling for the rule's content.
+Making the _parent_ rule atomic (`@.{ ... }`) would fix the whitespace issue but would require rewriting the entire `stmt` rule as atomic, losing all pest whitespace handling for the rule's content.
 
 ### Option B: Reorder alternatives in `stmt` (chosen)
 

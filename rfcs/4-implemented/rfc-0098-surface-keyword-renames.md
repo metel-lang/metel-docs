@@ -76,8 +76,8 @@ The inherent form is simply the `: Aspect` clause omitted — exactly mirroring
 `impl_block`'s existing `(named_type ~ "for")?` optionality today, not a new
 rule. This matters more than it looks: inherent impls are not a peripheral
 case — they're roughly as common as aspect impls in `stdlib/core.mtl` itself
-(`impl List<T> { ... }`, `impl Perhaps<T> { ... }`, `impl Result<T, E> { ... }`,
-`impl OsError { ... }`, and so on), so any spelling that required *something*
+(`impl List<T> .{ ... }`, `impl Perhaps<T> .{ ... }`, `impl Result<T, E> .{ ... }`,
+`impl OsError .{ ... }`, and so on), so any spelling that required *something*
 after the target on every impl would touch the majority of the existing
 codebase's impl blocks, not just the minority that implement an aspect.
 
@@ -126,7 +126,7 @@ No existing RFC specifies `impl X for Y` as its own subject — every RFC that u
 
 ## 2. Visibility keyword: `pub` → `public`
 
-Today: `pub struct IntBox { ... }`, `pub fun get(...)`, and, per RFC-0032, `pub` on individual struct fields:
+Today: `pub struct IntBox .{ ... }`, `pub fun get(...)`, and, per RFC-0032, `pub` on individual struct fields:
 ```metel
 pub struct Token {
     pub value: String,

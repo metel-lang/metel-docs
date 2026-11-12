@@ -107,13 +107,13 @@ Two gaps in the currently-shipped design motivate this:
 
 **1. A struct's own projection type accepts values that never came from that struct.**
 `extend Handle { fun f(h: Self.{ .fd }) -> … }` currently typechecks a call passing a
-bare anonymous record literal (`{ .fd = 3 }`) exactly as readily as a value actually
+bare anonymous record literal (`.{ .fd = 3 }`) exactly as readily as a value actually
 projected from a real `Handle` (`h.{ .fd }`) — confirmed directly against the shipped
 v0.13.0 interpreter. RFC-0116 §4 states plainly that this is the intended behavior as
 specified: "projection yields a record type" — a genuinely plain, unbranded one, with no
 tracking of where it came from. That is a real design choice, not an oversight, but it
 means a struct's own projected-field parameter type currently states no more than "has
-these fields, whatever their origin" — the same thing `{ .fd: i64 }` written directly
+these fields, whatever their origin" — the same thing `.{ .fd: i64 }` written directly
 would say, with no benefit from naming the struct at all beyond avoiding repetition of
 field types.
 
@@ -202,7 +202,7 @@ row-conditional impl resolution stays exactly as opt-in as it is under RFC-0120'
 three-tier model:
 
 - A plain `struct` has a row, but that row is never visible to structural matching.
-  `Handle.{ .fd }` remains a distinct type from `{ .fd: i64 }` for every purpose that
+  `Handle.{ .fd }` remains a distinct type from `.{ .fd: i64 }` for every purpose that
   matters to a caller — it is still, unambiguously, `Handle`'s own row — but neither
   `Handle` nor any residual or view produced from it ever satisfies a row bound or a
   row-conditional `extend`.
@@ -233,7 +233,7 @@ declared `struct` and one declared `record` (RFC-0120):
 struct Handle { fd: i64, name: String }
 record NamedHandle { fd: i64, name: String }   // RFC-0120 — different declaration, different brand
 
-fun wants_a_record<record T: { .fd: i64, .name: String, .. }>(t: T) -> i64 { t.fd }
+fun wants_a_record<record T: .{ .fd: i64, .name: String, .. }>(t: T) -> i64 { t.fd }
 
 fun main() {
     let h = Handle { fd = 3, name = "x" };

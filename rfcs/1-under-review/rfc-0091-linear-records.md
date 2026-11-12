@@ -30,11 +30,11 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/954'
 >
 > **Revised 2026-07-24 — mechanical syntax sweep, no semantic change.** RFC-0090 dropped
 > the `record` keyword from the anonymous type-former, so every `record { … }` here is now
-> `{ … }`, and anonymous record *values* separate with `=` (`{ .host = "example.com" }`) per
+> `{ … }`, and anonymous record *values* separate with `=` (`.{ .host = "example.com" }`) per
 > the `:` classifies / `=` defines invariant. Nothing about this RFC's own content changes.
 >
 > **One visible inconsistency this leaves, deliberately, because it is accurate:** §2.3's
-> examples read `RequestBuilder { data: { .host = "example.com" } }` — the *struct literal*
+> examples read `RequestBuilder { data: .{ .host = "example.com" } }` — the *struct literal*
 > still separates with `:`, the *record value* inside it with `=`. That mismatch is real
 > and current: RFC-0090's record values are settled, while RFC-0115 (which would make the
 > struct literal `data = …` too) is only `0-draft`. Left as-is rather than pre-applying an
@@ -43,15 +43,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/954'
 > **`HasField`/`Lacks` swept later the same day — see the final note below.**
 >
 > **Also revised 2026-07-24 — §5's `drain_field` row-extension notation normalized to
-> `..R`.** Its signature read `(s: &var { .name: T | R }) -> (T, &var { R })`, using two
+> `..R`.** Its signature read `(s: &var .{ .name: T | R }) -> (T, &var { R })`, using two
 > notations for row extension in one function and neither of them the corpus's normative
 > one. `| R` appeared **nowhere else in the corpus** except the copy of this same signature
 > in `reports/substructural-types/structural-records.md`, which this RFC was extracted from
 > — it is a leftover from that split, not a competing convention. The normative spelling is
-> RFC-0090 §2's spread tail, `{ .x: f64, ..R }`, used consistently in RFC-0090, this RFC's
+> RFC-0090 §2's spread tail, `.{ .x: f64, ..R }`, used consistently in RFC-0090, this RFC's
 > own §2.3, `brand-types.md`, and `access-and-presence-rows.md`. The return type's bare
 > `{ R }` (row variable with no marker at all) is normalized the same way. No semantic
-> change — `{ .name: T, ..R }` and `{ .name: T | R }` denote the same row.
+> change — `.{ .name: T, ..R }` and `.{ .name: T | R }` denote the same row.
 >
 > *(Where `{IO | E}` appears elsewhere in the corpus it is quoting **Koka's** effect-row
 > syntax as prior art, not proposing Metel syntax; `access-and-presence-rows.md` §4 writes
@@ -72,20 +72,20 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/954'
 >
 > | was | now |
 > |---|---|
-> | `HasField<"fd", i64>` | `{ .fd: i64, .. }` |
-> | `impl<row R: HasField<"auth", String>>` | `impl<row R: { .auth: String, .. }>` |
+> | `HasField<"fd", i64>` | `.{ .fd: i64, .. }` |
+> | `impl<row R: HasField<"auth", String>>` | `impl<row R: .{ .auth: String, .. }>` |
 > | `impl<row R: Lacks<"auth">>` | `impl<row R: !{ auth: _ }>` |
 >
 > **The trailing `..` on the positive bounds is not cosmetic.** A `HasField` bound was
 > always existential — "has at least this field" — so under the `..` rule adopted earlier
 > today it needs the marker to keep that meaning. Dropped, each would now read as "this
-> row is *exactly* `{ .auth: String }`", which would break every one of these examples: the
+> row is *exactly* `.{ .auth: String }`", which would break every one of these examples: the
 > builder's whole point is that `R` carries `host` and whatever else besides. The negative
 > bound takes no `..`, since absence has no rest to quantify over.
 >
 > **`RequestBuilder<R + "auth">` fixed later the same day, via RFC-0090 §2.1's resolution
 > of open question 14.** Row extension turns out to need no operator: it is
-> `RequestBuilder<{ ..R, .auth: String }>`, this cluster's own spread tail, with the label
+> `RequestBuilder<.{ ..R, .auth: String }>`, this cluster's own spread tail, with the label
 > written where labels are normally written. The string literal was only ever there
 > because an infix operator had nowhere else to put the name. Removal — the other half of
 > that question — becomes a where-clause decomposition, which this RFC does not currently
@@ -150,7 +150,7 @@ extend Handle: Drop {
 ```
 
 — checked (not just asserted) against the method body, so `tag` may be moved out of
-`Handle` first (the residual is still `{ .fd: i64, .. }`, all `drop` needs) while
+`Handle` first (the residual is still `.{ .fd: i64, .. }`, all `drop` needs) while
 moving `fd` itself out remains rejected. Declared rather than inferred, for the same
 reason this whole cluster has repeatedly preferred explicit-and-checked over
 implicit-and-inferred (RFC-0065's elision-is-never-a-silent-choice principle, Storage
@@ -214,7 +214,7 @@ tears itself down.
 
 Once RFC-0090's `{ … }` type-former exists, a partial-consumption residual stops being
 a bespoke, invisible marker — it *is* a record type. Consuming `Foo { a: A, b: B }`'s
-field `a` produces a value typed `{ .b: B }`: the struct's own remaining fields,
+field `a` produces a value typed `.{ .b: B }`: the struct's own remaining fields,
 literally. Since a record containing a linear or `Drop`-needing field is itself
 linear/drop-relevant by the same structural composition rule as ordinary structs, "the
 remainder still needs consuming" is no longer a rule anyone had to write — it's the
@@ -325,24 +325,24 @@ multiplicity-`1` — no `#derive(Linear)` annotation is actually needed or meani
 shown for illustration only. `ToRecord`/`FromRecord` are the derivable ones.)
 
 ```metel
-fun take_fd(h: &var FileHandle) -> (RawFd, &var { .path: String }) {
+fun take_fd(h: &var FileHandle) -> (RawFd, &var .{ .path: String }) {
     let view := h.to_record_mut();
     let fd := view.fd;   // moving a non-Copy field out is implicit, no `move` keyword
                          // exists in this grammar
-    (fd, view)          // view's residual type, { .path: String }, is not Linear —
+    (fd, view)          // view's residual type, .{ .path: String }, is not Linear —
                          // RFC-0090 §5's field-composition rule applies to records
                          // exactly as it does to structs, and `path` alone carries no
                          // obligation
 }
 
-fun log_path(view: &{ .path: String }) {
+fun log_path(view: &.{ .path: String }) {
     println("still open at: ${view.path}");
     // view.fd doesn't typecheck here at all. Compare to fd being declared Option<RawFd>
     // instead: every read site would need a match/unwrap to find out it's gone. Here
     // the caller's own parameter type already says so — checked once, at compile time.
 }
 
-fun release(view: &var { .path: String }, fd: RawFd) -> &var FileHandle {
+fun release(view: &var .{ .path: String }, fd: RawFd) -> &var FileHandle {
     view.fd = fd;
     FileHandle::from_record_mut(view)
 }
@@ -354,24 +354,24 @@ Per-field multiplicity is equally about a field going from absent (0) to present
 exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 
 ```metel
-struct RequestBuilder<row R> { data: { .host: String, ..R } }
+struct RequestBuilder<row R> { data: .{ .host: String, ..R } }
 
 extend<row R: !{ auth: _ }> RequestBuilder<..R> {
-    fun with_auth(self, token: String) -> RequestBuilder<{ ..R, .auth: String }> {
-        RequestBuilder { data = { ..self.data, .auth = token } }
+    fun with_auth(self, token: String) -> RequestBuilder<.{ ..R, .auth: String }> {
+        RequestBuilder { data = .{ ..self.data, .auth = token } }
     }
 }
 
-extend<row R: { .auth: String, .. }> RequestBuilder<..R> {
+extend<row R: .{ .auth: String, .. }> RequestBuilder<..R> {
     fun send(self) -> Response { ... }
 }
 
 fun main() {
-    let req = RequestBuilder { data = { .host = "example.com" } }
+    let req = RequestBuilder { data = .{ .host = "example.com" } }
         .with_auth("secret");
     req.send();
     // req.with_auth("again");                        -- R no longer satisfies !{ auth: _ }
-    // RequestBuilder { data: { .host = "x" } }.send()  -- needs { auth: _, .. }
+    // RequestBuilder { data: .{ .host = "x" } }.send()  -- needs { auth: _, .. }
 }
 ```
 
@@ -410,10 +410,10 @@ fn authenticate(session: &mut Session, token: String) {
 struct Session { host: String, state: AuthState }
 
 fun authenticate(session: &var Session, token: String) {
-    let view = session.to_record_mut();   // &var { .host: String, .state: AuthState }
+    let view = session.to_record_mut();   // &var .{ .host: String, .state: AuthState }
     let old_state = view.state;            // no `move` keyword exists -- moving a
                                             // non-Copy field out is implicit; view
-                                            // narrows to &var { .host: String } —
+                                            // narrows to &var .{ .host: String } —
                                             // `state` is genuinely absent here, not holding
                                             // a placeholder value of any kind
     let new_state = match old_state {
@@ -458,13 +458,13 @@ fn build() -> BigConfig {
 struct BigConfig { a: A, b: B, c: C }
 
 fun build() -> BigConfig {
-    let partial = { .a = compute_a() };
-    let partial = { ..partial, .b = compute_b() };  // if this panics, `partial` is an
+    let partial = .{ .a = compute_a() };
+    let partial = .{ ..partial, .b = compute_b() };  // if this panics, `partial` is an
                                                    // ordinary, fully-valid record
                                                    // { a: A } — dropped through the
                                                    // same safe machinery as any
                                                    // other value, no manual cleanup
-    let partial = { ..partial, .c = compute_c() };
+    let partial = .{ ..partial, .c = compute_c() };
     BigConfig::from_record(partial)   // only typechecks once the row exactly matches
                                        // BigConfig's full shape — assume_init()'s runtime
                                        // assertion, made a compile-time fact instead
@@ -478,8 +478,8 @@ call site, or reaches for unsafe pointer-cast tricks. This is exactly the motiva
 behind Rust's own (still unshipped, as of writing) "view types" proposal:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &var { .name: T, ..R })
-    -> (T, &var { ..R })
+fun drain_field<row R, name: Symbol, T>(s: &var .{ .name: T, ..R })
+    -> (T, &var .{ ..R })
 {
     let v = s.[name];   // no `move` keyword exists -- moving a non-Copy field out is
                          // implicit. This signature has other problems too, unrelated
@@ -493,7 +493,7 @@ struct Handle { fd: i32, alloc: @a Buffer }
 fun example(h: &var Handle) {
     let view = h.to_record_mut();
     let (buf, rest) = drain_field::<_, "alloc", @a Buffer>(view);
-    // `buf: @a Buffer` and `rest: &var { .fd: i32 }` are independently usable —
+    // `buf: @a Buffer` and `rest: &var .{ .fd: i32 }` are independently usable —
     // `drain_field` was written once, generically, and works unmodified for any struct
     // that derives ToRecord/FromRecord, not just Handle
 }
@@ -515,7 +515,7 @@ fun example(h: &var Handle) {
    only construct in the corpus that does:
 
    ```metel
-   fun drain_field<row R, name: Symbol, T>(s: &var { .name: T, ..R }) -> (T, &var { ..R })
+   fun drain_field<row R, name: Symbol, T>(s: &var .{ .name: T, ..R }) -> (T, &var .{ ..R })
    { let v = s.[name]; (v, s) }
    ```
 
@@ -542,7 +542,7 @@ fun example(h: &var Handle) {
    **This is not settled by RFC-0090 §2.1's resolution of row algebra, and the distinction
    matters.** That resolution retires the need for a label *literal* — extension writes
    the label inside a row literal, removal names both halves in an equation. It does not
-   provide label *polymorphism*: `where R = { .name: T, ..Rest }` still leaves `name`
+   provide label *polymorphism*: `where R = .{ .name: T, ..Rest }` still leaves `name`
    ranging over labels. `drain_field` needs the stronger capability, independently.
 
    **What it would cost:** a label kind (spelled as a prefix keyword, to match `row`), a

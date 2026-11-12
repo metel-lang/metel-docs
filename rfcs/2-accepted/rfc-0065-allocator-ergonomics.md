@@ -32,7 +32,7 @@ status: accepted
 
 > **Updated 2026-07-20 (second pass):** a real critique — an allocator genuinely
 > **declared** two scopes out (e.g. `Heap` as an outer function's own parameter, with
-> an inner `BumpAlloc::scoped((@a) -> {...})` closure) had no stated resolution;
+> an inner `BumpAlloc::scoped((@a) -> .{...})` closure) had no stated resolution;
 > read literally, both would count as candidates for a bare allocation expression
 > inside the closure, forcing an explicit name — exactly backwards from what the
 > closure is for. A first draft of this fix proposed silent depth-based shadowing
@@ -350,7 +350,7 @@ tradeoffs, surveyed directly rather than from memory:
   as of Kotlin 2.4) are the closest precedent to this section's rule: every function
   that needs one still declares it in its own signature — no silent propagation
   across call depth — but the call site never re-passes it by name, resolving it by
-  type from an ambient `context(users) { ... }` block or the caller's own context
+  type from an ambient `context(users) .{ ... }` block or the caller's own context
   parameters; ambiguity between two same-typed candidates is a compile error. That
   last rule is verbatim this RFC's own governing invariant, arrived at
   independently. Kotlin's own design history is a useful cross-check: context
@@ -437,7 +437,7 @@ the signature and the `&`-bearing positions that follow from it.
 ## 4. Unresolved questions
 
 1. **Closures.** The grammar for allocator parameters on closure literals
-   (`BumpAlloc::scoped((@a) -> { ... })`) is left to RFC-0050 (Closure Capture Lists).
+   (`BumpAlloc::scoped((@a) -> .{ ... })`) is left to RFC-0050 (Closure Capture Lists).
 
 2. **§1b's exact spelling at the parser level.** This RFC specifies that the omitted
    argument is not a positional gap — the call's argument list simply has one fewer

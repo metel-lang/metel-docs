@@ -23,12 +23,12 @@ impl_status: implemented
 
 ## Summary
 
-A by-value parameter whose type has an open row tail (`{ .x: f64, ..R }`, `Handle.{ .fd, ..R }`)
+A by-value parameter whose type has an open row tail (`.{ .x: f64, ..R }`, `Handle.{ .fd, ..R }`)
 owns the whole argument. The fields the parameter does not name are the callee's to move,
 return or drop; they are not forgotten at the call boundary. This replaces RFC-0121 §4's rule
 that by-value width subtyping is sound only when every unnamed field is `Copy`, and it makes
-the inline spelling `{ .f: T, ..Rest }` mean the same as the row equation
-`{ ..R } where R = { .f: T, ..Rest }`.
+the inline spelling `.{ .f: T, ..Rest }` mean the same as the row equation
+`.{ ..R } where R = .{ .f: T, ..Rest }`.
 
 ---
 
@@ -39,25 +39,25 @@ record and keep the rest. They are accepted or rejected differently:
 
 ```metel
 // rejected today (T0033) when `Rest` holds a `String`
-fun strip<row Rest>(d: { .token: String, ..Rest }) -> { ..Rest } {
-    let { .token: _, ..rest } := d;
+fun strip<row Rest>(d: .{ .token: String, ..Rest }) -> .{ ..Rest } {
+    let .{ .token: _, ..rest } := d;
     rest
 }
 
 // accepted today, same meaning
-fun strip<row R, row Rest>(d: { ..R }) -> { ..Rest } where R = { .token: String, ..Rest } {
-    let { .token: _, ..rest } := d;
+fun strip<row R, row Rest>(d: .{ ..R }) -> .{ ..Rest } where R = .{ .token: String, ..Rest } {
+    let .{ .token: _, ..rest } := d;
     rest
 }
 ```
 
-The equation form is accepted because a tail-only parameter `{ ..R }` is never narrowed: the
+The equation form is accepted because a tail-only parameter `.{ ..R }` is never narrowed: the
 callee receives the whole record. The inline form is rejected because RFC-0121 §4 treats it as
 narrowing at the call, which forgets the unnamed fields.
 
 **What §4 was protecting, and what it costs.** RFC-0121 §4 chose this rule deliberately: reject a
 by-value open row whose unnamed fields are not `Copy`, and require an explicit
-`where R = { .., ..Rest }` decomposition instead. Besides soundness, that made discarding data
+`where R = .{ .., ..Rest }` decomposition instead. Besides soundness, that made discarding data
 visible, because the author had to write the remainder down. This RFC gives that up for open-row
 parameters. The alternatives section considers keeping the visibility by other means.
 
@@ -67,7 +67,7 @@ argument, the owner exists: the callee. It can return the remainder, destructure
 remainder pattern, or let it drop at the end of its scope, as it can for any owned value.
 
 **The restriction has a visible cost.** The `forgets field` error (`T0033`) fires on the most
-natural generic signature, `fun get_x<row R>(p: { .x: f64, ..R }) -> f64`, whenever a caller
+natural generic signature, `fun get_x<row R>(p: .{ .x: f64, ..R }) -> f64`, whenever a caller
 passes a record with a `String` in it, and the only fix is to rewrite the signature in the
 equation form.
 
@@ -77,14 +77,14 @@ equation form.
 
 ### 1.1 The rule
 
-For a by-value parameter whose declared type is an open record (`{ .f₁: T₁, …, ..R }`) or an
+For a by-value parameter whose declared type is an open record (`.{ .f₁: T₁, …, ..R }`) or an
 open projection (`Handle.{ .f₁, …, ..R }`):
 
 - the argument is moved into the parameter whole;
 - inside the body the parameter has the named fields at their declared types and the
   remainder as an owned row `R`;
 - the callee owns the fields `R` carries: it may move them out (a remainder pattern
-  `..rest`, a spread `{ ..d }`, a return), pass the parameter on by value, or leave them to be
+  `..rest`, a spread `.{ ..d }`, a return), pass the parameter on by value, or leave them to be
   dropped when the parameter goes out of scope.
 
 The call site needs only that the argument has at least the named fields with matching types.
@@ -98,9 +98,9 @@ documentation is retitled for that rule alone.
 
 ### 1.2 Equivalence with the equation form
 
-`{ .f: T, ..R }` in a by-value parameter position is defined as `{ ..S }` with the equation
-`S = { .f: T, ..R }`. Both spellings then accept and reject the same programs. An anonymous
-tail (`{ .x: f64, .. }`) is the same with a fresh tail name the body cannot mention; the
+`.{ .f: T, ..R }` in a by-value parameter position is defined as `.{ ..S }` with the equation
+`S = .{ .f: T, ..R }`. Both spellings then accept and reject the same programs. An anonymous
+tail (`.{ .x: f64, .. }`) is the same with a fresh tail name the body cannot mention; the
 callee still owns, and drops, what it cannot name.
 
 ### 1.3 Positions that do not change

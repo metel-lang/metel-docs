@@ -279,7 +279,7 @@ This RFC implies the following rewrites:
 
 | Old form | New form |
 |---|---|
-| `fun f(var self) { ... }` used only for local mutation | either `fun f(self) -> Self` or `fun f(&var self)`, depending on intent |
+| `fun f(var self) .{ ... }` used only for local mutation | either `fun f(self) -> Self` or `fun f(&var self)`, depending on intent |
 | `fun next(var self) -> Option<T>` | `fun next(&var self) -> Option<T>` |
 | read-only methods using `self` only for observation | `fun f(&self) -> R` |
 

@@ -96,7 +96,7 @@ temporary `Overload` variant until step 2. Making an allocator and minting from 
 `SymbolTable` and `BlockLocalAllocator` (a second table or allocator mints equal ids by construction),
 so what the types rule out is forging a specific index, not creating a second allocator. Tests that
 minted `SymbolId(1000)` use a `#[cfg(test)]` constructor. Kind tests become matches
-(`matches!(id, SymbolId::Overload { .. } | SymbolId::CoreOverload(_))`), and an exhaustive `match` on
+(`matches!(id, SymbolId::Overload .{ .. } | SymbolId::CoreOverload(_))`), and an exhaustive `match` on
 `SymbolId` forces a consumer to consider every kind when one is added.
 
 ### 3. Overload identity is structural, not counted

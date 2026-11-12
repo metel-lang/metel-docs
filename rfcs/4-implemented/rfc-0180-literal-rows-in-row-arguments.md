@@ -34,13 +34,13 @@ The compiler already computes the type of a row-extending function. This runs to
 return type left off:
 
 ```metel
-record Req<row R> { data: { ..R } }
+record Req<row R> { data: .{ ..R } }
 
 fun add_host<row R: !{ .host }>(r: Req<..R>, h: String) {
-    Req { data = { .host = h, ..r.data } }
+    Req { data = .{ .host = h, ..r.data } }
 }
 
-extend<row R: { .host: String, .. }> Req<..R> {
+extend<row R: .{ .host: String, .. }> Req<..R> {
     fun build(self) -> String { "GET " + self.data.host }
 }
 ```

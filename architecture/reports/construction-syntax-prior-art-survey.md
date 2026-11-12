@@ -146,16 +146,16 @@ in the sources surveyed; it is not needed to choose among the stronger candidate
 
 RFC-0100 section 7 plans a `Construct` operation, but its current release scope
 uses only a synthesised default. RFC-0114 remains a draft. The current proposal
-for raw minting is `Self { ... }` only inside the designated constructor bodies.
+for raw minting is `Self .{ ... }` only inside the designated constructor bodies.
 These are project design facts, not shipped support for custom constructors.
 
 Importantly, RFC-0114's own revision states that a literal desugaring to `construct`
-is not an invariant bypass. Either `new Ticket(...)` or `Ticket { ... }` could
+is not an invariant bypass. Either `new Ticket(...)` or `Ticket .{ ... }` could
 route through exactly the same canonical policy. Braces do not inherently force
 raw field initialisation, just as parentheses do not establish validation.
 
 If public braces are chosen, the language must distinguish canonical construction
-from the internal minting step. Reusing `Self { ... }` with a context-specific raw
+from the internal minting step. Reusing `Self .{ ... }` with a context-specific raw
 meaning is possible but obscures the distinction; alternatively the minting form
 would need another explicit spelling. That is a real interaction requiring a
 joint decision with RFC-0114, not grounds to assume braces cannot work.

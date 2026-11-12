@@ -424,7 +424,7 @@ every use site downstream changes meaning.
   people's code, so the cost of writing it is paid exactly there.
 
 - **S5. Inferred, with a marker ascription at the expression** (optional companion to S6).
-  `({ .x = 0, .y = 0 }: extends Copy)`: an erased check that the value's type extends `Copy`,
+  `(.{ .x = 0, .y = 0 }: extends Copy)`: an erased check that the value's type extends `Copy`,
   and a `!Copy` form for the negative. The spelling is `extends`, the word Metel already uses
   for "some type that extends this aspect" (RFC-0130): `x: extends Display` in a parameter
   is a bound the caller meets, `-> extends Display` in a return is opaque, and `: extends
@@ -446,13 +446,13 @@ every use site downstream changes meaning.
   for the header; it waits on an RFC-0130 amendment, which is why it is not the headline.
 - **S6. Inferred, with a marker on the written type.** Inference stays, and a type written
   in a signature or an annotation may carry a bound list of markers, using the header list's
-  own items: `-> { .x: i64, .y: i64 }: Copy`, `p: (i64, boolean): Copy`,
+  own items: `-> .{ .x: i64, .y: i64 }: Copy`, `p: (i64, boolean): Copy`,
   `let pair: (i64, boolean): Copy := …`, `: !Copy`. It is a refinement of the written type,
   erased, and checked at the definition: for a concrete type it is true or false the moment
   it is written, and for a generic one it follows the derived condition (`(T, T): Copy`
   holds when `T: Copy`). On a result it is a guarantee the author makes and the caller
   reads; on a parameter it also constrains callers. For an open row,
-  `{ .x: i64, ..R }: Copy` is the field-wise bound `where ..R: Copy` (RFC-0123), so one
+  `.{ .x: i64, ..R }: Copy` is the field-wise bound `where ..R: Copy` (RFC-0123), so one
   spelling covers both. No multiplicity is carried on tuples and records. It cannot make a
   `Copy` value move-only (`!Copy` on a `(i64, i64)` asserts something false); a token is a
   named type. Markers only (aspects with no required methods). The positions are returns,
@@ -462,7 +462,7 @@ every use site downstream changes meaning.
   verbose of the two. **Neither parses today** (tried against the parser, 2026-11-02): a
   trailing `: Copy` after a parameter, return or `let` type is a parse error, and so is a
   concrete type as the subject of a `where` constraint, whose subject must be an identifier
-  (a type parameter) or `..R`; the existing row equation (`where R = { .x: i64, ..Rest }`)
+  (a type parameter) or `..R`; the existing row equation (`where R = .{ .x: i64, ..Rest }`)
   requires an open row with a `..Rest` tail, so it cannot pin a closed type either. Both
   spellings are therefore a grammar change: the suffix as a restricted production
   (`type_expr` followed by `":" ~ !"=" ~ bound_list`, used only in parameters, returns and
@@ -492,7 +492,7 @@ and Mojo's `Tuple` is conditionally `Copyable` over a variadic pack.
 Each was run against the implementation for S1 (today). The other positions are reasoned,
 the syntax not existing.
 
-1. **API evolution.** `lib.mtl`: `pub fun origin() -> { .x: i64, .y: i64 }`; `main.mtl`
+1. **API evolution.** `lib.mtl`: `pub fun origin() -> .{ .x: i64, .y: i64 }`; `main.mtl`
    calls `show(o)` twice on its result. Someone adds `label: String`. *S1:* the edit is in
    `lib.mtl`; the error is in `main.mtl`, `use of moved value 'o'`, and does not say the
    new field is the cause. *S2:* nothing breaks, because the double use never compiled; the
@@ -506,7 +506,7 @@ the syntax not existing.
    Under every position the diagnostic should say *why*: "`(i64, String)` is not `Copy`
    because `String` is not". That change is independent of this axis and should be made
    whichever position is taken.
-4. **An open record in generic code.** `fun dup<record R>(r: { .x: i64, ..R })` using `r`
+4. **An open record in generic code.** `fun dup<record R>(r: .{ .x: i64, ..R })` using `r`
    twice is rejected today; `where ..R: Copy` fixes it. Under S3 and S3p
    `copy { x: i64, ..R }` is a second spelling of that same bound, not a new capability.
 5. **A transitive flip.** `record Outer { i: Inner, n: i64 }` is `Copy` while `Inner` is;
@@ -1121,12 +1121,12 @@ trait that gates nothing implicit is an unobjectionable trait.
 6. **Residuals of S6.** Added 2026-11-02; Axis S proposes S6, the marker on the written type. Three
    things remain. (a) *Spelling:* the expression form is `: extends Copy` (decided 2026-11-02), and whether
    it is allowed in a `let` annotation is open. For a written type, a trailing `: Copy`
-   (`p: (i64, boolean): Copy`, `-> { .x: i64 }: Copy`) is unusual next to a parameter's own
+   (`p: (i64, boolean): Copy`, `-> .{ .x: i64 }: Copy`) is unusual next to a parameter's own
    `:`; the suffix is chosen (2026-11-02) over a `where` clause on the function. Tried against
    the parser, neither parses today and both need a grammar change (S6). Which positions are allowed (returns, parameters, `let`; not fields or
    type arguments) and whether a parameter's marker is a requirement as well as documentation
    are also open. (b) *Duplicating a non-`Copy`
-   structural value:* records (anonymous and named) have a `Clone`, `extend<record R> { ..R }:
+   structural value:* records (anonymous and named) have a `Clone`, `extend<record R> .{ ..R }:
    Clone where ..R: Clone` in `std::core` (RFC-0123), as do arrays, primitives and
    `String`; **tuples have none** (`T: Clone` rejects `(i64, i64)`, and `.clone()` on one
    reports "cannot infer receiver type"); a named `struct`, `Option` and `List` have no

@@ -18,7 +18,7 @@ Allow `if` expressions to accept a single expression as the body without requiri
 :
 ## Motivation
 
-Currently, every `if` body must be a block (`{ ... }`), even for trivial single-expression branches. This is unnecessarily verbose for simple cases like `if (debug) print_state();`. Many Rust-inspired languages (C, Swift, Kotlin) permit braceless single-expression bodies as a convenience form.
+Currently, every `if` body must be a block (`.{ ... }`), even for trivial single-expression branches. This is unnecessarily verbose for simple cases like `if (debug) print_state();`. Many Rust-inspired languages (C, Swift, Kotlin) permit braceless single-expression bodies as a convenience form.
 
 ---
 

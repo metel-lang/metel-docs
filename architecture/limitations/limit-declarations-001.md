@@ -57,7 +57,7 @@ RFC-0137 §3) — a `record`'s row is now structurally visible to row bounds exa
 this record's "Impact" section described it should be. Row-conditional impl
 resolution is implemented by RFC-0121. Verified directly: `record Handle { fd: i64 }` parses
 and typechecks (a record's fields are public by construction), a `pub` written on a
-record field is rejected as `P0001`, and a function generic over `<record T: { .fd: i64, .. }>` accepts `Handle` and its
+record field is rejected as `P0001`, and a function generic over `<record T: .{ .fd: i64, .. }>` accepts `Handle` and its
 narrowed residuals but rejects an equivalent `struct`. This record's exemptions on
 the four affected rules below are removed now that real fixtures cover them
 (`metel-interpreter/tests/integration/sources/evaluator/structs/112-114_*`,

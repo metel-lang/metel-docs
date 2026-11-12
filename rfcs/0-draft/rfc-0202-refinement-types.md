@@ -75,7 +75,7 @@ Non-literal values use `try_from`.
 
 ### 4. Flow-sensitive refinement (non-goal in this RFC)
 
-The type system does **not** track facts (`if (n >= 0) { ... }` does not give `n` a refined
+The type system does **not** track facts (`if (n >= 0) .{ ... }` does not give `n` a refined
 type). That would require a proof engine. Refinement is checked at construction only.
 
 ### 5. Operations

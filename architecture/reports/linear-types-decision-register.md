@@ -33,9 +33,9 @@ Every type has a class that says what a value of the type may do.
 
 | Class | Written | Use at most / exactly | May be dropped | May be copied |
 |---|---|---|---|---|
-| copy | `copy struct P { .. }` | any number of times | yes | yes, implicitly |
+| copy | `copy struct P .{ .. }` | any number of times | yes | yes, implicitly |
 | affine | (default, no keyword) | at most once | yes | no |
-| linear | `linear struct Tx { .. }` | exactly once | **no** | no |
+| linear | `linear struct Tx .{ .. }` | exactly once | **no** | no |
 
 Most Metel types are affine, which is the default and what Rust calls "move-only". `copy` is for small
 plain-data types. `linear` is the new one: a value of a linear type **must** be consumed. It cannot simply go out of
@@ -235,10 +235,10 @@ cheap now and expensive after std is annotated.
 
 Answer these without looking, then check against the text.
 
-1. `fun first<T>(p: Pair<T>) -> T { p.a }` with the named struct `Pair<T> { .a: T, .b: T }`. Does it compile once
+1. `fun first<T>(p: Pair<T>) -> T { p.a }` with the named struct `Pair<T> .{ .a: T, .b: T }`. Does it compile once
    linear ships? **No.** `Pair<T>` is not known `Discard`, so the field move leaves a residual the compiler cannot
    drop. Fix: `T: Discard`, or `let Pair { a, b } := p; a` (but then `b` must be handled).
-2. Same, but `p` is an anonymous record `{ .a: T, .b: T }`. **Yes** for the field move. It narrows to `{ .b: T }`, whose
+2. Same, but `p` is an anonymous record `.{ .a: T, .b: T }`. **Yes** for the field move. It narrows to `.{ .b: T }`, whose
    class is recomputed, and returning without using `b` is then an error unless `T: Discard`.
 3. `struct Cache<T> { marker: &T }`. Is `Cache<Tx>` linear? **No.** It owns a reference, which is `Discard`.
 4. Add `ticket: Ticket<T>` where `linear struct Ticket<T> { id: i64 }`. What must change on `Cache`? It must now be

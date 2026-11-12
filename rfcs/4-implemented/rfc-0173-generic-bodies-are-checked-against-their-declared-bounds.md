@@ -50,7 +50,7 @@ Each such function silently stops being generic. The error appears, if at all, a
 
 ### What it breaks
 
-- **Row polymorphism (RFC-0121).** `Rest` is only meaningful as a variable *distinct from* `R`. `fun authenticate<row R, row Rest>(s: Session<..R>) -> Session<..Rest> where R = { .token: String, ..Rest } { .. }` is accepted even when the body returns the wrong row, because `Rest` and `R` collapse. The `Rest` derivation of metel-core#1310 leaves a collapsed `Rest` alone (metel-core#1320).
+- **Row polymorphism (RFC-0121).** `Rest` is only meaningful as a variable *distinct from* `R`. `fun authenticate<row R, row Rest>(s: Session<..R>) -> Session<..Rest> where R = .{ .token: String, ..Rest } .{ .. }` is accepted even when the body returns the wrong row, because `Rest` and `R` collapse. The `Rest` derivation of metel-core#1310 leaves a collapsed `Rest` alone (metel-core#1320).
 - **Conditional impls (RFC-0036, RFC-0121 §3).** `extend<T: Tag> Box<T> { fun f(self) }` should make `f` visible only where `T: Tag` is entailed. Inside `fun g<U>(b: Box<U>) { b.f() }` it is visible anyway, and the condition is checked per call, with the error reported inside `g` (metel-core#1323).
 - **Error locality.** A wrong definition is reported at its callers.
 
@@ -73,7 +73,7 @@ fun id2<T, U>(a: T) -> U { a }   // error: expected U, found T
 
 Γ states equalities in exactly two places, and the set is closed (a future `where T = U` would need its own RFC):
 
-1. **Row equations.** `where R = { .token: String, ..Rest }` says `R` has `token: String`, that `Rest` is *derived*, namely `R` without `token`, and that `Rest` lacks `token`. `Rest` is not an independent parameter; the caller does not choose it, and it is computed at each call. So the body may treat `R` and `{ .token: String, ..Rest }` as equal, and `R` can never equal `Rest`: unifying them is an occurs-check failure, which is how returning the wrong row is rejected at the definition.
+1. **Row equations.** `where R = .{ .token: String, ..Rest }` says `R` has `token: String`, that `Rest` is *derived*, namely `R` without `token`, and that `Rest` lacks `token`. `Rest` is not an independent parameter; the caller does not choose it, and it is computed at each call. So the body may treat `R` and `.{ .token: String, ..Rest }` as equal, and `R` can never equal `Rest`: unifying them is an occurs-check failure, which is how returning the wrong row is rejected at the definition.
 2. **Associated-type bindings.** `T: Iterable<Item = X>` makes `T::Item` equal to `X`.
 
 A closure or nested generic function inside a generic body sees the enclosing parameters as rigid. A recursive or mutually recursive generic call instantiates the callee's parameters afresh, so it checks against the callee's declared bounds like any other call.
@@ -159,7 +159,7 @@ Each combines this RFC with an already-integrated feature, looking for a soundne
 
 ```metel
 fun authenticate<row R, row Rest>(s: Session<..R>) -> Session<..Rest>
-where R = { .token: String, ..Rest } { s.drop_token() }   // body returns Session<..R>
+where R = .{ .token: String, ..Rest } { s.drop_token() }   // body returns Session<..R>
 ```
 
 `Rest` lacks `token` and `R` has it, so `Session<..R>` is not `Session<..Rest>`: rejected at the definition (`T0001`). Today this is accepted because `Rest` collapses into `R`.
@@ -167,7 +167,7 @@ where R = { .token: String, ..Rest } { s.drop_token() }   // body returns Sessio
 **2. With RFC-0137 by-value narrowing.**
 
 ```metel
-fun first<row R>(r: { .x: i64, ..R }) -> { .x: i64 } { r }   // forgets the fields of R
+fun first<row R>(r: .{ .x: i64, ..R }) -> .{ .x: i64 } { r }   // forgets the fields of R
 ```
 
 Narrowing by value forgets `R`'s fields, so it needs `where all R: Copy`; without it the body is rejected at the definition (`T0033`). This closes the definition-time half of `LIMIT-TYPES-002` that waited on this RFC. With `where all R: Copy` it is accepted, and `all R: Copy` is not granted to `R` itself (D6 case 5).

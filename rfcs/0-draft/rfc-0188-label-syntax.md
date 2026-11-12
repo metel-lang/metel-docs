@@ -72,8 +72,8 @@ They are used wherever a label appears as a value, an argument or a variable, an
 let id := get(.id, record);
 
 // a label variable in a type, a literal and a selection
-fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T { r.[l] }
-fun single<V>(comptime l: Label, v: V) -> { .[l]: V } { { .[l] = v } }
+fun get<T, record R>(comptime l: Label, r: .{ .[l]: T, ..R }) -> T { r.[l] }
+fun single<V>(comptime l: Label, v: V) -> .{ .[l]: V } { .{ .[l] = v } }
 let one := single(.id, 5);
 ```
 
@@ -86,11 +86,11 @@ compile time".
 
 ```metel
 // (a, b) is notation for the row below
-{ .0 = a, .1 = b }
+.{ .0 = a, .1 = b }
 ```
 
 **A field of a row is a label.** In an anonymous record literal, pattern, type, row bound, negative bound,
-row equation and projection list the field is written `.x`: `{ .x = 1 }`, `Handle.{ .fd, ..R }`.
+row equation and projection list the field is written `.x`: `.{ .x = 1 }`, `Handle.{ .fd, ..R }`.
 RFC-0221 owns that rule and its sites. Struct and enum construction, declarations and patterns keep bare
 names (RFC-0100).
 
@@ -105,7 +105,7 @@ so `m.put(.host, "a.com")` infers it from the argument. This example depends on 
 illustrative.
 
 ```metel
-record Rec<record R> { data: { ..R } }
+record Rec<record R> { data: .{ ..R } }
 
 extend<record R> Rec<..R> {
     fun empty() -> Rec<..{}> { Rec(data = {}) }
@@ -113,10 +113,10 @@ extend<record R> Rec<..R> {
     fun put<V>(self, comptime l: Label, v: V) -> Rec<..{ .[l]: V, ..R }>
     where R: !{ .[l] }
     {
-        Rec(data = { .[l] = v, ..self.data })
+        Rec(data = .{ .[l] = v, ..self.data })
     }
 
-    fun get<V, record Rest>(&self, comptime l: Label) -> &V where R = { .[l]: V, ..Rest } { &self.data.[l] }
+    fun get<V, record Rest>(&self, comptime l: Label) -> &V where R = .{ .[l]: V, ..Rest } { &self.data.[l] }
 }
 
 let m := Rec::empty().put(.host, "a.com").put(.port, 8080);   // Rec<..{ .host: String, .port: i64 }>

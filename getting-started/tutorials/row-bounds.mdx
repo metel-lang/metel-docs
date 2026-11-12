@@ -9,16 +9,16 @@ function say exactly that.
 
 ## Row bounds
 
-`<record T: { .user: i64, .. }>` is a bound: `T` is any record that **at least** has a
+`<record T: .{ .user: i64, .. }>` is a bound: `T` is any record that **at least** has a
 `user: i64` field. The `..` quantifies over whatever else it carries.
 
 ```metel
-fun user_of<record T: { .user: i64, .. }>(e: T) -> i64 { e.user }
-fun is_heavy<record T: { .weight: i64, .. }>(e: T) -> boolean { e.weight >= 10 }
+fun user_of<record T: .{ .user: i64, .. }>(e: T) -> i64 { e.user }
+fun is_heavy<record T: .{ .weight: i64, .. }>(e: T) -> boolean { e.weight >= 10 }
 
 fun main() {
-    let ev    := { .user = 7, .kind = "buy", .weight = 42, .line = 2 };
-    let other := { .user = 3, .weight = 1 };   // different shape, same `user`/`weight` bounds
+    let ev    := .{ .user = 7, .kind = "buy", .weight = 42, .line = 2 };
+    let other := .{ .user = 3, .weight = 1 };   // different shape, same `user`/`weight` bounds
 
     println(user_of(ev));       // 7
     println(is_heavy(ev));      // true
@@ -46,7 +46,7 @@ A row bound is satisfied by a **record**, not by a nominal `struct`:
 ```metel
 struct Point { x: i64, y: i64 }
 
-fun x_of<record T: { .x: i64, .. }>(v: T) -> i64 { v.x }
+fun x_of<record T: .{ .x: i64, .. }>(v: T) -> i64 { v.x }
 
 fun main() {
     let p := Point { x = 1, y = 2 };
@@ -65,7 +65,7 @@ so it satisfies them. Every field of a `record` is public, so fields are written
 ```metel
 record Point { x: i64, y: i64 }
 
-fun x_of<record T: { .x: i64, .. }>(v: T) -> i64 { v.x }
+fun x_of<record T: .{ .x: i64, .. }>(v: T) -> i64 { v.x }
 
 fun main() {
     let p := Point { x = 1, y = 2 };

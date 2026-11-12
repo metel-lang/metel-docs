@@ -267,8 +267,8 @@ options below are actually about closing.
 - **Java.** Never checked, always silently wraps for `int`/`long` — no checked,
   wrapping (redundant, since default already wraps), or saturating variant exists in
   the language or its core library.
-- **C#.** The one contextual, scope-based precedent in the survey: `checked { ... }`
-  / `unchecked { ... }` wrap a block or a single expression, flipping whether `+`/
+- **C#.** The one contextual, scope-based precedent in the survey: `checked .{ ... }`
+  / `unchecked .{ ... }` wrap a block or a single expression, flipping whether `+`/
   `-`/`*` throw `OverflowException` or wrap silently *without changing which operator
   is written* — existing arithmetic syntax keeps meaning what it already means, the
   surrounding context changes what happens on overflow. A project-wide compiler
@@ -310,7 +310,7 @@ already shipped), zero new surface to learn, matches Rust's own `/` exactly for 
 common case. **Not type-safe**: nothing in a function's signature indicates a
 division inside it can terminate the process, and the type checker cannot help a
 caller avoid the mistake. **Not ergonomic for code that wants to handle a possibly-
-zero divisor**: the only option is a manual `if b == 0 { ... }` guard immediately
+zero divisor**: the only option is a manual `if b == 0 .{ ... }` guard immediately
 before the division — unenforced (nothing stops the guard and the division from
 drifting apart during a later edit), and boilerplate repeated at every call site that
 cares.
@@ -360,7 +360,7 @@ detail:**
   B and pays a wrapper-type tax for it. (Overflow's equivalent options, §7.3/§7.4,
   don't share this cost at all — see §5.2.)
 - **Flow-sensitive narrowing would make the common case free, if the type checker
-  supports it.** After `if b != 0 { ... }`, can the checker treat `b` as `NonZero<T>`
+  supports it.** After `if b != 0 .{ ... }`, can the checker treat `b` as `NonZero<T>`
   inside the branch without an explicit `NonZero::new` call? This is the difference
   between "ergonomic" and "a wrapper type nobody uses because `checked_div` is less
   ceremony for the same guarantee." **Open question, not resolved by this RFC**:

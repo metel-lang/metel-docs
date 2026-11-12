@@ -40,7 +40,7 @@ A constraint form that applies an aspect bound to **every field of a row** rathe
 the row's type as a whole:
 
 ```metel
-extend<row R> { ..R }: Display where all R: Display { … }
+extend<row R> .{ ..R }: Display where all R: Display { … }
 ```
 
 Read: *this impl applies to any record all of whose fields are themselves `Display`.*
@@ -56,7 +56,7 @@ copyable fields, and the rule that makes width subtyping sound.
 ### 1. Anonymous records cannot satisfy a stdlib aspect at all
 
 RFC-0116 §3 permits an aspect implementation for a record **only when the aspect is local
-to the implementing module** — the orphan rule, and correctly so: `{ .x: f64, .y: f64 }` has
+to the implementing module** — the orphan rule, and correctly so: `.{ .x: f64, .y: f64 }` has
 no owning module, so two modules writing `extend { x: f64, y: f64 }: Display` would conflict
 with no principled tiebreak.
 
@@ -64,7 +64,7 @@ Every standard-library aspect is non-local. The consequence, which RFC-0116 stat
 restriction for but never draws:
 
 ```metel
-let p := { .x = 1.0, .y = 2.0 };
+let p := .{ .x = 1.0, .y = 2.0 };
 println("${p}");                  // no `Display` for any record, ever
 ```
 
@@ -72,7 +72,7 @@ A single stdlib impl would fix it for all records at once, and cannot be written
 because it needs to require `Display` of each field:
 
 ```metel
-extend<row R> { ..R }: Display where all R: Display { … }
+extend<row R> .{ ..R }: Display where all R: Display { … }
 ```
 
 ### 2. The width-subtyping rule cannot be stated
@@ -90,11 +90,11 @@ auto-derived — RFC-0096's auto-impl set is a closed list of exactly three (`Se
 Since RFC-0116 §3 bans non-local aspect impls for records, and `Copy` is standard-library:
 
 ```metel
-let a := { .x = 1, .y = 2 };
+let a := .{ .x = 1, .y = 2 };
 let b := a;        // a MOVES. Every record is affine, forever.
 ```
 
-`{ .x: i64, .y: i64 }` is exactly the shape a reader expects to copy freely, so this is a
+`.{ .x: i64, .y: i64 }` is exactly the shape a reader expects to copy freely, so this is a
 harsher cliff than `Display`. It also **blocks RFC-0121's width-subtyping rule from ever
 applying to a nested record**, since that rule requires each silently-dropped field to be
 `Copy` and a record field can never be.
@@ -102,7 +102,7 @@ applying to a nested record**, since that rule requires each silently-dropped fi
 The fix is the same single stdlib impl shape:
 
 ```metel
-extend<row R> { ..R }: Copy where all R: Copy { }
+extend<row R> .{ ..R }: Copy where all R: Copy { }
 ```
 
 **These are the same missing construct**, and recognising that is most of this RFC's
@@ -116,14 +116,14 @@ being tracked as unrelated problems in different documents.
 `where all R: Aspect`:
 
 ```metel
-extend<row R> { ..R }: Display  where all R: Display  { … }
-fun consume<row R>(r: { ..R })  where all R: Copy     { … }
+extend<row R> .{ ..R }: Display  where all R: Display  { … }
+fun consume<row R>(r: .{ ..R })  where all R: Copy     { … }
 ```
 
 `all R: A` holds when every field type in `R` satisfies `A`. On an empty row it holds
 vacuously.
 
-**It is a constraint, not a bound on the row itself.** `R: { .x: f64, .. }` constrains the
+**It is a constraint, not a bound on the row itself.** `R: .{ .x: f64, .. }` constrains the
 row's *shape* — which labels it has. `all R: Display` constrains the row's *contents* —
 what the field types can do. The two compose and neither subsumes the other.
 
@@ -133,7 +133,7 @@ the ordinary bound (`ident : BoundList`) and RFC-0121's row equation (`ident = T
 Adding `all R : BoundList` as a third costs exactly one keyword (`all`) and no new grammar
 shape, the same cost RFC-0121 already paid for `row`. The alternatives considered and set
 aside: `R: all Display` moves the keyword inside a bound-list entry for no compensating
-clarity; a bound-position marker (`{ ..R }: Display` meaning "apply recursively") is
+clarity; a bound-position marker (`.{ ..R }: Display` meaning "apply recursively") is
 genuinely ambiguous with an ordinary row bound of the same shape; `AllFields<R, Display>`
 invents a synthetic generic-looking construct that isn't an aspect, isn't a type, and
 would need its own special-cased resolution rule. `WhereConstraint` gains:
@@ -153,7 +153,7 @@ against `RowEquation`'s `IDENTIFIER "="` and the bare `IDENTIFIER ":"` bound for
 Comptime derive (RFC-0093) could generate a per-shape implementation instead of quantifying.
 That is a real alternative and is recorded in Alternatives — but it produces one impl per
 concrete record shape encountered, whereas this produces one impl covering all of them.
-The difference matters for a *bound*: `fun f<row R>(r: { ..R }) where all R: Copy` is a
+The difference matters for a *bound*: `fun f<row R>(r: .{ ..R }) where all R: Copy` is a
 constraint checked at the call site, and there is nothing to derive there.
 
 ## 3. Prior art
@@ -208,7 +208,7 @@ typestate coexist rather than forcing one to subsume the other.
 
 1. ~~**Is `where all R: A` the right surface?** It reads well and reuses `where`, but `all`
    is a new keyword in a language that has been reluctant to spend them. Alternatives:
-   `R: all Display`, a bound-position marker (`{ ..R }: Display`), or a named aspect
+   `R: all Display`, a bound-position marker (`.{ ..R }: Display`), or a named aspect
    (`AllFields<R, Display>`) — the last being closest to PureScript's constraint-class
    framing and requiring no keyword.~~
    **Resolved 2026-09-27 — see "Why this spelling over the alternatives" in §1 above.**
@@ -229,22 +229,22 @@ typestate coexist rather than forcing one to subsume the other.
 3. ~~**Does it need to be per-field rather than uniform?** `all R: Display` applies one
    aspect to every field. `Display` for a record needs exactly that. But a heterogeneous
    requirement — "field `x` is `Copy` and the rest are `Display`" — is expressible as
-   decomposition (`R = { .x: T, ..Rest } where T: Copy, all Rest: Display`), so probably not.
+   decomposition (`R = .{ .x: T, ..Rest } where T: Copy, all Rest: Display`), so probably not.
    Unverified.~~
    **Confirmed 2026-09-27, not merely "probably."** Any finite set of per-field exceptions
-   chains via repeated decomposition — `where R = { .x: T, ..R2 }, R2 = { .y: U, ..Rest }`,
+   chains via repeated decomposition — `where R = .{ .x: T, ..R2 }, R2 = .{ .y: U, ..Rest }`,
    each exception constrained individually and `all Rest: A` covering the remainder — so
    `all` itself never needs to be heterogeneous. §2's existing decomposition machinery
    (RFC-0121 §2) is exactly what makes this compositionally complete.
 4. ~~**What does it mean for a record containing a record?** `all R: Display` on
-   `{ .inner: { .a: i64 } }` requires `{ .a: i64 }: Display`, which requires the very impl
+   `.{ .inner: .{ .a: i64 } }` requires `.{ .a: i64 }: Display`, which requires the very impl
    being defined. Whether that terminates or needs a coinductive rule is unexamined, and
    PureScript's answer should be checked rather than guessed.~~
    **Resolved 2026-09-27 — not coinductive.** An anonymous row type is written in finite
    source text and cannot be self-referential — Metel has no nominal recursion through
    anonymous records; only named types can recurse, and only through indirection (`&`,
    allocator handles), which resolves through ordinary nominal impl search, never through
-   `all`'s own unfolding. `all R: Display` on `{ .inner: { .a: i64 } }` therefore terminates
+   `all`'s own unfolding. `all R: Display` on `.{ .inner: .{ .a: i64 } }` therefore terminates
    by plain structural induction on syntactic nesting depth, which is always finite.
    PureScript's induction-over-reification needing care there is about *that* mechanism
    working over nominally-recursive ADTs, not evidence this construct needs coinduction —
@@ -258,7 +258,7 @@ typestate coexist rather than forcing one to subsume the other.
    §3's aspect-impl rule is keyed on **aspect locality** ("Aspect impls, when the aspect
    is local to you" / banned "for a non-local aspect") — the "record has no owner" language
    is scoped to the separate *inherent-impl* ban a few lines below it, not to aspect impls
-   at all. A stdlib impl of `Display`/`Copy` over `{ ..R }`, written inside the module that
+   at all. A stdlib impl of `Display`/`Copy` over `.{ ..R }`, written inside the module that
    owns `Display`/`Copy`, is an ordinary "aspect local to you" case, no different from any
    other module implementing its own local aspect for a record. The actual blocker is
    metel-core#581 (structural impl targets — records, tuples, `T[]` alike — unimplemented

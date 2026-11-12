@@ -19,8 +19,8 @@ residual-projection tail, generic-argument position and reusable nested/return/f
 type positions; a `where R = { label: Type,
 ..Rest }` decomposition, which bounds `R` and derives `Rest` at each call; by-value width
 subtyping when the row's fields are concretely known at the narrowing site; and
-row-conditional impls (`extend<record R: { .. }> Session<..R>`, inherent and aspect) on a
-nominal target, and aspect impls on a record target (`extend<record R: { .. }> { ..R }: A`,
+row-conditional impls (`extend<record R: .{ .. }> Session<..R>`, inherent and aspect) on a
+nominal target, and aspect impls on a record target (`extend<record R: .{ .. }> .{ ..R }: A`,
 `extend { x: f64 }: A`; anonymous and nominal records), with row-versus-row coherence
 and runtime dispatch.
 
@@ -34,7 +34,7 @@ At the time, row-polymorphic code over a nominal type worked, including
 typestate (`authenticate` / `send_data` as separate impls), and a local aspect can be
 implemented for every record of a given shape. The standard library provides
 the blanket `Display` and `Copy` impls for records. Row extension now also permits the
-tail before newly-added fields, such as `{ ..R, .auth: String }`.
+tail before newly-added fields, such as `.{ ..R, .auth: String }`.
 
 ## Affects
 
@@ -48,4 +48,4 @@ tail before newly-added fields, such as `{ ..R, .auth: String }`.
 ## Resolution
 
 Resolved by metel-core#1301, #1306, and #1384. The grammar and reusable-type
-implementation now accept both `{ fields, ..R }` and `{ ..R, fields }` forms.
+implementation now accept both `{ fields, ..R }` and `.{ ..R, fields }` forms.

@@ -155,7 +155,7 @@ error: region-allocated value cannot escape the function without an explicit reg
 Each inferred AutoRegion receives a compiler-generated name (e.g., `'auto.4`) derived
 from the source location. This name appears only in error messages — the programmer
 never writes it. When a clearer name is needed, the programmer promotes the inferred
-region to an explicit `AutoRegion::scoped([r]() -> { ... })` and uses `@[r]` on the
+region to an explicit `AutoRegion::scoped([r]() -> .{ ... })` and uses `@[r]` on the
 relevant bindings.
 
 ---
@@ -165,8 +165,8 @@ relevant bindings.
 RFC-0065 fires when `@` is present but the tag is absent and exactly one named region
 is in scope. RFC-0075 fires when `@` is absent entirely and no named region is in scope.
 
-If one named region is in scope and a bare `T { ... }` expression appears, RFC-0065
-takes priority — the expression is treated as `@T { ... }` and resolved by RFC-0065.
+If one named region is in scope and a bare `T .{ ... }` expression appears, RFC-0065
+takes priority — the expression is treated as `@T .{ ... }` and resolved by RFC-0065.
 RFC-0075 inference fires only when no named region is in scope at all.
 
 The two levels compose without conflict: a function may use RFC-0065 elision for some

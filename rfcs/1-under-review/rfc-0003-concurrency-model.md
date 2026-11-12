@@ -61,7 +61,7 @@ Metel's existing surface syntax desugars to aspect method calls: `?` desugars to
 | `spawn { expr }` | `Spawnable::spawn(|| expr) -> Fiber<T>` |
 | `ch <- value` | `Sendable::send(&ch, value)` |
 | `<- ch` | `Receivable::recv(&ch) -> Option<T>` |
-| `select { ... }` | `Selectable::select(...)` |
+| `select .{ ... }` | `Selectable::select(...)` |
 
 Any type implementing the relevant aspect participates in the syntax. This means user-defined channels, mock channels in tests, and alternative spawning strategies are all first-class without special-casing in the compiler.
 

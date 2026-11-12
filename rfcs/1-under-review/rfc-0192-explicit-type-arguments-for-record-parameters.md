@@ -16,13 +16,13 @@ signature splices as `..R`. Arguments pin a function's declared generics in decl
 record parameters included, and a mixed list works.
 
 ```metel
-fun get_x<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
-get_x::<{ .name: i64 }>({ .x = 1, .name = 2 })     // R = { .name: i64 }; p : { .x: i64, .name: i64 }
+get_x::<.{ .name: i64 }>(.{ .x = 1, .name = 2 })     // R = .{ .name: i64 }; p : .{ .x: i64, .name: i64 }
 
-fun tag<T, record R>(t: T, p: { .id: u32, ..R }) -> (T, u32) { (t, p.id) }
+fun tag<T, record R>(t: T, p: .{ .id: u32, ..R }) -> (T, u32) { (t, p.id) }
 
-tag::<String, { .ok: boolean }>("a", { .id = 7, .ok = true })
+tag::<String, .{ .ok: boolean }>("a", .{ .id = 7, .ok = true })
 ```
 
 Today the first call is `T0004: explicit type arguments are not supported on get_x: it takes an
@@ -43,7 +43,7 @@ thing still missing is a statement of what is written for it.
 The need is the same as for any turbofish (RFC-0023): a type parameter that the arguments do not
 determine. For a record parameter that arises when:
 
-- **The row only appears in the return type.** `fun empty_with<record R>(x: i64) -> { .x: i64, ..R }`
+- **The row only appears in the return type.** `fun empty_with<record R>(x: i64) -> .{ .x: i64, ..R }`
   has nothing to infer `R` from at the call.
 - **The inferred row is wider than intended.** Passing a record with extra fields infers a `R`
   that includes them; the author wants to state the narrower row the function is meant to see
@@ -69,10 +69,10 @@ For a generic parameter `record R` (optionally with a row bound, `record R: { na
 type argument is a **record type**: an anonymous record or a `record` declaration. It is `R`
 itself, not the record that contains it:
 
-- In `p: { .x: i64, ..R }`, `R = { .name: i64 }` makes `p`'s type `{ .x: i64, .name: i64 }`. The
+- In `p: .{ .x: i64, ..R }`, `R = .{ .name: i64 }` makes `p`'s type `.{ .x: i64, .name: i64 }`. The
   argument is the remainder, the thing `..R` splices.
 - In `p: R` (no splice), `R` is the whole parameter type; this is the case that already works
-  (`make::<{ .name: i64 }>({ .name = 2 })`) and is unchanged.
+  (`make::<.{ .name: i64 }>(.{ .name = 2 })`) and is unchanged.
 - An argument that is a `record` declaration is accepted. `R` keeps its brand where it is used as
   `R`, and `..R` forgets it (RFC-0186 §1).
 
@@ -85,7 +85,7 @@ The argument is checked exactly as an inferred `R` would be:
 2. **The field-wise bound** `where ..R: A` holds of every field type of the argument
    (RFC-0123, RFC-0186).
 3. **Disjointness.** A label written next to `..R` must be absent from `R`
-   (`{ .x: i64, ..R }` with `R = { .x: i64 }` is rejected, `T0012`, naming `x`).
+   (`.{ .x: i64, ..R }` with `R = .{ .x: i64 }` is rejected, `T0012`, naming `x`).
 4. **The call's arguments unify** with the parameter types so obtained, per
    `spec.functions.turbofish.legality-2`.
 
@@ -98,7 +98,7 @@ including `record` parameters; mixed lists (`<T, record R>`, `<record R, T>`) ar
 declaration order. The same "expected N type arguments, got M" error applies when the count is
 wrong, and N counts declared generics only.
 
-Anonymous open tails (`{ .x: i64, .. }`, RFC-0181) and the synthetic type of such a parameter are
+Anonymous open tails (`.{ .x: i64, .. }`, RFC-0181) and the synthetic type of such a parameter are
 not declared generics, so they are neither counted nor pinnable.
 
 ### Out of scope
@@ -133,8 +133,8 @@ not declared generics, so they are neither counted nor pinnable.
 1. **Status quo (rows are inferred, never pinned).** Works while a row is always determined by the
    arguments. Rejected because it makes `::<…>` all-or-nothing across a function's kinds, and the
    rows that cannot be inferred (return position, intentional narrowing) have no spelling at all.
-2. **The argument is the whole open record (`get_x::<{ .x: i64, .name: i64 }>`).** Reads naturally for
-   `p: R`, but for `{ .x: i64, ..R }` it asks the author to repeat the fixed labels and then
+2. **The argument is the whole open record (`get_x::<.{ .x: i64, .name: i64 }>`).** Reads naturally for
+   `p: R`, but for `.{ .x: i64, ..R }` it asks the author to repeat the fixed labels and then
    derive `R` by subtraction, which a rigid parameter (RFC-0173) never does. It also makes the
    argument depend on how the signature happens to split the record.
 3. **A separate row-argument position (`get_x::<; name: i64>` or `get_x::<..{ name: i64 }>`).** A
@@ -149,7 +149,7 @@ not declared generics, so they are neither counted nor pinnable.
 
 **Is all-or-nothing arity acceptable for mixed lists until a placeholder exists?** A function
 `fun f<T, record R>` whose `R` is inferable but whose `T` is not must write `R` out to pin `T`
-(`f::<u8, { .ok: boolean }>(…)`). That is the same cost an ordinary two-parameter function pays
+(`f::<u8, .{ .ok: boolean }>(…)`). That is the same cost an ordinary two-parameter function pays
 today, and `{ … }` record arguments are short, but a wide row is not. If review finds this too
 costly the placeholder RFC moves ahead of this one; the rule above does not change.
 

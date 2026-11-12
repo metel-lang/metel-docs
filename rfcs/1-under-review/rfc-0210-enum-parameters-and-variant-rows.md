@@ -18,7 +18,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1791'
 ## Summary
 
 RFC-0209 lets a nominal type's row be visible to an aspect's row template, but a template is
-written over `{ ..R }`, and an enum has no anonymous counterpart: it is a sum of variants, each
+written over `.{ ..R }`, and an enum has no anonymous counterpart: it is a sum of variants, each
 a row of named fields. This RFC adds the missing pieces for enums:
 
 1. **An enum parameter kind**, `<enum E>`: `E` stands for a nominal enum type that has granted
@@ -48,7 +48,7 @@ provided (RFC-0206 section 2), so a `Copy` enum needs only the eligibility check
 ## Motivation
 
 RFC-0207 gives named types a header entry and RFC-0209 explains it as the aspect's own template
-applied to the type's row. For structs and records the template is the existing `{ ..R }` impl.
+applied to the type's row. For structs and records the template is the existing `.{ ..R }` impl.
 For enums nothing equivalent exists:
 
 - **Enums are the exception in the Copy/Clone settlement.** std's `Option`, `Result` and `List`
@@ -79,7 +79,7 @@ introduce anonymous sum types, or to give enums a parameter kind. This RFC propo
 2. `E` may be used as a type (`E`, `&E`, `Self`) and as the row operand `..E`.
 3. A template whose target is `E` may carry the bound `..E: A`. This is the form RFC-0186
    rejects for `record R` (`T0012`: the bound must name the row tail of a record target); it is
-   permitted here because the target is an enum parameter and there is no `{ ..R }` form to
+   permitted here because the target is an enum parameter and there is no `.{ ..R }` form to
    write instead.
 4. `Self` in the template body denotes the matched enum.
 
@@ -145,7 +145,7 @@ behaviour is the same; only the source of the body differs.
 ## 5. Costs
 
 - **A fourth parameter kind** beside type, `record R` and the row binder of RFC-0208, and a rule
-  that the bound `..E: A` is legal on a target that is not `{ ..R }`.
+  that the bound `..E: A` is legal on a target that is not `.{ ..R }`.
 - **Dependence on RFC-0174** for the source-level bodies (iteration over variants and fields) and
   on two forms that do not exist (match and construct by compile-time name).
 - **Enum reflection leaks the variant structure** of an enum to the aspect's module, as a struct's

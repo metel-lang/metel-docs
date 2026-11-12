@@ -12,16 +12,16 @@ review: null
 ## Limitation
 
 `where each R: Aspect` parses (`all` is contextual, not reserved) and is enforced where it
-is written: on an `extend` whose target is `{ ..R }` (the impl applies to a record only
+is written: on an `extend` whose target is `.{ ..R }` (the impl applies to a record only
 when every field satisfies the aspect, through method calls and `T: A` bounds, for
 anonymous and nominal records) and on a function whose parameter has an open-row tail
-(`{ x, ..R }`, a struct-residual tail, and the `Rest` of a `where R = { .., ..Rest }`
+(`{ x, ..R }`, a struct-residual tail, and the `Rest` of a `where R = .{ .., ..Rest }`
 decomposition), where every field of the argument beyond the ones the parameter names must
 satisfy each aspect, else `T0012` names the field.
 
 ```metel
-fun consume<record R>(r: { .id: i64, ..R }) -> i64 where each R: Copy { r.id }
-consume({ .id = 1, .label = "x".to_string() });   // T0012: field `label` ... does not implement `Copy`
+fun consume<record R>(r: .{ .id: i64, ..R }) -> i64 where each R: Copy { r.id }
+consume(.{ .id = 1, .label = "x".to_string() });   // T0012: field `label` ... does not implement `Copy`
 ```
 
 The completed implementation also carries this entitlement into generic bodies. Since

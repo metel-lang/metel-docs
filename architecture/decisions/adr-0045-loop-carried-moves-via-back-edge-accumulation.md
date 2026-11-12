@@ -47,7 +47,7 @@ them and the two analyses disagree about partial moves. `Place`, `Projection` an
 `is_prefix_of` were genuinely analysis-neutral, and move state was held separately in
 `FlowState`/`MoveRecord`. But the module was `move_check::place`, so a borrow checker
 would import from the move checker's namespace; and `from_typed_place` ended
-`TypedPlace::Deref { .. } => None`, with `from_expr`'s `_ => None` dropping the
+`TypedPlace::Deref .{ .. } => None`, with `from_expr`'s `_ => None` dropping the
 expression-side deref too. It could not represent `*p` at all — and extending it later
 is exactly the rework §9b exists to prevent.
 

@@ -18,7 +18,7 @@ A `comptime for` loop over a row (RFC-0174) can read every field. It cannot yet 
 the per-field results, so a method that returns `Self` (`clone`, `default`, a deserializer) cannot be
 written once over a row. This RFC adds two things:
 
-1. **A computed-label record literal**, `{ .[field.name] = expr, .. }`, whose labels are `Label` values
+1. **A computed-label record literal**, `.{ .[field.name] = expr, .. }`, whose labels are `Label` values
    (RFC-0175), so a loop can produce a record of the same row as its input.
 2. **A residual construction** for a branded type: inside the defining module, a record of the right row
    is spread into a call of the residual, `T.{ ..R }(..record)` (RFC-0100 §7), which builds a residual of
@@ -53,13 +53,13 @@ extend Doc: Clone<record R> where ..R: Clone {          // RFC-0214 row-generic 
 
 ## 1. Computed-label record literal
 
-`{ .[e] = v, .. }` is a record literal whose label is the `Label` `e` (RFC-0175, RFC-0188). It may appear
+`.{ .[e] = v, .. }` is a record literal whose label is the `Label` `e` (RFC-0175, RFC-0188). It may appear
 only where `e` is comptime-known (RFC-0132 §1.1), normally `field.name` of an enclosing `comptime for`
 (RFC-0174 D2). A `comptime for` may appear inside a record literal and contributes one
 `.[field.name] = v` entry per iteration, in field order.
 
 Typing: the literal's row is the union of its literal entries and the entries its loops produce. A
-loop over `fields(R)` whose entries are `.[field.name] = f(self.[field.name])` has row `{ ..R' }`, where
+loop over `fields(R)` whose entries are `.[field.name] = f(self.[field.name])` has row `.{ ..R' }`, where
 `R'` maps each field type through `f`. For `clone`, `R' = R`; the checker proves this once, against the
 symbolic field of RFC-0174 D3, from the bound `..R: Clone` (RFC-0123), not per instantiation.
 

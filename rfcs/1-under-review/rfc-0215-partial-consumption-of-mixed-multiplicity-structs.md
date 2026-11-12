@@ -152,7 +152,7 @@ runtime value to consume), but it can preserve *which specific origin* a convert
 came from, which is the actual missing ingredient. For a struct whose `Linear` status is
 not fully explained by its own row, `ToRecord`'s derive produces a record that carries
 the source's brand rather than RFC-0090 §8's ordinarily-bare row: `{ id: i64 } @
-'receipt-origin` instead of a plain `{ .id: i64 }`. The derive (RFC-0093's `emit`)
+'receipt-origin` instead of a plain `.{ .id: i64 }`. The derive (RFC-0093's `emit`)
 then generates one ordinary, explicit `impl Linear for { id: i64 } @
 'receipt-origin {}` against that exact branded shape — no new coherence primitive, no
 dynamic brand-to-aspect lookup: an explicit impl targeting one specific nominal/branded
@@ -181,7 +181,7 @@ field list to exclude anything at multiplicity `1`:
 ```metel
 struct Session { token: LinearToken, name: String, retries: i64 }
 
-fun archive(entry: NonLinear<Session>) { ... }   // = { .name: String, .retries: i64 }
+fun archive(entry: NonLinear<Session>) { ... }   // = .{ .name: String, .retries: i64 }
 ```
 
 Needs only a closed, already-known field list — no row-kind, no unification

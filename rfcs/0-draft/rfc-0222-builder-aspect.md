@@ -15,9 +15,9 @@ label, and offers `build()` only when every field is set.
 struct Server derives Builder { host: String, port: i64 }
 
 let s := Server::builder()
-    .set(.host, "a.com")        // Building<Server, .., { .host: String }>
-    .set(.port, 8080)           // Building<Server, .., { .host: String, .port: i64 }>
-    .build();                   // Server::construct({ .host = .., .port = .. }), RFC-0114
+    .set(.host, "a.com")        // Building<Server, .., .{ .host: String }>
+    .set(.port, 8080)           // Building<Server, .., .{ .host: String, .port: i64 }>
+    .build();                   // Server::construct(.{ .host = .., .port = .. }), RFC-0114
 ```
 
 Setting a field twice, setting a field the struct does not have, setting a value of the wrong type, and calling
@@ -37,8 +37,8 @@ once. It is a design draft. Nothing here is accepted, and several of the RFCs it
 RFC-0114 §3 notes that a value built field by field only constructs once, when its row becomes complete:
 
 ```metel
-let partial := { .a = compute_a() };
-let partial := { ..partial, .b = compute_b() };
+let partial := .{ .a = compute_a() };
+let partial := .{ ..partial, .b = compute_b() };
 let full := Type(..partial);                         // RFC-0100 §7
 ```
 
@@ -48,7 +48,7 @@ requested by a struct with one word.
 
 ### What this adds over a record plus `new Type(..r)`
 
-- **A named, nominal state.** `Building<Server, { .host: String }, { .host: String, .port: i64 }>` tells a reader
+- **A named, nominal state.** `Building<Server, .{ .host: String }, .{ .host: String, .port: i64 }>` tells a reader
   and the checker which fields remain. A bare record's type says which are present but not which are required.
 - **Chaining.** `.set(…).set(…).build()` reads in one expression. The record form needs a `let` per step or a
   nested literal.
@@ -72,7 +72,7 @@ exceptions as possible.
 
 ```metel
 // std
-struct Building<T, record Need, record Have> { fields: { ..Have } }
+struct Building<T, record Need, record Have> { fields: .{ ..Have } }
 
 aspect Builder {
     type Start;                       // the empty state, Building<Self, <Self's row>, {}>
@@ -91,7 +91,7 @@ fills it in with a row it has in scope. Both rows are row parameters (RFC-0186, 
 `Need` comes into scope:
 
 ```metel
-extend<record R> { ..R }: Builder {
+extend<record R> .{ ..R }: Builder {
     type Start = Building<Self, ..R, ..{}>;
     fun builder() -> Self::Start {
         Building(fields = {})
@@ -109,15 +109,15 @@ has that type after the associated type is resolved.
 extend<T, record Need, record Have> Building<T, ..Need, ..Have> {
     fun set<V>(self, comptime l: Label, v: V)
         -> Building<T, ..Need, ..{ .[l]: V, ..Have }>
-    where Need: { .[l]: V, .. }, Have: !{.[l]} {
-        Building(fields = { .[l] = v, ..self.fields })
+    where Need: .{ .[l]: V, .. }, Have: !{.[l]} {
+        Building(fields = .{ .[l] = v, ..self.fields })
     }
 }
 ```
 
 - `l` is a comptime `Label` parameter (RFC-0132 §3.6) and appears in the return type. It is a unification
   variable resolved from the call's argument, as `V` is, and not an expression evaluated during checking.
-- `Need: { .[l]: V, .. }` requires the target to have a field `l` of type `V`. `Have: !{.[l]}` (RFC-0189) requires
+- `Need: .{ .[l]: V, .. }` requires the target to have a field `l` of type `V`. `Have: !{.[l]}` (RFC-0189) requires
   that it is not yet set.
 - The method takes `self` by value. The result has a different type from the receiver, which a `&var` method
   could not give.
@@ -148,7 +148,7 @@ fun connection(b: Building<Server, ..{ .host: String, .port: i64 }, ..{ .host: S
     b.set(.port, 8080).build()                         // finishes a partly built Server
 }
 
-let b := Server::builder().set(.host, "a.com");        // Building<Server, .., { .host: String }>
+let b := Server::builder().set(.host, "a.com");        // Building<Server, .., .{ .host: String }>
 let s := connection(b);
 ```
 
