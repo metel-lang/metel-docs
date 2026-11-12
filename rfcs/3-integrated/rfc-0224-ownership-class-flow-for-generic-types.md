@@ -109,7 +109,8 @@ copy struct Local<T> { value: T }                                    // non-pub:
   `via` must be the declaration's own type parameters (checked after parsing), so `,` never needs name resolution to
   tell an entry from a parameter.
 - In v0.16.0 only a `Copy` entry may take `via`; a `via` on any other entry, or on a negative entry, is an error naming
-  this rule. The other markers adopt it in their own RFCs (section 3).
+  this rule. The other markers adopt it in their own RFCs (section 3); draft RFC-0227 proposes the general rule, `via` on
+  every field-wise derived impl.
 
 **The interface.** The stated set, or the computed one for a non-`pub` type that omits it, is stored as the type's
 interface. Use sites read only the stored interface.
