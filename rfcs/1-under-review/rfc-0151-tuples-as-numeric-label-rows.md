@@ -2,7 +2,9 @@
 id: rfc-0151
 title: "Tuples as Numeric-Label Rows"
 date: '2026-08-29'
-status: draft
+status: under-review
+updated: '2026-11-12'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 ---
 
 > **Consolidation RFC.** Anonymous record types (RFC-0116) landed a general
@@ -11,6 +13,8 @@ status: draft
 > row `{ 0: A, 1: B }` rather than a parallel type with its own representation,
 > its own narrowing story, its own branding question, and its own variadic
 > spine. The surface syntax stays; the second type-former goes away.
+
+> **Status — under review (2026-11-12).** Language owner moved it to review for v0.16.0 (Copy migration stage); design settlement tracked in metel-core#1956, decision in #1848
 
 ## Summary
 
