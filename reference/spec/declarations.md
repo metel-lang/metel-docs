@@ -4069,7 +4069,6 @@ an `extend` of an aspect does not have it.
 A generic type that derives `Copy` states, when it is `pub`, which of its type parameters its copy-ness depends on
 (RFC-0224, the stated flow of the stored condition of RFC-0206):
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
 ```metel
 struct Wrapper<T> derives Copy via T { value: T }                  // Wrapper<X> is Copy exactly when X is
 struct Pair<A, B> derives Copy via A + B, Clone { a: A, b: B }     // `+` joins parameters, `,` separates entries
@@ -4232,7 +4231,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 <!-- rfc.py:last_reviewed 2d68dfef6b1b7d2b91161c675d6707dfcf5db033 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4247,7 +4246,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 A `Copy` entry of a `derives` clause may be followed by `via` and one or more type parameters of the declaration joined by `+`. The named parameters are the type's **flow set** for `Copy`: `N<A..>` is `Copy` exactly when `N` derives `Copy`, the exclusions of `Copy` hold at the instantiation, and every argument at a position in the flow set is `Copy`. `copy struct` and `copy enum` take no `via` clause. A `via` clause on any other entry, on a negative entry, or naming something that is not a type parameter of the declaration is an error. A parameter of row or record kind is not accepted in the flow set.
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+<!-- doc-example: expect-fail reason="the second declaration is the error the rule shows: `copy struct` takes no `via` clause" -->
 ```metel
 struct Wrapper<T> derives Copy via T { value: T }
 copy struct Local<T> via T { value: T }   // error: `copy struct` takes no `via` clause; write `derives Copy via T`
@@ -4256,7 +4255,7 @@ copy struct Local<T> via T { value: T }   // error: `copy struct` takes no `via`
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4274,7 +4273,7 @@ copy struct Local<T> via T { value: T }   // error: `copy struct` takes no `via`
 
 The stated flow set must contain every type parameter that a field's `Copy` depends on, and may contain more. The dependence of a field type is: a type parameter `P` depends on `{P}`; a nominal application `N<A..>` depends on the union of the dependences of its arguments at the positions in the flow set of `N`, and is an error at the field if `N` is not `Copy` for any arguments; a tuple or array depends on the union of its components; a reference and the `T[]` view depend on nothing; a primitive depends on nothing. A written function type is move-only, so a `Copy` type cannot hold one. A parameter missing from the stated set is an error at the field, with a fix-it that adds it. A set larger than needed is accepted and makes the type `Copy` only when those arguments are.
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+<!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: `via A` does not cover `B`" -->
 ```metel
 struct Bad<A, B> derives Copy via A { a: A, b: B }   // error: field `b` depends on `B`, which `via A` does not cover
 struct Handle<T> derives Copy via T { id: i64 }      // accepted: Copy only when T is, whatever the fields become
@@ -4283,7 +4282,7 @@ struct Handle<T> derives Copy via T { id: i64 }      // accepted: Copy only when
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4324,11 +4323,12 @@ pub copy struct V<T> { r: &T }              // accepted: the computed flow set i
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-14}
 
-The flow set describes a whole nominal type. A residual type `N<A..>.{ .f }` is `Copy` by the structural rule over its visible field types, whatever the flow set of `N` is. A `Copy` declaration with a field whose copy-ness depends on an associated type (`value: T.Item`) is an error, and so is one that depends on a parameter of row or record kind. A type that derives `Copy` has no negative grant of `Copy` and no `Drop` impl, conditional or not.
+The flow set describes a whole nominal type. A residual type `N<A..>.{ .f }` is `Copy` by the structural rule over its visible field types, whatever the flow set of `N` is. A `Copy` declaration with a field whose copy-ness depends on an associated type (`value: T::Item`) is an error, and so is one that depends on a parameter of row or record kind. A type that derives `Copy` has no negative grant of `Copy` and no `Drop` impl, conditional or not.
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+<!-- doc-example: expect-fail reason="the declaration is the error the rule shows: a field of associated type is rejected at its type" -->
 ```metel
-copy struct Payload<T: Source> { value: T.Item }   // error: a Copy declaration cannot depend on an associated type
+aspect Source { type Item; }
+copy struct Payload<T: Source> { value: T::Item }   // error: a Copy declaration cannot depend on an associated type
 ```
 
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
@@ -4345,8 +4345,9 @@ copy struct Payload<T: Source> { value: T.Item }   // error: a Copy declaration 
 
 In a generic body, whether a value of a nominal type with a stored flow set is copied or moved is decided by the bounds in scope: it is copied exactly when every argument at a position in the flow set is known `Copy` (a type parameter by a bound that grants `Copy`, a nested application by its own flow set, a concrete type directly) and otherwise it moves. That a value moves under the bounds in scope is not evidence that its type argument is not `Copy`: it does not select an implementation guarded by a negative bound, and for selection and coherence the fact stays undecided. The undecided-ownership diagnostic applies to a nominal type only when it has no stored flow set.
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1941" -->
+<!-- doc-example: expect-fail reason="`bad` is the error the example shows: `T` carries no `Copy` bound, so `w` moves" -->
 ```metel
+struct Wrapper<T> derives Copy via T { value: T }
 fun twice<T: Copy>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }   // accepted
 fun bad<T>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }           // error: use of moved value `w`
 ```

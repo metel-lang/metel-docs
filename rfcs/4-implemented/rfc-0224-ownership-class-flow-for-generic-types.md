@@ -2,8 +2,8 @@
 id: rfc-0224
 title: "Stated flow for the ownership markers of generic types"
 date: '2026-11-10'
-status: integrated
-updated: '2026-11-10'
+status: implemented
+updated: '2026-11-12'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1940'
 coverage:
   "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
@@ -12,7 +12,7 @@ coverage:
   "4": { kind: untestable, reason: "The worked examples are fixtures citing the stated-flow rules." }
   "5": { kind: untestable, reason: "Section 5 states what the RFC does not do (policy-narrowed Copy); it adds no rule." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1941'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Status — under review (2026-11-10).** Policy-narrowed Copy decided out by the language owner; design settlement tracked in metel-core#1940
@@ -27,6 +27,8 @@ impl_status: in-progress
 > **Status — accepted (2026-11-10).** Accepted by the language owner 2026-11-10 after the adversarial review, the grammar decision and the prototype experiment
 
 > **Status — integrated (2026-11-10).** Integrated into reference/spec/declarations.md (declaration-clauses legality-11 to 15); RFC-0206 and RFC-0207 amended; implementation tracked in metel-core#1941
+
+> **Status — implemented (2026-11-12).** All four steps landed: #1941 (via clause), #1818 (stored flows), #1819 (computed flows), #1820 (rule 3 error).
 
 ## Summary
 
