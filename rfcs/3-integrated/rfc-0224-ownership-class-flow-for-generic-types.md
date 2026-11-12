@@ -12,7 +12,7 @@ coverage:
   "4": { kind: untestable, reason: "The worked examples are fixtures citing the stated-flow rules." }
   "5": { kind: untestable, reason: "Section 5 states what the RFC does not do (policy-narrowed Copy); it adds no rule." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1941'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **Status — under review (2026-11-10).** Policy-narrowed Copy decided out by the language owner; design settlement tracked in metel-core#1940

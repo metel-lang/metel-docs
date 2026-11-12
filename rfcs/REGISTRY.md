@@ -133,7 +133,7 @@ the curated thematic map.
 - **RFC-0207** — Declaration Clauses: derives and the Colon List (`3-integrated` ; rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1800)
 - **RFC-0212** — Aspect Declaration Properties (`3-integrated` ; rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1803)
 - **RFC-0213** — Super-Aspects (`3-integrated` ; rfcs/3-integrated/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1801)
-- **RFC-0224** — Stated flow for the ownership markers of generic types (`3-integrated` ; rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-10 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1941)
+- **RFC-0224** — Stated flow for the ownership markers of generic types (`3-integrated` ; rfcs/3-integrated/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1941)
 
 ## Implemented (86)
 
