@@ -943,8 +943,8 @@ res(B, R) = B.{R}    if R is a strict subset of D(B)
 ```
 
 Here `B.{R}` denotes the branded residual whose labels are those of `R`;
-it is not additional source syntax. Thus `res(B, {}) = B.{}` when `D(B)`
-is nonempty, but `res(B, {}) = B` when `D(B) = {}`. For anonymous rows,
+it is not additional source syntax. Thus `res(B, .{}) = B.{}` when `D(B)`
+is nonempty, but `res(B, .{}) = B` when `D(B) = .{}`. For anonymous rows,
 `res(anonymous, R) = R`. Different brands remain distinct at every width,
 including zero; neither empty form is `Unit`.
 
@@ -1020,7 +1020,7 @@ field type is held under [legality-1](#spec.ownership.narrowing.legality-1).
 The moved-field and absent-field judgments and the row transition apply with or without
 move checking.
 
-Ordinary binding, argument, and return typing may use `res(B, {})` at that
+Ordinary binding, argument, and return typing may use `res(B, .{})` at that
 same type. No empty-residual rule supplies missing fields, erases `B`, or
 coerces the result to `Unit`. A whole-binding consumption updates ownership
 state separately: when move checking is enabled, consuming a non-`Copy`

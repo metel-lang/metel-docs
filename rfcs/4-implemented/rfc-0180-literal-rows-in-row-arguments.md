@@ -85,7 +85,7 @@ marks "this is a row" (RFC-0121 §1), so no new marker is needed, and the existi
 by `R`. It is the same type the checker already builds for a record literal with a spread
 (`{{ f₁ = e₁, …, ..d }`), so an inferred return type and its written form agree and unify.
 `Req<..{ f₁: T₁, … }>` denotes `Req` at exactly those fields: the type of
-`Req { dataa = { f₁ = e₁, … } }`, and `Req<..{}>` the type of `Req { data = {} }`.
+`Req { dataa = { f₁ = e₁, … } }`, and `Req<..{}>` the type of `Req { data = .{} }`.
 
 ### 1.3 Disjointness
 
