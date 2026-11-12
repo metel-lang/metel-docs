@@ -279,7 +279,7 @@ No runtime effect; nothing leaves the compiler.
 - **RFC-0160 (Type Aliases, `4-implemented`)** — co-lands in v0.13.0. Aliases are the
   recommended tool for anything deeper than the one level §5's recommended parentheses
   cover; RFC-0160's RHS uses this RFC's `|...|` form.
-- **RFC-0151 (Tuples as Numeric-Label Rows, `0-draft`, unscheduled)** — the *anticipated*
+- **RFC-0151 (Tuples as Numeric-Label Rows, `1-under-review`, v0.16.0 Copy migration (metel-core#1956))** — the *anticipated*
   reason `(A, B) -> C` must stop being a function type. This RFC frees `(...)` ahead of
   it; the `|(A, B)| -> C` one-record-parameter form becomes writable only once `(A, B)`
   type syntax lands.

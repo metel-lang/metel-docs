@@ -39,7 +39,7 @@ the source. Three proposals need a label to be a value or a variable:
   the binder keyword, the literal form (strings, identifier tokens, `#field`) and the selection
   syntax (`value.[L]`) open. RFC-0175 now takes the binder from RFC-0132 (`comptime l: Label`) and the spelling
   from this RFC.
-- **RFC-0151 (Tuples as numeric-label rows, `0-draft`)** would write `(a, b)` as `{ 0 = a, 1 = b }`,
+- **RFC-0151 (Tuples as numeric-label rows, `1-under-review`)** would write `(a, b)` as `{ 0 = a, 1 = b }`,
   which today is not a record at all, since `0 = a` is not an identifier field.
 - **RFC-0174 (compile-time iteration over a row's fields, `1-under-review`)** needs a way to name a
   label as a value.

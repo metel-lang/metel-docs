@@ -70,7 +70,7 @@ but neither says what that loop looks like, and both are larger RFCs still under
 - **Parameter packs.** RFC-0125 §1.1 lesson 4 identifies Bertholet's `static for` as "the same
   construct as RFC-0092's comptime iteration" and as the best implementation of its stage 2.
   Its open question 4 asks whether the two are one feature.
-- **Tuples.** RFC-0151 (draft) desugars `(A, B, C)` to the row `.{ .0: A, .1: B, .2: C }`. If that
+- **Tuples.** RFC-0151 (under review) desugars `(A, B, C)` to the row `.{ .0: A, .1: B, .2: C }`. If that
   lands, a loop over a row's fields is a loop over a tuple's elements, and RFC-0125's pack
   becomes a row operation rather than a separate calculus.
 
@@ -281,7 +281,7 @@ which RFC-0216 specifies, or `emit` (RFC-0093).
 - RFC-0188 (Label syntax): `.[name]`; RFC-0186: `record R` and `..R`; RFC-0216: building a row from the
   per-field results.
 - RFC-0125 (Variadic Generics), §1.1 lesson 4 and open question 4: the same loop for packs.
-- RFC-0151 (Tuples as Numeric-Label Rows, draft): a tuple is a row.
+- RFC-0151 (Tuples as Numeric-Label Rows, under review): a tuple is a row.
 - RFC-0092 §2 (`typeinfo`), RFC-0093 (`#derive`, `emit`), RFC-0132 (comptime execution model).
 - RFC-0096 (auto-impl set): the closed list the near-term derive extends.
 - RFC-0173: a body may use only what its declared bounds entail.
