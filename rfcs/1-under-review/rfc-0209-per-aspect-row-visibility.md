@@ -20,7 +20,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 ## Summary
 
 Today a nominal type's row is invisible to row-conditional impls: a plain `struct` never
-matches an impl over `{ ..R }`, and a `record` declaration matches every such impl (RFC-0137,
+matches an impl over `.{ ..R }`, and a `record` declaration matches every such impl (RFC-0137,
 RFC-0120's tiers). This RFC adds a middle position, **row visibility per aspect**: a header
 entry in a type's declaration (RFC-0207) makes that type's row visible to the row-conditional
 impls of that one aspect.
@@ -49,7 +49,7 @@ special case. The rule needed is how a nominal type's row reaches an aspect's te
 
 Measured against the current build (2026-11-02):
 
-- An impl `extend<record R> { ..R }: Describe where ..R: Describe` applies to an anonymous
+- An impl `extend<record R> .{ ..R }: Describe where ..R: Describe` applies to an anonymous
   record and to a named `record Pt`, and a plain `struct S` gets `no method describe on S`.
 - An impl over the parameter itself, `extend<record R> R: Describe where ..R: Describe`, is
   rejected with `T0012`: a field-wise bound on an `extend` must name the row tail of its
@@ -69,11 +69,11 @@ struct's narrowed residual and an opted-in `record` from being confusable.
    to the row-conditional impls of aspect `A` exactly when its declaration header lists `A`, after the colon for a marker aspect or after
    `derives` for a derivable one (RFC-0207), or, for a `record` declaration, as section 2 provides. Otherwise it is
    invisible, as today.
-2. **A row template.** An `extend` of `A` whose target is `{ ..R }` (with `R` a row, RFC-0208, or
+2. **A row template.** An `extend` of `A` whose target is `.{ ..R }` (with `R` a row, RFC-0208, or
    a `record R` today) is a row template. A template applies to a nominal type `T` that has
    granted visibility to `A` when every field type of `T` satisfies the template's `where`
    clause on `..R`.
-3. **`Self` in a template** denotes the type the template matched: the anonymous record `{ ..R }`
+3. **`Self` in a template** denotes the type the template matched: the anonymous record `.{ ..R }`
    for an anonymous record, and `T` for a nominal type. A template method that returns `Self`
    returns a `T`. Field access by label (`self.[label]`) needs no relabelling, so a template
    that only reads works unchanged.

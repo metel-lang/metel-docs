@@ -6,7 +6,7 @@ status: draft
 updated: '2026-07-14'
 ---
 
-> **Status — draft (2026-07-14).** Split out of RFC-0103 when the smaller bodyless-aspect-declaration feature was accepted independently and the `struct Type: Aspect { ... }` / `enum Type: Aspect { ... }` syntax was deferred for separate evaluation.
+> **Status — draft (2026-07-14).** Split out of RFC-0103 when the smaller bodyless-aspect-declaration feature was accepted independently and the `struct Type: Aspect .{ ... }` / `enum Type: Aspect .{ ... }` syntax was deferred for separate evaluation.
 
 ## Summary
 
@@ -21,7 +21,7 @@ struct Token: Copy2, Serializable, !Send {
 and the symmetric enum form. The list reuses RFC-0102's `extend_aspect_list`, but in a
 type declaration rather than an `extend` block. A negative item (`!Aspect`) is fully
 satisfied by the list itself; a positive item (`Aspect`) declares a checked,
-module-wide obligation that some ordinary `extend Type: Aspect { ... }` block exists
+module-wide obligation that some ordinary `extend Type: Aspect .{ ... }` block exists
 elsewhere. The declaration's own body remains fields-only or variants-only: this syntax
 does not put method bodies inside a `struct` or `enum`.
 
@@ -79,7 +79,7 @@ with one important refinement:
 - `!Aspect` is fully satisfied by the embedded list itself, exactly like a bodyless
   negative `extend`.
 - `Aspect` does **not** implement the aspect there. It declares an obligation that some
-  ordinary `extend Token: Aspect { ... }` block exists and satisfies the aspect's own
+  ordinary `extend Token: Aspect .{ ... }` block exists and satisfies the aspect's own
   completeness rules.
 
 ### 3. Obligation model
@@ -102,8 +102,8 @@ scan.
 ### 4. Auto-impl interaction
 
 If `Send`, `Sync`, or `Linear` are auto-impl aspects under RFC-0096, then
-`struct Handle: Send { ... }` should not spuriously fail just because no handwritten
-`extend Handle: Send { ... }` exists. Under the original RFC-0103 draft, that meant
+`struct Handle: Send .{ ... }` should not spuriously fail just because no handwritten
+`extend Handle: Send .{ ... }` exists. Under the original RFC-0103 draft, that meant
 RFC-0096's implementation needed to inject auto-impl results into the same
 aspect-implementation registry ordinary `extend` blocks populate, so the obligation
 check still had a single lookup path.
@@ -137,7 +137,7 @@ same acceptance as bodyless aspect declarations.
 
 ## Unresolved Questions
 
-- Should Metel allow `struct Type: Aspect { ... }` / `enum Type: Aspect { ... }` at all?
+- Should Metel allow `struct Type: Aspect .{ ... }` / `enum Type: Aspect .{ ... }` at all?
 - If yes, should positive items always be obligations, or should some narrower class of
   aspects be satisfiable directly from the list?
 - Is the coherence pass the right home for the obligation check?

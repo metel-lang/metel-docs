@@ -297,7 +297,7 @@ checked exactly like an ordinary `<T>` generic — its body is type-checked once
 abstractly, against the tag, and monomorphized per call site. A body that does not
 actually preserve a single consistent tag on every path — one branch returning the
 input, another fabricating a fresh, untagged value — fails to type-check, for the
-same reason a generic `fun f<T>(x: T) -> T { ... }` fails to type-check if some
+same reason a generic `fun f<T>(x: T) -> T .{ ... }` fails to type-check if some
 branch does not produce a `T`.
 
 **Where extraction is still required.** `<@a>` / elided-`@T` positions only ever

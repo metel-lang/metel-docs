@@ -70,7 +70,7 @@ coverage:
 > closed set of exactly three — `Send`, `Sync`, `Linear` — and `Copy` is not in it, so it must
 > be declared. RFC-0116 §3 bans non-local aspect impls for records, and `Copy` is
 > standard-library. **Therefore every record is affine and must be moved**, including
-> `{ .x: i64, .y: i64 }`, which is precisely the shape a reader would expect to be freely
+> `.{ .x: i64, .y: i64 }`, which is precisely the shape a reader would expect to be freely
 > copyable.
 >
 > This is the same class of problem as records not being `Display`, and it bites harder in one

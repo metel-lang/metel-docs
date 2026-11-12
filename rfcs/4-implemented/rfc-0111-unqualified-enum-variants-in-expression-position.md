@@ -58,7 +58,7 @@ counterpart survives untouched:
 - `src/parser/mod.rs` — `Rule::none_lit => Literal::None`
 - `src/typechecker/inference.rs:2977` — `Literal::None => InferType::Named("Option", [fresh])`
 - `src/typechecker/construction.rs:3914` — `Literal::None => expected_ty.cloned().ok_or(T0002)`
-- `src/evaluator/mod.rs:2474` — `Literal::None => Value::Enum { .. }`
+- `src/evaluator/mod.rs:2474` — `Literal::None => Value::Enum .{ .. }`
 
 So `Option` is privileged in a way no user-defined enum can be. A user writing
 `enum Colour { Red, Green, Blue }` must write `Colour::Red` in every expression, while
@@ -310,7 +310,7 @@ resolves — §1.4's property is preserved.
 ### 3.2 Retiring `Literal::None`
 
 Once §1 works, all four `Literal::None` sites listed in the Motivation are removable, plus
-`Rule::none_lit` in the grammar and the `(Literal::None, Value::Enum { .. })` arm in
+`Rule::none_lit` in the grammar and the `(Literal::None, Value::Enum .{ .. })` arm in
 `evaluator/pattern.rs`. `none_lit`'s removal was checked directly rather than assumed, the same way RFC-0107 checked
 `None`'s keyword status for pattern position. `keyword` (`grammar.pest:337`) does not list
 `None`, so `ident` matches it. In `primary_expr` (`grammar.pest:184`) `none_lit` currently sits

@@ -37,10 +37,10 @@ every introduced field and remainder binding mutable. Other pattern forms
 continue to use `match`.
 
 ```metel
-fun take_id<record R, record Rest>(r: { .id: i64, ..R }) -> i64
-where R = { .extra: i64, ..Rest }
+fun take_id<record R, record Rest>(r: .{ .id: i64, ..R }) -> i64
+where R = .{ .extra: i64, ..Rest }
 {
-    let var { .id, ..rest } := r;
+    let var .{ .id, ..rest } := r;
     id = id + 1;
     rest.extra = rest.extra + 1;
     id + rest.extra
@@ -1124,8 +1124,8 @@ fun main() {
 }
 ```
 
-A third declaration kind alongside `struct`, `enum` and `aspect`. `record X { ... }` is
-accepted everywhere `struct X { ... }` is — same declaration grammar, same construction
+A third declaration kind alongside `struct`, `enum` and `aspect`. `record X .{ ... }` is
+accepted everywhere `struct X .{ ... }` is — same declaration grammar, same construction
 syntax, same field access, same generic-parameter list, same aspect-impl coherence rules
 — with exactly one difference: a `record`'s declared row is *structurally visible*, so
 it satisfies row bounds ([Generics — Row bounds](types.md#row-bounds)) and
@@ -1142,20 +1142,20 @@ A `record` may take a `record`-kinded parameter, spliced as `..R` wherever the t
 parameter stands for extra fields the user of the type supplies:
 
 ```metel
-record Builder<record R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: .{ ..R } }
 
 fun describe<record R>(b: Builder<..R>) -> String { b.name }
 
 fun main() {
-    let a := Builder { name = "a", data = { .retries = 3 } };
-    let b := Builder { name = "b", data = { .auth = "t", .retries = 1 } };
+    let a := Builder { name = "a", data = .{ .retries = 3 } };
+    let b := Builder { name = "b", data = .{ .auth = "t", .retries = 1 } };
     assert(describe(a) == "a");
     assert(describe(b) == "b");
 }
 ```
 
 Records of `Copy` fields are `Copy`, and records of `Display` fields are `Display`, through
-`std::core` impls over `{ ..R }` with `where ..R: Copy` and `where ..R: Display`
+`std::core` impls over `.{ ..R }` with `where ..R: Copy` and `where ..R: Display`
 respectively ([Field-wise row constraints](types.md#field-wise-row-constraints)).
 
 <details>
@@ -1192,7 +1192,7 @@ projection syntax as a `struct`'s own row.
 ##### Legality Rule {#spec.declarations.records.legality-2}
 
 A `record`'s declared row is visible to structural matching: it satisfies a row bound
-(`<record T: { ... }>`) and is matched by row-conditional impl resolution against its
+(`<record T: .{ ... }>`) and is matched by row-conditional impl resolution against its
 *current* row — the row narrows as fields are moved out (RFC-0137), exactly as it does
 for a plain `struct`'s own (invisible) row. A plain `struct`'s row is never visible to
 either mechanism, regardless of width — projecting every field a `struct` declares does
@@ -1673,7 +1673,7 @@ fun main() {
 **Aspect implementation method set.** An `extend Type: Aspect` block must define
 exactly the methods declared by `Aspect`: every declared method must be present unless it
 has a default body, and no additional methods are permitted. Put a type-specific method
-that is not part of the aspect in an inherent `extend Type { ... }` block; [inherent and
+that is not part of the aspect in an inherent `extend Type .{ ... }` block; [inherent and
 aspect implementations may coexist for the same type](#spec.declarations.aspects.implementing-an-aspect.legality-1).
 
 **Aspect implementation method signatures.** Each implementation method must
@@ -1833,8 +1833,8 @@ which kind of aspect the bound names.
 
 ##### Legality Rule {#spec.declarations.aspects.implementing-an-aspect.legality-1}
 
-An inherent implementation is written `extend Type { ... }`; an aspect implementation is
-written `extend Type: Aspect { ... }`, and both forms may coexist for the same type.
+An inherent implementation is written `extend Type .{ ... }`; an aspect implementation is
+written `extend Type: Aspect .{ ... }`, and both forms may coexist for the same type.
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 

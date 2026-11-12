@@ -50,8 +50,8 @@ updated: '2026-11-11'
 > revision above used RFC-0090's then-normative `record { … }` former and noted that
 > `access-and-presence-rows.md` §3.5 recommended bare braces instead, declining to adopt
 > an unadopted spelling unilaterally. **RFC-0090 has since been amended to drop the
-> keyword from anonymous records**, so this RFC follows: rows are `{ .small: i32, .big: i32 }`
-> as types and `{ .small = 3, .big = 1 }` as values. `record` now appears in this RFC not at
+> keyword from anonymous records**, so this RFC follows: rows are `.{ .small: i32, .big: i32 }`
+> as types and `.{ .small = 3, .big = 1 }` as values. `record` now appears in this RFC not at
 > all — it survives only as RFC-0090 tier 3's *declaration* keyword, which this RFC has no
 > occasion to use.
 >
@@ -155,8 +155,8 @@ extend SortedPair: Construct {
 works through.
 
 **Syntax note.** Rows are bare braces in every position this RFC uses, per RFC-0090's
-2026-07-24 amendment and `access-and-presence-rows.md` §3.5: `{ .small: i32, .big: i32 }` as
-a type, `{ .small = row.big }` as a value (the `=` per RFC-0100 §1's separator invariant),
+2026-07-24 amendment and `access-and-presence-rows.md` §3.5: `.{ .small: i32, .big: i32 }` as
+a type, `.{ .small = row.big }` as a value (the `=` per RFC-0100 §1's separator invariant),
 and `SortedPair.{ .big }` for projection — the dot surviving only where there is a receiver
 to project from. `construct`'s parameter is a **closed** record type, not a bound: it names
 the type's exact complete row, and a caller supplying a wider row does not satisfy it.
@@ -178,7 +178,7 @@ representation generally — not a new promise, the same one recurring here.
 
 ### 1.1 What `construct`'s own body may build — the one privileged site
 
-> **Syntax (2026-11-08).** RFC-0100 §7 defines the minting step as a form, the brace literal `Self { field = value }` (`Self { ..row }` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. It is legal only for the impl's own type, in `construct` and `construct_unchecked`; RFC-0114 adds its grammar production. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
+> **Syntax (2026-11-08).** RFC-0100 §7 defines the minting step as a form, the brace literal `Self { field = value }` (`Self .{ ..row }` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. It is legal only for the impl's own type, in `construct` and `construct_unchecked`; RFC-0114 adds its grammar production. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
 
 Correcting the syntax above exposed a hole the first draft's examples had papered over:
 its `construct` body wrote `SortedPair { small: …, big: … }`, **a bare struct literal that
@@ -286,7 +286,7 @@ invariant when produced. Code that can name a field may change it afterwards; an
 private fields and methods. The `mess_with_it` example stands as the accepted limit, reachable only from the defining module or
 through `pub` fields.
 
-**Piecewise building.** A value built field by field, `let partial = { .a = compute_a() }; let partial = { ..partial, .b = compute_b() };`,
+**Piecewise building.** A value built field by field, `let partial = .{ .a = compute_a() }; let partial = .{ ..partial, .b = compute_b() };`,
 is an ordinary anonymous record, with no brand. Turning the complete record into a `Self` is the explicit `new Type(..partial)` (RFC-0100
 §7), which calls `construct` once; nothing fires on completion.
 
@@ -404,7 +404,7 @@ may in fact be closer to revisitable than its own header currently states.
 
 ## 7. Generics and monomorphization
 
-A generic struct's row depends on its type parameter — `Pair<T> { .a: T, .b: T }`'s row
+A generic struct's row depends on its type parameter — `Pair<T> .{ .a: T, .b: T }`'s row
 isn't fully known until `T` is concrete. Whether `construct()` resolution needs to defer
 to monomorphization time, the way Metel's generic function bodies already do
 (`FunBody::Generic`/`TypedExpr::GenericClosure`, constructed from runtime values), is the
@@ -609,7 +609,7 @@ extend Interval: Construct {
 - `public/rfcs/4-implemented/rfc-0115-field-initializer-separator.md` — the separator half
   split out of RFC-0100 the same day; keeps brace literals and changes only `field_init`'s
   `:` to `=`, which is what makes `SortedPair { small = 3, big = 1 }` desugar so directly
-  to `SortedPair::construct({ .small = 3, .big = 1 })` (§2). Also not a dependency
+  to `SortedPair::construct(.{ .small = 3, .big = 1 })` (§2). Also not a dependency
 - `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the `:` classifies / `=` defines
   invariant that fixes the separator in this RFC's record values and RFC-0100's keyword
   arguments identically

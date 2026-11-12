@@ -44,7 +44,7 @@ pattern Name { fields } for Subject {
 ```
 
 - The **match** clause is total: it always produces the fields (the synonym is a projection,
-  not a test). A *partial* synonym is written with an `Option` result (`match (v) => Some {...}`
+  not a test). A *partial* synonym is written with an `Option` result (`match (v) => Some .{...}`
   / `None`) and `pattern partial Name ...`.
 - The **build** clause makes the synonym usable as an expression (`Cartesian { x = 1.0, y = 2.0 }`).
 
@@ -107,7 +107,7 @@ module may keep its representation private and export only the patterns.
 ## Alternatives considered
 
 1. **Only methods** (`p.x()`, `p.y()`). No `match`, no exhaustiveness.
-2. **View patterns** (`match (f(v)) { ... }` written inline at every site). Duplicates the
+2. **View patterns** (`match (f(v)) .{ ... }` written inline at every site). Duplicates the
    projection at each use; no name; no export boundary.
 3. **Active patterns** (F#). Similar; a partial active pattern here is `partial` + `Option`.
 

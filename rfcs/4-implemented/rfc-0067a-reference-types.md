@@ -48,7 +48,7 @@ coverage:
 > surfaced that the same rule also has to fire at `return`, `break`, and (since a
 > function/method/closure body, an `if`/`else` branch, and a `match` arm all resolve
 > against a declared/expected type the same way a `let` binding does) any tail
-> expression, or the RFC's own worked pattern — `fun f() -> i64 { ...; p }` with no
+> expression, or the RFC's own worked pattern — `fun f() -> i64 .{ ...; p }` with no
 > explicit `return` — would be a hole in its own rule. §3a's text and worked example
 > updated to state this. Separately, §3's existing chain-depth guarantee ("a `&&T` will
 > deref through both levels if needed") turned out to need making explicit that it

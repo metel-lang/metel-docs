@@ -50,7 +50,7 @@ a primitive quantifier over PureScript-style induction because "every actual use
 
 The **body** of such an impl is a different problem. A `Display` for a record has to render
 each field, and nothing in the language can iterate a row: there is no reflection, no row
-induction, and no macro system. So `extend<record R> { ..R }: Display where ..R: Display` is
+induction, and no macro system. So `extend<record R> .{ ..R }: Display where ..R: Display` is
 accepted today but cannot be given a body that does anything (metel-core#1338). `Eq`, `Hash`
 and `Clone` for records have the same shape. `Copy` does not: it has no body (metel-core#1337).
 
@@ -70,7 +70,7 @@ but neither says what that loop looks like, and both are larger RFCs still under
 - **Parameter packs.** RFC-0125 §1.1 lesson 4 identifies Bertholet's `static for` as "the same
   construct as RFC-0092's comptime iteration" and as the best implementation of its stage 2.
   Its open question 4 asks whether the two are one feature.
-- **Tuples.** RFC-0151 (draft) desugars `(A, B, C)` to the row `{ .0: A, .1: B, .2: C }`. If that
+- **Tuples.** RFC-0151 (draft) desugars `(A, B, C)` to the row `.{ .0: A, .1: B, .2: C }`. If that
   lands, a loop over a row's fields is a loop over a tuple's elements, and RFC-0125's pack
   becomes a row operation rather than a separate calculus.
 
@@ -172,7 +172,7 @@ from per-field results (RFC-0216), packs (RFC-0125) and tuples (RFC-0151) beyond
 ### `Display` (the motivating case)
 
 As in the summary. `where ..R: Display` supplies `F: Display` for the single symbolic check;
-at `{ .x = 1, .y = "a" }` the loop unrolls to two statements, each calling the right
+at `.{ .x = 1, .y = "a" }` the loop unrolls to two statements, each calling the right
 `to_string`.
 
 ### `Eq` (illustrative; the aspect's method names are as RFC text, not checked here)

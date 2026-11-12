@@ -93,7 +93,7 @@ be. But it landed on `(...)`, and that spelling now collides in three ways:
 `|A, B| -> C` says two arguments unambiguously; `|(A, B)| -> C` says one record argument
 once `(A, B)` type syntax exists (RFC-0151). `|...|` for the literal and the type also
 means `let f: |i64| -> String = |n| { n.to_string() };` reads with the annotation and the
-value in the same shape — today they diverge (`(i64) -> String` vs `(n) -> String { ... }`).
+value in the same shape — today they diverge (`(i64) -> String` vs `(n) -> String .{ ... }`).
 
 RFC-0134 §3a proposed `fun(T) -> U` for the type. That is a revert of RFC-0041's
 change in the type-annotation half and reads heavier, without unifying the
@@ -131,23 +131,23 @@ closure_expr = { capture_list? ~ once_kw? ~ var_kw? ~ "|" ~ param_list? ~ "|" ~ 
 ```
 
 - The prefix order is fixed: `[captures]? once? var? |params|`. For example,
-  `[state] once var |x: i64| -> String { ... }`. `var once` remains invalid on
+  `[state] once var |x: i64| -> String .{ ... }`. `var once` remains invalid on
   a literal even though type qualifiers are order-insensitive.
 - Parameters: `|x|`, `|x, y|`, with optional per-parameter types `|x: i64, y: String|`.
-- Return type: `|x| -> String { ... }` when written, or omitted — `|x| { ... }` — and
+- Return type: `|x| -> String .{ ... }` when written, or omitted — `|x| .{ ... }` — and
   inferred from the body. **This supersedes RFC-0041** (spec
   `spec.functions.closures.legality-1`/`-2`/`-3`), which required `->` before *every*
-  closure body (`(x) -> { x * 2 }`, `() -> { ... }`). That mandatory arrow was RFC-0041's
+  closure body (`(x) -> { x * 2 }`, `() -> .{ ... }`). That mandatory arrow was RFC-0041's
   disambiguator between `(x)` grouping and `(x) -> {}` a closure; `|...|` carries that
   itself, so the arrow now appears **exactly when a return type is written**. Return-type
   *inference* from the body is unchanged. The result is an intentional asymmetry with a
   written *type* (§1, `->` and the return type mandatory): a literal has a body to infer
   from, a bare type annotation does not.
-- Body: a block `|x| { ...; last }`. RFC-0041's block-only body rule is retained; a
-  bare-expression form is out of scope for this migration. A bare `{ ... }` with no
-  preceding `|...|` is still a block expression — RFC-0041's `() -> { ... }` becomes
-  `|| { ... }`, not `{ ... }`.
-- Nullary: `|| { ... }`.
+- Body: a block `|x| .{ ...; last }`. RFC-0041's block-only body rule is retained; a
+  bare-expression form is out of scope for this migration. A bare `.{ ... }` with no
+  preceding `|...|` is still a block expression — RFC-0041's `() -> .{ ... }` becomes
+  `|| .{ ... }`, not `.{ ... }`.
+- Nullary: `|| .{ ... }`.
 
 ### 3. `(...)` is freed
 
@@ -324,7 +324,7 @@ different thing — an erased, dispatched form. Not the bare function type.
 3. **Closure body:** retain RFC-0041's block-only form. Bare-expression closures are out of
    scope. The `->` RFC-0041 placed before every body is not replaced by anything — the
    `|...|` delimiters do that disambiguation (§2).
-4. **Nullary spelling:** `|| { ... }`, resolved by the operand-position rule that also
+4. **Nullary spelling:** `|| .{ ... }`, resolved by the operand-position rule that also
    settles logical-or.
 
 ## Acceptance tests
@@ -333,8 +333,8 @@ The implementation must cover, at minimum:
 
 - capture-list literals in every prefix combination (`[x] |x|`, `[x] once |x|`,
   `[&var x] var ||`, `[x] once var |x|`), including the rejected `var once` literal;
-- a closure literal with **no** `->` (`|x| { ... }`, `|| { ... }`) and with `-> T { ... }`
-  — both parse; a bare `{ ... }` with no `|...|` is a block, not a nullary closure;
+- a closure literal with **no** `->` (`|x| .{ ... }`, `|| .{ ... }`) and with `-> T .{ ... }`
+  — both parse; a bare `.{ ... }` with no `|...|` is a block, not a nullary closure;
 - nullary closure and function types at expression/type start, and ordinary `a || b`;
 - closure literals after `=`, `(`, `,`, and `return`;
 - the `&` / `&var` / `once` / `var` prefix order on a function type, including the rejected

@@ -383,31 +383,31 @@ fun main() -> i64 {
 ```
 
 A closure parameter may be annotated with an open record whose tail is anonymous
-(`|p: { .x: i64, .. }| { p.x }`); the closure is then polymorphic in that row and accepts
+(`|p: .{ .x: i64, .. }| { p.x }`); the closure is then polymorphic in that row and accepts
 records of different shapes ([open rows](types.md#spec.types.generics.open-rows.legality-5)).
 
 A stand-alone closure has no generics list, so it cannot declare a row parameter, and a written
-return annotation cannot name one: `|p: { .x: i64, ..R }| -> { .x: i64, ..R } { p }` is rejected
+return annotation cannot name one: `|p: .{ .x: i64, ..R }| -> .{ .x: i64, ..R } { p }` is rejected
 (`T0003`, undefined row variable `R`). Inside a generic function the closure uses the enclosing
 function's `R`. When the return type is omitted it is inferred, and keeps the row of the argument:
 
 <!-- doc-example: expect-fail reason="a stand-alone closure cannot name a row parameter" -->
 ```metel
 fun main() {
-    let f := |p: { .x: i64, ..R }| -> { .x: i64, ..R } { p };
+    let f := |p: .{ .x: i64, ..R }| -> .{ .x: i64, ..R } { p };
 }
 ```
 
 ```metel
-fun keep<record R>(r: { .x: i64, ..R }) -> i64 {
-    let f := |p: { .x: i64, ..R }| -> { .x: i64, ..R } { p };
+fun keep<record R>(r: .{ .x: i64, ..R }) -> i64 {
+    let f := |p: .{ .x: i64, ..R }| -> .{ .x: i64, ..R } { p };
     return f(r).x;
 }
 
 fun main() {
-    let f := |p: { .x: i64, .. }| { p };
-    assert(f({ .x = 1, .y = 2 }).y == 2);
-    assert(keep({ .x = 1, .y = 2 }) == 1);
+    let f := |p: .{ .x: i64, .. }| { p };
+    assert(f(.{ .x = 1, .y = 2 }).y == 2);
+    assert(keep(.{ .x = 1, .y = 2 }) == 1);
 }
 ```
 

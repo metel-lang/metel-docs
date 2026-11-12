@@ -48,7 +48,7 @@ requested by a struct with one word.
 
 ### What this adds over a record plus `new Type(..r)`
 
-- **A named, nominal state.** `Building<Server, { .host: String }, { .host: String, .port: i64 }>` tells a reader
+- **A named, nominal state.** `Building<Server, .{ .host: String }, .{ .host: String, .port: i64 }>` tells a reader
   and the checker which fields remain. A bare record's type says which are present but not which are required.
 - **Chaining.** `.set(…).set(…).build()` reads in one expression. The record form needs a `let` per step or a
   nested literal.
@@ -72,7 +72,7 @@ exceptions as possible.
 
 ```metel
 // std
-struct Building<T, record Need, record Have> { fields: { ..Have } }
+struct Building<T, record Need, record Have> { fields: .{ ..Have } }
 
 aspect Builder {
     type Start;                       // the empty state, Building<Self, <Self's row>, {}>

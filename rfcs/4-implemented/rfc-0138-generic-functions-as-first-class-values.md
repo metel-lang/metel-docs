@@ -83,7 +83,7 @@ Contrary to this RFC's own issue (#736), which locates the gap in
 - What inference does *not* do is re-generalize `alias` itself: the closure
   special case (`infer_decl`'s `Decl::Let` arm) that re-quantifies an
   unannotated let-binding's free variables into a fresh `poly_env` scheme is
-  gated on `matches!(&ld.value, Expr::Closure { .. })` — a bare `Expr::Ident`
+  gated on `matches!(&ld.value, Expr::Closure .{ .. })` — a bare `Expr::Ident`
   RHS never reaches it. `alias` gets bound as one fixed monomorphic
   instantiation of `identity`'s type via the ordinary path instead.
 
@@ -236,7 +236,7 @@ separate mechanism is needed for it.
 - **Rank-2 polymorphism** (a function value whose own parameter position is
   still quantified inside the callee) — not implied by the issue, not
   proposed here.
-- **Nested generic functions** (`fun outer() { fun identity<T>(x: T) -> T { ... } identity }`
+- **Nested generic functions** (`fun outer() { fun identity<T>(x: T) -> T .{ ... } identity }`
   as opposed to top-level) — the issue's acceptance criteria explicitly
   requires this to work identically to the top-level case. `hoist_fun_decls`
   already runs per-block (it's how mutual recursion within one block works

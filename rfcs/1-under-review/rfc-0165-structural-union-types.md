@@ -21,7 +21,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/937'
 
 Add an **anonymous sum-type former**, written `A | B | C` — a value that is exactly one of
 several types, tagged, with no named declaration. It is the coproduct dual of RFC-0116's
-anonymous record types (`{ .x: A, .y: B }`) and RFC-0151's tuples (`(A, B)`); today Metel
+anonymous record types (`.{ .x: A, .y: B }`) and RFC-0151's tuples (`(A, B)`); today Metel
 has structural *products* without a name but only *nominal* sums (`enum`). The spelling
 `|` coexists with RFC-0154's pipe notation by the same operand-vs-operator position rule
 that already separates `|| expr` from `a || b`.
@@ -33,7 +33,7 @@ Metel already has:
 - **Nominal sums** — `enum Shape { Circle(f64), Rect(f64, f64) }` (spec
   `declarations.md#enums`, RFC-0034 / RFC-0107 / RFC-0111). Every alternative and the type
   as a whole must be *declared and named* before use.
-- **Anonymous products** — `{ .x: A, .y: B }` (RFC-0116), `(A, B)` (RFC-0151, `0-draft`).
+- **Anonymous products** — `.{ .x: A, .y: B }` (RFC-0116), `(A, B)` (RFC-0151, `0-draft`).
   Written inline, structurally identified, no declaration.
 
 The gap is an **anonymous sum**. Cases where declaring an `enum` is pure ceremony:

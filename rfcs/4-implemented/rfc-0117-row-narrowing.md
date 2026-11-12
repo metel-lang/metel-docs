@@ -49,7 +49,7 @@ impl_status: implemented
 ## Summary
 
 Moving a field out of a record narrows the record's type to exactly the fields that
-remain. `{ .fd: i64, .path: String }` with `path` moved out becomes `{ .fd: i64 }` — not a
+remain. `.{ .fd: i64, .path: String }` with `path` moved out becomes `.{ .fd: i64 }` — not a
 partially-valid value, not an opaque "moved-from" marker, but an ordinary value of a
 narrower record type.
 
@@ -87,7 +87,7 @@ per-field multiplicity, which is deferred until records are implemented).
 ## 1. The rule
 
 ```metel
-let r := { .fd = 3, .path = "/tmp/x" };   // { fd: i64, path: String }
+let r := .{ .fd = 3, .path = "/tmp/x" };   // { fd: i64, path: String }
 let p := r.path;                         // r : { .fd: i64 } -- moving a non-Copy field
                                          // out is implicit, no separate `move` syntax
 ```

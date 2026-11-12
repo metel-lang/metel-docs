@@ -361,8 +361,8 @@ All closures close over references to the enclosing scope. Mutations are always 
 ### B — `move` / non-`move` closure distinction (Rust model)
 
 Two syntactic forms:
-- `fun(...) -> R { ... }` — reference capture (borrows from enclosing scope)
-- `move fun(...) -> R { ... }` — value capture (moves/clones from enclosing scope)
+- `fun(...) -> R .{ ... }` — reference capture (borrows from enclosing scope)
+- `move fun(...) -> R .{ ... }` — value capture (moves/clones from enclosing scope)
 
 **Rejected.** Metel does not have borrow checking today. A reference-capture closure whose enclosing scope has ended would dangle unless the language later adds a lifetime or escape discipline. The explicit-pointer approach (Proposal) gives the same expressive power for shared state while keeping aliasing explicit.
 

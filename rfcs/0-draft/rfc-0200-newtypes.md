@@ -67,7 +67,7 @@ reserved and not otherwise accessible outside the declaring module.
 
 ### 3. Forwarded aspects
 
-`deriving (A, B)` generates `extend UserId: A { ... }` by delegating each method to the inner
+`deriving (A, B)` generates `extend UserId: A .{ ... }` by delegating each method to the inner
 type's impl. The rules:
 
 1. **Self-returning methods are re-wrapped.** `Add::add(self, rhs: Self) -> Self` becomes

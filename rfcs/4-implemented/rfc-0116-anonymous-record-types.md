@@ -43,7 +43,7 @@ coverage:
 > **Cross-checked against the siblings still in flight for v0.12.0**, per `PROCESS.md`:
 >
 > - **RFC-0115 (Field Initializer Separator)** — the pairing that put both in this release.
->   With RFC-0115, `Point { x = 1.0 }` is this RFC's `{ .x = 1.0 }` plus a path, so the two
+>   With RFC-0115, `Point { x = 1.0 }` is this RFC's `.{ .x = 1.0 }` plus a path, so the two
 >   differ by the brand alone. Shipping either without the other would release a separator
 >   mismatch.
 > - **RFC-0118 (Row Bounds)** — depends on this RFC and does not conflict. A row *type*
@@ -83,8 +83,8 @@ coverage:
 
 ## Summary
 
-A closed, anonymous, exact-shape product type written in bare braces: `{ .x: f64, .y: f64 }`
-as a type, `{ .x = 1.0, .y = 2.0 }` as a value. No keyword, no row variables, no
+A closed, anonymous, exact-shape product type written in bare braces: `.{ .x: f64, .y: f64 }`
+as a type, `.{ .x = 1.0, .y = 2.0 }` as a value. No keyword, no row variables, no
 polymorphism — a record over *N* fields is an ordinary product type with a
 compiler-synthesized structural identity, usable anywhere an ordinary type is.
 
@@ -119,7 +119,7 @@ five features it does not need.
 Handle.{ .fd, .alloc }      // projection — a receiver's row, narrowed (§4)
 ```
 
-**Bare braces, no keyword.** Earlier drafts wrote the former as `record { ... }`; the
+**Bare braces, no keyword.** Earlier drafts wrote the former as `record .{ ... }`; the
 keyword was dropped on 2026-07-24 because it did exactly one job — mark "this is a row" —
 in a position where nothing else can appear. `record` survives only as RFC-0120's
 *declaration* keyword, where it mints nominal identity.
@@ -127,7 +127,7 @@ in a position where nothing else can appear. `record` survives only as RFC-0120'
 **`:` in the type, `=` in the value**, per the separator invariant in
 `reports/syntax/colon-classifies-equals-labels-walrus-binds.md`: `:` classifies (`x` *has type* `f64`),
 `=` defines (`x` *is* `1.0`). This is also what makes a nominal struct literal, under
-RFC-0115, read as this form plus a brand: `Point { x = 1.0 }` is `{ .x = 1.0 }` with a name
+RFC-0115, read as this form plus a brand: `Point { x = 1.0 }` is `.{ .x = 1.0 }` with a name
 in front.
 
 **The dot survives only where there is a receiver to project from.** `Handle.{ .fd }`
@@ -145,27 +145,27 @@ from a block. An anonymous record drops that prefix, which is exactly the case w
 `{ … }` collides with `block`. In any position that admits `(block | expr)` — an `if`/`else`
 arm, a `match` arm, a `loop`/function/closure body — `block` is tried first, and a bare
 `{ x }` parses as a *block whose tail expression is `x`*, never as the punned record
-`{ .x: <x> }`. The same is true of `{ .x = 1 }`: a block whose tail is the assignment
+`.{ .x: <x> }`. The same is true of `.{ .x = 1 }`: a block whose tail is the assignment
 expression `x = 1`. This is **deterministic, not ambiguous** — the block always wins — but
 it means the spec's own punning example works only because it sits in `let`-RHS position:
 
 ```metel
-let p := { .x, .y };                     // record: let-RHS is a pure expression position
-fun f() -> { .x: i64 } { ({ .x = 1 }) } // record: parenthesized to force expression position
-fun g() -> { .x: i64 } { x = 1; }       // NOT a record — block whose tail is `x = 1`
+let p := .{ .x, .y };                     // record: let-RHS is a pure expression position
+fun f() -> .{ .x: i64 } { (.{ .x = 1 }) } // record: parenthesized to force expression position
+fun g() -> .{ .x: i64 } { x = 1; }       // NOT a record — block whose tail is `x = 1`
 ```
 
 Punning and single-field record literals are records in **pure-expression** positions
 (`let`/`var` and struct/enum-field initializers, call arguments, array elements, operands,
 `return`/`break` operands). In **block-admitting** positions a record must be parenthesized:
-`({ … })`. A multi-field literal (`{ .x = 1, .y = 2 }`) is unaffected — the comma is not valid
+`({ … })`. A multi-field literal (`.{ .x = 1, .y = 2 }`) is unaffected — the comma is not valid
 inside a block, so it backtracks to the record parse on its own.
 
 ## 2. Closed by default, and what that means
 
-A record type names an **exact** shape. `{ .x: f64 }` is inhabited only by records with
-that row and nothing else; a value of type `{ .x: f64, .y: f64 }` is not a value of
-`{ .x: f64 }`.
+A record type names an **exact** shape. `.{ .x: f64 }` is inhabited only by records with
+that row and nothing else; a value of type `.{ .x: f64, .y: f64 }` is not a value of
+`.{ .x: f64 }`.
 
 This is not a limitation awaiting removal — it is what keeps this RFC free of the
 machinery the rest of the cluster needs. Width subtyping (silently accepting a wider
@@ -178,19 +178,19 @@ here.
 the same type, wherever they were written. There is no declaration site and no brand —
 that is RFC-0120's job.
 
-**Field order is not part of a record's identity.** `{ .x: i64, .y: i64 }` and
-`{ .y: i64, .x: i64 }` are the **same type**, and `{ .x = 1, .y = 2 }` and `{ .y = 2, .x = 1 }`
+**Field order is not part of a record's identity.** `.{ .x: i64, .y: i64 }` and
+`.{ .y: i64, .x: i64 }` are the **same type**, and `.{ .x = 1, .y = 2 }` and `.{ .y = 2, .x = 1 }`
 are the same value. A record is a label→type map, not an ordered tuple with names; nothing
 in the type observes field order, since every access, pattern, and construction is by label.
 The implementation gives each record type a **canonical form** by sorting fields
 lexicographically by label, and identity, equality, and (on any layout-bearing backend) the
 memory layout are all defined over that canonical form. This is not a convenience — it is
-forced by the rest of the cluster: RFC-0118's row bounds (`{ .x: f64, .. }`) and RFC-0121's
+forced by the rest of the cluster: RFC-0118's row bounds (`.{ .x: f64, .. }`) and RFC-0121's
 open rows are about *which labels are present*, and would be incoherent if a record's
 identity also depended on the order they were written in. Order-insensitivity here is the
 same decision, made once at the root so the siblings inherit it.
 
-Duplicate labels in a single record (`{ .x: i64, .x: f64 }`) are a compile error, not a
+Duplicate labels in a single record (`.{ .x: i64, .x: f64 }`) are a compile error, not a
 last-wins or first-wins rule — the map has no key for the collision to resolve to.
 
 ## 3. Where records are usable
@@ -235,7 +235,7 @@ last-wins or first-wins rule — the map has no key for the collision to resolve
 > were stated without it: an anonymous record cannot satisfy *any* standard-library aspect.**
 > `Display`, `From`, `Iterable` are all non-local, so no user module may implement them for
 > a record, and stdlib cannot enumerate every shape. Concretely, `println("${p}")` does not
-> work for `let p = { .x = 1.0, .y = 2.0 }`.
+> work for `let p = .{ .x = 1.0, .y = 2.0 }`.
 >
 > **Auto-derived aspects are unaffected** — `Send`, `Sync` and `Linear` are computed from
 > field composition (RFC-0096) rather than declared, so records satisfy them structurally.
@@ -244,13 +244,13 @@ last-wins or first-wins rule — the map has no key for the collision to resolve
 > **`Copy` is impl-based, so no record is ever `Copy`** — found 2026-07-24 while cross-checking
 > RFC-0071. RFC-0096's auto-impl set is a closed list of exactly three (`Send`, `Sync`,
 > `Linear`); `Copy` is declared with `extend T: Copy;` (RFC-0071 §2). **Every record is
-> therefore affine and must be moved**, including `{ .x: i64, .y: i64 }`. This is sharper than
+> therefore affine and must be moved**, including `.{ .x: i64, .y: i64 }`. This is sharper than
 > the `Display` case — a small all-primitive record is exactly what a reader expects to copy
 > freely — and it also blocks RFC-0121's width-subtyping rule for any dropped field that is
 > itself a record. Same fix, RFC-0123.
 >
 > **The fix is a single stdlib implementation covering all rows at once**, which requires
-> constraining every field of a row (`extend<row R> { ..R }: Display where all R: Display`).
+> constraining every field of a row (`extend<row R> .{ ..R }: Display where all R: Display`).
 > That construct does not exist and is now **RFC-0123 (Field-Wise Row Constraints)**, which
 > depends on RFC-0121 — so neither is in v0.12.0. **This is a real usability limit of
 > records as first shipped**, and it is stated here rather than discovered later.
@@ -350,7 +350,7 @@ Carried from RFC-0090, narrowed to what this RFC owns.
    reverted afterwards. Results:
    - **The full suite stayed green — 805 passed, 0 failed.** The alternative breaks nothing
      that exists.
-   - **`{ .x: 1, .y: 2 }` parses.** The resulting failure is
+   - **`.{ .x: 1, .y: 2 }` parses.** The resulting failure is
      `parse_expr: unexpected rule record_lit` — a missing AST branch, i.e. the grammar
      accepted it and only the not-yet-written parser arm is absent. That is the expected
      state and the positive result.
@@ -365,7 +365,7 @@ Carried from RFC-0090, narrowed to what this RFC owns.
    structurally impossible here. The safety is a property of the condition syntax, not a
    lucky absence of collisions.
 
-   **One residual collision, now specified rather than open:** a bare `{ x }` or `{ .x = e }`
+   **One residual collision, now specified rather than open:** a bare `{ x }` or `.{ .x = e }`
    in a *block-admitting* position (an `if`/`else`/`match` arm, a function/closure/loop
    body) parses as a block, not a record — deterministically, block-first. This is not the
    Rust condition ambiguity; it is block-versus-expression precedence, resolved by

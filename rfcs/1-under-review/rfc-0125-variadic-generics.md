@@ -150,7 +150,7 @@ away.
 It is nonetheless not a problem here, and the evidence is already in the language: `..`
 **already** means "and a rest" in row bounds (RFC-0118) and row variables (RFC-0121), and
 coexists with ranges today because the two occur in different grammatical positions —
-`{ .x: f64, .. }` in a bound, `0..10` in an expression. A pack in a generic parameter list is
+`.{ .x: f64, .. }` in a bound, `0..10` in an expression. A pack in a generic parameter list is
 separated the same way. So `..Ts` inherits an established meaning at no new cost, where in
 Rust the same spelling would have been a fresh collision.
 
@@ -172,7 +172,7 @@ A declaration may hold at most one pack, and it must come last. Both restriction
 the same reason: with two packs, or a pack followed by an ordinary parameter, matching
 `(i64, String, boolean)` against the parameter list is ambiguous.
 
-The spelling deliberately matches `..R`, `{ .x: f64, .. }` and `..Ts` across the corpus: `..`
+The spelling deliberately matches `..R`, `.{ .x: f64, .. }` and `..Ts` across the corpus: `..`
 consistently means "the rest, however many". It is **not** `record`-marked — a pack is a
 list of types, not a record kind (see RFC-0118 §1 for why that distinction is kept sharp).
 

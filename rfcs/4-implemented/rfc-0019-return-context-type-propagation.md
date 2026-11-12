@@ -9,13 +9,13 @@ coverage:
 
 ## Summary
 
-Fix a bug in typechecker Pass 2 where `return` and `break` statements do not propagate the enclosing function's return type as the expected type for the return value. This causes type inference to fail on any under-constrained expression in return position — most visibly `return nope;` and `return Result::Err { ... };` — even when the function's return type annotation fully determines the missing type.
+Fix a bug in typechecker Pass 2 where `return` and `break` statements do not propagate the enclosing function's return type as the expected type for the return value. This causes type inference to fail on any under-constrained expression in return position — most visibly `return nope;` and `return Result::Err .{ ... };` — even when the function's return type annotation fully determines the missing type.
 
 ---
 :
 ## Motivation
 
-The spec states that `nope`'s type must be "determinable from context" and shows `return Result::Err { ... }` as valid code in a function annotated `-> Result<Float, String>`. Both currently fail with E0002 at the typechecker's Pass 2 stage.
+The spec states that `nope`'s type must be "determinable from context" and shows `return Result::Err .{ ... }` as valid code in a function annotated `-> Result<Float, String>`. Both currently fail with E0002 at the typechecker's Pass 2 stage.
 
 ```metel
 fun find(arr: [Int], target: Int) -> Option<Int> {
@@ -28,7 +28,7 @@ fun divide(a: Float, b: Float) -> Result<Float, String> {
 }
 ```
 
-The same failure occurs with `break nope;` and `break Result::Err { ... };` inside a `loop`.
+The same failure occurs with `break nope;` and `break Result::Err .{ ... };` inside a `loop`.
 
 The same expressions work correctly as tail expressions (last line of a function body without `return`) because `construct_block` already receives the function's return type and propagates it. Only the explicit `return` and `break` paths are broken.
 

@@ -24,7 +24,7 @@ coverage:
 
 > **Status — integrated (2026-07-20).** Merged into expressions.md (Unqualified variant patterns) + Pattern Kinds table; Pattern::None retirement noted; cross-checked with RFC-0108 peel ordering.
 
-> **Status — implemented (2026-07-21).** Bare-variant resolution runs in both the inference and construction passes (`resolve_bare_variant`), a bare fieldful `Variant { .. }` alternative was added to the grammar, and `Pattern::None` is retired across all eight sites. Fixture: `evaluator/enums/40_unqualified_variant_patterns.mtl`.
+> **Status — implemented (2026-07-21).** Bare-variant resolution runs in both the inference and construction passes (`resolve_bare_variant`), a bare fieldful `Variant .{ .. }` alternative was added to the grammar, and `Pattern::None` is retired across all eight sites. Fixture: `evaluator/enums/40_unqualified_variant_patterns.mtl`.
 
 ## Summary
 

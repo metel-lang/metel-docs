@@ -169,7 +169,7 @@ amended with this RFC if accepted.
 
 - **RFC-0165:** direct dependency and joint representation decision; literal members
   compare by full singleton identity.
-- **RFC-0116:** records remain exact; `{ .kind: "ok" }` and `{ .kind: String }` differ.
+- **RFC-0116:** records remain exact; `.{ .kind: "ok" }` and `.{ .kind: String }` differ.
 - **RFC-0160:** transparent aliases name public discriminated-union contracts.
 - **RFC-0109:** this is flow narrowing of an anonymous union, not branded self-view
   narrowing.

@@ -234,7 +234,7 @@ proposed `{| … |}` for the same purpose, is refused: RFC-0221 removes its case
 
 | This RFC's problem | With RFC-0221 first |
 |---|---|
-| Review finding 1: `{ x = 1 }` is a record or a block whose tail is `x = 1`; "block wins" would turn a record tail into a unit block | Gone. A record is `{ .x = 1 }`; `{ x = 1 }` is only ever a block, and a block ending in an unterminated assignment is a parse error with the hint "add `;`" |
+| Review finding 1: `{ x = 1 }` is a record or a block whose tail is `x = 1`; "block wins" would turn a record tail into a unit block | Gone. A record is `.{ .x = 1 }`; `{ x = 1 }` is only ever a block, and a block ending in an unterminated assignment is a parse error with the hint "add `;`" |
 | Review finding 5: a block ending in an assignment with no `;` becomes a record in match-arm, closure and function bodies | Gone. No block can fall back to a record |
 | §1 *Tail assignments*: the `;` rule, the migration rewrite that appends `;`, the record-versus-block hint and its fixtures | Not needed for records. A bare `{ x = 1 }` is the error above |
 | RFC-0116's position-dependent behaviour (`if (c) { x = 1 }` is a parse error, `|v| { x = 1 }` a record) | Gone for non-empty records. The empty `{}` is one value however it is read (RFC-0221 §5, RFC-0151 §6) |

@@ -59,7 +59,7 @@ only where `e` is comptime-known (RFC-0132 §1.1), normally `field.name` of an e
 `.[field.name] = v` entry per iteration, in field order.
 
 Typing: the literal's row is the union of its literal entries and the entries its loops produce. A
-loop over `fields(R)` whose entries are `.[field.name] = f(self.[field.name])` has row `{ ..R' }`, where
+loop over `fields(R)` whose entries are `.[field.name] = f(self.[field.name])` has row `.{ ..R' }`, where
 `R'` maps each field type through `f`. For `clone`, `R' = R`; the checker proves this once, against the
 symbolic field of RFC-0174 D3, from the bound `..R: Clone` (RFC-0123), not per instantiation.
 

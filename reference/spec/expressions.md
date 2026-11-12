@@ -457,7 +457,7 @@ eligible only when all of its fields are public, and the remainder loses the nom
 
 ```metel
 match (value) { // value : { .token: Token, .extra: i64, ..Rest }
-    { .token, ..rest } => rest // rest : { .extra: i64, ..Rest }
+    .{ .token, ..rest } => rest // rest : { .extra: i64, ..Rest }
 }
 ```
 

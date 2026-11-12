@@ -137,7 +137,7 @@ construct did two things, and only one of them is replaced:
 
 - **Borrowed access to a sub-row** — fully replaced by RFC-0109, and better: a named view is
   branded, so an unrelated same-shaped value cannot satisfy it, whereas a bare
-  `&var { .fd: i32 }` could.
+  `&var .{ .fd: i32 }` could.
 - **Moving a field *out* through a borrow** (`let buf = view.alloc;` — moving a non-Copy
   field out is implicit, there is no `move` keyword) — **not replaced.** Views govern
   access, not consumption. Nothing in the remaining cluster lets you take ownership of
@@ -194,7 +194,7 @@ record matching **self's current row**, whatever it presently is — this is exa
 "reading fields out" (this RFC's own framing above) already meant for a whole, unnarrowed
 value, and narrowing doesn't add anything `to_record()` has to newly account for beyond
 which fields happen to be there when it's called. `handle_narrowed.to_record()` therefore
-produces `{ .fd: i64 }`, not `Handle`'s full `{ .fd: i64, .name: String }` — no implicit
+produces `.{ .fd: i64 }`, not `Handle`'s full `.{ .fd: i64, .name: String }` — no implicit
 widening or further narrowing at the call, consistent with §3's own no-implicit-coercion
 stance.
 
@@ -365,7 +365,7 @@ by-reference mode (§2).*
    numbering correction and extended deferral note above.**
 
    The proposal: `FromRecord` **stays its own opt-in aspect**, but two things change.
-   - **Surface syntax becomes the constructor call form** — `Handle({ .fd = 3, .alloc = buf })`
+   - **Surface syntax becomes the constructor call form** — `Handle(.{ .fd = 3, .alloc = buf })`
      or `Handle(r)` for an existing row value `r` — instead of a named
      `Handle::from_record(r)` method. There is then no `from_record` spelling at all.
    - **Its default body is `construct`.** Deriving `FromRecord` gives you the ability to
@@ -390,7 +390,7 @@ by-reference mode (§2).*
      `Handle(3, buf)`. For a single-field struct, `Handle(r)` is ambiguous between "the row
      `r`" and "one positional argument `r`". Needs a disambiguation rule, or the row form
      restricted to an explicit record literal.
-   - **Are `Handle { fd = 3 }` and `Handle({ .fd = 3 })` both legal?** If so that is two
+   - **Are `Handle { fd = 3 }` and `Handle(.{ .fd = 3 })` both legal?** If so that is two
      spellings for one action, which this cluster has removed three times this week. The
      defensible reading is that the brace form takes an *inline* row and the call form takes
      a row *value* — one spelling per situation rather than two per action — but it has to

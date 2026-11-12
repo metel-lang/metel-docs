@@ -71,7 +71,7 @@ extend Doc: Display {
 ```
 
 **Exact-shape impl.** The impl target is one residual type or one named view (RFC-0109):
-`extend DocTitle: A { .. }` or `extend Doc.{ .title }: A { .. }`. It applies to exactly that shape and
+`extend DocTitle: A .{ .. }` or `extend Doc.{ .title }: A .{ .. }`. It applies to exactly that shape and
 `Self` is that shape. It is the form for a method that returns `Self`, because a row-bounded impl cannot
 build a value of an unknown width.
 

@@ -324,12 +324,12 @@ what generic code can talk about structurally, in three increasingly general way
 
 | To say | Write | Specified in |
 |---|---|---|
-| "a record with *at least* these fields" | `<record T: { .x: f64, .. }>` | [Row bounds](#row-bounds) |
+| "a record with *at least* these fields" | `<record T: .{ .x: f64, .. }>` | [Row bounds](#row-bounds) |
 | "a record with *no* such field" | `<record T: !{ token }>` | [Row bounds](#row-bounds) |
-| "…and name *the rest*, so a signature can carry it" | `<record R>` with `{ .x: f64, ..R }` | [Open rows](#open-rows) |
-| "…the rest is this field plus a remainder" | `where R = { .token: Token, ..Rest }` | [Open rows](#open-rows) |
+| "…and name *the rest*, so a signature can carry it" | `<record R>` with `.{ .x: f64, ..R }` | [Open rows](#open-rows) |
+| "…the rest is this field plus a remainder" | `where R = .{ .token: Token, ..Rest }` | [Open rows](#open-rows) |
 | "every field's *type* satisfies an aspect" | `where ..R: Copy` | [Field-wise row constraints](#field-wise-row-constraints) |
-| "this impl applies to every record of this shape" | `extend<record R: { x, .. }> { ..R }: A` | [Implementing an aspect for a record](#implementing-an-aspect-for-a-record) |
+| "this impl applies to every record of this shape" | `extend<record R: { x, .. }> .{ ..R }: A` | [Implementing an aspect for a record](#implementing-an-aspect-for-a-record) |
 
 Which types a row bound or row-conditional impl can match is decided by the declaration
 kind, not by the fields written:
@@ -350,16 +350,16 @@ non-`Copy` field would be forgotten ([Open rows](#open-rows)).
 The example below uses each piece once:
 
 ```metel
-record Session<record R> { id: i64, data: { ..R } }
+record Session<record R> { id: i64, data: .{ ..R } }
 
 // A bound: any record carrying `user: i64`.
-fun user_of<record T: { .user: i64, .. }>(e: T) -> i64 { e.user }
+fun user_of<record T: .{ .user: i64, .. }>(e: T) -> i64 { e.user }
 
 // A row variable: carry the rest through unchanged.
-fun keep<record R>(p: { .user: i64, ..R }) -> { .user: i64, ..R } { p }
+fun keep<record R>(p: .{ .user: i64, ..R }) -> .{ .user: i64, ..R } { p }
 
 // Row-conditional methods: which exist depends on the session's row.
-extend<record R: { .token: String, .. }> Session<..R> {
+extend<record R: .{ .token: String, .. }> Session<..R> {
     fun send(self) -> i64 { self.id * 10 }
 }
 extend<record R: !{ .token }> Session<..R> {
@@ -367,11 +367,11 @@ extend<record R: !{ .token }> Session<..R> {
 }
 
 fun main() {
-    assert(user_of({ .user = 7, .kind = 1 }) == 7);
-    assert(keep({ .user = 1, .extra = 2 }).extra == 2);
+    assert(user_of(.{ .user = 7, .kind = 1 }) == 7);
+    assert(keep(.{ .user = 1, .extra = 2 }).extra == 2);
 
-    let anon: Session<{ .user: i64 }> := Session { id = 2, data = { .user = 1 } };
-    let authed: Session<{ .token: String }> := Session { id = 1, data = { .token = "t" } };
+    let anon: Session<.{ .user: i64 }> := Session { id = 2, data = .{ .user = 1 } };
+    let authed: Session<.{ .token: String }> := Session { id = 1, data = .{ .token = "t" } };
     assert(anon.login() == 2);
     assert(authed.send() == 10);
 }
@@ -392,16 +392,16 @@ It is written in bare braces, with no keyword:
 Field declarations classify and take `:`; field initializers define and take `=` — the same
 distinction `let x: i64 = 1` already draws.
 
-**A record type is exact.** `{ .x: f64 }` is inhabited only by records with that row and
-nothing else; a value of `{ .x: f64, .y: f64 }` is *not* a value of `{ .x: f64 }`. Records are
+**A record type is exact.** `.{ .x: f64 }` is inhabited only by records with that row and
+nothing else; a value of `.{ .x: f64, .y: f64 }` is *not* a value of `.{ .x: f64 }`. Records are
 not implicitly widened or narrowed.
 
 **Records are structurally typed.** Two records with the same labels and field types are the
 same type, wherever they were written. A record has no declaration site and no name.
-**Field order does not matter:** `{ .x: i64, .y: i64 }` and `{ .y: i64, .x: i64 }` are the same
-type, and `{ .x = 1, .y = 2 }` and `{ .y = 2, .x = 1 }` are indistinguishable — each is usable
+**Field order does not matter:** `.{ .x: i64, .y: i64 }` and `.{ .y: i64, .x: i64 }` are the same
+type, and `.{ .x = 1, .y = 2 }` and `.{ .y = 2, .x = 1 }` are indistinguishable — each is usable
 wherever the other is. A record is a set of labelled fields, not an ordered one. Repeating a
-label in one record (`{ .x: i64, .x: f64 }`) is an error.
+label in one record (`.{ .x: i64, .x: f64 }`) is an error.
 
 (Indistinguishable is a statement about the type, not about `==`, which no compound type —
 record, struct, tuple, or array — supports.)
@@ -413,7 +413,7 @@ a struct literal:
 fun main() {
     let x := 1.0;
     let y := 2.0;
-    let p := { .x, .y };       // { x: f64, y: f64 }
+    let p := .{ .x, .y };       // { x: f64, y: f64 }
     println("${p.x}");
 }
 ```
@@ -422,8 +422,8 @@ Punning, and single-field record literals generally, are read as records only in
 that expect an expression — a `let`/`var` or field initializer, a call argument, an array
 element. In a position that also admits a block — an `if`/`else` or `match` arm, a
 function, closure, or loop body — a bare `{ x }` is a **block** whose result is `x`, and
-`{ .x = 1 }` is a block whose result is the assignment. Write the record in parentheses to
-force it: `({ x })`. A multi-field literal needs no parentheses, as `{ .x = 1, .y = 2 }`
+`.{ .x = 1 }` is a block whose result is the assignment. Write the record in parentheses to
+force it: `({ x })`. A multi-field literal needs no parentheses, as `.{ .x = 1, .y = 2 }`
 cannot be a block.
 
 ### Where records may be used
@@ -556,8 +556,8 @@ non-local aspect implementation, and as the target of a custom `Drop` implementa
 
 ### Record labels
 
-The fields of an anonymous record are **labels**, written with a leading dot: `{ .x = 1.0, .y = 2.0 }`, the pattern `{ .x, .y }`, the type
-`{ .x: f64, ..R }`, the row bound `{ .x: i64, .. }` and the projection list `Handle.{ .fd, ..R }`. A label is `.name` or `.0`. Field selection
+The fields of an anonymous record are **labels**, written with a leading dot: `.{ .x = 1.0, .y = 2.0 }`, the pattern `.{ .x, .y }`, the type
+`.{ .x: f64, ..R }`, the row bound `.{ .x: i64, .. }` and the projection list `Handle.{ .fd, ..R }`. A label is `.name` or `.0`. Field selection
 (`p.x`), struct and enum members, declarations, struct and enum patterns, parameter lists and keyword arguments keep their bare names.
 
 <details>
@@ -567,7 +567,7 @@ The fields of an anonymous record are **labels**, written with a leading dot: `{
 
 A field of an anonymous record, in a record literal, a record pattern, a record type, a row bound, a row equation and a projection list, is a
 label written `.name` or `.0` (a decimal integer). A bare identifier in that position is a parse error. A pun, a label with no value, means
-`{ .x = x }` in a literal and binds `x` in a pattern, and a pun of a numeric label is an error.
+`.{ .x = x }` in a literal and binds `x` in a pattern, and a pun of a numeric label is an error.
 
 <!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
 
@@ -1491,7 +1491,7 @@ parameters used as a row (`..R`) and the parameters of the enclosing `extend`, i
 type that the definition's declared bounds state is equal to it. Unifying it with a
 concrete type, or with another declared parameter, in any other way is a type error
 (`T0001`) at the definition. The declared bounds state equalities in exactly two places:
-a row equation (`where R = { .label: Type, ..Rest }`, in which `Rest` is derived from `R`
+a row equation (`where R = .{ .label: Type, ..Rest }`, in which `Rest` is derived from `R`
 and lacks the named labels, so `R` never equals `Rest`) and an associated-type binding
 (`T: Iterable<Item = X>` makes `T::Item` equal to `X`). A closure inside the body
 sees the enclosing parameters as rigid; a nested function does not see them and declares its own
@@ -1608,7 +1608,7 @@ cannot be rejected by it: if it is, the two checks disagree, which is the intern
 A bound written as a row accepts any type carrying at least the listed fields:
 
 ```metel
-fun squared_magnitude<record T: { .x: f64, .y: f64, .. }>(p: T) -> f64 {
+fun squared_magnitude<record T: .{ .x: f64, .y: f64, .. }>(p: T) -> f64 {
     p.x * p.x + p.y * p.y
 }
 ```
@@ -1627,9 +1627,9 @@ A record pattern's own trailing `..` reads the bound's listed fields the same wa
 them at all:
 
 ```metel
-fun describe<record T: { .x: f64, .. }>(p: T) -> String {
+fun describe<record T: .{ .x: f64, .. }>(p: T) -> String {
     match (p) {
-        { .x, .. } => "x is ${x}, plus whatever else the caller passed",
+        .{ .x, .. } => "x is ${x}, plus whatever else the caller passed",
     }
 }
 ```
@@ -1638,9 +1638,9 @@ fun describe<record T: { .x: f64, .. }>(p: T) -> String {
 here, so a pattern that doesn't end in `..` can never be exhaustive:
 
 ```metel
-fun bad<record T: { .x: f64, .. }>(p: T) -> f64 {
+fun bad<record T: .{ .x: f64, .. }>(p: T) -> f64 {
     match (p) {
-        { .x } => x,   // error: open bound's field set isn't known here; add `..`
+        .{ .x } => x,   // error: open bound's field set isn't known here; add `..`
     }
 }
 ```
@@ -1650,9 +1650,9 @@ requirement — a pattern matching a closed bound must still name every field th
 lists unless it uses `..`:
 
 ```metel
-fun get_x<record T: { .x: f64, .y: f64 }>(p: T) -> f64 {
+fun get_x<record T: .{ .x: f64, .y: f64 }>(p: T) -> f64 {
     match (p) {
-        { .x, .y } => x,       // OK: every field of the closed bound is named
+        .{ .x, .y } => x,       // OK: every field of the closed bound is named
         // { x } => x,       // error: `y` isn't named and there's no `..`
     }
 }
@@ -1662,9 +1662,9 @@ Naming a field the bound doesn't list is still rejected, `..` or not — the pat
 form discards *unnamed* fields, not fields the bound never promised are there:
 
 ```metel
-fun bad2<record T: { .x: f64, .. }>(p: T) -> f64 {
+fun bad2<record T: .{ .x: f64, .. }>(p: T) -> f64 {
     match (p) {
-        { .x, .z, .. } => x,   // error: no field `z` on the bound
+        .{ .x, .z, .. } => x,   // error: no field `z` on the bound
     }
 }
 ```
@@ -1701,14 +1701,14 @@ fun g<T>(p: T) -> f64 where record T: { .x: f64, .. }
 ```
 
 **The row bound is optional.** `<record T>` on its own means "any record, whatever its
-fields" — the only way to write that, since a bound of `{ .. }` alone is not accepted:
+fields" — the only way to write that, since a bound of `.{ .. }` alone is not accepted:
 
 ```metel
 fun labels<record T>(x: T) -> [Symbol]   // any record; no constraint on its fields
 ```
 
 ```metel
-squared_magnitude({ .x = 3.0, .y = 4.0 });   // a record — satisfies the bound
+squared_magnitude(.{ .x = 3.0, .y = 4.0 });   // a record — satisfies the bound
 squared_magnitude(some_point);             // a struct — does not
 ```
 
@@ -1771,11 +1771,11 @@ rather than declared.
 A `record`-kinded generic parameter used as `..R` abstracts over "the rest of a row" rather than a
 concrete shape. The binder is `record R`; every use of its *row* is written `..R`,
 distinguishing it from the record type `R` itself in every position a row can appear —
-a record type's tail (`{ .x: f64, ..R }`), a struct's own residual projection
+a record type's tail (`.{ .x: f64, ..R }`), a struct's own residual projection
 (`Handle.{ ..R }`), and a generic argument (`Session<..R>`):
 
 ```metel
-fun get_x<record R>(p: { .x: f64, ..R }) -> f64 { p.x }
+fun get_x<record R>(p: .{ .x: f64, ..R }) -> f64 { p.x }
 ```
 
 **Extension needs no operator** — the new label goes directly in the row literal:
@@ -1797,28 +1797,28 @@ where R = { .token: Token, ..Rest }
 ```
 
 The equation constrains the *type*. In a generic body, `{ token, ..rest }` consumes a record
-and binds its unnamed fields as an owned anonymous record. A row spread (`{ ..rest, .auth = a }`)
+and binds its unnamed fields as an owned anonymous record. A row spread (`.{ ..rest, .auth = a }`)
 places an owned record's fields into a new record. The details and current implementation
 limit are specified below.
 
 Reading a field the equation promises is:
 
 ```metel
-fun split<record R, record Rest>(p: { .token: i64, ..R }) -> i64
-where R = { .extra: i64, ..Rest }
+fun split<record R, record Rest>(p: .{ .token: i64, ..R }) -> i64
+where R = .{ .extra: i64, ..Rest }
 {
     p.token + p.extra
 }
 
 fun main() {
-    assert(split({ .token = 1, .extra = 2, .other = 3 }) == 3);
+    assert(split(.{ .token = 1, .extra = 2, .other = 3 }) == 3);
 }
 ```
 
 For a rest pattern, the checker removes the explicitly named labels from the strongest
 decomposition entailed by the scrutinee's type and declared row facts. Other known fields
-and the open tail remain. Thus, if `S = { .token: Token, .extra: i64, ..Rest }`, then
-`{ token, ..rest }` gives `rest: { .extra: i64, ..Rest }`. A presence-only bound such as
+and the open tail remain. Thus, if `S = .{ .token: Token, .extra: i64, ..Rest }`, then
+`{ token, ..rest }` gives `rest: .{ .extra: i64, ..Rest }`. A presence-only bound such as
 `R: { token, .. }` proves that `token` exists but does not determine the remainder type;
 the pattern is rejected with a distinct “remainder type cannot be determined” diagnostic.
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
@@ -1844,18 +1844,18 @@ determined by its row/type.
 <!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
 
 A row may also be the argument of a nominal type's own row parameter, written
-`..R` in the argument list. A bound on that row (`where R = { .auth: String, .. }`) is
+`..R` in the argument list. A bound on that row (`where R = .{ .auth: String, .. }`) is
 checked at each use:
 
 ```metel
-record Builder<record R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: .{ ..R } }
 
-fun auth_of<record R>(b: Builder<..R>) -> String where R = { .auth: String, .. } {
+fun auth_of<record R>(b: Builder<..R>) -> String where R = .{ .auth: String, .. } {
     b.data.auth
 }
 
 fun main() {
-    let b := Builder { name = "req", data = { .auth = "tok", .retries = 3 } };
+    let b := Builder { name = "req", data = .{ .auth = "tok", .retries = 3 } };
     assert(auth_of(b) == "tok");
 }
 ```
@@ -1864,32 +1864,32 @@ An argument whose row lacks a required label is rejected with `T0012`:
 
 <!-- doc-example: expect-fail reason="the argument's row has no `auth` field -- T0012 is the point" -->
 ```metel
-record Builder<record R> { name: String, data: { ..R } }
+record Builder<record R> { name: String, data: .{ ..R } }
 
-fun auth_of<record R>(b: Builder<..R>) -> String where R = { .auth: String, .. } {
+fun auth_of<record R>(b: Builder<..R>) -> String where R = .{ .auth: String, .. } {
     b.data.auth
 }
 
 fun main() {
-    let bare := Builder { name = "bare", data = { .retries = 1 } };
+    let bare := Builder { name = "bare", data = .{ .retries = 1 } };
     let _ := auth_of(bare);
 }
 ```
 
-A tail-only parameter `{ ..R }` transfers the entire owned row, and a parameter that names
-fields (`{ .f: T, ..R }`) takes the whole record too, so the two spellings accept the same
+A tail-only parameter `.{ ..R }` transfers the entire owned row, and a parameter that names
+fields (`.{ .f: T, ..R }`) takes the whole record too, so the two spellings accept the same
 programs and an owned remainder may hold non-`Copy` fields.
 
 **Width subtyping.** A record with extra fields may be passed to a parameter that names
-only some of them (`{ .x: f64, ..R }`); the extras bind to `R`. By value the parameter takes
+only some of them (`.{ .x: f64, ..R }`); the extras bind to `R`. By value the parameter takes
 the **whole** record: the callee owns the extra fields and may move, return or drop them, so
 they need not be `Copy`:
 
 ```metel
-fun get_x<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
-    let wide := { .x = 1, .name = "ada".to_string() };
+    let wide := .{ .x = 1, .name = "ada".to_string() };
     assert(get_x(wide) == 1);
 }
 ```
@@ -1897,10 +1897,10 @@ fun main() {
 Taking the record by reference does not move it, so the caller keeps every field:
 
 ```metel
-fun get_x<record R>(p: &{ .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: &.{ .x: i64, ..R }) -> i64 { p.x }
 
 fun main() {
-    let wide := { .x = 1, .name = "ada" };
+    let wide := .{ .x = 1, .name = "ada" };
     assert(get_x(&wide) == 1);
     assert(wide.name == "ada");
 }
@@ -1911,18 +1911,18 @@ the parameter on by value with no bound. `where ..R: Copy` is only needed to *us
 more than once:
 
 ```metel
-fun consume<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun consume<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
-fun outer<record R>(s: { .x: i64, ..R }) -> i64 {
+fun outer<record R>(s: .{ .x: i64, ..R }) -> i64 {
     consume(s) + 1
 }
 
 fun main() {
-    assert(outer({ .x = 1, .k = "kept".to_string(), .flag = true }) == 2);
+    assert(outer(.{ .x = 1, .k = "kept".to_string(), .flag = true }) == 2);
 }
 ```
 
-An open record with an anonymous tail (`{ .x: T, .. }`) is not accepted everywhere; see
+An open record with an anonymous tail (`.{ .x: T, .. }`) is not accepted everywhere; see
 [legality-5](#spec.types.generics.open-rows.legality-5), as decided by
 [RFC-0181](../../rfcs/4-implemented/rfc-0181-open-rows-in-every-type-position.md). Three limits are recorded as gaps.
 
@@ -1935,7 +1935,7 @@ from an argument.
 > **Gap** GAP-TYPES-011
 
 A written function type cannot say it accepts any record with at least some fields. A named row
-(`|{ .x: T, ..R }| -> U`) works for callbacks over records of one shape.
+(`|.{ .x: T, ..R }| -> U`) works for callbacks over records of one shape.
 
 > **Gap** GAP-TYPES-012
 
@@ -1993,7 +1993,7 @@ An open record type may occur in a reusable type position, including a function 
 instance-method parameter, a return type, a local annotation, or a nominal field.
 Its row tail is substituted and checked wherever the enclosing type is instantiated.
 
-For a branded `record` type `R`, `{ ..R }` is the anonymous record with the same
+For a branded `record` type `R`, `.{ ..R }` is the anonymous record with the same
 fields; `R` itself retains its brand. Converting an owned branded record to its
 anonymous row consumes the branded value and transfers its fields. This conversion
 is rejected if the branded type implements `Drop`, because it would bypass its
@@ -2005,7 +2005,7 @@ accepted only as the type of a function parameter, and anywhere else (a return t
 annotation, a field, under `&`) it is a parse error naming that restriction. A row argument
 to a nominal type (`Session<..R>`), an open record, or a closed projection (`Handle.{ .fd }`)
 covers the same ground in those positions. A projection that names no fields
-(`Handle.{ ..R }`) takes a whole struct, like `{ ..R }`, and so does one that names fields
+(`Handle.{ ..R }`) takes a whole struct, like `.{ ..R }`, and so does one that names fields
 (`Handle.{ .fd, ..R }`); see [legality-3](#spec.types.generics.open-rows.legality-3).
 
 A row argument is a row variable (`..R`), an anonymous `..`, or a **literal row**: an open or
@@ -2018,15 +2018,15 @@ accepted only where the generic parameter is declared `record`. An anonymous tai
 follows the positions in [legality-5](#spec.types.generics.open-rows.legality-5).
 
 ```metel
-record Req<record R> { data: { ..R } }
+record Req<record R> { data: .{ ..R } }
 
-fun empty() -> Req<..{}> { Req { data = {} } }
+fun empty() -> Req<..{}> { Req { data = .{} } }
 
 fun add_host<record R: !{ .host }>(r: Req<..R>, h: String) -> Req<..{ .host: String, ..R }> {
-    Req { data = { .host = h, ..r.data } }
+    Req { data = .{ .host = h, ..r.data } }
 }
 
-extend<record R: { .host: String, .. }> Req<..R> {
+extend<record R: .{ .host: String, .. }> Req<..R> {
     fun build(self) -> String { "GET " + self.data.host }
 }
 
@@ -2088,9 +2088,9 @@ fun main() {
 ##### Legality Rule {#spec.types.generics.open-rows.legality-2}
 
 A row literal's trailing `..R` (or anonymous `..`) extends that row with whatever
-fields `R` carries. A `where R = { .label: Type, ..Rest }` equation decomposes a row
+fields `R` carries. A `where R = .{ .label: Type, ..Rest }` equation decomposes a row
 variable `R` into one named field and a remainder `Rest`, and simultaneously bounds `R`
-to carry at least that field (equivalent to `R: { .label: Type, .. }`).
+to carry at least that field (equivalent to `R: .{ .label: Type, .. }`).
 
 
 
@@ -2120,7 +2120,7 @@ to carry at least that field (equivalent to `R: { .label: Type, .. }`).
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-3}
 
-A by-value parameter whose type has an open row tail (`{ .x: Type, ..R }`, or
+A by-value parameter whose type has an open row tail (`.{ .x: Type, ..R }`, or
 `Handle.{ .fd, ..R }`) takes its argument **whole**. The call needs only that the argument has
 the named fields at the declared types; the fields the parameter does not name are the
 callee's to move, return or drop, so they need not be `Copy`, and a generic body that
@@ -2168,7 +2168,7 @@ that only *contains* a `Drop` value is unaffected.
 
 ##### Legality Rule {#spec.types.generics.open-rows.legality-5}
 
-An open record type whose tail is **anonymous**, `{ .x: T, .. }` or `{ .. }`, denotes a record
+An open record type whose tail is **anonymous**, `.{ .x: T, .. }` or `.{ .. }`, denotes a record
 with at least the named fields and a remainder that is a **fresh row at each occurrence**. It
 is accepted:
 
@@ -2180,32 +2180,32 @@ is accepted:
 In a `let` or `var` annotation the fresh row is solved by the initializer, so the binding has
 the initializer's type and every one of its fields stays readable; the annotation names the
 fields that must be present and does not narrow the value. The field types written in the
-annotation apply to the initializer, so `{ .x: u8, .. }` makes `x` a `u8`. A closure whose parameter carries
+annotation apply to the initializer, so `.{ .x: u8, .. }` makes `x` a `u8`. A closure whose parameter carries
 such an annotation is polymorphic in that row: each call instantiates it afresh, so one closure
 accepts records of different shapes.
 
 ```metel
 fun main() {
-    let a: { .x: i64, .. } := { .x = 1, .y = "s".to_string() };
+    let a: .{ .x: i64, .. } := .{ .x = 1, .y = "s".to_string() };
     assert(a.y == "s");
 
-    let get := |p: { .x: i64, .. }| { p.x };
-    assert(get({ .x = 1, .y = 2 }) == 1);
-    assert(get({ .x = 5 }) == 5);
-    assert(get({ .x = 7, .flag = true }) == 7);
+    let get := |p: .{ .x: i64, .. }| { p.x };
+    assert(get(.{ .x = 1, .y = 2 }) == 1);
+    assert(get(.{ .x = 5 }) == 5);
+    assert(get(.{ .x = 7, .flag = true }) == 7);
 }
 ```
 
 An open record with an anonymous tail is rejected with `T0032` as a **return type**, inside a
 **written function type**, and as a **record or struct field**. In a return type or function type
 the tail has no construct that solves it, and a field's type would differ between values of one
-nominal type. A named tail (`{ .x: T, ..R }`, `R` declared `record`) is not affected by this rule
+nominal type. A named tail (`.{ .x: T, ..R }`, `R` declared `record`) is not affected by this rule
 and is accepted wherever `R` is in scope.
 
 <!-- doc-example: expect-fail reason="an anonymous open record has no solver in a return type -- T0032 is the point" -->
 ```metel
-fun make() -> { .x: i64, .. } {
-    { .x = 1, .y = 2 }
+fun make() -> .{ .x: i64, .. } {
+    .{ .x = 1, .y = 2 }
 }
 
 fun main() {
@@ -2244,7 +2244,7 @@ fun main() {
 ### Field-wise row constraints
 
 A constraint applies an aspect bound to **every field** of a row, rather than to the
-row's own type as a whole — distinct from a row *bound* (`R: { .x: f64, .. }`), which
+row's own type as a whole — distinct from a row *bound* (`R: .{ .x: f64, .. }`), which
 constrains the row's shape (which labels it has), not its contents (what the field
 types can do):
 
@@ -2263,22 +2263,22 @@ bounds the record as a whole. A type or literal row after `..` in a bound is a
 parse error; a parameter without the `record` kind is rejected with `T0012`.
 
 `R` must be a row the declaration can walk: the tail of an open-row parameter
-(`{ ..R }`), the remainder of a `where` decomposition, the tail of an `extend` target
-(`extend<record R> { ..R }`), or a declared `record` generic used as the row argument of a
+(`.{ ..R }`), the remainder of a `where` decomposition, the tail of an `extend` target
+(`extend<record R> .{ ..R }`), or a declared `record` generic used as the row argument of a
 named type (`Packet<..R>`), in a function signature or an `extend` target. A row that
 none of these positions mentions has no fields to constrain and is rejected.
 
 ```metel
 aspect Mark { fun mark(&self) -> i64; }
-record Packet<record R> { data: { ..R } }
-fun duplicate<record R>(p: Packet<..R>) -> ({ ..R }, { ..R }) where ..R: Copy {
+record Packet<record R> { data: .{ ..R } }
+fun duplicate<record R>(p: Packet<..R>) -> (.{ ..R }, .{ ..R }) where ..R: Copy {
     let d := p.data;
     (d, d)
 }
 extend<record R> Packet<..R>: Mark where ..R: Copy { fun mark(&self) -> i64 { 1 } }
 
 fun main() {
-    let p := Packet { data = { .a = 1 } };
+    let p := Packet { data = .{ .a = 1 } };
     assert(p.mark() == 1);
     let pair := duplicate(p);
     assert(pair.0.a + pair.1.a == 2);
@@ -2362,7 +2362,7 @@ matches an impl when its row meets the condition, whether it is an anonymous rec
 nominal [`record`](declarations.md#records). Methods are checked per call against the
 concrete receiver, as for every structural target, and the aspect's default methods are
 inherited as for any impl. The field types a target writes must be spelled out: one that
-names an impl type parameter (`extend<T> { .w: T }: A`) is rejected, since no receiver's
+names an impl type parameter (`extend<T> .{ .w: T }: A`) is rejected, since no receiver's
 field type could equal it.
 
 The second also needs overlap checking between row bounds — two shape-conditional
@@ -2379,16 +2379,16 @@ Two shape-conditional impls are disjoint when some label one requires the other 
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
-extend<record R: { .name: String, .. }> { ..R }: Describe {
+extend<record R: .{ .name: String, .. }> .{ ..R }: Describe {
     fun describe(&self) -> String { "named ${self.name}" }
 }
-extend<record R: !{ .name }> { ..R }: Describe {
+extend<record R: !{ .name }> .{ ..R }: Describe {
     fun describe(&self) -> String { "anonymous" }
 }
 
 fun main() {
-    assert({ .name = "ada", .age = 36 }.describe() == "named ada");
-    assert({ .age = 36 }.describe() == "anonymous");
+    assert(.{ .name = "ada", .age = 36 }.describe() == "named ada");
+    assert(.{ .age = 36 }.describe() == "anonymous");
 }
 ```
 
@@ -2399,10 +2399,10 @@ record Handle { id: i64, name: String }
 
 aspect Describe { fun state(&self) -> String; }
 
-extend<record R: !{ .name }> { ..R }: Describe {
+extend<record R: !{ .name }> .{ ..R }: Describe {
     fun state(&self) -> String { "no name" }
 }
-extend<record R: { .name: String, .. }> { ..R }: Describe {
+extend<record R: .{ .name: String, .. }> .{ ..R }: Describe {
     fun state(&self) -> String { "has name" }
 }
 
@@ -2422,10 +2422,10 @@ Two impls whose conditions do not exclude each other overlap and are rejected wi
 ```metel
 aspect Describe { fun describe(&self) -> String; }
 
-extend<record R: { .name: String, .. }> { ..R }: Describe {
+extend<record R: .{ .name: String, .. }> .{ ..R }: Describe {
     fun describe(&self) -> String { "a" }
 }
-extend<record R: { .id: i64, .. }> { ..R }: Describe {
+extend<record R: .{ .id: i64, .. }> .{ ..R }: Describe {
     fun describe(&self) -> String { "b" }
 }
 ```
@@ -2435,7 +2435,7 @@ extend<record R: { .id: i64, .. }> { ..R }: Describe {
 
 ##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-1}
 
-A row-conditional impl (`extend<record R: { ... }> { ..R }: Aspect` or `extend<record R>
+A row-conditional impl (`extend<record R: .{ ... }> .{ ..R }: Aspect` or `extend<record R>
 { ..R }: Aspect`) resolves against a value's **current** row, not only its widest
 possible one — for a struct, that is the row of its current residual (narrower after a
 partial move, wider again after the moved field is restored), exactly the same
@@ -2646,7 +2646,7 @@ bound lists. Naming a field the bound doesn't list is rejected regardless of `..
 
 A row bound is a list of entries, optionally followed by `..` (RFC-0189). An entry is `.x` (a field `.x` of any type), `.x: T` (a field `.x` of type `T`), `!.x` (no field
 `.x`) or `!.x: T` (no field `.x` of type `T`), and the bound holds when every entry holds. The whole-row form `!{ .a, .b: T }` is sugar for
-`{ !.a, !.b: T, .. }`, and `{ .. }` alone is not a bound.
+`{ !.a, !.b: T, .. }`, and `.{ .. }` alone is not a bound.
 
 <!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
 
@@ -2668,7 +2668,7 @@ A row bound is a list of entries, optionally followed by `..` (RFC-0189). An ent
 ##### Legality Rule {#spec.types.generics.row-bounds.legality-9}
 
 A bound with a negative entry must end in `..`: in a closed bound the entry states nothing and is an error (T0043). A label may appear once positively and any number of times
-negatively; entries that cannot all hold, such as `{ .x, !.x, .. }` and `{ .x: T, !.x: T, .. }`, are an error (T0043), and a negative entry inside an outer `!{ }` is an error
+negatively; entries that cannot all hold, such as `.{ .x, !.x, .. }` and `.{ .x: T, !.x: T, .. }`, are an error (T0043), and a negative entry inside an outer `!{ }` is an error
 (T0043).
 
 <!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->

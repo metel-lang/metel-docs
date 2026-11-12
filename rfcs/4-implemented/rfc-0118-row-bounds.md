@@ -48,9 +48,9 @@ coverage:
 > **The design questions that were open at review are settled, two of them by building the
 > change rather than reasoning about it.** `wildcard_type` and a `row_bound` alternative to
 > `bound_head` were added to the grammar, run against the suite (755 green), and reverted:
-> `T: { .x: f64, .y: f64, .. }` and `T: !{ token: … }` both parse, `T: Show + Clone` is
+> `T: .{ .x: f64, .y: f64, .. }` and `T: !{ token: … }` both parse, `T: Show + Clone` is
 > unaffected. The prototype also settled a detail the RFC had not specified — the trailing
-> `..` is admitted only after at least one field, so bare `{ .. }` does not parse.
+> `..` is admitted only after at least one field, so bare `.{ .. }` does not parse.
 >
 > **Amended 2026-07-24, hours after integration, and the amendment is the substantive
 > part.** As first integrated, §3 said any struct with matching fields satisfies a row bound
@@ -116,7 +116,7 @@ coverage:
 
 ## Summary
 
-A bound written as a bare row: `record T: { .x: f64, .y: f64, .. }` means "any type carrying at
+A bound written as a bare row: `record T: .{ .x: f64, .y: f64, .. }` means "any type carrying at
 least these fields." A field may omit its type (`{ x }`) to constrain the label only.
 Negation reuses the bound grammar's existing `!` and is the complement of the positive
 bound: `T: !{ token }` means "any type carrying no field named `token`." **Any nominal struct with matching
@@ -173,7 +173,7 @@ wrong, and the reason is `<record T>` with no row bound at all.**
 fun labels<record T>(x: T) -> Symbol[] { ... }   // any record, whatever its shape
 ```
 
-There is no other spelling for that. `<T>` is unconstrained and admits `i64`; `<T: { .. }>`
+There is no other spelling for that. `<T>` is unconstrained and admits `i64`; `<T: .{ .. }>`
 **does not parse**, deliberately — see open question 2, where the trailing `..` is admitted
 only after at least one field. So without the marker, record-kindedness is obtainable only
 as a side effect of constraining specific fields, and a function that wants "any record"
@@ -268,8 +268,8 @@ So `!{ x: f64 }` **is satisfied by a record whose `x` is an `i64`** — it has n
 label outright.
 
 **The complement is taken per listed field, not against the row as a whole.** Reading it the
-other way — "T does not satisfy the closed bound `{ .x: f64 }`" — would make `!{ x: f64 }`
-hold for `{ .x: f64, .y: i64 }`, since a two-field record does not satisfy a closed one-field
+other way — "T does not satisfy the closed bound `.{ .x: f64 }`" — would make `!{ x: f64 }`
+hold for `.{ .x: f64, .y: i64 }`, since a two-field record does not satisfy a closed one-field
 bound. That is plainly not the intent, and the distinction is invisible until someone writes
 a wider record, so it is fixed here rather than left to the implementation.
 
@@ -281,7 +281,7 @@ syntax that is accepted but meaningless tends to acquire a meaning later by acci
 reading of an empty label set, satisfied only by `{ }`. It falls out of the grammar rather
 than being designed, and it is harmless and consistent (closed bounds require an exact label
 set; the empty set is a set), so it is admitted rather than special-cased. Note this is *not*
-the same as the rejected `{ .. }`, which would mean "any row at all" — see open question 2.
+the same as the rejected `.{ .. }`, which would mean "any row at all" — see open question 2.
 
 ## 2a. A field may omit its type, in either polarity
 
@@ -294,7 +294,7 @@ fun g<record T: { .x, .y: f64, .. }>(p: T)    // mixed: any-typed `x`, f64 `y`
 fun h<record T: !{ token }>(t: T)           // carries no `token`, whatever its type
 ```
 
-Earlier drafts spelled the any-type case `{ .x: _ }`, with `_` a new type-position wildcard.
+Earlier drafts spelled the any-type case `.{ .x: _ }`, with `_` a new type-position wildcard.
 Omitting the annotation says the same thing with no new construct, and it matches the shape
 the language already uses when a part is inferable — a record literal's `{ x }` likewise
 drops what need not be written. **The wildcard is therefore not introduced.**
@@ -334,13 +334,13 @@ far as it goes, and it is why RFC-0090 §2 and §7 both stated the implicit rule
 claimed implicit satisfaction creates "ambient structural compatibility — the TypeScript
 collapse." That conflates two different things. TypeScript's collapse is *subtyping*: a
 `ScreenPos` **is** a `Point`, substitutable wherever one is expected. A row bound does
-nothing of the kind — under `record T: { .x: f64, .. }`, `Point` and `ScreenPos` both satisfy
+nothing of the kind — under `record T: .{ .x: f64, .. }`, `Point` and `ScreenPos` both satisfy
 the bound and remain **completely unrelated to each other**. The function is polymorphic;
 the types do not collapse. Constrained genericity is not substitutability.
 
 **The two arguments that do hold:**
 
-- **Privacy.** Under implicit struct satisfaction, `{ .secret: i64, .. }` becomes an oracle
+- **Privacy.** Under implicit struct satisfaction, `.{ .secret: i64, .. }` becomes an oracle
   for private structure: outside code can learn which fields a struct has by observing which
   bounds it satisfies. That defeats RFC-0032, and it is what forced the awkward
   "public projection" rule this RFC briefly carried and then withdrew. Records-only makes
@@ -426,7 +426,7 @@ position admits both readings.
    resolution is retracted.
 
    **Why it was wrong:** adding the alternative to `type_expr` makes `_` writable in *every*
-   type position — `let x: _ = 5`, `fun f(x: _)`, `{ .x: _ }` as a record type — while this
+   type position — `let x: _ = 5`, `fun f(x: _)`, `.{ .x: _ }` as a record type — while this
    RFC defined its meaning in exactly one of them. It would have shipped a construct whose
    semantics were undefined almost everywhere it could be written, to be settled later by
    whoever first hit it.
@@ -447,7 +447,7 @@ position admits both readings.
 
    **Both were built, run and reverted**, rather than reasoned about:
    - **755 tests green** with both additions.
-   - `fun magnitude<T: { .x: f64, .y: f64, .. }>(p: T)` **parses** — the failure is
+   - `fun magnitude<T: .{ .x: f64, .y: f64, .. }>(p: T)` **parses** — the failure is
      `path: unexpected rule row_field`, a missing parser arm, not a grammar conflict.
    - `fun send<T: !{ token: _ }>(t: T)` **parsed**, exercising the negative bound and the
      then-proposed wildcard together. The wildcard has since been withdrawn (open question 1);
@@ -470,10 +470,10 @@ position admits both readings.
    `let record = 5;` compiles today — and is discussed in §1.
 
    **One detail the prototype settled that the RFC had not specified:** the rule above
-   admits the trailing `..` only *after* at least one field, so `{ .. }` alone does not
+   admits the trailing `..` only *after* at least one field, so `.{ .. }` alone does not
    parse. **That is now load-bearing rather than incidental:** it is precisely why the
    `record` marker cannot be dropped, since "any record, whatever its shape" has no other
-   spelling than `<record T>` (§1). Written as a bound it would have to be `{ .. }`, which
+   spelling than `<record T>` (§1). Written as a bound it would have to be `.{ .. }`, which
    the grammar rejects.
 3. ~~Cross-module private-field leakage.~~ **Withdrawn 2026-07-24 — the question does not
    arise for this RFC, and the resolution briefly recorded here is retracted.** It was

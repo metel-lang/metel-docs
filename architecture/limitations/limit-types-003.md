@@ -13,7 +13,7 @@ review: null
 
 ## Limitation
 
-`std::core` declares `extend<record R> { ..R }: Display where each R: Display`, so every record
+`std::core` declares `extend<record R> .{ ..R }: Display where each R: Display`, so every record
 whose fields are all `Display` is `Display`: anonymous and nominal records, nested records,
 and records with fields whose types have a `Display` impl of their own. The impl's body is
 not Metel code. Nothing in the language can iterate a row's fields, so the method is a
@@ -22,7 +22,7 @@ intercepted by label in `call_runtime_callable` because it needs the runtime to 
 field's own `to_string`) formats the receiver at runtime, fields in label order:
 
 ```metel
-let p := { .x = 1, .y = 2.5, .s = "hi" };
+let p := .{ .x = 1, .y = 2.5, .s = "hi" };
 println("${p}");        // { s: hi, x: 1, y: 2.5 }
 ```
 

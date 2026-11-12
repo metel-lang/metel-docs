@@ -1,7 +1,7 @@
 ---
 id: LIMIT-COHERENCE-001
-title: "`extend<record T: {...}> T: Aspect` is accepted, then never applies"
-summary: "A blanket aspect impl bounded by a row (`extend<record T: { .x: f64, .. }> T: A`) passes coherence, but a call through the bound never dispatches to it; the same class of mistake is rejected outright for the equivalent non-generic form."
+title: "`extend<record T: .{...}> T: Aspect` is accepted, then never applies"
+summary: "A blanket aspect impl bounded by a row (`extend<record T: .{ .x: f64, .. }> T: A`) passes coherence, but a call through the bound never dispatches to it; the same class of mistake is rejected outright for the equivalent non-generic form."
 scope: "architecture/spec/coherence.md#coherence"
 owner: metel-frontend
 discovered_by: "metel-core#1241"
@@ -15,9 +15,9 @@ Reproduced against current `develop`:
 
 ```metel
 aspect A { fun f(self) -> i64; }
-extend<record T: { .x: f64, .. }> T: A { fun f(self) -> i64 { 1 } }
+extend<record T: .{ .x: f64, .. }> T: A { fun f(self) -> i64 { 1 } }
 fun main() {
-    let r := { .x = 1.0, .y = 2.0 };
+    let r := .{ .x = 1.0, .y = 2.0 };
     println(r.f().to_string());
 }
 ```
@@ -32,7 +32,7 @@ generic, row-bounded form slips through the same class of check.
 This is a different case from `GAP-DECLARATIONS-001` (no local aspect impl for
 a tuple or anonymous record target) and `GAP-TYPES-004` (`extend<record R>` does
 not parse at all): here the `extend` uses the ordinary, already-supported
-`record T: { .. }` bound and is accepted, then silently does nothing.
+`record T: .{ .. }` bound and is accepted, then silently does nothing.
 
 ## Impact
 

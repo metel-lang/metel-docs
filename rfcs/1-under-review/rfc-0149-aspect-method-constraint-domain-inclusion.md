@@ -164,9 +164,9 @@ from "does constraint `P` entail constraint `Q`".
 | `T: Copy + Display` | `T: Display` | yes |
 | `T: Display` | `T: Copy + Display` | no |
 | `T: Copy` | `T: !Drop` | yes |
-| `record T: { .x: f64, .y: f64, .. }` | `record T: { .x: f64, .. }` | yes |
-| `record T: { .x: f64, .. }` | `record T: { .x: f64, .y: f64, .. }` | no |
-| `record T: { .x: i64, .. }` | `record T: !{ x: f64 }` | yes |
+| `record T: .{ .x: f64, .y: f64, .. }` | `record T: .{ .x: f64, .. }` | yes |
+| `record T: .{ .x: f64, .. }` | `record T: .{ .x: f64, .y: f64, .. }` | no |
+| `record T: .{ .x: i64, .. }` | `record T: !{ x: f64 }` | yes |
 | `T: Deref<Target = U>` | `T: Deref` | yes |
 | `T: Deref` | `T: Deref<Target = U>` | no |
 | `T: Deref<Target = U>` | `T: Deref<Target = U>` | yes |
@@ -235,22 +235,22 @@ This subsection **supersedes RFC-0129 Open Question 1's retreat** and folds in t
 
 ### 4. Row-bound entailment
 
-Row-bound forms (RFC-0118): open `{ .l: T, .. }` ("has at least"), closed
-`{ .l: T }` ("has exactly"), label-only `{ l, .. }` ("has `l` at any type"),
+Row-bound forms (RFC-0118): open `.{ .l: T, .. }` ("has at least"), closed
+`.{ .l: T }` ("has exactly"), label-only `{ l, .. }` ("has `l` at any type"),
 negative `!{ l }` / `!{ l: T }`. Each denotes a set of concrete rows;
 `bound_a ⊢ bound_i` iff `Dom(bound_a) ⊆ Dom(bound_i)`.
 
 **Normalize multi-label bounds to per-label atoms first:**
 
-- `{ .a: A, .b: B, .. }` → `{ .a: A, .. } ∧ { b: B, .. }`
+- `.{ .a: A, .b: B, .. }` → `.{ .a: A, .. } ∧ { b: B, .. }`
 - `!{ a, b }` → `!{ a } ∧ !{ b }`
 - `!{ a: A, b: B }` → `!{ a: A } ∧ !{ b: B }`
 - `{ a, b, .. }` (label-only) → `{ a, .. } ∧ { b, .. }`
-- `{ .a: A, .b: B }` (closed) stays one atom on the **aspect** side — closedness is
+- `.{ .a: A, .b: B }` (closed) stays one atom on the **aspect** side — closedness is
   a property of the whole row, not decomposable — but a closed aspect bound is a
   **singleton domain** `{ the row `{ a: A, b: B }` }`, so it entails **every impl
   atom that single row satisfies**: each contained typed-open atom
-  (`{ .a: A, .. }`, `{ .b: B, .. }`), each contained label-only atom (`{ a, .. }`),
+  (`.{ .a: A, .. }`, `.{ .b: B, .. }`), each contained label-only atom (`{ a, .. }`),
   and each negative atom the row does not violate (`!{ c }` for `c ∉ {a, b}`,
   `!{ a: X }` for `X ≠ A`). It matches a closed impl bound only when that bound is
   the identical row.
@@ -259,18 +259,18 @@ Each resulting atom is then checked by the table:
 
 | Aspect row bound | Implementation row bound | Result | Reason |
 |---|---|---|---|
-| open `{ .x: f64, .y: f64, .. }` | open `{ .x: f64, .. }` | yes | fewer required fields on the impl side |
-| open `{ .x: f64, .. }` | open `{ .x: f64, .y: f64, .. }` | no | aspect admits rows lacking `y` |
-| closed `{ .x: f64 }` | open `{ .x: f64, .. }` | yes | the one closed row satisfies the open bound |
-| open `{ .x: f64, .. }` | closed `{ .x: f64 }` | no | aspect admits `{ .x: f64, .z: … }` |
-| closed `{ .x: f64, .y: f64 }` | closed `{ .x: f64 }` | no | distinct exact rows; disjoint domains |
-| closed `{ .x: f64 }` | closed `{ .x: f64 }` | yes | identical |
-| closed `{ .x: f64 }` | `!{ y }` (any `y ≠ x`) | yes | the closed row has no `y` |
-| closed `{ .x: f64 }` | `!{ x: g }` (`g ≠ f64`) | yes | the closed row's `x` is `f64`, not `g` |
-| open `{ .x: i64, .. }` | `!{ x: f64 }` | yes | a label has one type — `x: i64` ⇒ not `x: f64` |
-| open `{ .x: f64, .. }` | `!{ y }` | no | aspect admits rows that also carry `y` |
-| open `{ .x: f64, .. }` | label-only `{ x, .. }` | yes | requiring `x: f64` ⊆ requiring `x: _` |
-| label-only `{ x, .. }` | open `{ .x: f64, .. }` | no | aspect admits `x: i64` |
+| open `.{ .x: f64, .y: f64, .. }` | open `.{ .x: f64, .. }` | yes | fewer required fields on the impl side |
+| open `.{ .x: f64, .. }` | open `.{ .x: f64, .y: f64, .. }` | no | aspect admits rows lacking `y` |
+| closed `.{ .x: f64 }` | open `.{ .x: f64, .. }` | yes | the one closed row satisfies the open bound |
+| open `.{ .x: f64, .. }` | closed `.{ .x: f64 }` | no | aspect admits `.{ .x: f64, .z: … }` |
+| closed `.{ .x: f64, .y: f64 }` | closed `.{ .x: f64 }` | no | distinct exact rows; disjoint domains |
+| closed `.{ .x: f64 }` | closed `.{ .x: f64 }` | yes | identical |
+| closed `.{ .x: f64 }` | `!{ y }` (any `y ≠ x`) | yes | the closed row has no `y` |
+| closed `.{ .x: f64 }` | `!{ x: g }` (`g ≠ f64`) | yes | the closed row's `x` is `f64`, not `g` |
+| open `.{ .x: i64, .. }` | `!{ x: f64 }` | yes | a label has one type — `x: i64` ⇒ not `x: f64` |
+| open `.{ .x: f64, .. }` | `!{ y }` | no | aspect admits rows that also carry `y` |
+| open `.{ .x: f64, .. }` | label-only `{ x, .. }` | yes | requiring `x: f64` ⊆ requiring `x: _` |
+| label-only `{ x, .. }` | open `.{ .x: f64, .. }` | no | aspect admits `x: i64` |
 | label-only `{ x, .. }` | label-only `{ x, .. }` | yes | identical |
 | `!{ x }` | `!{ x }` | yes | identical |
 | `!{ x }` | `!{ x: f64 }` | yes | "no `x` at all" ⊆ "no `x` at `f64`" |
@@ -302,11 +302,11 @@ implements it, and vacuous `∅ ⊆ D_impl` conformance would let any implementa
 Unsatisfiability is detected over a **closed set of conflict shapes**:
 
 - `A(T) ∧ !A(T)` for the same aspect; `Copy(T) ∧ Drop(T)` (RFC-0071 §4).
-- a **positive row bound of any kind** — open `{ .l: A, .. }`, closed `{ .l: A }`,
+- a **positive row bound of any kind** — open `.{ .l: A, .. }`, closed `.{ .l: A }`,
   or label-only `{ l, .. }` — conjoined with a negative bound over the **same
   label** that it violates: `!{ l }`, or `!{ l: A }` when the positive bound pins
   `l` to `A`.
-- a closed row conjoined with a positive-field atom it lacks; `{ .l: A } ∧ { l: B }`
+- a closed row conjoined with a positive-field atom it lacks; `.{ .l: A } ∧ { l: B }`
   with `A` and `B` **provably distinct concrete types** (§8).
 - two associated-type equality atoms `Assoc = X` and `Assoc = Y` for the same
   `(T, Aspect, Assoc)` projection where `X` and `Y` are **provably distinct
@@ -388,7 +388,7 @@ implementation and its fixtures agree on the boundary:
   normal type-equality relation (alias expansion, tuple/row canonicalization).
   If either still contains a free parameter or an unresolved projection, they are
   **not** provably distinct and the conflict/`no` does not fire (conservative
-  accept for §5, conservative wrong-no for §4's `{ .l: A } ⊬ { l: B }`).
+  accept for §5, conservative wrong-no for §4's `.{ .l: A } ⊬ { l: B }`).
 - **The reachable-impl query.** Input: an aspect `A` and, for the blanket rule, a
   candidate premise conjunction. Output: (a) the set of reachable bare-parameter
   blankets `extend<G: P̄> G: A`; (b) a boolean "any reachable negative impl of

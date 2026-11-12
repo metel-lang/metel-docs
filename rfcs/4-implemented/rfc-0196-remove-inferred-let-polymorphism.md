@@ -35,7 +35,7 @@ variables into type parameters, so `let id := |x| x;` used at `i64` and then at 
 error, as in Rust. Polymorphism in Metel is then always *written* or *already declared*:
 
 - a type, bound or row parameter list on a `fun` (`fun id<T>(x: T) -> T`);
-- a written open record (`|p: { .x: i64, .. }| p.x`), whose `..` is the user's own row variable;
+- a written open record (`|p: .{ .x: i64, .. }| p.x`), whose `..` is the user's own row variable;
 - a reference to an already-generic function (`let f := identity;`), which keeps the scheme its
   declaration wrote.
 
@@ -131,7 +131,7 @@ Generalization is kept, unchanged, for the two forms whose polymorphism is not i
 
 1. **A reference to an already-generic function** (`let f := identity;`). The scheme is the
    declaration's. This is metel-core#736 / RFC-0138 and is not touched.
-2. **A closure whose written annotation names a row variable** (`|p: { .x: i64, .. }| p.x`). Only the
+2. **A closure whose written annotation names a row variable** (`|p: .{ .x: i64, .. }| p.x`). Only the
    variables that the annotation itself introduced are quantified; the parameter and return types the
    closure infers are not. This is metel-core#1478.
 
@@ -267,7 +267,7 @@ error code is proposed; the mismatch is `T0001`.
   `let` closures whose generalized scheme is instantiated at two or more distinct types. This decides
   whether the migration is cheap.
 - Turn off the closure-literal branch of the let-polymorphism code and list the failing fixtures.
-- `let f := identity;` still works at several types; `|p: { .x: i64, .. }| p.x` still accepts
+- `let f := identity;` still works at several types; `|p: .{ .x: i64, .. }| p.x` still accepts
   several shapes.
 - The diagnostic above is produced for `id(42); id(true);`.
 - `let dup := |x| { (x, x) };` used at `i64` passes `--move-check` (monomorphic), and `let dup := |x| { (x, x) };` used at `i64` and `boolean` is the one-type mismatch.

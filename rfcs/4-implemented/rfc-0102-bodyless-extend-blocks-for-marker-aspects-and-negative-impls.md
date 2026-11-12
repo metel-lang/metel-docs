@@ -41,7 +41,7 @@ requires the braces anyway:
   empty body; there's simply nothing new to say at that impl site.
 
 The empty `{ }` in both cases is pure noise, and this grammar already has a precedent for dropping it:
-`fun_decl = { ... ~ (block | ";") }` — a function declaration ends in either a real body or a bare
+`fun_decl = .{ ... ~ (block | ";") }` — a function declaration ends in either a real body or a bare
 semicolon, used throughout aspect method signatures and native declarations for exactly this reason
 (nothing to write, so don't make anyone write nothing). `impl_block`'s own grammar has no such
 alternative — `"{" ~ (fun_decl | assoc_type_def)* ~ "}"` is unconditional — and this RFC proposes closing
@@ -153,7 +153,7 @@ others weren't there. There is no cross-item interaction: `A`'s requirements, `B
 negative-impl rule are each validated completely independently.
 
 **Restriction: a multi-aspect list may only appear on a bodyless (or, for an all-positive list, an
-explicitly-empty-braced) extend block.** `extend Type: A, B { fun foo() { ... } }` is rejected outright —
+explicitly-empty-braced) extend block.** `extend Type: A, B { fun foo() .{ ... } }` is rejected outright —
 there is no principled way to say which aspect `foo` belongs to (Rust sidesteps this question entirely by
 requiring exactly one trait per `impl` block in the first place). This RFC doesn't invent a disambiguation
 mechanism for a shared, non-empty body (e.g. a qualified `A::foo` method-declaration syntax) — multi-aspect

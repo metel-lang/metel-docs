@@ -86,11 +86,11 @@ compile time".
 
 ```metel
 // (a, b) is notation for the row below
-{ .0 = a, .1 = b }
+.{ .0 = a, .1 = b }
 ```
 
 **A field of a row is a label.** In an anonymous record literal, pattern, type, row bound, negative bound,
-row equation and projection list the field is written `.x`: `{ .x = 1 }`, `Handle.{ .fd, ..R }`.
+row equation and projection list the field is written `.x`: `.{ .x = 1 }`, `Handle.{ .fd, ..R }`.
 RFC-0221 owns that rule and its sites. Struct and enum construction, declarations and patterns keep bare
 names (RFC-0100).
 

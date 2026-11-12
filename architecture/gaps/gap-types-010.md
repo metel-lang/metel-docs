@@ -12,7 +12,7 @@ review: "revisit if a real API needs to hide a record's extra fields from its ca
 
 ## Gap
 
-`fun make() -> { .x: i64, .. }` is rejected with `T0032`. Such a return type would be an
+`fun make() -> .{ .x: i64, .. }` is rejected with `T0032`. Such a return type would be an
 existential: the callee picks the row and the caller sees `x` plus an extra row it cannot name.
 The language has no form for it.
 
@@ -21,8 +21,8 @@ The cases that motivate it are covered by other forms:
 - a private function omits its return type and the exact record is inferred, so the caller reads
   every field;
 - a `pub` function must write a return type (`T0010`) and writes the record in full,
-  `-> { .x: i64, .y: i64 }`;
-- a function whose row comes from an argument names it, `-> { .x: i64, ..R }`.
+  `-> .{ .x: i64, .y: i64 }`;
+- a function whose row comes from an argument names it, `-> .{ .x: i64, ..R }`.
 
 ## Impact
 

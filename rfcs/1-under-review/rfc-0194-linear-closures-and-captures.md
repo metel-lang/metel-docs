@@ -87,7 +87,7 @@ the example above is an error, and the fix-it writes `[t] linear || { close(t); 
 RFC-0089 declares a type's class and checks it against its fields. A closure's captured environment is the same kind
 of aggregate, so the same check applies: **a closure that captures a `Linear` value by value must be declared
 `linear`**, and the compiler reports the missing keyword at the capture. The keyword sits in the literal's prefix
-(`[t] linear || { ... }`) and in a function type (`linear || -> ()`). Its position follows `copy`, `once` and `var`
+(`[t] linear || .{ ... }`) and in a function type (`linear || -> ()`). Its position follows `copy`, `once` and `var`
 (RFC-0219): order-insensitive in a type, first in a literal's prefix. `linear` implies `once`, and a `linear` closure
 may have no linear capture at all (a fiat `linear`, a must-call callback). `copy` and `linear` are mutually exclusive.
 

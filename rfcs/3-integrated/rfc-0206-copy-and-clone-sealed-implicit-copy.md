@@ -213,7 +213,7 @@ direction depends on the property:
    Leaf, Node(List<Tree>) }` needs `Tree: Clone`, which needs `List<Tree>: Clone`, which needs `Tree: Clone`
    again. The solver assumes the impl being derived while it checks the fields. This is the recursive-derivation case of Haskell's smallest derived context, computed by fixed point (Haskell Report section 11); Rust's coinduction applies to auto traits, not to derives, so it is not a precedent for this rule. The
    derived `clone` is a recursive function over finite values, so termination comes from the data and not from the
-   proof. This covers regular recursion such as `Node<T> { .next: Option<Node<T>>, .v: T }`.
+   proof. This covers regular recursion such as `Node<T> .{ .next: Option<Node<T>>, .v: T }`.
 4. **Coinduction never applies to a negative goal** (`!Drop`, `T: !B`) **or to a granted marker** (`Copy`): a cycle
    through one is unknown or "no", never a proof. The structural markers of rule 2 are the only exception.
 5. **Expanding recursion is rejected.** `struct Grow<T> derives Clone { rest: Option<Grow<List<T>>> }` grows its
@@ -276,7 +276,7 @@ Measured on 2026-11-02:
 | Primitives | yes | `Copy` types: the `Clone` is provided; the explicit bodies go |
 | `String` | yes | the body becomes the leaf native `copy_value` |
 | `[T; N]` | yes, but it does not call the element's `clone` | `Copy` when the element is (provided); otherwise field-wise through the element's `clone`; the discrepancy with records is a defect to fix |
-| Anonymous records | yes, field-wise: `extend<record R> { ..R }: Clone where ..R: Clone` (RFC-0123) | unchanged |
+| Anonymous records | yes, field-wise: `extend<record R> .{ ..R }: Clone where ..R: Clone` (RFC-0123) | unchanged |
 | Named `record` | yes today, the same field-wise impl | takes `derives Clone` or `derives Copy` like a `struct`; a plain `record P` is not cloneable |
 | Tuples | **no** | a structural arm, hardcoded like tuple `Copy` (metel-core#263), until variadic generics (metel-core#794) |
 | `Option`, `Result`, `List` | **no** | `extend<T: Clone> Option<T>: Clone`, and the same for the others (metel-core#270) |
@@ -472,7 +472,7 @@ condition. Consequences:
   the fields support (`Tx` is linear, so the type is never `Discard`). The error is at the declaration and suggests
   `linear struct`. This is what protects a public type when a field such as `Ticket<T>` mentions a parameter but is
   linear for every `T`, which the syntactic keyword rule of RFC-0089 section 2 (D10) does not catch.
-- A public type that does not own its parameter (`View<T> { .v: &T }`) must state `Discard` (`true`) to be droppable
+- A public type that does not own its parameter (`View<T> .{ .v: &T }`) must state `Discard` (`true`) to be droppable
   for a linear `T`. Without the statement `View<Tx>` is linear for outside users, which is over-conservative but
   harmless, and the author fixes it with one statement.
 The statement is an assertion verified against the fields, like the sealed `Copy` grant. It is not an impl, so no user

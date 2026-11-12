@@ -110,11 +110,11 @@ extend Stack<T> { fun push(self, item: T) }  // named — fun required
 
 ### D1 — Closure-start disambiguation uses `->` lookahead
 
-The parser resolves `(x)` versus `(x) -> { ... }` by looking for `->` after the closing `)`. If `->` is present, the parser interprets the construct as a closure expression; otherwise it remains a grouped expression. No extra parameter annotation rule is introduced.
+The parser resolves `(x)` versus `(x) -> .{ ... }` by looking for `->` after the closing `)`. If `->` is present, the parser interprets the construct as a closure expression; otherwise it remains a grouped expression. No extra parameter annotation rule is introduced.
 
-### D2 — Zero-argument closures use `() -> { ... }`
+### D2 — Zero-argument closures use `() -> .{ ... }`
 
-Bare `{ ... }` remains a block expression, not a closure shorthand. Zero-argument closures must be written as `() -> { ... }`.
+Bare `.{ ... }` remains a block expression, not a closure shorthand. Zero-argument closures must be written as `() -> .{ ... }`.
 
 ### D3 — `->` is always required before the closure body
 
@@ -160,10 +160,10 @@ as an argument or capture names from its enclosing scope.
 
 ### 2. The arrow distinguishes a closure from a grouped expression
 
-`(x) -> { ... }` is a closure, while `(x)` remains a grouped expression. A
+`(x) -> .{ ... }` is a closure, while `(x)` remains a grouped expression. A
 parameter list followed directly by a block, without `->`, is not closure syntax.
 
-### 3. Zero-argument closures use `() -> { ... }`
+### 3. Zero-argument closures use `() -> .{ ... }`
 
 The empty parameter list is still followed by `->`; a bare block is not an
 anonymous function.
@@ -175,8 +175,8 @@ such as `(i64) -> i64`, including zero-argument function types.
 
 ### 5. Named functions still require `fun`
 
-`fun name(...) { ... }` remains the declaration form for named functions.
+`fun name(...) .{ ... }` remains the declaration form for named functions.
 
 ### 6. The former anonymous `fun(...)` form is rejected
 
-The former `fun(...) { ... }` anonymous-function spelling is rejected.
+The former `fun(...) .{ ... }` anonymous-function spelling is rejected.

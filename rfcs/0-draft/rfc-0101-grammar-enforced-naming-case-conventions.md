@@ -16,8 +16,8 @@ PascalCase for type declarations (struct/enum/aspect/generic params), camelCase 
 
 Metel's identifier casing is, today, a convention with no enforcement behind it: every struct/enum/aspect
 in `stdlib/core.mtl` happens to be PascalCase, and every function, method, variable, and field happens to
-be snake_case — but nothing in the grammar or typechecker would reject `struct point { ... }` or
-`fun IsSome(self) -> boolean { ... }` if someone wrote them. This RFC proposes making three specific
+be snake_case — but nothing in the grammar or typechecker would reject `struct point .{ ... }` or
+`fun IsSome(self) -> boolean .{ ... }` if someone wrote them. This RFC proposes making three specific
 casing rules real, compiler-enforced constraints rather than an unstated house style, with one deliberate
 departure from the current de-facto convention: **`fun` declarations (free functions, methods, associated
 functions) move from snake_case to camelCase**, distinguishing "this name was introduced by a `fun`

@@ -187,7 +187,7 @@ when the rewrite keeps the program's meaning, which means the function must sati
 4. **Every use follows the declaration.** Functions are hoisted and `let` bindings are not: a
    function declared after a call to it is fine, a `let`-bound closure used before its `let` is
    an undefined name (GAP-DECLARATIONS-004, RFC-0131).
-5. **Its body does not extend a parameter's record.** A body such as `{ ..r, .host = "h" }` needs
+5. **Its body does not extend a parameter's record.** A body such as `.{ ..r, .host = "h" }` needs
    the fact that `r` lacks `host`, which a function states with a row bound and a closure cannot;
    the closure form is rejected with `T0012` (GAP-FUNCTIONS-007). Such a function must write its type.
 
@@ -241,9 +241,9 @@ stated so that it keeps holding. Items 1 and 3 restate `T0010` and constrain a f
   comes from an argument, or (for a private function satisfying §2) bind a closure. The per-position
   `T0032` advice (metel-core#1484), which exists only because omission means different things,
   collapses to that one list.
-- **Row-extension helpers.** `fun add_host<record R: !{ host }>(r: { ..R }) -> { ..R, .host: String }`
+- **Row-extension helpers.** `fun add_host<record R: !{ host }>(r: .{ ..R }) -> .{ ..R, .host: String }`
   writes its type, with the row bound that makes the added label provable. The closure form
-  `|r| { { ..r, host = "h" } }` is rejected today with `T0012`, which is why §2 condition 5
+  `|r| { .{ ..r, host = "h" } }` is rejected today with `T0012`, which is why §2 condition 5
   withholds the suggestion for such a body.
 - **RFC-0037 (return-position `impl Aspect`).** Unaffected; `-> impl Aspect` is a written type.
 - **Unqualified variant constructors.** A named function body now always has an expected type, its

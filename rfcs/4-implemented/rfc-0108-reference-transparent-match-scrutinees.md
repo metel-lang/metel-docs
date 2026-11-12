@@ -50,12 +50,12 @@ fun name(c: &Colour) -> String {
 ```
 
 fails with `T0001 cannot unify &Colour with Colour`. The same failure reproduces
-identically for a plain local binding (`let r: &Colour = &c; match r { ... }`), so
+identically for a plain local binding (`let r: &Colour = &c; match r .{ ... }`), so
 it isn't specific to function parameters.
 
 **There is no workaround.** Metel has no general explicit-deref expression — `*` only
 exists as the multiplication operator in the grammar (`mul_op`), not as a unary prefix
-anywhere `match *c { ... }` could parse. Confirmed directly: `match *c { ... }` fails
+anywhere `match *c .{ ... }` could parse. Confirmed directly: `match *c .{ ... }` fails
 with a *parse* error (`expected assign_expr`), not a type error — the deref-then-match
 idiom Rust programmers would reach for doesn't exist as syntax at all. A caller holding
 a `&Colour` has no way to pattern-match it, full stop, short of changing the function's
@@ -198,7 +198,7 @@ specific position "the expression being matched" gains the same transparency `se
 ## Alternatives considered
 
 - **Add a general unary deref expression (`*expr`) instead**, and let users write
-  `match *c { .. }` explicitly. Rejected as the primary fix: it's a materially bigger
+  `match *c .{ .. }` explicitly. Rejected as the primary fix: it's a materially bigger
   grammar/semantics change (a new general expression form, with its own type-checking
   and — eventually, once RFC-0071 ships — move/ownership implications) to solve a
   problem RFC-0067a's existing auto-deref-chain principle already covers for every

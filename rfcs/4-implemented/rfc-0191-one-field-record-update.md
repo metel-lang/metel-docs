@@ -26,8 +26,8 @@ A record literal that spreads a record may also **replace** one of its fields, w
 can see that the field is present and the replacement has the field's type.
 
 ```metel
-let s := { .a = 1, .b = 2 };
-let t := { ..s, .a = 10 };       // { .a: i64, .b: i64 }: today T0012
+let s := .{ .a = 1, .b = 2 };
+let t := .{ ..s, .a = 10 };       // { .a: i64, .b: i64 }: today T0012
 ```
 
 Spread stays additive for an absent label (RFC-0178 §2, unchanged). A written label that is
@@ -45,7 +45,7 @@ There is no expression meaning "this record, with `a` replaced". Found while wri
 record-heavy examples (metel-core#1640):
 
 ```metel
-let u := { .a = 10, ..s };       // T0012: record spread already contains field `.a`
+let u := .{ .a = 10, ..s };       // T0012: record spread already contains field `.a`
 ```
 
 The two ways around it today are both worse than the one-expression form every other
@@ -53,8 +53,8 @@ language with record literals has:
 
 - **Assign through a `var`.** `var t := s; t.a = 10;` turns an expression into two
   statements and forces a `var` binding for a value that is never mutated again.
-- **Destructure and rebuild.** `let { .a: _, ..rest } := s; { ..rest, .a = 10 }`. On an open row
-  this also needs the removal to be provable (`R: { .a, .. }`, or an equation), which the
+- **Destructure and rebuild.** `let .{ .a: _, ..rest } := s; .{ ..rest, .a = 10 }`. On an open row
+  this also needs the removal to be provable (`R: .{ .a, .. }`, or an equation), which the
   replacement does not conceptually need: it is replacing a field it already knows is there.
 
 The case is common in functional style (a pipeline step returns its input with one field
@@ -93,16 +93,16 @@ A replacement requires `typeof(v)` to be `T`, by the same unification any field 
 uses. A different type is a type mismatch against `T` (`T0001`), not a retyping.
 
 ```metel
-fun discount<record R: { .price: i64, .. }>(line: { ..R }) -> { ..R } {
-    { ..line, .price = line.price * 9 / 10 }      // price known present: replacement
+fun discount<record R: .{ .price: i64, .. }>(line: .{ ..R }) -> .{ ..R } {
+    .{ ..line, .price = line.price * 9 / 10 }      // price known present: replacement
 }
 
-fun priced<record R: !{ .price }>(line: { ..R }) -> { ..R, .price: i64 } {
-    { ..line, .price = 100 }                      // price known absent: addition
+fun priced<record R: !{ .price }>(line: .{ ..R }) -> .{ ..R, .price: i64 } {
+    .{ ..line, .price = 100 }                      // price known absent: addition
 }
 ```
 
-Position is not significant: `{ .price = 0, ..line }` and `{ ..line, .price = 0 }` are the same
+Position is not significant: `.{ .price = 0, ..line }` and `.{ ..line, .price = 0 }` are the same
 literal, as for every other initializer. At most one spread per literal still holds
 (`GAP-TYPES-008`); several written labels may each be additions or replacements independently.
 
@@ -116,7 +116,7 @@ to them; the update adds one rule, about the replaced field.
   of an assignment is. A replaced field with a `Drop` impl therefore runs its destructor, the
   same as `s.a = v` on an owned place.
 - **The right-hand side may read the source like any other initializer.** After the spread has
-  consumed `line`, reading a `Copy` field is accepted (`{ ..line, .total = line.price * 2 }`
+  consumed `line`, reading a `Copy` field is accepted (`.{ ..line, .total = line.price * 2 }`
   runs today) and reading a non-`Copy` field is a use of a moved value (`T0019`). The discount
   example above reads `line.price`, a `Copy` field, so it is accepted.
 - **Spreading through a reference** requires every field of the spread's row **that is not
@@ -135,7 +135,7 @@ must return a branded value reconstructs it through its constructor (RFC-0178 §
 (RFC-0100's spread, alone). The call form takes no replacement itself: `Type(..r, x = 5)` stays an error in v0.16.0 (decided
 2026-11-07), and extending it with this rule is a small additive change later.
 
-`struct` has no spread today (`P { ..s, a = 10 }` is a parse error) because its row is private
+`struct` has no spread today (`P .{ ..s, a = 10 }` is a parse error) because its row is private
 to its module. This RFC does not change that; an update form for `struct` would be a member
 function the module writes, not a language feature.
 
@@ -169,10 +169,10 @@ function the module writes, not a language feature.
    machinery must be wired (the update needs the same presence entailment). See Open question.
 3. **Spread with override, last wins (JS/Elm), unrestricted.** Rejected by RFC-0178 and still: the
    literal's type would depend on presence, and a typo'd label silently adds a field.
-4. **Type-changing update** (`{ ..s, .a = "x" }` where `.a: i64`, result has `.a: String`). It makes
+4. **Type-changing update** (`.{ ..s, .a = "x" }` where `.a: i64`, result has `.a: String`). It makes
    the result row differ from the spread's for abstract rows (`R` would no longer be the
    remainder). Rejected here; it is a separate feature if wanted, and needs removal plus
-   addition, which RFC-0178 already composes (`let { .a: _, ..rest } := s; { ..rest, .a = "x" }`).
+   addition, which RFC-0178 already composes (`let .{ .a: _, ..rest } := s; .{ ..rest, .a = "x" }`).
 5. **Replacement only for a place (`s.{ a = e }` as a copy-modify of `s`).** Reads as a view
    (RFC-0178 alternative 2) and cannot consume a temporary.
 
@@ -180,7 +180,7 @@ function the module writes, not a language feature.
 
 ## Open question
 
-**Should a replacement be marked at the site?** *Resolved 2026-11-07 (language owner): no marker.* `{ ..s, .a = e }` is an addition or a
+**Should a replacement be marked at the site?** *Resolved 2026-11-07 (language owner): no marker.* `.{ ..s, .a = e }` is an addition or a
 replacement depending on `typeof(s)`, as in Elm, OCaml, JS and Rust record update. The risk (a reader cannot tell which from the literal, and a type
 change to `s` can turn one into the other) is limited: the result always contains `.a`, a retyping is rejected, and a wrong guess is a type error, never
 silent misbehaviour, except for a `Drop` field replaced instead of kept. A marker (`x := e`, `x <- e`) was rejected: RFC-0183 narrowed `:=` to introduction, and a new
@@ -201,11 +201,11 @@ fun priced<record R: !{ .price }>(line: { ..R }) -> { ..R, .price: i64 } { { ..l
 let p := Point(..{ ..r, .x = 5 });                          // a named record: RFC-0100's spread, alone
 ```
 
-1. **Rejections.** `{ ..s, .c = 1 }` where `s`'s row proves neither `.c` present nor absent (an open row with no fact) is `T0012`; `{ ..s, .a = "x" }` where
+1. **Rejections.** `.{ ..s, .c = 1 }` where `s`'s row proves neither `.c` present nor absent (an open row with no fact) is `T0012`; `.{ ..s, .a = "x" }` where
    `.a: i64` is `T0001`; two spreads stay `GAP-TYPES-008`.
 2. **Ownership.** Spreading an owned `s` moves every field but `.a` and drops the old `.a`; reading a `Copy` field after the spread is accepted and a non-`Copy` field is `T0019`;
    spreading `*r` needs every non-replaced field `Copy` (`T0033` otherwise).
-3. **Siblings.** Presence facts come from a concrete row, `{ .a, .. }` or `{ .a: T, .. }`; absence facts from `!{ .a }` or RFC-0189's `!.a` entry. `Type(..r, x = 5)` stays an error (RFC-0100).
+3. **Siblings.** Presence facts come from a concrete row, `.{ .a, .. }` or `.{ .a: T, .. }`; absence facts from `!{ .a }` or RFC-0189's `!.a` entry. `Type(..r, x = 5)` stays an error (RFC-0100).
 
 Exit check: no contradiction with the integrated spec (open rows, spread, move and drop) or with RFC-0189, RFC-0221 and RFC-0100.
 

@@ -132,7 +132,7 @@ Two types that must be equal are not.
 
 When both are records, the message names the field that differs instead of printing the two
 types: `the record is missing field `y` (expected `{ .x: i64, .y: i64 }`, found `{ .x: integer }`)`,
-``field `z` is not part of `{ .x: i64, .y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``.
+``field `z` is not part of `.{ .x: i64, .y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``.
 An unresolved numeric literal prints as `integer` or `float` and an open tail as `..`. The same
 mismatch reached through a row bound is `T0012`, in the same words.
 
@@ -144,7 +144,7 @@ function to return `Option<_>`, but it returns `Result<Config, ConfigError>`" an
 naming the bridge: `.ok_or(...)` for an `Option` in a `Result` function, `.ok()` for a `Result`
 in an `Option` function (RFC-0182).
 
-A `let`-bound closure has one type (RFC-0196), so using it at a second type is this code and names the closure: "`id` has one type, fixed by its first use, so it cannot also be used here: cannot unify an integer literal with `boolean`". When the closure captures nothing, the help line suggests a generic function (`fun id<T>(..) -> .. { .. }`).
+A `let`-bound closure has one type (RFC-0196), so using it at a second type is this code and names the closure: "`id` has one type, fixed by its first use, so it cannot also be used here: cannot unify an integer literal with `boolean`". When the closure captures nothing, the help line suggests a generic function (`fun id<T>(..) -> .. .{ .. }`).
 
 A named function with no return type returns `()`, so a body whose value is not `()` is this code (RFC-0193):
 "`triple` has no return type, so it returns `()`, but its body evaluates to `i64`". The help line names the
@@ -1155,7 +1155,7 @@ callable with zero arguments, with a body the type checker can type
 ([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
 Replaces retired `R0001`/`R0002`'s `main`-entry cases — see those entries below.
 
-**Fix:** add `fun main() { ... }` (or fix its shape) to your program's root module.
+**Fix:** add `fun main() .{ ... }` (or fix its shape) to your program's root module.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1170,16 +1170,16 @@ Replaces retired `R0001`/`R0002`'s `main`-entry cases — see those entries belo
 ### T0032 — Anonymous row in this position
 
 An anonymous row — the splice `Builder<..>` (RFC-0121 §5) or an open record with an
-anonymous tail, `{ .x: T, .. }` — is a fresh, nameless row variable at each occurrence. It is
+anonymous tail, `.{ .x: T, .. }` — is a fresh, nameless row variable at each occurrence. It is
 accepted in a function or method parameter, a `let` or `var` annotation, and a closure
 parameter (a closure with such a parameter generalizes, so one closure accepts records of
 different shapes). The splice `Builder<..>` is also accepted in a return type and in a written
 function type.
 
-It is `T0032` in a record or struct field, and an open record `{ .x: T, .. }` is `T0032` in a
+It is `T0032` in a record or struct field, and an open record `.{ .x: T, .. }` is `T0032` in a
 return type and in a written function type, positions whose meaning is not settled
 (RFC-0181). A named splice (`Builder<..R>`, `R` declared `record`) and a
-tail-only `{ ..R }` are supported everywhere. An undeclared row variable is `T0003`, and a
+tail-only `.{ ..R }` are supported everywhere. An undeclared row variable is `T0003`, and a
 `..R` argument for a non-`record` parameter (or a non-record argument for a row
 parameter) is `T0012`
 ([metel-core#1310](https://github.com/metel-lang/metel-core/issues/1310),
@@ -1189,8 +1189,8 @@ parameter) is `T0012`
 open record as a parameter, a `let` annotation or a closure parameter. What works instead depends on the position, and the message says so:
 
 - a **named function's, method's or aspect method declaration's return type**: write the record in full
-  (`-> { .x: i64, .y: i64 }`), name a `record` or a type alias for it (RFC-0160), or name a `record` row
-  parameter when the row comes from an argument (`-> { .x: i64, ..R }`). Leaving the type out never infers it:
+  (`-> .{ .x: i64, .y: i64 }`), name a `record` or a type alias for it (RFC-0160), or name a `record` row
+  parameter when the row comes from an argument (`-> .{ .x: i64, ..R }`). Leaving the type out never infers it:
   the function returns `()` (RFC-0193). For a private function with typed parameters and no generics, a
   closure that infers its return type is the other spelling;
 - a **closure's return annotation**: omit the annotation, and the exact record is inferred, or
@@ -1212,7 +1212,7 @@ open record as a parameter, a `let` annotation or a closure parameter. What work
 
 ### T0033 — A record spread through a reference needs every field `Copy`
 
-Spreading a record through a reference (`{ ..r }` where `r` is `&{ .. }`) copies its
+Spreading a record through a reference (`.{ ..r }` where `r` is `&{ .. }`) copies its
 fields, so it is accepted only when every field is `Copy` (RFC-0178). RFC-0179 removed the
 by-value case this code used to report: an open-row parameter now takes its whole argument,
 so nothing is forgotten at a call.
@@ -1345,7 +1345,7 @@ A struct, enum, aspect, type alias, or block-local struct or enum is declared wi
 intrinsic type: `boolean`, `String`, `Char`, `i8`, `i16`, `i32`, `i64`, `u8`, `u16`, `u32`, `u64`,
 `f32`, `f64`, `Range` or `RangeInclusive`. The language provides these types and `std::core` declares
 none of them, so a user type of the same name would capture part of the compiler's lookups by name:
-with `struct String { ... }` declared, `println` of an ordinary string failed because the `Display`
+with `struct String .{ ... }` declared, `println` of an ordinary string failed because the `Display`
 impl belongs to the primitive. Only the type namespace is reserved. A function or `let` may use
 the name, and the types `std::core` declares (`List`, `Option`, `Result`, ...) are not covered.
 
@@ -1415,7 +1415,7 @@ An impl method declares a parameter with a different name from the aspect's meth
 
 ### T0043 — Invalid row-bound entry
 
-A row bound has an entry the language rejects ([RFC-0189](../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)): a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
+A row bound has an entry the language rejects ([RFC-0189](../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)): a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`.{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
 
 **Fix:** add `..` to the bound, drop the contradictory entry, or write the positive spelling.
 
@@ -1467,7 +1467,7 @@ An aspect declaration property is used where the language does not allow it (RFC
 
 An entry of a struct's or enum's colon list or `derives` clause is rejected (RFC-0207): a colon-list entry that is not a `declared` aspect without methods (an aspect granted by derivation such as `Copy`, an aspect with methods, or one that `extend` grants), or a `derives` entry that names an aspect with no derivation. An entry naming no aspect is `T0003`.
 
-**Fix:** write `derives A` (or `copy struct`) for an aspect that has a derivation, `extend T: A { ... }` for the rest.
+**Fix:** write `derives A` (or `copy struct`) for an aspect that has a derivation, `extend T: A .{ ... }` for the rest.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

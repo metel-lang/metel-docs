@@ -108,7 +108,7 @@ type, brand-stripped, alive only while it is held.
 to impl resolution.** That is the Summary's one bit, and it takes two forms that RFC-0118
 OQ4 already notes are the same question from two positions:
 
-- **Row-conditional impls** (`extend<row R: { .token: Token, .. }> Session<..R>`) —
+- **Row-conditional impls** (`extend<row R: .{ .token: Token, .. }> Session<..R>`) —
   resolution matches the type's *own* declared row, so `Session` gains or loses methods as
   its row narrows. Tier 2 cannot express this at all: an impl on the converted anonymous
   value is brandless and matches every same-shaped value, not `Session`.
@@ -327,10 +327,10 @@ for a bare tuple.
 `record` composes with type parameters exactly as `struct` does: `record Session<T> {
 token: T, log: List<String> }` declares the row `{ .token: T, .log: List<String> }` with
 `T` symbolic, and each instantiation substitutes as for a struct's fields — `Session<Api>`
-has the row `{ .token: Api, .. }`.
+has the row `.{ .token: Api, .. }`.
 
 Row-conditional impl resolution is checked **under the impl's own substitution**, against
-the instantiated row. An `extend<row R: { .token: Api, .. }> Session<..R>` matches
+the instantiated row. An `extend<row R: .{ .token: Api, .. }> Session<..R>` matches
 `Session<Api>` and not `Session<i64>`; an `extend<T> ...` impl written over an unbound
 `token: T` matches every instantiation. This is the same rule RFC-0137 applies to a
 generic brand's symbolic field types (including a `Drop` impl's required set), so `record`

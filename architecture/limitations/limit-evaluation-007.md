@@ -34,7 +34,7 @@ fun main() {
 ## Impact
 
 Which impl runs for a `{}` depends on how the value was built, not on its type, so a
-function generic over `{ ..R }` can observe a brand its signature does not mention. The
+function generic over `.{ ..R }` can observe a brand its signature does not mention. The
 same happens through `dyn Aspect`. Tracked by metel-core#1446 (v0.14.1).
 
 ## Affects

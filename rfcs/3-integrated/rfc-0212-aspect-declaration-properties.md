@@ -160,7 +160,7 @@ that needs observable behaviour on an implicit copy which an explicit `.clone()`
 
 ## 4. `derivable` (std only)
 
-An aspect states that the compiler can write its implementation with `derivable` (`pub derivable aspect Clone { .. }`). A
+An aspect states that the compiler can write its implementation with `derivable` (`pub derivable aspect Clone .{ .. }`). A
 `derives A` entry (RFC-0207 section 2) is legal exactly when `A` is `derivable`, or when `A` marks a super-aspect
 `deriving` (RFC-0213 section 4), because deriving `A` then derives the super with it. A derivation is native code:
 only std declares `derivable` until comptime (RFC-0092, RFC-0093) lets a user supply one, and the property on a user

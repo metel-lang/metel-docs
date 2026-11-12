@@ -28,7 +28,7 @@ impl_status: implemented
 
 ## Summary
 
-An open record with an anonymous tail (`{ .x: i64, .. }`) is accepted as a function or method
+An open record with an anonymous tail (`.{ .x: i64, .. }`) is accepted as a function or method
 parameter, a `let` or `var` annotation, a closure parameter and a type alias right-hand side
 (metel-core#1478; `spec.types.generics.open-rows.legality-5`). This RFC decides the positions
 where it is not: a **return type** and a **written function type** keep reporting `T0032`. It
@@ -47,7 +47,7 @@ The table is the state after #1478:
 | closure parameter | works (generalized with the closure) | cannot be declared |
 | return type | `T0032` | works when `R` comes from a parameter |
 | written function type | `T0032` | works |
-| record or struct field | `T0032` | works (`record W<row R> { d: { .x: i64, ..R } }`) |
+| record or struct field | `T0032` | works (`record W<row R> { d: .{ .x: i64, ..R } }`) |
 | type alias | works (each use is its own fresh row) | works |
 
 The three unsupported anonymous cases look like gaps, and two needs are plausible behind them: a
@@ -61,14 +61,14 @@ any wider record. This RFC checks each against what the language already does.
 ### 1.1 Return types: keep `T0032`
 
 An anonymous tail in a return type would be an **existential**: the callee chooses the row and
-the caller sees `{ .x: i64, ..? }` with an extra row it cannot name. The factory case does not need
+the caller sees `.{ .x: i64, ..? }` with an extra row it cannot name. The factory case does not need
 it:
 
 - A private function can omit its return type, and the **exact** record is inferred: the caller
   reads every field, which is strictly more than an existential gives.
 - A public function must write a return type (`T0010`), and can write the concrete record in
-  full: `-> { .x: i64, .y: i64 }`.
-- A function whose row comes from an argument names it: `-> { .x: i64, ..R }`.
+  full: `-> .{ .x: i64, .y: i64 }`.
+- A function whose row comes from an argument names it: `-> .{ .x: i64, ..R }`.
 
 What an existential would add is **hiding the extra fields from callers**, an API-abstraction
 feature with no demonstrated demand. The `T0032` message for a return type should say what to do:
@@ -82,12 +82,12 @@ annotation or write the record in full.
 
 ### 1.2 Written function types: keep `T0032`
 
-An anonymous tail in `|{ .x: i64, .. }| -> i64` has two readings. As a fresh row of the enclosing
+An anonymous tail in `|.{ .x: i64, .. }| -> i64` has two readings. As a fresh row of the enclosing
 signature (rank-1), the callee cannot call the function on its own records, because the row is
 the caller's choice. As "accepts every wider record" (rank-2), it needs higher-rank checking.
 
 A named row already covers a callback over records of one shape, which is the common case:
-`fun apply<row R>(f: |{ .x: i64, ..R }| -> i64, a: { .x: i64, ..R }, b: { .x: i64, ..R }) -> i64`
+`fun apply<row R>(f: |.{ .x: i64, ..R }| -> i64, a: .{ .x: i64, ..R }, b: .{ .x: i64, ..R }) -> i64`
 type-checks and runs. A callee that must apply one callback to **differently shaped** records
 it holds can take two callbacks, or be generic over two rows. A closure with an open-row
 parameter already generalizes, so a rank-2 *value* exists; only the written *type* of one does not.
@@ -96,11 +96,11 @@ parameter already generalizes, so a rank-2 *value* exists; only the written *typ
 
 An anonymous tail in a struct or record field would make the field's type existential, so two
 values of one nominal type could hide different rows. That does not fit a nominal type. A record
-with a row parameter, `record W<row R> { d: { .x: i64, ..R } }`, covers the use.
+with a row parameter, `record W<row R> { d: .{ .x: i64, ..R } }`, covers the use.
 
 ### 1.4 Aliases: unchanged
 
-`type P := { .x: i64, .. };` is accepted and each use is its own fresh row, exactly as writing the
+`type P := .{ .x: i64, .. };` is accepted and each use is its own fresh row, exactly as writing the
 open record at the use. In a return type or function type it reports `T0032` like the written form.
 
 ---

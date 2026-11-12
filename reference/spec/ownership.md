@@ -216,7 +216,7 @@ granted in the type's declaration (a `declared` aspect, RFC-0212):
 copy struct Point { x: f64, y: f64 }
 ```
 
-`struct Point derives Copy { .. }` is the same declaration, and `extend Point: Copy;` is an error.
+`struct Point derives Copy .{ .. }` is the same declaration, and `extend Point: Copy;` is an error.
 
 A type may implement `Copy` only if every one of its fields — or, for an enum, every payload
 in every variant — is itself `Copy`. Fixed-size arrays and tuples are `Copy` when their
@@ -226,7 +226,7 @@ elements are.
 so it is moved or reborrowed rather than duplicated.
 
 **Granted in the declaration.** `Copy` is a `declared` aspect ([RFC-0212](declarations.md#spec.declarations.aspects.aspect-declaration-properties.legality-1)):
-`copy struct P { .. }` and `struct P derives Copy { .. }` grant it ([Declaration Clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)),
+`copy struct P .{ .. }` and `struct P derives Copy .{ .. }` grant it ([Declaration Clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)),
 and an `extend P: Copy;` of a type with a declaration is an error. The standard library grants it to the scalars and
 to the structural kinds. Whether a type may be duplicated implicitly is its author's statement: a type from another
 module cannot be made `Copy` by its user.
@@ -274,7 +274,7 @@ In a generic body, reusing a value whose type is a nominal application that ment
 
 ##### Legality Rule {#spec.ownership.copy.legality-3}
 
-A named type is `Copy` only through its declaration: `copy struct P { .. }` or `struct P derives Copy { .. }`. An `extend T: Copy;` of a struct, enum or record is an error with a fix-it that moves it into the declaration.
+A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or `struct P derives Copy .{ .. }`. An `extend T: Copy;` of a struct, enum or record is an error with a fix-it that moves it into the declaration.
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
@@ -365,7 +365,7 @@ A generic body decides whether a read is a copy or a move from the bounds visibl
 original. Calling `clone` is always explicit; the implicit copy of a [`Copy`](#copy) type is the `Clone` the compiler
 provides, done implicitly.
 
-A type gets a `Clone` by writing one (`extend T: Clone { .. }`), by deriving it (`struct P derives Clone { .. }`,
+A type gets a `Clone` by writing one (`extend T: Clone .{ .. }`), by deriving it (`struct P derives Clone .{ .. }`,
 which clones each field through that field's own `clone`), or, for a `Copy` type, because the compiler provides it.
 A type with none of these has no `Clone`: whether a named type may be duplicated is a statement about what it means, not
 a consequence of its fields.
@@ -811,7 +811,7 @@ struct type instead of staying a distinct residual — `h.{ .fd, .name }` here i
 
 For a **struct** (RFC-0137 slice 2, metel-core#858), `h.name` produces the same branded
 residual type, `h.{ .fd }`, as a projection does. For an **anonymous `record`** (RFC-0117,
-metel-core#789), moving `r.left` out leaves `r : { .right: i64 }`. Using the narrowed value
+metel-core#789), moving `r.left` out leaves `r : .{ .right: i64 }`. Using the narrowed value
 where the whole type or a wider row is required is a type error at type-check time, not only
 a `--move-check` finding. The converse is an error too and is worded for what it is: a whole
 value where a narrowed type is required (a call argument or an annotated binding) moved
@@ -822,7 +822,7 @@ narrowed again. For a value over *N* fields, the space of residual shapes is the
 lattice, bounded by 2^*N* — there is no row variable and no unification involved in
 computing it. The rule applies uniformly to a **nominal struct's** row (residual of the
 same brand, `Handle.{ .fd }`) and to an **anonymous `record`'s** row (the record type with
-the moved label removed, `{ .fd: i64 }` — no brand clause). A record-typed **field** is
+the moved label removed, `.{ .fd: i64 }` — no brand clause). A record-typed **field** is
 moved as a **unit** — a residual's row never carries a *narrower* type for a field it
 still holds; narrowing a field of a field in place is
 RFC-0150's. A field read by
@@ -843,7 +843,7 @@ An anonymous record narrows in the same way, and reading the moved-out label is 
 <!-- doc-example: expect-fail reason="`left` was moved out, so the anonymous record no longer has it -- T0003 is the point" -->
 ```metel
 fun main() {
-    let r := { .left = "l", .right = "r" };
+    let r := .{ .left = "l", .right = "r" };
     let l := r.left;          // r : { .right: String }
     println(r.right);         // fine: `right` is still present
     println(r.left);          // error: no field `left` on { right: String }
