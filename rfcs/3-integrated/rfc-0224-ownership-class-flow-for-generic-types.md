@@ -190,7 +190,8 @@ Computing sets for a recursive declaration is the per-component fixed point of R
 
 - **`Clone`.** A `Copy` type has the provided `Clone` (RFC-0206 section 2 rule 2); `derives Copy via T` gives it the same
   flow, so `Wrapper<X>: Clone` when `X: Copy`. A type that is `Clone` and not `Copy` keeps `derives Clone`, whose
-  condition is computed from `Clone` bounds (RFC-0207, RFC-0213); unchanged.
+  condition is computed exactly from the fields, like a `Copy` flow, through the flow of each type a field names (a field
+  type that derives `Copy` contributes its `Copy` flow); it cannot yet be stated (draft RFC-0227).
 - **`Discard`, `Send`, `Sync` (direction, not normative).** They are "every field" markers, so a flow set describes
   them exactly, and RFC-0206 section 6 already stores their conditions in the same language. `Discard` is computed from
   the fields; a `pub` generic type's stated `Discard` condition (RFC-0206 D19) is a conjunction over its parameters, with a
