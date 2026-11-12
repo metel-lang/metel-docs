@@ -55,7 +55,8 @@ AspectProperty           → "declared"
 ClassKeyword             → "copy"
                          | "linear"
 ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
-DerivesClause            → "derives" ClauseEntry ( "," ClauseEntry )*
+DerivesClause            → "derives" ClauseEntry ViaClause? ( "," ClauseEntry ViaClause? )*
+ViaClause                → "via" IDENTIFIER ( "+" IDENTIFIER )*
 ClauseEntry              → "!"? TypePath
 SuperAspects             → ":" SuperAspect ( "," SuperAspect )*
 SuperAspect              → "!"? "deriving"? TypePath
