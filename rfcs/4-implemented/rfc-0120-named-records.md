@@ -325,7 +325,7 @@ for a bare tuple.
 ## 6. Generic named records
 
 `record` composes with type parameters exactly as `struct` does: `record Session<T> {
-token: T, log: List<String> }` declares the row `{ .token: T, .log: List<String> }` with
+token: T, log: List<String> }` declares the row `.{ .token: T, .log: List<String> }` with
 `T` symbolic, and each instantiation substitutes as for a struct's fields — `Session<Api>`
 has the row `.{ .token: Api, .. }`.
 

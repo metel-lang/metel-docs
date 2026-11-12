@@ -40,7 +40,7 @@ A constraint form that applies an aspect bound to **every field of a row** rathe
 the row's type as a whole:
 
 ```metel
-extend<row R> { ..R }: Display where all R: Display { … }
+extend<row R> .{ ..R }: Display where all R: Display { … }
 ```
 
 Read: *this impl applies to any record all of whose fields are themselves `Display`.*
@@ -72,7 +72,7 @@ A single stdlib impl would fix it for all records at once, and cannot be written
 because it needs to require `Display` of each field:
 
 ```metel
-extend<row R> { ..R }: Display where all R: Display { … }
+extend<row R> .{ ..R }: Display where all R: Display { … }
 ```
 
 ### 2. The width-subtyping rule cannot be stated
@@ -102,7 +102,7 @@ applying to a nested record**, since that rule requires each silently-dropped fi
 The fix is the same single stdlib impl shape:
 
 ```metel
-extend<row R> { ..R }: Copy where all R: Copy { }
+extend<row R> .{ ..R }: Copy where all R: Copy { }
 ```
 
 **These are the same missing construct**, and recognising that is most of this RFC's
@@ -116,8 +116,8 @@ being tracked as unrelated problems in different documents.
 `where all R: Aspect`:
 
 ```metel
-extend<row R> { ..R }: Display  where all R: Display  { … }
-fun consume<row R>(r: { ..R })  where all R: Copy     { … }
+extend<row R> .{ ..R }: Display  where all R: Display  { … }
+fun consume<row R>(r: .{ ..R })  where all R: Copy     { … }
 ```
 
 `all R: A` holds when every field type in `R` satisfies `A`. On an empty row it holds

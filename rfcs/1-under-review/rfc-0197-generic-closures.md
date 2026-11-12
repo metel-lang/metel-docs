@@ -29,8 +29,8 @@ let first_or := <T: Copy>|xs: [T], d: T| -> T { if (xs.len() == 0) { d } else { 
 first_or([1, 2], 0);          // T = i64
 first_or(["a"], "z");         // T = String
 
-let add_host := <record R: !{ host }>|r: { ..R }| -> { ..R, .host: String } {
-    { ..r, .host = "h" }
+let add_host := <record R: !{ host }>|r: .{ ..R }| -> .{ ..R, .host: String } {
+    .{ ..r, .host = "h" }
 };
 ```
 

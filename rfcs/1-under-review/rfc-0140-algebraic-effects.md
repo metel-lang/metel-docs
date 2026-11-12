@@ -57,7 +57,7 @@ effectful surface in the signature. Swapping the handler is the entire test stra
 fun test_greet() {
     var output: String = "";
     handle greet() {
-        Console::print(msg) => { .output = output + msg; resume(()) }
+        Console::print(msg) => .{ .output = output + msg; resume(()) }
         Console::read_line() => { resume("Alice") }
     }
     assert(output == "What is your name? Hello, Alice!");

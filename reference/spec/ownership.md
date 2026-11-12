@@ -799,7 +799,7 @@ extend Handle {
 fun main() -> i64 {
     let handle := Handle { fd = 3, name = "x" };
     return Handle::describe(handle.{ .fd });   // OK -- branded Handle.{ .fd }
-    // Handle::describe({ .fd = 3 })            // rejected -- no brand, T0001
+    // Handle::describe(.{ .fd = 3 })            // rejected -- no brand, T0001
 }
 ```
 
@@ -844,7 +844,7 @@ An anonymous record narrows in the same way, and reading the moved-out label is 
 ```metel
 fun main() {
     let r := .{ .left = "l", .right = "r" };
-    let l := r.left;          // r : { .right: String }
+    let l := r.left;          // r : .{ .right: String }
     println(r.right);         // fine: `right` is still present
     println(r.left);          // error: no field `left` on { right: String }
 }
@@ -976,7 +976,7 @@ flag it.
 > **Changed in v0.14.0:** Row narrowing includes empty residuals.
 
 Moving the last remaining non-`Copy` field leaves an empty residual. An anonymous
-record has type `{}`; a nominal struct or record retains its brand with an empty
+record has type `.{}`; a nominal struct or record retains its brand with an empty
 row, written `Name.{}`. Neither becomes `Unit`, and a branded empty residual does
 not become an anonymous record. Fields read by copying remain in the row.
 Using a field that was moved out of a nominal struct or record, by reading it or by

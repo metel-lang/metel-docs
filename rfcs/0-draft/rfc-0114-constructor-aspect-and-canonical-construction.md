@@ -142,9 +142,9 @@ aspect Construct {
 
 extend SortedPair: Construct {
     type Error = !;
-    fun construct(row: { .small: i32, .big: i32 }) -> Result<Self, !> {
+    fun construct(row: .{ .small: i32, .big: i32 }) -> Result<Self, !> {
         if row.small <= row.big { Ok(row) }                    // §1.1
-        else { Ok({ .small = row.big, .big = row.small }) }
+        else { Ok(.{ .small = row.big, .big = row.small }) }
     }
 }
 ```
@@ -227,7 +227,7 @@ mattering to this RFC at all:
 SortedPair { small = 3, big = 1 }      // brace literal (today's form, RFC-0115's separator)
 SortedPair(small = 3, big = 1)         // call-shaped   (if RFC-0100 lands)
 // both desugar to
-SortedPair::construct({ .small = 3, .big = 1 })
+SortedPair::construct(.{ .small = 3, .big = 1 })
 ```
 
 **The brace form's desugaring reads directly off the surface, which is worth noting rather

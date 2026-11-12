@@ -2,14 +2,23 @@
 id: rfc-0225
 title: "Dot-prefixed anonymous records"
 date: '2026-11-11'
-status: accepted
+status: integrated
 updated: '2026-11-12'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1943'
+coverage:
+  "1": { spec: "spec.types.record-labels.legality-2" }
+  "2": { spec: "spec.types.record-labels.legality-4" }
+  "3": { spec: "spec.types.record-labels.legality-5" }
+  "4": { spec: "spec.types.record-labels.legality-7" }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1949'
+impl_status: not-started
 ---
 
 > **Status — under review (2026-11-11).** Language owner requested review and scheduled design settlement; parser prototype remains required before acceptance.
 
 > **Status — accepted (2026-11-12).** Accepted by the language owner after parser-prototype evidence (21 fixtures, migrated corpus passes, RFC-0221's objection answered) and an adversarial review whose findings were fixed
+
+> **Status — integrated (2026-11-12).** Integrated into reference/spec/types.md (record-labels legality-2, 4 to 7); the docs sweep ships with it; implementation tracked in metel-core#1949
 
 ## Summary
 

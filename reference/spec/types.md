@@ -382,11 +382,11 @@ fun main() {
 > **Availability:** Since v0.12.0.
 
 A record is a product type whose components are *labelled*, where a tuple's are positional.
-It is written in bare braces, with no keyword:
+It is written with a dot before the braces, `.{ ... }`, and no keyword (RFC-0225):
 
 ```metel
-{ .x: f64, .y: f64 }      // the type
-{ .x = 1.0, .y = 2.0 }    // a value of it
+.{ .x: f64, .y: f64 }      // the type
+.{ .x = 1.0, .y = 2.0 }    // a value of it
 ```
 
 Field declarations classify and take `:`; field initializers define and take `=` — the same
@@ -418,13 +418,9 @@ fun main() {
 }
 ```
 
-Punning, and single-field record literals generally, are read as records only in positions
-that expect an expression — a `let`/`var` or field initializer, a call argument, an array
-element. In a position that also admits a block — an `if`/`else` or `match` arm, a
-function, closure, or loop body — a bare `{ x }` is a **block** whose result is `x`, and
-`.{ .x = 1 }` is a block whose result is the assignment. Write the record in parentheses to
-force it: `({ x })`. A multi-field literal needs no parentheses, as `.{ .x = 1, .y = 2 }`
-cannot be a block.
+A record opens with `.{`, so it is never mistaken for a block: `.{ .x }` is always a record, `.{}` is the empty record, and a bare
+`{ x }` or `{}` is a block. A function, closure or loop body is a block, so a record returned from one is written inside it, `{ .{ .x = 1 } }`;
+where an expression arm is allowed, as in `if`/`else` and `match`, the record needs no parentheses.
 
 ### Where records may be used
 
@@ -468,7 +464,7 @@ accepted.
 
 If the nominal type itself declares no fields, this is a full-width projection and
 normalizes to that nominal type. An empty branded residual of a non-empty type
-is not the anonymous record type `{}` or `Unit`.
+is not the anonymous record type `.{}` or `Unit`.
 
 Inside an `extend` block, `Self.{ .fd }` projects `Self`'s own row exactly as
 `Handle.{ .fd }` would project `Handle`'s — `Self` resolves to the enclosing block's
@@ -591,15 +587,21 @@ label written `.name` or `.0` (a decimal integer). A bare identifier in that pos
 
 ##### Legality Rule {#spec.types.record-labels.legality-2}
 
-A brace group whose first entry starts with a single `.` is an anonymous record wherever a record can appear. Where the grammar requires a block, a
-function body, a closure body or a loop body, such a group is a parse error and the record is written inside the block. The empty group `{}` keeps
-its position rule: a block where a block is required and a record elsewhere.
+An anonymous record, wherever one can appear (a literal, a pattern, a type, an open type, a row bound, a row equation and an impl target), opens with the contiguous
+token `.{`; whitespace and comments may follow it but may not separate the dot from the brace. Bare braces never open an anonymous record, and `.{` is never read as
+a block or as a nominal constructor, whatever the expected type. A trailing comma and the other entries of each form keep their existing rules.
 
 <!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1949" reason="RFC-0225: the .{ cutover is accepted and integrated, not yet implemented" -->
+
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md), [rfc-0225](../../rfcs/3-integrated/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
 <!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1949: RFC-0225: the .{ cutover is accepted and integrated, not yet implemented_</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1617,8 +1619,8 @@ fun squared_magnitude<record T: .{ .x: f64, .y: f64, .. }>(p: T) -> f64 {
 presence is what makes the bound *open*:
 
 ```metel
-fun g<record T: { .x: f64 }>(p: T)        // closed: T's row is exactly `x`
-fun h<record T: { .x: f64, .. }>(p: T)    // open:  T has at least `x`
+fun g<record T: .{ .x: f64 }>(p: T)        // closed: T's row is exactly `x`
+fun h<record T: .{ .x: f64, .. }>(p: T)    // open:  T has at least `x`
 ```
 
 A record pattern's own trailing `..` reads the bound's listed fields the same way
@@ -1674,7 +1676,7 @@ whatever its type":
 
 ```metel
 fun f<record T: { x, .. }>(p: T)          // has an `x` of some type
-fun g<record T: { .x, .y: f64, .. }>(p: T)  // any-typed `x`, `f64` `y`
+fun g<record T: .{ .x, .y: f64, .. }>(p: T)  // any-typed `x`, `f64` `y`
 ```
 
 Negation reuses the `!` that bounds already accept, and is the **complement** of the positive
@@ -1696,8 +1698,8 @@ The marker may be written at the parameter or in a `where` clause — the two ar
 and a parameter is record-kinded if either one carries it:
 
 ```metel
-fun f<record T: { .x: f64, .. }>(p: T) -> f64
-fun g<T>(p: T) -> f64 where record T: { .x: f64, .. }
+fun f<record T: .{ .x: f64, .. }>(p: T) -> f64
+fun g<T>(p: T) -> f64 where record T: .{ .x: f64, .. }
 ```
 
 **The row bound is optional.** `<record T>` on its own means "any record, whatever its
@@ -1781,7 +1783,7 @@ fun get_x<record R>(p: .{ .x: f64, ..R }) -> f64 { p.x }
 **Extension needs no operator** — the new label goes directly in the row literal:
 
 ```metel
-RequestBuilder<{ ..R, .auth: String }>
+RequestBuilder<.{ ..R, .auth: String }>
 ```
 
 **Removal from an abstract row uses a rest pattern.** A `where` equation names both halves
@@ -1790,7 +1792,7 @@ already implies `R: { token, .. }`) and names the remainder:
 
 ```metel
 extend<record R, record Rest> Session<..R>
-where R = { .token: Token, ..Rest }
+where R = .{ .token: Token, ..Rest }
 {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
@@ -1822,7 +1824,7 @@ and the open tail remain. Thus, if `S = .{ .token: Token, .extra: i64, ..Rest }`
 `R: { token, .. }` proves that `token` exists but does not determine the remainder type;
 the pattern is rejected with a distinct “remainder type cannot be determined” diagnostic.
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
-`{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
+`.{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
 
 A record literal accepts at most one spread, including for concrete rows. A written label is an
 addition when proven absent from the spread row, a replacement when proven present, and rejected when neither is proven. Initializers evaluate from
@@ -2249,8 +2251,8 @@ constrains the row's shape (which labels it has), not its contents (what the fie
 types can do):
 
 ```metel
-extend<record R> { ..R }: Display where ..R: Display { … }
-fun consume<record R>(r: { ..R })  where ..R: Copy     { … }
+extend<record R> .{ ..R }: Display where ..R: Display { … }
+fun consume<record R>(r: .{ ..R })  where ..R: Copy     { … }
 ```
 
 `..R: A` holds when every field type in `R`'s row satisfies `A`; it holds vacuously on an
@@ -2352,8 +2354,8 @@ Three forms, with different rules:
 
 ```metel
 extend { x: f64, y: f64 }: MyAspect { … }                    // one concrete row
-extend<record R: { .x: f64, .. }> { ..R }: MyAspect { … }         // every row of a given shape
-extend<record R> { ..R }: MyAspect { … }                         // every row
+extend<record R: .{ .x: f64, .. }> .{ ..R }: MyAspect { … }         // every row of a given shape
+extend<record R> .{ ..R }: MyAspect { … }                         // every row
 ```
 
 All three are permitted once the aspect is local to the implementing module: the first is
@@ -2436,7 +2438,7 @@ extend<record R: .{ .id: i64, .. }> .{ ..R }: Describe {
 ##### Legality Rule {#spec.types.generics.row-conditional-impls.legality-1}
 
 A row-conditional impl (`extend<record R: .{ ... }> .{ ..R }: Aspect` or `extend<record R>
-{ ..R }: Aspect`) resolves against a value's **current** row, not only its widest
+.{ ..R }: Aspect`) resolves against a value's **current** row, not only its widest
 possible one — for a struct, that is the row of its current residual (narrower after a
 partial move, wider again after the moved field is restored), exactly the same
 current-row behavior [Named Records](declarations.md#records) states for `record`'s own

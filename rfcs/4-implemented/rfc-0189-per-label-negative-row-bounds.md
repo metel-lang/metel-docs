@@ -70,7 +70,7 @@ locality and a place to put a per-label negative:
   generic in its rest requires the rest to be provably free of that label (`R: !{ host }`,
   spec, *Row arguments*), usually next to other requirements on the same `R`:
   ```metel
-  fun add_host<record R: { .token, !.host, .. }>(r: Req<..R>, h: String) -> Req<..{ .host: String, ..R }>
+  fun add_host<record R: .{ .token, !.host, .. }>(r: Req<..R>, h: String) -> Req<..{ .host: String, ..R }>
   ```
 - **Row-conditional impls (RFC-0121 §3) are disjoint exactly when some label is present in one
   and absent in the other.** `extend<record R: { name, !id, .. }>` and `extend<record R: { name,
@@ -103,8 +103,8 @@ with a fix-it ("add `..`, or drop the entry"). With the trailing `..` the row sa
 not these ones, and anything else".
 
 ```metel
-fun a<record R: { .x: f64, !.token, .. }>(r: R)   // ok
-fun b<record R: { .x: f64, !.token }>(r: R)       // error: closed row; `!.token` is redundant
+fun a<record R: .{ .x: f64, !.token, .. }>(r: R)   // ok
+fun b<record R: .{ .x: f64, !.token }>(r: R)       // error: closed row; `!.token` is redundant
 fun c<record R: { !.token, .. }>(r: R)            // ok: only a negative entry, still open
 ```
 
@@ -122,7 +122,7 @@ give it that meaning without a break.
 A label may appear **once positively** and **any number of times negatively**:
 
 ```metel
-{ .x, !.x: u8, .. }           // an `.x` that is not a u8 (any other type)
+.{ .x, !.x: u8, .. }           // an `.x` that is not a u8 (any other type)
 { !.x: u8, !.x: u16, .. }     // no u8 `.x` and no u16 `.x`
 ```
 

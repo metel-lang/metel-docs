@@ -15,7 +15,7 @@ A compile-time `for` loop over the fields of a row, so that a blanket impl over 
 record can walk its fields:
 
 ```metel
-extend<record R> { ..R }: Display where ..R: Display {
+extend<record R> .{ ..R }: Display where ..R: Display {
     fun to_string(&self) -> String {
         var out := "{ ";
         comptime for field in fields(R) {
@@ -178,7 +178,7 @@ at `.{ .x = 1, .y = "a" }` the loop unrolls to two statements, each calling the 
 ### `Eq` (illustrative; the aspect's method names are as RFC text, not checked here)
 
 ```metel
-extend<record R> { ..R }: Eq where ..R: Eq {
+extend<record R> .{ ..R }: Eq where ..R: Eq {
     fun eq(&self, other: &Self) -> boolean {
         comptime for field in fields(R) {
             if (self.[field.name] != other.[field.name]) { return false; }
@@ -195,7 +195,7 @@ is open question 5.
 ### What it does not cover
 
 `Clone` and `Default` need to *build* a record whose labels are compile-time values. Reading by
-computed label is not enough; that needs a record literal with computed labels, `{ .[field.name] = v }`,
+computed label is not enough; that needs a record literal with computed labels, `.{ .[field.name] = v }`,
 which RFC-0216 specifies, or `emit` (RFC-0093).
 
 ---
@@ -239,7 +239,7 @@ which RFC-0216 specifies, or `emit` (RFC-0093).
    by-value `self`? A partial move out of a row has residual-type consequences (RFC-0137). Is
    assignment through a computed access in scope?
 7. ~~**Building a row from per-field results.**~~ **Resolved:** RFC-0216 specifies the computed-label
-   record literal `{ .[field.name] = v, .. }` and the residual construction. `emit` stays with RFC-0093.
+   record literal `.{ .[field.name] = v, .. }` and the residual construction. `emit` stays with RFC-0093.
 8. **Visibility.** Does a loop in module `m` see the private fields of a nominal record from
    another module? A `record` has only public fields (RFC-0120), a `struct` may not. For a label supplied
    to generic code see RFC-0175 §9: a loop sees only the row its bounds expose, and a granted aspect template sees

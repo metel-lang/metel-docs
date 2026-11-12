@@ -27,7 +27,7 @@ impls of that one aspect.
 
 ```metel
 // std, in the aspect's module: the aspect's row template (exists today for records)
-extend<record R> { ..R }: Clone where ..R: Clone { … }
+extend<record R> .{ ..R }: Clone where ..R: Clone { … }
 
 struct Doc derives Clone { title: String, tags: List<String> }   // Doc's row is visible to Clone's template
 struct Handle { fd: i64 }                                 // not visible to any row template

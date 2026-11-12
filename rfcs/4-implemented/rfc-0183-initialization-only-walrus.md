@@ -282,7 +282,7 @@ let r := match k { 0 => total = 1, _ => total = 2, };        // an arm body is a
 let add := [&var total] |v| { total = total + v; };          // RFC-0050/0153: a closure that assigns is written with a block
 p.left = "c";                                                // RFC-0071: reassigning a moved-out field restores it, with `=`
 connect(host = "db.local", port = 5432);                     // RFC-0100: a keyword argument, never an assignment
-let t := { ..s, a = 10 };                                    // RFC-0191: a replacement label in a record, not an assignment
+let t := .{ ..s, a = 10 };                                    // RFC-0191: a replacement label in a record, not an assignment
 ```
 
 1. **`f(x = 1)`** is a keyword argument (RFC-0100) and `Type(x = 1)` a construction; neither can be an assignment passed as an

@@ -148,7 +148,7 @@ exists for an unrelated reason.
 ## 1. Positive bounds, and the `..` that makes them open
 
 ```metel
-fun magnitude<record T: { .x: f64, .y: f64, .. }>(p: T) -> f64 { ... }
+fun magnitude<record T: .{ .x: f64, .y: f64, .. }>(p: T) -> f64 { ... }
 ```
 
 **The `record` kind marker is required; a bare `<T: { … }>` is an error.** *(Adopted
@@ -190,7 +190,7 @@ is an optional further constraint on an already-record-kinded parameter:
 
 ```metel
 fun labels<record T>(x: T) -> Symbol[]                  // any record
-fun magnitude<record T: { .x: f64, .y: f64, .. }>(p: T)   // a record with at least x and y
+fun magnitude<record T: .{ .x: f64, .y: f64, .. }>(p: T)   // a record with at least x and y
 ```
 
 ### Where the marker may be written
@@ -200,9 +200,9 @@ same way an aspect bound may be written in either place. The two are equivalent,
 it in both is redundant but legal:
 
 ```metel
-fun f<record T: { .x: f64, .. }>(p: T) -> f64 { ... }
-fun g<record T>(p: T) -> f64 where T: { .x: f64, .. } { ... }
-fun h<T>(p: T) -> f64 where record T: { .x: f64, .. } { ... }   // kind declared in `where`
+fun f<record T: .{ .x: f64, .. }>(p: T) -> f64 { ... }
+fun g<record T>(p: T) -> f64 where T: .{ .x: f64, .. } { ... }
+fun h<T>(p: T) -> f64 where record T: .{ .x: f64, .. } { ... }   // kind declared in `where`
 ```
 
 **A parameter is record-kinded iff `record` precedes its name in at least one of those two
@@ -238,9 +238,9 @@ unlike RFC-0098's `var`/`std::env::var` collision.
 not naming" — and its presence is what makes the bound open:
 
 ```metel
-fun f(p: { .x: f64 })              // a closed type: exactly x
-fun g<record T: { .x: f64 }>(p: T)        // a closed bound: T's row is exactly x
-fun h<record T: { .x: f64, .. }>(p: T)    // an open bound: T has at least x
+fun f(p: .{ .x: f64 })              // a closed type: exactly x
+fun g<record T: .{ .x: f64 }>(p: T)        // a closed bound: T's row is exactly x
+fun h<record T: .{ .x: f64, .. }>(p: T)    // an open bound: T has at least x
 ```
 
 Without the marker, the closed and open readings would be spelled identically and told
@@ -290,7 +290,7 @@ replacing a type-position wildcard — see open question 1.)*
 
 ```metel
 fun f<record T: { x, .. }>(p: T)            // has an `x`; its type is unconstrained
-fun g<record T: { .x, .y: f64, .. }>(p: T)    // mixed: any-typed `x`, f64 `y`
+fun g<record T: .{ .x, .y: f64, .. }>(p: T)    // mixed: any-typed `x`, f64 `y`
 fun h<record T: !{ token }>(t: T)           // carries no `token`, whatever its type
 ```
 
@@ -311,9 +311,9 @@ its fields are shaped. To pass a struct where a row bound is expected, convert i
 granted.
 
 ```metel
-fun magnitude<record T: { .x: f64, .y: f64, .. }>(p: T) -> f64 { … }
+fun magnitude<record T: .{ .x: f64, .y: f64, .. }>(p: T) -> f64 { … }
 
-magnitude({ .x = 3.0, .y = 4.0 });    // a record — satisfies the bound
+magnitude(.{ .x = 3.0, .y = 4.0 });    // a record — satisfies the bound
 magnitude(some_point);              // a struct — does not, whatever its fields
 magnitude(some_point.to_record());  // explicit conversion, once RFC-0119 lands
 ```

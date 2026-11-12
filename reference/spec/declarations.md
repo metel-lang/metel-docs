@@ -4350,7 +4350,7 @@ struct SortedList<T: Comparable> {
 }
 
 // error[T0012]: NonComparable does not implement Comparable
-let list = SortedList<NonComparable> { .items = [] }
+let list = SortedList<NonComparable> .{ .items = [] }
 ```
 
 The same inline `+` and `where` clause forms apply, with identical semantics:

@@ -528,7 +528,7 @@ checker data this needs is an implementation matter for an ADR, not this RFC.
 A function parameter may be marked `comptime`:
 
 ```metel
-fun get<T, record R>(comptime l: Label, r: { .[l]: T, ..R }) -> T { r.[l] }
+fun get<T, record R>(comptime l: Label, r: .{ .[l]: T, ..R }) -> T { r.[l] }
 
 get::<i64, _>(.name, user)           // the label is an argument
 get::<.name, i64, _>(user)           // the same function written with the label in the generic list

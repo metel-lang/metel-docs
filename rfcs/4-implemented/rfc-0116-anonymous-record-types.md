@@ -114,8 +114,8 @@ five features it does not need.
 ## 1. Syntax
 
 ```metel
-{ .x: f64, .y: f64 }        // type — a record with exactly these two fields
-{ .x = 1.0, .y = 2.0 }      // value
+.{ .x: f64, .y: f64 }        // type — a record with exactly these two fields
+.{ .x = 1.0, .y = 2.0 }      // value
 Handle.{ .fd, .alloc }      // projection — a receiver's row, narrowed (§4)
 ```
 

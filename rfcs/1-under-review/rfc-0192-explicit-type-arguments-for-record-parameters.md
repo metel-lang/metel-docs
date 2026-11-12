@@ -16,13 +16,13 @@ signature splices as `..R`. Arguments pin a function's declared generics in decl
 record parameters included, and a mixed list works.
 
 ```metel
-fun get_x<record R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<record R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 
-get_x::<{ .name: i64 }>({ .x = 1, .name = 2 })     // R = { .name: i64 }; p : { .x: i64, .name: i64 }
+get_x::<.{ .name: i64 }>(.{ .x = 1, .name = 2 })     // R = .{ .name: i64 }; p : .{ .x: i64, .name: i64 }
 
-fun tag<T, record R>(t: T, p: { .id: u32, ..R }) -> (T, u32) { (t, p.id) }
+fun tag<T, record R>(t: T, p: .{ .id: u32, ..R }) -> (T, u32) { (t, p.id) }
 
-tag::<String, { .ok: boolean }>("a", { .id = 7, .ok = true })
+tag::<String, .{ .ok: boolean }>("a", .{ .id = 7, .ok = true })
 ```
 
 Today the first call is `T0004: explicit type arguments are not supported on get_x: it takes an

@@ -329,7 +329,7 @@ fun take_fd(h: &var FileHandle) -> (RawFd, &var .{ .path: String }) {
     let view := h.to_record_mut();
     let fd := view.fd;   // moving a non-Copy field out is implicit, no `move` keyword
                          // exists in this grammar
-    (fd, view)          // view's residual type, { .path: String }, is not Linear —
+    (fd, view)          // view's residual type, .{ .path: String }, is not Linear —
                          // RFC-0090 §5's field-composition rule applies to records
                          // exactly as it does to structs, and `path` alone carries no
                          // obligation
@@ -354,24 +354,24 @@ Per-field multiplicity is equally about a field going from absent (0) to present
 exactly once — RFC-0090 §4's "builders, in the dual direction" claim:
 
 ```metel
-struct RequestBuilder<row R> { data: { .host: String, ..R } }
+struct RequestBuilder<row R> { data: .{ .host: String, ..R } }
 
 extend<row R: !{ auth: _ }> RequestBuilder<..R> {
-    fun with_auth(self, token: String) -> RequestBuilder<{ ..R, .auth: String }> {
-        RequestBuilder { data = { ..self.data, .auth = token } }
+    fun with_auth(self, token: String) -> RequestBuilder<.{ ..R, .auth: String }> {
+        RequestBuilder { data = .{ ..self.data, .auth = token } }
     }
 }
 
-extend<row R: { .auth: String, .. }> RequestBuilder<..R> {
+extend<row R: .{ .auth: String, .. }> RequestBuilder<..R> {
     fun send(self) -> Response { ... }
 }
 
 fun main() {
-    let req = RequestBuilder { data = { .host = "example.com" } }
+    let req = RequestBuilder { data = .{ .host = "example.com" } }
         .with_auth("secret");
     req.send();
     // req.with_auth("again");                        -- R no longer satisfies !{ auth: _ }
-    // RequestBuilder { data: { .host = "x" } }.send()  -- needs { auth: _, .. }
+    // RequestBuilder { data: .{ .host = "x" } }.send()  -- needs { auth: _, .. }
 }
 ```
 
@@ -410,10 +410,10 @@ fn authenticate(session: &mut Session, token: String) {
 struct Session { host: String, state: AuthState }
 
 fun authenticate(session: &var Session, token: String) {
-    let view = session.to_record_mut();   // &var { .host: String, .state: AuthState }
+    let view = session.to_record_mut();   // &var .{ .host: String, .state: AuthState }
     let old_state = view.state;            // no `move` keyword exists -- moving a
                                             // non-Copy field out is implicit; view
-                                            // narrows to &var { .host: String } —
+                                            // narrows to &var .{ .host: String } —
                                             // `state` is genuinely absent here, not holding
                                             // a placeholder value of any kind
     let new_state = match old_state {
@@ -458,13 +458,13 @@ fn build() -> BigConfig {
 struct BigConfig { a: A, b: B, c: C }
 
 fun build() -> BigConfig {
-    let partial = { .a = compute_a() };
-    let partial = { ..partial, .b = compute_b() };  // if this panics, `partial` is an
+    let partial = .{ .a = compute_a() };
+    let partial = .{ ..partial, .b = compute_b() };  // if this panics, `partial` is an
                                                    // ordinary, fully-valid record
                                                    // { a: A } — dropped through the
                                                    // same safe machinery as any
                                                    // other value, no manual cleanup
-    let partial = { ..partial, .c = compute_c() };
+    let partial = .{ ..partial, .c = compute_c() };
     BigConfig::from_record(partial)   // only typechecks once the row exactly matches
                                        // BigConfig's full shape — assume_init()'s runtime
                                        // assertion, made a compile-time fact instead
@@ -478,8 +478,8 @@ call site, or reaches for unsafe pointer-cast tricks. This is exactly the motiva
 behind Rust's own (still unshipped, as of writing) "view types" proposal:
 
 ```metel
-fun drain_field<row R, name: Symbol, T>(s: &var { .name: T, ..R })
-    -> (T, &var { ..R })
+fun drain_field<row R, name: Symbol, T>(s: &var .{ .name: T, ..R })
+    -> (T, &var .{ ..R })
 {
     let v = s.[name];   // no `move` keyword exists -- moving a non-Copy field out is
                          // implicit. This signature has other problems too, unrelated
@@ -493,7 +493,7 @@ struct Handle { fd: i32, alloc: @a Buffer }
 fun example(h: &var Handle) {
     let view = h.to_record_mut();
     let (buf, rest) = drain_field::<_, "alloc", @a Buffer>(view);
-    // `buf: @a Buffer` and `rest: &var { .fd: i32 }` are independently usable —
+    // `buf: @a Buffer` and `rest: &var .{ .fd: i32 }` are independently usable —
     // `drain_field` was written once, generically, and works unmodified for any struct
     // that derives ToRecord/FromRecord, not just Handle
 }
@@ -515,7 +515,7 @@ fun example(h: &var Handle) {
    only construct in the corpus that does:
 
    ```metel
-   fun drain_field<row R, name: Symbol, T>(s: &var { .name: T, ..R }) -> (T, &var { ..R })
+   fun drain_field<row R, name: Symbol, T>(s: &var .{ .name: T, ..R }) -> (T, &var .{ ..R })
    { let v = s.[name]; (v, s) }
    ```
 

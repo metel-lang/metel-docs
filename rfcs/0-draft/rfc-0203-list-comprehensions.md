@@ -12,7 +12,7 @@ Add comprehension syntax as sugar over iterator adapters:
 ```metel
 let squares := [x * x for (x in 1..=10) if (x % 2 == 0)];
 let pairs   := [(a, b) for (a in 1..=3) for (b in a..=3) if (a + b == 4)];
-let lookup  := {.w: w.len() for (w in words)};
+let lookup  := .{.w: w.len() for (w in words)};
 ```
 
 A comprehension has a result expression, one or more `for` generators, and optional `if`

@@ -449,15 +449,15 @@ An anonymous-record or nominal `record` pattern may end in `..name`. The binding
 the owned anonymous record made from all fields not named by the pattern. Bare `..` remains
 discard-only. The named fields must be entailed present; the row facts must also determine
 the remainder type. A presence-only bound without a decomposition is insufficient. Removing
-all fields from a closed row produces `{}`. Structs, `Drop` types, and borrowed scrutinees are
+all fields from a closed row produces `.{}`. Structs, `Drop` types, and borrowed scrutinees are
 not accepted by this form. Every named field is bound by the pattern and follows the
 ordinary ownership rules for pattern bindings; every unmentioned field moves into the
 remainder binding. Matching consumes the scrutinee as a whole. A nominal `record` is
 eligible only when all of its fields are public, and the remainder loses the nominal brand.
 
 ```metel
-match (value) { // value : { .token: Token, .extra: i64, ..Rest }
-    .{ .token, ..rest } => rest // rest : { .extra: i64, ..Rest }
+match (value) { // value : .{ .token: Token, .extra: i64, ..Rest }
+    .{ .token, ..rest } => rest // rest : .{ .extra: i64, ..Rest }
 }
 ```
 

@@ -33,7 +33,7 @@ written:
 ```metel
 extend<row R, row Rest> Session<..R> where R = .{ .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let .{ .token: _, ..rest } := self.data;      // rest : { ..Rest }
+        let .{ .token: _, ..rest } := self.data;      // rest : .{ ..Rest }
         Session { id = self.id, data = rest }
     }
 }
@@ -109,8 +109,8 @@ A record pattern may end in `..name`, binding every field the pattern did not na
 record:
 
 ```metel
-let .{ .token, ..rest } := value;          // value : { .token: Token, .extra: i64, .flag: boolean }
-// token : Token, rest : { .extra: i64, .flag: boolean }
+let .{ .token, ..rest } := value;          // value : .{ .token: Token, .extra: i64, .flag: boolean }
+// token : Token, rest : .{ .extra: i64, .flag: boolean }
 ```
 
 This is the record counterpart of the array pattern's `..name`, and a refinement of the
@@ -164,7 +164,7 @@ A record literal may contain `..expr` among its field initializers, placing ever
 `expr` into the new record:
 
 ```metel
-.{ ..rest, .auth = a }          // rest : { ..R }  ⇒  { ..R, auth: String }
+.{ ..rest, .auth = a }          // rest : .{ ..R }  ⇒  .{ ..R, auth: String }
 ```
 
 This is the value-level form of the type-level tail `.{ ..R, .auth: String }`; the position of
@@ -208,7 +208,7 @@ The typestate step (signature unchanged from RFC-0121):
 ```metel
 extend<row R, row Rest> Session<..R> where R = .{ .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> {
-        let .{ .token: _, ..rest } := self.data; // §1 case 2: rest : { ..Rest }
+        let .{ .token: _, ..rest } := self.data; // §1 case 2: rest : .{ ..Rest }
         Session { id = self.id, data = rest }
     }
 }

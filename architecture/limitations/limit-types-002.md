@@ -20,8 +20,8 @@ decomposition), where every field of the argument beyond the ones the parameter 
 satisfy each aspect, else `T0012` names the field.
 
 ```metel
-fun consume<record R>(r: { .id: i64, ..R }) -> i64 where each R: Copy { r.id }
-consume({ .id = 1, .label = "x".to_string() });   // T0012: field `label` ... does not implement `Copy`
+fun consume<record R>(r: .{ .id: i64, ..R }) -> i64 where each R: Copy { r.id }
+consume(.{ .id = 1, .label = "x".to_string() });   // T0012: field `label` ... does not implement `Copy`
 ```
 
 The completed implementation also carries this entitlement into generic bodies. Since

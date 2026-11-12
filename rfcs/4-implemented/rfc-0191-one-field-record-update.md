@@ -27,7 +27,7 @@ can see that the field is present and the replacement has the field's type.
 
 ```metel
 let s := .{ .a = 1, .b = 2 };
-let t := .{ ..s, .a = 10 };       // { .a: i64, .b: i64 }: today T0012
+let t := .{ ..s, .a = 10 };       // .{ .a: i64, .b: i64 }: today T0012
 ```
 
 Spread stays additive for an absent label (RFC-0178 §2, unchanged). A written label that is
@@ -193,11 +193,11 @@ initializer operator is a larger decision than the problem warrants.
 They become fixtures of the implementation (metel-core#1663); a hit means a contradiction.
 
 ```metel
-let s := { .a = 1, .b = 2 };
-let t := { ..s, .a = 10 };                                  // replacement: row { .a: i64, .b: i64 }
-let u := { .a = 10, ..s };                                  // the same literal, position is free
-fun discount<record R: { .price: i64, .. }>(line: { ..R }) -> { ..R } { { ..line, .price = line.price * 9 / 10 } }
-fun priced<record R: !{ .price }>(line: { ..R }) -> { ..R, .price: i64 } { { ..line, .price = 100 } }   // addition
+let s := .{ .a = 1, .b = 2 };
+let t := .{ ..s, .a = 10 };                                  // replacement: row .{ .a: i64, .b: i64 }
+let u := .{ .a = 10, ..s };                                  // the same literal, position is free
+fun discount<record R: .{ .price: i64, .. }>(line: .{ ..R }) -> .{ ..R } { .{ ..line, .price = line.price * 9 / 10 } }
+fun priced<record R: !{ .price }>(line: .{ ..R }) -> .{ ..R, .price: i64 } { .{ ..line, .price = 100 } }   // addition
 let p := Point(..{ ..r, .x = 5 });                          // a named record: RFC-0100's spread, alone
 ```
 

@@ -132,7 +132,7 @@ brand), now visible in the surface syntax rather than contradicted by it. Withou
 RFC, the two would differ by separator for no reason a reader could recover:
 
 ```metel
-{ .x = 1.0, .y = 2.0 }         // anonymous record          (RFC-0090, settled)
+.{ .x = 1.0, .y = 2.0 }         // anonymous record          (RFC-0090, settled)
 Point { x: 1.0, y: 2.0 }     // nominal struct — today, gratuitously different
 Point { x = 1.0, y = 2.0 }   // nominal struct — this RFC, the same form plus a brand
 Point.{ .x }                  // projection from a receiver (RFC-0090 §3.5, settled)

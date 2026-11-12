@@ -1126,7 +1126,7 @@ trait that gates nothing implicit is an unobjectionable trait.
    the parser, neither parses today and both need a grammar change (S6). Which positions are allowed (returns, parameters, `let`; not fields or
    type arguments) and whether a parameter's marker is a requirement as well as documentation
    are also open. (b) *Duplicating a non-`Copy`
-   structural value:* records (anonymous and named) have a `Clone`, `extend<record R> { ..R }:
+   structural value:* records (anonymous and named) have a `Clone`, `extend<record R> .{ ..R }:
    Clone where ..R: Clone` in `std::core` (RFC-0123), as do arrays, primitives and
    `String`; **tuples have none** (`T: Clone` rejects `(i64, i64)`, and `.clone()` on one
    reports "cannot infer receiver type"); a named `struct`, `Option` and `List` have no

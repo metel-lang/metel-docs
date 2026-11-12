@@ -233,7 +233,7 @@ declared `struct` and one declared `record` (RFC-0120):
 struct Handle { fd: i64, name: String }
 record NamedHandle { fd: i64, name: String }   // RFC-0120 — different declaration, different brand
 
-fun wants_a_record<record T: { .fd: i64, .name: String, .. }>(t: T) -> i64 { t.fd }
+fun wants_a_record<record T: .{ .fd: i64, .name: String, .. }>(t: T) -> i64 { t.fd }
 
 fun main() {
     let h = Handle { fd = 3, name = "x" };

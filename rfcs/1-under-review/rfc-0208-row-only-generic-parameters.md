@@ -15,10 +15,10 @@ A generic parameter that stands only for a row, never for a type, is declared wi
 binder**, `<..R>`. `record R` is kept for parameters that are used as types.
 
 ```metel
-extend<record R> { ..R }: Display where ..R: Display    // today: R is never used as a type
-extend<..R> { ..R }: Display where ..R: Display         // proposed: the binder says "a row"
+extend<record R> .{ ..R }: Display where ..R: Display    // today: R is never used as a type
+extend<..R> .{ ..R }: Display where ..R: Display         // proposed: the binder says "a row"
 
-fun get_x<..R>(p: { .x: i64, ..R }) -> i64 { p.x }
+fun get_x<..R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
 fun sum<record T>(p: T) -> T { p }                      // unchanged: T is used as a type
 ```
 

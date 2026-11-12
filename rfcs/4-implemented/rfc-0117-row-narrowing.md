@@ -88,7 +88,7 @@ per-field multiplicity, which is deferred until records are implemented).
 
 ```metel
 let r := .{ .fd = 3, .path = "/tmp/x" };   // { fd: i64, path: String }
-let p := r.path;                         // r : { .fd: i64 } -- moving a non-Copy field
+let p := r.path;                         // r : .{ .fd: i64 } -- moving a non-Copy field
                                          // out is implicit, no separate `move` syntax
 ```
 

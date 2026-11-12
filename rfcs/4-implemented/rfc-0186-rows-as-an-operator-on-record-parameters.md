@@ -36,10 +36,10 @@ rest patterns, pack splices); in a bound, `..R: A` says every member of that unp
 
 ```metel
 // before                                              // after
-fun get_x<row R>(p: { .x: f64, ..R }) -> f64            fun get_x<record R>(p: { .x: f64, ..R }) -> f64
-fun consume<row R>(r: { ..R }) where all R: Copy       fun consume<record R>(r: { ..R }) where ..R: Copy
-extend<row R> { ..R }: Display where all R: Display    extend<record R> { ..R }: Display where ..R: Display
-record Packet<row R> { data: { ..R } }                 record Packet<record R> { data: { ..R } }
+fun get_x<row R>(p: .{ .x: f64, ..R }) -> f64            fun get_x<record R>(p: .{ .x: f64, ..R }) -> f64
+fun consume<row R>(r: .{ ..R }) where all R: Copy       fun consume<record R>(r: .{ ..R }) where ..R: Copy
+extend<row R> .{ ..R }: Display where all R: Display    extend<record R> .{ ..R }: Display where ..R: Display
+record Packet<row R> { data: .{ ..R } }                 record Packet<record R> { data: .{ ..R } }
 fun f<row R>(p: Packet<..R>) -> ...                    fun f<record R>(p: Packet<..R>) -> ...
 ```
 
@@ -163,7 +163,7 @@ name of a `record` parameter.
 one bound list:
 
 ```metel
-fun show<record R>(r: { ..R }) -> String where ..R: Display { … }   // each field is Display
+fun show<record R>(r: .{ ..R }) -> String where ..R: Display { … }   // each field is Display
 fun dup<record R: Copy>(r: R) -> (R, R) { (r, r) }                  // the record is Copy
 ```
 

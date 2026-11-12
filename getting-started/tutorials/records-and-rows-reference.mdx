@@ -242,7 +242,7 @@ fun main() {
 
 This prints `3`. The discarded `token` is consumed; `rest` owns every other field.
 The same pattern works inside a row-conditional impl, allowing a typestate method
-to construct a result such as `Session<..Rest>`. With only `token`, the remainder is `{}`.
+to construct a result such as `Session<..Rest>`. With only `token`, the remainder is `.{}`.
 
 ## Rows on nominal types
 
@@ -346,8 +346,8 @@ An aspect local to your module may be implemented three ways, from narrowest to 
 
 ```metel
 // extend { x: f64, y: f64 }: MyAspect { … }                  one concrete row
-// extend<record R: { .x: f64, .. }> { ..R }: MyAspect { … }      every row with an `x: f64`
-// extend<record R> { ..R }: MyAspect { … }                      every row
+// extend<record R: .{ .x: f64, .. }> .{ ..R }: MyAspect { … }      every row with an `x: f64`
+// extend<record R> .{ ..R }: MyAspect { … }                      every row
 ```
 
 Two row-conditional impls of the same aspect must be provably disjoint — some label
@@ -415,7 +415,7 @@ and `record`s alike. Reading a moved-out field is a compile error:
 ```metel
 fun main() {
     let r := .{ .left = "l", .right = "r" };
-    let l := r.left;       // moves `left`; r : { .right: String }
+    let l := r.left;       // moves `left`; r : .{ .right: String }
     println(r.right);
     println(r.left);       // error: no field `left` on { right: String }
 }

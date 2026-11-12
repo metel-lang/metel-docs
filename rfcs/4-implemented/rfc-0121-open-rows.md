@@ -118,7 +118,7 @@ is the same mechanism with the rest named.
 (`.{ .x :: Int | r }`), Koka (`<div|e>`) and OCaml (`< x : int; .. >`) all do it:
 
 ```metel
-RequestBuilder<{ ..R, .auth: String }>
+RequestBuilder<.{ ..R, .auth: String }>
 ```
 
 **Removal has no literal form and gets a decomposition instead of a subtraction.** Name both
@@ -126,7 +126,7 @@ halves and state how they compose:
 
 ```metel
 extend<row R, row Rest> Session<..R>
-where R = { .token: Token, ..Rest }
+where R = .{ .token: Token, ..Rest }
 {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
@@ -152,7 +152,7 @@ confirm before citing as precedent.)
 ## 3. Typestate via row-conditional impls
 
 ```metel
-extend<row R, row Rest> Session<..R> where R = { .token: Token, ..Rest } {
+extend<row R, row Rest> Session<..R> where R = .{ .token: Token, ..Rest } {
     fun authenticate(self) -> Session<..Rest> { ... }
 }
 
