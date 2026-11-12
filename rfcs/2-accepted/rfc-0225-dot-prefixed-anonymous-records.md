@@ -2,12 +2,14 @@
 id: rfc-0225
 title: "Dot-prefixed anonymous records"
 date: '2026-11-11'
-status: under-review
-updated: '2026-11-11'
+status: accepted
+updated: '2026-11-12'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1943'
 ---
 
 > **Status — under review (2026-11-11).** Language owner requested review and scheduled design settlement; parser prototype remains required before acceptance.
+
+> **Status — accepted (2026-11-12).** Accepted by the language owner after parser-prototype evidence (21 fixtures, migrated corpus passes, RFC-0221's objection answered) and an adversarial review whose findings were fixed
 
 ## Summary
 
@@ -70,7 +72,7 @@ still determine an anonymous structural record, rather than a nominal constructo
 | Empty type or value | `.{}` |
 | Row bound | `record R: .{ .x: i64, .. }` |
 | Negative row entry | `record R: .{ !.token, .. }` |
-| Whole-row negative bound | `record R: !{ .token: i64, .. }` |
+| Whole-row negative bound | `record R: !{ .token: i64 }` |
 | Row equation | `where R = .{ .x: i64, ..Rest }` |
 | Anonymous structural impl target | `extend<record R> .{ ..R }: Aspect ...` |
 
@@ -138,7 +140,8 @@ ordinary record types a bare-brace alias. The introducer is contiguous, just as
 as an alternative spelling.
 
 **Whole-row negative bounds keep `!{ ... }`.** Write
-`record R: !{ .token: i64, .. }`, not `record R: !.{ .token: i64, .. }`.
+`record R: !{ .token: i64 }`, not `record R: !.{ .token: i64 }`. (A negative bound takes no trailing `..`;
+RFC-0189 reserves that spelling and this RFC does not change it.)
 The `!{` introducer identifies a negative row bound in bound position; it does
 not compose a general negation operator with an anonymous record type. Preserve
 RFC-0189's existing expansion into per-entry negative bounds, including its
@@ -163,14 +166,19 @@ The change uses a single breaking cutover after a parser-based migration tool
 is available. There is no temporary compatibility window or permanent bare-brace
 alias. Old
 `{ .x = 0 }`, `{ .x: i64 }`, `{ ..R }` and anonymous record patterns are rejected
-at their respective record sites. Where the parser recognises an old record form,
-it should suggest inserting `.` immediately before `{`. Ordinary block errors
-must not be misreported as missing record prefixes.
+at their respective record sites. Where the parser fails at a bare `{` followed by a dotted label
+(`{ .x = 0 }`, `{ .x: i64 }`, `{ ..R }`, `{ !.token }`), it names the old record form and suggests inserting `.`
+immediately before `{`. Where the failure follows a spaced `!` or `..` introducer it names the gap instead (`!{` and
+`..{` are contiguous), never a missing dot, which would produce the forbidden `!.{`. Ordinary block errors are not
+misreported as missing record prefixes. Type displays and fix-it hints in diagnostics print anonymous records in
+the new spelling (`.{ .x: i64 }`, with dotted labels), so that no message teaches a form that no longer parses.
 
-Empty braces require special migration care: an old `{}` record value may become
-a valid block returning unit, so a parse error cannot reliably catch every missed
-site. Migration must classify it using the old grammar and AST before the grammar
-switch. No new semantic error code is proposed; diagnostic coverage must establish
+`{}` is classified by the old grammar, not guessed. In the old grammar a block is the body of a function,
+closure, `if`, `while`, `for` or `match` arm, and an expression position tries a record literal first; a `{}` in
+the first group stays a block and a `{}` in an expression position was a record. After the switch an expression-
+position `{}` is a parse error (the grammar has no general block expression), so a missed record site is caught,
+and the prototype review found no old empty-record site that silently becomes a unit block. The migration
+still classifies each `{}` from the old parse tree before the grammar switch. No new semantic error code is proposed; diagnostic coverage must establish
 whether the existing parser-error machinery can provide the targeted suggestion.
 
 ## Interactions and prior decisions
@@ -230,12 +238,18 @@ current rules remain in force while this document is a draft.
 Before accepting, build a parser prototype and inventory affected sites. Before
 switching grammars, implement a migration against the old parser that inserts a
 single dot at each anonymous record opening delimiter, including patterns and
-empty records. The tool must preserve comments, strings and line endings,
-recognise nested sites, and leave blocks, nominal declaration/pattern braces,
+empty records. The tool must preserve comments, strings, non-ASCII text and line endings
+byte for byte, recognise nested sites (including records inside string interpolations, through the compiler's
+unescaping with an offset map back to the source), and leave blocks, nominal declaration/pattern braces,
 projection lists, literal-row arguments (`..{ ... }`) and whole-row negative
-bound introducers (`!{ ... }`) untouched. Nested anonymous record types inside
-those forms still gain their own prefix. Run it a
-second time to verify that it makes no additional edits. The migration tool must
+bound introducers (`!{ ... }`) untouched except for whitespace between an introducer's tokens, which it removes.
+A comment in that gap, an interpolation it cannot map, or an ordinary Rust string that holds an old record is not
+guessed at: the tool reports it as needing manual migration, writes nothing for that file, and exits non-zero.
+Nested anonymous record types inside those forms still gain their own prefix. Supported containers are `.mtl`
+files, column-0 ```` ```metel ```` fences in Markdown and MDX, and Rust raw strings; other containers that hold
+Metel are reported, not skipped silently. The tool runs under the old grammar and is one-shot: a rerun on migrated
+sources reports them as unparseable and exits non-zero, and the check that no old site remains is the new parser's
+rejection of old forms over the whole corpus. The migration tool must
 be available before the single grammar cutover; old anonymous record forms are
 rejected from that cutover onward.
 
@@ -283,13 +297,47 @@ unverified; agreement on the design does not supply that evidence.
 The prefix adds a character to every anonymous record. Literal-row arguments
 and whole-row negative bounds keep their spelling, at the cost of dedicated
 grammar productions rather than pure operator composition. Migrating immediately after the dotted-label
-change would require another syntax sweep. These costs must be weighed against
+change would require another syntax sweep. Specific readability costs: `.{}` adds a character where the position already
+made an empty record unambiguous, `.{ ..p }` combines two different uses of the dot, and `Req<..{ .x: i64 }>` keeps
+the longer introducer. These costs must be weighed against
 uniform empty-record syntax and clearer separation from blocks.
 
-No design question remains open in this draft. The remaining prerequisite is a
-parser prototype verifying the dedicated `..{ ... }` row-literal and `!{ ... }`
-negative-bound productions alongside `.{ ... }` record types and the other cases
-listed above.
+## Prototype result (2026-11-12)
+
+A parser prototype (metel-core branch `proto/rfc-0225-parser`; reference, not for merge) changes six grammar productions
+(`record_lit`, `record_pattern`, `record_type`, `open_record_type`, `row_bound`, plus the dedicated `row_literal`
+and `neg_row_bound`), about 40 lines of parser code, and adds the parser-driven migration tool
+(`examples/record_prefix_migrate.rs`, run under the old grammar).
+
+**Inventory (metel-core, 2026-11-12).** 2094 `.mtl` files scanned: 349 contain anonymous-record sites (1231 sites);
+40 are parse-negative fixtures the tool cannot parse (3 hold an old record and were migrated by hand). Rust raw
+strings: 3 files, 195 sites; 2 ordinary Rust strings were migrated by hand. metel-docs: 32 Markdown files, 281
+fenced sites (spec, tutorials and active RFC examples).
+
+**Results.** After migrating the corpus with the tool: `metel` integration 1902 passed (1881 migrated fixtures, which
+are the same programs with the same expected results, plus 21 new `rfc0225_*` fixtures), unit 97 passed,
+frontend 468 passed, 0 failed. The fixtures cover each form in the acceptance list: closed, open, empty, tail-only
+and nested types; values, puns, numeric labels, spreads and updates; patterns; positive, mixed and whole-row
+negative bounds; row equations; literal-row arguments; records in function bodies, closures and expression arms;
+rejection of `.. .{`, `...{`, `. {`, `!.{`, a spaced `!` or `..` introducer, `{}` as a record value and every old brace form,
+each with the targeted message; and one program in which a projection `p.{ .x }`, `.{ .x = 1 }`, `..{` and `!{`
+coexist.
+
+**RFC-0221's objection.** The Zig-style `.{` was rejected there as clashing with row splices and dot paths. In the
+prototype the four forms are four distinct tokens (`.{`, `..{`, `!{` and a projection's `.{` after a path); an
+anonymous record never follows an expression, and a projection always has a path before it. No program parsed
+ambiguously, and no old program was reinterpreted instead of rejected. The objection does not hold.
+
+**Adversarial review (Codex, read-only, 2026-11-12) and its outcome.** Findings that blocked acceptance were fixed
+in the prototype and this text: the migration tool corrupted non-ASCII text in Rust files, deleted comments between
+`..` and `{`, left a spaced or commented `!` `{` unmigrated, and silently skipped interpolations containing escapes;
+`parse_row_bound` read openness from the bound's source text, so a comment containing `..` changed typing (now read from the tree);
+and this RFC's own whole-row negative examples carried a forbidden trailing `..`. Each now has a fixture or a tool
+check; the tool reports what it cannot migrate and exits non-zero instead of guessing.
+
+**Not covered by the prototype.** Display of types and the fix-it hints in diagnostics still print the old spelling
+(decided by the language owner to change with the implementation); the metel-docs sweep and `check-examples`
+run; the metel-lsp formatter and highlighting; the changelog and migration command text.
 
 ## References
 
@@ -316,6 +364,5 @@ update), RFC-0151 (proposed tuples as rows), RFC-0188 (label syntax), RFC-0175
 - Keep empty-record and unit semantics separate under the current rules, and
   keep function and closure bodies as blocks.
 
-**Lifecycle outcome:** Under review, tracked by metel-core#1943, pending
-parser-prototype evidence and formal acceptance. These decisions do not transition the RFC or authorise implementation
-before spec integration.
+**Lifecycle outcome:** Accepted 2026-11-12, tracked by metel-core#1943, on the parser-prototype evidence above.
+Implementation begins only after spec integration and an implementation tracking issue (PROCESS.md).
