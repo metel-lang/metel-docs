@@ -565,7 +565,7 @@ A field of an anonymous record, in a record literal, a record pattern, a record 
 label written `.name` or `.0` (a decimal integer). A bare identifier in that position is a parse error. A pun, a label with no value, means
 `.{ .x = x }` in a literal and binds `x` in a pattern, and a pun of a numeric label is an error.
 
-<!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md)_</span>
@@ -591,10 +591,10 @@ An anonymous record, wherever one can appear (a literal, a pattern, a type, an o
 token `.{`; whitespace and comments may follow it but may not separate the dot from the brace. Bare braces never open an anonymous record, and `.{` is never read as
 a block or as a nominal constructor, whatever the expected type. A trailing comma and the other entries of each form keep their existing rules.
 
-<!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md), [rfc-0225](../../rfcs/3-integrated/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0221](../../rfcs/4-implemented/rfc-0221-dotted-row-labels.md), [rfc-0225](../../rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -617,7 +617,7 @@ a block or as a nominal constructor, whatever the expected type. A trailing comm
 `..` introduces a spread or a rest and is never part of a label. Struct, enum and named-record declarations, patterns and construction do not use
 labels. The label-variable form `.[expr]` is not part of the language.
 
-<!-- rfc.py:last_reviewed a92932c36d60ac8e1d622f1a0b4142b3e153507f -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -629,10 +629,10 @@ labels. The label-variable form `.[expr]` is not part of the language.
 `{}` is an empty block wherever a block is permitted, and is an error where neither a block nor another brace form is permitted; it is never an empty record. The empty
 record is `.{}`, and a block that returns it is `{ .{} }`. A function or closure body is a block, so `fun f() -> .{} .{}` is an error.
 
-<!-- rfc.py:last_reviewed 049b4ea71d425485647bc61eb486e6672cbc6904 -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0225](../../rfcs/3-integrated/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0225](../../rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -650,10 +650,10 @@ A literal-row argument is introduced by the contiguous token `..{`, and a whole-
 prefixed again. `.. .{ ... }`, `...{ ... }` and `!.{ ... }` are errors, as is whitespace or a comment inside either introducer. A whole-row negative bound takes no
 trailing `..`, as before.
 
-<!-- rfc.py:last_reviewed 049b4ea71d425485647bc61eb486e6672cbc6904 -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0225](../../rfcs/3-integrated/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0225](../../rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -675,7 +675,7 @@ trailing `..`, as before.
 A projection keeps its spelling, `Handle.{ .fd, ..R }` and `value.{ .fd }`: it follows a type or value path, and an anonymous record never does. Struct, enum and
 named-record declarations, patterns and construction keep their braces, and field selection `p.x` is unchanged.
 
-<!-- rfc.py:last_reviewed 049b4ea71d425485647bc61eb486e6672cbc6904 -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -691,10 +691,10 @@ The old bare-brace spellings of an anonymous record are errors. Where the parser
 inserting a `.` before the `{`; where the failure follows a spaced `!` or `..` introducer it names the gap. A missed bare `{}` record is reported by the ordinary
 block rules, not by a record-specific message.
 
-<!-- rfc.py:last_reviewed 049b4ea71d425485647bc61eb486e6672cbc6904 -->
+<!-- rfc.py:last_reviewed e6c1939a30bbbc10df0fcb9f1c2ca4524163a573 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0225](../../rfcs/3-integrated/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0225](../../rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

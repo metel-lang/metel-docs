@@ -108,7 +108,7 @@ illustrative.
 record Rec<record R> { data: .{ ..R } }
 
 extend<record R> Rec<..R> {
-    fun empty() -> Rec<..{}> { Rec(data = {}) }
+    fun empty() -> Rec<..{}> { Rec(data = .{}) }
 
     fun put<V>(self, comptime l: Label, v: V) -> Rec<..{ .[l]: V, ..R }>
     where R: !{ .[l] }

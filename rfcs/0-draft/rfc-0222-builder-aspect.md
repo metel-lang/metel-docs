@@ -94,7 +94,7 @@ fills it in with a row it has in scope. Both rows are row parameters (RFC-0186, 
 extend<record R> .{ ..R }: Builder {
     type Start = Building<Self, ..R, ..{}>;
     fun builder() -> Self::Start {
-        Building(fields = {})
+        Building(fields = .{})
     }
 }
 ```

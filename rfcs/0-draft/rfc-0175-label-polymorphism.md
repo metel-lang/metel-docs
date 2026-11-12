@@ -246,7 +246,7 @@ where R: !{.[l]} {
 }
 
 fun main() {
-    let cfg := insert(.port, insert(.host, {}, "a.com"), 8080);   // .{ .host: String, .port: i64 }
+    let cfg := insert(.port, insert(.host, .{}, "a.com"), 8080);   // .{ .host: String, .port: i64 }
     assert(get(.port, cfg) == 8080);
 }
 ```
