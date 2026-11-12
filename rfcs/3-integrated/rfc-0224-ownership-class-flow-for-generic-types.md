@@ -374,9 +374,12 @@ move-check ownership facts, so "not copy under these bounds" does not reach impl
 - **No change for non-`pub` types** and for `copy struct` with an empty flow: the flow is computed.
 - **A `pub` generic type with a non-empty computed flow** gains the error of rule 3, with a fix-it showing the set.
   Std has no generic `Copy` type today; the fixture corpus is swept when rule 3 takes effect.
-- **When rule 3 takes effect.** With the stored-interface work (metel-core#1818), not before: until interfaces are
-  stored there is nothing for a stated flow to be checked against. RFC-0206's step 4 ("an unstated condition on a `pub`
-  generic type is an error", #1820) is this rule, so #1820 becomes the implementation issue for it.
+- **When rule 3 takes effect.** In v0.16.0 (language owner, 2026-11-12). The stored-interface work moved into the
+  release with it: #1941 (the `via` clause, consuming stored rules, the checks), then #1818 (storage and the
+  recursive evaluator over stored sets), #1819 (computing unstated Copy flow sets in the declaration-graph phase) and
+  #1820 (the rule 3 error, RFC-0206's step 4). Until stored interfaces and computed sets exist there is nothing for a
+  stated flow to be checked against, so the error lands last. The general solver (#1813) and the interfaces of the
+  other markers stay in "Abstract ownership solver".
 - **Parser.** `via_clause` and the contextual keyword land with the stated-flow implementation; until then a `via`
   clause is a parse error naming the staging, so no program silently ignores a flow.
 
