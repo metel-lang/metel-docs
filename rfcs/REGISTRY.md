@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**226 RFCs total.** 36 draft, 54 under review, 11 accepted, 6 integrated (107 live), 87 implemented, 16 superseded, 16 refused (119 settled).
+**226 RFCs total.** 36 draft, 54 under review, 11 accepted, 3 integrated (104 live), 90 implemented, 16 superseded, 16 refused (122 settled).
 
 ## Draft (36)
 
@@ -125,16 +125,13 @@ the curated thematic map.
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 - **RFC-0211** — Aspects on Residuals (`2-accepted` ; rfcs/2-accepted/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-06)
 
-## Integrated (6)
+## Integrated (3)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`3-integrated` ; rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1808)
-- **RFC-0207** — Declaration Clauses: derives and the Colon List (`3-integrated` ; rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1800)
-- **RFC-0212** — Aspect Declaration Properties (`3-integrated` ; rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1803)
-- **RFC-0213** — Super-Aspects (`3-integrated` ; rfcs/3-integrated/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1801)
 
-## Implemented (87)
+## Implemented (90)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -218,6 +215,9 @@ the curated thematic map.
 - **RFC-0193** — Named Declarations Write Their Signature (`4-implemented` ; rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md ; date 2026-10-29 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1713)
 - **RFC-0195** — Local Functions Do Not Capture (`4-implemented` ; rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md ; date 2026-10-30 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1714)
 - **RFC-0196** — Remove Inferred Let-Polymorphism (`4-implemented` ; rfcs/4-implemented/rfc-0196-remove-inferred-let-polymorphism.md ; date 2026-10-30 ; updated 2026-10-30 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1718)
+- **RFC-0207** — Declaration Clauses: derives and the Colon List (`4-implemented` ; rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1800)
+- **RFC-0212** — Aspect Declaration Properties (`4-implemented` ; rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1803)
+- **RFC-0213** — Super-Aspects (`4-implemented` ; rfcs/4-implemented/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1801)
 - **RFC-0218** — Spell Visibility pub (`4-implemented` ; rfcs/4-implemented/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1837)
 - **RFC-0221** — Dotted Row Labels (`4-implemented` ; rfcs/4-implemented/rfc-0221-dotted-row-labels.md ; date 2026-11-07 ; updated 2026-11-11 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1847)
 - **RFC-0223** — Keyword Arguments at Every Call (`4-implemented` ; rfcs/4-implemented/rfc-0223-keyword-arguments-at-every-call.md ; date 2026-11-07 ; updated 2026-11-11 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1854)

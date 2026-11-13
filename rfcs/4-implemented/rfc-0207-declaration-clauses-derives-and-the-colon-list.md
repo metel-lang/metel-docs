@@ -2,8 +2,8 @@
 id: rfc-0207
 title: "Declaration Clauses: derives and the Colon List"
 date: '2026-11-02'
-status: integrated
-updated: '2026-11-10'
+status: implemented
+updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1786'
 coverage:
   "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-1" }
@@ -12,7 +12,7 @@ coverage:
   "4": { kind: untestable, reason: "Section 4 states what the RFC does not do; it adds no rule." }
   "5": { kind: untestable, reason: "The worked examples are fixtures citing the declaration-clause rules." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1800'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Extracted from RFC-0162 on 2026-11-02** (its Axis C), and **cut down on 2026-11-03** when the
@@ -28,6 +28,8 @@ impl_status: in-progress
 > **Status — integrated (2026-11-10).**
 
 > **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). The implementation follows the text except: the generic derive bounds exactly the type parameters a field's aspect depends on, computed through the flow of each type a field names (RFC-0224; metel-core#1819 for `Copy`, #1938 for `Clone`, #1964 for declarations in function bodies). Details the text left open: the clauses are accepted on a named `record` as on a struct (RFC-0206 section 3), `linear` is a parse error until `Linear` exists, a negative colon-list entry is a parse error, and the clause impls are written after name resolution (`pipeline/clause_expansion.rs`). The error codes are T0046 (invalid entry) and T0003 (unknown aspect).
+
+> **Status — implemented (2026-11-13).** Implemented in the compiler in the v0.16.0 stage Declarations and derivation.
 
 ## Summary
 
