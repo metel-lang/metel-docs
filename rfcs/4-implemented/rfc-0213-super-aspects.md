@@ -2,8 +2,8 @@
 id: rfc-0213
 title: "Super-Aspects"
 date: '2026-11-04'
-status: integrated
-updated: '2026-11-10'
+status: implemented
+updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1796'
 coverage:
   "1": { spec: "spec.declarations.aspects.super-aspects.legality-1" }
@@ -12,7 +12,7 @@ coverage:
   "4": { spec: "spec.declarations.aspects.super-aspects.legality-5" }
   "5": { kind: untestable, reason: "The worked examples are fixtures citing the super-aspect rules." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1801'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Split from RFC-0168 on 2026-11-04.** RFC-0168 defines the equality model and, in one section,
@@ -30,6 +30,8 @@ impl_status: in-progress
 > **Status — integrated (2026-11-10).**
 
 > **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). Section 2 is amended (language owner, 2026-11-10): the `deriving` super of an `implicit` aspect is provided by the compiler, so an explicit `extend T: A;` of such an aspect needs no written impl of that super (`Copy: deriving Clone`). Everything else follows the text; the error codes are T0044 (invalid list) and T0015 (exclusion or negative super).
+
+> **Status — implemented (2026-11-13).** Implemented in the compiler in the v0.16.0 stage Declarations and derivation.
 
 ## Summary
 

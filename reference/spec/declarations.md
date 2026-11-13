@@ -3914,7 +3914,7 @@ An aspect lists its direct super-aspects after its name, each a visible aspect. 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -3947,7 +3947,7 @@ An explicit `extend T: A` requires a coherent impl of every direct and transitiv
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -3968,7 +3968,7 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -3987,7 +3987,7 @@ The `deriving` mark on a super-aspect entry is accepted only on an aspect declar
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/3-integrated/rfc-0213-super-aspects.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4037,7 +4037,7 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4057,7 +4057,7 @@ The properties `implicit` and `auto` are accepted only on an aspect declared in 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4127,7 +4127,7 @@ A colon-list entry names a visible aspect that is `declared` and has no methods,
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4159,7 +4159,7 @@ A declaration clause has no negative entries. An opt-out of an `auto` aspect is 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0212](../../rfcs/3-integrated/rfc-0212-aspect-declaration-properties.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0212](../../rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4211,7 +4211,7 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/3-integrated/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
