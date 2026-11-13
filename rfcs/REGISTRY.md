@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**227 RFCs total.** 38 draft, 53 under review, 11 accepted, 6 integrated (108 live), 87 implemented, 16 superseded, 16 refused (119 settled).
+**227 RFCs total.** 37 draft, 54 under review, 11 accepted, 6 integrated (108 live), 87 implemented, 16 superseded, 16 refused (119 settled).
 
-## Draft (38)
+## Draft (37)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -54,9 +54,8 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 - **RFC-0227** — Stated flow for every derived impl (`0-draft` ; rfcs/0-draft/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12)
-- **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`0-draft` ; rfcs/0-draft/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13)
 
-## Under Review (53)
+## Under Review (54)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -111,6 +110,7 @@ the curated thematic map.
 - **RFC-0217** — Row Templates for Aspects on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0217-row-templates-for-aspects-on-residuals.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0219** — The copy Function-Type Qualifier (`1-under-review` ; rfcs/1-under-review/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
+- **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 
 ## Accepted (11)
 

@@ -2,8 +2,12 @@
 id: rfc-0228
 title: "Aspects with type arguments: impl identity, bound satisfaction and method selection"
 date: '2026-11-13'
-status: draft
+status: under-review
+updated: '2026-11-13'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2001'
 ---
+
+> **Status — under review (2026-11-13).** Settlement committed to v0.16.0 (milestone [v0.16.0] Declarations and derivation); five open questions block acceptance.
 
 ## Summary
 
