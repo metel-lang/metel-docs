@@ -101,8 +101,7 @@ A method call selects an implementation, never the last one registered.
 
 - `dyn Conv<i64>` and `dyn Conv<String>` are different object types; their vtables are not affected.
 - An aspect without type arguments behaves as before: its identity is its name.
-- A call syntax that names the impl explicitly (`Conv<i64>::conv(&l)`) is not introduced here; an RFC may add it for
-  the unannotated case.
+- A call syntax that names the impl explicitly is not introduced here (open question 3).
 
 ---
 
@@ -130,9 +129,23 @@ alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3
    metel-core#1813 is for ownership goals and is not that mechanism. Until it exists a direct call with several
    candidates is `T0013` whether or not it is annotated, and section 3.2's resolution takes effect with the mechanism.
    Is that staging acceptable, or should the first release restrict section 1.1 to one impl per aspect and type?
-2. **Locality of arguments (1.2).** Rust lets a local type argument make `extend i64: Conv<MyType>` legal. This RFC says
-   no. Revisit with the package system.
-3. **Free argument in a bound (2).** Whether `X: Conv<U>` with several impls should infer `U` from other constraints
+2. **Locality of arguments (1.2).** Rust counts a trait's type arguments towards locality: `impl From<MyType> for i64` is
+   legal in a crate that owns only `MyType`, which is how a crate converts its own types into foreign ones. Section 1.2
+   says arguments do not count, the stricter choice, under which `extend i64: Conv<MyType>` needs `Conv` to be local.
+   The cost is that a module cannot write a conversion from its own type into a foreign type for a foreign aspect; the
+   benefit is that coherence stays decidable from the aspect and the target alone, and no other module's impls need to
+   be consulted (the property the coherence section builds on). Should a local type argument make an impl local? If so
+   the orphan rule needs a fundamental-type story (what `&MyType` or `List<MyType>` count as), which Rust spent several
+   RFCs on. Revisit with the package system.
+3. **A qualified call form.** Rust selects an impl explicitly with `<L as Conv<i64>>::conv(&l)`, always available, so an
+   ambiguous call has an escape that needs no annotation (for example a call whose result is discarded, or a generic
+   position the expected type cannot reach). Section 4 introduces no such form, so under section 3.2 the only way to
+   resolve an ambiguous call is a type annotation. Should the RFC add a qualified form (`Conv<i64>::conv(&l)`,
+   `l.conv::<Conv<i64>>()`, or a Rust-style `<L as Conv<i64>>::conv(&l)`), or leave it to a later RFC? It needs surface
+   syntax, which interacts with RFC-0223's call rules and the path grammar, and the language has no aspect-qualified call today
+   (`Show::show(&l)` is `T0003`, unresolved path; a type-qualified `L::show(..)` parses but names no aspect), so the form
+   would be new, not an extension.
+4. **Free argument in a bound (2).** Whether `X: Conv<U>` with several impls should infer `U` from other constraints
    rather than being ambiguous.
 
 ---
