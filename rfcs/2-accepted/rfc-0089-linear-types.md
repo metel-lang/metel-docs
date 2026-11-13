@@ -3,7 +3,7 @@ id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
 status: accepted
-updated: '2026-11-05'
+updated: '2026-11-12'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
@@ -273,7 +273,7 @@ aspect Affine = !Copy + !Linear
 
 **The problem.** A generic body can do two things to a value of parameter type `T` without writing a call: copy it
 and drop it. A copy happens at a visible use site (a second use of `x` is a use-after-move unless `T: Copy`), so the
-author is told. A **drop** is implicit: scope end, an early `return` or `?`, an overwritten assignment, an unused
+author is told. A **drop** is implicit: scope end (including leaving a block by `break` or `continue`), an early `return` or `?`, an overwritten assignment, an unused
 argument, a discarded expression statement, the unmoved rest of a partial move. If a bare `T` were affine, a linear
 type could never instantiate it and generic code could not be used with linear types at all.
 
@@ -406,6 +406,40 @@ the value is then affine with a destructor, not linear.
 **Open (exit tracking: metel-core#1828, the linear-release gate).** The spelling of the dismantling-method marker of decision D13 (candidates `consume self`, `deinit self`, a `dismantle` keyword; it must not collide with `pub`, RFC-0218); the spelling `Discard`; whether an explicit
 `where T: !Discard` ("this parameter must be linear") is ever needed (probably not); the rule that moving every field out consumes a struct (RFC-0215); whether `print` and `println` take `&T`.
 
+### 2.3 Early exits and paths
+
+The linearity rule is **per path**. Every place a value can stop being reachable without being moved is an implicit
+drop (the list in section 2.2), and for a value that is not known `Discard` each one is an error at that site. A
+branch, a loop exit and an early return are each a path with their own drop sites, so a linear value must be
+consumed on every path that leaves its scope.
+
+1. **`break` and `continue`** leave a scope as a block end does. A linear value declared in a scope that a `break`
+   or `continue` leaves must have been consumed on the path that reaches the jump.
+2. **`return` and `?`.** An early `return`, and the early-exit path of a `?`, are drop sites for every linear value
+   still in scope. The success path of a `?` is unaffected.
+3. **A panic is not a path.** A panic is a hard, uncatchable, process-terminating error (RFC-0153 section 1a,
+   `spec.runtime.panics.dynamics-1`), so no program point follows it at which a linear obligation could be observed
+   unmet. This RFC adds no rule for panics.
+4. **Effect sites.** RFC-0140 section 9 requires that at an effect-performance site no unconsumed linear value remain
+   in scope unless it is passed through the effect, because a handler that aborts never resumes the continuation.
+   That check belongs to RFC-0140. This RFC's drop-site list does not include effect sites, and RFC-0140's check
+   would add one.
+
+The rule has a visible cost. A fallible call between acquiring a linear value and consuming it is an error at the `?`:
+
+```metel
+fun run() -> Result<(), Err> {
+    let h := open()?;      // h is a linear handle
+    step()?;               // if step() fails, `?` returns early with h still in scope: error at this `?`
+    h.close()
+}
+```
+
+The author consumes the value on the error path first, by matching on the result of `step()` and closing `h` in
+both arms. This is the intended strictness: a linear value is never discharged by accident. It makes a fallible call
+between acquisition and release awkward, and no mechanism for discharging a linear value on an early exit is
+specified (Open Question 8).
+
 ---
 
 > **Sections 3 to 5 moved to RFC-0215 on 2026-11-05.** Partial consumption through `ToRecord`, the brand-carrying
@@ -433,6 +467,11 @@ the value is then affine with a destructor, not linear.
    demonstration required there remains a gate for accepting sections 1 to 2.1.
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
 7. **Binding-level strengthening** (a `linear` binding, parameter, return or field on an ordinary type, never looser than the type): designed as an extension on 2026-11-06 and drafted as RFC-0220. It is local discipline and does not change the declared-class model of sections 1 to 2.1.
+
+8. **Discharging a linear value on an early exit** (section 2.3). A fallible call between acquiring a linear value
+   and consuming it forces an explicit `match` that consumes it on the error path. Whether the language should
+   offer a scope-exit discharge (a `defer`-style construct, or a `?` that runs a named consuming method) is open.
+   No RFC currently proposes one. Not blocking: the strict form is sound and needs no new feature.
 
 ---
 
