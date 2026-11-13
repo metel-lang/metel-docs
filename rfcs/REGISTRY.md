@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-12'
+generated_on: '2026-11-13'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**226 RFCs total.** 37 draft, 53 under review, 11 accepted, 6 integrated (107 live), 87 implemented, 16 superseded, 16 refused (119 settled).
+**227 RFCs total.** 38 draft, 53 under review, 11 accepted, 6 integrated (108 live), 87 implemented, 16 superseded, 16 refused (119 settled).
 
-## Draft (37)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -54,6 +54,7 @@ the curated thematic map.
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 - **RFC-0227** — Stated flow for every derived impl (`0-draft` ; rfcs/0-draft/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12)
+- **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`0-draft` ; rfcs/0-draft/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13)
 
 ## Under Review (53)
 
