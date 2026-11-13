@@ -1189,6 +1189,143 @@ match that row exactly, with no implicit narrowing at the call site.
 
 </details>
 
+### Aspects on a residual
+
+A residual (`Doc.{ .title }`, the same brand with fewer fields) is a value of its brand, but it is not the whole type, so the
+language says which aspects it satisfies. Bound satisfaction and dispatch agree: a residual satisfies **structural `Copy`**
+(with the `Clone` that `Copy` provides) and keeps the existing [`Drop` dispatch](#drop-dispatch-against-a-narrowed-residual),
+and **every other aspect that needs an impl is `T0012` on a residual**, whether the whole-type impl is written or derived.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1830" -->
+```metel
+copy struct Point { x: i64, y: i64 }
+struct Doc derives Clone { title: String, n: i64 }
+
+let p2 := p.{ .x };           // Point.{ .x }: Copy, because x is
+let t := d.{ .title };        // the projection moves the field out
+t.clone()                     // T0012: Clone has no impl for the projection (derived: template not yet available)
+```
+
+A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ .title }`: its body may read any field the residual no
+longer has. There is no way to write an impl for a residual itself in this release: RFC-0214 (under review) proposes one, and
+until it is implemented a residual has such an aspect only through the rules below. `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A residual of a type that
+cannot grant `Copy` (a field is not `Copy`) never is, even if the remaining fields are: the declaration says so, not the
+shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously. A type whose `Clone` is written is not `Copy` ([RFC-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
+so its projections move like the value itself.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-1}
+
+A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` and the residual's
+**present** fields are `Copy`. It then has the provided `Clone` that `Copy` brings. The rule is evaluated over the present
+fields: for `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is `Copy`: the condition
+holds when no field is present, and a copy of it copies no field.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-2}
+
+A residual does not satisfy an aspect `A` through a hand-written impl of `A` for `T` (an `extend T: A { … }`), because the body
+may read a field the residual no longer has. A bound `T: A` on a residual is `T0012` unless legality-1 or legality-5 applies.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-3}
+
+A residual does not satisfy an aspect through a **derived** impl either: the derivation is whole-type, and the row template
+that would extend it to residuals is a later RFC. The use-site diagnostic says the template is not yet available and does not
+name a written impl.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-4}
+
+A residual of a type whose declaration grants nothing satisfies nothing for marker and derivable aspects, as the brand does.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-5}
+
+A residual is a value of the same brand, so the brand's `Drop` rule is unchanged: a destructor is dispatched by the row-bounded
+rule of [Drop dispatch against a narrowed residual](#drop-dispatch-against-a-narrowed-residual) and is outside this section.
+The total destructuring of a marked dismantling method suppresses the destructor and is separate from that dispatch.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-6}
+
+Compiler-computed ownership capabilities (`Discard`) are not impls: they follow the surviving fields of the residual. A partial
+move out of a nominal aggregate is legal only when the aggregate is known `Discard`, so a residual of a linear or possibly linear
+aggregate does not arise. A structural type (anonymous record, tuple) that holds a linear value narrows as usual and its leftover
+class is recomputed from the surviving components.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-7}
+
+The error for an aspect a residual does not satisfy is `T0012` at the use site. When a written whole-type impl exists, the note
+names it as the cause; when the aspect is derived, the note says the template is not yet available.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics Rule {#spec.ownership.aspects-on-a-residual.dynamics-1}
+
+A copy of a `Copy` residual copies its present fields. No absent field is read.
+
+<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
 ### Drop dispatch against a narrowed residual
 
 > **Gap** GAP-OWNERSHIP-003

@@ -2,9 +2,16 @@
 id: rfc-0211
 title: "Aspects on Residuals"
 date: '2026-11-02'
-status: accepted
-updated: '2026-11-06'
+status: integrated
+updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
+coverage:
+  "1": { kind: blocked, reason: "Implementation of the aspects-on-a-residual rules is metel-core#1830; the rules are in reference/spec/ownership.md (aspects-on-a-residual legality 1 to 7, dynamics 1) and carry no fixtures until then.", ref: "metel-core#1830" }
+  "2": { kind: untestable, reason: "The worked examples are fixtures citing the aspects-on-a-residual rules." }
+  "3": { kind: untestable, reason: "Section 3 records rejected alternatives; it adds no rule." }
+  "4": { kind: untestable, reason: "Section 4 states costs; it adds no rule." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1830'
+impl_status: not-started
 ---
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05.
@@ -12,6 +19,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 > **Split (2026-11-06).** This RFC was accepted with a staged marker. It is split so that each RFC has one status:
 > this RFC keeps the rules that apply in v0.16.0; the template half (a granted aspect's row template applying to
 > every residual) is RFC-0217, under review. The title changed from "Aspect Templates on Residuals".
+
+> **Status — integrated (2026-11-13).** Integrated into reference/spec/ownership.md (aspects-on-a-residual legality 1 to 7, dynamics 1); implementation tracked in metel-core#1830.
 
 ## Summary
 
@@ -61,10 +70,11 @@ aspects.
 1. A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` (RFC-0206,
    RFC-0207) and the residual's **present** fields are `Copy`. It then has the provided `Clone` that `Copy` brings. The
    rule is native compiler logic in v0.16.0 (metel-core#1823). It must be evaluated over the present fields: for
-   `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`.
+   `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is therefore `Copy`.
 2. A residual does **not** satisfy `A` through a hand-written impl of `A` for `T` (an `extend T: A { … }`), because the
    body may read a field the residual no longer has. A bound `T: A` on a residual is `T0012` unless rule 1 or rule 5
-   applies.
+   applies. An impl written *for the residual* (a narrowed receiver or an exact-shape impl) is a different thing and is
+   not provided here: it is RFC-0214 (under review). Where one exists it applies to the residual, and until then there is none.
 3. A residual does not satisfy `A` through a **derived** impl either in v0.16.0. The derivation is whole-type; the
    row template that would extend it to residuals is RFC-0217. The use-site diagnostic says "template not yet
    available" and does not name a written impl.
@@ -79,7 +89,8 @@ aspects.
    usual and its leftover class is recomputed from the surviving components.
 
 **Diagnostics.** The error is `T0012` at the use site. When a written whole-type impl exists, the note names it as the
-cause; when the aspect is derived, the note says the template is not yet available. The language keeps no edit
+cause; when the aspect is derived, the note says the template is not yet available. When RFC-0214 is implemented, the note also names the residual-impl route as the way to give the
+aspect a meaning on the residual; until then the diagnostic does not suggest a feature that does not exist. The language keeps no edit
 history, so there is no warning at the edit.
 
 **Marker aspects.** `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A
@@ -141,7 +152,9 @@ projections move like the value itself.
 
 ## Open questions
 
-1. **Empty residuals** (`Handle.{}`): whether `Copy` holds vacuously for a granted brand.
+1. **Empty residuals** (`Handle.{}`): whether `Copy` holds vacuously for a granted brand. *Answered 2026-11-13 (language owner): yes.*
+   The condition of rule 1 holds when no field is present, so an empty residual of a brand that grants `Copy` is `Copy` and copies no
+   field (dynamic semantics: no absent field is read). An empty residual of a brand that does not grant `Copy` is not (rule 4).
 2. Open questions about templates moved to RFC-0217.
 
 ---

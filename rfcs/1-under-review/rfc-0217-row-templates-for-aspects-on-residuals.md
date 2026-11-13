@@ -7,7 +7,7 @@ updated: '2026-11-06'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1834'
 ---
 
-> **Status — draft (2026-11-06).** Split from RFC-0211 on 2026-11-06. RFC-0211 (accepted) keeps the rules that
+> **Status — draft (2026-11-06).** Split from RFC-0211 on 2026-11-06. RFC-0211 (integrated) keeps the rules that
 > apply in v0.16.0; this RFC is the end state. Nothing here is decided.
 
 > **Not a dependency.** The Copy/Clone settlement (RFC-0206, RFC-0207, RFC-0211, RFC-0212, RFC-0213) does not

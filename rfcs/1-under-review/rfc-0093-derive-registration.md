@@ -3,7 +3,7 @@ id: rfc-0093
 title: "Derive Registration — #derive(Aspect) as Request and Registration"
 date: '2026-07-09'
 status: under-review
-updated: '2026-08-23'
+updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/799'
 ---
 
@@ -32,6 +32,30 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/799'
 > rewritten accordingly, since its original argument (rejecting `#` for `@`) is now
 > backwards; every other `@derive`/`@` mention throughout is a mechanical sigil update
 > with no change in substance.
+
+> **Reconciled with the implementation, 2026-11-13.** This RFC predates RFC-0207, RFC-0212, RFC-0213 and RFC-0224
+> (all four implemented in the v0.16.0 stage "Declarations and derivation": metel-core#1800, #1801, #1803 and the
+> RFC-0224 chain) and several of its claims
+> no longer describe the language. What changed, so the rest of the text can be read against it:
+>
+> - **The request half is settled and is not `#derive(...)`.** A derive request is the `derives` clause after a type's
+>   name (`struct Pixel derives Copy { .. }`, RFC-0207), with the class keyword `copy` as sugar for `derives Copy`.
+>   `derives` replaced this RFC's `#derive(Aspect, ...)` call-site spelling; section 3's rejection of `derives` is
+>   superseded, not merely out of date.
+> - **"Derivable" is a property of an aspect's declaration, read by identity** (RFC-0212): `pub derivable aspect Clone`,
+>   `pub declared derivable implicit aspect Copy: deriving Clone, !Drop` in `std::core`. `derives A` is legal exactly when `A`
+>   has a derivation (`spec.declarations.aspects.declaration-clauses.legality-3`). The property is **std-only** today.
+> - **The derivation is built into the compiler, not a comptime function.** For `Copy` and `Clone` the compiler writes an
+>   ordinary conditional impl after name resolution (`clause_expansion`), bounded per type parameter held by value
+>   (`declaration-clauses.legality-5`). It is idempotent per type and aspect (legality-7) and a written `extend` of the same
+>   aspect overlaps it (`T0015`, legality-4). A std aspect may mark a super-aspect entry `deriving` so that `derives` brings
+>   it too (RFC-0213): `Copy` brings `Clone`.
+> - **A derive may state which type parameters it depends on:** `derives Copy via T` (RFC-0224, `Copy` only today;
+>   RFC-0227, under review, would extend it to every field-wise derivation).
+> - **What remains of this RFC is the registration half**: a user or third-party aspect becoming derivable through a
+>   comptime function (section 1's registration, open questions 1 to 5 as restated below), which waits on RFC-0092 and
+>   RFC-0132. The set of derivable aspects is not the table of section 2: only `Copy` and `Clone` are derivable; the rest
+>   are proposals.
 
 ## Summary
 
@@ -64,6 +88,14 @@ which no prior document specifies.
 ---
 
 ## 1. Resolving a derive request to a comptime function
+
+> **Reconciliation, 2026-11-13.** The *request* (`#derive(Aspect)` attached to a struct or enum) is replaced by the
+> `derives` clause of RFC-0207 and is implemented for `Copy` and `Clone`. Everything below that describes a **comptime
+> function registered as an aspect's deriver** is still the proposal, not the implementation: no `#derive` attribute
+> exists and `derive_clone` above is not how `Clone` is derived (the compiler writes it). Read `#derive(Aspect)` on a
+> struct as `derives Aspect`, and `#derive(Aspect)` on a `comptime fun` as the registration that would make a
+> user's aspect `derivable`.
+
 
 `#derive(Aspect)`, attached to the comptime function that implements the derive,
 registers it as that aspect's deriver:
@@ -120,13 +152,14 @@ change required when that lands.
 
 ## 2. Derivable Aspects (initial standard-library set)
 
-| Aspect | Behaviour |
-|---|---|
-| `Eq` | Field-by-field equality |
-| `Ord` / `Comparable` | Lexicographic field ordering |
-| `Display` | Structural `to_string` (see Open Question 4) |
-| `Clone` | Deep field-by-field clone (RFC-0206 §4 (formerly RFC-0080 §1.3)) |
-| `Hash` | Structural hash combining all fields |
+| Aspect | Behaviour | Status (2026-11-13) |
+|---|---|---|
+| `Eq` | Field-by-field equality | proposed; `derives Eq` is `T0046` today ("`Eq` has no derivation") |
+| `Ord` / `Comparable` | Lexicographic field ordering | proposed |
+| `Display` | Structural `to_string` (see Open Question 4) | proposed; `Display` is an ordinary aspect, written by hand |
+| `Clone` | Deep field-by-field clone (RFC-0206 §4 (formerly RFC-0080 §1.3)) | **implemented**: `derives Clone`, and brought by `derives Copy` |
+| `Copy` | Copy of the representation | **implemented** (not in the original table): `derives Copy` or `copy struct` |
+| `Hash` | Structural hash combining all fields | proposed |
 
 **`Linear` does not belong on this list.** An earlier revision of this thread's design
 (and this RFC's own predecessor, RFC-0012) incorrectly treated `Linear` as
@@ -159,21 +192,20 @@ actually about that syntax.
 
 ### Derive as a language keyword (`derives`), closed
 
+> **Superseded 2026-11-13: this is the adopted form.** RFC-0207 (implemented) made `derives` the request
+> clause, and it is implemented. The reasoning below, which rejected it in favour of `#derive(...)`, is kept as the
+> record of why that was first chosen; its objection (a trailing clause crowds the declaration line) lost to the need
+> for one place where a type states what it derives and, with RFC-0224, `via`.
+
 Derive expressed with a `derives` keyword rather than the `#` attribute system:
 
 ```metel
 struct Point derives Eq, Ord, Display { x: Float, y: Float }
 ```
 
-Ergonomic and self-contained, but does not scale to user-defined derivable aspects.
-**Not adopted, at the mechanism level or the syntax level.** `derives`'s only stated
-con (no extensibility) is exactly what §1's comptime registration mechanism solves, so
-its syntax could in principle ride along on top of that mechanism — but `derives` as a
-trailing clause crowds a struct's declaration line (competing for space with generic
-parameters and row-conditional bounds before the opening brace) in a way
-`#derive(Aspect, ...)` as a leading attribute does not, and `#derive(...)` is closer to
-what Rust users already expect. `derives` is therefore dropped, not merely superseded
-by something that happens to look the same.
+Ergonomic and self-contained. Its stated con (it does not scale to user-defined derivable aspects) is the open
+question this RFC's registration half still has to answer: `derives` opens to an aspect that has a derivation, and
+today only std aspects carry the `derivable` property that says so.
 
 ### `#[...]` Rust-style, bracketed attributes
 
@@ -192,6 +224,13 @@ checked and set aside.
 ---
 
 ## Open Questions
+
+> **Reconciliation, 2026-11-13.** Questions 1 to 5 are about the registration half and stay open for a user's deriver; for
+> the derivations the compiler writes (`Copy`, `Clone`) the implementation answers them: the derived impl is an ordinary
+> impl in the declaring module, so the orphan rule holds trivially, a conflicting written impl is `T0015`, and only
+> `std::core` carries the `derivable` property, so only std "registers". Question 6 is answered. New questions 7 to 9
+> follow the list.
+
 
 1. **`emit` soundness.** Does ordinary orphan-rule/coherence checking (RFC-0060) apply
    unchanged to an impl emitted by comptime code? Can a comptime function emit an impl
@@ -227,24 +266,35 @@ checked and set aside.
    (the registered function's signature would need to accept whichever form is
    chosen).
 
-6. **`Display` vs `From` for string conversion.** `print` currently only accepts
-   `String`. When aspects land, `print` should accept any type with a string
-   representation. The question is which aspect owns that conversion:
-   - A `Display` aspect (`fun to_string(self) -> String`) implemented by the source
-     type — the natural direction for user-defined types.
-   - `String` implementing `From<T>` for each printable type — consistent with the
-     `from` pattern but puts the responsibility on `String`, which cannot know about
-     user-defined types without open dispatch.
-   These serve different purposes and should likely remain separate aspects. Resolve
-   before finalising the `print` signature.
+6. **`Display` vs `From` for string conversion.** *(Answered by the implementation, 2026-11-13.)* `Display`
+   (`fun to_string(&self) -> String`) is an ordinary aspect implemented by the source type, and string interpolation
+   (`"${value}"`) uses it, for a type that implements it by hand. Whether a *derived* `Display` exists is the table's
+   `proposed` row, not this question.
+
+7. **What does a user's registration set?** Today the `derivable` property is std-only (RFC-0212, the property table of
+   `spec.declarations.aspects.aspect-declaration-properties`). Registering a comptime deriver for a user aspect means either
+   allowing `derivable` on a user aspect (and the registration is what makes it true), or deriving the property from the
+   registration. Not decided.
+
+8. **How does a registered deriver promise it is field-wise?** RFC-0227's `via` clause and the `pub` statement
+   (a generic type states the parameters its derived impl depends on) are defined for a field-wise derivation, where the
+   compiler checks the stated set against the fields. A user's deriver emits arbitrary code, so the compiler cannot check
+   a stated flow against it. Options: the registration declares itself field-wise and the compiler checks the emitted impl
+   has that shape; `via` is refused for user derivers; or the emitted impl's bounds are the interface. RFC-0227 open
+   question 4 asks the same and leaves it here.
+
+9. **Template derivations.** RFC-0222's `derives Builder` is a std row template, not generated code and not field-wise.
+   Does `derives` accept an aspect whose derivation is a template, under which property, and how does that sit beside a
+   registered comptime deriver? Not decided here; RFC-0222 depends on the answer.
 
 ---
 
 ## Timing Recommendation
 
-Deferred to **v0.5+**, alongside RFC-0092. `#derive(Clone)`'s registration function
-(RFC-0206's `derive_clone`) cannot be written until RFC-0092's `type`-as-value and
-`typeinfo` exist.
+The request half (`derives Copy`, `derives Clone`) shipped in v0.16.0 and does not wait on comptime. The registration half
+is deferred until comptime exists: `type`-as-value and `typeinfo` (RFC-0092) and the execution model (RFC-0132) are still
+under review and unimplemented, and a registered deriver cannot be written without them. The earlier target (v0.5+) is
+obsolete.
 
 ---
 
@@ -252,6 +302,12 @@ Deferred to **v0.5+**, alongside RFC-0092. `#derive(Clone)`'s registration funct
 
 - RFC-0092 (Comptime Core) — `type`-as-value, `typeinfo`, single-declaration `emit`
   this RFC's registration mechanism is built from
+- RFC-0207 (Declaration clauses), implemented (metel-core#1800) — the `derives` clause that replaced `#derive(...)` as the request
+- RFC-0212 (Aspect declaration properties), implemented (metel-core#1803) — `derivable`, `declared`, `implicit`; std-only today
+- RFC-0213 (Super-aspects), implemented (metel-core#1801) — the `deriving` mark on a super-aspect entry (`Copy` brings `Clone`)
+- RFC-0224 (Stated flow), implemented for `Copy` — `derives Copy via T`
+- RFC-0227 (Stated flow for every derived impl), under review — `via` for every field-wise derivation
+- RFC-0222 (Builder aspect), draft — a template derivation, the case `derives` and this RFC's registration both have to account for
 - RFC-0206 (Copy and Clone) — `Clone`'s derive is the concrete first test
   case; its `#derive(Clone)` example depends on this RFC
 - RFC-0089 (Linear Types) — §2's correction (`Linear` is auto-impl, not derive-as-
