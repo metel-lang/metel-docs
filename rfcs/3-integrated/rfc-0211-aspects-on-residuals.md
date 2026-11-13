@@ -6,12 +6,12 @@ status: integrated
 updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 coverage:
-  "1": { kind: blocked, reason: "Implementation of the aspects-on-a-residual rules is metel-core#1830; the rules are in reference/spec/ownership.md (aspects-on-a-residual legality 1 to 7, dynamics 1) and carry no fixtures until then.", ref: "metel-core#1830" }
+  "1": { spec: "spec.ownership.aspects-on-a-residual.legality-1" }
   "2": { kind: untestable, reason: "The worked examples are fixtures citing the aspects-on-a-residual rules." }
   "3": { kind: untestable, reason: "Section 3 records rejected alternatives; it adds no rule." }
   "4": { kind: untestable, reason: "Section 4 states costs; it adds no rule." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1830'
-impl_status: not-started
+impl_status: in-progress
 ---
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05.

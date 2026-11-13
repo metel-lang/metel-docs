@@ -1198,7 +1198,7 @@ language says which aspects it satisfies. Bound satisfaction and dispatch agree:
 (with the `Clone` that `Copy` provides) and keeps the existing [`Drop` dispatch](#drop-dispatch-against-a-narrowed-residual),
 and **every other aspect that needs an impl is `T0012` on a residual**, whether the whole-type impl is written or derived.
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1830" -->
+<!-- doc-example: skip reason="fragment: uses bindings (p, d) declared elsewhere, and the last line is a rejected program" -->
 ```metel
 copy struct Point { x: i64, y: i64 }
 struct Doc derives Clone { title: String, n: i64 }
@@ -1228,11 +1228,6 @@ holds when no field is present, and a copy of it copies no field.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-2}
 
@@ -1241,11 +1236,6 @@ may read a field the residual no longer has. A bound `T: A` on a residual is `T0
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-3}
 
@@ -1255,11 +1245,6 @@ name a written impl.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-4}
 
@@ -1267,11 +1252,6 @@ A residual of a type whose declaration grants nothing satisfies nothing for mark
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-5}
 
@@ -1281,10 +1261,10 @@ The total destructuring of a marked dismantling method suppresses the destructor
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="RFC-0211: row-bounded Drop dispatch against a residual is not implemented (GAP-OWNERSHIP-003)." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: RFC-0211: row-bounded Drop dispatch against a residual is not implemented (GAP-OWNERSHIP-003)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-6}
@@ -1296,10 +1276,10 @@ class is recomputed from the surviving components.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0211: Discard is not implemented yet." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0211: Discard is not implemented yet._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-7}
@@ -1309,11 +1289,6 @@ names it as the cause; when the aspect is derived, the note says the template is
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics Rule {#spec.ownership.aspects-on-a-residual.dynamics-1}
 
@@ -1321,11 +1296,6 @@ A copy of a `Copy` residual copies its present fields. No absent field is read.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1830" reason="RFC-0211 (accepted, integrated): not implemented until metel-core#1830." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1830: RFC-0211 (accepted, integrated): not implemented until metel-core#1830._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
