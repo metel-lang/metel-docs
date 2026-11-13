@@ -70,7 +70,7 @@ aspects.
 1. A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` (RFC-0206,
    RFC-0207) and the residual's **present** fields are `Copy`. It then has the provided `Clone` that `Copy` brings. The
    rule is native compiler logic in v0.16.0 (metel-core#1823). It must be evaluated over the present fields: for
-   `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`.
+   `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is therefore `Copy`.
 2. A residual does **not** satisfy `A` through a hand-written impl of `A` for `T` (an `extend T: A { … }`), because the
    body may read a field the residual no longer has. A bound `T: A` on a residual is `T0012` unless rule 1 or rule 5
    applies.
@@ -150,7 +150,9 @@ projections move like the value itself.
 
 ## Open questions
 
-1. **Empty residuals** (`Handle.{}`): whether `Copy` holds vacuously for a granted brand.
+1. **Empty residuals** (`Handle.{}`): whether `Copy` holds vacuously for a granted brand. *Answered 2026-11-13 (language owner): yes.*
+   The condition of rule 1 holds when no field is present, so an empty residual of a brand that grants `Copy` is `Copy` and copies no
+   field (dynamic semantics: no absent field is read). An empty residual of a brand that does not grant `Copy` is not (rule 4).
 2. Open questions about templates moved to RFC-0217.
 
 ---

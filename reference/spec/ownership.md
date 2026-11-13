@@ -1209,7 +1209,7 @@ t.clone()                     // T0012: Clone has no impl for the projection (de
 A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ .title }`: its body may read any field the residual no
 longer has. `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A residual of a type that
 cannot grant `Copy` (a field is not `Copy`) never is, even if the remaining fields are: the declaration says so, not the
-shape. A type whose `Clone` is written is not `Copy` ([RFC-0206](../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
+shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously. A type whose `Clone` is written is not `Copy` ([RFC-0206](../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
 so its projections move like the value itself.
 
 <details>
@@ -1219,7 +1219,8 @@ so its projections move like the value itself.
 
 A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` and the residual's
 **present** fields are `Copy`. It then has the provided `Clone` that `Copy` brings. The rule is evaluated over the present
-fields: for `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`.
+fields: for `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is `Copy`: the condition
+holds when no field is present, and a copy of it copies no field.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
