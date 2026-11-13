@@ -2,8 +2,8 @@
 id: rfc-0212
 title: "Aspect Declaration Properties"
 date: '2026-11-04'
-status: integrated
-updated: '2026-11-10'
+status: implemented
+updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
 coverage:
   "1": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-1" }
@@ -13,7 +13,7 @@ coverage:
   "5": { kind: untestable, reason: "A table of how the existing aspects are declared; the std declarations are the evidence." }
   "6": { kind: untestable, reason: "The worked examples are fixtures citing the property rules." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1803'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Written 2026-11-04** as part of the `Copy`/`Clone` settlement (RFC-0206). The compiler today
@@ -30,6 +30,8 @@ impl_status: in-progress
 > **Status — integrated (2026-11-10).**
 
 > **Implementation note (2026-11-10).** Implemented before this integration step (see RFC-0206's note). The implementation follows the text, with this addition and these limits: `derivable` is a documented fourth property (section 4, added at integration, language owner); `auto` parses and is std only but has no semantics, because the text defers it with the Send/Sync revision; an `extend` of a `declared` aspect is T0045 for a type with a declaration and, for a type without one, rejected outside the defining module (T0014 from the orphan rule). `Copy` is `declared derivable implicit`.
+
+> **Status — implemented (2026-11-13).** Implemented in the compiler in the v0.16.0 stage Declarations and derivation.
 
 ## Summary
 

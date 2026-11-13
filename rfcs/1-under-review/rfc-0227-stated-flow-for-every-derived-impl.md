@@ -2,8 +2,12 @@
 id: rfc-0227
 title: "Stated flow for every derived impl"
 date: '2026-11-12'
-status: draft
+status: under-review
+updated: '2026-11-13'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2002'
 ---
+
+> **Status — under review (2026-11-13).** Settlement committed to v0.16.0 (milestone [v0.16.0] Declarations and derivation); four open questions block acceptance.
 
 ## Summary
 

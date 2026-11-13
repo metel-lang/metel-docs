@@ -830,7 +830,7 @@ The closure-side items (D5, and "keep investing in the closure-capability cluste
   and their relationship (extracted from RFC-0080 §1). RFC-0158 amends its §1 (tighten
   `Clone` to independent-duplication-only; add `Share`). This RFC's direction leaves `Clone`
   otherwise untouched.
-- **RFC-0207 (Declaration Clauses: derives and the Colon List, `3-integrated`)** — the colon list
+- **RFC-0207 (Declaration Clauses: derives and the Colon List, `4-implemented`)** — the colon list
   that carries the marker, and the `derives` clause (this RFC's Axis C,
   cut down).
 - **RFC-0158 (Share and Clone, `1-under-review`)** — split out of this analysis's "Axis B,
