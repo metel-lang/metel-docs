@@ -2,7 +2,9 @@
 id: rfc-0214
 title: "Aspect Impls for Residuals"
 date: '2026-11-04'
-status: draft
+status: under-review
+updated: '2026-11-13'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2003'
 ---
 
 > **Status — draft (2026-11-04).** First draft. Nothing here is decided.
@@ -12,6 +14,8 @@ status: draft
 > aspect only through a row template (RFC-0217 rule 1), a hand-written impl for the whole type never
 > applies to a residual (RFC-0211 rule 2), and there is no way to write an impl for a residual. This RFC
 > only adds that written route; every rule of the settlement stays true without it.
+
+> **Status — under review (2026-11-13).** Settlement scheduled in the Views and projections milestone beside the narrowed-receiver RFCs it generalises; the unresolved questions block acceptance.
 
 ## Summary
 
