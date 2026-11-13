@@ -120,7 +120,8 @@ A method call selects an implementation, never the last one registered.
 RFC-0060 (coherence) states the rules this one applies per identity. RFC-0082 (associated types) states the prose this
 makes normative and the equality-bound syntax (`A<Item = X>`) that composes with section 2. RFC-0040 (bound
 enforcement) and RFC-0036 (conditional impls) own the call-site check and the conditional case that section 2 leaves
-alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3).
+alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3). RFC-0128 (exportable overload sets) and
+`spec.functions.keyword-arguments.legality-5` own function overloading, which open question 5 asks whether to keep.
 
 ## Open questions
 
@@ -147,6 +148,22 @@ alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3
    would be new, not an extension.
 4. **Free argument in a bound (2).** Whether `X: Conv<U>` with several impls should infer `U` from other constraints
    rather than being ambiguous.
+
+5. **Should function overloading continue to be accepted?** Metel accepts several free functions of one name as an
+   overload set: identical parameter types are `T0011`, a call is resolved by comparing the per-slot argument types and
+   keyword names with each candidate's parameters (`spec.functions.keyword-arguments.legality-5`), the result type takes
+   no part, and the resolution is static and non-generic (RFC-0128 makes sets exportable; `std::core` uses it for
+   `assert`). Rust has no function overloading: the same need is met by a trait with a type parameter, which is the
+   mechanism this RFC states the rules for. Keeping both gives the language two selection mechanisms with different
+   inputs: overload sets choose by *argument* types, statically, and cannot be named in a bound or reached through a
+   generic parameter; aspects with type arguments choose by identity, through a bound, or by the *expected* type
+   (section 3.2). The RFC does not decide this, but the answer shapes section 3: if overloading stays, section 3.2's
+   expected-type rule is a second, partly overlapping way to write `to_i64(x)` and `to_text(x)` as one name, and the
+   ambiguity errors (`T0011`, `T0013`) need one consistent story; if it goes, the migration is every overload set
+   becoming either differently named functions or an aspect with a type parameter, `std::core`'s `assert` pair being
+   the first case, and RFC-0128 and `spec.functions.keyword-arguments.legality-5` retire with it. Options: (a) keep
+   overload sets as they are; (b) keep them only for `std::core` intrinsics; (c) deprecate and remove them in favour of
+   aspects with type arguments (the Rust position); (d) keep them and let an overload set be named in a bound.
 
 ---
 
