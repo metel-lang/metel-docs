@@ -1191,6 +1191,8 @@ match that row exactly, with no implicit narrowing at the call site.
 
 ### Aspects on a residual
 
+> **Gap** GAP-OWNERSHIP-004
+
 A residual (`Doc.{ .title }`, the same brand with fewer fields) is a value of its brand, but it is not the whole type, so the
 language says which aspects it satisfies. Bound satisfaction and dispatch agree: a residual satisfies **structural `Copy`**
 (with the `Clone` that `Copy` provides) and keeps the existing [`Drop` dispatch](#drop-dispatch-against-a-narrowed-residual),
