@@ -73,7 +73,8 @@ aspects.
    `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is therefore `Copy`.
 2. A residual does **not** satisfy `A` through a hand-written impl of `A` for `T` (an `extend T: A { … }`), because the
    body may read a field the residual no longer has. A bound `T: A` on a residual is `T0012` unless rule 1 or rule 5
-   applies.
+   applies. An impl written *for the residual* (a narrowed receiver or an exact-shape impl) is a different thing and is
+   not provided here: it is RFC-0214 (under review). Where one exists it applies to the residual, and until then there is none.
 3. A residual does not satisfy `A` through a **derived** impl either in v0.16.0. The derivation is whole-type; the
    row template that would extend it to residuals is RFC-0217. The use-site diagnostic says "template not yet
    available" and does not name a written impl.
@@ -88,7 +89,8 @@ aspects.
    usual and its leftover class is recomputed from the surviving components.
 
 **Diagnostics.** The error is `T0012` at the use site. When a written whole-type impl exists, the note names it as the
-cause; when the aspect is derived, the note says the template is not yet available. The language keeps no edit
+cause; when the aspect is derived, the note says the template is not yet available. When RFC-0214 is implemented, the note also names the residual-impl route as the way to give the
+aspect a meaning on the residual; until then the diagnostic does not suggest a feature that does not exist. The language keeps no edit
 history, so there is no warning at the edit.
 
 **Marker aspects.** `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A
