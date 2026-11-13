@@ -636,7 +636,7 @@ not ready; its repairs are applied, and a short second pass on the changed text 
 6. **The `copy_value` native.** A native method inside an aspect impl is already accepted (the record `Clone` in
    `core.mtl` is one). What is missing is the key: `@std.core.copy_value` is not in the closed `NativeKey` set and
    needs a key and a host function whose contract distinguishes a string and an owning array.
-7. **Written `Clone` for a residual of a non-`Copy` type.** RFC-0214 (draft) would let the author write one; it is
+7. **Written `Clone` for a residual of a non-`Copy` type.** RFC-0214 (under review) would let the author write one; it is
    not a dependency of this RFC.
 
 ---
