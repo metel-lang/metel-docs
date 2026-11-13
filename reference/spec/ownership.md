@@ -1191,6 +1191,8 @@ match that row exactly, with no implicit narrowing at the call site.
 
 ### Aspects on a residual
 
+> **Gap** GAP-OWNERSHIP-004
+
 A residual (`Doc.{ .title }`, the same brand with fewer fields) is a value of its brand, but it is not the whole type, so the
 language says which aspects it satisfies. Bound satisfaction and dispatch agree: a residual satisfies **structural `Copy`**
 (with the `Clone` that `Copy` provides) and keeps the existing [`Drop` dispatch](#drop-dispatch-against-a-narrowed-residual),
@@ -1211,7 +1213,8 @@ longer has. There is no way to write an impl for a residual itself in this relea
 until it is implemented a residual has such an aspect only through the rules below. `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A residual of a type that
 cannot grant `Copy` (a field is not `Copy`) never is, even if the remaining fields are: the declaration says so, not the
 shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously. A type whose `Clone` is written is not `Copy` ([RFC-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
-so its projections move like the value itself.
+so its projections move like the value itself. The `Copy` rule for residuals is native compiler logic in this release, a named exception with a recorded exit
+(GAP-OWNERSHIP-004): it moves to the std row template with no change in accepted programs.
 
 <details>
 <summary>Formal rules</summary>
