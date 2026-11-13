@@ -34,7 +34,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/799'
 > with no change in substance.
 
 > **Reconciled with the implementation, 2026-11-13.** This RFC predates RFC-0207, RFC-0212, RFC-0213 and RFC-0224
-> (all accepted, integrated and implemented in the v0.16.0 stage "Declarations and derivation") and several of its claims
+> (the first three integrated and implemented in the compiler in the v0.16.0 stage "Declarations and derivation",
+> metel-core#1800, #1801, #1803; RFC-0224 fully implemented) and several of its claims
 > no longer describe the language. What changed, so the rest of the text can be read against it:
 >
 > - **The request half is settled and is not `#derive(...)`.** A derive request is the `derives` clause after a type's
@@ -191,7 +192,7 @@ actually about that syntax.
 
 ### Derive as a language keyword (`derives`), closed
 
-> **Superseded 2026-11-13: this is the adopted form.** RFC-0207 (accepted 2026-11-05) made `derives` the request
+> **Superseded 2026-11-13: this is the adopted form.** RFC-0207 (integrated) made `derives` the request
 > clause, and it is implemented. The reasoning below, which rejected it in favour of `#derive(...)`, is kept as the
 > record of why that was first chosen; its objection (a trailing clause crowds the declaration line) lost to the need
 > for one place where a type states what it derives and, with RFC-0224, `via`.
@@ -301,9 +302,9 @@ obsolete.
 
 - RFC-0092 (Comptime Core) — `type`-as-value, `typeinfo`, single-declaration `emit`
   this RFC's registration mechanism is built from
-- RFC-0207 (Declaration clauses), accepted and implemented — the `derives` clause that replaced `#derive(...)` as the request
-- RFC-0212 (Aspect declaration properties), implemented — `derivable`, `declared`, `implicit`; std-only today
-- RFC-0213 (Super-aspects), implemented — the `deriving` mark on a super-aspect entry (`Copy` brings `Clone`)
+- RFC-0207 (Declaration clauses), integrated and implemented in the compiler (metel-core#1800) — the `derives` clause that replaced `#derive(...)` as the request
+- RFC-0212 (Aspect declaration properties), integrated and implemented in the compiler (metel-core#1803) — `derivable`, `declared`, `implicit`; std-only today
+- RFC-0213 (Super-aspects), integrated and implemented in the compiler (metel-core#1801) — the `deriving` mark on a super-aspect entry (`Copy` brings `Clone`)
 - RFC-0224 (Stated flow), implemented for `Copy` — `derives Copy via T`
 - RFC-0227 (Stated flow for every derived impl), under review — `via` for every field-wise derivation
 - RFC-0222 (Builder aspect), draft — a template derivation, the case `derives` and this RFC's registration both have to account for

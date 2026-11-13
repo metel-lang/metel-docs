@@ -63,7 +63,7 @@ the curated thematic map.
 - **RFC-0080** — Standard Library Aspects — Deref, Send, Sync (`1-under-review` ; rfcs/1-under-review/rfc-0080-stdlib-aspects.md ; date 2026-07-01 ; updated 2026-11-02)
 - **RFC-0091** — Linear Records (`1-under-review` ; rfcs/1-under-review/rfc-0091-linear-records.md ; date 2026-07-09 ; updated 2026-09-03)
 - **RFC-0092** — Comptime Core — Type-as-Value, Reflection, and Emit (`1-under-review` ; rfcs/1-under-review/rfc-0092-comptime-core.md ; date 2026-07-09 ; updated 2026-08-23)
-- **RFC-0093** — Derive Registration — #derive(Aspect) as Request and Registration (`1-under-review` ; rfcs/1-under-review/rfc-0093-derive-registration.md ; date 2026-07-09 ; updated 2026-08-23)
+- **RFC-0093** — Derive Registration — #derive(Aspect) as Request and Registration (`1-under-review` ; rfcs/1-under-review/rfc-0093-derive-registration.md ; date 2026-07-09 ; updated 2026-11-13)
 - **RFC-0094** — Comptime Metaprogramming — Generalized Emit, Comptime-Callable Parsing, Diagnostics (`1-under-review` ; rfcs/1-under-review/rfc-0094-comptime-metaprogramming.md ; date 2026-07-09 ; updated 2026-09-09)
 - **RFC-0095** — Attributes and Metadata (`1-under-review` ; rfcs/1-under-review/rfc-0095-attributes-and-metadata.md ; date 2026-07-09 ; updated 2026-09-01)
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
