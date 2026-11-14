@@ -382,10 +382,10 @@ A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2029" reason="RFC-0151: not implemented until metel-core#2029 (the property) and #2032 (the printing of a tuple as a row)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2032" reason="RFC-0151: the Tuple property is decided (metel-core#2029, done), but it is observable only through the tuple rendering of a row, which is not implemented until metel-core#2032." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2029: RFC-0151: not implemented until metel-core#2029 (the property) and #2032 (the printing of a tuple as a row)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2032: RFC-0151: the Tuple property is decided (metel-core#2029, done), but it is observable only through the tuple rendering of a row, which is not implemented until metel-core#2032._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.tuples.legality-8}
