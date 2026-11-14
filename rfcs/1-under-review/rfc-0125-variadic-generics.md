@@ -25,10 +25,10 @@ What a row cannot do is **recurse by position**. The rest of a row that holds `.
 a tuple, so every operation that is positional rather than per-field needs the labels renumbered: `cons`, `uncons`, `append`,
 `zip`, `curry`, `apply(f, args)`, and a `Callable<Args, Ret>` whose function returns one that takes the remaining arguments.
 
-This RFC decides how a program writes those operations. It proposes **not building anything yet**: use `comptime` (RFC-0132,
-RFC-0174) when the first real use appears, and add a built-in renumbering only if comptime cannot state the result type. The
-two designs are stated here so that decision is made on purpose, and so this RFC can be retired in favour of the one that
-wins. It is a design draft. Nothing here is accepted.
+This RFC decides how a program writes those operations. It states three designs: comptime functions (A), a built-in
+renumbering (B), and **comptime functions over refined rows (C)**, which is the language owner's preferred direction
+(2026-11-14). It proposes **not building anything yet**, because each design waits on something that does not exist, and so
+that this RFC can be retired in favour of the one that wins. It is a design draft. Nothing here is accepted.
 
 ---
 
@@ -108,11 +108,71 @@ extend<A, record R> Zip for Cons<A, R> where R: Zip { .. }  // a row with a .0
   a row-conditional impl whose target is written as an operator application (`Cons<A, R>`), which no existing impl form
   establishes and which would need checking against RFC-0121's coherence rules.
 
-### 4. Recommendation
+### 4. Option C: comptime over refined rows
 
-Do not build either now. When the first real positional generic function is wanted (most likely composing `Callable<Args, Ret>`,
-#893, or an arity-generic `zip`), try it in `comptime` first. If its *signature* cannot be written, that is the evidence for
-Option B, and Option B is then two operators and one impl form. Until then this RFC stays under review and **may be
+*The language owner's preferred direction, 2026-11-14.* `Tuple` is an anonymous record **refined** by a predicate on its labels,
+and the positional operations are `comptime` functions that accept the refined record:
+
+```metel
+// illustrative, not a proposed spelling
+comptime fun cons<A, R: Tuple>(a: A, t: R) -> Tuple      // the result is a Tuple one longer than R
+comptime fun tail<A, R: Tuple>(t: R) -> Tuple            // R must be a non-empty Tuple
+```
+
+What each half contributes:
+
+- **The refinement** says what an argument is: a record whose labels satisfy a predicate (dense integers, here), a subtype of
+  the plain anonymous record. Every record operation applies to a `Tuple`, and an operation that breaks the predicate (a partial
+  move that leaves a gap, RFC-0151 section 4a) returns the unrefined row. A precondition such as "non-empty" is a refinement of
+  the same kind, which is where `tail` states it.
+- **The comptime function** computes the result: it iterates the row's fields (RFC-0174), relabels, and builds the result row
+  and its type. Because it is code, `append`, `zip`, `reverse` and a map over fields are the same mechanism, not one operator each.
+
+**What the refinement does not do is compute the result type.** The thing Option A could not settle was how `cons`'s signature
+names a shifted row. A refinement on the argument does not say what comes back. The result type is stated one of two ways:
+
+1. *A comptime-computed type in the signature*, as Zig writes it with `@TypeOf`. This needs a `comptime` function whose result
+   can be used as a type in a signature, which is the open question about RFC-0132. With it, the refinement contributes the
+   argument constraint only.
+2. *A predicate relating the two rows* (the result is dense, its `.0` is `A`, its `.(i+1)` has the type of `t`'s `.i`). That
+   quantifies over labels and mentions field types, so it is a dependent type-level predicate, not a value refinement, and
+   heavier than anything in the corpus.
+
+**Prerequisites**, none of which exists:
+
+- (i) a `comptime` function whose result is a type usable in a signature (RFC-0132, under review);
+- (ii) the refinement itself. There is no refinement-type RFC. A row's labels are a finite set, so a predicate over them is
+  decidable, which keeps the machinery small. RFC-0118's row bounds are already a restricted predicate language over rows
+  (presence, absence, type of a label); "the integer labels are `.0 .. .N-1`" is the one statement they cannot make, because it
+  quantifies over an unbounded set. The smallest first step is a **built-in bound** (`R: Tuple`, RFC-0151 section 5a) that a
+  later refinement subsumes, so the first implementation need not wait for the general feature;
+- (iii) if a result names a length (`Tuple<N + 1>`), a compile-time integer parameter, which is const generics (RFC-0053
+  deferred them; #1811 already waits on RFC-0132's compile-time `N`);
+- (iv) an inference rule for when a record is refined. For a closed row it is a check on its label set; for an open or abstract
+  row the refinement is carried by the bound.
+
+**The predicate is "the integer labels are dense", not "the labels are `.0 .. .N-1`".** A call's argument list is a mixed row
+(RFC-0151 section 2): `.{ .0, .1, .x }` has positional arguments and a keyword. `cons` and `tail` over a call's arguments must
+shift the integers and leave `.x`, so they take a row whose *integer part* is dense. `Tuple` is that predicate with no
+identifier labels, which makes a tuple the special case and positional operations the general one.
+
+- **For:** one mechanism for every positional operation and for any shape; no operator in the type language; the refinement
+  gives a principled reading of residuals, preconditions and subtyping; mixed rows are handled by the same predicate.
+- **Against:** the largest prerequisite list of the three designs; a refinement feature with no RFC; the open question on
+  RFC-0132 is decisive for the result type; and if the result type needs a length, it needs const generics too.
+
+**Relation to Option B.** B's `Cons<A, R>` and `Tail<R>` are what C's comptime function would compute, written as built-in
+operators. If prerequisite (i) fails, so that a comptime function cannot return a type, B is the way to state the signature and
+C's refined argument constraint still applies. The two compose.
+
+### 5. Recommendation
+
+**The end state is Option C**, the language owner's direction: comptime functions over rows that carry the dense-integer
+predicate. Build nothing now. When the first real positional generic function is wanted (most likely composing
+`Callable<Args, Ret>`, #893, or an arity-generic `zip`), write it as a `comptime` function (Option A). If its *signature* cannot
+be written, that is the evidence that prerequisite (i) of Option C is missing and for Option B's operators as the stopgap. The
+row predicate or refinement is not this RFC's to specify: it needs its own RFC, with RFC-0151 section 5a's `Tuple` property as
+its first, built-in form, and that RFC is **not yet drafted**. Until these exist this RFC stays under review and **may be
 retired**, and #794 is not a prerequisite of the Copy migration: #263's tuple arm becomes "confirm the row impls cover tuples",
 after RFC-0151's implementation.
 
@@ -127,6 +187,11 @@ after RFC-0151's implementation.
    a shift inside the existing row syntax with no new operator; whether label variables admit arithmetic is RFC-0188's question.
 4. **Do mixed rows shift only integer labels** (as the Motivation says), and is that what a curried call needs?
 5. **Which RFC owns a variadic function?** Not this one (section 1). An argument list is a row, so it follows RFC-0223.
+6. **A built-in bound first, or a general refinement?** Option C needs a way to say "the integer labels are dense". A bound
+   (`R: Tuple`) is small and can ship before refinement types; a refinement subsumes it. Does the refinement RFC come first, or
+   the bound?
+7. **Does the result type name a length?** If it does, Option C needs const generics (prerequisite (iii)); if the comptime
+   function computes the type from the row, it does not.
 
 ---
 
