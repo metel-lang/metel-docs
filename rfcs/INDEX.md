@@ -1807,8 +1807,13 @@ implementation).
   The nominal alias RFC-0160 rejected and left room for. Read with RFC-0202.
 - **RFC-0201** *(draft 2026-11-01)* — Pattern synonyms: named, user-defined patterns exposing a matching
   interface that differs from the representation. Adjacent to RFC-0109 and RFC-0170.
-- **RFC-0202** *(draft 2026-11-01)* — Refinement and smart-constructor types: `type T := U satisfying (…)`,
-  a distinct nominal type whose only way in is a checked construction. Builds on RFC-0200.
+- **RFC-0202** *(draft 2026-11-01; rewritten 2026-11-14)* — Predicates and refinement types. One mechanism for a pure, total,
+  compile-time-evaluable predicate over a subject: a value known only at run time gives a sealed nominal type with a checked
+  construction (`type T := U satisfying (…)`, `try_from`, literals checked at compile time); a row, known at compile time, gives an
+  aspect granted by shape (`Dense`, `Tuple`), usable as a bound with no wrapper. Entailment by extension, propositional coherence,
+  obligations as three-valued goals, flow-sensitive refinement and a solver as named extension points. Open: mutation of sealed
+  values, implicit versus declared analyzability. Supplies the predicate RFC-0151 section 5a names and RFC-0125's Option A needs.
+  Builds on RFC-0200.
 - **RFC-0203** *(draft 2026-11-01)* — List comprehensions: sugar over iterator adapters and `collect`.
   Depends on RFC-0190 and RFC-0124.
 - **RFC-0204** *(under-review 2026-11-01, #1754)* — Pipelines and function composition: `x |> f(a)` and `f.then(g)`.
