@@ -548,15 +548,9 @@ A field of a record pattern may bind its label to a name, `.label: name`: the pa
 
 ##### Legality Rule {#spec.expressions.record-rest-patterns.legality-3}
 
-After `.label:` the pattern may be any pattern, not only a name: a literal (`.0: 0`), an enum or struct pattern, a tuple or record pattern, an array pattern. A nested pattern is checked against the type of that field, makes the record pattern refutable where it is, and is rejected in a `let` declaration if it is. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`.
+After `.label:` the pattern may be any pattern, not only a name: a literal (`.0: 0`), an enum or struct pattern, a tuple or record pattern, an array pattern. A nested pattern is checked against the type of that field, makes the record pattern refutable where it is, and is rejected in a `let` declaration if it is. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`. A `match` arm whose record pattern is refutable does not cover the scrutinee's type on its own, and arms are not combined field by field (metel-core#2040), so a `match` over such arms ends in an irrefutable arm.
 
 <!-- rfc.py:last_reviewed 5fdc3f23ea2f507afb4101bb6f227558ebd579a2 -->
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2035" reason="RFC-0151: a literal or nested sub-pattern is not implemented until metel-core#2035." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2035: RFC-0151: a literal or nested sub-pattern is not implemented until metel-core#2035._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 <!-- rfc.py:fixtures:end -->
