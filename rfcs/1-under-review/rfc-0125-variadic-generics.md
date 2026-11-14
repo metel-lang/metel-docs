@@ -11,52 +11,151 @@ updated: '2026-11-14'
 
 > **Status — under review (2026-08-23).** Committed to v0.21.1, tracking issue #794 filed 2026-08-22
 
-> **Re-scoped 2026-11-14 (language owner), on the assumption that RFC-0151 is adopted (metel-core#1848).** If tuples are
-> numeric-label rows, the driving case of this RFC is already covered, and what remains is a much smaller question: see
-> "Re-scope" below. The text after it is the original proposal, kept as the record and as the design to use if RFC-0151 is
-> not adopted.
+> **Re-scoped 2026-11-14 (language owner), on the assumption that RFC-0151 is adopted (metel-core#1848).** The pack
+> proposal this RFC was opened with is Appendix A. If RFC-0151 is not adopted, Appendix A is the design.
 
-## Re-scope (2026-11-14)
+## Summary
 
-**What RFC-0151 removes.** This RFC exists because a tuple satisfied no aspect and each arity needed its own impl (Motivation).
-With a tuple a row of integer labels, the impls are the row impls, which exist today in `core.mtl`:
+If a tuple is a row of integer labels (RFC-0151), arity-generic code over tuples is row-generic code, and the case this RFC was
+opened for is already covered: `Copy`, `Send`, `Sync` and `Linear` for every arity by the existing row impls (`extend<record R>
+.{ ..R }: Copy where ..R: Copy;`), and `Display` and `Clone` by the row impls that exist as native stand-ins for RFC-0174's
+`comptime for`. No pack, no second quantifier.
 
-| This RFC's stage | Needs | Under RFC-0151 |
-|---|---|---|
-| Stage 1: `Copy`, `Send`, `Sync`, `Linear` for every arity | `<..Ts>`, `(..Ts)`, `..Ts: A` | `extend<record R> .{ ..R }: Copy where ..R: Copy;` already covers every tuple (checked: a numeric-label record satisfies a `Copy` bound). No pack, no second quantifier: RFC-0123's `..R: A` is the one `all`. |
-| Stage 2: `Display`, `Clone`, `Eq`, `Hash` bodies | expansion in a method body | the row impls of `Display` and `Clone` exist, as native stand-ins for RFC-0174's `comptime for`; `Eq`, `Ord`, `Hash` for rows are the missing part and belong to RFC-0151 section 3 and RFC-0080. |
+What a row cannot do is **recurse by position**. The rest of a row that holds `.0` has the labels `.1, .2, …`, which is not
+a tuple, so every operation that is positional rather than per-field needs the labels renumbered: `cons`, `uncons`, `append`,
+`zip`, `curry`, `apply(f, args)`, and a `Callable<Args, Ret>` whose function returns one that takes the remaining arguments.
 
-So sections 2.1 to 2.3 and the staging of section 3 are **not needed** if RFC-0151 is adopted: a pack would restate what a row
-already is. Open questions 1 (who owns `all`), 3 (coherence of a blanket impl over an infinite family) and 6 (arity limits)
-go with them, because a row impl has a finite head, `.{ ..R }`.
-
-**What remains: positional recursion.** A pack can say "the first element, then the rest": `(A, ..Ts)`. A row cannot. The rest
-of a row that holds `.0` is a row whose labels are `.1, .2, …`, which is not a tuple, since a tuple starts at `.0`. Every
-operation that is positional rather than per-field needs the labels renumbered:
-
-- `cons` and `uncons` (head and tail), `append`, `zip`, `curry` and `uncurry`, `apply(f, args)`.
-- `Callable<Args, Ret>` with `Args` a row (RFC-0061 section 7.1, #893), for the same reason when a function takes some
-  arguments and returns another that takes the rest.
-
-**This RFC is re-scoped to that one question:** *how does a program write a positional operation over numeric-label rows?*
-Two answers, from sections 4 and 5 below, which the re-scope reopens:
-
-1. **A built-in type-level renumbering** on numeric rows (`Shift<R>`, or a concatenation `Concat<R, S>` that shifts the second
-   operand), the smaller version of this RFC's expansion. It keeps positional operations ordinary generic functions.
-2. **`comptime`** (RFC-0132, RFC-0174): iterate the row's fields and build the result row at compile time. No new type
-   machinery, which was this RFC's strongest alternative (section 4) and is stronger now that the driving case is gone.
-
-Which one is decided by what positional operations need to be generic over arity in practice. Until a real use shows, the
-cheapest decision is comptime, and this RFC may be **retired** in its favour; it stays under review so that decision is made
-on purpose. Tuples still need nothing from it.
-
-**Consequences for the milestone.** Under the re-scope #794 stops being a prerequisite of the Copy migration's tuple arm
-(#263): that arm becomes "confirm the row impls cover tuples", after RFC-0151's implementation. #794 itself moves out of the
-Copy migration milestone unless the renumbering question is wanted for v0.16.0.
+This RFC decides how a program writes those operations. It proposes **not building anything yet**: use `comptime` (RFC-0132,
+RFC-0174) when the first real use appears, and add a built-in renumbering only if comptime cannot state the result type. The
+two designs are stated here so that decision is made on purpose, and so this RFC can be retired in favour of the one that
+wins. It is a design draft. Nothing here is accepted.
 
 ---
 
-## Summary
+## Motivation
+
+A positional operation names its result in terms of the argument's *positions*:
+
+```metel
+fun head<A, record R>(t: .{ .0: A, ..R }) -> A { t.0 }          // fine today: a row bound
+fun cons<A, record R>(a: A, t: R) -> ???                         // (A, ..R): R's labels move up by one
+fun tail<A, record R>(t: .{ .0: A, ..R }) -> ???                 // R's labels move down by one
+```
+
+`head` needs nothing new. `cons` and `tail` cannot write their result type, because the result is the argument row with its
+integer labels shifted. Without a way to say so, a generic function cannot take "the rest of the arguments", `append` and
+`zip` cannot be written once for all arities, and a `Callable<Args, Ret>` cannot be composed or curried.
+
+Nothing in the language needs these today. Metel has no variadic function (`print<T: Display>(x: T)` takes one argument), and
+RFC-0161's `Callable` is deferred in full. The need is real but not yet driven by a program, which is why this RFC proposes a
+decision rather than a feature.
+
+### Mixed rows
+
+RFC-0151 allows a row to mix integer and identifier labels, and a call's argument list is such a row (`f(1, x = 2)` is
+`.{ .0 = 1, .x = 2 }`). So a renumbering acts on the **integer labels only** and leaves the identifier labels where they are:
+the tail of `.{ .0: A, .1: B, .x: C }` is `.{ .0: B, .x: C }`. Positional recursion over a call's arguments therefore leaves
+its keyword arguments alone, which is what a curried call wants.
+
+---
+
+## Proposal
+
+### 1. What is covered, and what is not
+
+| Need | Covered by |
+|---|---|
+| `Copy`, `Send`, `Sync`, `Linear` for every tuple | the row impls (RFC-0123), no change |
+| `Display`, `Clone` for every tuple | the row impls; native today, `comptime for` once RFC-0174 lands |
+| `Eq`, `Ord`, `Hash` for every tuple | row impls that do not exist yet: RFC-0151 section 3 and RFC-0080, not this RFC |
+| Positional recursion (`cons`, `tail`, `append`, `zip`, `curry`) | **this RFC** |
+| A variadic *function* (`print(a, b, c)`) | not proposed here; an argument list is a row, so it is RFC-0223's keyword-argument machinery and its own RFC |
+
+### 2. Option A: comptime
+
+Write the operation as a `comptime` function (RFC-0132) over the row's fields, building the result row at compile time:
+
+```metel
+comptime fun cons<A, record R>(a: A, t: R) -> ...        // iterate t's fields, relabel i to i+1, add .0
+```
+
+- **For:** no type-system machinery; it works for any shape reflection can see (RFC-0132's `TypeInfo::Struct { row }`); the cost
+  is shared with a planned RFC; mixed rows are handled by the loop.
+- **Against:** the signature's *return type* must name the shifted row. That needs a `comptime` function that returns a type and
+  can be used in a signature, which RFC-0132 may or may not provide; if it does not, comptime alone cannot write `cons`'s
+  type. A comptime-built impl is also per concrete shape, where the pack proposal gave one impl for all of them (Appendix A,
+  section 4).
+
+### 3. Option B: a built-in renumbering
+
+Two type-level operators on a row's integer labels, and recursion through the row-conditional impls (RFC-0121) that already
+exist:
+
+- `Cons<A, R>` is `.{ .0: A, ..R }` with every integer label of `R` increased by one.
+- `Tail<R>` removes `.0` and decreases every integer label by one.
+- `Head<R>` is the type at `.0`, and needs no operator (it is a row bound).
+
+Everything else is built from these and from row spread. Recursion over arity is an impl on the row's shape:
+
+```metel
+extend Zip for ()                                           // the empty row
+extend<A, record R> Zip for Cons<A, R> where R: Zip { .. }  // a row with a .0
+```
+
+- **For:** ordinary generic functions, no `comptime` required, signatures state their shifted result, and the operators are two
+  small, total functions on a label set.
+- **Against:** two operators (and whatever `Concat` is built from them) in the type language; the recursive impl above relies on
+  a row-conditional impl whose target is written as an operator application (`Cons<A, R>`), which no existing impl form
+  establishes and which would need checking against RFC-0121's coherence rules.
+
+### 4. Recommendation
+
+Do not build either now. When the first real positional generic function is wanted (most likely composing `Callable<Args, Ret>`,
+#893, or an arity-generic `zip`), try it in `comptime` first. If its *signature* cannot be written, that is the evidence for
+Option B, and Option B is then two operators and one impl form. Until then this RFC stays under review and **may be
+retired**, and #794 is not a prerequisite of the Copy migration: #263's tuple arm becomes "confirm the row impls cover tuples",
+after RFC-0151's implementation.
+
+---
+
+## Open questions
+
+1. **Is `Tuple` a bound?** RFC-0151 section 5a names the dense-label property and leaves open whether it is a bound. `cons`,
+   `zip` and `curry` want to say "a dense numeric row", so a positional operation is the first thing that would use `R: Tuple`.
+2. **Can a comptime function return a type used in a signature** (Option A's return type)? RFC-0132 decides this.
+3. **Label arithmetic instead of operators?** Label variables (`.[L]`, RFC-0188) could take an offset (`.[L + 1]`), which states
+   a shift inside the existing row syntax with no new operator; whether label variables admit arithmetic is RFC-0188's question.
+4. **Do mixed rows shift only integer labels** (as the Motivation says), and is that what a curried call needs?
+5. **Which RFC owns a variadic function?** Not this one (section 1). An argument list is a row, so it follows RFC-0223.
+
+---
+
+## Alternatives considered
+
+1. **The pack proposal** (Appendix A). Needed only if RFC-0151 is not adopted. Under it a pack restates what a row already is.
+2. **Per-arity impls** (the Rust answer, Appendix A section 5). Unneeded for aspects once rows carry the impls; for positional
+   operations it means one function per arity.
+3. **Nothing.** No program needs a positional generic function today, and this RFC may simply be retired.
+
+---
+
+## References
+
+- RFC-0151 (Tuples as Numeric-Label Rows): the row a tuple becomes, mixed labels (section 2), the `Tuple` property (section 5a).
+- RFC-0123 (Field-Wise Row Constraints): `..R: A`, the one quantifier, and the row impls of `Copy`, `Clone`, `Display`.
+- RFC-0121 (Row-conditional impls), RFC-0132 (Comptime), RFC-0174 (Compile-time iteration over a row's fields).
+- RFC-0188 (Label syntax): label variables `.[L]`. RFC-0223 (Keyword arguments): the mixed argument row.
+- RFC-0061 section 7.1 / metel-core#893 (`Callable<Args, Ret>`), RFC-0161 (`dyn Callable`), RFC-0096 and #263.
+
+---
+
+## Appendix A: the original pack proposal (2026-07-25)
+
+*The design this RFC was opened with. It applies unchanged if RFC-0151 is not adopted: then tuples stay a separate type, the
+per-arity boilerplate stays unwritten, and a type-parameter pack is the way to write one impl for every arity. Headings below
+are one level deeper than in the original; the text is otherwise as it stood.*
+
+### Summary
 
 A **type-parameter pack** — `<..Ts>` — so one impl can cover tuples of every arity:
 
@@ -77,9 +176,9 @@ general feature — see §3.
 
 ---
 
-## Motivation
+### Motivation
 
-### Tuples satisfy nothing, and the workaround was rejected once already
+#### Tuples satisfy nothing, and the workaround was rejected once already
 
 A tuple satisfies no aspect today. `(i64, i64)` is not `Display`, not `Copy`, not `Eq`. The
 diagnostic RFC-0061 §6 specifies is in the typechecker verbatim:
@@ -98,7 +197,7 @@ Two ways out were identified in RFC-0061 §6, and **both were deferred rather th
 This RFC supplies the missing design so the choice can be made on merits rather than on one
 option being unspecified.
 
-### It is now blocking concrete work
+#### It is now blocking concrete work
 
 Issue #263 tracks moving `Copy` for tuples and fixed arrays out of the typechecker, where
 #578 is about to hardcode them, and into `stdlib/`. Its tuple half is blocked on exactly
@@ -106,7 +205,7 @@ this: even once structural impl targets work (#581), *what to write* remains und
 variadic impl is one line; per-arity is twelve near-identical blocks that must be kept in
 sync across `Copy`, `Display`, `Eq`, `Clone`, `Send`, `Sync` — six aspects × twelve arities.
 
-### The cost of not having it is paid repeatedly
+#### The cost of not having it is paid repeatedly
 
 RFC-0096's auto-impl rule for `Send`/`Sync` "applies to tuples as soon as per-arity blanket
 impls land" (RFC-0061 §6). So does every future aspect. Each one either writes the
@@ -114,7 +213,7 @@ boilerplate again or leaves tuples out.
 
 ---
 
-## 1. Prior art
+### 1. Prior art
 
 The design space is unusually well explored, and the lesson is about *cost*, not
 feasibility.
@@ -131,7 +230,7 @@ feasibility.
 **Swift is the best syntactic model.** `each`/`repeat` reads at a glance where C++'s `...`
 requires knowing which of several expansion contexts you are in.
 
-### 1.1 Rust's decade of proposals, and what to take from it
+#### 1.1 Rust's decade of proposals, and what to take from it
 
 Rust is the most instructive entry, because it has the strongest motivation of any language
 here and *still has not shipped the feature* after discussing it since 2013. The lang team
@@ -186,7 +285,7 @@ falls back on macros; **Metel has no macro system at all**, so the fallback avai
 Rust — generate the boilerplate — is not available here (§5). What is a convenience for Rust
 is closer to a necessity for Metel.
 
-### 1.2 The `..` collision, checked rather than assumed
+#### 1.2 The `..` collision, checked rather than assumed
 
 The lang team notes that `..` overlaps Rust's range syntax. **Metel has the same overlap** —
 `range_op = { "..=" | ".." }` — so the concern transfers and was verified rather than waved
@@ -201,9 +300,9 @@ Rust the same spelling would have been a fresh collision.
 
 ---
 
-## 2. Proposal
+### 2. Proposal
 
-### 2.1 Declaring a pack
+#### 2.1 Declaring a pack
 
 `..Ts` in a generic parameter list declares **Ts** as a type-parameter pack — zero or more
 types, ordered:
@@ -221,13 +320,13 @@ The spelling deliberately matches `..R`, `.{ .x: f64, .. }` and `..Ts` across th
 consistently means "the rest, however many". It is **not** `record`-marked — a pack is a
 list of types, not a record kind (see RFC-0118 §1 for why that distinction is kept sharp).
 
-### 2.2 Expanding a pack into a tuple type
+#### 2.2 Expanding a pack into a tuple type
 
 `(..Ts)` is the tuple type formed from the pack in order. For `Ts = [i64, String]` it is
 `(i64, String)`. For the empty pack it is `()`, which is already Metel's unit type — the
 degenerate case is therefore already meaningful, not a special case.
 
-### 2.3 Bounds — reusing `all`
+#### 2.3 Bounds — reusing `all`
 
 A bound over every member of a pack is written with RFC-0123's quantifier:
 
@@ -249,7 +348,7 @@ and it means a reader who has learned `all` once has learned it everywhere.
 out. That dependency is real and should be settled before acceptance rather than discovered
 during implementation.
 
-### 2.4 What is *not* proposed here
+#### 2.4 What is *not* proposed here
 
 No value-level packs (variadic *functions* — `print(a, b, c)`), no `sizeof...`, no pack
 indexing, and no expansion in arbitrary type positions. Metel has no variadic function today
@@ -259,7 +358,7 @@ than laziness.
 
 ---
 
-## 3. Staging: the driving case needs much less than the feature
+### 3. Staging: the driving case needs much less than the feature
 
 The aspects that need tuple impls split cleanly, and the split should drive scope:
 
@@ -287,7 +386,7 @@ enough to actually land.
 
 ---
 
-## 4. Considered: comptime instead
+### 4. Considered: comptime instead
 
 **RFC-0092 (Comptime Core) could substitute**, and this is the strongest alternative rather
 than a straw man. Zig has no variadic generics: it passes a tuple and iterates it at
@@ -320,7 +419,7 @@ comptime" but **stage 1 as type-system machinery plus comptime as stage 2's expa
 mechanism** — which would let Metel skip the ad-hoc expansion contexts C++ accreted, and
 reuse a feature it is building anyway. Recorded as open question 4.
 
-## 5. Considered: per-arity boilerplate (the Rust answer)
+### 5. Considered: per-arity boilerplate (the Rust answer)
 
 Write twelve impls per aspect, generated or by hand. Rust does this and it works.
 
@@ -345,7 +444,7 @@ be decided explicitly rather than by default.
 
 ---
 
-## Open Questions
+### Open Questions
 
 1. **Does this depend on RFC-0123, or should the `all` quantifier be lifted into its own
    RFC?** Both RFCs need it over different collections. Specifying it twice is the wrong
@@ -371,7 +470,7 @@ be decided explicitly rather than by default.
 
 ---
 
-## References
+### References
 
 - RFC-0061 (Structural Aspect Bounds), `4-implemented` — §6 defers tuple impls and names
   this RFC's absence as the reason; open question 1 restates it. Note §6's interim diagnostic
