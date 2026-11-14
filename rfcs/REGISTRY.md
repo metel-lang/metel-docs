@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**227 RFCs total.** 35 draft, 56 under review, 10 accepted, 4 integrated (105 live), 90 implemented, 16 superseded, 16 refused (122 settled).
+**228 RFCs total.** 36 draft, 56 under review, 10 accepted, 4 integrated (106 live), 90 implemented, 16 superseded, 16 refused (122 settled).
 
-## Draft (35)
+## Draft (36)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -52,6 +52,7 @@ the curated thematic map.
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
+- **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
 
 ## Under Review (56)
 
