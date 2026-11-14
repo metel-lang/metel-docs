@@ -139,7 +139,7 @@ was found and reconciled, and where this session did most of its work.
 Listed in dependency order. Each can be reviewed and accepted independently once the ones
 above it are.
 
-- **RFC-0125** *(draft, opened 2026-07-25)* — Variadic Generics — a type-parameter pack
+- **RFC-0125** *(re-scoped 2026-11-14, on the assumption that RFC-0151 is adopted)* — Variadic Generics. If tuples are numeric-label rows the driving case (`Copy`/`Send`/`Sync`/`Linear` and `Display`/`Clone` for every arity) is covered by the row impls, and the RFC shrinks to positional recursion over numeric rows (cons, uncons, append, zip, `Callable` argument lists): comptime over rows refined by a dense-integer-label predicate (the end state it works toward), plain comptime, or a built-in renumbering. Original proposal: a type-parameter pack
   (`<..Ts>`) so one impl covers tuples of every arity: `extend<..Ts> (..Ts): Copy where all
   Ts: Copy;`. Supplies the design RFC-0061 §6 deferred as "no design exists", which
   RFC-0096 §7 then inherited and #263 is now blocked on. **Bounds reuse RFC-0123's `all`
@@ -1807,8 +1807,13 @@ implementation).
   The nominal alias RFC-0160 rejected and left room for. Read with RFC-0202.
 - **RFC-0201** *(draft 2026-11-01)* — Pattern synonyms: named, user-defined patterns exposing a matching
   interface that differs from the representation. Adjacent to RFC-0109 and RFC-0170.
-- **RFC-0202** *(draft 2026-11-01)* — Refinement and smart-constructor types: `type T := U satisfying (…)`,
-  a distinct nominal type whose only way in is a checked construction. Builds on RFC-0200.
+- **RFC-0202** *(draft 2026-11-01; rewritten 2026-11-14)* — Predicates and refinement types. One mechanism for a pure, total,
+  compile-time-evaluable predicate over a subject: a value known only at run time gives a sealed nominal type with a checked
+  construction (`type T := U satisfying (…)`, `try_from`, literals checked at compile time); a row, known at compile time, gives an
+  aspect granted by shape (`Dense`, `Tuple`), usable as a bound with no wrapper. Entailment by extension, propositional coherence,
+  obligations as three-valued goals, flow-sensitive refinement and a solver as named extension points. Open: mutation of sealed
+  values, implicit versus declared analyzability. Supplies the predicate RFC-0151 section 5a names and RFC-0125's Option A needs.
+  Builds on RFC-0200.
 - **RFC-0203** *(draft 2026-11-01)* — List comprehensions: sugar over iterator adapters and `collect`.
   Depends on RFC-0190 and RFC-0124.
 - **RFC-0204** *(under-review 2026-11-01, #1754)* — Pipelines and function composition: `x |> f(a)` and `f.then(g)`.
@@ -1882,6 +1887,7 @@ generated file as the exact source of truth.
 - **RFC-0216** *(draft 2026-11-05)* — Constructing rows and residuals from per-field results. A computed-label record literal and a defining-module residual construction, so `Clone`/`Default` can be written once over a row inside a `comptime for` body (RFC-0174 open question 7). Construction half of RFC-0214's row-generic impl. Not a dependency of the Copy/Clone settlement.
 - **RFC-0221** *(implemented, #1847)* — Dotted row labels. Anonymous record fields and row/projection labels are `.name`; nominal declarations, brace construction and patterns use bare member names. The label rule survives the RFC-0100 rollback (#1945). Anonymous outer delimiters are separately under review in RFC-0225; unit and empty-record types remain distinct.
 - **RFC-0225** *(implemented 2026-11-12, #1943; #1949)* — Dot-prefixed anonymous records. Writes types as `.{ .x: i64 }` and values as `.{ .x = 0 }`, consistently extending the opener to patterns and row constraints. Revisits RFC-0221's delimiter alternative and RFC-0187's refused goal; specifies empty records, projections and the retained `..{ ... }` literal-row spelling. Scheduling lives in #1943's milestone.
+- **RFC-0229** *(draft 2026-11-14)* — Single-field projection shorthand. `Type.field` for `Type.{ .field }` in type position and where a type is named in an expression (`Handle.fd::describe`). A value receiver keeps field access (`v.field` is the field's value), so `v.{ .field }` has no shorthand; the draft asks whether the type-receiver half of expression position is wanted. Builds on RFC-0137, RFC-0116, RFC-0221 and RFC-0225; excludes chained `Type.a.b` (RFC-0150).
 - **RFC-0230** *(draft 2026-11-14; metel-core#2021)* — Negative label entry without the dot. Writes a negative row-bound entry as `!label` / `!label: T` instead of `!.label` / `!.label: T`, positive entries staying `.label`. Amends RFC-0189 section 1 and reverses, for negative entries, the choice RFC-0221 made on purpose; asks whether only negated entries drop the dot, what `!.0` and `!.[L]` become, and whether the labels inside `!{ }` keep theirs. Related: RFC-0188, RFC-0175, RFC-0225, RFC-0229.
 - **RFC-0226** *(superseded 2026-11-11)* — Explicit and inferred nominal construction. Consolidated into RFC-0100; retained here as the proposal history.
 - **RFC-0223** *(implemented, #1854)* — Keyword arguments at every function call. `name = value` binds free, associated, method and aspect-call arguments; declarations keep `:`. Split from RFC-0100; keyword arguments remain implemented independently of its constructor-call rollback. Depends on RFC-0183 so `f(x = 1)` is never a positional assignment.
