@@ -321,6 +321,8 @@ annotation, an empty block, a block with no tail, a braceless `if` without `else
 `()` and `.{}` are interchangeable in type position and in pattern position, `Result<(), E>` and `Result<.{}, E>` are one type,
 and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type.
 
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
 
 <!-- rfc.py:exemption:rendered:start -->
@@ -332,6 +334,8 @@ and both literals denote the one value. A branded empty residual `Name.{}` is no
 > **Planned (RFC-0231, metel-core#2024).** `extend (): A` is accepted as a spelling of `extend .{}: A`. Writing both is a `T0015` conflicting implementation.
 `Copy` and `Clone` of `()` come from the row impls that hold vacuously for the empty row.
 
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
 
 <!-- rfc.py:exemption:rendered:start -->
@@ -340,13 +344,20 @@ and both literals denote the one value. A branded empty residual `Name.{}` is no
 
 ##### Dynamic Semantics Rule {#spec.types.tuples.dynamics-1}
 
-> **Planned (RFC-0231, metel-core#2024).** The empty row prints as `()`, as a type and as a value: the record `Display` has one case for it, so `println(())` prints
-`()`.
+> **Planned (RFC-0231, metel-core#2024).** The empty row prints as `()`, as a type and as a value, so `println(.{})`, `println(())` and `"${.{}}"` all produce `()`.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
+`()` and `.{}` are one type with one value ([the empty tuple](#spec.types.tuples.legality-2)), so the language has exactly one
+rendering for it, and the rendering is the unit's: the record `Display` has a single case for the empty row, where it would
+otherwise print the record form `.{}`. Every non-empty anonymous record prints as its source form
+([Display of an anonymous record](#spec.types.anonymous-records.dynamics-3)); the empty one is the only exception. A diagnostic
+that names the type writes `()` for the same reason.
+
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2026" reason="Display of an anonymous record prints its source form: not implemented until metel-core#2026." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2024: RFC-0231: not implemented until metel-core#2024._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2026: Display of an anonymous record prints its source form: not implemented until metel-core#2026._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -566,6 +577,33 @@ the nominal receiver type.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjkxX2Fub255bW91c19yZWNvcmRzX2V4dHJhLm10bCIsInNvdXJjZSI6Ii8vIEV4dHJhIGFub255bW91cy1yZWNvcmQgY292ZXJhZ2UgKFJGQy0wMTE2KTogbmVzdGluZywgcmVjb3JkcyBhcyBzdHJ1Y3Rcbi8vIGZpZWxkcywgd2hvbGUtdmFsdWUgYW5kIGZpZWxkIG11dGF0aW9uLCBtdWx0aS1maWVsZCBwcm9qZWN0aW9uLCB0aGVcbi8vIG9yZGVyLWluc2Vuc2l0aXZlIGlkZW50aXR5IGFjcm9zcyBhIGZ1bmN0aW9uIGJvdW5kYXJ5LCBhbmQgcGF0dGVybiBiaW5kaW5nLlxuXG5zdHJ1Y3QgV3JhcCB7IGlubmVyOiAueyAueDogaTY0LCAueTogaTY0IH0gfVxuXG5zdHJ1Y3QgSGFuZGxlIHsgZmQ6IGk2NCwgdGFnOiBpNjQsIG1vZGU6IGk2NCB9XG5cbi8vIFRoZSBkZWNsYXJlZCByZXR1cm4gcm93IGlzIHdyaXR0ZW4gYHsgYiwgYSB9YDsgdGhlIGNhbGwgc2l0ZSBiZWxvdyBhbm5vdGF0ZXNcbi8vIGB7IGEsIGIgfWAuIFRoZXkgYXJlIHRoZSBzYW1lIHR5cGUgXHUyMDE0IGZpZWxkIG9yZGVyIGlzIG5vdCBwYXJ0IG9mIGlkZW50aXR5LlxuZnVuIHN3YXBfbmFtZXMoYTogaTY0LCBiOiBpNjQpIC0+IC57IC5iOiBpNjQsIC5hOiBpNjQgfSB7XG4gICAgKC57IC5hID0gYSwgLmIgPSBiIH0pXG59XG5cbi8vIEEgYmxvY2sgd2hvc2UgdGFpbCBpcyBhIHJlY29yZC10eXBlZCBpZGVudGlmaWVyIGlzIGEgcGVyZmVjdGx5IG9yZGluYXJ5XG4vLyByZWNvcmQgcmV0dXJuIFx1MjAxNCBubyBwYXJlbnRoZXNlcyBuZWVkZWQuIChSZWdyZXNzaW9uIGd1YXJkOiBhbiBlYXJsaWVyXG4vLyBibG9jay12cy1yZWNvcmQgaGV1cmlzdGljIHdyb25nbHkgcmVqZWN0ZWQgdGhpcyB2YWxpZCBmb3JtLilcbmZ1biB2aWFfaWRlbnQoKSAtPiAueyAuYTogaTY0IH0ge1xuICAgIGxldCByIDo9ICgueyAuYSA9IDEgfSk7XG4gICAgclxufVxuXG5mdW4gbWFpbigpIHtcbiAgICAvLyBOZXN0ZWQgcmVjb3JkcywgYW5kIGFjY2VzcyB0aHJvdWdoIHR3byBsZXZlbHMuXG4gICAgbGV0IG5lc3RlZCA6PSAueyAub3V0ZXIgPSAueyAuaW5uZXIgPSA3IH0gfTtcbiAgICBhc3NlcnQobmVzdGVkLm91dGVyLmlubmVyID09IDcpO1xuXG4gICAgLy8gQSByZWNvcmQgYXMgYSBzdHJ1Y3QgZmllbGQuXG4gICAgbGV0IHcgOj0gV3JhcCB7IGlubmVyID0gLnsgLnggPSAxLCAueSA9IDIgfSB9O1xuICAgIGFzc2VydCh3LmlubmVyLnggPT0gMSk7XG4gICAgYXNzZXJ0KHcuaW5uZXIueSA9PSAyKTtcblxuICAgIC8vIE9yZGVyLWluc2Vuc2l0aXZlIGlkZW50aXR5IGFjcm9zcyBhIGNhbGw6IGB7IGIsIGEgfWAgcmVzdWx0IHVzZWQgd2hlcmVcbiAgICAvLyBgeyBhLCBiIH1gIGlzIGFubm90YXRlZC5cbiAgICBsZXQgYWI6IC57IC5hOiBpNjQsIC5iOiBpNjQgfSA6PSBzd2FwX25hbWVzKDEwLCAyMCk7XG4gICAgYXNzZXJ0KGFiLmEgPT0gMTApO1xuICAgIGFzc2VydChhYi5iID09IDIwKTtcblxuICAgIC8vIFJlY29yZC10eXBlZCBpZGVudGlmaWVyIGFzIGEgYmxvY2sgdGFpbCAocmVncmVzc2lvbiBndWFyZCkuXG4gICAgYXNzZXJ0KHZpYV9pZGVudCgpLmEgPT0gMSk7XG5cbiAgICAvLyBXaG9sZS12YWx1ZSBtdXRhdGlvbiB0aHJvdWdoIGEgYHZhcmAgYmluZGluZy5cbiAgICB2YXIgcCA6PSAueyAueCA9IDEsIC55ID0gMSB9O1xuICAgIHAgPSAueyAueCA9IDUsIC55ID0gNiB9O1xuICAgIGFzc2VydChwLnggPT0gNSk7XG4gICAgYXNzZXJ0KHAueSA9PSA2KTtcblxuICAgIC8vIEZpZWxkIG11dGF0aW9uLlxuICAgIHAueSA9IDk7XG4gICAgYXNzZXJ0KHAueSA9PSA5KTtcblxuICAgIC8vIE11bHRpLWZpZWxkIHByb2plY3Rpb24gb2YgYSBub21pbmFsIHR5cGUncyByb3cuXG4gICAgbGV0IGggOj0gSGFuZGxlIHsgZmQgPSAzLCB0YWcgPSA0LCBtb2RlID0gNSB9O1xuICAgIGxldCBwaWNrZWQgOj0gaC57IC5mZCwgLm1vZGUgfTtcbiAgICBhc3NlcnQocGlja2VkLmZkID09IDMpO1xuICAgIGFzc2VydChwaWNrZWQubW9kZSA9PSA1KTtcblxuICAgIC8vIFBhdHRlcm4gYmluZGluZywgYm90aCBmaWVsZHMgdXNlZC5cbiAgICBsZXQgdG90YWwgOj0gbWF0Y2ggKHApIHsgLnsgLngsIC55IH0gPT4geCArIHksIH07XG4gICAgYXNzZXJ0KHRvdGFsID09IDE0KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3N0cnVjdHMvOTFfYW5vbnltb3VzX3JlY29yZHNfZXh0cmEubXRsIiwibmFtZSI6IjkxX2Fub255bW91c19yZWNvcmRzX2V4dHJhLm10bCJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics Rule {#spec.types.anonymous-records.dynamics-3}
+
+The `Display` of an anonymous record whose fields are all `Display` is the **source form** that writes it: `.{ .label: value, … }`,
+with the labels in canonical row order, each value rendered by its own `Display`, and `, ` between fields. Nested anonymous
+records are written the same way. A nominal struct or record keeps the bare names its declaration uses, so it prints as
+`Name { label: value, … }`, and a nominal value that holds an anonymous record prints that record dotted.
+
+| Value | `println` prints |
+|---|---|
+| `.{ .x = 1 }` | `.{ .x: 1 }` |
+| `.{ .a = 1, .b = .{ .c = 2 } }` | `.{ .a: 1, .b: .{ .c: 2 } }` |
+| `Pt { x = 3, y = 4 }` (a nominal type) | `Pt { x: 3, y: 4 }` |
+| `Session { id = 1, data = .{ .count = 3 } }` | `Session { data: .{ .count: 3 }, id: 1 }` |
+| `.{}` and `()` | `()` |
+
+The empty record is the one exception, and the reason is that it is not a record to print: `.{}` and `()` are one type with one
+value ([the empty tuple](#spec.types.tuples.legality-2)), the unit's rendering is `()`, and printing `.{}` for the same value
+would give a value two renderings.
+
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2026" reason="Display of an anonymous record prints its source form: not implemented until metel-core#2026." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2026: Display of an anonymous record prints its source form: not implemented until metel-core#2026._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.anonymous-records.legality-3}
 
@@ -1886,7 +1924,9 @@ branded-row mechanism itself.
 
 An anonymous record has no owning module, so the orphan rule permits an implementation only
 for an aspect local to the implementing module. Every standard-library aspect is non-local,
-which means no anonymous record is `Display` and `println("${r}")` does not work on one.
+which means a program cannot implement one for an anonymous record, and `println("${r}")` works on one only through the standard
+library's own row impls (`Display`, `Clone` and `Copy` for every record of such fields, see [Implementing an aspect for a
+record](#implementing-an-aspect-for-a-record)), printed as the [source form of the record](#spec.types.anonymous-records.dynamics-3).
 Auto-derived aspects are unaffected — `Send` and `Sync` are computed from field composition
 rather than declared.
 
