@@ -35,7 +35,7 @@ Declaration              → FunDeclaration
 TypeAliasDeclaration     → "pub"? "type" IDENTIFIER GenericParams? ":=" Type ";"
 LetDeclaration           → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
 VarDeclaration           → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
-RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) RecordPattern ":=" Expression ";"
+RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) ( RecordPattern | TuplePattern ) ":=" Expression ";"
 FunDeclaration           → NativeBinding? "pub"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
 NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
 StructDeclaration        → "pub"? ClassKeyword? "struct" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" StructFields "}"
