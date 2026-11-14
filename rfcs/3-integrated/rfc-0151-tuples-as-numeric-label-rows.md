@@ -7,7 +7,7 @@ updated: '2026-11-14'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 coverage:
   "1": { kind: blocked, reason: "The desugaring is metel-core#2032 (retire Type::Tuple); the rules are types.tuples legality-4 and legality-5 and carry no fixtures until then.", ref: "metel-core#2032" }
-  "2": { kind: blocked, reason: "Numeric labels, ordering and mixed rows are metel-core#2029; the rule is types.tuples legality-6.", ref: "metel-core#2029" }
+  "2": { spec: "spec.types.tuples.legality-6" }
   "3": { kind: blocked, reason: "The Eq, Ord and Hash row impls are metel-core#2031; the rule is types.tuples legality-8.", ref: "metel-core#2031" }
   "4": { kind: blocked, reason: "Numeric labels in row bounds are metel-core#2029; narrowing of tuples is #2032.", ref: "metel-core#2029" }
   "4a": { kind: blocked, reason: "The remainder of a tuple has no type until metel-core#2032; the rule is partial-moves legality-3.", ref: "metel-core#2032" }

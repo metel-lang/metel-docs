@@ -200,7 +200,8 @@ ArrayPatternBody       → ( Pattern ( "," Pattern )* ( "," RestPattern )? | Res
 RestPattern            → ".." IDENTIFIER
 RecordRest             → ".."
 RecordRestBinding      → ".." IDENTIFIER
-RecordFieldPattern     → Label ( ":" "_" )?
+RecordFieldDiscard     → "_"
+RecordFieldPattern     → Label ( ":" ( RecordFieldDiscard | IDENTIFIER ) )?
 RecordFieldPatternList → RecordFieldPattern ( "," RecordFieldPattern )* ( "," ( RecordRestBinding | RecordRest ) )? ","?
                        | RecordRestBinding
                        | RecordRest
