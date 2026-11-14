@@ -954,6 +954,8 @@ is nonempty, but `res(B, .{}) = B` when `D(B) = .{}`. For anonymous rows,
 `res(anonymous, R) = R`. Different brands remain distinct at every width,
 including zero; neither empty form is `Unit`.
 
+> **Planned (RFC-0231, metel-core#2024).** An anonymous empty residual is `()`: the empty row and the unit type are one type ([the empty tuple](types.md#spec.types.tuples.legality-2)). A branded empty residual `Name.{}` stays branded and is not `()`, so "neither empty form is `Unit`" holds only for the branded form.
+
 <!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1025,6 +1027,8 @@ grant permission to move from a borrowed place or a `Drop` type. An unresolved
 field type is held under [legality-1](#spec.ownership.narrowing.legality-1).
 The moved-field and absent-field judgments and the row transition apply with or without
 move checking.
+
+> **Planned (RFC-0231, metel-core#2024).** The anonymous empty residual is `()` ([the empty tuple](types.md#spec.types.tuples.legality-2)), so passing it to a parameter of type `()` type-checks, and "neither becomes `Unit`" holds only for a branded empty residual. The two fixtures that currently expect `T0001` for an anonymous empty residual passed to a `()` parameter flip when this lands, and a fixture keeps the branded case rejected.
 
 Ordinary binding, argument, and return typing may use `res(B, .{})` at that
 same type. No empty-residual rule supplies missing fields, erases `B`, or

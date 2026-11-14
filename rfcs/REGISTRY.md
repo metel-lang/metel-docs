@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**230 RFCs total.** 37 draft, 56 under review, 11 accepted, 4 integrated (108 live), 90 implemented, 16 superseded, 16 refused (122 settled).
+**230 RFCs total.** 37 draft, 55 under review, 11 accepted, 5 integrated (108 live), 90 implemented, 16 superseded, 16 refused (122 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
 
-## Under Review (56)
+## Under Review (55)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -112,7 +112,6 @@ the curated thematic map.
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0227** — Stated flow for every derived impl (`1-under-review` ; rfcs/1-under-review/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12 ; updated 2026-11-13)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
-- **RFC-0231** — Unit as the Empty Row (`1-under-review` ; rfcs/1-under-review/rfc-0231-unit-as-the-empty-row.md ; date 2026-11-14 ; updated 2026-11-14)
 
 ## Accepted (11)
 
@@ -128,12 +127,13 @@ the curated thematic map.
 - **RFC-0151** — Tuples as Numeric-Label Rows (`2-accepted` ; rfcs/2-accepted/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-14)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (4)
+## Integrated (5)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`3-integrated` ; rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1808)
 - **RFC-0211** — Aspects on Residuals (`3-integrated` ; rfcs/3-integrated/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-13 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1830)
+- **RFC-0231** — Unit as the Empty Row (`3-integrated` ; rfcs/3-integrated/rfc-0231-unit-as-the-empty-row.md ; date 2026-11-14 ; updated 2026-11-14 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/2024)
 
 ## Implemented (90)
 
