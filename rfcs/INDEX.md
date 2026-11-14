@@ -139,7 +139,7 @@ was found and reconciled, and where this session did most of its work.
 Listed in dependency order. Each can be reviewed and accepted independently once the ones
 above it are.
 
-- **RFC-0125** *(re-scoped 2026-11-14, on the assumption that RFC-0151 is adopted)* — Variadic Generics. If tuples are numeric-label rows the driving case (`Copy`/`Send`/`Sync`/`Linear` and `Display`/`Clone` for every arity) is covered by the row impls, and the RFC shrinks to positional recursion over numeric rows (cons, uncons, append, zip, `Callable` argument lists): comptime, a built-in renumbering, or (the language owner's preferred direction) comptime over rows refined by a dense-integer-label predicate. Original proposal: a type-parameter pack
+- **RFC-0125** *(re-scoped 2026-11-14, on the assumption that RFC-0151 is adopted)* — Variadic Generics. If tuples are numeric-label rows the driving case (`Copy`/`Send`/`Sync`/`Linear` and `Display`/`Clone` for every arity) is covered by the row impls, and the RFC shrinks to positional recursion over numeric rows (cons, uncons, append, zip, `Callable` argument lists): comptime over rows refined by a dense-integer-label predicate (the end state it works toward), plain comptime, or a built-in renumbering. Original proposal: a type-parameter pack
   (`<..Ts>`) so one impl covers tuples of every arity: `extend<..Ts> (..Ts): Copy where all
   Ts: Copy;`. Supplies the design RFC-0061 §6 deferred as "no design exists", which
   RFC-0096 §7 then inherited and #263 is now blocked on. **Bounds reuse RFC-0123's `all`

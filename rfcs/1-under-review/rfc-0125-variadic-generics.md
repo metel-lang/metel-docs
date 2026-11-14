@@ -11,7 +11,7 @@ updated: '2026-11-14'
 
 > **Status — under review (2026-08-23).** Committed to v0.21.1, tracking issue #794 filed 2026-08-22
 
-> **Re-scoped 2026-11-14 (language owner), on the assumption that RFC-0151 is adopted (metel-core#1848).** The pack
+> **Re-scoped 2026-11-14, on the assumption that RFC-0151 is adopted (metel-core#1848).** The pack
 > proposal this RFC was opened with is Appendix A. If RFC-0151 is not adopted, Appendix A is the design.
 
 ## Summary
@@ -25,10 +25,10 @@ What a row cannot do is **recurse by position**. The rest of a row that holds `.
 a tuple, so every operation that is positional rather than per-field needs the labels renumbered: `cons`, `uncons`, `append`,
 `zip`, `curry`, `apply(f, args)`, and a `Callable<Args, Ret>` whose function returns one that takes the remaining arguments.
 
-This RFC decides how a program writes those operations. It states three designs: comptime functions (A), a built-in
-renumbering (B), and **comptime functions over refined rows (C)**, which is the language owner's preferred direction
-(2026-11-14). It proposes **not building anything yet**, because each design waits on something that does not exist, and so
-that this RFC can be retired in favour of the one that wins. It is a design draft. Nothing here is accepted.
+This RFC decides how a program writes those operations. It states three designs: comptime functions over **refined rows** (A),
+comptime functions over plain rows (B), and a built-in renumbering (C). Option A is the end state it works toward. It proposes
+**not building anything yet**, because each design waits on something that does not exist, and so that this RFC can be
+retired in favour of the one that wins. It is a design draft. Nothing here is accepted.
 
 ---
 
@@ -71,46 +71,9 @@ its keyword arguments alone, which is what a curried call wants.
 | Positional recursion (`cons`, `tail`, `append`, `zip`, `curry`) | **this RFC** |
 | A variadic *function* (`print(a, b, c)`) | not proposed here; an argument list is a row, so it is RFC-0223's keyword-argument machinery and its own RFC |
 
-### 2. Option A: comptime
+### 2. Option A: comptime over refined rows
 
-Write the operation as a `comptime` function (RFC-0132) over the row's fields, building the result row at compile time:
-
-```metel
-comptime fun cons<A, record R>(a: A, t: R) -> ...        // iterate t's fields, relabel i to i+1, add .0
-```
-
-- **For:** no type-system machinery; it works for any shape reflection can see (RFC-0132's `TypeInfo::Struct { row }`); the cost
-  is shared with a planned RFC; mixed rows are handled by the loop.
-- **Against:** the signature's *return type* must name the shifted row. That needs a `comptime` function that returns a type and
-  can be used in a signature, which RFC-0132 may or may not provide; if it does not, comptime alone cannot write `cons`'s
-  type. A comptime-built impl is also per concrete shape, where the pack proposal gave one impl for all of them (Appendix A,
-  section 4).
-
-### 3. Option B: a built-in renumbering
-
-Two type-level operators on a row's integer labels, and recursion through the row-conditional impls (RFC-0121) that already
-exist:
-
-- `Cons<A, R>` is `.{ .0: A, ..R }` with every integer label of `R` increased by one.
-- `Tail<R>` removes `.0` and decreases every integer label by one.
-- `Head<R>` is the type at `.0`, and needs no operator (it is a row bound).
-
-Everything else is built from these and from row spread. Recursion over arity is an impl on the row's shape:
-
-```metel
-extend Zip for ()                                           // the empty row
-extend<A, record R> Zip for Cons<A, R> where R: Zip { .. }  // a row with a .0
-```
-
-- **For:** ordinary generic functions, no `comptime` required, signatures state their shifted result, and the operators are two
-  small, total functions on a label set.
-- **Against:** two operators (and whatever `Concat` is built from them) in the type language; the recursive impl above relies on
-  a row-conditional impl whose target is written as an operator application (`Cons<A, R>`), which no existing impl form
-  establishes and which would need checking against RFC-0121's coherence rules.
-
-### 4. Option C: comptime over refined rows
-
-*The language owner's preferred direction, 2026-11-14.* `Tuple` is an anonymous record **refined** by a predicate on its labels,
+`Tuple` is an anonymous record **refined** by a predicate on its labels,
 and the positional operations are `comptime` functions that accept the refined record:
 
 ```metel
@@ -128,7 +91,7 @@ What each half contributes:
 - **The comptime function** computes the result: it iterates the row's fields (RFC-0174), relabels, and builds the result row
   and its type. Because it is code, `append`, `zip`, `reverse` and a map over fields are the same mechanism, not one operator each.
 
-**What the refinement does not do is compute the result type.** The thing Option A could not settle was how `cons`'s signature
+**What the refinement does not do is compute the result type.** The thing Option B could not settle was how `cons`'s signature
 names a shifted row. A refinement on the argument does not say what comes back. The result type is stated one of two ways:
 
 1. *A comptime-computed type in the signature*, as Zig writes it with `@TypeOf`. This needs a `comptime` function whose result
@@ -161,20 +124,57 @@ identifier labels, which makes a tuple the special case and positional operation
 - **Against:** the largest prerequisite list of the three designs; a refinement feature with no RFC; the open question on
   RFC-0132 is decisive for the result type; and if the result type needs a length, it needs const generics too.
 
-**Relation to Option B.** B's `Cons<A, R>` and `Tail<R>` are what C's comptime function would compute, written as built-in
-operators. If prerequisite (i) fails, so that a comptime function cannot return a type, B is the way to state the signature and
-C's refined argument constraint still applies. The two compose.
+**Relation to Option C.** C's `Cons<A, R>` and `Tail<R>` are what A's comptime function would compute, written as built-in
+operators. If prerequisite (i) fails, so that a comptime function cannot return a type, C is the way to state the signature and
+A's refined argument constraint still applies. The two compose.
+
+### 3. Option B: comptime over plain rows
+
+Write the operation as a `comptime` function (RFC-0132) over the row's fields, with no refinement on the argument, building the result row at compile time:
+
+```metel
+comptime fun cons<A, record R>(a: A, t: R) -> ...        // iterate t's fields, relabel i to i+1, add .0
+```
+
+- **For:** no type-system machinery; it works for any shape reflection can see (RFC-0132's `TypeInfo::Struct { row }`); the cost
+  is shared with a planned RFC; mixed rows are handled by the loop.
+- **Against:** the signature's *return type* must name the shifted row. That needs a `comptime` function that returns a type and
+  can be used in a signature, which RFC-0132 may or may not provide; if it does not, comptime alone cannot write `cons`'s
+  type. A comptime-built impl is also per concrete shape, where the pack proposal gave one impl for all of them (Appendix A,
+  section 4).
+
+### 4. Option C: a built-in renumbering
+
+Two type-level operators on a row's integer labels, and recursion through the row-conditional impls (RFC-0121) that already
+exist:
+
+- `Cons<A, R>` is `.{ .0: A, ..R }` with every integer label of `R` increased by one.
+- `Tail<R>` removes `.0` and decreases every integer label by one.
+- `Head<R>` is the type at `.0`, and needs no operator (it is a row bound).
+
+Everything else is built from these and from row spread. Recursion over arity is an impl on the row's shape:
+
+```metel
+extend Zip for ()                                           // the empty row
+extend<A, record R> Zip for Cons<A, R> where R: Zip { .. }  // a row with a .0
+```
+
+- **For:** ordinary generic functions, no `comptime` required, signatures state their shifted result, and the operators are two
+  small, total functions on a label set.
+- **Against:** two operators (and whatever `Concat` is built from them) in the type language; the recursive impl above relies on
+  a row-conditional impl whose target is written as an operator application (`Cons<A, R>`), which no existing impl form
+  establishes and which would need checking against RFC-0121's coherence rules.
 
 ### 5. Recommendation
 
-**The end state is Option C**, the language owner's direction: comptime functions over rows that carry the dense-integer
-predicate. Build nothing now. When the first real positional generic function is wanted (most likely composing
-`Callable<Args, Ret>`, #893, or an arity-generic `zip`), write it as a `comptime` function (Option A). If its *signature* cannot
-be written, that is the evidence that prerequisite (i) of Option C is missing and for Option B's operators as the stopgap. The
-row predicate or refinement is not this RFC's to specify: it needs its own RFC, with RFC-0151 section 5a's `Tuple` property as
-its first, built-in form, and that RFC is **not yet drafted**. Until these exist this RFC stays under review and **may be
-retired**, and #794 is not a prerequisite of the Copy migration: #263's tuple arm becomes "confirm the row impls cover tuples",
-after RFC-0151's implementation.
+**The end state is Option A**: comptime functions over rows that carry the dense-integer predicate. Build nothing now. When
+the first real positional generic function is wanted (most likely composing `Callable<Args, Ret>`, #893, or an arity-generic
+`zip`), write it as a `comptime` function (Option B). If its *signature* cannot be written, that is the evidence that
+prerequisite (i) of Option A is missing, and for Option C's operators as the stopgap. The row predicate or refinement is not
+this RFC's to specify: it needs its own RFC, with RFC-0151 section 5a's `Tuple` property as its first, built-in form, and that
+RFC is **not yet drafted**. Until these exist this RFC stays under review and **may be retired**, and #794 is not a
+prerequisite of the Copy migration: #263's tuple arm becomes "confirm the row impls cover tuples", after RFC-0151's
+implementation.
 
 ---
 
@@ -182,15 +182,15 @@ after RFC-0151's implementation.
 
 1. **Is `Tuple` a bound?** RFC-0151 section 5a names the dense-label property and leaves open whether it is a bound. `cons`,
    `zip` and `curry` want to say "a dense numeric row", so a positional operation is the first thing that would use `R: Tuple`.
-2. **Can a comptime function return a type used in a signature** (Option A's return type)? RFC-0132 decides this.
+2. **Can a comptime function return a type used in a signature** (the result type of Options A and B)? RFC-0132 decides this.
 3. **Label arithmetic instead of operators?** Label variables (`.[L]`, RFC-0188) could take an offset (`.[L + 1]`), which states
    a shift inside the existing row syntax with no new operator; whether label variables admit arithmetic is RFC-0188's question.
 4. **Do mixed rows shift only integer labels** (as the Motivation says), and is that what a curried call needs?
 5. **Which RFC owns a variadic function?** Not this one (section 1). An argument list is a row, so it follows RFC-0223.
-6. **A built-in bound first, or a general refinement?** Option C needs a way to say "the integer labels are dense". A bound
+6. **A built-in bound first, or a general refinement?** Option A needs a way to say "the integer labels are dense". A bound
    (`R: Tuple`) is small and can ship before refinement types; a refinement subsumes it. Does the refinement RFC come first, or
    the bound?
-7. **Does the result type name a length?** If it does, Option C needs const generics (prerequisite (iii)); if the comptime
+7. **Does the result type name a length?** If it does, Option A needs const generics (prerequisite (iii)); if the comptime
    function computes the type from the row, it does not.
 
 ---
