@@ -2,8 +2,12 @@
 id: rfc-0231
 title: "Unit as the Empty Row"
 date: '2026-11-14'
-status: draft
+status: under-review
+updated: '2026-11-14'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2024'
 ---
+
+> **Status — under review (2026-11-14).** Committed ahead of RFC-0151 in the Copy migration; tracked by metel-core#2024.
 
 ## Summary
 
@@ -15,9 +19,10 @@ fun f() -> () { .{} }                 // fails today: cannot unify `.{ }` with `
 let u: .{} := ();                     // fails today for the same reason
 ```
 
-This was section 6 of RFC-0151 (tuples as numeric-label rows). It is extracted because it is independent of the tuple work: a
-tuple's row view needs `()` to be the empty row, but nothing in the tuple desugaring needs the unification to land first, and
-the change is large enough to be reviewed on its own. It is a design draft. Nothing here is accepted.
+This was section 6 of RFC-0151 (tuples as numeric-label rows). It is a separate RFC because the change is large enough to be
+reviewed on its own, and it **is implemented before RFC-0151**: with `()` already the empty row, the zero-arity tuple needs no
+conversion, and RFC-0221's stated reliance on the unification is true before the tuple work builds on it. It is a design draft.
+Nothing here is accepted.
 
 ---
 
@@ -28,7 +33,7 @@ the change is large enough to be reviewed on its own. It is a design draft. Noth
 - **RFC-0221 states a reliance on the unification** (an empty brace group is the same value whether it is read as a block or as a
   record). **Measured 2026-11-14: the compiler has not unified them**, so that reliance describes the design and is not yet true.
 - **RFC-0151.** A tuple of no elements is the empty row. With the unit type separate, the zero-arity case of the tuple sugar needs
-  a conversion at exactly one place.
+  a conversion at exactly one place; this RFC removes that place by landing first.
 
 ---
 
@@ -72,7 +77,8 @@ an ADR matter.
 1. **Representation.** One representation for the empty row in the checker and the runtime (an ADR), and whether `Value::Unit` is
    kept as a fast path for it.
 2. **Overload sets and impl pairs** that distinguish `()` from `.{}` today, if any exist in the standard library or the fixtures.
-3. **Order against RFC-0151.** Whether this lands before, with, or after the tuple work; neither depends on the other.
+3. ~~**Order against RFC-0151.**~~ **Resolved (2026-11-14):** this RFC is implemented first. RFC-0151's implementation depends on it;
+   it does not depend on RFC-0151.
 
 ---
 

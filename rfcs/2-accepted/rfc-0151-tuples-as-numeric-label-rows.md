@@ -223,8 +223,8 @@ changes none of the rules here. Whether it is surfaced as a bound is not decided
 
 **`()` is the empty closed row `.{}`.** The tuple sugar has arity 0 as well: no elements give `.{}`. Unifying the primitive unit
 type with the empty row is a change of its own, measured at about 32 `Type::Unit` and 44 `Value::Unit` sites, and it is
-**extracted into RFC-0231 (Unit as the Empty Row)** so that this RFC does not carry it. The tuple desugaring does not depend on it
-landing first: until it does, the zero-arity case is the one place where `()` and `.{}` are converted.
+**extracted into RFC-0231 (Unit as the Empty Row)** so that this RFC does not carry it. RFC-0231 is implemented **first**: this
+RFC's implementation depends on it, so the zero-arity tuple is the empty row with no conversion.
 
 ### 7. Tuple structs
 
