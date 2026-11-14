@@ -35,7 +35,7 @@ Declaration              → FunDeclaration
 TypeAliasDeclaration     → "pub"? "type" IDENTIFIER GenericParams? ":=" Type ";"
 LetDeclaration           → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
 VarDeclaration           → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
-RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) ( RecordPattern | TuplePattern ) ":=" Expression ";"
+RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) ( RecordPattern | TuplePattern | UnitPattern ) ":=" Expression ";"
 FunDeclaration           → NativeBinding? "pub"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
 NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
 StructDeclaration        → "pub"? ClassKeyword? "struct" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" StructFields "}"
@@ -163,7 +163,9 @@ ReturnExpression     → "return" Expression?
 BreakExpression      → "break" Expression?
 ContinueExpression   → "continue"
 TupleOrParen         → "(" Expression ( "," Expression )+ ")"
+                     | "(" Expression OneElementTupleComma ")"
                      | "(" Expression ")"
+OneElementTupleComma → ","
 RepeatArray          → "[" Expression ";" INT "]"
 ArrayLiteral         → "[" ( Expression ( "," Expression )* ","? )? "]"
 MatchExpression      → "match" ( "()" | TupleOrParen ) "{" ( MatchArm ( "," MatchArm )* ","? )? "}"
@@ -190,11 +192,15 @@ StructFieldInit      → IDENTIFIER ( "=" Expression )?
 Pattern                → "_"
                        | ArrayPattern
                        | TuplePattern
+                       | UnitPattern
                        | RecordPattern
                        | EnumPattern
                        | LiteralPattern
                        | IDENTIFIER
-TuplePattern           → "(" Pattern ( "," Pattern )* ")"
+TuplePattern           → "(" Pattern ( "," Pattern )+ ")"
+                       | "(" Pattern OneElementTupleComma ")"
+                       | "(" Pattern ")"
+UnitPattern            → "(" ")"
 ArrayPattern           → "[" ArrayPatternBody "]"
 ArrayPatternBody       → ( Pattern ( "," Pattern )* ( "," RestPattern )? | RestPattern )?
 RestPattern            → ".." IDENTIFIER
@@ -236,6 +242,7 @@ Type                     → FunType
 ExtendsType              → "extends" NamedType
 DynType                  → "dyn" NamedType
 TupleType                → "(" Type ( "," Type )+ ")"
+                         | "(" Type OneElementTupleComma ")"
 RecordType               → ".{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
 RecordTypeField          → Label ":" Type
 OpenRecordType           → ".{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"

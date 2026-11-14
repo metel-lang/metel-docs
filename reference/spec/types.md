@@ -363,12 +363,6 @@ A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A�
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2023" reason="RFC-0151: not implemented until metel-core#2023." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2023: RFC-0151: not implemented until metel-core#2023._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
 ##### Legality Rule {#spec.types.tuples.legality-6}
 
 A row's labels are integers or identifiers, written `.0`, `.name`. The canonical order of a row's labels, for iteration, display and derived comparison, is its integer labels first in numeric order (`.2` before `.10`), then its identifier labels in lexicographic order. A row may mix the two kinds (`.{ .0: A, .name: B }`): a call's argument list is such a row, with positional arguments as integer labels and keyword arguments as identifier labels. The `(…)` sugar produces only the dense integer labels `.0 .. .N-1`; a mixed row is written with `.{ … }`.

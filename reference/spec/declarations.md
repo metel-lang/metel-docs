@@ -93,12 +93,6 @@ A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) :=
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2023" reason="RFC-0151: the tuple pattern in a declaration is implemented (metel-core#2022) for two or more elements; the one-element form (p,) is not parsed until metel-core#2023." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2023: RFC-0151: the tuple pattern in a declaration is implemented (metel-core#2022) for two or more elements; the one-element form (p,) is not parsed until metel-core#2023._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
 
 </details>
 <!-- rfc.py:fixtures:end -->
