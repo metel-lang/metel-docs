@@ -952,9 +952,7 @@ Here `B.{R}` denotes the branded residual whose labels are those of `R`;
 it is not additional source syntax. Thus `res(B, .{}) = B.{}` when `D(B)`
 is nonempty, but `res(B, .{}) = B` when `D(B) = .{}`. For anonymous rows,
 `res(anonymous, R) = R`. Different brands remain distinct at every width,
-including zero; neither empty form is `Unit`.
-
-> **Planned (RFC-0231, metel-core#2024).** An anonymous empty residual is `()`: the empty row and the unit type are one type ([the empty tuple](types.md#spec.types.tuples.legality-2)). A branded empty residual `Name.{}` stays branded and is not `()`, so "neither empty form is `Unit`" holds only for the branded form.
+including zero. An anonymous empty residual is `()`: the empty row and the unit type are one type ([the empty tuple](types.md#spec.types.tuples.legality-2)). A branded empty residual `Name.{}` stays branded and is not `()`.
 
 <!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
 
@@ -984,9 +982,8 @@ flag it.
 > **Changed in v0.14.0:** Row narrowing includes empty residuals.
 
 Moving the last remaining non-`Copy` field leaves an empty residual. An anonymous
-record has type `.{}`; a nominal struct or record retains its brand with an empty
-row, written `Name.{}`. Neither becomes `Unit`, and a branded empty residual does
-not become an anonymous record. Fields read by copying remain in the row.
+record has type `.{}`, which is `()`; a nominal struct or record retains its brand with an empty
+row, written `Name.{}`, which is neither `()` nor an anonymous record. Fields read by copying remain in the row.
 Using a field that was moved out of a nominal struct or record, by reading it or by
 projecting it again, is a `T0019` use of a moved value, including when the row is empty.
 Naming a label the type never declared, or any label absent from an anonymous record
@@ -1028,11 +1025,9 @@ field type is held under [legality-1](#spec.ownership.narrowing.legality-1).
 The moved-field and absent-field judgments and the row transition apply with or without
 move checking.
 
-> **Planned (RFC-0231, metel-core#2024).** The anonymous empty residual is `()` ([the empty tuple](types.md#spec.types.tuples.legality-2)), so passing it to a parameter of type `()` type-checks, and "neither becomes `Unit`" holds only for a branded empty residual. The two fixtures that currently expect `T0001` for an anonymous empty residual passed to a `()` parameter flip when this lands, and a fixture keeps the branded case rejected.
-
 Ordinary binding, argument, and return typing may use `res(B, .{})` at that
 same type. No empty-residual rule supplies missing fields, erases `B`, or
-coerces the result to `Unit`. A whole-binding consumption updates ownership
+coerces a branded result to `()`. A whole-binding consumption updates ownership
 state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
