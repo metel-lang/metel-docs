@@ -3,7 +3,7 @@ id: rfc-0151
 title: "Tuples as Numeric-Label Rows"
 date: '2026-08-29'
 status: under-review
-updated: '2026-11-12'
+updated: '2026-11-14'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 ---
 
@@ -104,9 +104,10 @@ integer labels `0 .. N-1` with no gaps.
 
 ### 4. Narrowing, row bounds, branding — apply unchanged
 
-- **Narrowing (RFC-0117)**: moving `t.1` out of `(A, B)` narrows `t` to
-  `{ 0: A }` = `(A,)`. The `2^N` subset-lattice bound, the "residual is an
-  ordinary value" property, and path-sensitivity all apply with no addition.
+- **Narrowing (RFC-0117)**: moving the last element, `t.1` out of `(A, B)`, narrows `t` to
+  `{ 0: A }` = `(A,)`. Moving any other element leaves a gap and a row that is not a tuple
+  (§4a). The `2^N` subset-lattice bound, the "residual is an ordinary value" property, and
+  path-sensitivity all apply with no addition.
 - **Nested narrowing (RFC-0150)**: a tuple-typed field's residual is a
   numeric-label row residual. RFC-0150 §3 (define tuple residuals or ban them)
   is **resolved** by this RFC — delete the open question, keep the recursion.
@@ -115,6 +116,48 @@ integer labels `0 .. N-1` with no gaps.
   desirable is Open Question 3.
 - **Branded rows (RFC-0137)**: a tuple is an *anonymous* row — no brand, never
   satisfies a nominal projection bound — exactly as an anonymous record does not.
+
+### 4a. A partial move out of a tuple leaves a row, and nothing compacts it
+
+*Added 2026-11-14.* Today move checking tracks tuple elements (RFC-0071 section 9a, `spec.ownership.partial-moves`):
+moving `t.0` and then `t.1` is accepted, moving `t.0` twice and using `t` whole after `t.0` moved are rejected. What a
+tuple lacks is a **type** for what is left: a struct narrows to `S.{ .b }` and passes to a function that names it, while a
+tuple's remainder has no spelling, and a projection `t.{ .1 }` is rejected. Measured 2026-11-14 on the metel-core checkout.
+This RFC gives the remainder the type RFC-0117 already gives every other row.
+
+**The rule is RFC-0117's, with no tuple case.** The residual of `t` after a move is the row with the same labels minus the
+moved ones, at the same types. The remaining elements keep their labels:
+
+```metel
+let t := (a, b, c);          // .{ .0: A, .1: B, .2: C }
+let x := t.1;                // t : .{ .0: A, .2: C }   (a gap at .1)
+```
+
+The residual is a tuple, under section 5, only when the labels that remain are exactly `.0 .. .N-1`, which is when the moved
+elements were a suffix: `(A, B)` after `t.1` is `(A,)`. Any other residual is a sparse row and prints in brace form,
+`.{ .0: A, .2: C }`.
+
+**Nothing compacts the remainder, and no rule says it should.** Renumbering `.2` to `.1` would be a rule for tuples alone,
+and it would be unsound for the program that wrote the move:
+
+- *Names would stop being stable.* Moves, projections and bounds name elements by label. If the remainder were renumbered
+  after `t.1` moved, `t.2` would stop existing and `t.1` would mean what `t.2` meant a statement before, so one expression
+  changes meaning with the statements around it. A live `&t.2` would be left pointing at a renamed element.
+- *It would hide a cost.* A compacted value moves the remaining elements down, O(n), as a side effect of a move.
+- *The general rule says otherwise.* Every other row keeps its labels. A rule that keeps them except when they are numeric is
+  a special case, and the only way to avoid it is to make numeric labels ordinal (derived from position rather than named),
+  which makes a tuple a different kind of type than a row and gives up what this RFC is for.
+
+**Getting a tuple back is explicit.** Two ways, neither a tuple rule:
+
+- *Destructure.* A pattern that names the elements to keep builds a new tuple from them, by position, so it is already the
+  compaction when it is wanted.
+- *Relabel.* A general row operation that renames labels in a projection (`.2` as `.1`) turns the sparse remainder into a
+  dense row, with its cost visible and its effect on the type stated. It applies to any row, so it is not part of this RFC. If
+  it is wanted, it is a small follow-on RFC beside RFC-0191 (one-field record update).
+
+A function that takes `(A, C)` takes a dense tuple. The sparse remainder is passed to one that takes a row bound
+(`.{ .0: A, ..R }`), or relabelled first.
 
 ### 5. Type display
 
@@ -216,6 +259,9 @@ ad-hoc returns and argument lists.
    grouping, and interaction with turbofish and function-type syntax
    `(A) -> B` — confirm the existing tuple grammar's disambiguation survives
    unchanged when the node it builds is a record.
+6. ~~**Compacting the remainder of a partial move** (§4a).~~ **Resolved:** the remainder keeps its labels and is a
+   sparse row unless the moved elements were a suffix; getting a tuple back is a destructuring pattern or an explicit relabel,
+   and no rule renumbers automatically.
 
 ## References
 

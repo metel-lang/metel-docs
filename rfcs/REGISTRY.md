@@ -86,7 +86,7 @@ the curated thematic map.
 - **RFC-0148** — Row-Parametric Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0148-row-parametric-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0149** — Aspect Method Constraint Domain Inclusion (`1-under-review` ; rfcs/1-under-review/rfc-0149-aspect-method-constraint-domain-inclusion.md ; date 2026-08-29 ; updated 2026-08-29)
 - **RFC-0150** — Nested Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0150-nested-row-narrowing.md ; date 2026-08-29 ; updated 2026-08-29)
-- **RFC-0151** — Tuples as Numeric-Label Rows (`1-under-review` ; rfcs/1-under-review/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-12)
+- **RFC-0151** — Tuples as Numeric-Label Rows (`1-under-review` ; rfcs/1-under-review/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-14)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
