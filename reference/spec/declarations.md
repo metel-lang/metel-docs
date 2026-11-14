@@ -3468,6 +3468,41 @@ concrete type; opacity changes what callers can name, not the value's ownership.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InN0YWdlMThfMDFfcmV0dXJuX2ltcGxfYXNwZWN0X2Jhc2ljLm10bCIsInNvdXJjZSI6Ii8vIFBvc2l0aXZlOiBiYXNpYyByZXR1cm4tcG9zaXRpb24gZXh0ZW5kcyBBc3BlY3Qgd2l0aG91dCBtZXRob2QgY2FsbHNcbi8vIFNob3VsZCB0eXBlY2hlY2sgd2l0aG91dCBhbnkgbWV0aG9kIGNhbGxzXG5cbmFzcGVjdCBEaXNwbGF5IHtcblx0ZnVuIGRpc3BsYXkoJnNlbGYpIC0+IFN0cmluZztcbn1cblxuc3RydWN0IE15SW50IHtcblx0dmFsdWU6IGk2NCxcbn1cblxuZXh0ZW5kIE15SW50OiBEaXNwbGF5IHtcblx0ZnVuIGRpc3BsYXkoJnNlbGYpIC0+IFN0cmluZyB7XG5cdFx0c2VsZi52YWx1ZS50b19zdHJpbmcoKVxuXHR9XG59XG5cbi8vIEJhc2ljIGZ1bmN0aW9uIHJldHVybmluZyBleHRlbmRzIERpc3BsYXkgLSBubyBtZXRob2QgY2FsbHMgeWV0XG5mdW4gbWFrZV9wYWlyKCkgLT4gZXh0ZW5kcyBEaXNwbGF5IHtcblx0TXlJbnQgeyB2YWx1ZSA9IDQyIH1cbn1cblxuZnVuIG1haW4oKSB7XG5cdGxldCBwYWlyIDo9IG1ha2VfcGFpcigpO1xuXHQvLyBEb24ndCBjYWxsIGFueSBtZXRob2RzIC0ganVzdCB1c2UgdGhlIHZhbHVlIGFzIGV4dGVuZHMgRGlzcGxheVxuXHQvLyBUaGlzIHNob3VsZCB0eXBlY2hlY2sgd2l0aG91dCBlcnJvcnNcbn0ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9nZW5lcmljcy9zdGFnZTE4XzAxX3JldHVybl9pbXBsX2FzcGVjdF9iYXNpYy5tdGwiLCJuYW1lIjoic3RhZ2UxOF8wMV9yZXR1cm5faW1wbF9hc3BlY3RfYmFzaWMubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-17}
+
+A method call written on a value whose type is a type parameter with a bound `X: A<Args>` calls the method of the impl of
+`A` for the type arguments `Args` the bound names. A type that has impls of `A` for other type arguments, each providing a
+method of that name, is called through the one the bound names: the others do not take part.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1987" reason="Dispatch by the aspect's type arguments is not implemented until metel-core#1987." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1987: Dispatch by the aspect's type arguments is not implemented until metel-core#1987._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18}
+
+A method call written directly on a value, where the value's type has impls of one aspect for different type arguments
+and more than one provides the method, is a `T0013` error naming the impls. The call names no type arguments to choose by;
+write it through a bound that does. (Choosing by the call's expected type is planned, metel-core#1987.)
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1987" reason="Dispatch by the aspect's type arguments is not implemented until metel-core#1987." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1987: Dispatch by the aspect's type arguments is not implemented until metel-core#1987._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-3}
+
+A call through a bound `X: A<Args>` runs the method of the impl of `A` for `Args`, whichever impl of `A` for other type
+arguments was declared first or last, and in whichever module.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1987" reason="Dispatch by the aspect's type arguments is not implemented until metel-core#1987." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1987: Dispatch by the aspect's type arguments is not implemented until metel-core#1987._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
 </details>
 
 ---
