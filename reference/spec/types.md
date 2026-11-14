@@ -321,6 +321,8 @@ annotation, an empty block, a block with no tail, a braceless `if` without `else
 `()` and `.{}` are interchangeable in type position and in pattern position, `Result<(), E>` and `Result<.{}, E>` are one type,
 and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type.
 
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
 
 <!-- rfc.py:exemption:rendered:start -->
@@ -331,6 +333,8 @@ and both literals denote the one value. A branded empty residual `Name.{}` is no
 
 > **Planned (RFC-0231, metel-core#2024).** `extend (): A` is accepted as a spelling of `extend .{}: A`. Writing both is a `T0015` conflicting implementation.
 `Copy` and `Clone` of `()` come from the row impls that hold vacuously for the empty row.
+
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
 
@@ -347,6 +351,8 @@ rendering for it, and the rendering is the unit's: the record `Display` has a si
 otherwise print the record form `.{}`. Every non-empty anonymous record prints as its source form
 ([Display of an anonymous record](#spec.types.anonymous-records.dynamics-3)); the empty one is the only exception. A diagnostic
 that names the type writes `()` for the same reason.
+
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#2026" reason="Display of an anonymous record prints its source form: not implemented until metel-core#2026." -->
 
@@ -590,6 +596,8 @@ records are written the same way. A nominal struct or record keeps the bare name
 The empty record is the one exception, and the reason is that it is not a record to print: `.{}` and `()` are one type with one
 value ([the empty tuple](#spec.types.tuples.legality-2)), the unit's rendering is `()`, and printing `.{}` for the same value
 would give a value two renderings.
+
+<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#2026" reason="Display of an anonymous record prints its source form: not implemented until metel-core#2026." -->
 
