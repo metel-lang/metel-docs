@@ -47,7 +47,7 @@ the curated thematic map.
 - **RFC-0199** — Lazy<T> — Deferred, Once-Evaluated Values (`0-draft` ; rfcs/0-draft/rfc-0199-lazy-t.md ; date 2026-11-01)
 - **RFC-0200** — Newtypes with Aspect Forwarding (`0-draft` ; rfcs/0-draft/rfc-0200-newtypes.md ; date 2026-11-01)
 - **RFC-0201** — Pattern Synonyms (`0-draft` ; rfcs/0-draft/rfc-0201-pattern-synonyms.md ; date 2026-11-01)
-- **RFC-0202** — Refinement and Smart-Constructor Types (`0-draft` ; rfcs/0-draft/rfc-0202-refinement-types.md ; date 2026-11-01)
+- **RFC-0202** — Predicates and Refinement Types (`0-draft` ; rfcs/0-draft/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-14)
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
