@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**229 RFCs total.** 37 draft, 56 under review, 10 accepted, 4 integrated (107 live), 90 implemented, 16 superseded, 16 refused (122 settled).
+**230 RFCs total.** 38 draft, 55 under review, 11 accepted, 4 integrated (108 live), 90 implemented, 16 superseded, 16 refused (122 settled).
 
-## Draft (37)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -54,8 +54,9 @@ the curated thematic map.
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
+- **RFC-0231** — Unit as the Empty Row (`0-draft` ; rfcs/0-draft/rfc-0231-unit-as-the-empty-row.md ; date 2026-11-14)
 
-## Under Review (56)
+## Under Review (55)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
@@ -88,7 +89,6 @@ the curated thematic map.
 - **RFC-0148** — Row-Parametric Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0148-row-parametric-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0149** — Aspect Method Constraint Domain Inclusion (`1-under-review` ; rfcs/1-under-review/rfc-0149-aspect-method-constraint-domain-inclusion.md ; date 2026-08-29 ; updated 2026-08-29)
 - **RFC-0150** — Nested Row Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0150-nested-row-narrowing.md ; date 2026-08-29 ; updated 2026-08-29)
-- **RFC-0151** — Tuples as Numeric-Label Rows (`1-under-review` ; rfcs/1-under-review/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-14)
 - **RFC-0155** — Higher-Order Function-Type Multiplicity Variance (`1-under-review` ; rfcs/1-under-review/rfc-0155-higher-order-function-type-multiplicity-variance.md ; date 2026-08-30 ; updated 2026-08-30)
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
@@ -114,7 +114,7 @@ the curated thematic map.
 - **RFC-0227** — Stated flow for every derived impl (`1-under-review` ; rfcs/1-under-review/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12 ; updated 2026-11-13)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 
-## Accepted (10)
+## Accepted (11)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -125,6 +125,7 @@ the curated thematic map.
 - **RFC-0089** — Linear Types (`2-accepted` ; rfcs/2-accepted/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-11-05)
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
+- **RFC-0151** — Tuples as Numeric-Label Rows (`2-accepted` ; rfcs/2-accepted/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-14)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
 ## Integrated (4)
