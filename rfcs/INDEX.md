@@ -426,7 +426,7 @@ above it are.
   Depends on RFC-0117, RFC-0137 (`3-integrated`), and **RFC-0147/0148**'s narrowed
   `drop`-receiver syntax, so it is scheduled after them (provisionally v0.18.1,
   metel-core#900).
-- **RFC-0151** *(accepted 2026-11-14, #1956; opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
+- **RFC-0151** *(integrated 2026-11-14, #1956; opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
   `(A, B)` sugar for the anonymous record `.{ .0: A, .1: B }` (a closed row with integer
   labels, numerically ordered), so there is one structural product former. The `(…)`
   surface syntax and `t.0` access stay, with the one-element form `(x,)` and `let` tuple patterns

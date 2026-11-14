@@ -2,9 +2,21 @@
 id: rfc-0151
 title: "Tuples as Numeric-Label Rows"
 date: '2026-08-29'
-status: accepted
+status: integrated
 updated: '2026-11-14'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
+coverage:
+  "1": { kind: blocked, reason: "The desugaring is metel-core#2032 (retire Type::Tuple); the rules are types.tuples legality-4 and legality-5 and carry no fixtures until then.", ref: "metel-core#2032" }
+  "2": { kind: blocked, reason: "Numeric labels, ordering and mixed rows are metel-core#2029; the rule is types.tuples legality-6.", ref: "metel-core#2029" }
+  "3": { kind: blocked, reason: "The Eq, Ord and Hash row impls are metel-core#2031; the rule is types.tuples legality-8.", ref: "metel-core#2031" }
+  "4": { kind: blocked, reason: "Numeric labels in row bounds are metel-core#2029; narrowing of tuples is #2032.", ref: "metel-core#2029" }
+  "4a": { kind: blocked, reason: "The remainder of a tuple has no type until metel-core#2032; the rule is partial-moves legality-3.", ref: "metel-core#2032" }
+  "5": { kind: blocked, reason: "Printing a row as a tuple is metel-core#2032; the rule is types.tuples legality-7.", ref: "metel-core#2032" }
+  "5a": { kind: blocked, reason: "The Tuple property is metel-core#2029; the rule is types.tuples legality-7.", ref: "metel-core#2029" }
+  "6": { spec: "spec.types.tuples.legality-2" }
+  "7": { kind: untestable, reason: "Section 7 fixes a direction and leaves the declaration and pattern spelling of a tuple struct to RFC-0100 and RFC-0114; it adds no rule of its own." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
+impl_status: not-started
 ---
 
 > **Consolidation RFC.** Anonymous record types (RFC-0116) landed a general
@@ -21,6 +33,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 > grammar are measured on the metel-core checkout of 2026-11-14 and marked as such.
 
 > **Status — accepted (2026-11-14).** Adopted 2026-11-14: all open questions resolved (mixed labels allowed, cross-shape bounds structural, record patterns gain .label: pattern, one-element tuples and let tuple patterns added, section 6 extracted as RFC-0231); implemented in full.
+
+> **Status — integrated (2026-11-14).** Integrated 2026-11-14: spec types.tuples legality-4 to legality-8, record-rest-patterns legality-2, record-pattern-bindings legality-2 and partial-moves legality-3 (each blocked-exempt on its implementation issue: #2029, #2023, #2030, #2022, #2031, #2032); worked examples recorded; GAP-TYPES-009 narrowed.
 
 ## Summary
 
@@ -248,6 +262,38 @@ Left open, because they belong to the declaration and construction RFCs rather t
 (`struct P(A, B)` against `struct P { .0: A, .1: B }`), the pattern spelling, and the interaction with RFC-0100's `new T(...)`
 and the call-form construction of RFC-0114. This section fixes the direction: a tuple struct is a numbered-label struct and
 adds no machinery.
+
+## Worked examples (integration)
+
+Each combines this RFC with an integrated feature or a sibling RFC still in flight, looking for a contradiction. None was
+found; the two places where the combination has a visible edge are marked.
+
+| Example | Result |
+|---|---|
+| `(1, "a").0`, `let (x, y) := t`, `match (t) { (0, y) => … }` | field access and patterns on the labels `.0`, `.1`; nothing downstream sees a tuple node |
+| nested narrowing (RFC-0150): move `o.pair.0` out of `Outer { pair: (A, B), tag: T }` | `o : Outer.{ .pair: .{ .1: B }, .tag }`: a tuple field's residual is a row residual, which resolves RFC-0150 section 3 with no new form |
+| a rest pattern (RFC-0178) `let (a, ..rest) := t` for `t: (A, B, C)` | `rest : .{ .1: B, .2: C }`: the remainder keeps its labels, as a partial move does (section 4a); GAP-TYPES-009's question is answered |
+| a call's argument list (RFC-0223): `f(1, x = 2)` | the row `.{ .0 = 1, .x = 2 }`; the integer labels are dense, the identifier labels free (RFC-0202's `Dense` predicate, not `Tuple`) |
+| a tuple struct (section 7) passed to `fun cons<record R: Tuple>` | rejected: a struct never satisfies a row bound (RFC-0137); the struct's row is reached by projection, or the struct opts in by the checked impl form RFC-0202 defers. **A visible edge, not a contradiction** |
+| width subtyping (RFC-0121): a 3-tuple passed to a bound `.{ .0: A, .1: B, ..R }` | accepted, as a record with extra fields is; a closed `(A, B)` parameter does not accept it |
+| the residual of an anonymous tuple (RFC-0211) | no brand to grant `Copy`, so it follows its fields; `extend` of a custom `Drop` on a tuple is rejected as for any anonymous record (RFC-0116 section 3) |
+| the zero-arity tuple `()` (RFC-0231) | the empty row, which is a `Tuple` and prints `()`; one type, no conversion |
+| the `Tuple` property (section 5a) and RFC-0202's `Tuple`/`Dense` aspects | one property: the aspect is the compiler's grant of what section 5a names; a closed row decides it by inspection |
+| an overload set (RFC-0100) with `f((i64, i64))` beside `f(.{ .0: i64, .1: i64 })` | the two parameter types are one type, so the set is a duplicate. **A visible edge**: no such set exists in the standard library or the fixtures |
+| `extend (A, B): Aspect` beside `extend .{ .0: A, .1: B }: Aspect` | one impl target, so the pair is a `T0015` overlap, as for `()` and `.{}` (RFC-0231) |
+
+---
+
+## Implementation tracking
+
+Implemented in full, after RFC-0231 (unit as the empty row, implemented). The steps, each tracked by an issue (umbrella
+metel-core#1956):
+
+1. #2029: numeric labels in the record machinery (field access, row bounds, ordering, the `Tuple` property).
+2. #2030: record patterns bind a label to a pattern, `.label: pattern`.
+3. #2022 and #2023: `let` tuple patterns and the one-element tuple.
+4. #2031: `Eq`, `Ord` and `Hash` for every row.
+5. #2032: retire `Type::Tuple` and the distinct tuple node; the tuple `Copy` rule of #263 goes with it.
 
 ## What this RFC does not cover
 
