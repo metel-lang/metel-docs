@@ -3478,11 +3478,15 @@ method of that name, is called through the one the bound names: the others do no
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18}
 
-A method call written directly on a value, where the value's type has impls of one aspect for different type arguments
-and more than one provides the method, is a `T0013` error naming the impls. The call names no type arguments to choose by;
-write it through a bound that does. (Choosing by the call's expected type is planned, metel-core#1987.)
+> **Gap** GAP-DECLARATIONS-007
 
-<!-- rfc.py:last_reviewed ca2e38b863f965b9bd7155dd4ed54b94d7d54f86 -->
+A method call is a `T0013` error when it names no type arguments to choose between candidates that differ only in the type
+arguments of one aspect. That is a call written directly on a value whose type has impls of one aspect for different type
+arguments, more than one of which provides the method, and a call written on a value of a type parameter that has more than
+one bound of one aspect (`Z: Conv<i64> + Conv<String>`), each providing the method. The error names the impls or the aspect.
+Write the call through a type parameter with a single bound of the aspect, which names the type arguments.
+
+<!-- rfc.py:last_reviewed 3297685f22359c543be6e4e8fc6617474b0293e8 -->
 
 ##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-3}
 
@@ -4572,7 +4576,7 @@ Aspect dispatch through a generic type parameter or `extends Aspect` is [**stati
 
 Method resolution must also be **unambiguous** at compile time. If the same receiver
 type implements two different aspects that both define the same method name, a call
-like `value.method()` is [rejected with `T0013`](#spec.declarations.aspects.static-dispatch-only.legality-1) rather than resolved by declaration order.
+like `value.method()` is [rejected with `T0013`](#spec.declarations.aspects.static-dispatch-only.legality-1) rather than resolved by declaration order. The same holds for one aspect at different type arguments (`Conv<i64>` and `Conv<String>`), which coherence treats as two aspects: see [aspect bounds, legality-18](#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18).
 
 <details>
 <summary>Formal rules</summary>
@@ -4592,7 +4596,8 @@ dispatch. A call on a `dyn Aspect` value is dispatched through its vtable.
 ##### Legality Rule {#spec.declarations.aspects.static-dispatch-only.legality-1}
 
 If applicable aspects for the same receiver type provide the same method name, an unqualified
-dot call is ambiguous and is rejected with `T0013`.
+dot call is ambiguous and is rejected with `T0013`. Applicable aspects include one aspect applied to different type arguments
+([aspect bounds, legality-18](#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18)).
 
 <!-- rfc.py:last_reviewed e7d2c1d4 -->
 
