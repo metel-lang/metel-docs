@@ -542,16 +542,21 @@ fun name(c: &Colour) -> String {
 
 ##### Legality Rule {#spec.expressions.record-rest-patterns.legality-2}
 
-A field of a record pattern may bind its label to a pattern, `.label: pattern`, where the pattern is a name, `_`, a literal or a nested pattern; `.label` alone remains the pun that binds the label's own name, and `.label: _` the discard. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`. A nested pattern is checked against the type of that field, and the ownership rules of the surrounding pattern apply to each binding.
+A field of a record pattern may bind its label to a name, `.label: name`: the pattern reads the row label `.label` and binds `name` to its value. `.label` alone remains the pun that binds the label's own name, and `.label: _` the discard. The label must be in the row, as for a pun, and two entries may not read the same label. The ownership rules of the surrounding pattern apply to each binding: a name that takes a non-`Copy` field moves it, and a move out of the scrutinee leaves the remainder as for any other record pattern.
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 5fdc3f23ea2f507afb4101bb6f227558ebd579a2 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2030" reason="RFC-0151: not implemented until metel-core#2030." -->
+##### Legality Rule {#spec.expressions.record-rest-patterns.legality-3}
+
+After `.label:` the pattern may be any pattern, not only a name: a literal (`.0: 0`), an enum or struct pattern, a tuple or record pattern, an array pattern. A nested pattern is checked against the type of that field, makes the record pattern refutable where it is, and is rejected in a `let` declaration if it is. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`.
+
+<!-- rfc.py:last_reviewed 5fdc3f23ea2f507afb4101bb6f227558ebd579a2 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2035" reason="RFC-0151: a literal or nested sub-pattern is not implemented until metel-core#2035." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2030: RFC-0151: not implemented until metel-core#2030._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2035: RFC-0151: a literal or nested sub-pattern is not implemented until metel-core#2035._</span>
 <!-- rfc.py:exemption:rendered:end -->
-
 
 </details>
 <!-- rfc.py:fixtures:end -->

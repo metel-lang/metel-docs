@@ -89,7 +89,7 @@ well-typed under the record-pattern rules.
 
 ##### Legality Rule {#spec.declarations.variables.record-pattern-bindings.legality-2}
 
-A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) := t;`, `let (p,) := u;` and `let () := v;`, with names, `_` and nested patterns for its elements. It is the record-pattern declaration of the labels the tuple pattern names ([record patterns](expressions.md#spec.expressions.record-rest-patterns.legality-2)): the initializer is evaluated once, its elements are moved or copied into the bindings, and the pattern must be irrefutable.
+A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) := t;`, `let (p,) := u;` and `let () := v;`, with names, `_` and nested patterns for its elements. It is the record-pattern declaration of the labels the tuple pattern names ([record patterns](expressions.md#spec.expressions.record-rest-patterns.legality-3)): the initializer is evaluated once, its elements are moved or copied into the bindings, and the pattern must be irrefutable.
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
