@@ -3,7 +3,7 @@ id: rfc-0151
 title: "Tuples as Numeric-Label Rows"
 date: '2026-08-29'
 status: under-review
-updated: '2026-11-12'
+updated: '2026-11-14'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 ---
 
@@ -84,9 +84,12 @@ canonical form, and derived `Ord` is:
 The numeric ordering is the point — a tuple `(a₀ … a₁₀)` must keep `0 < … < 10`,
 not the lexicographic `0 < 1 < 10 < 2` that string labels would give.
 
-A row may mix the two (`{ 0: A, .name: B }`); it is legal and simply unusual.
-Constructing one requires the `{ … }` form — the `(…)` sugar only produces
-integer labels `0 .. N-1` with no gaps.
+A row may mix the two (`{ 0: A, .name: B }`), and that is **decided, not merely tolerated** (language owner,
+2026-11-14). The reason is the argument list of a call: positional arguments are the integer labels and keyword
+arguments (RFC-0223) are identifier labels, so `f(1, x = 2)` is the row `.{ .0 = 1, .x = 2 }`. With one label type, a
+function's parameters, `Callable<Args, Ret>` (RFC-0061 section 7.1) and an argument list are all one row, and arity
+polymorphism over functions is row polymorphism. Constructing a mixed row takes the `{ … }` form; the `(…)` sugar only
+produces integer labels `0 .. N-1` with no gaps.
 
 ### 3. Copy, Drop, Ord — derived from the row, not the former
 
@@ -104,9 +107,10 @@ integer labels `0 .. N-1` with no gaps.
 
 ### 4. Narrowing, row bounds, branding — apply unchanged
 
-- **Narrowing (RFC-0117)**: moving `t.1` out of `(A, B)` narrows `t` to
-  `{ 0: A }` = `(A,)`. The `2^N` subset-lattice bound, the "residual is an
-  ordinary value" property, and path-sensitivity all apply with no addition.
+- **Narrowing (RFC-0117)**: moving the last element, `t.1` out of `(A, B)`, narrows `t` to
+  `{ 0: A }` = `(A,)`. Moving any other element leaves a gap and a row that is not a tuple
+  (§4a). The `2^N` subset-lattice bound, the "residual is an ordinary value" property, and
+  path-sensitivity all apply with no addition.
 - **Nested narrowing (RFC-0150)**: a tuple-typed field's residual is a
   numeric-label row residual. RFC-0150 §3 (define tuple residuals or ban them)
   is **resolved** by this RFC — delete the open question, keep the recursion.
@@ -116,12 +120,78 @@ integer labels `0 .. N-1` with no gaps.
 - **Branded rows (RFC-0137)**: a tuple is an *anonymous* row — no brand, never
   satisfies a nominal projection bound — exactly as an anonymous record does not.
 
+### 4a. A partial move out of a tuple leaves a row, and nothing compacts it
+
+*Added 2026-11-14.* Today move checking tracks tuple elements (RFC-0071 section 9a, `spec.ownership.partial-moves`):
+moving `t.0` and then `t.1` is accepted, moving `t.0` twice and using `t` whole after `t.0` moved are rejected. What a
+tuple lacks is a **type** for what is left: a struct narrows to `S.{ .b }` and passes to a function that names it, while a
+tuple's remainder has no spelling, and a projection `t.{ .1 }` is rejected. Measured 2026-11-14 on the metel-core checkout.
+This RFC gives the remainder the type RFC-0117 already gives every other row.
+
+**The rule is RFC-0117's, with no tuple case.** The residual of `t` after a move is the row with the same labels minus the
+moved ones, at the same types. The remaining elements keep their labels:
+
+```metel
+let t := (a, b, c);          // .{ .0: A, .1: B, .2: C }
+let x := t.1;                // t : .{ .0: A, .2: C }   (a gap at .1)
+```
+
+The residual is a tuple, under section 5, only when the labels that remain are exactly `.0 .. .N-1`, which is when the moved
+elements were a suffix: `(A, B)` after `t.1` is `(A,)`. Any other residual is a sparse row and prints in brace form,
+`.{ .0: A, .2: C }`.
+
+**Nothing compacts the remainder, and no rule says it should.** Renumbering `.2` to `.1` would be a rule for tuples alone,
+and it would be unsound for the program that wrote the move:
+
+- *Names would stop being stable.* Moves, projections and bounds name elements by label. If the remainder were renumbered
+  after `t.1` moved, `t.2` would stop existing and `t.1` would mean what `t.2` meant a statement before, so one expression
+  changes meaning with the statements around it. A live `&t.2` would be left pointing at a renamed element.
+- *It would hide a cost.* A compacted value moves the remaining elements down, O(n), as a side effect of a move.
+- *The general rule says otherwise.* Every other row keeps its labels. A rule that keeps them except when they are numeric is
+  a special case, and the only way to avoid it is to make numeric labels ordinal (derived from position rather than named),
+  which makes a tuple a different kind of type than a row and gives up what this RFC is for.
+
+**Getting a tuple back is explicit.** Two ways, neither a tuple rule:
+
+- *Destructure.* A pattern that names the elements to keep builds a new tuple from them, by position, so it is already the
+  compaction when it is wanted.
+- *Relabel.* A general row operation that renames labels in a projection (`.2` as `.1`) turns the sparse remainder into a
+  dense row, with its cost visible and its effect on the type stated. It applies to any row, so it is not part of this RFC. If
+  it is wanted, it is a small follow-on RFC beside RFC-0191 (one-field record update).
+
+A function that takes `(A, C)` takes a dense tuple. The sparse remainder is passed to one that takes a row bound
+(`.{ .0: A, ..R }`), or relabelled first.
+
 ### 5. Type display
 
 The printer renders a row whose labels are exactly `0 .. N-1` with no gaps as
 `(T₀, …, Tₙ)`, and any other row as `{ … }`. Round-trips: `(i64, String)` prints
 as `(i64, String)`, `{ 0: i64, 1: String }` written by hand prints the same, and
 `{ 0: i64, 2: String }` (a gap) prints as `{ 0: i64, 2: String }`.
+
+### 5a. The `Tuple` property: dense numeric labels
+
+*Added 2026-11-14 (language owner decision).* Section 5's printing rule, and the layout a compiler may choose, depend on one
+property of a closed row, and this RFC states it once and names it:
+
+> A closed row is a **`Tuple`** when its labels are exactly the integers `0 .. N-1`.
+
+`Tuple` is a **derived property of the row**, not a declaration, not a type former and not a new kind. A closed row has it
+or not by inspection of its label set, so it is decidable and needs no proof; `()` (the empty row) has it, `.{ .0: A, .1: B }`
+has it, `.{ .0: A, .2: C }` and `.{ .0: A, .name: B }` do not. It is used for:
+
+- **Printing** (section 5): a `Tuple` row prints as `(T₀, …, Tₙ)`, every other row in brace form.
+- **Layout.** A `Tuple` row may be stored densely, as an array of its fields, and any other row as a general record. The type
+  decides, so no runtime tag is needed. Nothing in the language depends on it; it permits the optimisation.
+- **The sugar.** The `(…)` surface forms construct, match and write exactly the rows that have it.
+
+It adds no rule for ownership, narrowing or aspects: `Copy`, `Clone`, `Display`, `Ord` and the partial-move residual of
+section 4a come from the row, as sections 3 and 4 say. A residual that stops being a `Tuple` (a gap) simply loses the printing
+and layout, which is the same fact section 4a states.
+
+The point of naming it is that every consumer above asks one question. If a later RFC makes it visible (a bound `R: Tuple` for
+arity-generic code, or a refinement of the plain row by the predicate "labels are dense"), that is a name for this property and
+changes none of the rules here. Whether it is surfaced as a bound is not decided by this RFC.
 
 ### 6. `()` and the unit type
 
@@ -147,6 +217,29 @@ empty row is an ADR matter.
 
 RFC-0221 relies on this: with one type, an empty brace group is the same value whether it is read as a block or
 as a record.
+
+### 7. Tuple structs
+
+*Added 2026-11-14 (language owner decision: in scope).* A nominal type whose fields are numbered is a struct whose row has
+integer labels, branded as every struct is (RFC-0137). There is no separate tuple-struct feature:
+
+```metel
+struct Point(i64, i64);          // brand Point over .{ .0: i64, .1: i64 }
+let p := Point(1, 2);            // the construction call of RFC-0100, positional arguments
+p.0                              // field access on the label .0
+let Point(x, y) := p;            // a pattern over the same row
+```
+
+The brand is what a tuple lacks: `Point` is not structurally interchangeable with `(i64, i64)`, which is the point of
+declaring it (RFC-0137's `Self.{ .0 }` projection and the residual `Point.{ .1 }` after `p.0` moved apply unchanged, as do
+`copy struct`, `derives` and the rules of RFC-0211). A struct may also mix labels (`struct Pair(i64, name: String)`) because
+the row may (section 2). Rust's tuple structs, rejected in the alternatives below for *tuples*, are the right model for a
+nominal type that wants positional fields.
+
+Left open, because they belong to the declaration and construction RFCs rather than to this one: the declaration spelling
+(`struct P(A, B)` against `struct P { .0: A, .1: B }`), the pattern spelling, and the interaction with RFC-0100's `new T(...)`
+and the call-form construction of RFC-0114. This section fixes the direction: a tuple struct is a numbered-label struct and
+adds no machinery.
 
 ## What this RFC does not cover
 
@@ -201,10 +294,9 @@ ad-hoc returns and argument lists.
 
 1. ~~**`()` vs `Unit`** (§6).~~ **Resolved:** unify. `()` is the empty row `{}` and `Unit` is retired as a
    separate type.
-2. **Mixed-label rows.** Are `{ 0: A, .name: B }` rows worth allowing at all, or
-   should integer and identifier labels be mutually exclusive per row (tuples
-   integer-only, records identifier-only, and a row is one or the other)? The
-   latter is simpler to reason about and to print; the former is more uniform.
+2. ~~**Mixed-label rows.**~~ **Resolved (2026-11-14):** allowed. A call's argument list is a mixed row (section 2), and
+   an exclusivity rule would be a second concept. A row prints as a tuple only when it is a `Tuple` (section 5a), and otherwise
+   in brace form.
 3. **Cross-shape row bounds.** Should `<record T: { 0: i64, .. }>` accept a
    hand-written `{ 0: i64, .name: … }`, and should a bound written for named data
    ever accidentally accept a tuple? Probably harmless given structural identity,
@@ -216,6 +308,9 @@ ad-hoc returns and argument lists.
    grouping, and interaction with turbofish and function-type syntax
    `(A) -> B` — confirm the existing tuple grammar's disambiguation survives
    unchanged when the node it builds is a record.
+6. ~~**Compacting the remainder of a partial move** (§4a).~~ **Resolved:** the remainder keeps its labels and is a
+   sparse row unless the moved elements were a suffix; getting a tuple back is a destructuring pattern or an explicit relabel,
+   and no rule renumbers automatically.
 
 ## References
 
