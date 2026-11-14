@@ -4,12 +4,57 @@ title: "Variadic Generics"
 date: '2026-07-25'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/794'
-updated: '2026-08-23'
+updated: '2026-11-14'
 ---
 
 > **Amended 2026-10-27 (RFC-0186, then #1653):** the quantifier shared with rows has no keyword: pack bounds read `where ..Ts: Copy`, as row bounds read `where ..R: Copy`. The examples below use that spelling; `all` is removed and the interim `each` never shipped.
 
 > **Status — under review (2026-08-23).** Committed to v0.21.1, tracking issue #794 filed 2026-08-22
+
+> **Re-scoped 2026-11-14 (language owner), on the assumption that RFC-0151 is adopted (metel-core#1848).** If tuples are
+> numeric-label rows, the driving case of this RFC is already covered, and what remains is a much smaller question: see
+> "Re-scope" below. The text after it is the original proposal, kept as the record and as the design to use if RFC-0151 is
+> not adopted.
+
+## Re-scope (2026-11-14)
+
+**What RFC-0151 removes.** This RFC exists because a tuple satisfied no aspect and each arity needed its own impl (Motivation).
+With a tuple a row of integer labels, the impls are the row impls, which exist today in `core.mtl`:
+
+| This RFC's stage | Needs | Under RFC-0151 |
+|---|---|---|
+| Stage 1: `Copy`, `Send`, `Sync`, `Linear` for every arity | `<..Ts>`, `(..Ts)`, `..Ts: A` | `extend<record R> .{ ..R }: Copy where ..R: Copy;` already covers every tuple (checked: a numeric-label record satisfies a `Copy` bound). No pack, no second quantifier: RFC-0123's `..R: A` is the one `all`. |
+| Stage 2: `Display`, `Clone`, `Eq`, `Hash` bodies | expansion in a method body | the row impls of `Display` and `Clone` exist, as native stand-ins for RFC-0174's `comptime for`; `Eq`, `Ord`, `Hash` for rows are the missing part and belong to RFC-0151 section 3 and RFC-0080. |
+
+So sections 2.1 to 2.3 and the staging of section 3 are **not needed** if RFC-0151 is adopted: a pack would restate what a row
+already is. Open questions 1 (who owns `all`), 3 (coherence of a blanket impl over an infinite family) and 6 (arity limits)
+go with them, because a row impl has a finite head, `.{ ..R }`.
+
+**What remains: positional recursion.** A pack can say "the first element, then the rest": `(A, ..Ts)`. A row cannot. The rest
+of a row that holds `.0` is a row whose labels are `.1, .2, …`, which is not a tuple, since a tuple starts at `.0`. Every
+operation that is positional rather than per-field needs the labels renumbered:
+
+- `cons` and `uncons` (head and tail), `append`, `zip`, `curry` and `uncurry`, `apply(f, args)`.
+- `Callable<Args, Ret>` with `Args` a row (RFC-0061 section 7.1, #893), for the same reason when a function takes some
+  arguments and returns another that takes the rest.
+
+**This RFC is re-scoped to that one question:** *how does a program write a positional operation over numeric-label rows?*
+Two answers, from sections 4 and 5 below, which the re-scope reopens:
+
+1. **A built-in type-level renumbering** on numeric rows (`Shift<R>`, or a concatenation `Concat<R, S>` that shifts the second
+   operand), the smaller version of this RFC's expansion. It keeps positional operations ordinary generic functions.
+2. **`comptime`** (RFC-0132, RFC-0174): iterate the row's fields and build the result row at compile time. No new type
+   machinery, which was this RFC's strongest alternative (section 4) and is stronger now that the driving case is gone.
+
+Which one is decided by what positional operations need to be generic over arity in practice. Until a real use shows, the
+cheapest decision is comptime, and this RFC may be **retired** in its favour; it stays under review so that decision is made
+on purpose. Tuples still need nothing from it.
+
+**Consequences for the milestone.** Under the re-scope #794 stops being a prerequisite of the Copy migration's tuple arm
+(#263): that arm becomes "confirm the row impls cover tuples", after RFC-0151's implementation. #794 itself moves out of the
+Copy migration milestone unless the renumbering question is wanted for v0.16.0.
+
+---
 
 ## Summary
 

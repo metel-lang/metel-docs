@@ -72,7 +72,7 @@ the curated thematic map.
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
 - **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`1-under-review` ; rfcs/1-under-review/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-09-01)
-- **RFC-0125** — Variadic Generics (`1-under-review` ; rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-08-23)
+- **RFC-0125** — Variadic Generics (`1-under-review` ; rfcs/1-under-review/rfc-0125-variadic-generics.md ; date 2026-07-25 ; updated 2026-11-14)
 - **RFC-0127** — Associated Functions on Generic Types (`1-under-review` ; rfcs/1-under-review/rfc-0127-associated-functions-on-generic-types.md ; date 2026-08-01 ; updated 2026-08-23)
 - **RFC-0131** — Hoist let/var Bindings to the Top of Their Containing Block (`1-under-review` ; rfcs/1-under-review/rfc-0131-hoist-let-var-bindings-to-the-top-of-their-containing-block.md ; date 2026-08-09 ; updated 2026-09-01)
 - **RFC-0132** — Comptime Execution Model — comptime let, comptime fun, comptime if (`1-under-review` ; rfcs/1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md ; date 2026-08-13 ; updated 2026-10-01)
