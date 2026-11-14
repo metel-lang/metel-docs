@@ -15,7 +15,7 @@ Metel is statically and strongly typed. Types are checked at compile time. There
 
 The unit type `()` is only written explicitly when needed as a type parameter (e.g. `Result<(), Error>`). Functions that return nothing omit the `->` annotation entirely.
 
-> **Planned (RFC-0231, metel-core#2024).** `()` stops being a separate primitive: it is the empty closed row `.{}`, one type with one value (see [the empty tuple](#spec.types.tuples.legality-2)).
+`()` is not a separate primitive: it is the empty closed row `.{}`, one type with one value (see [the empty tuple](#spec.types.tuples.legality-2)).
 
 ## Sized Numeric Types
 
@@ -279,9 +279,7 @@ fun main() -> i64 {
 }
 ```
 
-`()` is the zero-element tuple (unit type).
-
-> **Planned (RFC-0231, metel-core#2024).** `()` is the empty closed row `.{}`, so `()` and `.{}` are one type ([the empty tuple](#spec.types.tuples.legality-2)).
+`()` is the zero-element tuple (unit type), the empty closed row `.{}`, so `()` and `.{}` are one type ([the empty tuple](#spec.types.tuples.legality-2)).
 
 Tuples can be destructured in `match`:
 
@@ -316,35 +314,25 @@ only for an element in the tuple's declared arity.
 
 ##### Legality Rule {#spec.types.tuples.legality-2}
 
-> **Planned (RFC-0231, metel-core#2024).** `()` is the empty closed row `.{}`: one type and one value, not a separate primitive. A function with no return
+`()` is the empty closed row `.{}`: one type and one value, not a separate primitive. A function with no return
 annotation, an empty block, a block with no tail, a braceless `if` without `else`, and a `break` with no value have this type.
 `()` and `.{}` are interchangeable in type position and in pattern position, `Result<(), E>` and `Result<.{}, E>` are one type,
-and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type.
+and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type. ([RFC-0231](../../rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md))
 
-<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2024: RFC-0231: not implemented until metel-core#2024._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.tuples.legality-3}
 
-> **Planned (RFC-0231, metel-core#2024).** `extend (): A` is accepted as a spelling of `extend .{}: A`. Writing both is a `T0015` conflicting implementation.
+`extend (): A` is accepted as a spelling of `extend .{}: A`. Writing both is a `T0015` conflicting implementation.
 `Copy` and `Clone` of `()` come from the row impls that hold vacuously for the empty row.
 
-<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2024: RFC-0231: not implemented until metel-core#2024._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics Rule {#spec.types.tuples.dynamics-1}
 
-> **Planned (RFC-0231, metel-core#2024).** The empty row prints as `()`, as a type and as a value, so `println(.{})`, `println(())` and `"${.{}}"` all produce `()`.
+The empty row prints as `()`, as a type and as a value, so `println(.{})`, `println(())` and `"${.{}}"` all produce `()`.
 
 `()` and `.{}` are one type with one value ([the empty tuple](#spec.types.tuples.legality-2)), so the language has exactly one
 rendering for it, and the rendering is the unit's: the record `Display` has a single case for the empty row, where it would
@@ -352,13 +340,8 @@ otherwise print the record form `.{}`. Every non-empty anonymous record prints a
 ([Display of an anonymous record](#spec.types.anonymous-records.dynamics-3)); the empty one is the only exception. A diagnostic
 that names the type writes `()` for the same reason.
 
-<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2026" reason="Display of an anonymous record prints its source form: not implemented until metel-core#2026." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2026: Display of an anonymous record prints its source form: not implemented until metel-core#2026._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
@@ -597,13 +580,8 @@ The empty record is the one exception, and the reason is that it is not a record
 value ([the empty tuple](#spec.types.tuples.legality-2)), the unit's rendering is `()`, and printing `.{}` for the same value
 would give a value two renderings.
 
-<!-- rfc.py:last_reviewed cf26a9b4d7a317173afcf22239b5928e791c98b8 -->
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2026" reason="Display of an anonymous record prints its source form: not implemented until metel-core#2026." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2026: Display of an anonymous record prints its source form: not implemented until metel-core#2026._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.anonymous-records.legality-3}
 
@@ -1991,9 +1969,7 @@ and the open tail remain. Thus, if `S = .{ .token: Token, .extra: i64, ..Rest }`
 `R: { token, .. }` proves that `token` exists but does not determine the remainder type;
 the pattern is rejected with a distinct “remainder type cannot be determined” diagnostic.
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
-`.{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
-
-> **Planned (RFC-0231, metel-core#2024).** `.{}` is `()`: "not `Unit`" no longer holds for an anonymous remainder ([the empty tuple](#spec.types.tuples.legality-2)).
+`.{}`, which is `()` ([the empty tuple](#spec.types.tuples.legality-2)). Bare `..` in a pattern remains discard-only and does not produce a value.
 
 A record literal accepts at most one spread, including for concrete rows. A written label is an
 addition when proven absent from the spread row, a replacement when proven present, and rejected when neither is proven. Initializers evaluate from

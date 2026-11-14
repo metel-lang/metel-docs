@@ -2,20 +2,22 @@
 id: rfc-0231
 title: "Unit as the Empty Row"
 date: '2026-11-14'
-status: integrated
+status: implemented
 updated: '2026-11-14'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2024'
 coverage:
-  "1": { kind: blocked, reason: "Implementation of the unification is metel-core#2024; the rules are in reference/spec/types.md (tuples legality-2, legality-3, dynamics-1) and carry no fixtures until then.", ref: "metel-core#2024" }
+  "1": { spec: "spec.types.tuples.legality-2" }
   "2": { kind: untestable, reason: "Section 2 states the internal representation of the empty row; no source fixture can observe whether the checker keeps a separate unit node." }
   "3": { spec: "spec.ownership.narrowing.legality-4" }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/2024'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — accepted (2026-11-14).** Accepted 2026-11-14: representation, the spec conflict on empty residuals, impl target and display settled; implemented before RFC-0151.
 
 > **Status — integrated (2026-11-14).** Integrated 2026-11-14: spec types.tuples legality-2/3 and dynamics-1 (blocked-exempt on metel-core#2024), planned notes on the ownership chapter's empty-residual statements; worked examples recorded.
+
+> **Status — implemented (2026-11-14).** Implemented 2026-11-14 in metel-core#2028 (with the display change #2026).
 
 ## Summary
 
