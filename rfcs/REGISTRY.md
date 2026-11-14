@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**230 RFCs total.** 37 draft, 55 under review, 11 accepted, 4 integrated (107 live), 91 implemented, 16 superseded, 16 refused (123 settled).
+**230 RFCs total.** 37 draft, 55 under review, 10 accepted, 5 integrated (107 live), 91 implemented, 16 superseded, 16 refused (123 settled).
 
 ## Draft (37)
 
@@ -113,7 +113,7 @@ the curated thematic map.
 - **RFC-0227** — Stated flow for every derived impl (`1-under-review` ; rfcs/1-under-review/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12 ; updated 2026-11-13)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 
-## Accepted (11)
+## Accepted (10)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -124,13 +124,13 @@ the curated thematic map.
 - **RFC-0089** — Linear Types (`2-accepted` ; rfcs/2-accepted/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-11-05)
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
-- **RFC-0151** — Tuples as Numeric-Label Rows (`2-accepted` ; rfcs/2-accepted/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-14)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (4)
+## Integrated (5)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
+- **RFC-0151** — Tuples as Numeric-Label Rows (`3-integrated` ; rfcs/3-integrated/rfc-0151-tuples-as-numeric-label-rows.md ; date 2026-08-29 ; updated 2026-11-14 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/1956)
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`3-integrated` ; rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1808)
 - **RFC-0211** — Aspects on Residuals (`3-integrated` ; rfcs/3-integrated/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-13 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1830)
 

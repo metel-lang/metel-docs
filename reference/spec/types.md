@@ -258,6 +258,8 @@ type, independently of the enclosing function's return type.
 
 Tuples are lightweight anonymous product types.
 
+> **Planned (RFC-0151, metel-core#1956).** A tuple is a row of integer labels: `(A, B)` is the closed anonymous record type `.{ .0: A, .1: B }`, `(a, b)` is `.{ .0 = a, .1 = b }`, and `t.0` is field access on the label `.0`. There is one structural product former, so narrowing, row bounds and the row impls apply to a tuple with no separate rule. The rules below state it; each is blocked on the implementation issue it names.
+
 > **Gap** GAP-TYPES-009
 
 ```metel
@@ -342,6 +344,66 @@ that names the type writes `()` for the same reason.
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
+
+##### Legality Rule {#spec.types.tuples.legality-4}
+
+A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A₀, …, .n: Aₙ }`, and a tuple value `(a₀, …, aₙ)` is the record `.{ .0 = a₀, … }`: they are one type and one value, not a distinct form ([RFC-0151](../../rfcs/3-integrated/rfc-0151-tuples-as-numeric-label-rows.md)). `t.i` is field access on the label `.i`, and a tuple pattern is a pattern over the same labels. A tuple is therefore subject to every rule of a record: narrowing, row bounds, and the row impls of `Copy`, `Clone` and `Display`. A tuple carries no brand.
+
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2032" reason="RFC-0151: not implemented until metel-core#2032." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2032: RFC-0151: not implemented until metel-core#2032._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-5}
+
+`(x,)` is the one-element tuple `.{ .0 = x }`, its type is written `(T,)`, and a pattern `(p,)` matches it. `(e)` and `(T)` without the trailing comma are parenthesised groupings and are not tuples. `()` is the empty tuple ([the empty tuple](#spec.types.tuples.legality-2)).
+
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2023" reason="RFC-0151: not implemented until metel-core#2023." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2023: RFC-0151: not implemented until metel-core#2023._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-6}
+
+A row's labels are integers or identifiers, written `.0`, `.name`. The canonical order of a row's labels, for iteration, display and derived comparison, is its integer labels first in numeric order (`.2` before `.10`), then its identifier labels in lexicographic order. A row may mix the two kinds (`.{ .0: A, .name: B }`): a call's argument list is such a row, with positional arguments as integer labels and keyword arguments as identifier labels. The `(…)` sugar produces only the dense integer labels `.0 .. .N-1`; a mixed row is written with `.{ … }`.
+
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2029" reason="RFC-0151: not implemented until metel-core#2029." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2029: RFC-0151: not implemented until metel-core#2029._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-7}
+
+A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N-1`. The property is decided by inspecting the row, with no annotation or proof, and it adds no rule for ownership, narrowing or aspects. A `Tuple` row prints as `(T₀, …, Tₙ)`, a one-element one as `(T,)` and the empty one as `()`; any other row, including one with a gap in its integer labels or an identifier label, prints in brace form `.{ … }`. A row that stops being a `Tuple`, as a partial move that leaves a gap does, loses that rendering and nothing else.
+
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2029" reason="RFC-0151: not implemented until metel-core#2029 (the property) and #2032 (the printing of a tuple as a row)." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2029: RFC-0151: not implemented until metel-core#2029 (the property) and #2032 (the printing of a tuple as a row)._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-8}
+
+Tuples compare through `Eq`, `Ord` and `Hash` impls that every row has when its field types do, comparing the fields in canonical label order; for a row of integer labels that is positional order, so `(1, 2) < (1, 3)`. A field type that lacks the aspect makes the comparison a `T0012` error.
+
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2031" reason="RFC-0151: not implemented until metel-core#2031." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2031: RFC-0151: not implemented until metel-core#2031._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
