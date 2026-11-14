@@ -15,6 +15,8 @@ Metel is statically and strongly typed. Types are checked at compile time. There
 
 The unit type `()` is only written explicitly when needed as a type parameter (e.g. `Result<(), Error>`). Functions that return nothing omit the `->` annotation entirely.
 
+> **Planned (RFC-0231, metel-core#2024).** `()` stops being a separate primitive: it is the empty closed row `.{}`, one type with one value (see [the empty tuple](#spec.types.tuples.legality-2)).
+
 ## Sized Numeric Types
 
 > **Availability:** Since v0.8.0.
@@ -279,6 +281,8 @@ fun main() -> i64 {
 
 `()` is the zero-element tuple (unit type).
 
+> **Planned (RFC-0231, metel-core#2024).** `()` is the empty closed row `.{}`, so `()` and `.{}` are one type ([the empty tuple](#spec.types.tuples.legality-2)).
+
 Tuples can be destructured in `match`:
 
 ```metel
@@ -309,6 +313,41 @@ only for an element in the tuple's declared arity.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6Im91dCBvZiBib3VuZHMiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDlfdHVwbGVfb29iLm10bCIsInNvdXJjZSI6Ii8vIFRZUEVDSEVDS19FUlJPUltvdXQgb2YgYm91bmRzXVxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHQgOj0gKDEsIDIpO1xuICAgIGxldCBfeCA6PSB0LjU7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci90eXBlcy9uZWdfMDlfdHVwbGVfb29iLm10bCIsIm5hbWUiOiJuZWdfMDlfdHVwbGVfb29iLm10bCJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-2}
+
+> **Planned (RFC-0231, metel-core#2024).** `()` is the empty closed row `.{}`: one type and one value, not a separate primitive. A function with no return
+annotation, an empty block, a block with no tail, a braceless `if` without `else`, and a `break` with no value have this type.
+`()` and `.{}` are interchangeable in type position and in pattern position, `Result<(), E>` and `Result<.{}, E>` are one type,
+and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2024: RFC-0231: not implemented until metel-core#2024._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-3}
+
+> **Planned (RFC-0231, metel-core#2024).** `extend (): A` is accepted as a spelling of `extend .{}: A`. Writing both is a `T0015` conflicting implementation.
+`Copy` and `Clone` of `()` come from the row impls that hold vacuously for the empty row.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2024: RFC-0231: not implemented until metel-core#2024._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics Rule {#spec.types.tuples.dynamics-1}
+
+> **Planned (RFC-0231, metel-core#2024).** The empty row prints as `()`, as a type and as a value: the record `Display` has one case for it, so `println(())` prints
+`()`.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2024" reason="RFC-0231: not implemented until metel-core#2024." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2024: RFC-0231: not implemented until metel-core#2024._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
@@ -1913,6 +1952,8 @@ and the open tail remain. Thus, if `S = .{ .token: Token, .extra: i64, ..Rest }`
 the pattern is rejected with a distinct “remainder type cannot be determined” diagnostic.
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
 `.{}`, not `Unit`. Bare `..` in a pattern remains discard-only and does not produce a value.
+
+> **Planned (RFC-0231, metel-core#2024).** `.{}` is `()`: "not `Unit`" no longer holds for an anonymous remainder ([the empty tuple](#spec.types.tuples.legality-2)).
 
 A record literal accepts at most one spread, including for concrete rows. A written label is an
 addition when proven absent from the spread row, a replacement when proven present, and rejected when neither is proven. Initializers evaluate from

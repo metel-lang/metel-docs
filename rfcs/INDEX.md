@@ -426,16 +426,16 @@ above it are.
   Depends on RFC-0117, RFC-0137 (`3-integrated`), and **RFC-0147/0148**'s narrowed
   `drop`-receiver syntax, so it is scheduled after them (provisionally v0.18.1,
   metel-core#900).
-- **RFC-0151** *(under review 2026-11-12, #1956; opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
-  `(A, B)` sugar for the anonymous record `{ 0: A, 1: B }` (a closed row with integer
+- **RFC-0151** *(accepted 2026-11-14, #1956; opened 2026-08-29)* — Tuples as Numeric-Label Rows — make
+  `(A, B)` sugar for the anonymous record `.{ .0: A, .1: B }` (a closed row with integer
   labels, numerically ordered), so there is one structural product former. The `(…)`
-  surface syntax and `t.0` access stay; `Type::Tuple` goes away. Narrowing (RFC-0117),
-  row bounds (RFC-0118), branding (RFC-0137), and the `Copy` / `Ord` derivations then
-  apply to tuples with no second column — and RFC-0150's tuple-residual open question
-  and RFC-0125's pack-into-tuple calculus dissolve. `()` is the empty row `{}` and
-  the separate `Unit` type is retired (§6, decided 2026-11-07). Open: whether
-  mixed integer/identifier-label rows are allowed, migration staging. Sequence before
-  RFC-0125 (v0.21.1).
+  surface syntax and `t.0` access stay, with the one-element form `(x,)` and `let` tuple patterns
+  added; `Type::Tuple` goes away. Mixed integer and identifier labels are allowed (a call's
+  argument list is a mixed row); a partial move leaves a sparse row that nothing renumbers; the
+  dense-label property is named `Tuple` (§5a); tuple structs are numbered-label structs. Narrowing
+  (RFC-0117), row bounds (RFC-0118), branding (RFC-0137), and the `Copy` / `Ord` derivations then
+  apply to tuples with no second column; RFC-0150's tuple-residual open question dissolves and
+  RFC-0125 is re-scoped to positional recursion. `()` as the empty row is RFC-0231. Implemented in full.
 - **RFC-0165** *(under review, opened 2026-09-02; metel-core#937; **unscheduled**)* — Structural Union Types — an anonymous
   sum-type former `A | B | C`, the coproduct dual of RFC-0116 records and RFC-0151 tuples
   (today Metel has structural products without a name but only nominal sums, `enum`).
@@ -1889,6 +1889,7 @@ generated file as the exact source of truth.
 - **RFC-0225** *(implemented 2026-11-12, #1943; #1949)* — Dot-prefixed anonymous records. Writes types as `.{ .x: i64 }` and values as `.{ .x = 0 }`, consistently extending the opener to patterns and row constraints. Revisits RFC-0221's delimiter alternative and RFC-0187's refused goal; specifies empty records, projections and the retained `..{ ... }` literal-row spelling. Scheduling lives in #1943's milestone.
 - **RFC-0229** *(draft 2026-11-14)* — Single-field projection shorthand. `Type.field` for `Type.{ .field }` in type position and where a type is named in an expression (`Handle.fd::describe`). A value receiver keeps field access (`v.field` is the field's value), so `v.{ .field }` has no shorthand; the draft asks whether the type-receiver half of expression position is wanted. Builds on RFC-0137, RFC-0116, RFC-0221 and RFC-0225; excludes chained `Type.a.b` (RFC-0150).
 - **RFC-0230** *(draft 2026-11-14; metel-core#2021)* — Negative label entry without the dot. Writes a negative row-bound entry as `!label` / `!label: T` instead of `!.label` / `!.label: T`, positive entries staying `.label`. Amends RFC-0189 section 1 and reverses, for negative entries, the choice RFC-0221 made on purpose; asks whether only negated entries drop the dot, what `!.0` and `!.[L]` become, and whether the labels inside `!{ }` keep theirs. Related: RFC-0188, RFC-0175, RFC-0225, RFC-0229.
+- **RFC-0231** *(integrated 2026-11-14, #2024; implementation #2024)* — Unit as the empty row. `()` is the empty closed row `.{}` and the primitive unit type is retired as a separate type. Extracted from RFC-0151 section 6 and implemented before it. An anonymous empty residual becomes `()`; a branded one stays branded, and the spec's "neither empty form is `Unit`" is amended accordingly. Accepts `extend (): A`, prints `()`, deletes `Type::Unit` and `Value::Unit`: about 76 sites, and RFC-0221's text already relies on the unification, which the compiler has not done (measured: `()` and `.{}` do not unify).
 - **RFC-0226** *(superseded 2026-11-11)* — Explicit and inferred nominal construction. Consolidated into RFC-0100; retained here as the proposal history.
 - **RFC-0223** *(implemented, #1854)* — Keyword arguments at every function call. `name = value` binds free, associated, method and aspect-call arguments; declarations keep `:`. Split from RFC-0100; keyword arguments remain implemented independently of its constructor-call rollback. Depends on RFC-0183 so `f(x = 1)` is never a positional assignment.
 - **RFC-0222** *(draft 2026-11-07)* — Builder aspect. `derives Builder` gives a struct a typestate builder written as a std row template (RFC-0209), not a generated type: `Building<T, Need, Have>` tracks the fields set in its type, one generic `set(.label, v)` keyed by a comptime `Label`, and `build()` only when `Have` equals `Need`, calling `new T(..fields)` (RFC-0100/0114). No per-struct code. Named setters (`.host(v)`) and field defaults are out of scope; depends on the label model, RFC-0100/0114 and RFC-0209, and on whether `derives` is open to a non-compiler template.
