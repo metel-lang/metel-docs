@@ -3474,11 +3474,7 @@ A method call written on a value whose type is a type parameter with a bound `X:
 `A` for the type arguments `Args` the bound names. A type that has impls of `A` for other type arguments, each providing a
 method of that name, is called through the one the bound names: the others do not take part.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1987" reason="Dispatch by the aspect's type arguments is not implemented until metel-core#1987." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1987: Dispatch by the aspect's type arguments is not implemented until metel-core#1987._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:last_reviewed ca2e38b863f965b9bd7155dd4ed54b94d7d54f86 -->
 
 ##### Legality Rule {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18}
 
@@ -3486,22 +3482,14 @@ A method call written directly on a value, where the value's type has impls of o
 and more than one provides the method, is a `T0013` error naming the impls. The call names no type arguments to choose by;
 write it through a bound that does. (Choosing by the call's expected type is planned, metel-core#1987.)
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1987" reason="Dispatch by the aspect's type arguments is not implemented until metel-core#1987." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1987: Dispatch by the aspect's type arguments is not implemented until metel-core#1987._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:last_reviewed ca2e38b863f965b9bd7155dd4ed54b94d7d54f86 -->
 
 ##### Dynamic Semantics {#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.dynamics-3}
 
 A call through a bound `X: A<Args>` runs the method of the impl of `A` for `Args`, whichever impl of `A` for other type
 arguments was declared first or last, and in whichever module.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1987" reason="Dispatch by the aspect's type arguments is not implemented until metel-core#1987." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1987: Dispatch by the aspect's type arguments is not implemented until metel-core#1987._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:last_reviewed ca2e38b863f965b9bd7155dd4ed54b94d7d54f86 -->
 
 </details>
 
