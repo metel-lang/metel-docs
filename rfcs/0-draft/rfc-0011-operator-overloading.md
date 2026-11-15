@@ -21,6 +21,30 @@ Requires: the aspect system (v0.2).
 
 ---
 
+## Rows and tuples (inherited from RFC-0151, 2026-11-15)
+
+The language owner moved the remainder of RFC-0151 here: `Eq`, `Ord`/`PartialOrd` and `Hash` for every row. A tuple is
+the row of integer labels (RFC-0151, implemented), so the rows' comparison is the tuples' comparison, and this RFC owns
+it. Measured 2026-11-15 on `develop`:
+
+- `==`, `!=`, `<`, `<=`, `>`, `>=` accept only primitive operands (numbers, booleans, `String`, `char`); they never
+  dispatch through an aspect (`LIMIT-TYPE-CONSTRUCTION-003`). A struct with `Eq` is rejected, and so is
+  `(1, 2) == (1, 2)` or `(1, 2) < (1, 3)`.
+- `core.mtl` declares `Eq` with a single impl, `[T]: Eq where T: Eq`; primitives have none. There is no `Ord`,
+  `PartialOrd` or `Hash` aspect.
+
+What this RFC must therefore settle for rows, beside the operator aspects themselves:
+
+- The `Eq`, `Ord`/`PartialOrd` and `Hash` impls of every row whose field types have them, written like the row `Clone` and
+  `Display` impls, comparing fields in canonical label order (integers numerically first, then identifiers), so an
+  integer-labelled row compares positionally. A field type without the aspect is `T0012`.
+- `==`, `<` and the rest on a tuple and on an anonymous record dispatching through those aspects.
+- Where `Ord` and `Hash` come from, since neither aspect exists.
+
+Tracked by metel-core#2031 (`Eq`) and #2044 (`Ord`, `Hash`), blocked on this RFC reaching `3-integrated`.
+
+---
+
 ## Open Questions
 
 - **Aspect names**: `Add`, `Sub`, `Mul`, `Div`, `Rem` (Rust-style)? Something else?
