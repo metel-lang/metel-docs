@@ -101,7 +101,7 @@ let total := List::from([1, 2, 3, 4])
 - **RFC-0154 (function type spelling):** sections produce values of `|A| -> B`.
 - **RFC-0134 / RFC-0153 / RFC-0157 (closure qualifiers, default capture):** governs capture of
   sections.
-- **RFC-0011 (operator overloading, draft):** `ops::*` are the operator aspects' methods, so
+- **RFC-0011 (operator overloading, under review):** `ops::*` are the operator aspects' methods, so
   section 2 depends on that RFC (or on a hardcoded set of primitive operators until it lands).
   Section 1 does not.
 - **RFC-0197 (generic closures):** a section is monomorphic; generic use needs that RFC.
