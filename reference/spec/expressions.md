@@ -548,7 +548,7 @@ A field of a record pattern may bind its label to a name, `.label: name`: the pa
 
 ##### Legality Rule {#spec.expressions.record-rest-patterns.legality-3}
 
-After `.label:` the pattern may be any pattern, not only a name: a literal (`.0: 0`), an enum or struct pattern, a tuple or record pattern, an array pattern. A nested pattern is checked against the type of that field, makes the record pattern refutable where it is, and is rejected in a `let` declaration if it is. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`. A `match` arm whose record pattern is refutable does not cover the scrutinee's type on its own, and arms are not combined field by field (metel-core#2040), so a `match` over such arms ends in an irrefutable arm.
+After `.label:` the pattern may be any pattern, not only a name: a literal (`.0: 0`), an enum or struct pattern, a tuple or record pattern, an array pattern. A nested pattern is checked against the type of that field, makes the record pattern refutable where it is, and is rejected in a `let` declaration if it is. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`. Arms are combined field by field: a `match` over record patterns is exhaustive when every combination of its fields' values is covered, an enum by its variants, a `boolean` by `true` and `false`, a nested record field by field, and any other type only by a wildcard or a name.
 
 <!-- rfc.py:last_reviewed 5fdc3f23ea2f507afb4101bb6f227558ebd579a2 -->
 
