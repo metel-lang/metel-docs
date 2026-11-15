@@ -205,7 +205,8 @@ satisfaction ask it. A second answer anywhere (a special case in either consumer
 | `&var T` | never: an exclusive reference stays unique | structural |
 | `[T]` (borrowed view, RFC-0126) | always | structural |
 | Function type, closure | its use multiplicity is `many` (RFC-0134): no moved-in capture and not a written `once`; a *written* function type is move-only (RFC-0166) | structural |
-| `Option<T>`, `Result<T, E>` and every other std enum | only if std declares it | declared |
+| `Option<T>`, `Result<T, E>` | when their arguments are `Copy`: std declares `derives Copy via T`, and `via T + E` (metel-core#2009) | declared |
+| every other std enum | only if std declares it | declared |
 
 The structural kinds are listed because they cannot be declared: a tuple, an array and an
 anonymous record have no declaration to carry `extend`. Where each lives in the implementation

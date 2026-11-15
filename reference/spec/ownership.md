@@ -222,6 +222,8 @@ A type may implement `Copy` only if every one of its fields — or, for an enum,
 in every variant — is itself `Copy`. Fixed-size arrays and tuples are `Copy` when their
 elements are.
 
+`Option<T>` is `Copy` when `T` is, and `Result<T, E>` when `T` and `E` are: the standard library grants it in their declarations (`derives Copy via T`, and `via T + E`), so an `Option<i64>` is copied and an `Option<String>` moves.
+
 **References:** `&T` is `Copy`. `&var T` is not — an exclusive reference must remain unique,
 so it is moved or reborrowed rather than duplicated.
 
