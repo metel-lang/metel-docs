@@ -384,7 +384,7 @@ A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N
 
 ##### Legality Rule {#spec.types.tuples.legality-8}
 
-Tuples compare through `Eq`, `Ord` and `Hash` impls that every row has when its field types do, comparing the fields in canonical label order; for a row of integer labels that is positional order, so `(1, 2) < (1, 3)`. A field type that lacks the aspect makes the comparison a `T0012` error.
+Tuples compare for equality through the `Eq` impl that every row has when its field types do, comparing the fields in canonical label order, so `(1, 2) == (1, 2)`. A field type without `Eq` makes the comparison a `T0012` error.
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
@@ -392,6 +392,18 @@ Tuples compare through `Eq`, `Ord` and `Hash` impls that every row has when its 
 
 <!-- rfc.py:exemption:rendered:start -->
 <span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2031: RFC-0151: not implemented until metel-core#2031._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.types.tuples.legality-9}
+
+Tuples order and hash through `Ord`/`PartialOrd` and `Hash` impls that every row has when its field types do, comparing the fields in canonical label order; for a row of integer labels that is positional order, so `(1, 2) < (1, 3)`. A field type that lacks the aspect makes the operation a `T0012` error. Until those aspects exist (metel-core#2044), ordering and hashing of a tuple remain built-in.
+
+<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2044" reason="RFC-0151: the Ord, PartialOrd and Hash aspects do not exist yet; row impls of them are metel-core#2044." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2044: RFC-0151: the Ord, PartialOrd and Hash aspects do not exist yet; row impls of them are metel-core#2044._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
