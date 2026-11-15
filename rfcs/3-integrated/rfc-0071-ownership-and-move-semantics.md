@@ -227,9 +227,9 @@ waits on comptime.
 > Differences from the text this section replaced: anonymous records and tuples are `Copy` when their parts are;
 > `()` is `Copy` in a bound and under move checking (#1784, fixed); a named `record` is declared like a
 > `struct`, not structural; `extend X: Copy;` is an error (T0045) with a fix-it into the declaration, not a
-> deprecated form. One point of the one-predicate rule is not yet true in the implementation:
-> `move_check::is_copy` still answers function types and closures directly, bypassing the resolver
-> (metel-core#739).
+> deprecated form. The one-predicate rule is true in the implementation: move checking's `is_copy` no longer
+> answers function types and closures directly, and both consumers ask the aspect resolver (metel-core#739,
+> 2026-11-15).
 
 - **Do not write `extend<T: Copy> [T]: Copy;`.** The borrowed view is `Copy` structurally; a
   second declaration would be a second answer.
