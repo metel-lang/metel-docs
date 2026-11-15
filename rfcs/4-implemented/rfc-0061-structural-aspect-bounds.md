@@ -96,9 +96,9 @@ coverage:
 > multiplicity (RFC-0134), and a *written* function type is move-only (RFC-0166); `Clone` holds exactly when `Copy`
 > does, because `Copy` brings the provided `Clone` (RFC-0206), so `T: Clone` accepts a named function and a `Copy`
 > closure. `Send` and `Sync` are not implemented for any type yet (RFC-0080). `Callable<A, B>` (§7.1) is deferred
-> in full to RFC-0161. One consequence of the original finding remains: `move_check::is_copy` still answers
-> `Type::Fun` directly instead of asking the aspect resolver, which RFC-0071 §2's one-predicate rule forbids;
-> removing it is metel-core#739. Moving the structural `Copy` rules into std is the Copy migration theme: tuples
+> in full to RFC-0161. The original finding's consequence is gone: `move_check::is_copy` no longer answers
+> `Type::Fun` directly, so move checking and bound satisfaction ask one predicate (RFC-0071 §2; metel-core#739,
+> 2026-11-15). Moving the structural `Copy` rules into std is the Copy migration theme: tuples
 > and anonymous records are done (a tuple is a row, RFC-0151, metel-core#263), arrays are metel-core#1811, and
 > function types are #893 and #894.
 
