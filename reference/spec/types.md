@@ -384,19 +384,19 @@ A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N
 
 ##### Legality Rule {#spec.types.tuples.legality-8}
 
-Tuples compare for equality through the `Eq` impl that every row has when its field types do, comparing the fields in canonical label order, so `(1, 2) == (1, 2)`. A field type without `Eq` makes the comparison a `T0012` error.
+Tuples compare for equality through the `Eq` impl that every row has when its field types do, comparing the fields in canonical label order, so `(1, 2) == (1, 2)`. Equality dispatches through `Eq` only once operators dispatch through aspects (RFC-0011); until then `==` accepts only primitive operands, and `==` on a tuple is rejected. A field type without `Eq` makes the comparison a `T0012` error.
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2031" reason="RFC-0151: not implemented until metel-core#2031." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2031" reason="RFC-0151: not implemented until metel-core#2031, which waits for operators to dispatch through aspects (RFC-0011); == on a tuple is rejected today." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2031: RFC-0151: not implemented until metel-core#2031._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2031: RFC-0151: not implemented until metel-core#2031, which waits for operators to dispatch through aspects (RFC-0011); == on a tuple is rejected today._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.tuples.legality-9}
 
-Tuples order and hash through `Ord`/`PartialOrd` and `Hash` impls that every row has when its field types do, comparing the fields in canonical label order; for a row of integer labels that is positional order, so `(1, 2) < (1, 3)`. A field type that lacks the aspect makes the operation a `T0012` error. Until those aspects exist (metel-core#2044), ordering and hashing of a tuple remain built-in.
+Tuples order and hash through `Ord`/`PartialOrd` and `Hash` impls that every row has when its field types do, comparing the fields in canonical label order; for a row of integer labels that is positional order, so `(1, 2) < (1, 3)`. A field type that lacks the aspect makes the operation a `T0012` error. Until those aspects exist (metel-core#2044), a tuple has no ordering or hashing: `<` on a tuple is rejected, as it is on any non-primitive.
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
