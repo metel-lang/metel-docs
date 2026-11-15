@@ -207,7 +207,7 @@ RestPattern            → ".." IDENTIFIER
 RecordRest             → ".."
 RecordRestBinding      → ".." IDENTIFIER
 RecordFieldDiscard     → "_"
-RecordFieldPattern     → Label ( ":" ( RecordFieldDiscard | IDENTIFIER ) )?
+RecordFieldPattern     → Label ( ":" ( RecordFieldDiscard | Pattern ) )?
 RecordFieldPatternList → RecordFieldPattern ( "," RecordFieldPattern )* ( "," ( RecordRestBinding | RecordRest ) )? ","?
                        | RecordRestBinding
                        | RecordRest
