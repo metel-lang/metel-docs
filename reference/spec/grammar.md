@@ -231,6 +231,7 @@ Type                     → FunType
                          | BracketArrayType
                          | "()"
                          | TupleType
+                         | GroupedType
                          | OpenRecordProjectionType
                          | RecordProjectionType
                          | OpenRecordType
@@ -241,6 +242,7 @@ Type                     → FunType
                          | NamedType
 ExtendsType              → "extends" NamedType
 DynType                  → "dyn" NamedType
+GroupedType              → "(" Type ")"
 TupleType                → "(" Type ( "," Type )+ ")"
                          | "(" Type OneElementTupleComma ")"
 RecordType               → ".{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
