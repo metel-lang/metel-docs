@@ -2,13 +2,13 @@
 id: rfc-0151
 title: "Tuples as Numeric-Label Rows"
 date: '2026-08-29'
-status: integrated
-updated: '2026-11-14'
+status: implemented
+updated: '2026-11-15'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 coverage:
   "1": { spec: "spec.types.tuples.legality-4" }
   "2": { spec: "spec.types.tuples.legality-6" }
-  "3": { kind: blocked, reason: "The Eq row impl is metel-core#2031 (types.tuples legality-8); Ord and Hash row impls wait for those aspects, metel-core#2044 (legality-9). Both wait for operators to dispatch through aspects (RFC-0011); neither gates retiring Type::Tuple.", ref: "metel-core#2031" }
+  "3": { kind: elsewhere, reason: "Eq, Ord and Hash for rows, and with them tuple equality and ordering, are RFC-0011's responsibility (owner decision 2026-11-15); they arrive with operator dispatch through aspects.", ref: "rfc-0011" }
   "4": { spec: "spec.types.tuples.legality-4" }
   "4a": { spec: "spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-3" }
   "5": { spec: "spec.types.tuples.legality-7" }
@@ -16,7 +16,7 @@ coverage:
   "6": { spec: "spec.types.tuples.legality-2" }
   "7": { kind: untestable, reason: "Section 7 fixes a direction and leaves the declaration and pattern spelling of a tuple struct to RFC-0100 and RFC-0114; it adds no rule of its own." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Consolidation RFC.** Anonymous record types (RFC-0116) landed a general
@@ -34,7 +34,9 @@ impl_status: not-started
 
 > **Status — accepted (2026-11-14).** Adopted 2026-11-14: all open questions resolved (mixed labels allowed, cross-shape bounds structural, record patterns gain .label: pattern, one-element tuples and let tuple patterns added, section 6 extracted as RFC-0231); implemented in full.
 
-> **Status — integrated (2026-11-14).** Integrated 2026-11-14: spec types.tuples legality-4 to legality-9, record-rest-patterns legality-2, record-pattern-bindings legality-2 and partial-moves legality-3 (each blocked-exempt on its implementation issue: #2029, #2023, #2030, #2022, #2031, #2044, #2032); worked examples recorded; GAP-TYPES-009 narrowed.
+> **Status — integrated (2026-11-14).** Integrated 2026-11-14: spec types.tuples legality-4 to legality-7, record-rest-patterns legality-2, record-pattern-bindings legality-2 and partial-moves legality-3 (each blocked-exempt on its implementation issue: #2029, #2023, #2030, #2022, #2032); worked examples recorded; GAP-TYPES-009 narrowed.
+
+> **Status — implemented (2026-11-15).**
 
 ## Summary
 
@@ -133,18 +135,14 @@ produces integer labels `.0 .. .N-1` with no gaps.
 - **`Drop`**: RFC-0116 §3 forbids a custom `Drop` on an anonymous record; that
   now covers tuples too (they could never carry one anyway). Field-wise teardown
   is unchanged.
-- **`Ord` / `PartialOrd` / `Eq`**: the anonymous-record derivation compares
-  fields in label order; for an integer-labelled row that is positional order, so
-  `(1, 2) < (1, 3)` falls out. This RFC depends on that derivation existing for
-  anonymous records (RFC-0080 territory). **Measured 2026-11-14: it does not.**
-  `core.mtl` has row impls of `Copy`, `Clone` and `Display` and none of `Eq`,
-  `Ord` or `Hash`. **Measured 2026-11-15:** tuple comparison is not a built-in either:
-  `==` and `<` accept only primitive operands (`LIMIT-TYPE-CONSTRUCTION-003`), so
-  `(1, 2) == (1, 2)` and `(1, 2) < (1, 3)` are rejected today. `Eq` is the only one of the
-  three aspects `core.mtl` declares, with a single impl (`[T]: Eq`). The row `Eq`, `Ord` and
-  `Hash` impls (metel-core#2031, #2044) arrive with the language-wide change that makes
-  operators dispatch through aspects (RFC-0011); they do not gate retiring `Type::Tuple`,
-  since there is no tuple comparison to replace.
+- **`Ord` / `PartialOrd` / `Eq` / `Hash`**: the row impls of these are **RFC-0011's responsibility** (owner
+  decision 2026-11-15), not this RFC's. The intended behaviour stays what it was: fields compared in canonical
+  label order, positional for an integer-labelled row, so `(1, 2) < (1, 3)` falls out. **Measured 2026-11-15:**
+  tuple comparison is not a built-in either: `==` and `<` accept only primitive operands
+  (`LIMIT-TYPE-CONSTRUCTION-003`), so `(1, 2) == (1, 2)` and `(1, 2) < (1, 3)` are rejected today, and
+  `core.mtl` declares only `Eq` (one impl, `[T]: Eq`). Operators dispatch through aspects only with the
+  language-wide change RFC-0011 describes, and the row impls land with it (metel-core#2031, #2044). There is no
+  tuple comparison to replace, so none of this gates retiring `Type::Tuple`.
 
 ### 4. Narrowing, row bounds, branding — apply unchanged
 
@@ -297,7 +295,7 @@ metel-core#1956):
 1. #2029: numeric labels in the record machinery (field access, row bounds, ordering, the `Tuple` property).
 2. #2030: record patterns bind a label to a pattern, `.label: pattern`.
 3. #2022 and #2023: `let` tuple patterns and the one-element tuple.
-4. #2031 and #2044: `Eq`, then `Ord` and `Hash`, for every row, after operators dispatch through aspects (RFC-0011); not a prerequisite of step 5.
+4. Moved to RFC-0011 (owner decision 2026-11-15): `Eq`, `Ord` and `Hash` for every row, tracked by #2031 and #2044, land with operator dispatch through aspects. Not a step of this RFC.
 5. #2032: retire `Type::Tuple` and the distinct tuple node; the tuple `Copy` rule of #263 goes with it. Done (2026-11-15): `(A, B)`, `(a, b)`, `(p, q)` and `t.0` are lowered to the numeric-label row forms by the parser, and the tuple variants, the tuple runtime value and the tuple-specific Copy rule are gone.
 
 ## What this RFC does not cover

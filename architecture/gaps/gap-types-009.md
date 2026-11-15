@@ -13,7 +13,7 @@ review: null
 ## Gap
 
 A tuple cannot be split into its first element and the rest, or extended, in a generic
-body. RFC-0151 (integrated) makes tuples rows with numeric labels, so RFC-0178's forms apply to
+body. RFC-0151 (implemented) makes tuples rows with numeric labels, so RFC-0178's forms apply to
 them, and RFC-0151 decides the question this gap left open: a remainder **keeps its original
 labels** (`rest.1` is the old `.1`) and nothing renumbers it, because elements are named by
 label. A re-indexed tuple is got by an explicit relabelling. The positional operations that
