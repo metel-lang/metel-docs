@@ -91,37 +91,16 @@ coverage:
 > regression. Separately, that both live as hardcoded typechecker rules rather than
 > stdlib impls is already tracked as metel-core#263.)
 
-> **Status — §7.2 is not implemented (2026-08-14).** §7 below states that every function
-> type automatically implements `Callable` (§7.1) and that `Copy`, `Clone`, `Send`, and
-> `Sync` are provided for function pointers by `std::core` with no user declaration
-> needed (§7.2's table). **None of that is in the implementation.** Function types satisfy
-> *no* aspects: `infer_type_satisfies_aspect` (`typeinference/mod.rs`) answers every
-> aspect query for them with `false`, via an arm whose own comment states the intent —
-> `InferType::Var(_) | InferType::Never | InferType::Fun(_, _) => false`, *"`Never` and
-> `Fun` implement nothing."* Confirmed against the release binary for a named function and
-> a closure alike:
->
-> ```
-> [T0012] `(i64) -> i64` does not implement `Copy` (required by `needs_copy`)
-> [T0012] `(i64) -> i64` does not implement `Clone` (required by `needs_clone`)
-> [T0012] `() -> String` does not implement `Copy` (required by `needs_copy`)
-> ```
->
-> This is the same category as the §7.4 correction above — specification that was never
-> built — but with a wider blast radius, since §7.2's table is what RFC-0134 §1 originally
-> cited as corroboration for "a named function pointer is trivially `Copy`." That claim
-> remains true of the *move checker*, which special-cases `Type::Fun` to `Copy` in
-> `is_copy` and bypasses the aspect system entirely; it is false of aspect-bound
-> satisfaction. RFC-0134's Open Questions section now records the resulting two-notions-of-
-> `Copy` split in detail. Note the 2026-08-01 status block above already found the
-> *impl-registration* side of `fun` targets inert (rejected with `T0003`); this note
-> records that the `std::core`-provided side of §7 is equally absent. §§1-6 are unaffected.
-> **Tracked as metel-core#739**, which owns closing the gap — including whether §7.2's
-> table is implemented as specified or amended, and whether §7.1's `Callable<A, B>`
-> auto-impl (which RFC-0008's `dyn Callable<A, B>` depends on) is built or explicitly
-> deferred. Related: metel-core#702 is the architectural root cause (model non-record
-> structural types as regular types), and metel-core#263 tracks moving the analogous
-> hardcoded tuple/fixed-array `Copy` rules into the stdlib.
+> **Status — §7.2 partly implemented (reconciled 2026-11-15, metel-core#1783; the earlier note of 2026-08-14
+> said none of it was).** Measured on `develop`: a `T: Copy` bound accepts a named function, and a closure by its use
+> multiplicity (RFC-0134), and a *written* function type is move-only (RFC-0166); `Clone` holds exactly when `Copy`
+> does, because `Copy` brings the provided `Clone` (RFC-0206), so `T: Clone` accepts a named function and a `Copy`
+> closure. `Send` and `Sync` are not implemented for any type yet (RFC-0080). `Callable<A, B>` (§7.1) is deferred
+> in full to RFC-0161. One consequence of the original finding remains: `move_check::is_copy` still answers
+> `Type::Fun` directly instead of asking the aspect resolver, which RFC-0071 §2's one-predicate rule forbids;
+> removing it is metel-core#739. Moving the structural `Copy` rules into std is the Copy migration theme: tuples
+> and anonymous records are done (a tuple is a row, RFC-0151, metel-core#263), arrays are metel-core#1811, and
+> function types are #893 and #894.
 
 ## Summary
 
