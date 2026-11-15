@@ -261,7 +261,12 @@ Copyability doesn't survive the written type: it's [erased the moment such a val
 flows into a slot whose written type is a function type](#spec.functions.first-class-functions.legality-4) —
 a `let` / `var` binding, an ascription, an argument, or a return — and isn't
 recovered further downstream. A bare generic type parameter is not a written
-function type and keeps the resolved value's own capability. 
+function type and keeps the resolved value's own capability.
+
+> **Planned for v0.16.0 (RFC-0219).** The `copy` qualifier on a written function type.
+
+`copy |T| -> U` is the written spelling of a copyable function type ([rules](#spec.functions.first-class-functions.legality-5)): its values may be duplicated by value, and only a function value proved copyable is accepted into it.
+
 > **Gap** GAP-FUNCTIONS-003
 
 > **Gap** GAP-FUNCTIONS-002
@@ -364,6 +369,104 @@ written type and is not recoverable downstream.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzEzXzBfd3JpdHRlbl9mbl90eXBlX21vdmVfb25seS5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xMy4wIChSRkMtMDE2Nik6IGEgKndyaXR0ZW4qIGZ1bmN0aW9uIHR5cGUgYHxUfCAtPiBVYCBpcyBtb3ZlLW9ubHkuIEFcbi8vIGZ1bmN0aW9uIHZhbHVlIHRoZSBjb21waWxlciBwcm92ZWQgY29weWFibGUgLS0gYSBuYW1lZCBmdW5jdGlvbiBoZXJlIC0tIGlzXG4vLyBhY2NlcHRlZCBpbnRvIHN1Y2ggYSBzbG90IGJ5IG1vdmluZy4gVGhlIHdyaXR0ZW4gdHlwZSBkb2VzIG5vdCBjYXJyeSB0aGVcbi8vIGNvcHlhYmlsaXR5IGZvcndhcmQ6IGBwaWNrYCByZXR1cm5zIGl0cyBhcmd1bWVudCB0aHJvdWdoIGEgd3JpdHRlbiBmdW5jdGlvblxuLy8gcmV0dXJuIHR5cGUsIHNvIHRoZSByZXN1bHQgdGhlIGNhbGxlciBnZXRzIGJhY2sgaXMgYSBwbGFpbiBtb3ZlLW9ubHkgdmFsdWUuXG4vL1xuLy8gQSBgbWFueWAgYHJlYWRpbmdgIGNhbGwgaXMgYSBzaGFyZWQgYm9ycm93LCBub3QgYSBjb25zdW1lLCBzbyBjYWxsaW5nIGFcbi8vIHdyaXR0ZW4tZm4tdHlwZWQgcGFyYW1ldGVyIGFueSBudW1iZXIgb2YgdGltZXMgaXMgZmluZSAtLSBvbmx5IGEgcmVwZWF0ZWRcbi8vICpieS12YWx1ZSogdXNlIGlzIHRoZSB1c2UtYWZ0ZXItbW92ZS4gVGhlIGNvbXBhbmlvbiBuZWdhdGl2ZXNcbi8vIGB0eXBlY2hlY2tpbmcvZnVuY3Rpb25zL3YwXzEzXzBfbmVnX3dyaXR0ZW5fZm5fdHlwZV91c2VfYWZ0ZXJfbW92ZS5tdGxgIGFuZFxuLy8gYC4uLl9uZWdfd3JpdHRlbl9mbl9wYXJhbV91c2VfYWZ0ZXJfbW92ZS5tdGxgIGNvdmVyIHRoYXQgZGlyZWN0aW9uLlxuXG5mdW4gYWRkX29uZSh4OiBpNjQpIC0+IGk2NCB7IHggKyAxIH1cblxuLy8gZmlyc3Qtb3JkZXI6IGEgbmFtZWQgKENvcHkpIGZ1bmN0aW9uIGludG8gYSB3cml0dGVuIGB8aTY0fCAtPiBpNjRgIHBhcmFtZXRlcixcbi8vIGNhbGxlZCB0d2ljZSAtLSByZXBlYXRlZCBjYWxscyBkbyBub3QgbW92ZS5cbmZ1biBhcHBseV90d2ljZShmOiB8aTY0fCAtPiBpNjQsIHg6IGk2NCkgLT4gaTY0IHsgZih4KSArIGYoeCArIDEpIH1cblxuLy8gd3JpdHRlbiBmdW5jdGlvbiAqcmV0dXJuKiB0eXBlIC0tIHRoZSB2YWx1ZSBoYW5kZWQgYmFjayBpcyBtb3ZlLW9ubHkuXG5mdW4gcGljayhmOiB8aTY0fCAtPiBpNjQpIC0+IHxpNjR8IC0+IGk2NCB7IGYgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQoYXBwbHlfdHdpY2UoYWRkX29uZSwgMTApID09IDIzKTsgLy8gKDEwKzEpICsgKDExKzEpXG5cbiAgICBsZXQgY2hvc2VuIDo9IHBpY2soYWRkX29uZSk7XG4gICAgYXNzZXJ0KGNob3Nlbig5KSA9PSAxMCk7XG5cbiAgICAvLyBhIGNhcHR1cmUtZnJlZSBjbG9zdXJlIGxpdGVyYWwgaXMgY29weWFibGUgdG9vIGFuZCBpcyBhY2NlcHRlZCB0aGUgc2FtZSB3YXkuXG4gICAgYXNzZXJ0KGFwcGx5X3R3aWNlKHxuOiBpNjR8IHsgbiAqIDIgfSwgMTApID09IDQyKTsgLy8gMjAgKyAyMlxuXG4gICAgcHJpbnRsbihcIm9rXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zL3YwXzEzXzBfd3JpdHRlbl9mbl90eXBlX21vdmVfb25seS5tdGwiLCJuYW1lIjoidjBfMTNfMF93cml0dGVuX2ZuX3R5cGVfbW92ZV9vbmx5Lm10bCJ9"></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-5}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+`copy` is a qualifier on a written function type, written in the same prefix position as `once` and `var` and in any order with them: `copy |T| -> U`, `copy once |T| -> U`, `copy var |T| -> U`. It is contextual: it is a qualifier only before a function type, a class keyword only before `struct`, `enum` or `record` ([declaration clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)), and an ordinary identifier elsewhere.
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2049" reason="RFC-0219: the copy qualifier is not parsed until metel-core#2049." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2049: RFC-0219: the copy qualifier is not parsed until metel-core#2049._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-6}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+A slot of type `copy |T| -> U` accepts a function value only if the compiler proves it copyable from its captures ([closures](#spec.functions.closures.legality-20)): a named function, a closure with no captures, or a closure whose captures are all `Copy`. A closure that owns a capture that is not `Copy`, or that holds an exclusive reference `[&var x]` (which is not `Copy`), is a type mismatch (`T0001`) whose message names the capture that prevents copying.
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2050" reason="RFC-0219: the requirement is not checked until metel-core#2050." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2050: RFC-0219: the requirement is not checked until metel-core#2050._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-7}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b := f;`); a value of a bare written function type may not ([legality-3](#spec.functions.first-class-functions.legality-3)). A `copy |T| -> U` value flows into a bare `|T| -> U` slot, and a copyable value into either, by moving ([legality-4](#spec.functions.first-class-functions.legality-4)); a bare value is not accepted where `copy` is required (`T0001`). Below the first function level the qualifier matches exactly, as `once` and `var` do.
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2050" reason="RFC-0219: the permission and the directions are not checked until metel-core#2050." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2050: RFC-0219: the permission and the directions are not checked until metel-core#2050._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-8}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+`copy` in the prefix of a closure literal (`[x] copy |y| ...`) is a parse error (`P0001`): a literal's copyability is derived from its captures, not asserted.
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2049" reason="RFC-0219: the closure-literal rejection is not implemented until metel-core#2049." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2049: RFC-0219: the closure-literal rejection is not implemented until metel-core#2049._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-9}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+A value of type `copy |T| -> U` satisfies `Copy` and the provided `Clone` through the aspect resolver, the answer move checking gets ([Copy](ownership.md#spec.ownership.copy.legality-3)): one property with two spellings, `copy struct` and `copy |T| -> U`. It is `Discard` once the `Discard` check exists; until then every type is `Discard` and nothing is checked.
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2050" reason="RFC-0219: a copy function type is not a distinct type until metel-core#2050." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2050: RFC-0219: a copy function type is not a distinct type until metel-core#2050._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.functions.first-class-functions.legality-10}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+`copy var |T| -> U` is a copyable function whose call mutates its own captured state. Each copy owns an independent copy of that state, so copies diverge as they are called. A `[&var x]` capture, which aliases state the closure does not own, is not `Copy` and so cannot be `copy` (legality-6).
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2050" reason="RFC-0219: copy var is not implemented until metel-core#2050." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2050: RFC-0219: copy var is not implemented until metel-core#2050._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics Rule {#spec.functions.first-class-functions.dynamics-1}
+
+> **Planned for v0.16.0 (RFC-0219).**
+
+Copying a `copy |T| -> U` value duplicates its environment. Every capture is `Copy`, so this is a representation copy that runs no user code ([Copy](ownership.md#spec.ownership.copy.legality-3)).
+
+<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2050" reason="RFC-0219: copying a copy function value is not implemented until metel-core#2050." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2050: RFC-0219: copying a copy function value is not implemented until metel-core#2050._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 
