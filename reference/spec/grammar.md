@@ -172,7 +172,7 @@ MatchExpression      → "match" ( "()" | TupleOrParen ) "{" ( MatchArm ( "," Ma
 MatchArm             → Pattern ( "if" Expression )? "=>" ( Block | StatementExpression )
 IfExpression         → "if" "(" Expression ")" ( Block | Expression ) ( "else" ( IfExpression | Block | Expression ) )?
 LoopExpression       → "loop" Block
-ClosureExpression    → CaptureList? "once"? "var"? "|" Params? "|" ( "->" Type )? Block
+ClosureExpression    → CaptureList? "copy"? "once"? "var"? "|" Params? "|" ( "->" Type )? Block
 CaptureList          → "[" ( CaptureItem ( "," CaptureItem )* ","? )? "]"
 CaptureItem          → "&" "var" IDENTIFIER
                      | "&" IDENTIFIER
@@ -255,6 +255,7 @@ OpenRecordProjectionType → TypePath ".{" Label ( "," Label )* "," RowTail ","?
 FunType                  → FunTypeQualifier* "|" TypeList? "|" "->" Type
 FunTypeQualifier         → "once"
                          | "var"
+                         | "copy"
 ReferenceType            → "&" Type
 MutReferenceType         → "&" "var" Type
 BracketArrayType         → "[" Type ( ";" INT )? "]"
