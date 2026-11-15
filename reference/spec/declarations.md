@@ -2485,7 +2485,7 @@ already exists and outlives it, not from a buffer the implementation just alloca
 
 > **Gap** GAP-DECLARATIONS-001
 
-A tuple fails an aspect bound the same way an array does without a matching impl: `(i64, String)` does not implement `Display`, and the diagnostic hints at a named struct.
+A tuple is a row ([Tuples](types.md#spec.types.tuples.legality-4)), so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`: `(i64, i64)` is all three, `(i64, String)` is `Display` and `Clone` but not `Copy`, and a bound it does not meet is a `T0012` error. A tuple has no `Eq`, `Ord` or `Hash` until operators dispatch through aspects (RFC-0011, metel-core#2031).
 
 **Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. There is no `Callable<A, B>` aspect to bound a function type by. A closure value keeps its own copyability until it flows into a slot with a written function type, where it becomes move-only ([First-Class Functions](functions.md#first-class-functions)), and there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0003`, no method on a function type: it implements no aspect) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
 
