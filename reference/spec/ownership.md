@@ -783,12 +783,6 @@ A tuple's elements move independently, as a record's fields do, and moving one *
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2032" reason="RFC-0151: not implemented until metel-core#2032: the remainder of a tuple has no type today." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2032: RFC-0151: not implemented until metel-core#2032: the remainder of a tuple has no type today._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
 
 </details>
 <!-- rfc.py:fixtures:end -->

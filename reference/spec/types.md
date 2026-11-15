@@ -351,12 +351,6 @@ A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A�
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2032" reason="RFC-0151: not implemented until metel-core#2032." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2032: RFC-0151: not implemented until metel-core#2032._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
 ##### Legality Rule {#spec.types.tuples.legality-5}
 
 `(x,)` is the one-element tuple `.{ .0 = x }`, its type is written `(T,)`, and a pattern `(p,)` matches it. `(e)` and `(T)` without the trailing comma are parenthesised groupings and are not tuples. `()` is the empty tuple ([the empty tuple](#spec.types.tuples.legality-2)).
@@ -375,12 +369,6 @@ A row's labels are integers or identifiers, written `.0`, `.name`. The canonical
 A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N-1`. The property is decided by inspecting the row, with no annotation or proof, and it adds no rule for ownership, narrowing or aspects. A `Tuple` row prints as `(T₀, …, Tₙ)`, a one-element one as `(T,)` and the empty one as `()`; any other row, including one with a gap in its integer labels or an identifier label, prints in brace form `.{ … }`. A row that stops being a `Tuple`, as a partial move that leaves a gap does, loses that rendering and nothing else.
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2032" reason="RFC-0151: the Tuple property is decided (metel-core#2029, done), but it is observable only through the tuple rendering of a row, which is not implemented until metel-core#2032." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2032: RFC-0151: the Tuple property is decided (metel-core#2029, done), but it is observable only through the tuple rendering of a row, which is not implemented until metel-core#2032._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.types.tuples.legality-8}
 

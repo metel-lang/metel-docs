@@ -6,13 +6,13 @@ status: integrated
 updated: '2026-11-14'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
 coverage:
-  "1": { kind: blocked, reason: "The desugaring is metel-core#2032 (retire Type::Tuple); the rules are types.tuples legality-4 and legality-5 and carry no fixtures until then.", ref: "metel-core#2032" }
+  "1": { spec: "spec.types.tuples.legality-4" }
   "2": { spec: "spec.types.tuples.legality-6" }
   "3": { kind: blocked, reason: "The Eq row impl is metel-core#2031 (types.tuples legality-8); Ord and Hash row impls wait for those aspects, metel-core#2044 (legality-9). Both wait for operators to dispatch through aspects (RFC-0011); neither gates retiring Type::Tuple.", ref: "metel-core#2031" }
-  "4": { kind: blocked, reason: "Numeric labels in row bounds are metel-core#2029; narrowing of tuples is #2032.", ref: "metel-core#2029" }
-  "4a": { kind: blocked, reason: "The remainder of a tuple has no type until metel-core#2032; the rule is partial-moves legality-3.", ref: "metel-core#2032" }
-  "5": { kind: blocked, reason: "Printing a row as a tuple is metel-core#2032; the rule is types.tuples legality-7.", ref: "metel-core#2032" }
-  "5a": { kind: blocked, reason: "The Tuple property is metel-core#2029; the rule is types.tuples legality-7.", ref: "metel-core#2029" }
+  "4": { spec: "spec.types.tuples.legality-4" }
+  "4a": { spec: "spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-3" }
+  "5": { spec: "spec.types.tuples.legality-7" }
+  "5a": { spec: "spec.types.tuples.legality-7" }
   "6": { spec: "spec.types.tuples.legality-2" }
   "7": { kind: untestable, reason: "Section 7 fixes a direction and leaves the declaration and pattern spelling of a tuple struct to RFC-0100 and RFC-0114; it adds no rule of its own." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
@@ -298,7 +298,7 @@ metel-core#1956):
 2. #2030: record patterns bind a label to a pattern, `.label: pattern`.
 3. #2022 and #2023: `let` tuple patterns and the one-element tuple.
 4. #2031 and #2044: `Eq`, then `Ord` and `Hash`, for every row, after operators dispatch through aspects (RFC-0011); not a prerequisite of step 5.
-5. #2032: retire `Type::Tuple` and the distinct tuple node; the tuple `Copy` rule of #263 goes with it.
+5. #2032: retire `Type::Tuple` and the distinct tuple node; the tuple `Copy` rule of #263 goes with it. Done (2026-11-15): `(A, B)`, `(a, b)`, `(p, q)` and `t.0` are lowered to the numeric-label row forms by the parser, and the tuple variants, the tuple runtime value and the tuple-specific Copy rule are gone.
 
 ## What this RFC does not cover
 
