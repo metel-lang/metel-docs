@@ -370,7 +370,7 @@ A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N
 
 <!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
 
-Equality, ordering and hashing of a tuple are those of every row: the fields compared in canonical label order, positional for integer labels. They arrive with operator dispatch through aspects ([RFC-0011](../../rfcs/0-draft/rfc-0011-operator-overloading.md)); until then `==` and `<` accept only primitive operands, so they are rejected on a tuple as on any other non-primitive type.
+Equality, ordering and hashing of a tuple are those of every row: the fields compared in canonical label order, positional for integer labels. They arrive with operator dispatch through aspects (RFC-0011); until then `==` and `<` accept only primitive operands, so they are rejected on a tuple as on any other non-primitive type.
 
 </details>
 
