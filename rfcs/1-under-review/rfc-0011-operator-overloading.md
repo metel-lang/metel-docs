@@ -2,8 +2,12 @@
 id: rfc-0011
 title: "Operator Overloading Aspects"
 date: '2026-05-21'
-status: draft
+status: under-review
+updated: '2026-11-15'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2046'
 ---
+
+> **Status — under review (2026-11-15).**
 
 ## Summary
 

@@ -13,13 +13,12 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**230 RFCs total.** 37 draft, 55 under review, 10 accepted, 4 integrated (106 live), 92 implemented, 16 superseded, 16 refused (124 settled).
+**230 RFCs total.** 36 draft, 56 under review, 10 accepted, 4 integrated (106 live), 92 implemented, 16 superseded, 16 refused (124 settled).
 
-## Draft (37)
+## Draft (36)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
-- **RFC-0011** — Operator Overloading Aspects (`0-draft` ; rfcs/0-draft/rfc-0011-operator-overloading.md ; date 2026-05-21)
 - **RFC-0014** — Panic Recovery (`0-draft` ; rfcs/0-draft/rfc-0014-panic-recovery.md ; date 2026-05-21)
 - **RFC-0015** — Unwrap Syntax (`0-draft` ; rfcs/0-draft/rfc-0015-unwrap-syntax.md ; date 2026-05-21)
 - **RFC-0017** — Language Edition System (`0-draft` ; rfcs/0-draft/rfc-0017-language-edition-system.md ; date 2026-05-22)
@@ -55,9 +54,10 @@ the curated thematic map.
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
 
-## Under Review (55)
+## Under Review (56)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
+- **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
