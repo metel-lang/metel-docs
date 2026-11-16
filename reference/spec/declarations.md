@@ -66,7 +66,7 @@ when the initializer is consumed. A `let` declaration introduces immutable
 bindings; `var` and `let var` introduce mutable bindings. The pattern must be
 well-typed under the record-pattern rules.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <details>
 <summary>Formal rules</summary>
@@ -109,7 +109,7 @@ A `let` binding must be initialized with the `:=` separator and cannot be assign
 after initialization. `:=` is the sole separator that introduces a kept binding; the
 plain `=` spelling is a parse error (RFC-0136).
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
@@ -128,7 +128,7 @@ plain `=` spelling is a parse error (RFC-0136).
 A conditional aspect implementation may state its bounds inline on its type parameters or
 in a `where` clause; the two spellings are equivalent.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -170,7 +170,7 @@ satisfy every bound stated by that implementation.
 Conditional implementation bounds are checked whenever the aspect is required, including
 method dispatch, bound satisfaction, and implementation selection.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -193,7 +193,7 @@ method dispatch, bound satisfaction, and implementation selection.
 A type's declaration bounds and an aspect implementation's conditional bounds are
 independent; satisfying one does not satisfy the other.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -215,7 +215,7 @@ independent; satisfying one does not satisfy the other.
 A generic function using a conditional implementation must state the required bounds on
 its own type parameters; those bounds are not inferred from the function body.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -283,7 +283,7 @@ conflict, because the unconditional implementation covers every conditional inst
 A conditional implementation is subject to the orphan rule: either its aspect or its
 target's outermost constructor must be local to the implementing module.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -299,7 +299,7 @@ target's outermost constructor must be local to the implementing module.
 When a conditional implementation's bound is unsatisfied, the compiler reports `T0012`
 and identifies the unsatisfied condition.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -410,7 +410,7 @@ assigns to an existing place (RFC-0183); the compound assignment operators `+=`,
 `/=`, `%=` keep their spelling. The bare `=` spelling for a `var` initializer, and `:=` for a
 reassignment, are parse errors.
 
-<!-- rfc.py:last_reviewed ddd4da58d7786c565cca3f63d46e26818b8c0a53 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0136](../../rfcs/4-implemented/rfc-0136-walrus-for-kept-bindings.md)_</span>
@@ -534,7 +534,7 @@ Top-level `extend` blocks follow the same declaration-order rule as the types th
 Each block introduces a lexical scope. A declaration in an inner scope may shadow an outer
 declaration, and the outer declaration is not visible outside its own scope.
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -575,7 +575,7 @@ Function declarations are visible throughout their containing block regardless o
 order, including to other functions in that block; this hoisting does not extend out of an
 inner block.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -591,7 +591,7 @@ Top-level struct and enum declarations are visible throughout the program regard
 source order. A type declared inside a block is visible only from its declaration to the end
 of that block.
 
-<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -637,7 +637,7 @@ each use finds the one its position asks for. A type position resolves in the ty
 a type annotation, an `extend` or aspect target, the head of a struct, record or enum
 literal, and the head of a pattern.
 
-<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -651,7 +651,7 @@ no value of that name, in the type namespace (a zero-field struct used as a valu
 binding of the same name shadows both: the name then refers to the local for the rest of its
 scope, and a call through it calls the local.
 
-<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -675,7 +675,7 @@ them is rejected with [`T0038`](../error-codes.md#t0038--declaring-a-type-with-t
 A function or `let` may use the name, and the rule does not cover the types `std::core`
 declares (`List`, `Option`, `Result`, ...).
 
-<!-- rfc.py:last_reviewed 5685d9e65530a5ed1ecdb66fa9f3b4067e77a075 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -827,7 +827,7 @@ scope at the literal.
 A zero-field struct may be constructed either as its bare type name or with empty braces.
 
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -844,7 +844,7 @@ For a zero-field struct, the bare and empty-brace constructor forms evaluate to 
 struct value.
 
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -967,7 +967,7 @@ fun main() -> i64 {
 `&var self` is the mutable-reference receiver spelling and requires a mutable addressable
 receiver or an `&var T` reference at the call site.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md), [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
@@ -986,7 +986,7 @@ receiver or an `&var T` reference at the call site.
 
 Methods may use `self`, `&self`, or `&var self` as their receiver.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1020,7 +1020,7 @@ value leaves the caller's original binding unchanged.
 
 An `&self` receiver reads the original receiver storage without consuming it.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1036,7 +1036,7 @@ An `&self` receiver reads the original receiver storage without consuming it.
 An `&var self` receiver mutates the original receiver storage in place without consuming
 the receiver.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1051,7 +1051,7 @@ the receiver.
 Dot-call syntax selects the receiver behavior declared in the method signature; callers
 do not supply a distinct receiver-mode syntax.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1070,7 +1070,7 @@ do not supply a distinct receiver-mode syntax.
 An `Iterable<T>` implementation declares `next` with an `&var self` receiver so repeated
 calls can advance the same iterator value.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1085,7 +1085,7 @@ calls can advance the same iterator value.
 
 An `&var self` method may be called through an `&var T` reference.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1100,7 +1100,7 @@ An `&var self` method may be called through an `&var T` reference.
 
 An aspect method may declare an `&var self` receiver, including `Iterable<T>::next`.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1188,7 +1188,7 @@ parameter list (including a `record` type parameter used as a row, RFC-0121, RFC
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1218,7 +1218,7 @@ either mechanism, regardless of width — projecting every field a `struct` decl
 not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
 §3's worked example).
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1270,7 +1270,7 @@ and points an author who wanted a private field at a `struct`. There is no way t
 record field private. The rule applies to every `record`, generic or not, and never to a
 `struct`.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1340,7 +1340,7 @@ let y := Flag::On {};
 A zero-field enum variant may be constructed either as its qualified path or with empty
 braces.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -1356,7 +1356,7 @@ braces.
 For a zero-field enum variant, the bare and empty-brace constructor forms evaluate to the
 same variant value.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -1475,7 +1475,7 @@ body.
 
 ##### Legality Rule {#spec.declarations.type-aliases.legality-1}
 
-A type alias is written `public? type Name generic_params? := Type;` at module scope or
+A type alias is written `pub? type Name generic_params? := Type;` at module scope or
 in a function / block body. It introduces `Name` as a transparent synonym for `Type`:
 every use of `Name` (with type arguments substituted for its generic parameters) is
 replaced by `Type` before name resolution and type checking, and must supply exactly the
@@ -1537,7 +1537,7 @@ import (`import m::{A};`), a renamed import (`import m::A as B;`), a glob
 from outside its declaring module, directly or through an `export`, is a visibility
 error.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1560,7 +1560,7 @@ a record projection (`P.{ … }`), an enum-variant path (`D::Variant`), or a `ma
 pattern. An alias whose expansion is not a plain named type — a tuple, a function type, a
 reference — or is still parameterised has no meaning in value position.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1611,7 +1611,7 @@ fun main() -> i64 {
 An aspect declaration is introduced with the `aspect` keyword. Its braced body declares
 the methods and associated types that implementing types must provide.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md)_</span>
@@ -1648,7 +1648,7 @@ an aspect with zero methods and zero associated types. The bodyless production h
 syntax to carry a method or associated type, so this is pure notational sugar, not a
 conditional exemption to check against a body that could otherwise be non-empty.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0103](../../rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md)_</span>
@@ -2000,7 +2000,7 @@ A method with its own generic parameters is excluded from the vtable without
 disqualifying the rest of the aspect — including when it is the aspect's
 *only* method, the same way a zero-method marker aspect is object-safe.
 
-<!-- rfc.py:last_reviewed b6da47e5a683a1327336beb135cc2febb45235fd -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
@@ -2093,7 +2093,7 @@ independently. A heterogeneous literal used directly as an argument or
 field, with no annotated binding in between, isn't covered — bind it to a
 `let`/`var` first.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
@@ -2183,7 +2183,7 @@ at runtime to the implementation the wrapped concrete value's own type
 provides for the aspect, independent of any other value coerced to the same
 `dyn Aspect` type elsewhere in the program.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0008](../../rfcs/4-implemented/rfc-0008-aspect-objects.md)_</span>
@@ -2542,7 +2542,7 @@ Structural type constructors are owned by `std::core` for orphan-rule purposes; 
 `std::core` may declare conditional implementations for structural constructors; a
 generic structural target is registered and dispatched subject to its stated bounds.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0177](../../rfcs/4-implemented/rfc-0177-coercion-aware-structural-aspect-lookup.md)_</span>
@@ -2566,7 +2566,7 @@ generic structural target is registered and dispatched subject to its stated bou
 Without an applicable structural implementation, using a structural type where an aspect
 bound is required is rejected with `T0012`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
@@ -2597,7 +2597,7 @@ these implementations cannot be overridden by user code.
 
 Array marker-aspect propagation is not part of structural implementation lookup.
 
-<!-- rfc.py:last_reviewed 2976fde0 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
@@ -2618,7 +2618,7 @@ Array marker-aspect propagation is not part of structural implementation lookup.
 Tuple types have no standard blanket aspect implementations and therefore fail aspect
 bounds unless a separately specified implementation applies.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>
@@ -2818,7 +2818,7 @@ this language version.
 An associated type declared with `type Name;` is part of the aspect interface and must
 be defined by each implementation of that aspect.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -2853,7 +2853,7 @@ implementation must satisfy that bound.
 Within an aspect or its implementation, a bare associated-type name denotes the
 corresponding `Self::Name` projection and may be used in method signatures.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -2999,7 +2999,7 @@ is a compile-time error.
 An aspect method with a body is a default implementation. An implementing `extend` block
 that omits it inherits and dispatches to that body.
 
-<!-- rfc.py:last_reviewed b6da47e5a683a1327336beb135cc2febb45235fd -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -3062,7 +3062,7 @@ extend Point {
 Within an aspect declaration, `Self` denotes the type implementing that aspect. Within an
 `extend` block, it denotes the block's target type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -3265,7 +3265,7 @@ an argument that does not is a `T0012` type error.
 
 `extends Aspect` is rejected in a local binding type annotation.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0035](../../rfcs/4-implemented/rfc-0035-impl-aspect-anonymous-params.md)_</span>
@@ -3282,7 +3282,7 @@ At a generic-function call, each concrete type argument must satisfy every decla
 aspect bound, including the type arguments a bound names (`X: Conv<i64>` is not satisfied by
 a type that implements only `Conv<String>`); inferred type arguments are checked by the same rule.
 
-<!-- rfc.py:last_reviewed da49cbfbb718c340810ce3e78ae99c9777631b52 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
@@ -3398,7 +3398,7 @@ equivalent named type parameter.
 Generic methods in an `extend` block enforce their own bounds, while bounds on the
 enclosing type remain available in the method body.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
@@ -3414,7 +3414,7 @@ enclosing type remain available in the method body.
 A return-position `extends Aspect` has one concrete type for every path through its function
 body; branches that produce different concrete types are rejected.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
@@ -3431,7 +3431,7 @@ Each return-position `extends Aspect` occurrence is an independent opaque type. 
 `extends Aspect` return may be inferred equal to an `extends Aspect` parameter when the body
 returns that parameter directly.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
@@ -3450,7 +3450,7 @@ returns that parameter directly.
 A caller may use only the declared aspect interface of a return-position `extends Aspect`;
 the caller may not name or cast its hidden concrete type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
@@ -3466,7 +3466,7 @@ the caller may not name or cast its hidden concrete type.
 Calls to the same `extends Aspect`-returning function produce values of the same opaque
 type, and aspect methods declared for that return bound dispatch on those values.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
@@ -3485,7 +3485,7 @@ type, and aspect methods declared for that return bound dispatch on those values
 Return-position `extends Aspect` values follow the ordinary ownership behavior of their
 concrete type; opacity changes what callers can name, not the value's ownership.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0037](../../rfcs/4-implemented/rfc-0037-return-position-impl-aspect.md)_</span>
@@ -3523,7 +3523,7 @@ arguments, more than one of which provides the method, and a call written on a v
 one bound of one aspect (`Z: Conv<i64> + Conv<String>`), each providing the method. The error names the impls or the aspect.
 Write the call through a type parameter with a single bound of the aspect, which names the type arguments.
 
-<!-- rfc.py:last_reviewed 3297685f22359c543be6e4e8fc6617474b0293e8 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -3672,7 +3672,7 @@ Every type satisfying `Copy` also satisfies `!Drop`; no type may satisfy both `C
 `T: !Drop` concerns `T`'s own `Drop` implementation, not whether any of its fields
 implement `Drop`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
@@ -3704,7 +3704,7 @@ negative bounds.
 A negative bound on a conditional implementation is checked at each instantiation on the
 same terms as a positive conditional bound.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
@@ -3720,7 +3720,7 @@ same terms as a positive conditional bound.
 Negative bounds are use-site constraints and do not themselves declare that a type lacks
 an aspect implementation.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
@@ -3736,7 +3736,7 @@ an aspect implementation.
 Explicit negative implementations are a distinct definition-site mechanism that affects
 which implementations negative-bound checking finds.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
@@ -3823,7 +3823,7 @@ requiring a binding.
 A bodyless single-aspect `extend` has the same declaration semantics as the corresponding
 empty braced implementation; it introduces no bodyless-specific validation category.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
@@ -3878,7 +3878,7 @@ braced spelling is rejected.
 A bodyless multi-aspect `extend Type: A, B, !C;` is equivalent to independent bodyless
 single-aspect declarations for `A`, `B`, and `!C`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
@@ -3894,7 +3894,7 @@ single-aspect declarations for `A`, `B`, and `!C`.
 A negative implementation is a bodyless declaration of non-implementation: it provides no
 required or default aspect methods, and may name a generic or concrete target.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
@@ -3938,7 +3938,7 @@ not to another nominal type.
 Negative implementations obey the ordinary orphan rule: the aspect or the target's outermost
 constructor must be local to the module containing the `extend` declaration.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
@@ -4244,7 +4244,7 @@ A colon-list entry names a visible aspect that is `declared` and has no methods,
 
 A declaration clause has no negative entries. An opt-out of an `auto` aspect is the negative impl `extend T: !A;`.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -4354,7 +4354,7 @@ A derived `Clone` clones each field through that field's own `clone`; for an enu
 
 A derived `Clone` calls the field clones in a defined order: declaration order for a struct, and for an enum the payload fields of the active variant in declaration order. The clone of an anonymous record visits its fields in lexicographic label order. A panic in a field clone ends the program.
 
-<!-- rfc.py:last_reviewed 84836ff64e1b638440f5255418acd18a0e1ef9fd -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -4655,7 +4655,7 @@ A generic struct or enum parameter may carry aspect bounds inline, in a `where` 
 or in both forms. `+` joins multiple bounds, and bounds from the two forms on the same
 parameter are combined.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
@@ -4671,7 +4671,7 @@ parameter are combined.
 Constructing a bounded struct or enum with a concrete type argument that does not
 satisfy every declared aspect bound is rejected with `T0012` at that type argument.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
@@ -4703,7 +4703,7 @@ methods may use those aspect operations on `T` without restating the bounds.
 An aspect implementation `extend Struct<T>: Aspect` likewise inherits `Struct<T>`'s
 declared aspect bounds without a duplicate declaration.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
@@ -4720,7 +4720,7 @@ A match arm's body, when matching a value of a bounded struct or enum type, has 
 type parameter's declared aspect bounds available the same way any other use site does —
 no re-declaration needed.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0034](../../rfcs/4-implemented/rfc-0034-struct-enum-aspect-bounds.md)_</span>
@@ -4764,7 +4764,7 @@ If applicable aspects for the same receiver type provide the same method name, a
 dot call is ambiguous and is rejected with `T0013`. Applicable aspects include one aspect applied to different type arguments
 ([aspect bounds, legality-18](#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18)).
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
