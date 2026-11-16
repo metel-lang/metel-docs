@@ -52,7 +52,7 @@ AspectProperty           → "declared"
                          | "derivable"
                          | "implicit"
                          | "auto"
-ClassKeyword             → "copy"
+ClassKeyword             → "copy" DeriveArgs?
                          | "linear"
 ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
 DerivesClause            → "derives" ClauseEntry ( DeriveArgs | ViaClause )? ( "," ClauseEntry ( DeriveArgs | ViaClause )? )*
