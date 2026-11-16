@@ -26,7 +26,7 @@ a negative grant, and the rejection of row-kinded parameters belong to the aspec
 ```metel
 struct Pair<A, B> derives Clone via A + B { a: A, b: B }           // Pair<X, Y>: Clone when X and Y are
 struct Tagged<T> derives Clone via T { id: i64 }                    // Clone only when T is, whatever the fields become
-struct Wrapper<T> derives Copy via T { value: T }                   // Copy when T is; Clone when T is (RFC-0234)
+struct Wrapper<T> derives Copy via T { value: T }                   // Copy when T is (and Clone, derived beside it, RFC-0234)
 ```
 
 This is a design draft. Nothing here is accepted, and RFC-0224's implementation (metel-core#1941) keeps `via` on
@@ -88,11 +88,21 @@ every `Copy` entry whatever `via` says. `Clone` has none of them.
 
 ---
 
-## 2. Brought super-aspects
+## 2. Sharing a flow
 
-`derives Copy` also derives the `Clone` that `Copy` marks `deriving` (RFC-0213 section 4). Which condition that `Clone`
-carries, and whether a clause may restate it, are decided by RFC-0234, which this RFC does not depend on: the rule of
-section 1 applies to the brought entry as to any other, as a derivation of its own aspect on a flow.
+Aspects that derive on the same parameters state them once with a **group**:
+
+```metel
+struct W<T> derives (Clone, Copy) via T { v: T }          // = derives Clone via T, Copy via T
+struct Pair<A, B> derives Debug, (Clone, Copy) via A + B { a: A, b: B }
+```
+
+`(A1, .., An) via P + Q` is exactly `A1 via P + Q, .., An via P + Q`, and each member is a field-wise derivation
+(section 1). The group is only a way to write one flow once: members are derived independently, their order is irrelevant,
+and a group without `via` is an error with a fix-it that removes the parentheses, since it would be a second spelling of the
+plain list. A super-aspect obligation (RFC-0234) is satisfied by a member of a group like by a plain entry. A stated flow on
+an entry of a group that also contains a larger flow for its super-aspect is checked by RFC-0234's entailment rule, which is
+trivially met when the members share a flow.
 
 ---
 
@@ -101,7 +111,7 @@ section 1 applies to the brought entry as to any other, as a derivation of its o
 RFC-0224 rule 3: a `pub` generic type that derives `Copy` may omit `via` only when its computed set is empty; otherwise
 the omission is an error with a fix-it showing the computed set. Under this RFC the same rule applies to every field-wise
 derived impl, for the same reason: a field edit cannot change a public interface silently. In std, `Option<T>`,
-`Result<T, E>` and the others that derive `Clone` write `derives Clone via T` (or `via T + E`). Non-`pub` types keep the
+`Result<T, E>` and the others that derive `Clone` write `derives (Clone, Copy) via T` (or `via T + E`) where they are `Copy` as well, and `derives Clone via T` where they are not. Non-`pub` types keep the
 computed set.
 
 ---
@@ -131,14 +141,14 @@ is drawn by definition (open question 1) or by a declared property.
 - **RFC-0224** (integrated). Sections 1 and 3 say `via` is accepted on `Copy` only and defer the other markers; this RFC
   would replace that restriction with the rule of section 1. RFC-0224's rules 1 to 3 and 9 are unchanged and become the
   `A = Copy` case. Its rules 6 to 8 (row-kinded parameters of a `Copy`, negative grants, `Drop`) stay `Copy` rules.
-  Section 3's sentence "`Wrapper<X>: Clone` when `X: Copy`" is replaced by RFC-0234: `Wrapper<X>: Clone` when `X: Clone`.
+  The `Clone` a `Copy` brings is RFC-0234's: it becomes an obligation to derive `Clone`, with its own flow, and a group (section 2) states a shared flow once.
 - **RFC-0207** (integrated). The `derives` clause gains the optional `via` list on any field-wise entry.
 - **RFC-0212** (integrated). `derivable` would be defined as: the compiler writes an impl bounded parameter by parameter
   by the aspect itself. A derivation that is not (a row template) needs its own property when it arrives (RFC-0222).
-- **RFC-0213** (integrated). Brought supers keep the flow of the entry that brought them (RFC-0234), bounded by their own
-  aspect. Its `struct Dup derives Clone, Copy` example is RFC-0234's.
+- **RFC-0213** (integrated). A marked super-aspect is derived in its own entry, with its own flow (RFC-0234), bounded by its own
+  aspect. Its `struct Dup derives Clone, Copy` example is unchanged under RFC-0234.
 - **RFC-0206** (integrated). Section 2 rule 2 ("`Clone` is provided and cannot be written") is unchanged for a `Copy`
-  instantiation; for a conditional `Copy` the brought `Clone` also covers the instantiations that are not `Copy` (RFC-0234).
+  instantiation; for a conditional `Copy` the derived `Clone` covers the instantiations that are not `Copy` (RFC-0234).
 - **RFC-0222** (draft). `derives Builder` is the counterexample that bounds the rule (section 4).
 
 ---

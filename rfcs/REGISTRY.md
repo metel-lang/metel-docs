@@ -112,7 +112,7 @@ the curated thematic map.
 - **RFC-0227** — Stated flow for every derived impl (`1-under-review` ; rfcs/1-under-review/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12 ; updated 2026-11-13)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
-- **RFC-0234** — Brought Super-Aspects in a derives Clause (`1-under-review` ; rfcs/1-under-review/rfc-0234-brought-super-aspects-in-a-derives-clause.md ; date 2026-11-16 ; updated 2026-11-16)
+- **RFC-0234** — Super-Aspect Derivation Is an Obligation (`1-under-review` ; rfcs/1-under-review/rfc-0234-super-aspect-derivation-is-an-obligation.md ; date 2026-11-16 ; updated 2026-11-16)
 
 ## Accepted (10)
 
