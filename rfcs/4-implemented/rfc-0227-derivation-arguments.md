@@ -2,16 +2,16 @@
 id: rfc-0227
 title: "Derivation Arguments"
 date: '2026-11-12'
-status: integrated
+status: implemented
 updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2002'
 coverage:
   "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
   "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-12" }
   "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-13" }
-  "4": { kind: blocked, reason: "The grouped entailment rule is blocked on metel-core#2067 and metel-core#2066.", ref: "https://github.com/metel-lang/metel-core/issues/2067" }
+  "4": { spec: "spec.declarations.aspects.declaration-clauses.legality-17" }
 impl_tracking: 2067
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-11-16).** Rewritten from "Stated flow for every derived impl": the `via` keyword is replaced by
@@ -21,6 +21,8 @@ impl_status: not-started
 > **Status — accepted (2026-11-16).** No open questions; design settled with the language owner 2026-11-16.
 
 > **Status — integrated (2026-11-16).**
+
+> **Status — implemented (2026-11-16).**
 
 ## Summary
 

@@ -55,12 +55,15 @@ AspectProperty           → "declared"
 ClassKeyword             → "copy"
                          | "linear"
 ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
-DerivesClause            → "derives" ClauseEntry ViaClause? ( "," ClauseEntry ViaClause? )*
+DerivesClause            → "derives" ClauseEntry ( DeriveArgs | ViaClause )? ( "," ClauseEntry ( DeriveArgs | ViaClause )? )*
 ViaClause                → "via" IDENTIFIER ( "+" IDENTIFIER )*
+DeriveArgs               → "(" ( IDENTIFIER ( "," IDENTIFIER )* ","? )? ")"
 ClauseEntry              → "!"? TypePath
-SuperAspects             → ":" SuperAspect ( "," SuperAspect )*
-SuperAspect              → "!"? "deriving"? TypePath
-AspectDeclaration        → "pub"? AspectProperty* "aspect" IDENTIFIER GenericParams? SuperAspects? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
+SuperAspects             → "requires" SuperAspect ( "," SuperAspect )*
+SuperAspect              → "!"? "derived"? TypePath
+LegacySuperAspects       → ":" LegacySuperAspect ( "," LegacySuperAspect )*
+LegacySuperAspect        → "!"? ( "derived" | "deriving" )? TypePath
+AspectDeclaration        → "pub"? AspectProperty* "aspect" IDENTIFIER GenericParams? ( SuperAspects | LegacySuperAspects )? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
 AspectMethod             → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
 AssocTypeDecl            → "type" IDENTIFIER ( ":" BoundList )? ";"
 
