@@ -45,7 +45,7 @@ signature from its body or from its callers. This holds for free functions (priv
 `pub`), methods and aspect-method declarations. `native` functions are unchanged. A
 closure's parameter and return types are not subject to this rule.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md)_</span>
@@ -69,7 +69,7 @@ closure's parameter and return types are not subject to this rule.
 
 A function with no return annotation and no `return expr;` returns `()`.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -109,7 +109,7 @@ enclosing function and the two fixes, binding a closure or passing the value as 
 type parameter the note says to declare it on the local function. Local functions are hoisted
 like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-3)).
 
-<!-- rfc.py:last_reviewed 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
@@ -198,7 +198,7 @@ fun main() -> i64 {
 A function declared in an `extend` block without a `self`, `&self`, or `&var self`
 parameter is an associated function and is called through its target type with `::`.
 
-<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -659,7 +659,7 @@ function type) or, failing that, from the body, exactly as an omitted return typ
 closure whose parameter stays fully generic is polymorphic (`let id := |x| { x }`). A parameter
 that nothing determines is [T0002](../error-codes.md#t0002--annotation-required).
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -809,7 +809,7 @@ free local absent from a non-empty list is a compile error. Module-level functio
 constants, types, and aspects are resolved by ordinary name resolution and are never
 capture items.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -915,7 +915,7 @@ slot requiring `m'`, `u'`, `c'` when `m` is at least as permissive as `m'` (*man
 permissive as `c'` (`Copy` ≥ non-`Copy`). The reverse — a less permissive value into a
 more permissive slot — is rejected.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0134](../../rfcs/4-implemented/rfc-0134-closure-call-capability.md), [rfc-0152](../../rfcs/4-implemented/rfc-0152-function-type-multiplicity-widening.md)_</span>
@@ -978,7 +978,7 @@ receiver rule. An owned but non-`var` (`let`) binding, or any shared-`&` callee 
 compile error. This holds for every `mutating` closure, whether it mutates its own
 by-value captures or only drives mutation through a captured `&var`.
 
-<!-- rfc.py:last_reviewed a10e1a5edf19a543aa59a20555061490e28af170 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -1058,7 +1058,7 @@ A closure value is `Send` (respectively `Sync`) when every one of its captures i
 (respectively `Sync`), applying the reference rules for `&T` / `&var T` captures. A
 `mutating` closure value is additionally not `Sync`.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1091,7 +1091,7 @@ qualifier (an unresolved inference variable, or a bare generic parameter), the l
 takes the default and [legality-9](#spec.functions.closures.legality-9) widening resolves
 any remaining gap at the concrete site.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1113,7 +1113,7 @@ verification ([legality-8](#spec.functions.closures.legality-8)); (4) `var` veri
 reported; later stages are suppressed. Stages 3 and 4 are independent: a body that both
 consumes and mutates without the qualifiers is reported against both.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0050](../../rfcs/4-implemented/rfc-0050-closure-capture-lists.md)_</span>
@@ -1188,7 +1188,7 @@ listless closure, each free `Copy` variable) is placed into the closure's enviro
 according to its specifier: `[x]` moves a non-`Copy` value / copies a `Copy` value,
 `[x.clone()]` stores an independent copy, `[&x]` / `[&var x]` store a reference.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -1205,7 +1205,7 @@ A `reading` closure does not modify its environment; a `mutating` closure modifi
 place. In neither case does a write inside the closure body affect an *outer* binding that
 was captured by value — the closure operates on its own environment copy.
 
-<!-- rfc.py:last_reviewed d4b2b2bcaca758ef0dd39976e57816f3992b8b2b -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -1222,7 +1222,7 @@ Closures that capture the same binding by `[&x]` / `[&var x]`, or that capture t
 reference value, observe the same referent; a write through an exclusive reference by one
 closure is visible through the others.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0006](../../rfcs/4-implemented/rfc-0006-closure-capture-semantics.md)_</span>
@@ -1262,7 +1262,7 @@ Capturing a non-`Copy` binding by value (`[x]`) moves it, consuming the outer bi
 regardless of `Copy`-ness. The captured environment is constructed once, at closure
 creation, and is not re-cloned per call.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0157](../../rfcs/4-implemented/rfc-0157-copy-and-clone-model-re-analysis.md)_</span>
@@ -1303,7 +1303,7 @@ A `mutating` closure's assignments to its by-value captures are retained in its
 environment and are visible to subsequent calls of the same closure value — the closure
 holds private mutable state.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -1319,7 +1319,7 @@ holds private mutable state.
 Copying a closure value whose captures are all `Copy` copies its environment. The copies
 have independent environment state: a `mutating` call on one does not affect the other.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -1339,7 +1339,7 @@ second `mutating` call on the same closure value reached from inside the first �
 or through a structure the body can reach — is rejected: before the borrow checker lands,
 as a runtime error; after, as a static borrow conflict.
 
-<!-- rfc.py:last_reviewed 60cdfd504635a2a8c5e6f2d2edf2f9d5eea3f49b -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -1390,7 +1390,7 @@ path and consults no in-call flag, because call lowering branches on the closure
 own mutation axis, not on the slot type. A `many` value in a `once` slot is likewise not
 consumed by the call.
 
-<!-- rfc.py:last_reviewed a770445761323bbb96448619152def8053da27ae -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1432,7 +1432,7 @@ that field or result is a `var` value that callers must invoke under exclusive a
 never mutates. The coercion is one-way — there is no automatic re-narrowing back to
 `reading`.
 
-<!-- rfc.py:last_reviewed c2ade817c8bc3f617bbec842a0e63beab2a83094 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1450,7 +1450,7 @@ with a written open-record parameter, whose `..` is quantified (its other parame
 Inside a generic function the parameters of a `let`-bound closure are written; leaving one out is
 `T0002` at the definition.
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0196](../../rfcs/4-implemented/rfc-0196-remove-inferred-let-polymorphism.md)_</span>
@@ -1475,7 +1475,7 @@ types are written or follow from its body. Otherwise the `let` is `T0002`, "the 
 determined by its initializer; annotate its parameters". A `let` inside a function body is unaffected:
 the uses in the body that contains it fix its type.
 
-<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1528,7 +1528,7 @@ Keyword arguments are available at every call whose callee declares parameter na
 receiver, aspect methods and native std functions. The receiver is never a keyword argument, and a
 pack parameter is positional only.
 
-<!-- rfc.py:last_reviewed 30e484db7462676b74f703cf1d833de2ebcde41c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1543,7 +1543,7 @@ pack parameter is positional only.
 A call through a function value, such as a closure binding, a parameter of function type or a function item bound to a local, is positional
 only, because a function type carries no parameter names. A keyword argument in such a call is an error (T0041).
 
-<!-- rfc.py:last_reviewed 30e484db7462676b74f703cf1d833de2ebcde41c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1556,7 +1556,7 @@ An aspect method has one set of parameter names, the names of the aspect's decla
 a call through a bound, a `dyn` or the concrete type binds by that set. Parameter names are part of a function's public interface: renaming a
 parameter of a `pub` function or aspect method changes the calls that name it.
 
-<!-- rfc.py:last_reviewed 30e484db7462676b74f703cf1d833de2ebcde41c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1569,7 +1569,7 @@ Overload resolution takes keyword names into account: for each candidate, the ca
 parameter names, the remaining arguments fill the other slots in order, and the resulting per-slot argument types must equal the candidate's
 parameter types. A keyword absent from a candidate's parameter list disqualifies that candidate.
 
-<!-- rfc.py:last_reviewed 30e484db7462676b74f703cf1d833de2ebcde41c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1585,7 +1585,7 @@ parameter types. A keyword absent from a candidate's parameter list disqualifies
 The argument expressions of a call are evaluated strictly in the order written, left to right, whether positional or keyword, and only then
 are the resulting values bound to the callee's parameters. A keyword argument never reorders evaluation.
 
-<!-- rfc.py:last_reviewed 30e484db7462676b74f703cf1d833de2ebcde41c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1637,7 +1637,7 @@ A generic call may supply explicit type arguments with `name::<T, U>(arguments)`
 each named parameter to the given type. A pinned type must satisfy that parameter's own
 bounds (e.g. `T: Display`).
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
@@ -1765,7 +1765,7 @@ constructor equals that of the enclosing function or closure's return type; any 
 operand, or any other pairing, is a type error. When the return type is not yet known, the
 operand's constructor fixes it.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0182](../../rfcs/4-implemented/rfc-0182-question-mark-on-option.md)_</span>
@@ -1789,7 +1789,7 @@ For a `Result` operand, the enclosing function's return type must be `Result<U, 
 operand error type `E1` must equal `E2` or satisfy `E2: From<E1>`. An `Option` operand has no
 error type and no conversion.
 
-<!-- rfc.py:last_reviewed 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1801,7 +1801,7 @@ error type and no conversion.
 Evaluating `Ok { value }?` produces `value` and evaluation continues in the enclosing
 function.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1813,7 +1813,7 @@ function.
 Evaluating `Err { error }?` immediately returns `Err { error }` from the enclosing
 function; when the error types differ, the returned error is `E2::from(error)`.
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1829,7 +1829,7 @@ Evaluating `Some { value }?` produces `value`; evaluating `None?` immediately re
 from the enclosing function or closure body, dropping every live binding as an ordinary
 `return` does.
 
-<!-- rfc.py:last_reviewed 50875ef529fdbf39df5fd51694ec61559d603c63 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>

@@ -47,7 +47,7 @@ src/
 Each non-prelude module path maps directly to its `.mtl` file path. A facade file and
 the same-named directory are distinct paths; `name/mod.mtl` has no special meaning.
 
-<!-- rfc.py:last_reviewed 722a13049df7dd2ba817e781ebbc6bb3689f9d6e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
@@ -147,7 +147,7 @@ pub struct Token {
 contexts. A qualified path is valid wherever its resolved name is valid; `super` is
 invalid in the root module.
 
-<!-- rfc.py:last_reviewed 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
@@ -253,7 +253,7 @@ Import forms:
 A module may use its own declarations and public declarations brought into scope by an
 import. Loading another module alone does not make that module's names available.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -272,7 +272,7 @@ import. Loading another module alone does not make that module's names available
 An aliased import binds only its alias locally. The alias may be used wherever the
 imported declaration's kind permits, including as a value, type, or constructor.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -299,7 +299,7 @@ imported declaration's kind permits, including as a value, type, or constructor.
 A qualified use resolves through an imported binding; an unresolved qualified path is a
 name-resolution error and is not retried as an arbitrary bare name.
 
-<!-- rfc.py:last_reviewed 96efb7986f7025157efce9ff719d56f2b892a989 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -315,7 +315,7 @@ name-resolution error and is not retried as an arbitrary bare name.
 An import loads its referenced module and introduces the selected public names or module
 handle into the importing module's scope.
 
-<!-- rfc.py:last_reviewed 722a13049df7dd2ba817e781ebbc6bb3689f9d6e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
@@ -333,7 +333,7 @@ handle into the importing module's scope.
 renames the name in each. A name that `m` provides as both a type and a value is therefore
 imported as both. A module handle (`import m`) binds in the type namespace.
 
-<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -387,7 +387,7 @@ a private source declaration is a `T0009` visibility error.
 A re-export makes a public source declaration available through the current module's
 public API, including under an alias; importers may use it as a declaration of the facade.
 
-<!-- rfc.py:last_reviewed 722a13049df7dd2ba817e781ebbc6bb3689f9d6e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
@@ -442,7 +442,7 @@ You can still write `import std::core::Option;` or `import std::core::*;` explic
 Every module has the `std::core` names available without an import; the same names may also
 be named through their explicit `std::core::` paths.
 
-<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
@@ -493,7 +493,7 @@ Conflict rules:
 Two explicit imports that bind the same local name are rejected with `T0011` at import
 time.
 
-<!-- rfc.py:last_reviewed 282f563360390f6648e81bc9d3974bcb8070c496 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -505,7 +505,7 @@ time.
 A collision between two user glob imports is rejected with `T0011` only when code refers
 to the ambiguous name.
 
-<!-- rfc.py:last_reviewed 282f563360390f6648e81bc9d3974bcb8070c496 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -516,7 +516,7 @@ to the ambiguous name.
 
 An explicit import takes precedence over a glob-imported binding of the same name.
 
-<!-- rfc.py:last_reviewed 282f563360390f6648e81bc9d3974bcb8070c496 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -529,7 +529,7 @@ Import conflicts follow their binding kind: duplicate explicit imports fail imme
 ambiguous user-glob names fail when referenced, and an explicit import disambiguates a
 glob-provided name.
 
-<!-- rfc.py:last_reviewed 282f563360390f6648e81bc9d3974bcb8070c496 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -552,7 +552,7 @@ With a struct `Foo` in module `a` and a function `Foo` in module `b`, `import a:
 provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
 [legality-4](#spec.modules.import-conflicts.legality-4).
 
-<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -624,7 +624,7 @@ never becomes reachable across a module boundary, regardless of how a value of t
 struct's type was obtained (e.g. returned from a `pub` function that never names the
 struct type itself). `public` is a reserved legacy spelling and is a parse error.
 
-<!-- rfc.py:last_reviewed e2696db88d165cae993399b2813a5e2d321d62e0 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md), [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md), [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0218](../../rfcs/4-implemented/rfc-0218-spell-visibility-pub.md)_</span>
@@ -650,7 +650,7 @@ public API; an omitted required annotation is `T0010`. A function type that appe
 public signature, or as the type of a public struct's field, is written in full, parameter
 and return types included.
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0031](../../rfcs/4-implemented/rfc-0031-topological-typechecker.md)_</span>
@@ -676,7 +676,7 @@ projecting it (`t.{ .offset }`), or writing it in a residual type (`Token.{ .off
 outside the declaring module is the same `T0009`. A residual of public fields only
 (`Token.{ .kind }`) is unrestricted.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
@@ -702,7 +702,7 @@ it names any private field. A module-local constructor or helper function may st
 construct the value.
 
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
@@ -719,7 +719,7 @@ Declaring a field `pub` on a struct that is not itself `pub` produces a compiler
 warning: the field cannot be reached across a module boundary through a private type,
 so the `pub` marker on it has no effect from outside the declaring module.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
@@ -739,7 +739,7 @@ Named fields of an enum struct-like variant follow the same visibility rules as 
 ordinary struct's fields: constructing a variant literal outside the enum's declaring
 module and naming a private field is rejected with `T0009`, the same as for a struct.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
@@ -756,7 +756,7 @@ Naming a private field in a struct pattern from outside the struct's declaring m
 rejected with `T0009`. The pattern must either omit that field with a trailing `..`, or
 be written inside the declaring module, where private fields remain nameable.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0032](../../rfcs/4-implemented/rfc-0032-field-level-visibility.md)_</span>
@@ -780,7 +780,7 @@ methods (which take their visibility from the aspect), and residuals that name o
 `pub` fields are unrestricted. Naming a private field of *another* module's struct is
 already rejected by [legality-3](#spec.modules.visibility.legality-3).
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -803,7 +803,7 @@ import is accepted and brings in the type. Using the name as a value is then rej
 shadows it. A name the module provides publicly in no namespace is rejected at the import:
 `T0009` when it is private there, `T0003` when it does not exist.
 
-<!-- rfc.py:last_reviewed fa44859ef74e6592a3ef7ffe086e4afb0de8743e -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -821,7 +821,7 @@ that names the fix, writing a `pub fun` with its parameter and return types. A c
 by a top-level `let` is therefore never part of a module's public API, and no inferred type
 crosses a module boundary.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0193](../../rfcs/4-implemented/rfc-0193-named-declarations-write-their-signature.md)_</span>
@@ -889,7 +889,7 @@ error rather than an import that contributes an empty scope.
 Imports and re-exports both contribute module-graph edges. Missing modules and circular
 dependencies are load errors, and a bare re-export loads its target module.
 
-<!-- rfc.py:last_reviewed 8b844c9117d5c6a730882aeaf521184c3055eb2f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>

@@ -43,7 +43,7 @@ Primitive types and any type implementing `Copy` are exempt — they are duplica
 Using a non-`Copy` value in assignment, argument, or return position moves it; a later use
 of the source binding is rejected.
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -328,7 +328,7 @@ The `Clone` of a `Copy` type is derived and cannot be written: a written `extend
 
 For an instantiation `T<A>`, `T<A>: Copy` holds when every field's type is `Copy` there, and the type is not `Drop`. It is judged per instantiation, not as a bound on the type parameters, so `copy struct View<T> { r: &T }` is `Copy` for every `T`, while `copy struct Wrapper<T> { v: T }` is `Copy` exactly when `T` is.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -342,7 +342,7 @@ For an instantiation `T<A>`, `T<A>: Copy` holds when every field's type is `Copy
 
 A place read in value position is a copy when the place's type is `Copy` and a move otherwise. A copy leaves the original unchanged and independent of the copy. A borrow reads nothing.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -356,7 +356,7 @@ A place read in value position is a copy when the place's type is `Copy` and a m
 
 A generic body decides whether a read is a copy or a move from the bounds visible at its definition. Without a `Copy` bound a read of a value of a type parameter is a move, whatever the call site passes.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -408,7 +408,7 @@ a consequence of its fields.
 
 `clone` takes `&self` and returns a new owned value of the same type, and the original is not moved. A derived `clone` calls the `clone` of each field.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
@@ -423,7 +423,7 @@ a consequence of its fields.
 
 The compiler provides `Clone` for the built-in kinds of the table above: scalars and the unit type, shared references (another reference), views, arrays and records, tuples whose parts are all `Clone`, and `Copy` closures. `&var T` and a written function type are never `Clone`, and a tuple holding one is not.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -440,7 +440,7 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 
 `Option<T>`, `Result<T, E>` and `List<T>` are `Clone` exactly when their parameters are. A `List` clone is an independent list.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
@@ -455,7 +455,7 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 
 `struct P derives Clone` requires every field type to be `Clone`; a field that is not is an error at the field. The derived impl applies at an instantiation exactly when every field type is `Clone` there. A written `extend P: Clone` beside it overlaps and is an error (`T0015`).
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
@@ -474,7 +474,7 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 
 A derived `clone` calls the field clones in a defined order: declaration order for a struct, the payload fields of the active variant in declaration order for an enum, lexicographic label order for an anonymous record. A panic in a field clone ends the program.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -513,7 +513,7 @@ its fields.
 An `extend Type: Drop` declaration gives its type `Drop` status even when its `drop` body is
 empty; that status participates in ownership restrictions.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -668,7 +668,7 @@ After a field of a non-`Drop` struct is moved, the remaining fields may be acces
 containing value may not be used at its original whole type. A whole-value use at
 its narrowed residual type, including an empty residual, is legal.
 
-<!-- rfc.py:last_reviewed 1287040bb6508c79615a1805bbd3a9feaa4c20ba -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -683,7 +683,7 @@ its narrowed residual type, including an empty residual, is legal.
 
 A field of a `Drop` type may not be moved out, except by the total destructuring of a marked dismantling method (see [Ownership classes](#spec.ownership.ownership-classes.legality-6)).
 
-<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -700,7 +700,7 @@ Once every field ever moved out of a value has been reassigned this way, the val
 whole-value status is restored too, and it may be used as a whole again; reassigning only
 some of several moved-out fields is not enough.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -714,7 +714,7 @@ some of several moved-out fields is not enough.
 
 An owning destructuring pattern consumes its scrutinee; matching through a reference consumes nothing. Destructuring a struct, tuple or enum payload moves the bound fields. A field skipped by `..` or `_` is inaccessible afterwards, and where the aggregate is not known `Discard` each skipped field must itself be `Discard`. A pattern never leaves the scrutinee partially moved: a partial move comes only from an explicit field move. The `Drop`-type rule of [legality-2](#spec.ownership.partial-moves.legality-2) applies. A whole-value `_` consumes nothing, ownership moves to the selected arm only, and a pattern on an already narrowed value is rejected.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:exemption kind="blocked" ref="metel-core#1843" reason="Patterns still leave a partially moved scrutinee (RFC-0071, RFC-0137 slice 2 pattern narrowing); consuming patterns land with metel-core#1843" -->
 
@@ -785,7 +785,7 @@ original wider type is rejected; whole-value use at its residual type is legal. 
 ([narrowing.legality-1](#spec.ownership.narrowing.legality-1), RFC-0117) — the same
 mechanism struct narrowing uses, minus the brand.
 
-<!-- rfc.py:last_reviewed 21aa4cd466b110a738a198b3ac9e2d6c6e555bc3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -923,7 +923,7 @@ of unresolved or generic type is held until its type is known. Narrowing is
 path-sensitive, joined conservatively at merge points and loop fixpoints, matching move
 tracking.
 
-<!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -951,7 +951,7 @@ tracking.
 A residual's row is never visible to structural matching; only its brand, fixed at
 declaration, determines eligibility, regardless of how narrow or wide the current row is.
 
-<!-- rfc.py:last_reviewed 00ea5182206865bc4268d46281bafb2767b73cad -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0117](../../rfcs/4-implemented/rfc-0117-row-narrowing.md), [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -988,7 +988,7 @@ is nonempty, but `res(B, .{}) = B` when `D(B) = .{}`. For anonymous rows,
 `res(anonymous, R) = R`. Different brands remain distinct at every width,
 including zero. An anonymous empty residual is `()`: the empty row and the unit type are one type ([the empty tuple](types.md#spec.types.tuples.legality-2)). A branded empty residual `Name.{}` stays branded and is not `()`.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1126,7 +1126,7 @@ still in its row; naming a field already moved out of it is rejected.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed a770445761323bbb96448619152def8053da27ae -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1148,7 +1148,7 @@ value (`T0019`), with or without `--move-check`.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1211,7 +1211,7 @@ the caller to narrow itself first; the call never silently discards `name`.
 A function parameter may name a struct's own projected type; a caller's argument must
 match that row exactly, with no implicit narrowing at the call site.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -1496,7 +1496,7 @@ reassigned back into — a value reached through a reference
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
-<!-- rfc.py:last_reviewed 1bf44ca5dc418015d5b862416820f2c04eba5ecb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1539,7 +1539,7 @@ a binding that was moved as a whole.
 
 > **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
@@ -1606,7 +1606,7 @@ A non-`Copy` value may not be moved out through either kind of reference; a shar
 itself is `Copy`, while an exclusive reference is moved except for an argument-position
 reborrow to an `&var` parameter.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
