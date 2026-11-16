@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**231 RFCs total.** 36 draft, 56 under review, 10 accepted, 4 integrated (106 live), 93 implemented, 16 superseded, 16 refused (125 settled).
+**231 RFCs total.** 36 draft, 55 under review, 10 accepted, 4 integrated (105 live), 93 implemented, 17 superseded, 16 refused (126 settled).
 
 ## Draft (36)
 
@@ -54,7 +54,7 @@ the curated thematic map.
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
 
-## Under Review (56)
+## Under Review (55)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -92,7 +92,6 @@ the curated thematic map.
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-22)
-- **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`1-under-review` ; rfcs/1-under-review/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-11-02)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-11-07)
@@ -229,7 +228,7 @@ the curated thematic map.
 - **RFC-0225** — Dot-prefixed anonymous records (`4-implemented` ; rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md ; date 2026-11-11 ; updated 2026-11-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1949)
 - **RFC-0231** — Unit as the Empty Row (`4-implemented` ; rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md ; date 2026-11-14 ; updated 2026-11-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2024)
 
-## Superseded (16)
+## Superseded (17)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -246,6 +245,7 @@ the curated thematic map.
 - **RFC-0083** — Public Value Exports (`5-superseded` ; rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/539)
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
+- **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`5-superseded` ; rfcs/5-superseded/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-11-16)
 - **RFC-0226** — Explicit and inferred nominal construction (`5-superseded` ; rfcs/5-superseded/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Refused (16)
