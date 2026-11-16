@@ -9,6 +9,13 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2001'
 
 > **Status — under review (2026-11-13).** Settlement committed to v0.16.0 (milestone [v0.16.0] Declarations and derivation); five open questions block acceptance.
 
+> **Brought in line with the compiler (2026-11-16).** Most of this RFC is implemented (impl identity and its coherence,
+> bound satisfaction by argument list, selection through a bound, `T0013` for every call with no unique target; spec text in
+> metel-docs#625). The text below now says what the compiler does, and marks four places where it does not yet, each
+> tracked: expected-type selection of a direct call (section 3.2, metel-core#2018), a negative impl removing one identity
+> (section 1.3, #2061), a `dyn` object choosing the impl of its own identity (section 4, #2062), and a projection resolving
+> in the impl a bound names (section 1.4, #2063). The review moved out of v0.16.0 to *Aspects and generics*, with #2018.
+
 ## Summary
 
 An aspect may take type arguments (`Conv<T>`, `From<T>`), and a type may implement it for several argument lists at once.
@@ -69,8 +76,12 @@ are two aspects as far as coherence is concerned. The coherence rules apply per 
    arguments do not count towards locality: `extend i64: Conv<MyType>` is not allowed in a module that declares only
    `MyType` unless it also declares `Conv`.
 3. An explicit negative impl `extend L: !Conv<i64>` removes the identity `Conv<i64>` for `L`, not `Conv<String>`.
+   *Not yet:* the compiler keys a negative impl by the aspect's name, so `extend L: !Conv<String>` removes `Conv<i64>`
+   as well and `L: Conv<i64>` then fails with `T0012` (metel-core#2061).
 4. An associated type an impl binds belongs to that impl's identity: `L: Source<A>` and `L: Source<B>` may bind
    different associated types, and a projection through a bound resolves in the impl the bound names (section 2).
+   *Not yet:* two impls of one aspect may bind different associated types, but a projection `X::Item` through
+   `X: Source<i64>` is left unresolved when the type has both (`T0001`, metel-core#2063).
 
 ## 2. Bound satisfaction
 
@@ -83,29 +94,40 @@ have other arguments does not satisfy it: `T0012`, naming the arguments the type
   forwarded bound, and for a function imported from another module.
 - A type whose `A` is provided by a conditional or blanket impl, or by the compiler, satisfies the bound by that impl's
   own conditions; this section adds nothing there.
-- An argument that is still a free type parameter of the callee (`X: Conv<U>`, `U` bound by nothing else) is fixed by
-  the impl when the type has exactly one impl of `A`; with several the call is ambiguous (`T0013`, below).
+- An argument that is still a free type parameter of the callee (`X: Conv<U>`, `U` bound by nothing else) is **not
+  inferred** from the impl: the call is `T0002`, "cannot infer type; add a type annotation", whether the type has one
+  impl of `A` or several (open question 4).
 
 ## 3. Method selection
 
 A method call selects an implementation, never the last one registered.
 
 1. **Through a bound.** For `x: T` with `T: A<X>`, `x.m()` calls the method of the impl `A<X>` of the type `T` is
-   instantiated with. The choice is static and has no ambiguity: the bound names the arguments.
+   instantiated with. The choice is static and has no ambiguity: the bound names the arguments. A type parameter with
+   *two* bounds of the aspect (`X: Conv<i64> + Conv<String>`) is the exception: `x.conv()` names no arguments, so it is
+   `T0013` ("this type parameter has more than one bound of `Conv`, and each provides `conv`; the call names no type
+   arguments to choose between them").
 2. **Directly.** `l.m()` on a concrete receiver may have several candidates: impls of one aspect for different
-   arguments, or of different aspects, that each provide `m` for the receiver. The call is resolved by its **expected
-   type**: the candidate whose signature admits the types the call is used at (the annotated binding, the parameter it
-   is passed to, the return position). Exactly one admissible candidate is chosen; none admissible is `T0012`, naming the
-   candidates; several admissible is `T0013`, suggesting an annotation. An unannotated `let c := l.conv()` therefore
-   stays an error while two candidates exist.
-3. `T0013`, today the error for two different aspects defining the same method on one receiver, is the error for every
-   case in which a call has no unique static target, including several impls of one aspect.
+   arguments, or of different aspects, that each provide `m` for the receiver. **Today every such call is `T0013`**, with
+   or without an annotation: "ambiguous method call: `L` implements `Conv<i64>` and `Conv<String>` and each provides
+   `conv`; call it through a bound that names the type arguments". The intended rule, not implemented, resolves the call
+   by its **expected type**: the candidate whose signature admits the types the call is used at (the annotated binding,
+   the parameter it is passed to, the return position); exactly one admissible candidate is chosen, none admissible is
+   `T0012` naming the candidates, several admissible is `T0013`. It needs a deferred goal over an inference variable,
+   which inference does not have (open question 1; metel-core#2018).
+3. `T0013` is the error for every case in which a call has no unique static target: two different aspects defining the
+   same method on one receiver, several impls of one aspect called directly, and a parameter with several bounds of one
+   aspect (section 3.1).
 
 ## 4. What this does not change
 
-- `dyn Conv<i64>` and `dyn Conv<String>` are different object types; their vtables are not affected.
+- `dyn Conv<i64>` and `dyn Conv<String>` are different object types; their vtables are not affected. *Not yet for a type
+  that implements both:* the coercion to either object picks the last registered impl, so a call through
+  `dyn Conv<i64>` can run the `Conv<String>` impl (metel-core#2062).
 - An aspect without type arguments behaves as before: its identity is its name.
-- A call syntax that names the impl explicitly is not introduced here (open question 3).
+- A call syntax that names the impl explicitly is not introduced here (open question 3). The language has none: the only
+  ways to resolve an ambiguous call are a bound that names the arguments, and, once section 3.2 is implemented, an
+  annotation.
 
 ---
 
@@ -131,9 +153,11 @@ alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3
 
 1. **Staging of section 3.2.** Choosing among candidates by expected type needs the call's type, which inference only
    knows after unification, so it needs a deferred goal over an inference variable; the obligation solver of
-   metel-core#1813 is for ownership goals and is not that mechanism. Until it exists a direct call with several
-   candidates is `T0013` whether or not it is annotated, and section 3.2's resolution takes effect with the mechanism.
-   Is that staging acceptable, or should the first release restrict section 1.1 to one impl per aspect and type?
+   metel-core#1813 is for ownership goals and is not that mechanism. **This is the state of the compiler:** a direct
+   call with several candidates is `T0013` whether or not it is annotated, and section 3.2's resolution takes effect
+   with the mechanism (metel-core#2018). Is that staging acceptable, or should the first release restrict section 1.1
+   to one impl per aspect and type? (Several impls per type and selection through a bound are already shipped, so
+   restricting now would remove working behaviour.)
 2. **Locality of arguments (1.2).** Rust counts a trait's type arguments towards locality: `impl From<MyType> for i64` is
    legal in a crate that owns only `MyType`, which is how a crate converts its own types into foreign ones. Section 1.2
    says arguments do not count, the stricter choice, under which `extend i64: Conv<MyType>` needs `Conv` to be local.
@@ -150,8 +174,9 @@ alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3
    syntax, which interacts with RFC-0223's call rules and the path grammar, and the language has no aspect-qualified call today
    (`Show::show(&l)` is `T0003`, unresolved path; a type-qualified `L::show(..)` parses but names no aspect), so the form
    would be new, not an extension.
-4. **Free argument in a bound (2).** Whether `X: Conv<U>` with several impls should infer `U` from other constraints
-   rather than being ambiguous.
+4. **Free argument in a bound (2).** Whether `X: Conv<U>` should infer `U` from the impl. Today it is not inferred at
+   all (`T0002`), even when the type has a single impl; the choice is between inferring from a unique impl, inferring
+   from other constraints, and leaving it as an error that asks for an annotation.
 
 5. **Should function overloading continue to be accepted?** Metel accepts several free functions of one name as an
    overload set: identical parameter types are `T0011`, a call is resolved by comparing the per-slot argument types and
