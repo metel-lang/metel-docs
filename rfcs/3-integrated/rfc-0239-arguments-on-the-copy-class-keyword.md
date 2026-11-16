@@ -2,8 +2,23 @@
 id: rfc-0239
 title: "Arguments on the copy Class Keyword"
 date: '2026-11-16'
-status: draft
+status: integrated
+updated: '2026-11-16'
+tracking: 2071
+coverage:
+  "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-6" }
+  "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
+  "3": { kind: blocked, reason: "The explicit-entry rule is not implemented until metel-core#2072.", ref: "https://github.com/metel-lang/metel-core/issues/2072" }
+  "4": { kind: untestable, reason: "A type whose flows differ writes the derives entries, whose rules RFC-0227 and RFC-0234 state." }
+impl_tracking: 2072
+impl_status: not-started
 ---
+
+> **Status — under review (2026-11-16).**
+
+> **Status — accepted (2026-11-16).** no-open-questions
+
+> **Status — integrated (2026-11-16).**
 
 ## Summary
 
