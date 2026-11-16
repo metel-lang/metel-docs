@@ -4310,7 +4310,7 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md), [rfc-0239](../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md), [rfc-0239](../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

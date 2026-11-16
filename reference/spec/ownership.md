@@ -293,7 +293,7 @@ A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -411,7 +411,7 @@ a consequence of its fields.
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -443,7 +443,7 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -458,7 +458,7 @@ The compiler provides `Clone` for the built-in kinds of the table above: scalars
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1250,7 +1250,7 @@ A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ .title }`: i
 longer has. There is no way to write an impl for a residual itself in this release: RFC-0214 (under review) proposes one, and
 until it is implemented a residual has such an aspect only through the rules below. `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A residual of a type that
 cannot grant `Copy` (a field is not `Copy`) never is, even if the remaining fields are: the declaration says so, not the
-shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously. A type whose `Clone` is written is not `Copy` ([RFC-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
+shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously. A type whose `Clone` is written is not `Copy` ([RFC-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
 so its projections move like the value itself. The `Copy` rule for residuals is native compiler logic in this release, a named exception with a recorded exit
 (GAP-OWNERSHIP-004): it moves to the std row template with no change in accepted programs.
 
@@ -1267,7 +1267,7 @@ holds when no field is present, and a copy of it copies no field.
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0211](../../rfcs/3-integrated/rfc-0211-aspects-on-residuals.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0211](../../rfcs/4-implemented/rfc-0211-aspects-on-residuals.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

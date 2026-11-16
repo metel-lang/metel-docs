@@ -2,8 +2,8 @@
 id: rfc-0211
 title: "Aspects on Residuals"
 date: '2026-11-02'
-status: integrated
-updated: '2026-11-13'
+status: implemented
+updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1792'
 coverage:
   "1": { spec: "spec.ownership.aspects-on-a-residual.legality-1" }
@@ -11,7 +11,7 @@ coverage:
   "3": { kind: untestable, reason: "Section 3 records rejected alternatives; it adds no rule." }
   "4": { kind: untestable, reason: "Section 4 states costs; it adds no rule." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1830'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Status — accepted (2026-11-05).** Ratified in the Copy and Clone settlement sweep (metel-core#1824); spellings ratified by the language owner 2026-11-05.
@@ -21,6 +21,8 @@ impl_status: in-progress
 > every residual) is RFC-0217, under review. The title changed from "Aspect Templates on Residuals".
 
 > **Status — integrated (2026-11-13).** Integrated into reference/spec/ownership.md (aspects-on-a-residual legality 1 to 7, dynamics 1); implementation tracked in metel-core#1830.
+
+> **Status — implemented (2026-11-16).**
 
 ## Summary
 
@@ -150,6 +152,17 @@ projections move like the value itself.
 - **RFC-0089** — `Discard` and `Linear`, which follow the surviving fields.
 - **RFC-0109 / RFC-0146 / RFC-0147 / RFC-0148** — narrowed receivers, the route for written impls (RFC-0214).
 - **metel-core#1788** — the dispatch bug this RFC's rule resolves.
+
+## Deferred parts and their owners
+
+What this RFC leaves for later, and where each part is tracked:
+
+- **Row templates: a derived aspect on a projection**: RFC-0217 (metel-core#1834) and GAP-OWNERSHIP-004 (metel-core#1823).
+- **Written impls for a residual**: RFC-0214 (metel-core#2003); their construction is RFC-0216 (draft).
+- **Row-bounded `Drop` dispatch against a narrowed residual**: RFC-0137 section 5 (metel-core#949) and GAP-OWNERSHIP-003.
+- **`Discard` and `Linear` on a residual**: RFC-0089 (metel-core#953, #1831).
+
+---
 
 ## Open questions
 

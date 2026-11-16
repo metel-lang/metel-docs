@@ -222,7 +222,7 @@ waits on comptime.
 > that runs no user code); it is granted only in the declaration, with the exact per-instantiation condition
 > (every field `Copy`, not `Drop`, not `Linear`), and it brings a provided `Clone` that cannot be written for a
 > `Copy` type: RFC-0206 (accepted 2026-11-05, integrated 2026-11-10), RFC-0207, RFC-0212 and RFC-0213
-> (implemented), RFC-0211 (integrated). The classes are the lattice of RFC-0089. The spec's `Copy` section
+> (implemented), RFC-0211 (implemented). The classes are the lattice of RFC-0089. The spec's `Copy` section
 > (`ownership.md`) is the normative text.
 >
 > Differences from the text this section replaced: anonymous records and tuples are `Copy` when their parts are;

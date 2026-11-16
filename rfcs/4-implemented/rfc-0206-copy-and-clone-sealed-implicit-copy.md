@@ -2,8 +2,8 @@
 id: rfc-0206
 title: "Copy and Clone: A Sealed Implicit Copy and an Explicit Clone"
 date: '2026-11-02'
-status: integrated
-updated: '2026-11-10'
+status: implemented
+updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1785'
 coverage:
   "1": { spec: "spec.ownership.clone.legality-1" }
@@ -14,7 +14,7 @@ coverage:
   "6": { kind: untestable, reason: "Implementation staging and dependencies are not a language rule." }
   "7": { kind: untestable, reason: "The worked examples are fixtures citing the Copy and Clone rules." }
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1808'
-impl_status: in-progress
+impl_status: implemented
 ---
 
 > **Extracted from RFC-0080 on 2026-11-02**, the way RFC-0162 was extracted from RFC-0157, **redesigned on
@@ -32,6 +32,8 @@ impl_status: in-progress
 > **Status — integrated (2026-11-10).**
 
 > **Implementation note (2026-11-10).** Implemented in the v0.16.0 Copy and Clone stage before this integration step (a process slip; PROCESS.md now states the gate). The implementation follows the text except: `extend T: Copy;` is an error at once, with no deprecation window (section 5; language owner, 2026-11-09, since the language has no users); a generic derive bounds each type parameter a field holds by value instead of evaluating the exact per-instantiation condition (section 2 rule 3; metel-core#1938, which needs the row machinery); and the residual rule (section 2 rule 6) waits for RFC-0211. `Clone` is provided for the unit type, tuples of `Clone` parts and `Copy` closures, and `Option`, `Result` and `List` have it in std, as section 3 plans.
+
+> **Status — implemented (2026-11-16).**
 
 ## Summary
 
@@ -622,6 +624,22 @@ RFC-0211 was accepted with a staged marker and split on 2026-11-06: RFC-0211 kee
 with its provided `Clone`, the `Drop` dispatch, `T0012` otherwise) and the template half is RFC-0217, under review, with
 RFC-0209 and RFC-0210, which follow with the row machinery. The targeted adversarial review of the changes made after the fourth review (review 5, 2026-11-05) judged the cluster
 not ready; its repairs are applied, and a short second pass on the changed text precedes the sweep.
+
+## Deferred parts and their owners
+
+What this RFC leaves for later, and where each part is tracked:
+
+- **The obligation solver for abstract types, with witnesses** (section 6, step 2): metel-core#1813, in the Abstract ownership solver
+  milestone. In v0.16.0 undecided ownership in a generic body is a diagnostic (metel-core#1814). No RFC owns the solver's design yet.
+- **Arrays as std impls of `Copy` and `Clone` over a compile-time length, the record `Clone` hook, and the other structural types**:
+  compiler rules in this release; metel-core#1811, #1390 and #702 (Structural kinds after comptime), on RFC-0092 and RFC-0132.
+- **Row templates for the structural `Copy` of named types and their residuals**: RFC-0217 (metel-core#1834) and GAP-OWNERSHIP-004
+  (metel-core#1823).
+- **The `linear` class keyword, the `Discard` and `Linear` classes and the check of a written `Discard` bound**: RFC-0089
+  (metel-core#953, #1831; preparation in #1827). The keyword is reserved here.
+- **A lint for a large implicit copy**: metel-core#1825 (Backlog).
+
+---
 
 ## Open questions
 
