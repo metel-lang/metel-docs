@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-15'
+generated_on: '2026-11-16'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**230 RFCs total.** 36 draft, 55 under review, 10 accepted, 4 integrated (105 live), 93 implemented, 16 superseded, 16 refused (125 settled).
+**231 RFCs total.** 37 draft, 55 under review, 10 accepted, 4 integrated (106 live), 93 implemented, 16 superseded, 16 refused (125 settled).
 
-## Draft (36)
+## Draft (37)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -53,6 +53,7 @@ the curated thematic map.
 - **RFC-0222** — Builder Aspect (`0-draft` ; rfcs/0-draft/rfc-0222-builder-aspect.md ; date 2026-11-07)
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
+- **RFC-0232** — Function Types as Regular Types (`0-draft` ; rfcs/0-draft/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16)
 
 ## Under Review (55)
 
