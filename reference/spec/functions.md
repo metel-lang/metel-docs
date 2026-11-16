@@ -404,7 +404,7 @@ A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b :
 
 > **Since v0.16.0 (RFC-0219).**
 
-A value of type `copy |T| -> U` satisfies `Copy` and the provided `Clone` through the aspect resolver, the answer move checking gets ([Copy](ownership.md#spec.ownership.copy.legality-3)): one property with two spellings, `copy struct` and `copy |T| -> U`. It is `Discard` once the `Discard` check exists; until then every type is `Discard` and nothing is checked.
+A value of type `copy |T| -> U` satisfies `Copy` and, by the entailment of `Copy`, `Clone`, through the aspect resolver, the answer move checking gets ([Copy](ownership.md#spec.ownership.copy.legality-3)): one property with two spellings, `copy struct` and `copy |T| -> U`. It is `Discard` once the `Discard` check exists; until then every type is `Discard` and nothing is checked.
 
 <!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
 

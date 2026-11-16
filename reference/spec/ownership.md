@@ -216,26 +216,30 @@ granted in the type's declaration (a `declared` aspect, RFC-0212):
 copy struct Point { x: f64, y: f64 }
 ```
 
-`struct Point derives Copy .{ .. }` is the same declaration, and `extend Point: Copy;` is an error.
+`struct Point derives Clone, Copy .{ .. }` is the same declaration, and `extend Point: Copy;` is an error.
 
 A type may implement `Copy` only if every one of its fields — or, for an enum, every payload
 in every variant — is itself `Copy`. Fixed-size arrays and tuples are `Copy` when their
 elements are.
 
-`Option<T>` is `Copy` when `T` is, and `Result<T, E>` when `T` and `E` are: the standard library grants it in their declarations (`derives Copy via T`, and `via T + E`), so an `Option<i64>` is copied and an `Option<String>` moves.
+`Option<T>` is `Copy` when `T` is, and `Result<T, E>` when `T` and `E` are: the standard library grants it in their declarations (`derives Clone(T), Copy(T)`, and `(T, E)`), so an `Option<i64>` is copied and an `Option<String>` moves.
+
+> **Pending** metel-core#2067 the standard library is still written with `via`.
 
 **References:** `&T` is `Copy`. `&var T` is not — an exclusive reference must remain unique,
 so it is moved or reborrowed rather than duplicated.
 
 **Granted in the declaration.** `Copy` is a `declared` aspect ([RFC-0212](declarations.md#spec.declarations.aspects.aspect-declaration-properties.legality-1)):
-`copy struct P .{ .. }` and `struct P derives Copy .{ .. }` grant it ([Declaration Clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)),
+`copy struct P .{ .. }` and `struct P derives Clone, Copy .{ .. }` grant it ([Declaration Clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)),
 and an `extend P: Copy;` of a type with a declaration is an error. The standard library grants it to the scalars and
 to the structural kinds. Whether a type may be duplicated implicitly is its author's statement: a type from another
 module cannot be made `Copy` by its user.
 
-**The `Clone` it brings.** `Copy` declares `Clone` as a derived super-aspect, so granting `Copy` also grants the
-[`Clone`](#clone) the compiler provides: the representation copy. That `clone` cannot be written, and `T: Copy` proves
+**The `Clone` it requires.** `Copy` declares `Clone` as a derived super-aspect: a type that derives `Copy` also derives
+[`Clone`](#clone), in its own entry, and that `clone` is the representation copy. It cannot be written, and `T: Copy` proves
 `T: Clone`.
+
+> **Pending** metel-core#2066 the compiler still generates the `Clone` from the `Copy` entry.
 
 **What an implicit copy is.** A place read in value position (`let b := a`, an argument, `return a`, a struct field, an
 array element, a by-value `self`, a by-copy capture, and the same for a field `a.x`, an index `a[i]` and a dereference
@@ -282,7 +286,7 @@ In a generic body, reusing a value whose type is a nominal application that ment
 
 ##### Legality Rule {#spec.ownership.copy.legality-3}
 
-A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or `struct P derives Copy .{ .. }`. An `extend T: Copy;` of a struct, enum or record is an error with a fix-it that moves it into the declaration.
+A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or `struct P derives Clone, Copy .{ .. }`. An `extend T: Copy;` of a struct, enum or record is an error with a fix-it that moves it into the declaration.
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
 
@@ -300,9 +304,13 @@ A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or 
 
 ##### Legality Rule {#spec.ownership.copy.legality-4}
 
-The `Clone` of a `Copy` type is the one the compiler provides and cannot be written: a written `extend T: Clone` for a `Copy` type overlaps the provided impl and is an error (`T0015`). A type that needs a custom duplicate is not `Copy`.
+The `Clone` of a `Copy` type is derived and cannot be written: a written `extend T: Clone` for a `Copy` type overlaps the derived impl and is an error (`T0015`), and its `clone` is the representation copy. A type that needs a custom duplicate is not `Copy`.
 
 <!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0234](../../rfcs/3-integrated/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1231,12 +1239,15 @@ so its projections move like the value itself. The `Copy` rule for residuals is 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-1}
 
 A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` and the residual's
-**present** fields are `Copy`. It then has the provided `Clone` that `Copy` brings. The rule is evaluated over the present
+**present** fields are `Copy`. It then has `Clone` by the entailment of `Copy`, and its `clone` is the copy. The rule is evaluated over the present
 fields: for `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is `Copy`: the condition
 holds when no field is present, and a copy of it copies no field.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0211](../../rfcs/3-integrated/rfc-0211-aspects-on-residuals.md), [rfc-0234](../../rfcs/3-integrated/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
+<!-- rfc.py:origins:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-2}
 

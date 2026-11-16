@@ -2,12 +2,24 @@
 id: rfc-0235
 title: "Super-Aspects Written with requires"
 date: '2026-11-16'
-status: under-review
+status: integrated
 updated: '2026-11-16'
 tracking: 2065
+coverage:
+  "1": { spec: "spec.declarations.aspects.super-aspects.legality-1" }
+  "2": { kind: untestable, reason: "The clause order only matters once an aspect may have an instance list (RFC-0236); no rule exists to cite yet." }
+  "3": { kind: blocked, reason: "The reserved words and the old-spelling errors land with metel-core#2068.", ref: "https://github.com/metel-lang/metel-core/issues/2068" }
+  "4": { spec: "spec.declarations.aspects.super-aspects.legality-4" }
+  "5": { kind: untestable, reason: "The migration section lists corpus edits and states no rule." }
+impl_tracking: 2068
+impl_status: not-started
 ---
 
 > **Status — under review (2026-11-16).**
+
+> **Status — accepted (2026-11-16).** No open questions; design settled with the language owner 2026-11-16.
+
+> **Status — integrated (2026-11-16).**
 
 ## Summary
 
