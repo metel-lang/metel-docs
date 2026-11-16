@@ -9,7 +9,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2002'
 
 > **Status — under review (2026-11-16).** Rewritten from "Stated flow for every derived impl": the `via` keyword is replaced by
 > arguments to the derivation, and the registration of user derivations is left to a later RFC (the registration RFC, which
-> supersedes the remaining half of RFC-0093). Milestone: *Aspects and generics*.
+> supersedes the remaining half of RFC-0093). Milestone: v0.16.0.
 
 ## Summary
 
@@ -78,7 +78,9 @@ derive_args    = { ident ~ ("," ~ ident)* }              // for the field-wise d
 ```
 
 - **No parentheses** asks the compiler to compute the arguments (for a field-wise derivation, the smallest sufficient flow).
-- **Empty parentheses** state an empty argument list: the impl has no conditions on the declaration's parameters.
+- **Empty parentheses** state an empty argument list: the impl has no conditions on the declaration's parameters. This is distinct
+  from no list, which computes: on a `pub` generic type it is how a phantom parameter is stated (`pub struct Id<T> derives Clone() { n: i64 }`),
+  and legality 1 still applies, so `derives Clone()` on a type whose fields hold `T` by value is an error.
 - **Parentheses and not angle brackets**, since an aspect's own type arguments (RFC-0228) already use `<>`: `derives Conv<i64>(T)`
   is the derivation of the aspect `Conv<i64>` with the argument `T`.
 - **Positional arguments are numeric-label rows** (`.0`, `.1`, RFC-0151) as call arguments are (RFC-0223); a keyword argument is
@@ -113,6 +115,10 @@ omission is an error with a fix-it showing the computed set. Under this RFC the 
 impl, for the same reason: a field edit cannot change a public interface silently. In std, `Option<T>`, `Result<T, E>` and the
 others write `derives Clone(T), Copy(T)` (or `(T, E)`) where they are `Copy` as well, and `derives Clone(T)` where they are not.
 Non-`pub` types keep the computed set.
+
+The rule is the same for every field-wise aspect, not only the ownership aspects: a `pub` generic type's bounds are part of its
+interface whichever aspect they bound. A non-generic `pub` type, a non-`pub` type, and a `pub` generic type whose computed flow
+is empty (a parameter no field holds by value) are not subject to it.
 
 A derivation that declares its own parameters (the registration RFC) says which of them are subject to this rule, by their type.
 
@@ -154,10 +160,7 @@ introduced: the repetition is short and a second spelling of the list costs more
 
 ## Open questions
 
-1. **Does the `pub` statement (section 3) widen to every field-wise derived impl, or only to the ownership aspects?** Recommended:
-   every field-wise derived impl; std's public derives gain arguments.
-2. **Should an empty argument list (`derives Clone()`) be distinct from no list?** The draft says yes: no list computes, an empty
-   list states "no conditions". The alternative treats `()` as the computed default and leaves a parameter-free impl unwritable.
+None known.
 
 ---
 
