@@ -3957,7 +3957,6 @@ constructor must be local to the module containing the `extend` declaration.
 
 An aspect declaration lists its direct super-aspects after `requires`:
 
-<!-- doc-example: skip reason="the published develop binary predates the new spelling (metel-core#2066, #2067, #2068); verify once it is published" -->
 ```metel
 pub aspect Ord requires Eq {
     fun cmp(&self, other: &Self) -> Ordering;
@@ -4213,7 +4212,6 @@ A generic type that derives a field-wise aspect states, when it is `pub`, which 
 its **flow**. The flow is an argument to the derivation, written in parentheses after the entry: `derives Copy(T)`,
 `derives Clone(A, B)`. `derives Clone()` states no conditions, and an entry with no parentheses asks the compiler to compute the flow:
 
-<!-- doc-example: skip reason="the published develop binary predates the new spelling (metel-core#2066, #2067, #2068); verify once it is published" -->
 ```metel
 struct Wrapper<T> derives Clone(T), Copy(T) { value: T }           // Wrapper<X> is Copy exactly when X is
 struct Pair<A, B> derives Clone(A, B), Copy(A, B) { a: A, b: B }   // `,` separates parameters and entries alike
@@ -4390,7 +4388,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 An entry of a `derives` clause for a field-wise aspect (`Copy`, `Clone`) may be followed by an argument list in parentheses, one or more type parameters of the declaration separated by commas. The named parameters are the type's **flow** for that aspect: `N<A..>` has the aspect exactly when `N` derives it, the exclusions of the aspect hold at the instantiation, and every argument at a position in the flow has it. `copy struct` and `copy enum` take no argument list. An argument list on a derivation that takes none, on a negative entry, or naming something that is not a type parameter of the declaration is an error, and so is the former `via` clause. A parameter of row or record kind is not accepted in the flow.
 
-<!-- doc-example: skip reason="the published develop binary predates the new spelling (metel-core#2066, #2067, #2068); verify once it is published" -->
+<!-- doc-example: expect-fail reason="the second declaration is the error the rule shows: `via` is replaced by the argument list" -->
 ```metel
 struct Wrapper<T> derives Clone(T), Copy(T) { value: T }
 struct Old<T> derives Copy via T { value: T }   // error: `via` is replaced by the argument list; write `derives Copy(T)`
@@ -4419,7 +4417,7 @@ struct Old<T> derives Copy via T { value: T }   // error: `via` is replaced by t
 
 The stated flow must contain every type parameter that a field's aspect depends on, and may contain more. The dependence of a field type is: a type parameter `P` depends on `{P}`; a nominal application `N<A..>` depends on the union of the dependences of its arguments at the positions in the flow set of `N`, and is an error at the field if `N` is not `Copy` for any arguments; a tuple or array depends on the union of its components; a reference and the `T[]` view depend on nothing; a primitive depends on nothing. A written function type is move-only, so a `Copy` type cannot hold one. A parameter missing from the stated flow is an error at the field, with a fix-it that adds it. A flow larger than needed is accepted and makes the type have the aspect only when those arguments do.
 
-<!-- doc-example: skip reason="the published develop binary predates the new spelling (metel-core#2066, #2067, #2068); verify once it is published" -->
+<!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: `Copy(A)` does not cover `B`" -->
 ```metel
 struct Bad<A, B> derives Clone, Copy(A) { a: A, b: B }   // error: field `b` depends on `B`, which `Copy(A)` does not cover
 struct Handle<T> derives Clone(T), Copy(T) { id: i64 }   // accepted: Copy only when T is, whatever the fields become
@@ -4447,7 +4445,7 @@ struct Handle<T> derives Clone(T), Copy(T) { id: i64 }   // accepted: Copy only 
 
 A `derives` entry for a field-wise aspect without an argument list states the flow the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit the list. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set. An empty list (`derives Clone()`) states no conditions on the parameters, and is an error when a field holds a parameter by value. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
 
-<!-- doc-example: skip reason="the published develop binary predates the new spelling (metel-core#2066, #2067, #2068); verify once it is published" -->
+<!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: a public generic type omits a non-empty flow" -->
 ```metel
 pub struct W<T> derives Clone(T), Copy { value: T }   // error: a public generic type must state its flow: `derives Copy(T)`
 pub copy struct V<T> { r: &T }                         // accepted: the computed flow is empty
@@ -4498,7 +4496,7 @@ copy struct Payload<T: Source> { value: T::Item }   // error: a Copy declaration
 
 In a generic body, whether a value of a nominal type with a stored flow set is copied or moved is decided by the bounds in scope: it is copied exactly when every argument at a position in the flow set is known `Copy` (a type parameter by a bound that grants `Copy`, a nested application by its own flow set, a concrete type directly) and otherwise it moves. That a value moves under the bounds in scope is not evidence that its type argument is not `Copy`: it does not select an implementation guarded by a negative bound, and for selection and coherence the fact stays undecided. The undecided-ownership diagnostic applies to a nominal type only when it has no stored flow set.
 
-<!-- doc-example: skip reason="the published develop binary predates the new spelling (metel-core#2066, #2067, #2068); verify once it is published" -->
+<!-- doc-example: expect-fail reason="`bad` is the error the example shows: `T` carries no `Copy` bound, so `w` moves" -->
 ```metel
 struct Wrapper<T> derives Clone(T), Copy(T) { value: T }
 fun twice<T: Copy>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }   // accepted
