@@ -64,12 +64,17 @@ For an aspect `E` with a super-aspect entry marked `deriving B`:
    section 3). Otherwise it is an error naming the entry: "`Copy` requires a derived `Clone`; add `Clone` to the derives clause".
    The requirement is transitive through `deriving` entries of `B`.
 2. A written `extend P: B` for a type whose clause derives `E` is an error ("`Copy` requires a derived `Clone`; this type writes
-   one"), with the fix-it of RFC-0213: delete the impl, or write `E` by hand too (`extend P: E;` when `E` has no methods) so that
-   `E` is no longer derived. This is today's `T0015` outcome with a message that names the obligation.
+   one"). This is today's `T0015` outcome with a message that names the obligation. The fix-it depends on `E`: delete the impl
+   in every case; or, when `E` can be written by hand (`Eq`: `extend P: Eq;`, RFC-0213), write `E` by hand too so that it is no
+   longer derived. `Copy` is sealed and granted only in the declaration (RFC-0206), so for `Copy` the choices are to delete the
+   written `Clone` or to drop `Copy`.
 3. If `B` has no derivation (RFC-0207), `derives E` is an error: both are written by hand. The entry is an obligation in the
    sense of an unmarked entry, with the stronger requirement that `B` be derived when `E` is.
 4. Derivation stays idempotent per type and aspect: listing an aspect twice derives it once (RFC-0213 section 4 rule 4).
-5. The colon list (`struct P: A`) generates nothing and is unchanged: every super-aspect must already exist for `P`.
+5. The colon list (`struct P: A`) generates nothing and is unchanged for an aspect it can grant: every super-aspect must already
+   exist for `P`. It cannot grant an aspect that has a derivation, and an aspect with a marked super-aspect has one by
+   definition (its recipe includes the super), so the obligation concerns `derives` and the class keywords only. Today
+   `struct P: Copy` is already `T0046`, "`Copy` is granted by derivation, so the colon list cannot grant it".
 
 An unmarked super-aspect entry (`aspect Error: Display`) stays an ordinary obligation that the super-aspect *exist*, written or
 derived.
@@ -94,11 +99,21 @@ of a use by value, not a field-by-field clone that happens to agree with it. Bec
 (section 1 rule 2), nothing observes the difference except the cost. This is RFC-0206's "elided provided `Clone`" restated: the
 `Clone` of a `Copy` type is derived and is the copy.
 
-### 5. Migration
+### 5. Residuals
+
+A residual has no clause (RFC-0137, RFC-0211). A residual that is `Copy` is `Clone` by the entailment `Copy` implies `Clone`
+(RFC-0168's super-aspect relation, RFC-0213), and its `clone` is the copy, as section 4 says for any `Copy` instantiation.
+Where RFC-0217 gives a residual a derived `Clone` by a row template, section 4 applies to it too. The words "the provided
+`Clone` that `Copy` brings" in RFC-0211, RFC-0217 and the spec's ownership chapter describe this entailment and are replaced
+by it when this RFC is integrated.
+
+### 6. Migration
 
 Std's `Option` and `Result` stay `derives Clone, Copy via T` and `derives Clone, Copy via T + E`: `Clone` has its computed flow
 and `Copy` its stated one. RFC-0213 section 5's `Dup` example becomes `derives Clone, Copy`. A type that derives `Copy` alone adds
-`Clone`; the diagnostic's fix-it gives the edit. The language has no users to migrate.
+`Clone`; the diagnostic's fix-it gives the edit. The language has no users to migrate, but the corpus does: at the time of
+writing 57 uses of `derives Copy` without `Clone` in 41 fixture files and about 20 mentions in the spec change. `copy struct`
+and `copy enum` are unaffected, since they expand to both entries.
 
 ---
 
@@ -113,6 +128,8 @@ and `Copy` its stated one. RFC-0213 section 5's `Dup` example becomes `derives C
 - **RFC-0206** (integrated): the provided, unwritable `Clone` of a `Copy` type becomes the derived `Clone` of section 4, with the
   written case rejected by section 1 rule 2.
 - **RFC-0207** (implemented): `copy struct` is `derives Clone, Copy` (section 3).
+- **RFC-0211** (integrated) and **RFC-0217** (under review): a `Copy` residual's `Clone` is the entailment of section 5; their
+  "brings" wording is replaced at integration.
 - **RFC-0224** (integrated): section 3's sentence on the brought `Clone` is replaced by section 2.
 - **RFC-0168** (draft): `Eq: deriving PartialEq` becomes `derives PartialEq, Eq`, the same obligation.
 
@@ -139,7 +156,10 @@ and `Copy` its stated one. RFC-0213 section 5's `Dup` example becomes `derives C
 - **Verbosity.** `derives Clone, Copy` is longer than `derives Copy`, and `copy struct` is the short form. A `pub` generic `Copy`
   type that states a flow for `Clone` as well (RFC-0227) states it twice; RFC-0227's grouped `via` removes that.
 - **Implementation.** The clause expansion stops generating the marked super and checks for it instead; `copy struct` expands to
-  both entries; the derived `Clone` body uses the copy at `Copy` instantiations; the error messages change.
+  both entries; the derived `Clone` body uses the copy at `Copy` instantiations; the error messages change. Section 4 needs one
+  derived `Clone` body of a conditional type to choose per instantiation, so whether `T` is `Copy` must be known where the body
+  runs, in a generic body of the interpreter as in a monomorphised one. If that proves costly, the rule holds as "observably the
+  copy" (nothing can tell the difference once a written `Clone` is rejected), at the price of the literal identity.
 
 ---
 
