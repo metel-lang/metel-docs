@@ -4210,7 +4210,9 @@ an `extend` of an aspect does not have it.
 
 A generic type that derives a field-wise aspect states, when it is `pub`, which of its type parameters the aspect depends on,
 its **flow**. The flow is an argument to the derivation, written in parentheses after the entry: `derives Copy(T)`,
-`derives Clone(A, B)`. `derives Clone()` states no conditions, and an entry with no parentheses asks the compiler to compute the flow:
+`derives Clone(A, B)`. `derives Clone()` states no conditions, and an entry with no parentheses asks the compiler to compute the flow. The `copy` class keyword takes the list directly, `pub copy(T) struct W<T> { value: T }`, for both of its entries:
+
+> **Pending** metel-core#2072 the `copy` class keyword takes no argument list yet.
 
 ```metel
 struct Wrapper<T> derives Clone(T), Copy(T) { value: T }           // Wrapper<X> is Copy exactly when X is
@@ -4307,12 +4309,12 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-6}
 
-`copy` before `struct` or `enum` is `derives Clone, Copy`. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented.
+`copy` before `struct` or `enum` is `derives Clone, Copy`. It may be followed by an argument list in parentheses, the flow of both entries: `copy(P1, .., Pk)` is `derives Clone(P1, .., Pk), Copy(P1, .., Pk)`, and `copy()` states no conditions. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented; it takes no argument list.
 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md), [rfc-0239](../../rfcs/3-integrated/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4386,7 +4388,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-11}
 
-An entry of a `derives` clause for a field-wise aspect (`Copy`, `Clone`) may be followed by an argument list in parentheses, one or more type parameters of the declaration separated by commas. The named parameters are the type's **flow** for that aspect: `N<A..>` has the aspect exactly when `N` derives it, the exclusions of the aspect hold at the instantiation, and every argument at a position in the flow has it. `copy struct` and `copy enum` take no argument list. An argument list on a derivation that takes none, on a negative entry, or naming something that is not a type parameter of the declaration is an error, and so is the former `via` clause. A parameter of row or record kind is not accepted in the flow.
+An entry of a `derives` clause for a field-wise aspect (`Copy`, `Clone`) may be followed by an argument list in parentheses, one or more type parameters of the declaration separated by commas. The named parameters are the type's **flow** for that aspect: `N<A..>` has the aspect exactly when `N` derives it, the exclusions of the aspect hold at the instantiation, and every argument at a position in the flow has it. The `copy` class keyword takes the list in its own position ([class keywords](#spec.declarations.aspects.declaration-clauses.legality-6)). An argument list on a derivation that takes none, on a negative entry, or naming something that is not a type parameter of the declaration is an error, and so is the former `via` clause. A parameter of row or record kind is not accepted in the flow.
 
 <!-- doc-example: expect-fail reason="the second declaration is the error the rule shows: `via` is replaced by the argument list" -->
 ```metel
@@ -4397,7 +4399,7 @@ struct Old<T> derives Copy via T { value: T }   // error: `via` is replaced by t
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../rfcs/4-implemented/rfc-0227-derivation-arguments.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0239](../../rfcs/3-integrated/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4443,7 +4445,7 @@ struct Handle<T> derives Clone(T), Copy(T) { id: i64 }   // accepted: Copy only 
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-13}
 
-A `derives` entry for a field-wise aspect without an argument list states the flow the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit the list. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set. An empty list (`derives Clone()`) states no conditions on the parameters, and is an error when a field holds a parameter by value. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
+A `derives` entry for a field-wise aspect without an argument list states the flow the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit the list. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set, which for a bare `copy` keyword is `copy(..)`. A `copy` keyword with a list states the flow of both entries and satisfies this rule. An empty list (`derives Clone()`) states no conditions on the parameters, and is an error when a field holds a parameter by value. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
 
 <!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: a public generic type omits a non-empty flow" -->
 ```metel
@@ -4587,6 +4589,20 @@ A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow mu
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6IndoZXJldmVyIGl0IGlzIGBDb3B5YCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzRfYV9jbG9uZV9mbG93X3dpZGVyX3RoYW5fdGhlX2NvcHlfZmxvd19pc190MDA0Ni5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDIzNDogYSB0eXBlIGlzIGBDbG9uZWAgd2hlcmV2ZXIgaXQgaXMgYENvcHlgLCBzbyB0aGUgYENsb25lYCBmbG93IG11c3QgYmUgaW5zaWRlIHRoZSBgQ29weWAgZmxvdy5cbnN0cnVjdCBQPEEsIEI+IGRlcml2ZXMgQ2xvbmUoQSwgQiksIENvcHkoQSkgeyBhOiBBLCBuOiBpNjQgfSAvLyBFUlJPUltUMDA0Nl1cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2FzcGVjdHMvcmZjMDIzNF9hX2Nsb25lX2Zsb3dfd2lkZXJfdGhhbl90aGVfY29weV9mbG93X2lzX3QwMDQ2Lm10bCIsIm5hbWUiOiJyZmMwMjM0X2FfY2xvbmVfZmxvd193aWRlcl90aGFuX3RoZV9jb3B5X2Zsb3dfaXNfdDAwNDYubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-18}
+
+> **Pending** metel-core#2072
+
+A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` class keyword restates an entry the keyword stands for. When the keyword has no argument list, the explicit entry replaces the keyword's, with its own list: `copy struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and `pub copy struct W<T> derives Clone(T), Copy(T)` states both. When the keyword has an argument list, an explicit `Clone` or `Copy` entry is an error that names both spellings: write `copy(..)` or the `derives` entries, not both. A type whose `Clone` and `Copy` flows differ writes the `derives` entries.
+
+<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2072" reason="RFC-0239: the class keyword takes no argument list, and an explicit entry beside it loses its list, until metel-core#2072." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2072: RFC-0239: the class keyword takes no argument list, and an explicit entry beside it loses its list, until metel-core#2072._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 

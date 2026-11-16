@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**238 RFCs total.** 39 draft, 54 under review, 10 accepted, 4 integrated (107 live), 96 implemented, 19 superseded, 16 refused (131 settled).
+**238 RFCs total.** 38 draft, 54 under review, 10 accepted, 5 integrated (107 live), 96 implemented, 19 superseded, 16 refused (131 settled).
 
-## Draft (39)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -55,7 +55,6 @@ the curated thematic map.
 - **RFC-0236** — Inline Implementations in a Declaration (`0-draft` ; rfcs/0-draft/rfc-0236-inline-implementations-in-a-declaration.md ; date 2026-11-16)
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0238** — Derivation Registration (`0-draft` ; rfcs/0-draft/rfc-0238-derivation-registration.md ; date 2026-11-16)
-- **RFC-0239** — Arguments on the copy Class Keyword (`0-draft` ; rfcs/0-draft/rfc-0239-arguments-on-the-copy-class-keyword.md ; date 2026-11-16)
 
 ## Under Review (54)
 
@@ -127,12 +126,13 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (4)
+## Integrated (5)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`3-integrated` ; rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1808)
 - **RFC-0211** — Aspects on Residuals (`3-integrated` ; rfcs/3-integrated/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-13 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1830)
+- **RFC-0239** — Arguments on the copy Class Keyword (`3-integrated` ; rfcs/3-integrated/rfc-0239-arguments-on-the-copy-class-keyword.md ; date 2026-11-16 ; updated 2026-11-16 ; impl not-started ; tracking 2072)
 
 ## Implemented (96)
 
