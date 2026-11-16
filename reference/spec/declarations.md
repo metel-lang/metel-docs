@@ -4188,8 +4188,6 @@ The properties of an aspect are read from its declaration by identity. A re-expo
 
 > **Gap** GAP-DECLARATIONS-005
 
-> **Gap** GAP-DECLARATIONS-006
-
 A struct or enum declaration may carry two clauses after its name, and a class keyword before `struct` or `enum`
 (RFC-0207):
 
