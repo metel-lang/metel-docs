@@ -267,7 +267,7 @@ extend Handle: !Displayable;
 - RFC-0103 (Bodyless Aspect Declarations) — depends on this RFC as the direct precedent for
   bodyless declaration sugar one production earlier; also dropped the same `marker`-keyword
   alternative rejected above.
-- RFC-0105 (Struct-Embedded Aspect Lists, draft) — the larger struct/enum-embedding proposal
+- RFC-0105 (Struct-Embedded Aspect Lists, superseded by RFC-0236) — the larger struct/enum-embedding proposal
   split out of RFC-0103; reuses `extend_aspect_list` and the negative-always-eligible reasoning
   directly.
 
