@@ -2,8 +2,12 @@
 id: rfc-0234
 title: "Redundant Entries in a derives Clause"
 date: '2026-11-16'
-status: draft
+status: under-review
+updated: '2026-11-16'
+tracking: 2064
 ---
+
+> **Status — under review (2026-11-16).**
 
 ## Summary
 
