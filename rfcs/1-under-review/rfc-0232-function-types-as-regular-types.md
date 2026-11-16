@@ -2,11 +2,15 @@
 id: rfc-0232
 title: "Function Types as Regular Types"
 date: '2026-11-16'
-status: draft
+status: under-review
+updated: '2026-11-16'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2060'
 ---
 
 > **Design draft.** Nothing here is accepted. It reframes RFC-0161 and RFC-0219 and absorbs the idea of metel-core#702 for
 > function types. It changes no behaviour by itself: the first step it asks for is RFC-0161 Phase A.
+
+> **Status — under review (2026-11-16).**
 
 ## Summary
 
