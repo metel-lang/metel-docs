@@ -35,7 +35,10 @@ else was meant, the proposal below is not it. This is a design draft. Nothing he
 2. **The keyword is the common spelling.** `copy struct` is how the language writes a copyable type (RFC-0207 section 2,
    RFC-0234 section 3). A public generic container should be able to use it too, without a longer form that says the
    same thing twice (`Clone(T), Copy(T)`).
-3. **Both entries share one flow in nearly every case.** The class keyword already stands for the pair, and RFC-0234
+3. **An explicit entry beside the keyword is silently ignored today.** `copy struct H<T> derives Copy(T)` keeps the
+   keyword's computed flow and drops the stated one, so `H<String>` is copied (metel-core#2070). The keyword and the
+   entries need one rule for who states the flow.
+4. **Both entries share one flow in nearly every case.** The class keyword already stands for the pair, and RFC-0234
    section 2 requires the `Clone` flow to be inside the `Copy` flow. A flow written once on the keyword is the case where
    they coincide.
 
@@ -51,7 +54,8 @@ class_kw   = { copy_kw ~ derive_args? | linear_kw }
 ```
 
 An argument list follows `copy` directly, in parentheses, with the grammar of RFC-0227 section 1: type parameters of the
-declaration separated by commas, possibly none. It is accepted only on `copy`; `linear` stays reserved.
+declaration separated by commas, possibly none. It is accepted only on `copy`. `linear` takes no list: linear types are
+reserved (RFC-0207), and whether they take a flow is that RFC's decision.
 
 `copy(P1, .., Pk) struct T<..>` is `struct T<..> derives Clone(P1, .., Pk), Copy(P1, .., Pk)`, and likewise for `enum` and
 `record`. `copy() struct T` is `derives Clone(), Copy()`. `copy struct T` (no list) is unchanged: both flows are computed
@@ -68,10 +72,12 @@ rule (RFC-0227 section 3): `pub copy(T) struct W<T>` is accepted, `pub copy stru
 
 A `derives` entry for `Clone` or `Copy` in the same declaration restates an entry the keyword already stands for.
 
-- If the keyword has **no list**, the explicit entry is the entry: `copy struct P<T> derives Clone(T)` states the `Clone`
-  flow and leaves the `Copy` flow computed, as today.
-- If the keyword **has a list**, an explicit entry for `Clone` or `Copy` is an error: the flow would be stated twice.
-  The declaration writes `copy(..)` or the `derives` entries, not both.
+- If the keyword has **no list**, the explicit entry replaces the entry the keyword stands for, with its list:
+  `copy struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and
+  `pub copy struct W<T> derives Clone(T), Copy(T)` states both. (Today the explicit entry's list is dropped,
+  metel-core#2070; this section is the rule that fixes it.)
+- If the keyword **has a list**, an explicit entry for `Clone` or `Copy` is an error, with the fix-it "write `copy(..)` or
+  the `derives` entries, not both": the flow would be stated twice, and a silent winner would hide it.
 
 ### 4. A different flow for each aspect
 
@@ -116,11 +122,7 @@ fix-it text of the `pub` rule changes for the keyword. No existing program chang
 
 ## Open questions
 
-1. **Is the list on the keyword or on the entries?** The draft puts it on the keyword as the shared flow. The alternative
-   leaves the keyword bare and lets `derives` entries override it (`copy struct P<T> derives Copy(T)`), which is what
-   section 3 already allows when the keyword has no list.
-2. **Section 3's rule for a list plus an explicit entry.** An error, or the explicit entry wins?
-3. **`linear(T)`.** Linear types are reserved (RFC-0207). When they ship, does `linear` take a flow too? Not decided here.
+None known.
 
 ---
 
