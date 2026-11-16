@@ -1728,7 +1728,7 @@ implementation).
   guarantee attached, unlike an earlier draft's dropped `marker` keyword). This is
   the aspect-declaration analogue of RFC-0102's bodyless `extend`-block sugar, and
   nothing more.
-- **RFC-0105** *(draft, split from RFC-0103 on 2026-07-14)* — Struct-Embedded Aspect
+- **RFC-0105** *(superseded 2026-11-16 by RFC-0236; split from RFC-0103 on 2026-07-14)* — Struct-Embedded Aspect
   Lists — the deferred `struct Token: Copy2, Serializable, !Send { value: String }`
   / `enum ... : ...` proposal. Reuses RFC-0102 §5's `extend_aspect_list`, where
   struct/enum bodies stay fields-only: negative items are fully satisfied by the list
@@ -1761,7 +1761,7 @@ implementation).
   narrow parser/typechecker change only: non-empty constructors are unchanged, and
   empty enum-pattern braces were not added as part of this RFC. Opened 2026-07-14,
   implemented 2026-07-14.
-- **RFC-0104** *(draft)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
+- **RFC-0104** *(superseded 2026-11-16 by RFC-0236)* — Multi-Aspect Extend Blocks with Shared Bodies — split out
   of an earlier draft of RFC-0103's own struct/enum-embedding section, since it's a
   separate feature that doesn't depend on anything there. Lifts RFC-0102 §5's
   bodyless-only restriction for `extend` blocks specifically: `extend A: Aspect3,
@@ -1891,6 +1891,8 @@ generated file as the exact source of truth.
 - **RFC-0230** *(draft 2026-11-14; metel-core#2021)* — Negative label entry without the dot. Writes a negative row-bound entry as `!label` / `!label: T` instead of `!.label` / `!.label: T`, positive entries staying `.label`. Amends RFC-0189 section 1 and reverses, for negative entries, the choice RFC-0221 made on purpose; asks whether only negated entries drop the dot, what `!.0` and `!.[L]` become, and whether the labels inside `!{ }` keep theirs. Related: RFC-0188, RFC-0175, RFC-0225, RFC-0229.
 - **RFC-0233** *(draft 2026-11-16; metel-core#2055)* — Field sub-patterns in struct and variant patterns. A struct or variant pattern entry takes `field: pattern` (rename, literal, nested pattern) as a record pattern's does; bare names stay, field names stay undotted, visibility (RFC-0032 section 5) and RFC-0107's resolution unchanged. Extends RFC-0107 without amending it.
 - **RFC-0234** *(under review 2026-11-16; metel-core#2064)* — Super-aspect derivation is an obligation. A `deriving` mark on a super-aspect no longer generates it: `derives Copy` requires `Clone` to be derived in the same clause (`derives Clone, Copy`; `copy struct` declares both), and a hand-written `Clone` beside it is an error. The `Clone` of a `Copy` type is the copy, by construction. Split from RFC-0227.
+- **RFC-0235** *(draft 2026-11-16)* — Super-aspects written with `refines`. A dedicated keyword introduces an aspect's super-aspects (`aspect Ord refines Eq`), so the colon after a declared name always means "is an instance of". Prerequisite of RFC-0236.
+- **RFC-0236** *(draft 2026-11-16)* — Inline implementations in a declaration. A struct, enum or aspect declaration carries its aspect implementations in named blocks beside its fields (`Display { fun fmt .. }`, `Token { .. }` for inherent methods); `extend` adds only what the declaration does not list. Supersedes RFC-0105 and RFC-0104. Depends on RFC-0235.
 - **RFC-0231** *(implemented 2026-11-14, #2024, metel-core#2028)* — Unit as the empty row. `()` is the empty closed row `.{}` and the primitive unit type is retired as a separate type. Extracted from RFC-0151 section 6 and implemented before it. An anonymous empty residual becomes `()`; a branded one stays branded, and the spec's "neither empty form is `Unit`" is amended accordingly. Accepts `extend (): A`, prints `()`, deletes `Type::Unit` and `Value::Unit`: about 76 sites, and RFC-0221's text already relies on the unification, which the compiler has not done (measured: `()` and `.{}` do not unify).
 - **RFC-0232** *(under review 2026-11-16, #2060)* — Function types as regular types. A written function type is the erased `dyn Callable<Args, Ret>` plus marker aspects (`CallMany`, `CallShared`, `Copy`); `once`, `var` and `copy` are the markers, `Args` is a row, a closure literal has an anonymous environment type that derives its markers, `Copy` and `Send`/`Sync` from its captures, and widening is marker subset. Builds on RFC-0161 and RFC-0219; absorbs the function half of metel-core#702.
 - **RFC-0226** *(superseded 2026-11-11)* — Explicit and inferred nominal construction. Consolidated into RFC-0100; retained here as the proposal history.

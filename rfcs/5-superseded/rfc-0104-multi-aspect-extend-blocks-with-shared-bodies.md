@@ -2,8 +2,12 @@
 id: rfc-0104
 title: "Multi-Aspect Extend Blocks with Shared Bodies"
 date: '2026-07-14'
-status: draft
+status: superseded
+updated: '2026-11-16'
+superseded_by: rfc-0236
 ---
+
+> **Status — superseded (2026-11-16).** Absorbed by RFC-0236: named blocks say which aspect a method belongs to, so no shared pool or collision rule is needed.
 
 ## Summary
 

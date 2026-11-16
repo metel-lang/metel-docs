@@ -123,7 +123,7 @@ stronger `marker` keyword idea was dropped.
 - RFC-0080 (Standard Library Aspects — Clone, Deref, Send, Sync) — uses the already
   established "marker aspect" idea (`Send`/`Sync` as zero-method aspects). This RFC does
   not change those semantics; it only gives the empty declaration a shorter spelling.
-- RFC-0105 (Struct-Embedded Aspect Lists, draft) — extracted from an earlier, broader
+- RFC-0105 (Struct-Embedded Aspect Lists, superseded by RFC-0236) — extracted from an earlier, broader
   version of RFC-0103 when that larger syntax was deferred.
 
 ---

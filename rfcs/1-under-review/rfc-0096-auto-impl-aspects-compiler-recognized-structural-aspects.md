@@ -434,7 +434,7 @@ is not needed for `Copy`. Whether to adopt A is **an open question (see Unresolv
    further coordination is needed. Belongs to whichever RFC ends up specifying
    `HasField`'s own coherence story, not decided here.
 
-7. **RFC-0105 (draft) surfaces a concrete implementation requirement on this RFC,
+7. **RFC-0105 (superseded by RFC-0236) surfaces a concrete implementation requirement on this RFC,
    inherited from the split-out struct/enum-embedded aspect-list
    obligation model.** §5 above already says "an auto-impl is an ordinary positive
    impl for coherence purposes" — RFC-0105 takes that literally: each auto-impl
@@ -492,7 +492,7 @@ is not needed for `Copy`. Whether to adopt A is **an open question (see Unresolv
 - RFC-0090 (Structural Records) — §1's `HasField`/`Lacks` auto-derivation,
   the fifth document assuming this RFC's pattern, missed on the first drafting pass;
   the subject of this RFC's §7.
-- RFC-0105 (Struct-Embedded Aspect Lists, draft) — inherits the split-out requirement
+- RFC-0105 (Struct-Embedded Aspect Lists, superseded by RFC-0236) — inherits the split-out requirement
   originally developed while RFC-0103 still bundled this syntax: auto-impl determinations
   must be injected into the same
   aspect-implementation registry ordinary `extend` blocks populate, not exposed only

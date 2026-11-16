@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**233 RFCs total.** 37 draft, 56 under review, 10 accepted, 4 integrated (107 live), 93 implemented, 17 superseded, 16 refused (126 settled).
+**235 RFCs total.** 37 draft, 56 under review, 10 accepted, 4 integrated (107 live), 93 implemented, 19 superseded, 16 refused (128 settled).
 
 ## Draft (37)
 
@@ -30,8 +30,6 @@ the curated thematic map.
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
 - **RFC-0075** — Region Inference — Local AutoRegion (`0-draft` ; rfcs/0-draft/rfc-0075-region-inference.md ; date 2026-07-01)
 - **RFC-0101** — Grammar-Enforced Naming Case Conventions (`0-draft` ; rfcs/0-draft/rfc-0101-grammar-enforced-naming-case-conventions.md ; date 2026-07-14 ; updated 2026-07-17)
-- **RFC-0104** — Multi-Aspect Extend Blocks with Shared Bodies (`0-draft` ; rfcs/0-draft/rfc-0104-multi-aspect-extend-blocks-with-shared-bodies.md ; date 2026-07-14)
-- **RFC-0105** — Struct-Embedded Aspect Lists (`0-draft` ; rfcs/0-draft/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-07-14)
 - **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-11-11)
 - **RFC-0128** — Exportable overload sets and shadow-versus-extend semantics (`0-draft` ; rfcs/0-draft/rfc-0128-exportable-overload-sets-and-shadow-versus-extend-semantics.md ; date 2026-08-04)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
@@ -54,6 +52,8 @@ the curated thematic map.
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
 - **RFC-0233** — Field Sub-Patterns in Struct and Variant Patterns (`0-draft` ; rfcs/0-draft/rfc-0233-field-sub-patterns-in-struct-and-variant-patterns.md ; date 2026-11-16)
+- **RFC-0235** — Super-Aspects Written with refines (`0-draft` ; rfcs/0-draft/rfc-0235-super-aspects-written-with-refines.md ; date 2026-11-16)
+- **RFC-0236** — Inline Implementations in a Declaration (`0-draft` ; rfcs/0-draft/rfc-0236-inline-implementations-in-a-declaration.md ; date 2026-11-16)
 
 ## Under Review (56)
 
@@ -230,7 +230,7 @@ the curated thematic map.
 - **RFC-0225** — Dot-prefixed anonymous records (`4-implemented` ; rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md ; date 2026-11-11 ; updated 2026-11-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1949)
 - **RFC-0231** — Unit as the Empty Row (`4-implemented` ; rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md ; date 2026-11-14 ; updated 2026-11-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2024)
 
-## Superseded (17)
+## Superseded (19)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -246,6 +246,8 @@ the curated thematic map.
 - **RFC-0055** — Comptime (`5-superseded` ; rfcs/5-superseded/rfc-0055-comptime.md ; date 2026-06-05 ; updated 2026-07-09)
 - **RFC-0083** — Public Value Exports (`5-superseded` ; rfcs/5-superseded/rfc-0083-public-value-exports.md ; date 2026-07-01 ; updated 2026-07-12 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/539)
 - **RFC-0090** — Structural Records — Rows and Tiers (`5-superseded` ; rfcs/5-superseded/rfc-0090-structural-records.md ; date 2026-07-09 ; updated 2026-07-24)
+- **RFC-0104** — Multi-Aspect Extend Blocks with Shared Bodies (`5-superseded` ; rfcs/5-superseded/rfc-0104-multi-aspect-extend-blocks-with-shared-bodies.md ; date 2026-07-14 ; updated 2026-11-16)
+- **RFC-0105** — Struct-Embedded Aspect Lists (`5-superseded` ; rfcs/5-superseded/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-11-16)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`5-superseded` ; rfcs/5-superseded/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-11-16)
 - **RFC-0226** — Explicit and inferred nominal construction (`5-superseded` ; rfcs/5-superseded/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)

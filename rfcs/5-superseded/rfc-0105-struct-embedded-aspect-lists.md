@@ -2,11 +2,14 @@
 id: rfc-0105
 title: "Struct-Embedded Aspect Lists"
 date: '2026-07-14'
-status: draft
-updated: '2026-07-14'
+status: superseded
+updated: '2026-11-16'
+superseded_by: rfc-0236
 ---
 
 > **Status — draft (2026-07-14).** Split out of RFC-0103 when the smaller bodyless-aspect-declaration feature was accepted independently and the `struct Type: Aspect .{ ... }` / `enum Type: Aspect .{ ... }` syntax was deferred for separate evaluation.
+
+> **Status — superseded (2026-11-16).** Absorbed by RFC-0236: aspect lists in declarations now carry their implementations in named blocks.
 
 ## Summary
 
