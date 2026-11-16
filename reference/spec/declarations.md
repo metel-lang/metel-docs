@@ -3908,11 +3908,13 @@ constructor must be local to the module containing the `extend` declaration.
 
 ### Super-Aspects
 
-An aspect declaration may list direct super-aspects after its name:
+An aspect declaration lists its direct super-aspects after `requires`:
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
+> **Pending** metel-core#2068 the compiler still accepts the colon spelling `aspect Ord: Eq`.
+
+<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#2068" -->
 ```metel
-pub aspect Ord: Eq {
+pub aspect Ord requires Eq {
     fun cmp(&self, other: &Self) -> Ordering;
 }
 ```
@@ -3922,7 +3924,7 @@ The relation is nominal and [transitive](#spec.declarations.aspects.super-aspect
 not subtyping; no coercion exists from `Ord` to `Eq`. An `extend T: Ord` requires a coherent
 [`Eq` impl for the same type](#spec.declarations.aspects.super-aspects.legality-3), written or derived.
 
-A super-aspect entry may be negative. `aspect Copy: deriving Clone, !Drop` declares that no type may
+A super-aspect entry may be negative. `aspect Copy requires derived Clone, !Drop` declares that no type may
 be granted both `Copy` and `Drop`:
 
 <!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
@@ -3935,21 +3937,24 @@ An [exclusion](#spec.declarations.aspects.super-aspects.legality-4) is checked w
 aspects is granted. It is not evidence that two conditional impls are disjoint, and `T: !A` does not imply
 `T: !B` for a super-aspect `B` of `A`.
 
-An entry marked `deriving` is generated together with the sub-aspect by `derives`. Only aspects declared in
-the standard library may carry the mark; [on a user aspect it is an error](#spec.declarations.aspects.super-aspects.legality-5),
-and a user aspect's entry is always an obligation.
+An entry marked `derived` is an obligation to derive: `derives A` requires that the same declaration also derives the
+super-aspect, in its own entry ([the obligation](#spec.declarations.aspects.declaration-clauses.legality-16)). Nothing is
+generated. Only aspects declared in the standard library may carry the mark; [on a user aspect it is an error](#spec.declarations.aspects.super-aspects.legality-5),
+and a user aspect's entry is always an ordinary obligation.
+
+> **Pending** metel-core#2066 the compiler still generates the marked super-aspect and accepts the mark as `deriving`.
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-1}
 
-An aspect lists its direct super-aspects after its name, each a visible aspect. The relation is transitive: if `A: B` and `B: C`, a proof of `T: A` proves `T: C`. A cycle, direct or indirect, is an error.
+An aspect lists its direct super-aspects after `requires`, each a visible aspect. The relation is transitive: if `A requires B` and `B requires C`, a proof of `T: A` proves `T: C`. A cycle, direct or indirect, is an error.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md), [rfc-0235](../../rfcs/3-integrated/rfc-0235-super-aspects-written-with-requires.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4003,7 +4008,7 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md), [rfc-0235](../../rfcs/3-integrated/rfc-0235-super-aspects-written-with-requires.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4017,7 +4022,7 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 
 ##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-5}
 
-The `deriving` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an obligation.
+The `derived` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an ordinary obligation.
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
@@ -4027,7 +4032,21 @@ The `deriving` mark on a super-aspect entry is accepted only on an aspect declar
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ0IiwiY29sIjpudWxsLCJjb250YWlucyI6InN0ZCBhc3BlY3Qgb25seSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InN1cGVyX2FzcGVjdF9kZXJpdmluZ19vbl9hX3VzZXJfYXNwZWN0X2lzX3QwMDQ0Lm10bCIsInNvdXJjZSI6ImFzcGVjdCBOYW1lZCB7IGZ1biBuYW1lKCZzZWxmKSAtPiBTdHJpbmc7IH1cbmFzcGVjdCBHOiBkZXJpdmluZyBOYW1lZDsgLy8gRVJST1JbVDAwNDRdXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL3N1cGVyX2FzcGVjdF9kZXJpdmluZ19vbl9hX3VzZXJfYXNwZWN0X2lzX3QwMDQ0Lm10bCIsIm5hbWUiOiJzdXBlcl9hc3BlY3RfZGVyaXZpbmdfb25fYV91c2VyX2FzcGVjdF9pc190MDA0NC5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ0IiwiY29sIjpudWxsLCJjb250YWlucyI6InN0ZCBhc3BlY3Qgb25seSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InN1cGVyX2FzcGVjdF9kZXJpdmluZ19vbl9hX3VzZXJfYXNwZWN0X2lzX3QwMDQ0Lm10bCIsInNvdXJjZSI6ImFzcGVjdCBOYW1lZCB7IGZ1biBuYW1lKCZzZWxmKSAtPiBTdHJpbmc7IH1cbmFzcGVjdCBHOiBkZXJpdmluZyBOYW1lZDsgLy8gRVJST1JbVDAwNDRdXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL3N1cGVyX2FzcGVjdF9kZXJpdmluZ19vbl9hX3VzZXJfYXNwZWN0X2lzX3QwMDQ0Lm10bCIsIm5hbWUiOiJzdXBlcl9hc3BlY3RfZGVyaXZpbmdfb25fYV91c2VyX2FzcGVjdF9pc190MDA0NC5tdGwifQ==">##### Legality Rule {#spec.declarations.aspects.super-aspects.legality-6}
+
+> **Pending** metel-core#2068
+
+`requires` and `derived` are reserved words. `aspect A: B` is an error that names `requires`, and the mark `deriving` is an error that names `derived`: the colon after a declared name says that the declaration is an instance of the named aspect, and has no meaning on an aspect declaration until an aspect may be an instance of another.
+
+<!-- rfc.py:last_reviewed 96c696d6d3af78e6f598f582b602afc6fecda973 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2068" reason="RFC-0235: the compiler parses the colon spelling and the deriving mark until metel-core#2068." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2068: RFC-0235: the compiler parses the colon spelling and the deriving mark until metel-core#2068._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -4129,7 +4148,7 @@ A struct or enum declaration may carry two clauses after its name, and a class k
 (RFC-0207):
 
 ```metel
-copy struct Point { x: i64, y: i64 }            // class keyword: one-word form of `derives Copy`
+copy struct Point { x: i64, y: i64 }            // class keyword: one-word form of `derives Clone, Copy`
 struct Pixel derives Copy { v: i64 }            // derives: the compiler writes the impl
 declared aspect Validated;
 struct Ticket: Validated { id: i64 }            // colon list: a user marker, an unchecked promise
@@ -4140,11 +4159,15 @@ The **colon list** names facts about the type that its declaration claims: a [`d
 aspect with no methods. A user marker is an unchecked promise, visible in the declaration. The **`derives` clause**
 asks the compiler to write the impl of an aspect that has a derivation (`Copy`, `Clone`; the aspect declares it with the
 `derivable` property, which only the standard library uses). `copy` before `struct` or `enum` is sugar for
-`derives Copy`, and `linear` is reserved. Derivation is always explicit: a type with neither a `derives` entry nor
+`derives Clone, Copy`, and `linear` is reserved. Derivation is always explicit: a type with neither a `derives` entry nor
 an `extend` of an aspect does not have it.
 
-A generic type that derives `Copy` states, when it is `pub`, which of its type parameters its copy-ness depends on
-(RFC-0224, the stated flow of the stored condition of RFC-0206):
+A generic type that derives a field-wise aspect states, when it is `pub`, which of its type parameters the aspect depends on,
+its **flow**. The flow is an argument to the derivation, written in parentheses after the entry: `derives Copy(T)`,
+`derives Clone(A, B)`. `derives Clone()` states no conditions, and an entry with no parentheses asks the compiler to compute the flow.
+The examples below use the spelling the compiler accepts today (`via`):
+
+> **Pending** metel-core#2067 `via` is replaced by the argument list of the entry; the compiler still accepts `via`.
 
 ```metel
 struct Wrapper<T> derives Copy via T { value: T }                  // Wrapper<X> is Copy exactly when X is
@@ -4241,12 +4264,12 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-6}
 
-`copy` before `struct` or `enum` is `derives Copy`. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented.
+`copy` before `struct` or `enum` is `derives Clone, Copy`. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented.
 
 <!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../rfcs/3-integrated/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4300,7 +4323,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-10}
 
-`Copy` brings the `Clone` the compiler provides: `derives Copy` and `copy struct` each grant `Clone` to the type under the same condition, so `T: Copy` proves `T: Clone`. A written `extend T: Clone` for a `Copy` type overlaps the provided one and is an error (`T0015`).
+`Copy` requires a derived `Clone` ([the obligation](#spec.declarations.aspects.declaration-clauses.legality-16)): a type that derives `Copy` also derives `Clone`, in its own entry, so `T: Copy` proves `T: Clone`. A written `extend T: Clone` for a type whose declaration derives `Copy` overlaps the derived one and is an error (`T0015`).
 
 <!-- rfc.py:last_reviewed 2d68dfef6b1b7d2b91161c675d6707dfcf5db033 -->
 
@@ -4318,7 +4341,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-11}
 
-A `Copy` entry of a `derives` clause may be followed by `via` and one or more type parameters of the declaration joined by `+`. The named parameters are the type's **flow set** for `Copy`: `N<A..>` is `Copy` exactly when `N` derives `Copy`, the exclusions of `Copy` hold at the instantiation, and every argument at a position in the flow set is `Copy`. `copy struct` and `copy enum` take no `via` clause. A `via` clause on any other entry, on a negative entry, or naming something that is not a type parameter of the declaration is an error. A parameter of row or record kind is not accepted in the flow set.
+An entry of a `derives` clause for a field-wise aspect (`Copy`, `Clone`) may be followed by an argument list in parentheses, one or more type parameters of the declaration separated by commas. The named parameters are the type's **flow** for that aspect: `N<A..>` has the aspect exactly when `N` derives it, the exclusions of the aspect hold at the instantiation, and every argument at a position in the flow has it. `copy struct` and `copy enum` take no argument list. An argument list on a derivation that takes none, on a negative entry, or naming something that is not a type parameter of the declaration is an error, and so is the former `via` clause. A parameter of row or record kind is not accepted in the flow.
 
 <!-- doc-example: expect-fail reason="the second declaration is the error the rule shows: `copy struct` takes no `via` clause" -->
 ```metel
@@ -4329,7 +4352,7 @@ copy struct Local<T> via T { value: T }   // error: `copy struct` takes no `via`
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../rfcs/3-integrated/rfc-0227-derivation-arguments.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4345,7 +4368,7 @@ copy struct Local<T> via T { value: T }   // error: `copy struct` takes no `via`
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-12}
 
-The stated flow set must contain every type parameter that a field's `Copy` depends on, and may contain more. The dependence of a field type is: a type parameter `P` depends on `{P}`; a nominal application `N<A..>` depends on the union of the dependences of its arguments at the positions in the flow set of `N`, and is an error at the field if `N` is not `Copy` for any arguments; a tuple or array depends on the union of its components; a reference and the `T[]` view depend on nothing; a primitive depends on nothing. A written function type is move-only, so a `Copy` type cannot hold one. A parameter missing from the stated set is an error at the field, with a fix-it that adds it. A set larger than needed is accepted and makes the type `Copy` only when those arguments are.
+The stated flow must contain every type parameter that a field's aspect depends on, and may contain more. The dependence of a field type is: a type parameter `P` depends on `{P}`; a nominal application `N<A..>` depends on the union of the dependences of its arguments at the positions in the flow set of `N`, and is an error at the field if `N` is not `Copy` for any arguments; a tuple or array depends on the union of its components; a reference and the `T[]` view depend on nothing; a primitive depends on nothing. A written function type is move-only, so a `Copy` type cannot hold one. A parameter missing from the stated flow is an error at the field, with a fix-it that adds it. A flow larger than needed is accepted and makes the type have the aspect only when those arguments do.
 
 <!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: `via A` does not cover `B`" -->
 ```metel
@@ -4356,7 +4379,7 @@ struct Handle<T> derives Copy via T { id: i64 }      // accepted: Copy only when
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../rfcs/3-integrated/rfc-0227-derivation-arguments.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -4372,7 +4395,7 @@ struct Handle<T> derives Copy via T { id: i64 }      // accepted: Copy only when
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-13}
 
-A `derives Copy` entry without `via` states the flow set the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit `via`. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
+A `derives` entry for a field-wise aspect without an argument list states the flow the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit the list. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set. An empty list (`derives Clone()`) states no conditions on the parameters, and is an error when a field holds a parameter by value. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
 
 <!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: a public generic type omits a non-empty flow" -->
 ```metel
@@ -4381,6 +4404,10 @@ pub copy struct V<T> { r: &T }              // accepted: the computed flow set i
 ```
 
 <!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0227](../../rfcs/3-integrated/rfc-0227-derivation-arguments.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -4451,6 +4478,34 @@ fun bad<T>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }           // er
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6InVzZSBvZiBtb3ZlZCB2YWx1ZSBgd2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJtYWluLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMjI0OiBhIHR5cGUncyBzdG9yZWQgZmxvdyBzZXQgaXMgcmVhZCB3aGVyZSBpdCBpcyB1c2VkLCBpbiBhbm90aGVyIG1vZHVsZS4gYG9rYCBpcyBhY2NlcHRlZCAodGhlIG5lc3RlZCBmbG93IHJlZHVjZXNcbi8vIHRvIGBUOiBDb3B5YCk7IGBiYWRgIG1vdmVzIGJlY2F1c2UgYFRgIGlzIG5vdCBrbm93biBgQ29weWAuXG5pbXBvcnQgbGliOjpXcmFwcGVyO1xuaW1wb3J0IGxpYjo6UGFpcjtcblxuZnVuIG9rPFQ6IENvcHk+KHA6IFBhaXI8V3JhcHBlcjxUPiwgaTY0PikgLT4gKFBhaXI8V3JhcHBlcjxUPiwgaTY0PiwgUGFpcjxXcmFwcGVyPFQ+LCBpNjQ+KSB7IChwLCBwKSB9XG5cbmZ1biBiYWQ8VD4odzogV3JhcHBlcjxUPikge1xuICAgIGxldCBmaXJzdCA6PSB3O1xuICAgIGxldCBhZ2FpbiA6PSB3OyAvLyBFUlJPUltUMDAxOV1cbn1cblxuZnVuIG1haW4oKSB7fVxuIn0seyJuYW1lIjoibGliLm10bCIsInNvdXJjZSI6InB1YiBzdHJ1Y3QgV3JhcHBlcjxUPiBkZXJpdmVzIENvcHkgdmlhIFQgeyB2YWx1ZTogVCB9XG5wdWIgc3RydWN0IFBhaXI8QSwgQj4gZGVyaXZlcyBDb3B5IHZpYSBBICsgQiB7IGE6IEEsIGI6IEIgfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9tb2R1bGVfc2VtYW50aWNzL3JmYzAyMjRfZmxvd19zZXRzX2FyZV9yZWFkX2Fjcm9zc19tb2R1bGVzIiwibmFtZSI6InJmYzAyMjRfZmxvd19zZXRzX2FyZV9yZWFkX2Fjcm9zc19tb2R1bGVzIn0="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-16}
+
+> **Pending** metel-core#2066
+
+For an aspect `E` with a super-aspect entry marked `derived B`, `derives E` requires that the same declaration derives `B` in its own entry, and so on transitively through `derived` entries of `B`. `copy struct` and `copy enum` count as `derives Clone, Copy`. A missing entry is an error that names the entry to add. A written `extend T: B` for a type whose declaration derives `E` is an error (`T0015`): delete the impl, or, when `E` can be written by hand, write `E` by hand too. `Copy` is granted only in the declaration, so for `Copy` the choices are to delete the written `Clone` or to drop `Copy`. The colon list cannot grant an aspect that has a derivation.
+
+<!-- rfc.py:last_reviewed 96c696d6d3af78e6f598f582b602afc6fecda973 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2066" reason="RFC-0234: the compiler generates the marked super-aspect instead of requiring it until metel-core#2066." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2066: RFC-0234: the compiler generates the marked super-aspect instead of requiring it until metel-core#2066._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-17}
+
+> **Pending** metel-core#2066
+
+A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow must be contained in the `Copy` flow, so a larger stated `Clone` flow is an error at the `Copy` impl, naming the parameter. The derived `Clone` of a type at an instantiation where it is `Copy` is the representation copy, the same operation as the implicit copy of a use by value.
+
+<!-- rfc.py:last_reviewed 96c696d6d3af78e6f598f582b602afc6fecda973 -->
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2066" reason="RFC-0234: the entailment is not checked and the derived Clone is not the copy until metel-core#2066." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2066: RFC-0234: the entailment is not checked and the derived Clone is not the copy until metel-core#2066._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 

@@ -2,14 +2,25 @@
 id: rfc-0227
 title: "Derivation Arguments"
 date: '2026-11-12'
-status: under-review
+status: integrated
 updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2002'
+coverage:
+  "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
+  "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-12" }
+  "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-13" }
+  "4": { kind: blocked, reason: "The grouped entailment rule is blocked on metel-core#2067 and metel-core#2066.", ref: "https://github.com/metel-lang/metel-core/issues/2067" }
+impl_tracking: 2067
+impl_status: not-started
 ---
 
 > **Status — under review (2026-11-16).** Rewritten from "Stated flow for every derived impl": the `via` keyword is replaced by
 > arguments to the derivation, and the registration of user derivations is left to a later RFC (the registration RFC, which
 > supersedes the remaining half of RFC-0093). Milestone: v0.16.0.
+
+> **Status — accepted (2026-11-16).** No open questions; design settled with the language owner 2026-11-16.
+
+> **Status — integrated (2026-11-16).**
 
 ## Summary
 
