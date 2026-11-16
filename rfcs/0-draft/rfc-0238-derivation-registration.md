@@ -124,7 +124,7 @@ become the impls of section 3.
 
 - **RFC-0227** (under review): defines the clause arguments and the built-in flow; this RFC makes the signature a user's to declare.
 - **RFC-0237** (draft): aspects as comptime values, and `Self` of kind `Aspect`. A prerequisite.
-- **RFC-0234** (under review): the `deriving` mark is an obligation to derive another aspect and is independent of registration. Opening
+- **RFC-0234** (under review): the `derived` mark (RFC-0235) is an obligation to derive another aspect and is independent of registration. Opening
   it to user aspects (RFC-0213 question 9) is no longer a generation question; whether to open it is question 1 below.
 - **RFC-0093** (under review): superseded in its registration half when this RFC is accepted. Its questions 1 to 5 are answered by
   sections 4 and 6 (orphan, coherence, who may register, the signature, the arguments); question 7 by section 7; question 8 by the
@@ -158,7 +158,7 @@ become the impls of section 3.
 
 ## Open questions
 
-1. **Open the `deriving` mark to user aspects?** With generation gone (RFC-0234) the mark is an obligation to derive another aspect,
+1. **Open the `derived` mark to user aspects?** With generation gone (RFC-0234) the mark is an obligation to derive another aspect,
    which is safe for user aspects. Does this RFC enable it, or leave it std-only?
 2. **Template derivations.** RFC-0222's `derives Builder` makes a struct's row visible to a row template and emits no impl. Is `Builder`
    a `Derivable` whose `derive` returns a non-impl declaration, or a separate derivation form?

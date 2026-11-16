@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**237 RFCs total.** 39 draft, 56 under review, 10 accepted, 4 integrated (109 live), 93 implemented, 19 superseded, 16 refused (128 settled).
+**237 RFCs total.** 38 draft, 57 under review, 10 accepted, 4 integrated (109 live), 93 implemented, 19 superseded, 16 refused (128 settled).
 
-## Draft (39)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -52,12 +52,11 @@ the curated thematic map.
 - **RFC-0229** — Single-Field Projection Shorthand (`0-draft` ; rfcs/0-draft/rfc-0229-single-field-projection-shorthand.md ; date 2026-11-14)
 - **RFC-0230** — Negative Label Entry Without the Dot (`0-draft` ; rfcs/0-draft/rfc-0230-negative-label-entry-without-the-dot.md ; date 2026-11-14)
 - **RFC-0233** — Field Sub-Patterns in Struct and Variant Patterns (`0-draft` ; rfcs/0-draft/rfc-0233-field-sub-patterns-in-struct-and-variant-patterns.md ; date 2026-11-16)
-- **RFC-0235** — Super-Aspects Written with refines (`0-draft` ; rfcs/0-draft/rfc-0235-super-aspects-written-with-refines.md ; date 2026-11-16)
 - **RFC-0236** — Inline Implementations in a Declaration (`0-draft` ; rfcs/0-draft/rfc-0236-inline-implementations-in-a-declaration.md ; date 2026-11-16)
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0238** — Derivation Registration (`0-draft` ; rfcs/0-draft/rfc-0238-derivation-registration.md ; date 2026-11-16)
 
-## Under Review (56)
+## Under Review (57)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -115,6 +114,7 @@ the curated thematic map.
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
 - **RFC-0234** — Super-Aspect Derivation Is an Obligation (`1-under-review` ; rfcs/1-under-review/rfc-0234-super-aspect-derivation-is-an-obligation.md ; date 2026-11-16 ; updated 2026-11-16)
+- **RFC-0235** — Super-Aspects Written with requires (`1-under-review` ; rfcs/1-under-review/rfc-0235-super-aspects-written-with-requires.md ; date 2026-11-16 ; updated 2026-11-16)
 
 ## Accepted (10)
 
