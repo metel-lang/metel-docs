@@ -8,15 +8,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2064'
 ---
 
 > **Status — under review (2026-11-16).** Split from RFC-0227 (derivation arguments, which replaces `via`). It settles
-> what a `deriving` mark on a super-aspect means, after RFC-0227's review raised the `Clone` a `Copy` brings.
+> what the mark on a super-aspect (today `deriving`, `derived` under RFC-0235) means, after RFC-0227's review raised the `Clone` a `Copy` brings.
 
 ## Summary
 
-A super-aspect entry marked `deriving` (`aspect Copy: deriving Clone`, RFC-0213 section 4) says that the sub-aspect's law is stated
+A super-aspect entry marked `deriving` (`aspect Copy: deriving Clone`, RFC-0213 section 4; written `aspect Copy requires derived Clone` under RFC-0235) says that the sub-aspect's law is stated
 over the super-aspect's method. Today the mark makes `derives Copy` also *generate* the `Clone`. This RFC changes the mark from
 generation to an **obligation on the clause**:
 
-> `derives E`, where `E` has a super-aspect entry `deriving B`, requires that the same type derives `B` as well, in its own entry.
+> `derives E`, where `E` has a super-aspect entry marked `derived B`, requires that the same type derives `B` as well, in its own entry.
 > A clause without it is an error that names the entry to add. A hand-written `extend P: B` beside `derives E` is an error too.
 
 ```metel
@@ -58,11 +58,11 @@ RFC-0224 section 3's sentence on the brought `Clone` when it is integrated. Trac
 
 ### 1. The obligation
 
-For an aspect `E` with a super-aspect entry marked `deriving B`:
+For an aspect `E` with a super-aspect entry marked `derived B`:
 
 1. `derives E` requires `derives B` in the same clause (`copy struct P` and the other class keywords count as their entries,
    section 3). Otherwise it is an error naming the entry: "`Copy` requires a derived `Clone`; add `Clone` to the derives clause".
-   The requirement is transitive through `deriving` entries of `B`.
+   The requirement is transitive through `derived` entries of `B`.
 2. A written `extend P: B` for a type whose clause derives `E` is an error ("`Copy` requires a derived `Clone`; this type writes
    one"). This is today's `T0015` outcome with a message that names the obligation. The fix-it depends on `E`: delete the impl
    in every case; or, when `E` can be written by hand (`Eq`: `extend P: Eq;`, RFC-0213), write `E` by hand too so that it is no
@@ -131,7 +131,7 @@ and `copy enum` are unaffected, since they expand to both entries.
 - **RFC-0211** (integrated) and **RFC-0217** (under review): a `Copy` residual's `Clone` is the entailment of section 5; their
   "brings" wording is replaced at integration.
 - **RFC-0224** (integrated): section 3's sentence on the brought `Clone` is replaced by section 2.
-- **RFC-0168** (draft): `Eq: deriving PartialEq` becomes `derives PartialEq, Eq`, the same obligation.
+- **RFC-0168** (draft): `Eq: deriving PartialEq` (`Eq requires derived PartialEq`) becomes `derives PartialEq, Eq`, the same obligation.
 
 ---
 

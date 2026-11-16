@@ -30,7 +30,7 @@ a type declared elsewhere, or for one instantiation of a generic type, or an asp
 that the declaration lists is written in the declaration and nowhere else.
 
 This RFC takes over RFC-0105 (aspect lists in declarations) and RFC-0104 (shared bodies in multi-aspect `extend` blocks), whose
-purposes it serves with one mechanism, and supersedes both. It depends on RFC-0235 (`refines`) for the aspect form. This is a
+purposes it serves with one mechanism, and supersedes both. It depends on RFC-0235 (`requires`) for the aspect form. This is a
 design draft. Nothing here is accepted.
 
 ---
@@ -100,7 +100,7 @@ impl, and coherence (RFC-0060) sees the block as the impl. Auto aspects (RFC-009
 
 ### 5. Aspect declarations (stage 2)
 
-An aspect declaration has its own colon list, free once RFC-0235 moves super-aspects to `refines`. An entry names a meta-aspect
+An aspect declaration has its own colon list, free once RFC-0235 moves super-aspects to `requires`. An entry names a meta-aspect
 the aspect is an instance of, with a block for it:
 
 ```metel

@@ -114,7 +114,7 @@ the curated thematic map.
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
 - **RFC-0234** — Super-Aspect Derivation Is an Obligation (`1-under-review` ; rfcs/1-under-review/rfc-0234-super-aspect-derivation-is-an-obligation.md ; date 2026-11-16 ; updated 2026-11-16)
-- **RFC-0235** — Super-Aspects Written with refines (`1-under-review` ; rfcs/1-under-review/rfc-0235-super-aspects-written-with-refines.md ; date 2026-11-16 ; updated 2026-11-16)
+- **RFC-0235** — Super-Aspects Written with requires (`1-under-review` ; rfcs/1-under-review/rfc-0235-super-aspects-written-with-requires.md ; date 2026-11-16 ; updated 2026-11-16)
 
 ## Accepted (10)
 
