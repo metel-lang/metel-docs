@@ -16,6 +16,11 @@ coverage:
   "3": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-5" }
   "4": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-7" }
   "6": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
+  "6.1": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
+  "6.2": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
+  "6.3": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
+  "6.4": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
+  "6.5": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
   "5": { kind: elsewhere, reason: "Expression-position variants were deliberately split to RFC-0111 and its fixture coverage.", ref: "docs/public/rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md" }
 ---
 
