@@ -57,3 +57,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: python3 rfcs/tools/rfc.py check
+
+      # Generated backlinks and registry must match what the tool would write.
+      # Without the metel-core fixture corpus this checks the origins slots and
+      # the registry only; the fixture slots are checked where the corpus is.
+      - name: rfc.py index --check-drift
+        run: python3 rfcs/tools/rfc.py index --check-drift

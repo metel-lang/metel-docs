@@ -3195,8 +3195,8 @@ def cmd_index(args):
             print("index drift found:")
             for p in problems:
                 print(f"  - {p}")
-        else:
-            print("RFC registry/index look current.")
+            sys.exit(1)
+        print("RFC registry/index look current.")
         return
 
     if args.suggest_placement:
