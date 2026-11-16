@@ -3,7 +3,7 @@ id: rfc-0107
 title: "Unqualified Enum Variants in Match Patterns"
 date: '2026-07-17'
 status: implemented
-updated: '2026-07-21'
+updated: '2026-11-16'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/559'
 impl_status: implemented
 coverage:
@@ -15,6 +15,7 @@ coverage:
   "2": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-4" }
   "3": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-5" }
   "4": { spec: "spec.expressions.pattern-matching.unqualified-variant-patterns.legality-7" }
+  "6": { kind: blocked, reason: "Field sub-patterns in struct and variant patterns are proposed by this amendment and not implemented (metel-core#2055).", ref: "https://github.com/metel-lang/metel-core/issues/2055" }
   "5": { kind: elsewhere, reason: "Expression-position variants were deliberately split to RFC-0111 and its fixture coverage.", ref: "docs/public/rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md" }
 ---
 
@@ -272,6 +273,87 @@ which enum a bare name belongs to. See RFC-0111 §1.4.
 **`use Enum::*`-style explicit glob imports of variants into lexical scope** is a
 different mechanism (scope-based, not type-directed) with the multi-enum collision
 problem this RFC avoids by design — not proposed here.
+
+---
+
+## 6. Field sub-patterns
+
+> **Amendment, proposed (2026-11-16, metel-core#2055).** Everything above is implemented as written. This section adds
+> one form; it changes no rule of sections 1 to 5.
+
+Until now a struct or variant pattern lists its fields as plain names (`Tag { n }`, `Some { value }`), so a field can be
+bound or skipped (`..`) but never renamed, and a literal or a nested pattern cannot be matched in it. A record
+pattern can (`.{ .n: 0 }`, RFC-0151), and a named struct cannot be written as a record pattern, so `Tag { n: 0 }`
+has no spelling at all. This section lets a struct or variant pattern entry take a pattern after the field name:
+
+```metel
+struct Tag { n: i64, label: String }
+
+match (t) {
+    Tag { n: 0, label } => ...,        // a literal in a field; label is bound
+    Tag { n: k, .. }    => k,          // rename: n is bound to k
+}
+
+match (o) {
+    Some { value: Some { value: v } } => v,   // a variant pattern nested in a variant pattern
+    _ => 0,
+}
+```
+
+### 6.1 Entries
+
+| Entry | Meaning |
+|---|---|
+| `f` | bind the field `f` to a name `f` (unchanged; the bare form of section 1.2) |
+| `f: p` | match the field `f` against the pattern `p` |
+| `..` | skip every field not named (unchanged) |
+
+`p` is any pattern: a name (the rename), a literal, a wildcard, an enum or struct pattern, a record or tuple pattern,
+an array pattern. A bare entry `f` is exactly `f: f`. Entries of both kinds may be mixed in one pattern, and the
+form applies to a struct, a qualified variant (`Shape::Circle { r: 0 }`) and a bare variant (section 1.2) alike.
+Section 1's resolution is unchanged: a bare variant name is resolved from the scrutinee's type, and the field
+sub-patterns are then checked against that variant's field types.
+
+The field name is written **bare**, not dotted. RFC-0221's rule is that a name is dotted when it is a label of a row and
+bare when it is a member a nominal type declares for itself; a struct's fields are the second kind, and `n` in
+`Tag { n: x }` is the same name as in `Tag { n: 1, label: "" }`.
+
+### 6.2 Typing and exhaustiveness
+
+1. A sub-pattern is checked against the type of its field, with the type's arguments substituted for a generic struct
+   or variant. A field named twice is an error, as in a struct literal.
+2. A sub-pattern that can fail makes the pattern refutable at the position where it is written, and the pattern is
+   rejected in a `let` declaration for that reason (RFC-0151's rule for record patterns).
+3. A struct has one shape, so an unguarded arm is exhaustive for its struct type when every sub-pattern in it is
+   irrefutable. With a refutable sub-pattern the arm covers only the values it matches, and exhaustiveness is checked
+   **field by field** over the arms, as for record patterns: a `match` is exhaustive when every combination of the
+   fields' values is covered. A variant's arms combine with section 2's variant-coverage rule, field by field inside
+   each variant.
+4. **Visibility is unchanged** (RFC-0032 section 5). A pattern outside the declaring module that names a private field,
+   with a sub-pattern or without one, is `T0009`; the field must be omitted, which requires `..`.
+
+### 6.3 Not changed
+
+- The bare form, the single-segment variant form and the `Pattern::EnumVariant` rewrite of sections 1.1 and 1.2.
+- The record pattern's `.label: p`, which stays dotted: a record's labels are row labels.
+- Anonymous-record and nominal patterns remain different forms; this section gives the nominal one what the record one
+  already has, and does not let a record pattern match a struct.
+
+### 6.4 Alternatives
+
+1. **Names only; use a guard for a literal (`Tag { n } if n == 0`).** The status quo. A guard hides the field's value from
+   exhaustiveness, so such an arm never counts toward covering a type, and a rename is impossible.
+2. **Dotted names (`Tag { .n: x }`).** Rejected under section 6.1: the dot marks a row label, and `n` is not one.
+3. **A separate rename syntax (`Tag { n as x }`).** One more form for what `n: x` already says in a record pattern.
+
+### 6.5 Implementation notes
+
+The grammar's `field_pat_list` takes an optional `: pattern` after each name. The AST entries of `Pattern::Struct` and
+`Pattern::EnumVariant` gain a nested pattern, as `Pattern::Record` has (`nested`); inference, construction, move
+checking, the evaluator and generic-body retention resolve a nested pattern against the field's type with the
+machinery record sub-patterns already use (metel-core#2035), and the field-wise exhaustiveness check is the one record
+patterns use. Spec changes: the struct-patterns section of `expressions.md` (its sentence that sub-patterns are always
+plain bindings) and the unqualified-variant section. The spec's Struct patterns rules stay as they are for the bare form.
 
 ---
 
