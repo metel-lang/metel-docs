@@ -7,7 +7,7 @@ updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2064'
 ---
 
-> **Status — under review (2026-11-16).** Split from RFC-0227, which keeps the stated-flow rule and the `pub` statement. It settles
+> **Status — under review (2026-11-16).** Split from RFC-0227 (derivation arguments, which replaces `via`). It settles
 > what a `deriving` mark on a super-aspect means, after RFC-0227's review raised the `Clone` a `Copy` brings.
 
 ## Summary
@@ -119,7 +119,7 @@ and `copy enum` are unaffected, since they expand to both entries.
 
 ## Interaction with other work
 
-- **RFC-0227** (under review): states `via` for every field-wise derivation and the `pub` statement. It does not depend on this
+- **RFC-0227** (under review): replaces `via` with derivation arguments (`derives Clone(T), Copy(T)`) and widens the `pub` statement. It does not depend on this
   RFC, and this RFC does not depend on it: with today's `via` on `Copy` only, section 2 holds with the computed `Clone` flow. If
   RFC-0227 is adopted, a stated `Clone` flow is subject to section 2's entailment.
 - **RFC-0213** (integrated): section 4 rules 2 and 3 are replaced by section 1; the mark's name and its std-only restriction are
@@ -154,7 +154,7 @@ and `copy enum` are unaffected, since they expand to both entries.
 ## Costs
 
 - **Verbosity.** `derives Clone, Copy` is longer than `derives Copy`, and `copy struct` is the short form. A `pub` generic `Copy`
-  type that states a flow for `Clone` as well (RFC-0227) states it twice; RFC-0227's grouped `via` removes that.
+  type that states a flow for `Clone` as well (RFC-0227) states it twice (`derives Clone(T), Copy(T)` under RFC-0227); the repetition is short and RFC-0227 adds no group syntax for it.
 - **Implementation.** The clause expansion stops generating the marked super and checks for it instead; `copy struct` expands to
   both entries; the derived `Clone` body uses the copy at `Copy` instantiations; the error messages change. Section 4 needs one
   derived `Clone` body of a conditional type to choose per instantiation, so whether `T` is `Copy` must be known where the body
