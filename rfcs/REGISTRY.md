@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**237 RFCs total.** 38 draft, 54 under review, 10 accepted, 7 integrated (109 live), 93 implemented, 19 superseded, 16 refused (128 settled).
+**237 RFCs total.** 38 draft, 54 under review, 10 accepted, 4 integrated (106 live), 96 implemented, 19 superseded, 16 refused (131 settled).
 
 ## Draft (38)
 
@@ -126,17 +126,14 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (7)
+## Integrated (4)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`3-integrated` ; rfcs/3-integrated/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-10 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1808)
 - **RFC-0211** — Aspects on Residuals (`3-integrated` ; rfcs/3-integrated/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-13 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/1830)
-- **RFC-0227** — Derivation Arguments (`3-integrated` ; rfcs/3-integrated/rfc-0227-derivation-arguments.md ; date 2026-11-12 ; updated 2026-11-16 ; impl not-started ; tracking 2067)
-- **RFC-0234** — Super-Aspect Derivation Is an Obligation (`3-integrated` ; rfcs/3-integrated/rfc-0234-super-aspect-derivation-is-an-obligation.md ; date 2026-11-16 ; updated 2026-11-16 ; impl not-started ; tracking 2066)
-- **RFC-0235** — Super-Aspects Written with requires (`3-integrated` ; rfcs/3-integrated/rfc-0235-super-aspects-written-with-requires.md ; date 2026-11-16 ; updated 2026-11-16 ; impl not-started ; tracking 2068)
 
-## Implemented (93)
+## Implemented (96)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -230,7 +227,10 @@ the curated thematic map.
 - **RFC-0223** — Keyword Arguments at Every Call (`4-implemented` ; rfcs/4-implemented/rfc-0223-keyword-arguments-at-every-call.md ; date 2026-11-07 ; updated 2026-11-11 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1854)
 - **RFC-0224** — Stated flow for the ownership markers of generic types (`4-implemented` ; rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md ; date 2026-11-10 ; updated 2026-11-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1941)
 - **RFC-0225** — Dot-prefixed anonymous records (`4-implemented` ; rfcs/4-implemented/rfc-0225-dot-prefixed-anonymous-records.md ; date 2026-11-11 ; updated 2026-11-12 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1949)
+- **RFC-0227** — Derivation Arguments (`4-implemented` ; rfcs/4-implemented/rfc-0227-derivation-arguments.md ; date 2026-11-12 ; updated 2026-11-16 ; impl implemented ; tracking 2067)
 - **RFC-0231** — Unit as the Empty Row (`4-implemented` ; rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md ; date 2026-11-14 ; updated 2026-11-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2024)
+- **RFC-0234** — Super-Aspect Derivation Is an Obligation (`4-implemented` ; rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md ; date 2026-11-16 ; updated 2026-11-16 ; impl implemented ; tracking 2066)
+- **RFC-0235** — Super-Aspects Written with requires (`4-implemented` ; rfcs/4-implemented/rfc-0235-super-aspects-written-with-requires.md ; date 2026-11-16 ; updated 2026-11-16 ; impl implemented ; tracking 2068)
 
 ## Superseded (19)
 

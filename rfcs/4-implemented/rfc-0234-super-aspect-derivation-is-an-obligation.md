@@ -2,18 +2,18 @@
 id: rfc-0234
 title: "Super-Aspect Derivation Is an Obligation"
 date: '2026-11-16'
-status: integrated
+status: implemented
 updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2064'
 coverage:
-  "1": { kind: blocked, reason: "The obligation is not checked until metel-core#2066.", ref: "https://github.com/metel-lang/metel-core/issues/2066" }
-  "2": { kind: blocked, reason: "The entailment is not checked until metel-core#2066.", ref: "https://github.com/metel-lang/metel-core/issues/2066" }
+  "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-16" }
+  "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-17" }
   "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-6" }
   "4": { spec: "spec.ownership.copy.legality-4" }
   "5": { spec: "spec.ownership.aspects-on-a-residual.legality-1" }
   "6": { kind: untestable, reason: "The migration section lists corpus edits and states no rule." }
 impl_tracking: 2066
-impl_status: not-started
+impl_status: implemented
 ---
 
 > **Status — under review (2026-11-16).** Split from RFC-0227 (derivation arguments, which replaces `via`). It settles
@@ -22,6 +22,8 @@ impl_status: not-started
 > **Status — accepted (2026-11-16).** No open questions; design settled with the language owner 2026-11-16.
 
 > **Status — integrated (2026-11-16).**
+
+> **Status — implemented (2026-11-16).**
 
 ## Summary
 
