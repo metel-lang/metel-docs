@@ -7,9 +7,9 @@ updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2002'
 ---
 
-> **Status — under review (2026-11-13).** Settlement committed to v0.16.0 (milestone [v0.16.0] Declarations and derivation); four open questions block acceptance.
+> **Status — under review (2026-11-13).** Settlement committed to v0.16.0 (milestone [v0.16.0] Declarations and derivation); five open questions block acceptance.
 
-> **Amendment (2026-11-15, metel-core#2009).** Section 2 is rewritten. Declaring `Option<T>` `Copy` in std showed that the `Clone` a conditional `Copy` brings was specified, and implemented, with `Copy`'s own condition, so `derives Copy via T` alone leaves `Option<String>` without a `Clone`, and the declaration has to be written `derives Clone, Copy via T`, which reads as a conflict. The brought `Clone` now carries `Clone`'s own condition on the same flow, and a `Clone` entry beside a `Copy` entry is an error. Open question 5 records the decision this needs.
+> **Amendment (2026-11-15, metel-core#2009).** Section 2 is rewritten. Declaring `Option<T>` `Copy` in std showed that the `Clone` a conditional `Copy` brings was specified, and implemented, with `Copy`'s own condition, so `derives Copy via T` alone leaves `Option<String>` without a `Clone`, and the declaration has to be written `derives Clone, Copy via T`, which reads as a conflict. The brought `Clone` now carries `Clone`'s own condition on the same flow. Open question 5 records the decision this needs. Whether the redundant `derives Clone, Copy` becomes an error is a separate decision, RFC-0234.
 
 ## Summary
 
@@ -112,10 +112,10 @@ Consequences:
 - **One entry declares both.** `derives Copy via T` is the whole declaration of a type that is `Copy` when `T` is and
   `Clone` when `T` is. `Option<T>` and `Result<T, E>` in std are `derives Copy via T` and `derives Copy via T + E`
   (metel-core#2009).
-- **A `Clone` entry beside a `Copy` entry is an error** (`T0015`, the overlap of two derivations of one aspect), with a
-  fix-it that deletes the `Clone` entry. This includes today's accepted `derives Clone, Copy` (RFC-0213 section 5,
-  the `Dup` example), which only restates what `Copy` brings. A type that is `Clone` and not `Copy` at any instantiation
-  still writes `derives Clone` and no `Copy`.
+- **An explicit `Clone` entry beside a `Copy` entry is still accepted**, as today (`derives Clone, Copy`, RFC-0213 section 5,
+  the `Dup` example), and it is the same derivation as the brought one, so its flow must equal the brought flow: an
+  unstated flow adopts it, and a stated flow that differs is `T0015`, the overlap of two derivations of one aspect.
+  Whether the restating entry should be accepted at all is RFC-0234's question, not this RFC's.
 - **A written `Clone` on a type that derives `Copy` stays `T0015`** (RFC-0206 section 2 rule 2): it overlaps the brought
   impl.
 - **A stated flow on the brought entry is the `Copy` entry's.** There is no second `via` to write; if a type needs a
@@ -165,7 +165,7 @@ is drawn by definition (open question 1) or by a declared property.
 - **RFC-0212** (integrated). `derivable` would be defined as: the compiler writes an impl bounded parameter by parameter
   by the aspect itself. A derivation that is not (a row template) needs its own property when it arrives (RFC-0222).
 - **RFC-0213** (integrated). Brought supers keep the flow of the entry that brought them (section 2), bounded by their own
-  aspect. Its `struct Dup derives Clone, Copy` example becomes an error (section 2).
+  aspect. Its `struct Dup derives Clone, Copy` example is unchanged here (RFC-0234 asks whether it stays legal).
 - **RFC-0206** (integrated). Section 2 rule 2 ("`Clone` is provided and cannot be written") is unchanged for a `Copy`
   instantiation; for a conditional `Copy` the brought `Clone` also covers the instantiations that are not `Copy`.
 - **RFC-0222** (draft). `derives Builder` is the counterexample that bounds the rule (section 4).
@@ -180,19 +180,16 @@ is drawn by definition (open question 1) or by a declared property.
    a declaration for nothing.
 2. **Does the `pub` statement (section 3) widen to every derived impl, or only to the ownership aspects?** Recommended:
    every field-wise derived impl; std's three or four public derives gain a `via`.
-3. **Duplicate flows (section 2).** Recommended: equal sets or an error; an unstated explicit entry adopts the brought flow.
+3. **Duplicate flows (section 2).** An explicit entry for the aspect a `Copy` entry brings states a flow of its own.
+   Recommended: equal sets or an error; an unstated explicit entry adopts the brought flow.
 4. **User-declared derivables.** Once comptime lets a user supply a derivation (RFC-0092, RFC-0093), who checks that it is
    field-wise? Not decided here; the answer belongs with those RFCs.
 
 5. **Does the brought `Clone` carry `Clone`'s condition (section 2), or `Copy`'s?** Recommended: `Clone`'s. It makes
-   `derives Copy via T` a complete declaration, removes the `derives Clone, Copy via T` spelling that reads as a
-   conflict, and costs nothing at a `Copy` instantiation (the two impls agree). The cost is a change to the
+   `derives Copy via T` a complete declaration, makes the `derives Clone, Copy via T` spelling unnecessary, and costs nothing at a `Copy` instantiation (the two impls agree). The cost is a change to the
    implementation of the brought entry (its bound is `Clone`, not `Copy`) and to two integrated RFCs' examples. The
    alternative, keeping `Copy`'s condition, leaves the redundant-looking `derives Clone, Copy via T` as the only way
    to say "`Clone` for every cloneable argument, `Copy` for copyable ones".
-6. **Is `derives Clone, Copy` (no `via`) an error, or an accepted redundancy?** Recommended: an error with a fix-it. It
-   is accepted today and RFC-0213 lists it as legal; no program in the corpus depends on it except the std
-   declarations this RFC changes.
 
 ---
 
