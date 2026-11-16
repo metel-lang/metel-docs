@@ -1245,7 +1245,7 @@ implementation).
   RFC-0006 → `spec_status: pending`, `amended_by`. Accepted as part of the v0.13.0 closure
   cluster. *Originally "Copy and Clone Model Re-analysis"; the regular-value `Copy`/`Clone`
   model critique (D1–D4, P0–P3, prior art) was extracted to **RFC-0162** on 2026-09-01.*
-- **RFC-0162** *(under review, opened 2026-09-01; **v0.16.0**, #924; direction redesigned 2026-11-03)* — Copy and Clone
+- **RFC-0162** *(superseded 2026-11-16 by RFC-0206, RFC-0207, RFC-0212, RFC-0213; #924; opened 2026-09-01)* — Copy and Clone
   Model — Regular-Value Design Space — the longer-horizon half split from RFC-0157.
   Drawbacks D1 (implicit-copy use-site invisibility + API-stability hazard), D2 (two-aspect
   split), D3 (`Copy`/`Drop` exclusion, RFC-0071 §4), D4 (six-mechanism non-uniformity),

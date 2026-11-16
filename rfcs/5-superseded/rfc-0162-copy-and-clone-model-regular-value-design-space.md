@@ -2,9 +2,10 @@
 id: rfc-0162
 title: "Copy and Clone Model — Regular-Value Design Space"
 date: '2026-09-01'
-status: under-review
-updated: '2026-11-02'
+status: superseded
+updated: '2026-11-16'
 tracking: 'https://github.com/metel-lang/metel-core/issues/924'
+superseded_by: rfc-0206, rfc-0207, rfc-0212, rfc-0213
 ---
 
 > **Extracted from RFC-0157 on 2026-09-01.** RFC-0157 kept the D5 decision (closure-capture
@@ -31,6 +32,8 @@ ban (D3). That recommendation stands for the value model; what changed in 2026-1
 implicit marker is named, declared and related to `Clone`.
 
 ---
+
+> **Status — superseded (2026-11-16).** The direction this RFC reached on 2026-11-05 is delivered by RFC-0206 (sealed Copy and explicit Clone), RFC-0207 (declaration clauses: copy struct, derives Copy), RFC-0212 and RFC-0213 (aspect properties and super-aspects); its eight open questions are answered there. The design-space critique and the prior-art survey stay in this file as the history.
 
 ## Proposed direction (revised 2026-11-05)
 
