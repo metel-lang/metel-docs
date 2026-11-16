@@ -276,12 +276,11 @@ checked and set aside.
    allowing `derivable` on a user aspect (and the registration is what makes it true), or deriving the property from the
    registration. Not decided.
 
-8. **How does a registered deriver promise it is field-wise?** RFC-0227's `via` clause and the `pub` statement
+8. **How does a registered deriver promise it is field-wise?** RFC-0227's derivation arguments and the `pub` statement
    (a generic type states the parameters its derived impl depends on) are defined for a field-wise derivation, where the
    compiler checks the stated set against the fields. A user's deriver emits arbitrary code, so the compiler cannot check
    a stated flow against it. Options: the registration declares itself field-wise and the compiler checks the emitted impl
-   has that shape; `via` is refused for user derivers; or the emitted impl's bounds are the interface. RFC-0227 open
-   question 4 asks the same and leaves it here.
+   has that shape; a derivation's declared parameters say which of them the `pub` rule applies to; or the emitted impl's bounds are the interface.
 
 9. **Template derivations.** RFC-0222's `derives Builder` is a std row template, not generated code and not field-wise.
    Does `derives` accept an aspect whose derivation is a template, under which property, and how does that sit beside a
@@ -306,7 +305,7 @@ obsolete.
 - RFC-0212 (Aspect declaration properties), implemented (metel-core#1803) — `derivable`, `declared`, `implicit`; std-only today
 - RFC-0213 (Super-aspects), implemented (metel-core#1801) — the `deriving` mark on a super-aspect entry (`Copy` brings `Clone`)
 - RFC-0224 (Stated flow), implemented for `Copy` — `derives Copy via T`
-- RFC-0227 (Stated flow for every derived impl), under review — `via` for every field-wise derivation
+- RFC-0227 (Derivation Arguments), under review — `derives A(args)` replaces `via`
 - RFC-0222 (Builder aspect), draft — a template derivation, the case `derives` and this RFC's registration both have to account for
 - RFC-0206 (Copy and Clone) — `Clone`'s derive is the concrete first test
   case; its `#derive(Clone)` example depends on this RFC

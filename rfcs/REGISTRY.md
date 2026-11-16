@@ -109,7 +109,7 @@ the curated thematic map.
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
 - **RFC-0217** — Row Templates for Aspects on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0217-row-templates-for-aspects-on-residuals.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
-- **RFC-0227** — Stated flow for every derived impl (`1-under-review` ; rfcs/1-under-review/rfc-0227-stated-flow-for-every-derived-impl.md ; date 2026-11-12 ; updated 2026-11-13)
+- **RFC-0227** — Derivation Arguments (`1-under-review` ; rfcs/1-under-review/rfc-0227-derivation-arguments.md ; date 2026-11-12 ; updated 2026-11-16)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
 - **RFC-0234** — Super-Aspect Derivation Is an Obligation (`1-under-review` ; rfcs/1-under-review/rfc-0234-super-aspect-derivation-is-an-obligation.md ; date 2026-11-16 ; updated 2026-11-16)
