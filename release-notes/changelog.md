@@ -52,20 +52,41 @@ were migrated with parser-driven tools.
   written; `copy struct W<T>` is `Copy` when `T` is.
 - Declaration clauses and class keywords (RFC-0207): a struct, enum or record may carry a colon list of `declared`
   marker aspects (`struct Ticket: Validated`) and a `derives` clause (`struct Doc derives Clone`); `copy` before the
-  keyword is `derives Copy`, `linear` is reserved. New codes: T0046 (invalid clause entry); an unknown aspect is T0003.
+  keyword is `derives Clone, Copy`, and may state the flow of both, `copy(T) struct W<T>` (RFC-0239, `metel-core#2072`);
+  `linear` is reserved. New codes: T0046 (invalid clause entry); an unknown aspect is T0003.
+- **Breaking:** a `derives` entry may carry arguments, the flow of a field-wise derivation: `derives Clone(T), Copy(T)`,
+  `derives Clone()` for none (RFC-0227, `metel-core#2067`). It replaces the `via` clause, which is a parse error naming
+  the new form. A `pub` generic type states its flow for `Clone` as well as `Copy`; std's `Option` and `Result` are
+  `derives Clone(T), Copy(T)`.
 - Aspect declaration properties (RFC-0212): `declared`, `derivable`, `implicit` (std only) and `auto` (reserved),
   written before `aspect`. T0045 is a misused property.
-- Super-aspects (RFC-0213): `aspect Ord: Eq`, exclusions `aspect Copy: !Drop`, and `deriving` on a std super. A
-  bound proves its supers; an impl needs a coherent impl of each; T0044 is an invalid super-aspect list. `Copy` and
-  `Drop` can no longer be granted to one type (T0015, was T0001).
-- `Clone` is derivable and provided: `derives Clone` clones each field in declaration order (enum payloads by
-  variant, anonymous records by label); `Copy` brings the `Clone` the compiler provides, so `T: Copy` proves
-  `T: Clone`. Built-in kinds: the unit type, tuples of `Clone` parts, `Copy` closures and shared references are
+- Super-aspects (RFC-0213, RFC-0235): `aspect Ord requires Eq`, exclusions `aspect Copy requires !Drop`, and the mark
+  `derived` on a std super. A bound proves its supers; an impl needs a coherent impl of each; T0044 is an invalid
+  super-aspect list. `Copy` and `Drop` can no longer be granted to one type (T0015, was T0001).
+- **Breaking:** super-aspects follow `requires`, and the mark is `derived` (RFC-0235, `metel-core#2068`). The colon
+  after an aspect's name and the mark `deriving` are parse errors naming the new spelling; `requires` and `derived`
+  are reserved words.
+- `Clone` is derivable: `derives Clone` clones each field in declaration order (enum payloads by
+  variant, anonymous records by label). `Copy` requires a derived `Clone` (RFC-0234, `metel-core#2066`): `derives Copy`
+  without `Clone` is T0046, `copy struct` declares both, and `T: Copy` proves `T: Clone`. Nothing is generated from
+  the `Copy` entry any more, so each aspect has its own flow and `W<String>` can be `Clone` where it is not `Copy`. Built-in kinds: the unit type, tuples of `Clone` parts, `Copy` closures and shared references are
   `Clone`; `Option`, `Result` and `List` are `Clone` in std (`metel-core#270`).
 - The unit type is `Copy` under `--move-check` as in a bound (`metel-core#1784`). `[e; N]` with `N > 1` needs a `Copy`
   element (T0012).
 - `--move-check` no longer fails with the internal error I0011 when a generic body's ownership is undecided: it is
   T0047, naming the type (`metel-core#1814`).
+
+**Fixes:**
+
+- A struct or fieldful-variant literal written with a module prefix resolves without a glob import: after
+  `import lib::double;`, `lib::Counter { n = 2 }` and `lib::Kind::B { n = 1 }` construct the types their prefix
+  names, as a unit variant or a static method does. The type must be `pub` unless the prefix names the current
+  module (`metel-core#1772`).
+- A record pattern over a named record in a generic function is analysed by `--move-check` instead of failing with
+  the internal error I0011 (`metel-core#2056`).
+- An explicit `derives Copy(T)` or `derives Clone(T)` beside the `copy` keyword replaces the keyword's own entry, so
+  its flow counts; it used to be dropped, which made `H<String>` copyable in `copy struct H<T> derives Copy(T)`
+  (`metel-core#2070`).
 
 **Development note:** RFC-0100's constructor-call experiment is withdrawn (`metel-core#1945`): structs,
   named records and fieldful enum variants again use nominal braces such as
