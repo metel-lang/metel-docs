@@ -64,7 +64,7 @@ the `+` operator.
 
 `print` and `println` accept only values whose type implements `Display`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -76,7 +76,7 @@ the `+` operator.
 `print` writes a `Display` value's `to_string` result to stdout without a newline; `println`
 writes the same result followed by a newline.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -174,7 +174,7 @@ Arrays, lists, and ranges implement `Iterable<T>`; a user-defined type is usable
 `for-in` only when it implements that aspect. A list's iterator cursor belongs to the
 loop's copied value, so nested loops over one list do not share iteration position.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -204,7 +204,7 @@ aspect From<S> {
 `i64` implements `From<f64>` and `f64` implements `From<i64>`; user-defined `From<S>`
 implementations make their target type available for `as` casts and `?` error coercion.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -286,7 +286,7 @@ rather than panicking.
 
 Calling `.len()` on either `[T]` or `[T; N]` returns its number of elements.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -370,7 +370,7 @@ The listed `Option<T>` and `Result<T, E>` combinators operate on their correspon
 variants: transforms preserve the non-selected variant, and predicates report which variant
 is present.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0057](../../rfcs/4-implemented/rfc-0057-stdlib-layering-and-host-modules.md)_</span>
