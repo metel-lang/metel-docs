@@ -378,6 +378,10 @@ This RFC does not change the language and does not decide any of the designs bel
   abstract regions and a dedicated identity channel): the borrowing, origin and region designs the formal model would check.
   RFC-0159 already separates lifetimes, brands and storage identity as roles over one substrate and holds its own notation; the
   `@a` and `'b` spellings here are illustrative and follow whatever those RFCs settle.
+- **RFC-0242** (draft, library-defined references and generalized place access): the language-design companion of this RFC. It
+  proposes the access-witness model that Stages 3 and 4 and the arena case study formalize, and this RFC is the vehicle for
+  validating it. **RFC-0143** (under review) already proposes a unique arena handle and a disjointness witness that the arena
+  case study must be reconciled with.
 - **RFC-0076** (under review, brand types) and **RFC-0143** (under review, allocator placement and storage identity): the brand
   and allocation-identity concepts of Stage 4 and the arena case study.
 - **RFC-0077** (accepted, allocator generics): the allocator surface the arena case study exercises.
