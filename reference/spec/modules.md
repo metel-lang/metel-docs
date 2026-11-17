@@ -180,7 +180,7 @@ with fields has no bare-value form and is built with `m::T::x { … }`. A struct
 `m::T { … }` and a fieldful-variant literal `m::T::x { … }` name the type `T` the same way:
 neither needs `T` or a glob of `m` in scope.
 
-<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
