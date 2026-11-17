@@ -79,7 +79,7 @@ count = 99;               // 99 is i32
 The exact-width numeric primitive types are `i8`, `i16`, `i32`, `i64`, `u8`, `u16`,
 `u32`, `u64`, `f32`, and `f64`.
 
-<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
@@ -97,7 +97,7 @@ The exact-width numeric primitive types are `i8`, `i16`, `i32`, `i64`, `u8`, `u1
 
 Conversion between numeric types is written with an explicit `as` cast.
 
-<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
@@ -116,7 +116,7 @@ Conversion between numeric types is written with an explicit `as` cast.
 An unsuffixed numeric literal adopts the numeric type supplied by context; without
 context, integer literals default to `i64` and floating-point literals to `f64`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0007](../../rfcs/4-implemented/rfc-0007-uint-type.md)_</span>
@@ -225,7 +225,7 @@ fun main() -> i64 {
 An expression in `return` position is typechecked against the enclosing function or
 method's declared return type, which supplies its expected type.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
@@ -241,7 +241,7 @@ method's declared return type, which supplies its expected type.
 An expression in `break` position is typechecked against its enclosing `loop`'s value
 type, independently of the enclosing function's return type.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0019](../../rfcs/4-implemented/rfc-0019-return-context-type-propagation.md)_</span>
@@ -598,7 +598,7 @@ for it.
 Record identity is structural: records with the same labelled fields and field types are
 the same type regardless of declaration-free spelling order.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
@@ -616,7 +616,7 @@ record target whose row it has ([Implementing an aspect for a
 record](#implementing-an-aspect-for-a-record)); with no such implementation the bound is
 rejected with `T0012`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
@@ -632,7 +632,7 @@ rejected with `T0012`.
 Projection `Handle.{ .fd, .mode }` yields the record made from precisely the named fields of
 the nominal receiver type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 
 
@@ -675,7 +675,7 @@ would give a value two renderings.
 An anonymous record is rejected as an inherent-implementation target, as the target of a
 non-local aspect implementation, and as the target of a custom `Drop` implementation.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0116](../../rfcs/4-implemented/rfc-0116-anonymous-record-types.md)_</span>
@@ -904,7 +904,7 @@ The three-way split between `[T]`, `[T; N]`, and `List<T>` below reflects the cu
 `[T]` is an unconditionally-`Copy`, non-owning borrowed view. It has no `Drop`; using a
 view does not move the underlying elements out of the view.
 
-<!-- rfc.py:last_reviewed 0a067998 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md), [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md), [rfc-0171](../../rfcs/4-implemented/rfc-0171-prefix-array-type-syntax-t-and-t-n.md)_</span>
@@ -989,7 +989,7 @@ See the note under "Arrays" above — this split is not considered final.
 An array literal has fixed-size-array type `[T; N]`, not `[T]`, where `N` is its literal
 element count.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
@@ -1024,7 +1024,7 @@ element count.
 `[T; N]` implicitly coerces to `[T]` wherever `[T]` is expected. The reverse coercion
 is not permitted.
 
-<!-- rfc.py:last_reviewed 6469705aaeb2aefd7c60ead845b69e7b6c8dcab4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md), [rfc-0126](../../rfcs/4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)_</span>
@@ -1047,7 +1047,7 @@ is not permitted.
 the element type and literal length both participate in type identity, including for
 `[T; 0]`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
@@ -1067,7 +1067,7 @@ the element type and literal length both participate in type identity, including
 
 In a repeat array expression `[expr; N]` with `N` greater than one, the type of `expr` must be `Copy`: the element is duplicated without running any `clone`. With `N` of zero or one it is not duplicated and needs no bound.
 
-<!-- rfc.py:last_reviewed 84836ff64e1b638440f5255418acd18a0e1ef9fd -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1098,7 +1098,7 @@ produce all `N` elements.
 Where `[T; N]` is expected, an array literal is accepted only when it contains exactly
 `N` elements of type `T`.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
@@ -1118,7 +1118,7 @@ Where `[T; N]` is expected, an array literal is accepted only when it contains e
 
 A fixed-size array type `[T; N]` is valid as a struct field type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
@@ -1150,7 +1150,7 @@ A fixed-size array may have another fixed-size array as its element type, such a
 An exact array pattern for a `[T; N]` value must have a compatible element count; a
 different exact count is rejected.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0053](../../rfcs/4-implemented/rfc-0053-fixed-size-arrays.md)_</span>
@@ -1333,7 +1333,7 @@ A reference-typed expression is never implicitly converted to its referent type.
 non-reference type is expected, a reference-typed expression is a type error; `*r` reads
 the referent out, one `*` per reference layer, and only a `Copy` referent can be read out.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0067a](../../rfcs/4-implemented/rfc-0067a-reference-types.md), [rfc-0185](../../rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md)_</span>
@@ -1521,7 +1521,7 @@ fun main() -> i64 {
 reads a value out of a reference; it may apply the unsizing coercions that an expected type
 already drives (`dyn` erasure, `[T; N]` to `[T]`, singleton types).
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md), [rfc-0023](../../rfcs/4-implemented/rfc-0023-ascription-vs-turbofish.md)_</span>
@@ -1655,7 +1655,7 @@ Because `as` desugars to `From`, user-defined types become castable by implement
 `S` is `expr`'s type) and produces a value of type `T`. Not restricted to numeric types —
 any type with an applicable `From<S>` implementation is a valid cast target.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0021](../../rfcs/4-implemented/rfc-0021-type-ascription.md)_</span>
@@ -1730,7 +1730,7 @@ sees the enclosing parameters as rigid; a nested function does not see them and 
 ([Functions — Local Functions](functions.md#local-functions)); a recursive generic call
 instantiates the callee's parameters afresh.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0195](../../rfcs/4-implemented/rfc-0195-local-functions-do-not-capture.md)_</span>
@@ -1775,7 +1775,7 @@ and is forwarded only to another `where ..R: A` bound. `T::Assoc` is an opaque
 projection equal only to itself or to what an associated-type binding in `Γ` declares. A
 bare parameter is not callable. Impl resolution for a type built from `T` assumes `Γ`.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2269,7 +2269,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0180](../../rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md), [rfc-0186](../../rfcs/4-implemented/rfc-0186-rows-as-an-operator-on-record-parameters.md)_</span>
@@ -2328,7 +2328,7 @@ to carry at least that field (equivalent to `R: .{ .label: Type, .. }`).
 
 
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -2367,7 +2367,7 @@ callee needs drop dispatch against a narrowed residual (RFC-0137 §5, #949), whi
 implemented, so passing it to an open-row parameter is rejected with `T0036`. A plain record
 that only *contains* a `Drop` value is unaffected.
 
-<!-- rfc.py:last_reviewed e0c143ea1a24c86cd470a1fc5ef08b82ea0adc9f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0179](../../rfcs/4-implemented/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md)_</span>
@@ -2447,7 +2447,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed e30441227fc690ea71fea14c21fd340dd6580ff7 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0181](../../rfcs/4-implemented/rfc-0181-open-rows-in-every-type-position.md)_</span>
@@ -2530,7 +2530,7 @@ above): it holds exactly when every field type in row `R` satisfies `Aspect`,
 vacuously on an empty row. It constrains `R`'s field *contents*; it does not by itself
 constrain which labels `R` has (that is an ordinary row bound, composed separately).
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0123](../../rfcs/4-implemented/rfc-0123-field-wise-row-constraints.md)_</span>
@@ -2677,7 +2677,7 @@ current-row behavior [Named Records](declarations.md#records) states for `record
 row-bound satisfaction.
 
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md)_</span>
@@ -2710,7 +2710,7 @@ satisfies a row-conditional impl of the same aspect, the brand-keyed impl is sel
 brand-exact dispatch is checked first, and a match there short-circuits row-conditional
 resolution entirely rather than conflicting with it.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -2730,7 +2730,7 @@ impls of the same aspect overlaps, and is rejected exactly as two overlapping or
 impls are. Inside a generic body over an unconstrained `<record R>`, a row-conditional
 method is not visible unless `R`'s own bound entails the impl's condition.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2751,7 +2751,7 @@ method is not visible unless `R`'s own bound entails the impl's condition.
 A row bound requires `record` on its type parameter, either at the parameter declaration
 or in a `where` constraint; `record` without a row bound is also a legal any-record bound.
 
-<!-- rfc.py:last_reviewed 8d1f13bf3a5dfa4c0ffa3aac1de385fbb4c73cd1 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2771,7 +2771,7 @@ or in a `where` constraint; `record` without a row bound is also a legal any-rec
 A negative row bound is satisfied only when none of its named fields match; it accepts no
 trailing `..` and a negative bound in a `where` clause is enforced like an inline one.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2794,7 +2794,7 @@ trailing `..` and a negative bound in a `where` clause is enforced like an inlin
 A field in a row bound may omit its type, constraining the field label while accepting any
 field type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2813,7 +2813,7 @@ field type.
 Only a record satisfies a row bound; a nominal struct is rejected even when it has matching
 fields.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2832,7 +2832,7 @@ fields.
 Brace syntax after a parameter or `let` annotation denotes an exact record type, while the
 same syntax in a generic parameter or `where` constraint denotes a row bound.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2849,7 +2849,7 @@ A field a row bound lists is accessible via field access (`p.x`) from inside the
 body; a field the bound doesn't list is not, even when a caller's concrete argument
 happens to carry it.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -2864,7 +2864,7 @@ required to match an open bound at all, since the bound's full field set isn't k
 for a closed bound it is optional, but the pattern must otherwise name every field the
 bound lists. Naming a field the bound doesn't list is rejected regardless of `..`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2882,7 +2882,7 @@ A row bound is a list of entries, optionally followed by `..` (RFC-0189). An ent
 `.x`) or `!.x: T` (no field `.x` of type `T`), and the bound holds when every entry holds. The whole-row form `!{ .a, .b: T }` is sugar for
 `{ !.a, !.b: T, .. }`, and `.{ .. }` alone is not a bound.
 
-<!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)_</span>
@@ -2905,7 +2905,7 @@ A bound with a negative entry must end in `..`: in a closed bound the entry stat
 negatively; entries that cannot all hold, such as `.{ .x, !.x, .. }` and `.{ .x: T, !.x: T, .. }`, are an error (T0043), and a negative entry inside an outer `!{ }` is an error
 (T0043).
 
-<!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)_</span>
@@ -3008,7 +3008,7 @@ A `-> !` function containing a reachable `return` is a type error.
 
 `!` is uninhabited: no terminating expression can construct a value of that type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3040,7 +3040,7 @@ expected type.
 Code made unreachable by a diverging expression remains typechecked in its surrounding
 type context.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3075,7 +3075,7 @@ subexpression diverges.
 
 Match exhaustiveness excludes impossible scrutinee values and uninhabited variants.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3093,7 +3093,7 @@ Match exhaustiveness excludes impossible scrutinee values and uninhabited varian
 
 A match whose scrutinee has type `!` is exhaustive with no arms.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3109,7 +3109,7 @@ A match whose scrutinee has type `!` is exhaustive with no arms.
 An enum variant containing a `!` payload is uninhabited; its match arm may be omitted or,
 if written, is unreachable but not rejected.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3129,7 +3129,7 @@ if written, is unreachable but not rejected.
 An enum with exactly one inhabited, single-field variant implicitly coerces to that
 field's type; zero-field or multi-field inhabited variants do not receive this coercion.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3160,7 +3160,7 @@ When every arm of a match diverges, the match expression has type `!`.
 `Result<T, !>` has an uninhabited `Err` variant and therefore only an `Ok` value can be
 constructed.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3176,7 +3176,7 @@ constructed.
 `Result<T, !>` satisfies the inhabited-singleton coercion rule and a match omitting `Err`
 is exhaustive.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0078](../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
@@ -3312,7 +3312,7 @@ fun main() -> i64 {
 `None` is the empty variant of `Option<T>` and is valid only where the expected type
 determines `T`; `Option::None` is valid wherever the qualified variant is named.
 
-<!-- rfc.py:last_reviewed 45f20dd97b2aa2141537c703109a205bb46ff590 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0020](../../rfcs/4-implemented/rfc-0020-language-rebranding.md), [rfc-0111](../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
@@ -3337,7 +3337,7 @@ or pattern name, and in an import. A module that declares its own `Perhaps` is u
 `Option` may be shadowed like `Result` and `List`
 ([scoping-and-shadowing legality-9](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-9)).
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0184](../../rfcs/4-implemented/rfc-0184-rename-perhaps-to-option.md)_</span>
