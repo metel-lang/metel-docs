@@ -332,7 +332,7 @@ every nesting depth, matching exactly against a copyable one: a value of it may
 be called (subject to `once` / `var`) and moved, but not duplicated by value. A
 bare generic parameter is not a written function type.
 
-<!-- rfc.py:last_reviewed 0f4973466a31348e95cf0bc600ea88d4e8bc849a -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0166](../../rfcs/4-implemented/rfc-0166-written-function-types-lower-to-move-only.md)_</span>
@@ -376,7 +376,7 @@ written type and is not recoverable downstream.
 
 `copy` is a qualifier on a written function type, written in the same prefix position as `once` and `var` and in any order with them: `copy |T| -> U`, `copy once |T| -> U`, `copy var |T| -> U`. It is contextual: it is a qualifier only before a function type, a class keyword only before `struct`, `enum` or `record` ([declaration clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)), and an ordinary identifier elsewhere.
 
-<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0219](../../rfcs/4-implemented/rfc-0219-the-copy-function-type-qualifier.md)_</span>
@@ -393,7 +393,7 @@ written type and is not recoverable downstream.
 
 A slot of type `copy |T| -> U` accepts a function value only if the compiler proves it copyable from its captures ([closures](#spec.functions.closures.legality-20)): a named function, a closure with no captures, or a closure whose captures are all `Copy`. A closure that owns a capture that is not `Copy`, or that holds an exclusive reference `[&var x]` (which is not `Copy`), is a type mismatch (`T0001`) whose message says that a function value is copyable only if it is a named function or a closure whose captures are all `Copy`.
 
-<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -412,7 +412,7 @@ A slot of type `copy |T| -> U` accepts a function value only if the compiler pro
 
 A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b := f;`); a value of a bare written function type may not ([legality-3](#spec.functions.first-class-functions.legality-3)). A `copy |T| -> U` value flows into a bare `|T| -> U` slot, and a copyable value into either, by moving ([legality-4](#spec.functions.first-class-functions.legality-4)); a bare value is not accepted where `copy` is required (`T0001`). Below the first function level (a callback that takes a callback) the qualifier matches exactly, as `once` and `var` do.
 
-<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -429,7 +429,7 @@ A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b :
 
 `copy` in the prefix of a closure literal (`[x] copy |y| ...`) is a parse error (`P0001`): a literal's copyability is derived from its captures, not asserted.
 
-<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -442,7 +442,7 @@ A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b :
 
 A value of type `copy |T| -> U` satisfies `Copy` and, by the entailment of `Copy`, `Clone`, through the aspect resolver, the answer move checking gets ([Copy](ownership.md#spec.ownership.copy.legality-3)): one property with two spellings, `copy struct` and `copy |T| -> U`. It is `Discard` once the `Discard` check exists; until then every type is `Discard` and nothing is checked.
 
-<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -455,7 +455,7 @@ A value of type `copy |T| -> U` satisfies `Copy` and, by the entailment of `Copy
 
 `copy var |T| -> U` is a copyable function whose call mutates its own captured state. Each copy owns an independent copy of that state, so copies diverge as they are called. A `[&var x]` capture, which aliases state the closure does not own, is not `Copy` and so cannot be `copy` (legality-6).
 
-<!-- rfc.py:last_reviewed 8c6d0f7b3ee655a60d0b4ad455c98950fe4cc311 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 ##### Dynamic Semantics Rule {#spec.functions.first-class-functions.dynamics-1}
 
@@ -870,7 +870,7 @@ binding `[&var …]`, regardless of what the body does through it — written wi
 is a compile error naming the offending capture and the fix (add `var`, stop the mutation,
 or capture `[&x]` instead).
 
-<!-- rfc.py:last_reviewed b3bb868334b8487db28dacc7c358313694326908 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0153](../../rfcs/4-implemented/rfc-0153-closure-mutation-axis.md)_</span>
@@ -1504,7 +1504,7 @@ keyword arguments bind the rest by name, with every positional argument before t
 parameter already bound, a repeated keyword and an unknown name are errors (T0039), as is a positional argument after a keyword argument
 (T0040). Every parameter must be bound, and a missing or extra argument is an arity error (T0004).
 
-<!-- rfc.py:last_reviewed 30e484db7462676b74f703cf1d833de2ebcde41c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

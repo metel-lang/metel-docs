@@ -93,7 +93,7 @@ well-typed under the record-pattern rules.
 
 A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) := t;`, `let (p,) := u;` and `let () := v;`, with names, `_` and nested patterns for its elements. It is the record-pattern declaration of the labels the tuple pattern names ([record patterns](expressions.md#spec.expressions.record-rest-patterns.legality-3)): the initializer is evaluated once, its elements are moved or copied into the bindings, and the pattern must be irrefutable.
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -149,7 +149,7 @@ in a `where` clause; the two spellings are equivalent.
 A conditional aspect implementation applies only to instantiations whose type arguments
 satisfy every bound stated by that implementation.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0036](../../rfcs/4-implemented/rfc-0036-conditional-impl-blocks.md)_</span>
@@ -783,7 +783,7 @@ name both the field and a local binding in scope at the literal (shorthand/punni
 init). Shorthand and explicit fields may be freely mixed within one struct literal.
 
 
-<!-- rfc.py:last_reviewed c4008b52bff3b8219995f940f6404844f8705c49 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
@@ -808,7 +808,7 @@ A shorthand field `ident` in a struct literal evaluates identically to the expli
 scope at the literal.
 
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0115](../../rfcs/4-implemented/rfc-0115-field-initializer-separator.md)_</span>
@@ -1005,7 +1005,7 @@ Methods may use `self`, `&self`, or `&var self` as their receiver.
 A value receiver receives the ordinary passed value, so a method that returns a changed
 value leaves the caller's original binding unchanged.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0044](../../rfcs/4-implemented/rfc-0044-explicit-receiver-semantics.md)_</span>
@@ -1249,7 +1249,7 @@ because every field of a `record` is public. Converting back gives each field th
 `struct` default, module-private, so a field that must stay visible needs an explicit
 `pub` again.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1481,7 +1481,7 @@ every use of `Name` (with type arguments substituted for its generic parameters)
 replaced by `Type` before name resolution and type checking, and must supply exactly the
 alias's declared number of type arguments.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0160](../../rfcs/4-implemented/rfc-0160-type-aliases.md)_</span>
@@ -1855,7 +1855,7 @@ which kind of aspect the bound names.
 An inherent implementation is written `extend Type .{ ... }`; an aspect implementation is
 written `extend Type: Aspect .{ ... }`, and both forms may coexist for the same type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md)_</span>
@@ -2305,7 +2305,7 @@ orphan rule does not apply because there is no authored impl site.
 An authored `extend Type: Aspect` is rejected with `T0014` when neither the aspect nor
 the target type's outermost constructor is local to the implementing module.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
@@ -2328,7 +2328,7 @@ Two positive implementations of the same aspect are rejected with `T0015` when a
 instantiation is covered by both implementations, including when a blanket implementation
 covers an explicit concrete target.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md)_</span>
@@ -2380,7 +2380,7 @@ implementation of that aspect applies to the argument type.
 A bare-parameter blanket implementation is an `extend` whose target is one of its own
 generic parameters with no wrapping type constructor, such as `extend<T: Bound> T: Aspect`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0097](../../rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md)_</span>
@@ -2874,7 +2874,7 @@ corresponding `Self::Name` projection and may be used in method signatures.
 An implementation must define every associated type declared by its aspect; its
 definition fixes that projection to the implementation's concrete type.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -2895,7 +2895,7 @@ definition fixes that projection to the implementation's concrete type.
 A projection `T::AssocType` is valid only when the required `T: Aspect` bound is in
 scope, and resolves to that implementation's associated type at an instantiation.
 
-<!-- rfc.py:last_reviewed c0a5dbd6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -2935,7 +2935,7 @@ An equality constraint such as `Aspect<AssocType = U>` pins the associated type 
 right-hand type; a fresh type parameter may therefore name an otherwise ambiguous
 associated type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0082](../../rfcs/4-implemented/rfc-0082-associated-types.md)_</span>
@@ -3308,7 +3308,7 @@ a type that implements only `Conv<String>`); inferred type arguments are checked
 A type argument that does not satisfy a function type parameter's aspect bound is a
 `T0012` error reported at the offending call-site argument.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0040](../../rfcs/4-implemented/rfc-0040-function-aspect-bound-enforcement.md)_</span>
@@ -3656,7 +3656,7 @@ and its eventual instantiation satisfies it.
 Every type satisfying `Copy` also satisfies `!Drop`; no type may satisfy both `Copy` and
 `Drop`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0072](../../rfcs/4-implemented/rfc-0072-negative-bounds.md)_</span>
@@ -3807,7 +3807,7 @@ A bodyless positive `extend Type: Aspect;` is legal exactly when the correspondi
 braced implementation is legal: the aspect has no required methods and no associated type
 requiring a binding.
 
-<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0102](../../rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md)_</span>
@@ -3840,7 +3840,7 @@ An explicit negative implementation overrides an applicable blanket positive
 implementation for its concrete target, while an explicit positive and explicit negative
 implementation for that same target are rejected with `T0015`.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0060](../../rfcs/4-implemented/rfc-0060-aspect-impl-coherence.md), [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
@@ -3915,7 +3915,7 @@ An explicit negative implementation overrides an applicable blanket positive imp
 for its target and satisfies a corresponding negative bound; it applies only to that target,
 not to another nominal type.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0081](../../rfcs/4-implemented/rfc-0081-negative-impls.md)_</span>
@@ -3993,7 +3993,7 @@ and a user aspect's entry is always an ordinary obligation.
 
 An aspect lists its direct super-aspects after `requires`, each a visible aspect. The relation is transitive: if `A requires B` and `B requires C`, a proof of `T: A` proves `T: C`. A cycle, direct or indirect, is an error.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md), [rfc-0235](../../rfcs/4-implemented/rfc-0235-super-aspects-written-with-requires.md)_</span>
@@ -4015,7 +4015,7 @@ An aspect lists its direct super-aspects after `requires`, each a visible aspect
 
 Through a bound `T: A`, the methods of every direct and transitive super-aspect of `A` are callable on `T`, and the abstract analysis of a generic body treats `T: A` as proving each of them.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -4026,7 +4026,7 @@ Through a bound `T: A`, the methods of every direct and transitive super-aspect 
 
 An explicit `extend T: A` requires a coherent impl of every direct and transitive super-aspect for `T`, written or derived. A missing one is an error naming it. The compiler does not manufacture it from the impl of `A`.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
@@ -4047,7 +4047,7 @@ An explicit `extend T: A` requires a coherent impl of every direct and transitiv
 
 If an aspect lists a negative entry `!C`, no type may be granted both that aspect and `C`. A grant of the second is a coherence error at that grant, naming both aspects. The exclusion is symmetric and need be declared on one side only. It is checked at the grant only: it does not make two conditional impls disjoint, and `T: !A` does not imply `T: !B` for a super-aspect `B` of `A`.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md), [rfc-0235](../../rfcs/4-implemented/rfc-0235-super-aspects-written-with-requires.md)_</span>
@@ -4066,7 +4066,7 @@ If an aspect lists a negative entry `!C`, no type may be granted both that aspec
 
 The `derived` mark on a super-aspect entry is accepted only on an aspect declared in the standard library. On any other aspect it is an error, and the entry is an ordinary obligation.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0213](../../rfcs/4-implemented/rfc-0213-super-aspects.md)_</span>
@@ -4081,7 +4081,7 @@ The `derived` mark on a super-aspect entry is accepted only on an aspect declare
 
 `requires` and `derived` are reserved words. `aspect A: B` is an error that names `requires`, and the mark `deriving` is an error that names `derived`: the colon after a declared name says that the declaration is an instance of the named aspect, and has no meaning on an aspect declaration until an aspect may be an instance of another.
 
-<!-- rfc.py:last_reviewed 96c696d6d3af78e6f598f582b602afc6fecda973 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0235](../../rfcs/4-implemented/rfc-0235-super-aspects-written-with-requires.md)_</span>
@@ -4134,7 +4134,7 @@ Which types satisfy `Copy`, and what the implicit copy does, are specified in [O
 
 A `declared` aspect is satisfied by a named type only if the type's declaration grants it, through the colon list or `derives`. An `extend T: A` of a `declared` aspect for a named type is an error with a fix-it that moves it into the declaration.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md)_</span>
@@ -4154,7 +4154,7 @@ A `declared` aspect is satisfied by a named type only if the type's declaration 
 
 The properties `implicit` and `auto` are accepted only on an aspect declared in the standard library. An `implicit` aspect must refine `Clone` through a `deriving` super-aspect, and at most one `implicit` aspect exists in a program. A violation is an error at the aspect declaration.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0212](../../rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md)_</span>
@@ -4173,7 +4173,7 @@ The properties `implicit` and `auto` are accepted only on an aspect declared in 
 
 The properties of an aspect are read from its declaration by identity. A re-export, alias or import of the aspect carries them unchanged.
 
-<!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -4223,7 +4223,7 @@ copy struct View<T> { r: &T }                                        // no flow:
 
 A colon-list entry names a visible aspect that is `declared` and has no methods, and grants it to the type. An entry naming no aspect is an error. An aspect that has a derivation (`Copy`) is granted through `derives` or its class keyword instead, an aspect with methods through `derives` or `extend`, and an aspect that is not `declared` through `extend`; each is an error with a fix-it.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md)_</span>
@@ -4255,7 +4255,7 @@ A declaration clause has no negative entries. An opt-out of an `auto` aspect is 
 
 `derives A` is legal exactly when `A` has a derivation. An entry naming no aspect, or an aspect without a derivation, is an error.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0212](../../rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md)_</span>
@@ -4276,7 +4276,7 @@ A declaration clause has no negative entries. An opt-out of an `auto` aspect is 
 
 A derived impl and a written `extend` of the same aspect for one type overlap and are an error (`T0015`). A type customises an aspect by writing the impl instead of deriving it.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -4287,7 +4287,7 @@ A derived impl and a written `extend` of the same aspect for one type overlap an
 
 The derived impl holds exactly when every field type has the aspect. A field type that does not is an error at the declaration, next to the field. For a generic type a type parameter must have the aspect only where a field's aspect depends on it: a parameter held only behind a shared reference, or only through a type whose own flow leaves it out, is not bounded. So `copy struct Wrapper<T>` is `Copy` exactly when `T` is, and `copy struct View<T> { r: &T }` is `Copy` for every `T`. A type declared inside a function body is solved with the other declarations of its block.
 
-<!-- rfc.py:last_reviewed 225e9037f46b0ec3737e0099a151c88e5bf7a321 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -4307,7 +4307,7 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 
 `copy` before `struct` or `enum` is `derives Clone, Copy`. It may be followed by an argument list in parentheses, the flow of both entries: `copy(P1, .., Pk)` is `derives Clone(P1, .., Pk), Copy(P1, .., Pk)`, and `copy()` states no conditions. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented; it takes no argument list.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md), [rfc-0239](../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
@@ -4328,7 +4328,7 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 
 Derivation is idempotent per type and aspect: `copy struct T derives Copy` derives `Copy` once.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -4339,7 +4339,7 @@ Derivation is idempotent per type and aspect: `copy struct T derives Copy` deriv
 
 A derived `Clone` clones each field through that field's own `clone`; for an enum it keeps the active variant and clones its payload. A shared reference field is cloned by copying the reference. For a generic type the derived impl applies when each type parameter held by value in a field is `Clone`, so `struct View<T> { r: &T }` is `Clone` for every `T`.
 
-<!-- rfc.py:last_reviewed 0513a42ab5f43fea72d0736c7770639d07dfad8f -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -4368,7 +4368,7 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 
 `Copy` requires a derived `Clone` ([the obligation](#spec.declarations.aspects.declaration-clauses.legality-16)): a type that derives `Copy` also derives `Clone`, in its own entry, so `T: Copy` proves `T: Clone`. A written `extend T: Clone` for a type whose declaration derives `Copy` overlaps the derived one and is an error (`T0015`).
 
-<!-- rfc.py:last_reviewed 2d68dfef6b1b7d2b91161c675d6707dfcf5db033 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md)_</span>
@@ -4393,7 +4393,7 @@ struct Wrapper<T> derives Clone(T), Copy(T) { value: T }
 struct Old<T> derives Copy via T { value: T }   // error: `via` is replaced by the argument list; write `derives Copy(T)`
 ```
 
-<!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0239](../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
@@ -4424,7 +4424,7 @@ struct Bad<A, B> derives Clone, Copy(A) { a: A, b: B }   // error: field `b` dep
 struct Handle<T> derives Clone(T), Copy(T) { id: i64 }   // accepted: Copy only when T is, whatever the fields become
 ```
 
-<!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0224](../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../rfcs/4-implemented/rfc-0227-derivation-arguments.md)_</span>
@@ -4452,7 +4452,7 @@ pub struct W<T> derives Clone(T), Copy { value: T }   // error: a public generic
 pub copy struct V<T> { r: &T }                         // accepted: the computed flow is empty
 ```
 
-<!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0227](../../rfcs/4-implemented/rfc-0227-derivation-arguments.md)_</span>
@@ -4484,7 +4484,7 @@ aspect Source { type Item; }
 copy struct Payload<T: Source> { value: T::Item }   // error: a Copy declaration cannot depend on an associated type
 ```
 
-<!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -4505,7 +4505,7 @@ fun twice<T: Copy>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }   // ac
 fun bad<T>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }           // error: use of moved value `w`
 ```
 
-<!-- rfc.py:last_reviewed a9a135abc7a33d7c3804f16beb740446e59706c4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -4561,7 +4561,7 @@ fun bad<T>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }           // er
 
 For an aspect `E` with a super-aspect entry marked `derived B`, `derives E` requires that the same declaration derives `B` in its own entry, and so on transitively through `derived` entries of `B`. `copy struct` and `copy enum` count as `derives Clone, Copy`. A missing entry is an error that names the entry to add. A written `extend T: B` for a type whose declaration derives `E` is an error (`T0015`): delete the impl, or, when `E` can be written by hand, write `E` by hand too. `Copy` is granted only in the declaration, so for `Copy` the choices are to delete the written `Clone` or to drop `Copy`. The colon list cannot grant an aspect that has a derivation.
 
-<!-- rfc.py:last_reviewed 96c696d6d3af78e6f598f582b602afc6fecda973 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
@@ -4579,7 +4579,7 @@ For an aspect `E` with a super-aspect entry marked `derived B`, `derives E` requ
 
 A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow must be contained in the `Copy` flow, so a larger stated `Clone` flow is an error at the `Copy` impl, naming the parameter. The derived `Clone` of a type at an instantiation where it is `Copy` is the representation copy, the same operation as the implicit copy of a use by value.
 
-<!-- rfc.py:last_reviewed 96c696d6d3af78e6f598f582b602afc6fecda973 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0227](../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
@@ -4594,7 +4594,7 @@ A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow mu
 
 A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` class keyword restates an entry the keyword stands for. When the keyword has no argument list, the explicit entry replaces the keyword's, with its own list: `copy struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and `pub copy struct W<T> derives Clone(T), Copy(T)` states both. When the keyword has an argument list, an explicit `Clone` or `Copy` entry is an error that names both spellings: write `copy(..)` or the `derives` entries, not both. A type whose `Clone` and `Copy` flows differ writes the `derives` entries.
 
-<!-- rfc.py:last_reviewed fbeac9bfb64c97aa51c564bc2adfa8d4a7972db4 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0239](../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>

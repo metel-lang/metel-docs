@@ -252,7 +252,7 @@ copy.
 A declared `Copy` implementation is legal only when every struct field or enum payload is
 `Copy`; conditional implementations are considered under their declared bounds.
 
-<!-- rfc.py:last_reviewed e8fbf1d25144c7627a2a8ac357de96f7fb8a8509 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -279,7 +279,7 @@ A declared `Copy` implementation is legal only when every struct field or enum p
 
 In a generic body, reusing a value whose type is a nominal application that mentions an abstract type parameter, when whether that type is `Copy` depends on a condition the analysis of a generic body cannot decide, is an error (`T0047`) naming the type. The use is never treated as a move: a later solver may decide the condition, and an accepted program must not change meaning when it does. A bound that decides the condition, or a reference and an explicit `.clone()`, avoids the error.
 
-<!-- rfc.py:last_reviewed 2543e55e04003cda78a434db4b50cb2c9b07c254 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -290,7 +290,7 @@ In a generic body, reusing a value whose type is a nominal application that ment
 
 A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or `struct P derives Clone, Copy .{ .. }`. An `extend T: Copy;` of a struct, enum or record is an error with a fix-it that moves it into the declaration.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)_</span>
@@ -308,7 +308,7 @@ A named type is `Copy` only through its declaration: `copy struct P .{ .. }` or 
 
 The `Clone` of a `Copy` type is derived and cannot be written: a written `extend T: Clone` for a `Copy` type overlaps the derived impl and is an error (`T0015`), and its `clone` is the representation copy. A type that needs a custom duplicate is not `Copy`.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
@@ -370,7 +370,7 @@ A generic body decides whether a read is a copy or a move from the bounds visibl
 
 `T: Copy` entails `T: Clone`, in the checker and in the analysis of generic bodies.
 
-<!-- rfc.py:last_reviewed 68f00b561cc8c2458aa1b32d45be9728fda36edb -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -539,7 +539,7 @@ point at which a destructor should run.
 No concrete type instantiation may implement both `Copy` and `Drop`; overlapping conditional
 implementations are rejected only when an instantiation would receive both aspects.
 
-<!-- rfc.py:last_reviewed cfff5473333ed9035b5f8fc9ecf285c8fc394a1d -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -758,7 +758,7 @@ element left is not a static fact.
 Tuple elements may be moved independently; moving an enum payload consumes its enum wholly;
 array elements may not be moved out; and a non-`Copy` closure capture moves its enclosing binding.
 
-<!-- rfc.py:last_reviewed 2aa2c5729e26ccba73bcc69fe338f0941ffc4966 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -799,7 +799,7 @@ mechanism struct narrowing uses, minus the brand.
 
 A tuple's elements move independently, as a record's fields do, and moving one **narrows the tuple's static type** to the row of the elements that remain ([narrowing.legality-1](#spec.ownership.narrowing.legality-1), RFC-0117). The remainder keeps its labels: moving `t.1` out of `(A, B, C)` leaves `.{ .0: A, .2: C }`, a row with a gap that prints in brace form, and moving the last element of `(A, B)` leaves `.{ .0: A }`, which is the one-element tuple `(A,)`. Nothing renumbers the remainder, because moves, projections and bounds name elements by label and a renumbering would change what `t.2` means; a tuple is got back from a sparse remainder by destructuring it or by an explicit relabelling. A function that takes `(A, C)` takes a dense tuple; the sparse remainder is passed to a parameter with a row bound (`.{ .0: A, ..R }`).
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)_</span>
@@ -1066,7 +1066,7 @@ state separately: when move checking is enabled, consuming a non-`Copy`
 residual marks its binding moved, and another whole use reports `T0019`;
 consuming its last field does not itself mark that binding wholly moved.
 
-<!-- rfc.py:last_reviewed a9a7be3d486871c8a41f455e581929449d7feb92 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0231](../../rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md)_</span>
@@ -1264,7 +1264,7 @@ A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s de
 fields: for `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is `Copy`: the condition
 holds when no field is present, and a copy of it copies no field.
 
-<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0211](../../rfcs/4-implemented/rfc-0211-aspects-on-residuals.md), [rfc-0234](../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
@@ -1283,7 +1283,7 @@ holds when no field is present, and a copy of it copies no field.
 A residual does not satisfy an aspect `A` through a hand-written impl of `A` for `T` (an `extend T: A { … }`), because the body
 may read a field the residual no longer has. A bound `T: A` on a residual is `T0012` unless legality-1 or legality-5 applies.
 
-<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1296,7 +1296,7 @@ A residual does not satisfy an aspect through a **derived** impl either: the der
 that would extend it to residuals is a later RFC. The use-site diagnostic says the template is not yet available and does not
 name a written impl.
 
-<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1307,7 +1307,7 @@ name a written impl.
 
 A residual of a type whose declaration grants nothing satisfies nothing for marker and derivable aspects, as the brand does.
 
-<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -1351,7 +1351,7 @@ class is recomputed from the surviving components.
 The error for an aspect a residual does not satisfy is `T0012` at the use site. When a written whole-type impl exists, the note
 names it as the cause; when the aspect is derived, the note says the template is not yet available.
 
-<!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 
 ##### Dynamic Semantics Rule {#spec.ownership.aspects-on-a-residual.dynamics-1}

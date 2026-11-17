@@ -98,7 +98,7 @@ the same `match` expression.
 A block arm evaluates its statements and then its tail expression, if any; that tail is the
 arm's result, while a block with no tail produces `()`.
 
-<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0018](../../rfcs/4-implemented/rfc-0018-match-arm-blocks.md)_</span>
@@ -562,7 +562,7 @@ A field of a record pattern may bind its label to a name, `.label: name`: the pa
 
 After `.label:` the pattern may be any pattern, not only a name: a literal (`.0: 0`), an enum or struct pattern, a tuple or record pattern, an array pattern. A nested pattern is checked against the type of that field, makes the record pattern refutable where it is, and is rejected in a `let` declaration if it is. A tuple pattern `(p₀, …, pₙ)` is the record pattern `.{ .0: p₀, …, .n: pₙ }`. Arms are combined field by field: a `match` over record patterns is exhaustive when every combination of its fields' values is covered, an enum by its variants, a `boolean` by `true` and `false`, a nested record field by field, and any other type only by a wildcard or a name.
 
-<!-- rfc.py:last_reviewed 5fdc3f23ea2f507afb4101bb6f227558ebd579a2 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1193,7 +1193,7 @@ initializer, a condition, a closure's expression body or the tail expression of 
 keyword argument and never an assignment, `if (x = 1)` is a syntax error, and a closure that assigns is written
 with a block, `|v| { total = v; }`.
 
-<!-- rfc.py:last_reviewed ddd4da58d7786c565cca3f63d46e26818b8c0a53 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

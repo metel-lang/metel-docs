@@ -364,7 +364,7 @@ that names the type writes `()` for the same reason.
 
 A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A₀, …, .n: Aₙ }`, and a tuple value `(a₀, …, aₙ)` is the record `.{ .0 = a₀, … }`: they are one type and one value, not a distinct form ([RFC-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)). `t.i` is field access on the label `.i`, and a tuple pattern is a pattern over the same labels. A tuple is therefore subject to every rule of a record: narrowing, row bounds, and the row impls of `Copy`, `Clone` and `Display`. A tuple carries no brand.
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)_</span>
@@ -379,7 +379,7 @@ A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A�
 
 `(x,)` is the one-element tuple `.{ .0 = x }`, its type is written `(T,)`, and a pattern `(p,)` matches it. `(e)` and `(T)` without the trailing comma are parenthesised groupings and are not tuples. `()` is the empty tuple ([the empty tuple](#spec.types.tuples.legality-2)).
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -394,7 +394,7 @@ A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A�
 
 A row's labels are integers or identifiers, written `.0`, `.name`. The canonical order of a row's labels, for iteration, display and derived comparison, is its integer labels first in numeric order (`.2` before `.10`), then its identifier labels in lexicographic order. A row may mix the two kinds (`.{ .0: A, .name: B }`): a call's argument list is such a row, with positional arguments as integer labels and keyword arguments as identifier labels. The `(…)` sugar produces only the dense integer labels `.0 .. .N-1`; a mixed row is written with `.{ … }`.
 
-<!-- rfc.py:last_reviewed bfa021a51c839af1fc6f2e3b8159dbb0fc914d09 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)_</span>
@@ -416,7 +416,7 @@ A row's labels are integers or identifiers, written `.0`, `.name`. The canonical
 
 A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N-1`. The property is decided by inspecting the row, with no annotation or proof, and it adds no rule for ownership, narrowing or aspects. A `Tuple` row prints as `(T₀, …, Tₙ)`, a one-element one as `(T,)` and the empty one as `()`; any other row, including one with a gap in its integer labels or an identifier label, prints in brace form `.{ … }`. A row that stops being a `Tuple`, as a partial move that leaves a gap does, loses that rendering and nothing else.
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 Equality, ordering and hashing of a tuple are those of every row: the fields compared in canonical label order, positional for integer labels. They arrive with operator dispatch through aspects (RFC-0011); until then `==` and `<` accept only primitive operands, so they are rejected on a tuple as on any other non-primitive type.
 
@@ -2075,7 +2075,7 @@ source; when the record is not known `Discard`, every replaced field must be `Di
 not replaced is provably `Copy`; otherwise it is rejected with `T0033`. Initializers evaluate left-to-right, while the resulting record layout is
 determined by its row/type.
 
-<!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 A row may also be the argument of a nominal type's own row parameter, written
 `..R` in the argument list. A bound on that row (`where R = .{ .auth: String, .. }`) is
