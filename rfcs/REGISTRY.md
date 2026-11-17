@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-16'
+generated_on: '2026-11-17'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**239 RFCs total.** 39 draft, 54 under review, 10 accepted, 2 integrated (105 live), 99 implemented, 19 superseded, 16 refused (134 settled).
+**240 RFCs total.** 40 draft, 54 under review, 10 accepted, 2 integrated (106 live), 99 implemented, 19 superseded, 16 refused (134 settled).
 
-## Draft (39)
+## Draft (40)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -56,6 +56,7 @@ the curated thematic map.
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0238** — Derivation Registration (`0-draft` ; rfcs/0-draft/rfc-0238-derivation-registration.md ; date 2026-11-16)
 - **RFC-0240** — Spelling of Written Function Types (`0-draft` ; rfcs/0-draft/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16)
+- **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`0-draft` ; rfcs/0-draft/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17)
 
 ## Under Review (54)
 
