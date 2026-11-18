@@ -759,30 +759,7 @@ to match (`rfc-0066-allocated-value-extraction.md`, `rfc-0068-struct-owned-alloc
 plus a few stale cross-reference bugs (a self-contradictory syntax note, a wrong section
 number, a backwards RFC-0067a split direction).
 
-- **RFC-0143** *(under review, opened 2026-08-26; scheduled 2026-08-27)* — Allocator Placement, Storage Identity,
-  and Allocator-Selected Handles — a deliberate consolidated replacement candidate for
-  the accepted-but-unimplemented allocator surface in RFC-0063/0065/0066/0068/0073/0077
-  plus RFC-0141. Preserves instance identity, storage-only preservation, extraction,
-  owned allocators, `AutoAlloc`, generic well-formedness, elision, and explicit `dyn`
-  placement, while reopening the surface under the working proposal to restore `@` to
-  metadata and now that the rest of the language has acquired brands, context
-  parameters, and tracing-GC work.
-  Primary spelling is ordinary `a: A` + `T@a` + inferred `place expr`, with
-  `place a expr` and `<storage a>` reserved for ambiguity/explicit relationships;
-  `alloc a: A` remains only for struct-owned allocators. The semantic change is larger
-  than that spelling: `T@a` projects the handle family
-  selected by `a`, so allocation no longer implies one universal affine pointer shape.
-  GC handle rows are explicitly provisional: static identity proves allocation
-  disjointness but not absence of cross-arena reachability, and RFC-0139 must settle
-  complete roots, incoming edges, affine contents/finalization, and concurrency before
-  this RFC can promise standard GC behavior.
-  Also closes RFC-0133's unnamed allocator-substrate gap at the semantic level by
-  requiring allocate/grow/shrink/release block operations, with their user-authorable
-  unsafe spelling blocked on RFC-0026. The older accepted RFCs remain unchanged and
-  authoritative unless this draft is eventually accepted and supersedes them. Tracked
-  by metel-core#850 in v0.21.0; metel-core#851 owns the generic associated handle-family
-  prerequisite. Tracing GC is downstream in v0.23.0 rather than part of the allocator
-  foundation milestone.
+- **RFC-0143** *(under review, opened 2026-08-26; replaced 2026-11-18; metel-core#850)* — Allocator Storage Resources and Custody-Aware Typed Allocation. Replacement text under the same ID: an allocator provides storage, not an initialized value or a universal pointer family. Three layers: `Alloc<@s>` (trusted, non-invalidating storage acquisition tied to a storage identity), `RawStorage<@s>` (an affine, provenance-preserving block with a release protocol), and library-defined typed owners (`Unique`, `ArenaBox`, `OwnedBuffer`, `Rc`). Drops `T@a`, `place a expr` and allocator-selected `Handle<T>` as foundations; resizing is optional; runtime-sized buffers address RFC-0133; GC stays a managed-object protocol. Depends on the revised RFC-0242 (custody, validity, revocation) and proposes superseding RFC-0063/0065/0068/0077/0141 and recasting 0066/0073. Struct-owned allocators need an owning custody package (open).
 - **RFC-0063** *(accepted)* — Allocator Handles — the allocator half of the old "region
   handles" premise. Central to the whole cluster.
 - **RFC-0065** *(accepted, amended 2026-07-20)* — Allocator and Lifetime Ergonomics —
