@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-17'
+generated_on: '2026-11-18'
 ---
 
 # RFC Registry
@@ -57,7 +57,7 @@ the curated thematic map.
 - **RFC-0238** — Derivation Registration (`0-draft` ; rfcs/0-draft/rfc-0238-derivation-registration.md ; date 2026-11-16)
 - **RFC-0240** — Spelling of Written Function Types (`0-draft` ; rfcs/0-draft/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`0-draft` ; rfcs/0-draft/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17)
-- **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17)
+- **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 
 ## Under Review (54)
 
