@@ -26,17 +26,10 @@
     "unlinked-normative": 2
   },
   "reference/spec/lexical.md": {
-    "internal-number": 1,
-    "limit-in-prose": 2,
-    "long-paragraph": 1,
-    "long-quote": 1,
-    "unlinked-normative": 1
+    "limit-in-prose": 1
   },
   "reference/spec/modules.md": {
-    "internal-number": 1,
-    "long-paragraph": 1,
-    "section-links-no-rule": 9,
-    "unlinked-normative": 3
+    "unlinked-normative": 1
   },
   "reference/spec/ownership.md": {
     "internal-number": 128,
@@ -45,10 +38,6 @@
     "long-quote": 2,
     "section-links-no-rule": 7,
     "unlinked-normative": 7
-  },
-  "reference/spec/runtime.md": {
-    "internal-number": 2,
-    "section-links-no-rule": 8
   },
   "reference/spec/types.md": {
     "internal-number": 14,

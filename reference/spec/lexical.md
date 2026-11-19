@@ -33,7 +33,7 @@ self      std       struct    super     true      var       where
 while
 ```
 
-`pub` is the visibility keyword. `public` is its legacy spelling and stays reserved, so using it is a parse error, as with `impl` and `mut`.
+`pub` is the visibility keyword. `public` is its legacy spelling and stays reserved, so [using it is a parse error](modules.md#spec.modules.visibility.legality-1), as with `impl` and `mut`.
 
 ## Literals
 
@@ -138,25 +138,19 @@ Because `${…}` re-parses its content as an ordinary expression, and `if`/`matc
 immediately-invoked closures are all ordinary expressions, a `${…}` placeholder is not
 limited to "format an already-computed value" — a loop, a mutation, or a call with an
 observable effect can run as a side effect of constructing the string. This is a deliberate
-design choice ([metel-core#704](https://github.com/metel-lang/metel-core/issues/704)),
-not an oversight: restricting `${…}` to calls only would break idiomatic usage this corpus
-already depends on (the `if`/`else` example above), for a purity guarantee the rest of the
-language does not otherwise make today. This puts Metel's interpolation with Kotlin's,
+design choice, not an oversight: restricting `${…}` to calls only would break idiomatic usage
+this corpus already depends on (the `if`/`else` example above), for a purity guarantee the rest
+of the language does not otherwise make today.
+
+This puts Metel's interpolation with Kotlin's,
 Swift's, and C#'s full-expression model rather than Rust's macro-based one — Rust needs
 `format!` to be a macro because it has no string-literal grammar rule of its own to attach
 interpolation to; Metel does, so no macro workaround is needed.
 
-> This is not necessarily permanent. Once an effect system exists, whether an
-> effect-performing call should be allowed inside `${…}` is an open design question —
-> not a soundness one, since effect-row inference sees the fully lowered form regardless
-> of whether the effectful call sits inside a literal or not, but a discoverability one: a
-> `${…}` site reads as data, and nothing marks it as a place a computation can suspend and
-> hand control to a handler. Two narrower restrictions (comptime-only, place-expressions-only)
-> are already ruled out against the current corpus; an effect-axis restriction specifically —
-> `${…}` may not perform an effect — is the only one that would remain viable, and it is
-> only expressible once an effect system lands, so today's full-expression scope holds by
-> default until then. See `algebraic-effects.md` §15 and Open Question 7 (active design
-> report, not yet an RFC).
+> This is not necessarily permanent. Once an effect system exists, whether an effect-performing
+> call should be allowed inside `${…}` is an open design question. An effect-axis restriction
+> (`${…}` may not perform an effect) is the only one that would remain viable, and it is only
+> expressible once an effect system lands. See `algebraic-effects.md` §15 and Open Question 7.
 
 ```metel
 fun side_effect() -> i64 {

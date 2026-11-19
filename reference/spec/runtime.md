@@ -41,7 +41,7 @@ These are available in every module without any `import` declaration (provided b
 | `assert`          | `(cond: boolean)`                    | Panic with `"assertion failed"` if `cond` is `false` |
 | `assert`          | `(cond: boolean, msg: String)`       | Overload: panic with `msg` if `cond` is `false` |
 | `dbg`             | `<T>(x: T) -> T`                     | Print `[dbg] <value>` to stderr and return the value unchanged |
-| `panic`           | `(msg: String) -> !`                 | Panic unconditionally with `msg` (RFC-0078) |
+| `panic`           | `(msg: String) -> !`                 | Panic unconditionally with `msg` |
 
 `assert` is overloaded — [the two-argument form carries the panic message](#spec.runtime.built-in-functions.dynamics-2).
 
@@ -218,7 +218,7 @@ implementations make their target type available for `as` casts and `?` error co
 
 ## String Methods
 > All index-based operations count **Unicode scalar
-> values** (matching `.len()`), and are total — out-of-range indices clamp or
+> values** (matching `.len()`), and [are total](#spec.runtime.string-methods.dynamics-1) — out-of-range indices clamp or
 > return `None` rather than panicking.
 
 | Method                    | Signature                         | Description                                       |
@@ -273,7 +273,7 @@ rather than panicking.
 
 ## Array Methods
 
-`[T]` and `[T; N]` both expose:
+`[T]` and `[T; N]` both expose the following methods (for example, [`.len()` returns the number of elements for either](#spec.runtime.array-methods.dynamics-1)):
 
 | Method    | Signature       | Description                        |
 |-----------|-----------------|------------------------------------|
@@ -327,7 +327,7 @@ character or raises `R0016` when `n` is not a valid Unicode scalar value. A char
 ## Core Sum Types
 
 `Option<T>` and `Result<T, E>` are the core optional/fallible types, both in
-`std::core` and available unqualified. Their combinator methods let them be used
+`std::core` and available unqualified. Their combinator methods [operate on the corresponding variants](#spec.runtime.core-sum-types.dynamics-1), which lets them be used
 in pipelines without explicit `match`:
 
 `Option<T>` — `Some { value: T }` or `None`:
@@ -381,10 +381,10 @@ is present.
 
 ## List\<T\>
 
-`List<T>` is the growable collection type in `std::core`, available unqualified.
+`List<T>` is the growable collection type in `std::core`, available unqualified; [its collection and iteration methods are methods of `List<T>`](#spec.runtime.list-t.dynamics-2), not free functions.
 
-`.set(i, value)` was added alongside RFC-0126 because index assignment through an immutable
-`[T]` no longer works. It gives in-place algorithms, such as bubble sort, an operation for
+`.set(i, value)` exists because index assignment through an immutable
+`[T]` is not allowed. It gives in-place algorithms, such as bubble sort, an operation for
 replacing an element in a `List<T>`.
 
 | Method / function    | Signature                          | Description                                  |
@@ -442,7 +442,7 @@ does not mutate that source.
 
 ## OsError
 
-`OsError` is the error type returned by the host-backed standard-library modules
+`OsError` is the [error type returned by the host-backed standard-library modules](#spec.runtime.oserror.legality-1)
 (`std::fs`, `std::process`). It is in `std::core` (available unqualified) and
 implements `Display`.
 
@@ -479,7 +479,7 @@ host-backed.
 
 ### std::env
 
-Read-only process environment inspection.
+[Read-only process environment inspection](#spec.runtime.standard-library-modules.std-env.dynamics-1).
 
 | Function     | Signature                       | Description                                   |
 |--------------|---------------------------------|-----------------------------------------------|
@@ -509,7 +509,7 @@ an explicitly imported host-backed module, not part of the automatic prelude.
 
 ### std::fs
 
-Text-oriented file operations. Fallible operations return `Result<_, OsError>`.
+[Text-oriented file operations](#spec.runtime.standard-library-modules.std-fs.dynamics-1). Fallible operations return `Result<_, OsError>`.
 
 | Function                    | Signature                                       | Description                          |
 |-----------------------------|-------------------------------------------------|--------------------------------------|
@@ -554,7 +554,7 @@ Command-line arguments and shell-free synchronous subprocess execution.
 | `args()`              | `() -> [String]`                                          | The process command-line arguments         |
 | `run(command, args)`  | `(String, [String]) -> Result<ProcessOutput, OsError>`    | Run `command` with `args`, capturing output |
 
-`run` executes the command directly — there is no shell, so quoting and shell
+`run` [executes the command directly](#spec.runtime.standard-library-modules.std-process.dynamics-1) — there is no shell, so quoting and shell
 expansion never apply. A non-zero exit status is a successful `Ok` result, not
 an error; only a failure to launch the command is an `Err`. The result type is
 `ProcessOutput { status: i64, stdout: String, stderr: String }`.

@@ -14,7 +14,7 @@ In that example, `root::` refers to `src/main.mtl`.
 
 ## File-to-Module Mapping
 
-`::` maps directly to `/` in the filesystem. There is no special directory module file.
+`::` maps [directly to `/` in the filesystem](#spec.modules.file-to-module-mapping.legality-1). There is no special directory module file.
 
 | Import | File resolved |
 |---|---|
@@ -60,7 +60,7 @@ the same-named directory are distinct paths; `name/mod.mtl` has no special meani
 
 ## File Header Ordering
 
-At file scope, `import` and `export` declarations must precede all other declarations:
+At file scope, `import` and `export` declarations [must precede all other declarations](#spec.modules.file-header-ordering.legality-1):
 
 ```
 (import | export)* declaration*
@@ -119,7 +119,7 @@ level.
 
 No other top-level names are currently reserved.
 
-Fully-qualified paths are valid anywhere a name is expected:
+[Fully-qualified paths are valid anywhere a name is expected](#spec.modules.paths.legality-1):
 
 ```metel
 // src/main.mtl
@@ -200,7 +200,7 @@ neither needs `T` or a glob of `m` in scope.
 
 ## Imports
 
-`import` loads the referenced module file and declares which names from it are in scope for the current module:
+`import` [loads the referenced module file](#spec.modules.imports.legality-4) and declares which names from it are in scope for the current module:
 
 ```metel
 // src/main.mtl
@@ -346,7 +346,7 @@ imported as both. A module handle (`import m`) binds in the type namespace.
 
 ## Re-exports
 
-`export` re-exports names from submodules into the current module's public API:
+`export` [re-exports names from submodules into the current module's public API](#spec.modules.re-exports.legality-2):
 
 <!-- doc-example: skip reason="syntax illustration only -- ast/lexer/ParseError aren't real files here" -->
 ```metel
@@ -467,7 +467,7 @@ be named through their explicit `std::core::` paths.
 
 ## Import Conflicts
 
-Two explicit imports that bind the same local name in the same module are a compile-time error at the second import.
+Two explicit imports that bind the same local name in the same module are [a compile-time error at the second import](#spec.modules.import-conflicts.legality-1).
 
 Glob imports use a priority tier system:
 
@@ -480,7 +480,7 @@ Conflict rules:
 - Local declarations beat all glob imports.
 - Explicit imports beat all glob imports.
 - A `User` glob silently wins over a `Std` glob for the same name (no error).
-- Two `User` globs exporting the same name are a conflict error (T0011) only if that name is actually referenced.
+- Two `User` globs exporting the same name are [a conflict error (T0011) only if that name is actually referenced](#spec.modules.import-conflicts.legality-2).
 
 <details>
 <summary>Formal rules</summary>
@@ -593,13 +593,18 @@ pub struct Token {
 From outside the declaring module, `Token` is nameable, `token.kind` is accessible, and
 [reading or assigning `token.span` is a `T0009` visibility error](#spec.modules.visibility.legality-3);
 the declaring module retains access to all of its own fields.
+
 [Constructing `Token` directly outside its declaring module also requires visibility to
 every field the call supplies](#spec.modules.visibility.legality-4), so private fields force
-construction through module-local helpers or constructors instead. Marking a field
+construction through module-local helpers or constructors instead.
+
+Marking a field
 `pub` on a struct that is not itself `pub` doesn't expose that field to any other
 module — [the compiler warns on this combination](#spec.modules.visibility.legality-5),
 since the field can never actually be reached across a module boundary through a private
-type. [Pattern-matching `Token` outside its declaring module follows the same rule as
+type.
+
+[Pattern-matching `Token` outside its declaring module follows the same rule as
 construction](#spec.modules.visibility.legality-7) — a private field may not be named in
 the pattern; a `..` rest pattern (see [Struct patterns](expressions.md#struct-patterns))
 must be used to omit it instead. A private field's name also cannot appear in a [public
@@ -843,16 +848,16 @@ error message includes the full import chain.
 
 A qualified path closes a cycle the same way an import does. A `root::` or `super::` path that
 names an item of a module that depends on the current module, such as `root::helper` or
-`root::Counter::new` written in a module the root imports, is the same error, reported at the path
+`root::Counter::new` written in a module the root imports, is the same [circular-dependency load error](#spec.modules.module-graph-loading.legality-2), reported at the path
 (`P0001`). The parent module
 cannot be named from a child it imports, and a cycle is broken by moving the shared definitions
 into a third module.
 
 ## Module Graph Loading
 
-The module graph is built from both `import` and `export` declarations — a re-export
+The module graph is [built from both `import` and `export` declarations](#spec.modules.module-graph-loading.legality-2) — a re-export
 needs its target module loaded exactly as much as an ordinary import does, since a
-name that resolves nowhere can't be re-exported (metel-core#664):
+name that resolves nowhere can't be re-exported:
 
 1. The root file is parsed.
 2. All `import` and `export` declarations are collected; each is resolved to a file
@@ -910,7 +915,7 @@ dependencies are load errors, and a bare re-export loads its target module.
 
 ## Single-File Compatibility
 
-A `.mtl` file with no `import` or `export` declarations is a complete program. Existing single-file programs remain valid without modification.
+A `.mtl` file with no `import` or `export` declarations is [a complete program](#spec.modules.single-file-compatibility.legality-1). Existing single-file programs remain valid without modification.
 
 <details>
 <summary>Formal rules</summary>
@@ -934,7 +939,7 @@ A source file with no import or export declarations is a complete single-module 
 
 ## Removed Module Keywords
 
-`mod`, `use`, and `pub use` are not module declarations in Metel. Module loading and
+`mod`, `use`, and `pub use` [are not module declarations in Metel](#spec.modules.removed-module-keywords.legality-1). Module loading and
 re-export use `import` and `export`.
 
 <details>
