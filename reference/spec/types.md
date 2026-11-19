@@ -194,7 +194,7 @@ Annotations are required only where there is no expression to infer from:
 - Aspect method signatures
 - Named function and method signatures: every parameter's type and the return type (absent means `()`)
 
-Every named type in an annotation must resolve in the annotation's declaring scope,
+[Every named type in an annotation must resolve in the annotation's declaring scope](#spec.types.type-inference.legality-3),
 including names nested inside arrays, tuples, function types, and record fields. This is
 checked when the declaration is type-checked, even if no value ever reaches the
 annotation. A generic parameter in scope and `Self` where it is permitted resolve as
@@ -246,6 +246,29 @@ type, independently of the enclosing function's return type.
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InN0YWdlN18wMV9yZXR1cm5fdHlwZV9wcm9wYWdhdGlvbi5tdGwiLCJzb3VyY2UiOiIvLyBTdGFnZSA3OiByZXR1cm4gdHlwZSBwcm9wYWdhdGlvbiBmcm9tIGZ1bmN0aW9uIGNvbnRleHQuXG4vLyBQYXNzIDIgbXVzdCBwcm9wYWdhdGUgdGhlIGRlY2xhcmVkIHJldHVybiB0eXBlIGludG8gcmV0dXJuL2JyZWFrIGV4cHJlc3Npb25zXG4vLyBzbyB0aGF0IE5vbmUgYW5kIGJhcmUgZW51bSB2YXJpYW50cyBjYW4gYmUgdHlwZWQgd2l0aG91dCBhIGxvY2FsIGFubm90YXRpb24uXG5cbi8vIFJldHVybiBOb25lIGluIGEgT3B0aW9uPGk2ND4tcmV0dXJuaW5nIGZ1bmN0aW9uLlxuZnVuIGZpbmQoYXJyOiBbaTY0XSwgdGFyZ2V0OiBpNjQpIC0+IE9wdGlvbjxpNjQ+IHtcbiAgICByZXR1cm4gTm9uZTtcbn1cblxuLy8gUmV0dXJuIFJlc3VsdDo6RXJyIHdoZXJlIFQgaXMgbm90IHByZXNlbnQgaW4gRXJyJ3MgZmllbGRzLlxuZnVuIGRpdmlkZShhOiBmNjQsIGI6IGY2NCkgLT4gUmVzdWx0PGY2NCwgU3RyaW5nPiB7XG4gICAgaWYgKGIgPT0gMC4wKSB7XG4gICAgICAgIHJldHVybiBSZXN1bHQ6OkVyciB7IGVycm9yID0gXCJkaXZpc2lvbiBieSB6ZXJvXCIgfTtcbiAgICB9XG4gICAgcmV0dXJuIFJlc3VsdDo6T2sgeyB2YWx1ZSA9IGEgLyBiIH07XG59XG5cbi8vIEJyZWFrIE5vbmUgaW4gYSBsb29wIHdob3NlIHJlc3VsdCBpcyBhbm5vdGF0ZWQgYXMgT3B0aW9uPGk2ND4uXG5mdW4gZmlyc3RfcG9zaXRpdmUoYXJyOiBbaTY0XSkgLT4gT3B0aW9uPGk2ND4ge1xuICAgIGxldCByZXN1bHQ6IE9wdGlvbjxpNjQ+IDo9IGxvb3Age1xuICAgICAgICBicmVhayBOb25lO1xuICAgIH07XG4gICAgcmVzdWx0XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9mdW5jdGlvbnMvc3RhZ2U3XzAxX3JldHVybl90eXBlX3Byb3BhZ2F0aW9uLm10bCIsIm5hbWUiOiJzdGFnZTdfMDFfcmV0dXJuX3R5cGVfcHJvcGFnYXRpb24ubXRsIn0="></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.type-inference.legality-3}
+
+Every named type in an annotation must resolve in the annotation's declaring scope, including names
+nested inside arrays, tuples, function types, and record fields. A generic parameter in scope, and
+`Self` where it is permitted, resolve as types; any other unknown name is `T0003`, reported when the
+declaration is type-checked even if no value ever reaches the annotation.
+
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (8)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX2NhbGxlZF9wYXJhbV90eXBlLm10bCIsInNvdXJjZSI6ImZ1biB0YWtlKHZhbHVlOiBNaXNzaW5nKSB7IH1cblxuZnVuIG1haW4oKSB7XG4gICAgdGFrZSgxKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Fubm90YXRpb25zL3VuZGVjbGFyZWRfY2FsbGVkX3BhcmFtX3R5cGUubXRsIiwibmFtZSI6InVuZGVjbGFyZWRfY2FsbGVkX3BhcmFtX3R5cGUubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX2NvbnN0cnVjdGVkX2ZpZWxkX3R5cGUubXRsIiwic291cmNlIjoic3RydWN0IEhvbGRlciB7XG4gICAgdmFsdWU6IE1pc3NpbmcsXG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBob2xkZXIgOj0gSG9sZGVyIHsgdmFsdWUgPSAxIH07XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hbm5vdGF0aW9ucy91bmRlY2xhcmVkX2NvbnN0cnVjdGVkX2ZpZWxkX3R5cGUubXRsIiwibmFtZSI6InVuZGVjbGFyZWRfY29uc3RydWN0ZWRfZmllbGRfdHlwZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX2VudW1fZmllbGRfdHlwZS5tdGwiLCJzb3VyY2UiOiIvLyBBbiB1bnVzZWQgZW51bSB2YXJpYW50IHN0aWxsIGNhcnJpZXMgYSB2YWxpZCB0eXBlIGFubm90YXRpb24uXG5lbnVtIEhvbGRlciB7XG4gICAgVmFsdWUgeyB2YWx1ZTogTWlzc2luZyB9LFxufVxuXG5mdW4gbWFpbigpIHsgfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYW5ub3RhdGlvbnMvdW5kZWNsYXJlZF9lbnVtX2ZpZWxkX3R5cGUubXRsIiwibmFtZSI6InVuZGVjbGFyZWRfZW51bV9maWVsZF90eXBlLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX2xldF90eXBlLm10bCIsInNvdXJjZSI6Ii8vIFRoaXMgdXNlZCB0byBibGFtZSB0aGUgbGl0ZXJhbCBkdXJpbmcgdW5pZmljYXRpb24gcmF0aGVyIHRoYW4gdGhlIG1pc3NpbmcgbmFtZS5cbmZ1biBtYWluKCkge1xuICAgIGxldCB2YWx1ZTogTWlzc2luZyA6PSAxO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYW5ub3RhdGlvbnMvdW5kZWNsYXJlZF9sZXRfdHlwZS5tdGwiLCJuYW1lIjoidW5kZWNsYXJlZF9sZXRfdHlwZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX25lc3RlZF90eXBlLm10bCIsInNvdXJjZSI6Ii8vIE5lc3RlZCB0eXBlIGV4cHJlc3Npb25zIG11c3QgdmFsaWRhdGUgZXZlcnkgbmFtZWQgY29tcG9uZW50LlxuZnVuIHVudXNlZCh2YWx1ZXM6IFtNaXNzaW5nXSkgeyB9XG5cbmZ1biBtYWluKCkgeyB9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hbm5vdGF0aW9ucy91bmRlY2xhcmVkX25lc3RlZF90eXBlLm10bCIsIm5hbWUiOiJ1bmRlY2xhcmVkX25lc3RlZF90eXBlLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX3BhcmFtX3R5cGUubXRsIiwic291cmNlIjoiLy8gQW4gdW5jYWxsZWQgc2lnbmF0dXJlIG11c3Qgc3RpbGwgcmVqZWN0IGFuIHVuZGVjbGFyZWQgdHlwZS5cbmZ1biB1bnVzZWQodmFsdWU6IE1pc3NpbmcpIHsgfVxuXG5mdW4gbWFpbigpIHsgfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYW5ub3RhdGlvbnMvdW5kZWNsYXJlZF9wYXJhbV90eXBlLm10bCIsIm5hbWUiOiJ1bmRlY2xhcmVkX3BhcmFtX3R5cGUubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX3JldHVybl90eXBlLm10bCIsInNvdXJjZSI6Ii8vIFJldHVybiBhbm5vdGF0aW9ucyBhcmUgZGlhZ25vc2VkIGFzIHVucmVzb2x2ZWQgbmFtZXMsIG5vdCBhcyBhIGxhdGVyIG1pc21hdGNoLlxuZnVuIHVudXNlZCgpIC0+IE1pc3NpbmcgeyAwIH1cblxuZnVuIG1haW4oKSB7IH1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Fubm90YXRpb25zL3VuZGVjbGFyZWRfcmV0dXJuX3R5cGUubXRsIiwibmFtZSI6InVuZGVjbGFyZWRfcmV0dXJuX3R5cGUubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24gdHlwZSBgTWlzc2luZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJ1bmRlY2xhcmVkX3N0cnVjdF9maWVsZF90eXBlLm10bCIsInNvdXJjZSI6Ii8vIENvbnN0cnVjdGlvbiBpcyBub3QgcmVxdWlyZWQgYmVmb3JlIGEgZmllbGQgYW5ub3RhdGlvbiBpcyB2YWxpZGF0ZWQuXG5zdHJ1Y3QgSG9sZGVyIHtcbiAgICB2YWx1ZTogTWlzc2luZyxcbn1cblxuZnVuIG1haW4oKSB7IH1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Fubm90YXRpb25zL3VuZGVjbGFyZWRfc3RydWN0X2ZpZWxkX3R5cGUubXRsIiwibmFtZSI6InVuZGVjbGFyZWRfc3RydWN0X2ZpZWxkX3R5cGUubXRsIn0="></details>
+</details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -313,9 +336,9 @@ only for an element in the tuple's declared arity.
 `()` is the empty closed row `.{}`: one type and one value, not a separate primitive. A function with no return
 annotation, an empty block, a block with no tail, a braceless `if` without `else`, and a `break` with no value have this type.
 `()` and `.{}` are interchangeable in type position and in pattern position, `Result<(), E>` and `Result<.{}, E>` are one type,
-and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type. ([RFC-0231](../../rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md))
+and both literals denote the one value. A branded empty residual `Name.{}` is not `()`: its brand is part of its type.
 
-<!-- rfc.py:last_reviewed 5cf937885aa1d7b45b93bb5477397ab486fe161c -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md), [rfc-0231](../../rfcs/4-implemented/rfc-0231-unit-as-the-empty-row.md)_</span>
@@ -356,9 +379,9 @@ that names the type writes `()` for the same reason.
 
 ##### Legality Rule {#spec.types.tuples.legality-4}
 
-A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A₀, …, .n: Aₙ }`, and a tuple value `(a₀, …, aₙ)` is the record `.{ .0 = a₀, … }`: they are one type and one value, not a distinct form ([RFC-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)). `t.i` is field access on the label `.i`, and a tuple pattern is a pattern over the same labels. A tuple is therefore subject to every rule of a record: narrowing, row bounds, and the row impls of `Copy`, `Clone` and `Display`. A tuple carries no brand.
+A tuple type `(A₀, …, Aₙ)` is the closed anonymous record type `.{ .0: A₀, …, .n: Aₙ }`, and a tuple value `(a₀, …, aₙ)` is the record `.{ .0 = a₀, … }`: they are one type and one value, not a distinct form. `t.i` is field access on the label `.i`, and a tuple pattern is a pattern over the same labels. A tuple is therefore subject to every rule of a record: narrowing, row bounds, and the row impls of `Copy`, `Clone` and `Display`. A tuple carries no brand.
 
-<!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)_</span>
@@ -424,7 +447,7 @@ A closed row is a **`Tuple`** when its labels are exactly the integers `.0 .. .N
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
-Equality, ordering and hashing of a tuple are those of every row: the fields compared in canonical label order, positional for integer labels. They arrive with operator dispatch through aspects (RFC-0011); until then `==` and `<` accept only primitive operands, so they are rejected on a tuple as on any other non-primitive type.
+Equality, ordering and hashing of a tuple are those of every row: the fields compared in canonical label order, positional for integer labels. They arrive with operator dispatch through aspects; until then `==` and `<` apply only to primitive operands, which excludes a tuple as it does any other non-primitive type.
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)_</span>
@@ -440,7 +463,7 @@ Equality, ordering and hashing of a tuple are those of every row: the fields com
 A tuple element access `t.n` names the integer label `n` of the tuple's row. An index that is not a
 label of that row is a type error (`T0003`, out of bounds).
 
-<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -516,7 +539,7 @@ fun main() {
 ## Anonymous Records
 
 A record is a product type whose components are *labelled*, where a tuple's are positional.
-It is written with a dot before the braces, `.{ ... }`, and no keyword (RFC-0225):
+It is written with a dot before the braces, `.{ ... }`, and no keyword:
 
 ```metel
 .{ .x: f64, .y: f64 }      // the type
@@ -530,8 +553,8 @@ distinction `let x: i64 = 1` already draws.
 nothing else; a value of `.{ .x: f64, .y: f64 }` is *not* a value of `.{ .x: f64 }`. Records are
 not implicitly widened or narrowed.
 
-**Records are structurally typed.** Two records with the same labels and field types are the
-same type, wherever they were written. A record has no declaration site and no name.
+**Records are structurally typed.** [Two records with the same labels and field types are the
+same type, wherever they were written](#spec.types.anonymous-records.dynamics-1). A record has no declaration site and no name.
 **Field order does not matter:** `.{ .x: i64, .y: i64 }` and `.{ .y: i64, .x: i64 }` are the same
 type, and `.{ .x = 1, .y = 2 }` and `.{ .y = 2, .x = 1 }` are indistinguishable — each is usable
 wherever the other is. A record is a set of labelled fields, not an ordered one. Repeating a
@@ -709,7 +732,7 @@ non-local aspect implementation, and as the target of a custom `Drop` implementa
 
 ### Record labels
 
-The fields of an anonymous record are **labels**, written with a leading dot: `.{ .x = 1.0, .y = 2.0 }`, the pattern `.{ .x, .y }`, the type
+[The fields of an anonymous record are **labels**](#spec.types.record-labels.legality-1), written with a leading dot: `.{ .x = 1.0, .y = 2.0 }`, the pattern `.{ .x, .y }`, the type
 `.{ .x: f64, ..R }`, the row bound `.{ .x: i64, .. }` and the projection list `Handle.{ .fd, ..R }`. A label is `.name` or `.0`. Field selection
 (`p.x`), struct and enum members, declarations, struct and enum patterns, parameter lists and keyword arguments keep their bare names.
 
@@ -876,7 +899,7 @@ block rules, not by a record-specific message.
 
 ## Arrays
 
-`Array<T>` is the built-in ordered sequence type. The shorthand `[T]` is preferred.
+`Array<T>` is the built-in ordered sequence type. The shorthand [`[T]`](#spec.types.arrays.legality-1) is preferred.
 
 ```metel
 fun main() -> i64 {
@@ -902,8 +925,7 @@ Arrays are usable in `for-in` loops.
 pointer and a length — produced only by borrowing a `List<T>`, a `[T; N]`, or another slice.
 Assignment through a slice, such as `a[0] = 9`, does not compile; mutation belongs to
 `List<T>` or `[T; N]`. Array literals produce `[T; N]` (below), not `[T]`; `let nums:
-[i64] = [1, 2, 3];` continues to work through `[T; N]`'s implicit coercion to `[T]`
-(RFC-0053), not because the literal itself is a `[T]`.
+[i64] = [1, 2, 3];` continues to work through `[T; N]`'s implicit coercion to `[T]`, not because the literal itself is a `[T]`.
 
 The three-way split between `[T]`, `[T; N]`, and `List<T>` below reflects the current design.
 
@@ -955,8 +977,8 @@ An array index expression must have type `u64`.
 
 ## Fixed-size arrays
 
-`[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
-`[T; N]` coerces to `[T]` (not the reverse). `N` must be a non-negative integer literal;
+[`[T; N]` is an array type whose length `N` is a non-negative integer literal](#spec.types.fixed-size-arrays.legality-3) known at compile time.
+`[T; N]` [coerces to `[T]` (not the reverse)](#spec.types.fixed-size-arrays.legality-2). `N` must be a non-negative integer literal;
 variables are not permitted.
 
 ```metel
@@ -1211,7 +1233,7 @@ Every literal index into `[T; 0]` is statically rejected because it is out of bo
 
 ## References
 
-Reference types provide explicit aliasing.
+Reference types provide explicit aliasing; [an `&var T` may be used where `&T` is expected, but not the reverse](#spec.types.references.legality-1).
 
 ```metel
 fun main() -> i64 {
@@ -1295,7 +1317,7 @@ fun main() -> i64 {
 }
 ```
 
-A reference is never implicitly converted to its referent, at any position: not a `let`
+[A reference is never implicitly converted to its referent](#spec.types.references.reading-a-value-out-of-a-reference.legality-1), at any position: not a `let`
 or `var` annotation, a call argument, a `return` value, a `break` value, the tail
 expression of a body, an `if`/`else` branch, a `match` arm, or an ascription. Each is a
 type error, [T0001](../error-codes.md#t0001--type-mismatch), whose help line names the fix:
@@ -1367,7 +1389,7 @@ the referent out, one `*` per reference layer, and only a `Copy` referent can be
 
 ## List\<T\>
 
-`List<T>` is the standard growable-sequence type. Use it when you need to append, pop, or otherwise mutate a sequence. Use `[T]` when the sequence is a borrowed view after construction.
+`List<T>` is the standard growable-sequence type. Use it when you need to append, pop, or otherwise mutate a sequence. [Use `[T]` when the sequence is a borrowed view after construction](#spec.types.list-t.legality-1).
 
 ```metel
 fun main() {
@@ -1698,7 +1720,7 @@ fun main() -> i64 {
 
 > **Gap** GAP-TYPES-005
 
-A declared type parameter is **opaque inside its own definition**: it is equal only to
+A declared type parameter is [**opaque inside its own definition**](#spec.types.generics.rigid-type-parameters.legality-1): it is equal only to
 itself, and supports only what its declared bounds entail. A generic definition is
 accepted or rejected on that basis alone, never by trying it against particular
 arguments.
@@ -1709,8 +1731,8 @@ fun id2<T, U>(a: T) -> U { a }   // error: expected U, found T
 ```
 
 The declared bounds (inline `T: A`, `where` clauses, and the enclosing `extend`'s bounds)
-are the whole contract: a use is allowed when the bounds entail it, and is an error at
-the definition otherwise.
+are the whole contract: [a use is allowed when the bounds entail it, and is an error at
+the definition otherwise](#spec.types.generics.rigid-type-parameters.legality-2).
 
 <details>
 <summary>Formal rules</summary>
@@ -1922,7 +1944,7 @@ fun tag<record T: !{ id: String }>(t: T) -> i64 { … }    // no `String`-typed 
 Note the second form is satisfied by a record whose `id` is an `i64` — it does not have a
 `String` `id`. Write `!{ id }` for "no `id` of any type".
 
-**A row bound is satisfied by a record, not by a nominal struct.** The `record` marker on the
+**[A row bound is satisfied by a record, not by a nominal struct.](#spec.types.generics.row-bounds.legality-4)** The `record` marker on the
 type parameter says so at the declaration; a bare `<T: { … }>` is an error.
 
 The marker may be written at the parameter or in a `where` clause — the two are equivalent,
@@ -2050,9 +2072,12 @@ fun main() {
 For a rest pattern, the checker removes the explicitly named labels from the strongest
 decomposition entailed by the scrutinee's type and declared row facts. Other known fields
 and the open tail remain. Thus, if `S = .{ .token: Token, .extra: i64, ..Rest }`, then
-`{ token, ..rest }` gives `rest: .{ .extra: i64, ..Rest }`. A presence-only bound such as
-`R: { token, .. }` proves that `token` exists but does not determine the remainder type;
+`{ token, ..rest }` gives `rest: .{ .extra: i64, ..Rest }`.
+
+[A presence-only bound such as
+`R: { token, .. }` proves that `token` exists but does not determine the remainder type](expressions.md#spec.expressions.record-rest-patterns.legality-1);
 the pattern is rejected with a distinct “remainder type cannot be determined” diagnostic.
+
 If all fields are removed from a closed row, the remainder has empty anonymous-record type
 `.{}`, which is `()` ([the empty tuple](#spec.types.tuples.legality-2)). Bare `..` in a pattern remains discard-only and does not produce a value.
 
@@ -2092,7 +2117,7 @@ fun main() {
 }
 ```
 
-An argument whose row lacks a required label is rejected with `T0012`:
+[An argument whose row lacks a required label is rejected with `T0012`](#spec.types.generics.row-bounds.legality-10):
 
 <!-- doc-example: expect-fail reason="the argument's row has no `auth` field -- T0012 is the point" -->
 ```metel
@@ -2155,13 +2180,12 @@ fun main() {
 ```
 
 An open record with an anonymous tail (`.{ .x: T, .. }`) is not accepted everywhere; see
-[legality-5](#spec.types.generics.open-rows.legality-5), as decided by
-[RFC-0181](../../rfcs/4-implemented/rfc-0181-open-rows-in-every-type-position.md). Three limits are recorded as gaps.
+[legality-5](#spec.types.generics.open-rows.legality-5). Three limits are recorded as gaps.
 
 > **Gap** GAP-TYPES-010
 
-A function cannot return an open record while hiding its extra fields: an anonymous tail in a
-return type is `T0032`. Omit the return type, write the record in full, or name a row that comes
+[A function cannot return an open record while hiding its extra fields: an anonymous tail in a
+return type is `T0032`](#spec.types.generics.open-rows.legality-5). Omit the return type, write the record in full, or name a row that comes
 from an argument.
 
 > **Gap** GAP-TYPES-011
@@ -2224,7 +2248,7 @@ A generic parameter that stands for a record is declared `record R`; the *row* o
 parameter is written `..R` (or anonymous `..`) — in a record type's tail, a struct's own
 residual-projection tail, or generic-argument position. A bare identifier in any of these
 type positions is the record type `R` itself, never its row; `R` and `..R` are therefore never
-ambiguous with each other. The `row` kind and keyword do not exist (RFC-0186). `..R` on a parameter
+ambiguous with each other. The `row` kind and keyword do not exist. `..R` on a parameter
 that is not `record`-kinded is a type error.
 
 An open record type may occur in a reusable type position, including a function or
@@ -2273,7 +2297,7 @@ fun main() {
 }
 ```
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0180](../../rfcs/4-implemented/rfc-0180-literal-rows-in-row-arguments.md), [rfc-0186](../../rfcs/4-implemented/rfc-0186-rows-as-an-operator-on-record-parameters.md)_</span>
@@ -2367,11 +2391,11 @@ A parameter taken through a reference (`&{ .x: Type, ..R }`, `&var`) never moves
 and forgets nothing.
 
 A nominal argument whose type has a `Drop` impl is the one exception: dropping it inside the
-callee needs drop dispatch against a narrowed residual (RFC-0137 §5, #949), which is not
+callee needs drop dispatch against a narrowed residual, which is not
 implemented, so passing it to an open-row parameter is rejected with `T0036`. A plain record
 that only *contains* a `Drop` value is unaffected.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0121](../../rfcs/4-implemented/rfc-0121-open-rows.md), [rfc-0179](../../rfcs/4-implemented/rfc-0179-by-value-open-row-parameters-take-the-whole-record.md)_</span>
@@ -2481,7 +2505,7 @@ fun main() {
 
 ### Field-wise row constraints
 
-A constraint applies an aspect bound to **every field** of a row, rather than to the
+[A constraint applies an aspect bound to **every field** of a row](#spec.types.generics.field-wise-row-constraints.legality-1), rather than to the
 row's own type as a whole — distinct from a row *bound* (`R: .{ .x: f64, .. }`), which
 constrains the row's shape (which labels it has), not its contents (what the field
 types can do):
@@ -2496,11 +2520,11 @@ empty row. A per-field exception composes through ordinary row decomposition (`w
 = { x: T, ..Rest }, T: SomeOtherBound, ..Rest: A`) rather than needing a
 heterogeneous form of its own.
 
-The operand is `..` followed by the name of a `record` parameter. `R: A` instead
+[The operand is `..` followed by the name of a `record` parameter](#spec.types.generics.field-wise-row-constraints.legality-1). `R: A` instead
 bounds the record as a whole. A type or literal row after `..` in a bound is a
 parse error; a parameter without the `record` kind is rejected with `T0012`.
 
-`R` must be a row the declaration can walk: the tail of an open-row parameter
+[`R` must be a row the declaration can walk](#spec.types.generics.field-wise-row-constraints.legality-1): the tail of an open-row parameter
 (`.{ ..R }`), the remainder of a `where` decomposition, the tail of an `extend` target
 (`extend<record R> .{ ..R }`), or a declared `record` generic used as the row argument of a
 named type (`Packet<..R>`), in a function signature or an `extend` target. A row that
@@ -2586,7 +2610,7 @@ constrain which labels `R` has (that is an ordinary row bound, composed separate
 
 ### Implementing an aspect for a record
 
-Three forms, with different rules:
+[Three forms](#spec.types.generics.row-conditional-impls.legality-1), with different rules:
 
 ```metel
 extend { x: f64, y: f64 }: MyAspect { … }                    // one concrete row
@@ -2594,7 +2618,7 @@ extend<record R: .{ .x: f64, .. }> .{ ..R }: MyAspect { … }         // every r
 extend<record R> .{ ..R }: MyAspect { … }                         // every row
 ```
 
-All three are permitted once the aspect is local to the implementing module: the first is
+[All three are permitted once the aspect is local to the implementing module](#spec.types.generics.row-conditional-impls.legality-1): the first is
 exactly one structural type, the others a *row condition* on the receiver. The receiver
 matches an impl when its row meets the condition, whether it is an anonymous record or a
 nominal [`record`](declarations.md#records). Methods are checked per call against the
@@ -2609,7 +2633,7 @@ be disjoint, which is specified below. The third is most useful with a way to re
 aspect of every field in the row ([Field-wise row
 constraints](#field-wise-row-constraints) above, `..R: Aspect`), which a record-target
 impl accepts as `where ..R: Aspect`. The standard library implements `Display` for every record of `Display` fields this way
-(its body is a built-in, `LIMIT-TYPES-003`) and `Copy` for every record of `Copy` fields (a
+(its body is a built-in) and `Copy` for every record of `Copy` fields (a
 bodyless impl): such a record is copied, not moved.
 
 Two shape-conditional impls are disjoint when some label one requires the other forbids:
@@ -2653,8 +2677,8 @@ fun main() {
 }
 ```
 
-Two impls whose conditions do not exclude each other overlap and are rejected with
-`T0015`:
+[Two impls whose conditions do not exclude each other overlap and are rejected with
+`T0015`](#spec.types.generics.row-conditional-impls.legality-3):
 
 <!-- doc-example: expect-fail reason="two row-conditional impls that can both match overlap -- T0015 is the point" -->
 ```metel
@@ -2885,11 +2909,11 @@ bound lists. Naming a field the bound doesn't list is rejected regardless of `..
 
 ##### Legality Rule {#spec.types.generics.row-bounds.legality-8}
 
-A row bound is a list of entries, optionally followed by `..` (RFC-0189). An entry is `.x` (a field `.x` of any type), `.x: T` (a field `.x` of type `T`), `!.x` (no field
+A row bound is a list of entries, optionally followed by `..`. An entry is `.x` (a field `.x` of any type), `.x: T` (a field `.x` of type `T`), `!.x` (no field
 `.x`) or `!.x: T` (no field `.x` of type `T`), and the bound holds when every entry holds. The whole-row form `!{ .a, .b: T }` is sugar for
 `{ !.a, !.b: T, .. }`, and `.{ .. }` alone is not a bound.
 
-<!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0189](../../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)_</span>
@@ -2928,6 +2952,19 @@ negatively; entries that cannot all hold, such as `.{ .x, !.x, .. }` and `.{ .x:
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzE2XzBfZG90dGVkX2xhYmVsc19uZWdhdGl2ZV9ib3VuZHNfdHVwbGVzX2FuZF9ibG9ja19sb2NhbF9pbXBscy5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xNi4wIGludGVncmF0aW9uOiBkb3R0ZWQgcm93IGxhYmVscyB4IG5lZ2F0aXZlIHJvdy1ib3VuZCBlbnRyaWVzIHggdHVwbGVzIGFzIHJvd3MgeCBhIGJsb2NrLWxvY2FsIGltcGwgeCBmbG93IGFyZ3VtZW50c1xuLy8gb24gQ2xvbmUgYW5kIENvcHkuXG5zdHJ1Y3QgV3JhcHBlcjxUPiBkZXJpdmVzIENsb25lKFQpLCBDb3B5KFQpIHsgdmFsdWU6IFQgfVxuYXNwZWN0IERlc2NyaWJlIHsgZnVuIGRlc2NyaWJlKCZzZWxmKSAtPiBpNjQ7IH1cblxuZnVuIGZpcnN0PHJlY29yZCBSOiAueyAuMDogaTY0LCAhLnNlY3JldCwgLi4gfT4ocjogUikgLT4gaTY0IHsgci4wIH1cbmZ1biBuYW1lZDxyZWNvcmQgUjogLnsgLmlkOiBpNjQsICEuc2VjcmV0LCAuLiB9PihyOiBSKSAtPiBpNjQgeyByLmlkIH1cblxuZnVuIG1haW4oKSB7XG4gICAgY29weSBzdHJ1Y3QgTG9jYWwgeyBuOiBpNjQgfVxuICAgIGV4dGVuZCBMb2NhbDogRGVzY3JpYmUgeyBmdW4gZGVzY3JpYmUoJnNlbGYpIC0+IGk2NCB7IHNlbGYubiB9IH1cbiAgICBsZXQgdyA6PSBXcmFwcGVyIHsgdmFsdWUgPSBMb2NhbCB7IG4gPSAxIH0ubiB9O1xuICAgIGxldCB3MiA6PSB3O1xuICAgIGxldCB3MyA6PSB3O1xuICAgIGFzc2VydCh3Mi52YWx1ZSArIHczLnZhbHVlID09IDIpO1xuICAgIGxldCB0IDo9ICg0LCBcInNcIik7XG4gICAgYXNzZXJ0KGZpcnN0KHQpID09IDQpO1xuICAgIGxldCByIDo9IC57IC5pZCA9IDUsIC5sID0gTG9jYWwgeyBuID0gNiB9IH07XG4gICAgYXNzZXJ0KG5hbWVkKHIpID09IDUpO1xuICAgIGFzc2VydChyLmwuZGVzY3JpYmUoKSA9PSA2KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2ludGVncmF0aW9uL3YwXzE2XzBfZG90dGVkX2xhYmVsc19uZWdhdGl2ZV9ib3VuZHNfdHVwbGVzX2FuZF9ibG9ja19sb2NhbF9pbXBscy5tdGwiLCJuYW1lIjoidjBfMTZfMF9kb3R0ZWRfbGFiZWxzX25lZ2F0aXZlX2JvdW5kc190dXBsZXNfYW5kX2Jsb2NrX2xvY2FsX2ltcGxzLm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InYwXzE2XzBfc3ByZWFkc19kb3R0ZWRfbGFiZWxzX25lZ2F0aXZlX2JvdW5kc19hbmRfY29weV9mbG93cy5tdGwiLCJzb3VyY2UiOiIvLyB2MC4xNi4wIGludGVncmF0aW9uOiBkb3R0ZWQgbGFiZWxzIHggbmVnYXRpdmUgcm93IGJvdW5kcyBvdmVyIHJlY29yZHMgYW5kIHR1cGxlcyB4IHNwcmVhZCB0aGVuIHJlcGxhY2UgeCBmbG93IGFyZ3VtZW50cyBhbmRcbi8vIGNvcHkoVCkgeCBkZXJpdmVkIENsb25lIHggYSBibG9jay1sb2NhbCBpbXBsIHggYSBjb3B5IGZ1bmN0aW9uIHgga2V5d29yZCBjYWxscyB4IGEgQ29weSByZXNpZHVhbCB4IHVuZGVjaWRlZCBvd25lcnNoaXAuXG5hc3BlY3QgRGVzY3JpYmUgeyBmdW4gZGVzY3JpYmUoJnNlbGYpIC0+IGk2NDsgfVxuY29weShUKSBzdHJ1Y3QgQm94ZWQ8VD4geyB2YWx1ZTogVCB9XG5zdHJ1Y3QgV3JhcHBlcjxUPiBkZXJpdmVzIENsb25lKFQpLCBDb3B5KFQpIHsgdmFsdWU6IFQgfVxuY29weSBzdHJ1Y3QgVGFnZ2VkPFQ+IHsgbjogaTY0LCB2YWx1ZTogVCB9XG5cbmZ1biBzY2FsZShieTogaTY0LCB4OiBpNjQpIC0+IGk2NCB7IGJ5ICogeCB9XG5mdW4gYXBwbHk8cmVjb3JkIFI6IC57IC5mOiBjb3B5IHxpNjR8IC0+IGk2NCwgIS5zZWNyZXQsIC4uIH0+KHI6IFIsIHg6IGk2NCkgLT4gaTY0IHsgKHIuZikoeCkgfVxuZnVuIGZpcnN0PHJlY29yZCBSOiAueyAuMDogaTY0LCAhLnNlY3JldCwgLi4gfT4ocjogUikgLT4gaTY0IHsgci4wIH1cbmZ1biByZWdlbjxUOiBDb3B5PihiOiBCb3hlZDxUPiwgcjogLnsgLms6IGk2NCB9KSAtPiBpNjQge1xuICAgIGxldCBhIDo9IC57IC4uciwgLmIgPSBiIH07XG4gICAgbGV0IGMgOj0gLnsgLi5yLCAuYiA9IGIgfTtcbiAgICBhLmsgKyBjLmtcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgc3RydWN0IExvY2FsIHsgbjogaTY0IH1cbiAgICBleHRlbmQgTG9jYWw6IERlc2NyaWJlIHsgZnVuIGRlc2NyaWJlKCZzZWxmKSAtPiBpNjQgeyBzZWxmLm4gfSB9XG4gICAgbGV0IGluYzogY29weSB8aTY0fCAtPiBpNjQgOj0gfHh8IHsgeCArIDEgfTtcbiAgICBsZXQgciA6PSAueyAuZiA9IGluYywgLnAgPSBCb3hlZCB7IHZhbHVlID0gMSB9LCAudyA9IFdyYXBwZXIgeyB2YWx1ZSA9IDIgfSwgLmsgPSAwIH07XG4gICAgbGV0IHMgOj0gLnsgLi5yLCAuayA9IDUgfTtcbiAgICBsZXQgdCA6PSAueyAuLnMsIC53ID0gV3JhcHBlciB7IHZhbHVlID0gOSB9IH07XG4gICAgYXNzZXJ0KGFwcGx5KHQsIHNjYWxlKGJ5ID0gMiwgeCA9IDMpKSA9PSA3KTtcbiAgICBsZXQgYyA6PSB0LncuY2xvbmUoKTtcbiAgICBhc3NlcnQoYy52YWx1ZSA9PSA5KTtcbiAgICBhc3NlcnQoZmlyc3QoKDQsIFwic1wiKSkgPT0gNCk7XG4gICAgbGV0IHUgOj0gLnsgLi5yLCAubCA9IExvY2FsIHsgbiA9IDMgfSB9O1xuICAgIGFzc2VydCh1LmwuZGVzY3JpYmUoKSA9PSAzKTtcbiAgICBhc3NlcnQocmVnZW4oQm94ZWQgeyB2YWx1ZSA9IDEgfSwgLnsgLmsgPSAyIH0pID09IDQpO1xuICAgIGxldCB3MiA6PSBUYWdnZWQgeyBuID0gMSwgdmFsdWUgPSBcInNcIiB9O1xuICAgIGxldCBtb3ZlZCA6PSB3Mi52YWx1ZTtcbiAgICBsZXQgYSA6PSB3MjtcbiAgICBsZXQgYiA6PSB3MjtcbiAgICBhc3NlcnQoYS5uICsgYi5uID09IDIpO1xuICAgIGFzc2VydChtb3ZlZCA9PSBcInNcIik7XG4gICAgdmFyIHczIDo9IFRhZ2dlZCB7IG4gPSAxLCB2YWx1ZSA9IFwidFwiIH07XG4gICAgbGV0IHRha2VuIDo9IHczLnZhbHVlO1xuICAgIHczLm4gPSA1O1xuICAgIGxldCB3NCA6PSB3MztcbiAgICBhc3NlcnQodzQubiArIHczLm4gPT0gMTApO1xuICAgIGFzc2VydCh0YWtlbiA9PSBcInRcIik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9pbnRlZ3JhdGlvbi92MF8xNl8wX3NwcmVhZHNfZG90dGVkX2xhYmVsc19uZWdhdGl2ZV9ib3VuZHNfYW5kX2NvcHlfZmxvd3MubXRsIiwibmFtZSI6InYwXzE2XzBfc3ByZWFkc19kb3R0ZWRfbGFiZWxzX25lZ2F0aXZlX2JvdW5kc19hbmRfY29weV9mbG93cy5tdGwifQ=="></details>
 </details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.generics.row-bounds.legality-10}
+
+A row bound is satisfied only by a record that has every field the bound lists, at the stated type
+where it states one. An argument whose row lacks a listed field is rejected with `T0012`, naming the
+missing label.
+
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDEyIiwiY29sIjpudWxsLCJjb250YWlucyI6InJlcXVpcmVzIGxhYmVsIGBhdXRoYCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6ImFuX2FyZ3VtZW50X2xhY2tpbmdfYV9yb3dfYm91bmRfZmllbGRfaXNfdDAwMTIubXRsIiwic291cmNlIjoiLy8gQSByb3cgYm91bmQgaXMgc2F0aXNmaWVkIG9ubHkgYnkgYSByZWNvcmQgdGhhdCBoYXMgZXZlcnkgZmllbGQgaXQgbGlzdHMuXG5mdW4gbmVlZHNfYXV0aDxyZWNvcmQgUjogLnsgLmF1dGg6IFN0cmluZywgLi4gfT4ocjogUikgLT4gU3RyaW5nIHtcbiAgICByLmF1dGhcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbmVlZHNfYXV0aCgueyAudXNlciA9IFwiYVwiLnRvX3N0cmluZygpIH0pOyAvLyBFUlJPUltUMDAxMl1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3JlY29yZHMvYW5fYXJndW1lbnRfbGFja2luZ19hX3Jvd19ib3VuZF9maWVsZF9pc190MDAxMi5tdGwiLCJuYW1lIjoiYW5fYXJndW1lbnRfbGFja2luZ19hX3Jvd19ib3VuZF9maWVsZF9pc190MDAxMi5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -2998,7 +3035,7 @@ fun main() -> i64 {
 
 ### `!` as a return type
 
-A function annotated `-> !` promises never to return; every control-flow path must end in a diverging expression, checked by the compiler:
+[A function annotated `-> !` promises never to return; every control-flow path must end in a diverging expression](#spec.types.never-type.legality-11), checked by the compiler:
 
 ```metel
 fun abort(msg: String) -> ! {
@@ -3006,7 +3043,7 @@ fun abort(msg: String) -> ! {
 }
 ```
 
-A `-> !` function containing a reachable `return` is a type error.
+[A `-> !` function containing a reachable `return` is a type error](#spec.types.never-type.legality-11).
 
 <details>
 <summary>Formal rules</summary>
