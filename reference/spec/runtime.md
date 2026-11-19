@@ -217,7 +217,7 @@ implementations make their target type available for `as` casts and `?` error co
 </details>
 
 ## String Methods
-> Utilities since v0.9.0. All index-based operations count **Unicode scalar
+> All index-based operations count **Unicode scalar
 > values** (matching `.len()`), and are total — out-of-range indices clamp or
 > return `None` rather than panicking.
 
@@ -297,8 +297,6 @@ Calling `.len()` on either `[T]` or `[T; N]` returns its number of elements.
 
 ## Char Methods
 
-> **Availability:** Since v0.8.0.
-
 | Method / Function         | Signature                        | Description                                  |
 |---------------------------|----------------------------------|----------------------------------------------|
 | [`u32::from(c)`](#spec.runtime.char-methods.dynamics-1)            | `(Char) -> u32`                  | Unicode scalar value as a `u32`              |
@@ -327,8 +325,6 @@ character or raises `R0016` when `n` is not a valid Unicode scalar value. A char
 </details>
 
 ## Core Sum Types
-
-> **Availability:** Core methods since v0.9.0. `.yolo()`, `.ok_or()`, `.map_err()`, and `.ok()` since v0.10.0.
 
 `Option<T>` and `Result<T, E>` are the core optional/fallible types, both in
 `std::core` and available unqualified. Their combinator methods let them be used
@@ -385,11 +381,7 @@ is present.
 
 ## List\<T\>
 
-> **Availability:** Since v0.9.0.
-
 `List<T>` is the growable collection type in `std::core`, available unqualified.
-
-> **Since v0.12.0:** `List<T>.set(i, value)` overwrites an element in place.
 
 `.set(i, value)` was added alongside RFC-0126 because index assignment through an immutable
 `[T]` no longer works. It gives in-place algorithms, such as bubble sort, an operation for
@@ -449,8 +441,6 @@ does not mutate that source.
 </details>
 
 ## OsError
-
-> **Availability:** Since v0.9.0.
 
 `OsError` is the error type returned by the host-backed standard-library modules
 (`std::fs`, `std::process`). It is in `std::core` (available unqualified) and

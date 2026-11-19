@@ -6,8 +6,9 @@ The rules enforce reference/spec/STYLEGUIDE.md and rfcs/PROCESS.md ("Public avai
   internal-number       an RFC, ADR, issue, PR or GAP/LIMIT record number in the public text. The marker blocks
                         (`> **Gap`, `> **Limitation`, `> **Pending`, `> **Planned for`) are the one exception:
                         they cite the record that tracks what is not yet true.
-  provenance-marker     an `Availability`, `Since vX` or `Changed in vX` callout. The spec states the current
-                        language; versions live in the changelog and in the versioned docs snapshots.
+  provenance-marker     an `Availability`, `Available in`, `Since` or `Changed in` callout, or a sentence saying
+                        which version added or changed something. The spec states the current language; versions
+                        live in the changelog and in the versioned docs snapshots.
   long-paragraph        a prose paragraph or list item of more than MAX_PARAGRAPH_WORDS words.
   long-quote            a quote block of more than MAX_QUOTE_WORDS words.
   unlinked-normative    a paragraph that states a rule ("is an error", an error code) with no link to a rule.
@@ -50,6 +51,7 @@ SPEC_FILES = [
     "reference/spec/functions.md",
     "reference/spec/lexical.md",
     "reference/spec/modules.md",
+    "reference/spec/runtime.md",
     "reference/spec/ownership.md",
     "reference/spec/types.md",
     "reference/error-codes.md",
@@ -73,7 +75,10 @@ NUMBER_RE = re.compile(
     r"|\b(?:GAP|LIMIT)-[A-Z]+-\d+\b|\bADR-\d+\b"
 )
 MARKER_START_RE = re.compile(r"^>\s*\*\*(?:Gap|Limitation|Pending|Planned for)\b")
-PROVENANCE_RE = re.compile(r"\*\*(?:Availability:|Since v\d|Changed in v\d)")
+PROVENANCE_RE = re.compile(
+    r"\*\*(?:Availability:|Since\b|Changed in\b|Available in\b)"
+    r"|\b(?:[Ss]ince|[Aa]vailable in|[Cc]hanged in|[Aa]dded in|[Ii]ntroduced in) v\d+\.\d+"
+)
 RULE_HEADING_RE = re.compile(r"^#{5} (?:Legality Rule|Dynamic Semantics) \{#")
 RULE_LINK_RE = re.compile(r"#spec\.[a-z0-9_.-]+\.(?:legality|dynamics)-\d+")
 NORMATIVE_RE = re.compile(
@@ -255,7 +260,7 @@ def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[All
         if i not in marker_lines:
             for match in NUMBER_RE.finditer(line):
                 found.append(Finding("internal-number", path, i + 1, match.group(0)))
-        for _ in PROVENANCE_RE.finditer(line):
+        if PROVENANCE_RE.search(line):
             found.append(Finding("provenance-marker", path, i + 1, line.strip()[:70]))
 
     for start, end in _blocks(lines, labels, "text"):

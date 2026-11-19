@@ -2,8 +2,6 @@
 
 ## Files and Modules
 
-> **Availability:** Since v0.5.0.
-
 Every `.mtl` source file is a module. There is no `mod` declaration — the module graph is built entirely from `import` declarations.
 
 The root file passed to the toolchain is the root module:
@@ -407,11 +405,9 @@ public API, including under an alias; importers may use it as a declaration of t
 | `pub` | Marks a declaration in this file as externally accessible |
 | `export path::Name;` | Re-exports a name from a submodule into this module's public API |
 
-Since v0.12.1 (metel-core#664), a bare `export path::Name;` also loads `path`'s module file, exactly as an `import` of the same path would — otherwise a name reachable *only* through a re-export, with no `import` anywhere pulling its module in directly, would never actually resolve: it would exist nowhere in the compiled program for the re-export to point at. `export` and `import` therefore build the module graph together; an `export` is not merely a post-load renaming step over files `import` already loaded.
+A bare `export path::Name;` also loads `path`'s module file, exactly as an `import` of the same path would — otherwise a name reachable *only* through a re-export, with no `import` anywhere pulling its module in directly, would never actually resolve: it would exist nowhere in the compiled program for the re-export to point at. `export` and `import` therefore build the module graph together; an `export` is not merely a post-load renaming step over files `import` already loaded.
 
 ## std::core Auto-Import
-
-> **Availability:** Since v0.6.1.
 
 Every module automatically has `std::core` glob-imported at the lowest priority tier. This means `Option`, `Result`, `Display`, `Iterable`, `From`, and all built-in functions are available in every module without any explicit import statement.
 

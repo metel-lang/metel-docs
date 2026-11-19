@@ -135,9 +135,6 @@ like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarat
 
 ## Program Entry Point
 
-> **Changed in v0.14.0 (RFC-0167):** the program's `main` function is checked during
-> typechecking, not lazily at evaluator startup.
-
 The root module must declare exactly one function named `main`, callable with zero
 arguments, with a body the type checker can type. This is a purely static, declarative
 fact — answerable from the declaration table alone, with no dependency on program
@@ -236,9 +233,6 @@ in a written function type.
 A named function declared with its own `<T>` generics (`fun identity<T>(x: T) -> T
 { ... }`) may always be called directly (`identity(3)`, `identity::<i64>(3)`).
 
-> **Changed in v0.13.0 (RFC-0138):** generic named functions are no longer limited to direct
-> calls or explicitly typed contexts.
-
 A generic named function may be bound with a bare, unannotated `let`; the binding stays
 polymorphic, so its later uses may each instantiate it differently (`let alias = identity;
 alias(3); alias("x");`). It may also be passed as a higher-order argument when the receiving
@@ -294,8 +288,6 @@ before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type synta
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-2}
 
-> **Since v0.13.0 (RFC-0138).**
-
 A non-generic named function and a closure are values of their function type and may be
 bound, passed as arguments, and returned as results. A generic named function (declared
 with its own `<T>` generics) may be called directly, bound with a bare unannotated `let`
@@ -325,8 +317,6 @@ that is itself still generic in the callee — is `T0003`.
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-3}
 
-> **Since v0.13.0 (RFC-0166).**
-
 A written function type (`|T| -> U`) has move-only by-value use-multiplicity at
 every nesting depth, matching exactly against a copyable one: a value of it may
 be called (subject to `once` / `var`) and moved, but not duplicated by value. A
@@ -354,8 +344,6 @@ bare generic parameter is not a written function type.
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-4}
 
-> **Since v0.13.0 (RFC-0166).**
-
 A function value the compiler proved copyable is accepted into a written
 function-type slot by moving; the slot's copyability is not carried by the
 written type and is not recoverable downstream.
@@ -372,8 +360,6 @@ written type and is not recoverable downstream.
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-5}
 
-> **Since v0.16.0 (RFC-0219).**
-
 `copy` is a qualifier on a written function type, written in the same prefix position as `once` and `var` and in any order with them: `copy |T| -> U`, `copy once |T| -> U`, `copy var |T| -> U`. It is contextual: it is a qualifier only before a function type, a class keyword only before `struct`, `enum` or `record` ([declaration clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)), and an ordinary identifier elsewhere.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
@@ -388,8 +374,6 @@ written type and is not recoverable downstream.
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-6}
-
-> **Since v0.16.0 (RFC-0219).**
 
 A slot of type `copy |T| -> U` accepts a function value only if the compiler proves it copyable from its captures ([closures](#spec.functions.closures.legality-20)): a named function, a closure with no captures, or a closure whose captures are all `Copy`. A closure that owns a capture that is not `Copy`, or that holds an exclusive reference `[&var x]` (which is not `Copy`), is a type mismatch (`T0001`) whose message says that a function value is copyable only if it is a named function or a closure whose captures are all `Copy`.
 
@@ -407,8 +391,6 @@ A slot of type `copy |T| -> U` accepts a function value only if the compiler pro
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-7}
-
-> **Since v0.16.0 (RFC-0219).**
 
 A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b := f;`); a value of a bare written function type may not ([legality-3](#spec.functions.first-class-functions.legality-3)). A `copy |T| -> U` value flows into a bare `|T| -> U` slot, and a copyable value into either, by moving ([legality-4](#spec.functions.first-class-functions.legality-4)); a bare value is not accepted where `copy` is required (`T0001`). Below the first function level (a callback that takes a callback) the qualifier matches exactly, as `once` and `var` do.
 
@@ -430,8 +412,6 @@ A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b :
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-8}
 
-> **Since v0.16.0 (RFC-0219).**
-
 `copy` in the prefix of a closure literal (`[x] copy |y| ...`) is a parse error (`P0001`): a literal's copyability is derived from its captures, not asserted.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
@@ -442,8 +422,6 @@ A value of type `copy |T| -> U` may be duplicated by value (`let a := f; let b :
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-9}
-
-> **Since v0.16.0 (RFC-0219).**
 
 A value of type `copy |T| -> U` satisfies `Copy` and, by the entailment of `Copy`, `Clone`, through the aspect resolver, the answer move checking gets ([Copy](ownership.md#spec.ownership.copy.legality-3)): one property with two spellings, `copy struct` and `copy |T| -> U`. It is `Discard` once the `Discard` check exists; until then every type is `Discard` and nothing is checked.
 
@@ -463,15 +441,11 @@ A value of type `copy |T| -> U` satisfies `Copy` and, by the entailment of `Copy
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-10}
 
-> **Since v0.16.0 (RFC-0219).**
-
 `copy var |T| -> U` is a copyable function whose call mutates its own captured state. Each copy owns an independent copy of that state, so copies diverge as they are called. A `[&var x]` capture, which aliases state the closure does not own, is not `Copy` and so cannot be `copy` (legality-6).
 
 <!-- rfc.py:last_reviewed 58b51abc04d9a96abb3604f28b34f09b66dcaa36 -->
 
 ##### Dynamic Semantics Rule {#spec.functions.first-class-functions.dynamics-1}
-
-> **Since v0.16.0 (RFC-0219).**
 
 Copying a `copy |T| -> U` value duplicates its environment. Every capture is `Copy`, so this is a representation copy that runs no user code ([Copy](ownership.md#spec.ownership.copy.legality-3)).
 
@@ -1620,8 +1594,6 @@ are the resulting values bound to the callee's parameters. A keyword argument ne
 
 ## Turbofish
 
-> **Availability:** Since v0.8.0.
-
 > **Gap** GAP-FUNCTIONS-005
 
 When a generic function's type parameters cannot be inferred from the arguments, they [can be specified explicitly with turbofish syntax: `name::<T, U>(args)`](#spec.functions.turbofish.legality-1).
@@ -1712,8 +1684,6 @@ parentheses. There is no standalone instantiation-without-calling value form:
 </details>
 
 ## The ? Operator
-
-> **Availability:** Matching-error `?` since v0.1.0. `From`-based error coercion since v0.4.0. `?` on `Option<T>` since v0.15.0 (RFC-0182).
 
 Inside a function returning `Result<T, E>`, [`?` propagates errors early](#spec.functions.the-operator.dynamics-2):
 

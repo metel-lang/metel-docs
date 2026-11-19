@@ -732,8 +732,6 @@ fun main() -> i64 {
 
 ### Instantiation and Field Access
 
-> **Changed in v0.12.0: field initializers separate with `=`, not `:` — `Point { x = 1.0 }`; field *declarations* keep `:`.**
-
 ```metel
 struct Point {
     x: f64,
@@ -1155,7 +1153,7 @@ it satisfies row bounds ([Generics — Row bounds](types.md#row-bounds)) and
 row-conditional impl resolution ([Generics — Open rows](types.md#open-rows)) the way a
 plain `struct`'s row never does.
 
-> **Available in v0.14.0 (#1350):** `std::core` provides field-wise `Clone` for a record when every field implements `Clone`.
+`std::core` provides field-wise `Clone` for a record when every field implements `Clone`.
 
 The implementation recursively clones each field and preserves the record's type.
 This does not add `Eq`, `Ord`, or `Hash`; those aspects remain governed by their
@@ -1449,8 +1447,6 @@ fun main() -> i64 {
 
 ## Type Aliases
 
-> **Availability:** Since v0.13.0 (RFC-0160).
-
 A **type alias** gives an existing type a name:
 
 <!-- doc-example: skip reason="RFC-0160 type-alias syntax, pending a develop-latest that parses it (metel-core#921)" -->
@@ -1590,8 +1586,6 @@ remainder of its block; the outer alias is unaffected outside it.
 ---
 
 ## Aspects
-
-> **Availability:** Since v0.4.0.
 
 ```metel
 aspect Printable {
@@ -1879,9 +1873,6 @@ written `extend Type: Aspect .{ ... }`, and both forms may coexist for the same 
 </details>
 
 ### `dyn Aspect`
-
-> **Since v0.13.0 (RFC-0008, metel-core#865, metel-core#863, metel-core#864):** `dyn Aspect`
-> objects, their coercions, and heterogeneous `List<dyn Aspect>` collections are supported.
 
 `dyn Aspect` is an aspect object: a value whose concrete type is erased, with
 dispatch happening through a vtable at runtime. It complements `extends Aspect`
@@ -2501,9 +2492,6 @@ impls.
 
 > **Gap** GAP-DECLARATIONS-003
 
-> **Changed in v0.12.0 (RFC-0126):** `[T]`'s `Clone` implementation is now a view copy, not
-> an element-wise clone.
-
 Once `[T]` owns nothing, an element-wise clone into new backing storage is impossible:
 `Clone::clone(&self) -> Self` must produce a `[T]`, which can borrow only from storage that
 already exists and outlives it, not from a buffer the implementation just allocated.
@@ -2962,8 +2950,6 @@ associated type.
 
 ### Default Methods
 
-> **Availability:** Since v0.7.0.
-
 An aspect method may [supply a default body](#spec.declarations.aspects.default-methods.dynamics-1). An `extend` block may omit any method that
 has a default; the aspect's implementation is inherited automatically.
 
@@ -3041,8 +3027,6 @@ aspect Comparable {
 
 In a struct or enum `extend` block, `Self` is an alias for the type being implemented:
 
-> **Availability:** Since v0.7.0.
-
 ```metel
 struct Point {
     x: i64,
@@ -3077,8 +3061,6 @@ Within an aspect declaration, `Self` denotes the type implementing that aspect. 
 </details>
 
 ### Aspect Bounds on Function Type Parameters
-
-> **Availability:** Since v0.7.0.
 
 A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. The named aspect must resolve where the declaration is written; an unknown aspect is error `T0003`, even when the generic function is never called. Passing a type that does not satisfy a resolved bound is error `T0012`, with the span on the offending call-site argument.
 
@@ -4648,8 +4630,6 @@ A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` cla
 ---
 
 ### Aspect Bounds on Struct and Enum Type Parameters
-
-> **Availability:** Since v0.7.0.
 
 A struct or enum generic type parameter may declare an aspect bound. The bound is enforced at **construction time**: instantiating the type with a concrete type argument that does not implement the bound is error `T0012`, with the span on the offending type argument at the construction call site.
 

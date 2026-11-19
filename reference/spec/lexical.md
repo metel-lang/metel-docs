@@ -95,8 +95,6 @@ let y := x + 5;          // 5 adopts i32; y is i32
 assert(x > 5);          // 5 adopts i32
 ```
 
-> **Availability:** Sized literal suffixes and polymorphic literal coercion since v0.8.0.
-
 **Characters** — single-quoted Unicode scalar values:
 
 ```metel
@@ -109,8 +107,6 @@ assert(x > 5);          // 5 adopts i32
 ```
 
 The type of a character literal [is `Char`](#spec.lexical.literals.legality-5).
-
-> **Availability:** `Char` since v0.8.0.
 
 **Strings** — double-quoted UTF-8:
 
@@ -130,8 +126,6 @@ let msg := "hello, ${name}!";       // "hello, world!"
 let n := 42;
 let s  := "n=${n}";                 // "n=42"
 ```
-
-> **Availability:** Since v0.7.0.
 
 The expression inside `${…}` may be any expression whose type implements the `Display` aspect (i.e. has a `.to_string()` method). The placeholder desugars to `.to_string()` concatenated with the surrounding literal fragments using `+`. String literals may appear inside `${…}`:
 
@@ -329,8 +323,6 @@ A character literal has type `Char`.
 <!-- rfc.py:fixtures:end -->
 
 </details>
-
-> **Availability:** Since v0.7.0.
 
 **Booleans:** `true`, `false`
 

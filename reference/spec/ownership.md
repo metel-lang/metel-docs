@@ -4,8 +4,6 @@ title: "Ownership and Move Semantics"
 
 # Ownership and Move Semantics
 
-> **Availability:** Since v0.12.0, whole-binding move checking is opt-in via `--move-check`.
-
 Whole-binding use-after-move checking is enabled by the opt-in `--move-check` flag.
 Without it, reusing a binding moved as a whole is not rejected. Row narrowing and
 widening are ordinary type-checking rules and apply independently of that flag:
@@ -521,8 +519,6 @@ extend Handle: Drop {
 `Drop` is opt in. A type without a `Drop` implementation is reclaimed by recursively dropping
 its fields.
 
-> **Changed in v0.13.0 (RFC-0071):** `drop` takes `self: &var Self`, not `self` by value.
-
 <details>
 <summary>Formal rules</summary>
 
@@ -648,7 +644,7 @@ After `drop(x)` consumes a non-`Copy` binding, that binding may not be used agai
 
 Moving a field out of a struct leaves the containing value **partially moved**. The remaining
 fields stay accessible; the original whole type is no longer available, but the residual
-may be used as a whole at its current type. Since v0.13.0 (RFC-0137) the residual
+may be used as a whole at its current type. The residual
 also gets a named type — `Handle` becomes `Handle.{ .fd }`, not just internal bookkeeping;
 see [Narrowing](#narrowing) below.
 
@@ -747,9 +743,6 @@ An owning destructuring pattern consumes its scrutinee; matching through a refer
 
 </details>
 
-> **Changed in v0.12.0 (RFC-0071), behind `--move-check`:** moving a field out of a `Drop`
-> type is now rejected.
-
 A `Drop` type may still be partially *borrowed*; only moving out is restricted.
 
 > **Gap** GAP-OWNERSHIP-003: legality-2's ban is enforced unconditionally; see [Drop dispatch against a narrowed residual](#drop-dispatch-against-a-narrowed-residual).
@@ -843,9 +836,6 @@ Every `struct` is represented, for type-checking purposes, as a fixed nominal id
 (its **brand**, minted once at declaration) paired with its current **row** — the set of
 fields still present.
 
-> **Since v0.13.0 (RFC-0137, metel-core#857):** a struct's own field projection preserves
-> its nominal brand.
-
 `h.{ .fd }` is a move of the named fields that keeps the brand: a `Copy` field is copied,
 a non-`Copy` field is moved out of `h`, and `h` narrows by the fields moved, exactly as
 for `let n := h.name;`. It produces a residual of `h`'s own brand, not a same-shaped
@@ -868,8 +858,6 @@ fun main() -> i64 {
 A projection naming *every* field the struct declares normalizes back to the plain
 struct type instead of staying a distinct residual — `h.{ .fd, .name }` here is just
 `Handle`, still rejected by a row bound the same way a bare `Handle` value already is.
-
-> **Since v0.13.0:** moving a field out of a value narrows its type.
 
 For a **struct** (RFC-0137 slice 2, metel-core#858), `h.name` produces the same branded
 residual type, `h.{ .fd }`, as a projection does. For an **anonymous `record`** (RFC-0117,
@@ -934,9 +922,6 @@ unambiguously, that struct — not a same-shaped anonymous record, and not a
 ##### Legality Rule {#spec.ownership.narrowing.legality-1}
 
 > **Gap** GAP-OWNERSHIP-002
-
-> **Since v0.13.0.** Struct narrowing is RFC-0137 slice 2 (metel-core#858); anonymous-record
-> narrowing is RFC-0117 (metel-core#789).
 
 Moving a field out of a value narrows its type to a row with that field removed: a
 same-brand residual for a struct, the record type minus that label for an anonymous
@@ -1028,16 +1013,11 @@ including zero. An anonymous empty residual is `()`: the empty row and the unit 
 
 ##### Legality Rule {#spec.ownership.narrowing.legality-4}
 
-> **Since v0.13.0.** Struct: RFC-0137 slice 2 (metel-core#858). Anonymous record:
-> RFC-0117 (metel-core#789). `--move-check` agreement: metel-core#950.
-
 Using a narrowed value where a wider row, or the whole type, is required is a type error
 at type-check time, not deferred to `--move-check`; every still-present field stays
 readable and its methods callable. A whole-value use *at* the narrowed type — moving it,
 binding it, passing it to a matching-row parameter — is legal, and `--move-check` does not
 flag it.
-
-> **Changed in v0.14.0:** Row narrowing includes empty residuals.
 
 Moving the last remaining non-`Copy` field leaves an empty residual. An anonymous
 record has type `.{}`, which is `()`; a nominal struct or record retains its brand with an empty
@@ -1149,8 +1129,6 @@ consuming its last field does not itself mark that binding wholly moved.
 A residual may itself be projected (`h.{ .fd }` on an already-narrowed `h`) for a field
 still in its row; naming a field already moved out of it is rejected.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
-
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
@@ -1170,8 +1148,6 @@ non-`Copy` field out of it, and a borrowed projection (`&h.{ .f }`, `&var h.{ .f
 non-`Copy` field is rejected, because it would move; a borrowing form is reserved for
 RFC-0109 and RFC-0122. Projecting a field that was already moved out is a use of a moved
 value (`T0019`), with or without `--move-check`.
-
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
@@ -1200,10 +1176,7 @@ value (`T0019`), with or without `--move-check`.
 
 ### Passing a residual to a function
 
-> **Since v0.13.0 (RFC-0137, metel-core#857):** projection-produced residuals match
-> compatible projected parameters.
-
-Since v0.13.0 (RFC-0137 slice 2, metel-core#858), a residual reached via move-triggered
+A residual reached via move-triggered
 narrowing is passed exactly the same way; nothing here is specific to how the residual
 arose.
 
@@ -1502,9 +1475,6 @@ status today](#spec.ownership.partial-moves.legality-3), for every struct regard
 `Drop` — this is existing, unconditional `--move-check` behavior, not itself part of
 RFC-0137.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858):** reassigning a moved-out field
-> widens a residual back to its whole type.
-
 `Handle.{ .fd }` becomes `Handle` again once `name` is reassigned. This formalizes the
 whole-value-restoring behavior reassignment already has; it does not require another RFC.
 Widening does not check the reassembled value against constructor invariants. Ordinary field
@@ -1523,8 +1493,6 @@ brand's full declared row, and the write reintroduces it. Widening applies only 
 **owned** binding; a non-`Copy` field cannot be moved out of — and so cannot be
 reassigned back into — a value reached through a reference
 ([references-and-moves.legality-1](#spec.ownership.references-and-moves.legality-1)).
-
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).**
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
@@ -1567,8 +1535,6 @@ An unknown original label, a wrong value type, or an immutable binding is
 still rejected by the ordinary assignment rules. Restoration does not revive
 a binding that was moved as a whole.
 
-> **Since v0.13.0 (RFC-0137 slice 2, metel-core#858).** For an owned binding.
-
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
@@ -1601,8 +1567,6 @@ a binding that was moved as a whole.
 
 `&var T` is **not** `Copy` — an exclusive reference must stay unique to be exclusive. It is
 therefore moved on use, with one exception:
-
-> **Since v0.12.0 (RFC-0071), behind `--move-check`:** `&var T` arguments reborrow.
 
 Passing a `&var T` to an `&var T` parameter reborrows it rather than moving it, so the
 original binding remains usable after the call. Every other use moves.
