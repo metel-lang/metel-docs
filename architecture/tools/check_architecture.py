@@ -446,6 +446,7 @@ def validate_record(
     uniqueness, disposition rules, scope anchor, and a non-empty `## Affects`.
     Kind-specific rules live with their own kind."""
     findings: list = check_frontmatter_quoting(path, rel)
+    findings.extend(check_repro_fences(path, rel, path.read_text()))
     for required_field in ("id", "title", "scope", "owner", "discovered_by", "disposition"):
         if not fm.get(required_field):
             findings.append(Finding(str(rel), f"missing or empty frontmatter field `{required_field}`"))
@@ -729,6 +730,23 @@ def tracked_record_problems(records: list, repo_root: Path, resolver, unresolved
             if i.get("state") == "open" and not i.get("milestone"):
                 warnings.append(Finding(rel, f"`tracked_by` names metel-core#{n}, which has no milestone: a planned record must be scheduled"))
     return errors, warnings
+
+
+REPRO_FENCE_RE = re.compile(r"^```metel([^\n]*)$", re.MULTILINE)
+REPRO_ATTR_RE = re.compile(r"\brepro=(\S*)")
+REPRO_VALUE_RE = re.compile(r"^(?:ok|[A-Z]\d{4})$")
+
+
+def check_repro_fences(path: Path, rel: Path, text: str) -> list:
+    """A record's executable reproduction is a ```metel fence carrying `repro=ok` or
+    `repro=<diagnostic code>`; metel-core's `tools/check_record_repros.py` runs it. Here only the
+    spelling is checked, so a typo cannot silently disable the check."""
+    findings: list = []
+    for m in REPRO_FENCE_RE.finditer(text):
+        attr = REPRO_ATTR_RE.search(m.group(1))
+        if attr and not REPRO_VALUE_RE.match(attr.group(1)):
+            findings.append(Finding(str(rel), f"`repro={attr.group(1)}` must be `ok` or a diagnostic code like `T0002`"))
+    return findings
 
 
 ISSUE_CITATION_RE = re.compile(r"(?:metel-core)?(?<![\w/])#(\d{2,5})\b|metel-core#(\d{2,5})\b")

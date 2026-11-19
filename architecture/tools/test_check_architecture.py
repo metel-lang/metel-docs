@@ -725,6 +725,23 @@ class ResolutionCitationTests(GapRecordTests):
         self.write_gap_corpus(gap_text=text)
         self.assertTrue(any("`accepted` record is a deliberate boundary" in f for f in [str(f) for f in self.run_checks()]))
 
+
+class ReproFenceTests(GapRecordTests):
+    """`repro=` on a record's Metel fence is spelled `ok` or a diagnostic code (metel-core runs it)."""
+
+    def findings_for(self, info):
+        self.write_gap_corpus(gap_text=VALID_GAP.replace("Some gap.", f"```metel{info}\nfun main() {{}}\n```"))
+        return [str(f) for f in self.run_checks()]
+
+    def test_a_diagnostic_code_and_ok_are_accepted(self):
+        for info in (" repro=T0002", " repro=ok", ""):
+            self.assertEqual([], self.findings_for(info), info)
+
+    def test_a_malformed_expectation_is_a_finding(self):
+        for info in (" repro=fails", " repro=T2", " repro="):
+            self.assertTrue(any("must be `ok` or a diagnostic code" in f for f in self.findings_for(info)), info)
+
+
 class PendingMarkerTests(unittest.TestCase):
     """`> **Pending** metel-core#N` markers (metel-core#1418): the transient "not implemented yet,
     an issue tracks it" marker, valid while the issue is open and has a milestone."""

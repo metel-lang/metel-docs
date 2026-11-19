@@ -15,7 +15,7 @@ review: null
 
 `fun` declarations are hoisted to the top of their block; `let` and `var` bindings are sequential. A function that calls a module-level `let`-bound closure is therefore accepted when it follows the binding and is `T0003: undefined name` when it precedes it:
 
-```metel
+```metel repro=T0003
 fun main() { println(f(1)); }       // T0003: undefined name `f`
 let f := |a: i64| { a + 1 };
 ```

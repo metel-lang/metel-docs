@@ -83,7 +83,7 @@ not a language guarantee, and will not hold once the Compiled Profile
 A plain reference-typed struct field escapes the same way, reproduced
 2026-09-29 against current `develop`:
 
-```metel
+```metel repro=ok
 struct Holder { r: &i64 }
 
 fun make() -> Holder {
