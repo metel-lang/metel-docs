@@ -27,6 +27,13 @@ class InternalNumbers(unittest.TestCase):
                        "> **Planned for v0.17.0 (RFC-0123).** text"):
             self.assertEqual(findings(marker + "\n", "internal-number"), [], marker)
 
+    def test_an_exemptions_own_ref_is_exempt_but_its_reason_is_not(self):
+        ref = '<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Not built." -->\n'
+        span = '<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Not built._</span>\n'
+        self.assertEqual(findings(ref + "\n" + span, "internal-number"), [])
+        reason = '<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Waits for #261." -->\n'
+        self.assertEqual(len(findings(reason, "internal-number")), 1)
+
     def test_a_marker_inside_a_rule_block_is_exempt(self):
         rule = "##### Legality Rule {#spec.x.y.legality-1}\n\n> **Gap** GAP-X-001\n\nA rule.\n"
         self.assertEqual(findings(rule, "internal-number"), [])

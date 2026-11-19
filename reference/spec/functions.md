@@ -14,7 +14,7 @@ fun main() -> i64 {
 
 [Every parameter of a named function is written with its type](#spec.functions.named-function-declarations.legality-2) (a receiver excepted), and the checker never infers a named declaration's signature from its body or its callers. The return type follows `->`; [a function with no return annotation and no `return expr;` returns `()`](#spec.functions.named-function-declarations.dynamics-1). `return expr;` and bare `return;` are both valid. A closure, by contrast, infers its parameter and return types ([Closures](#closures)).
 
-A body whose value is not `()` under a signature with no `->` is an ordinary type mismatch, [T0001](../error-codes.md#t0001--type-mismatch), whose help line names the fix: write `-> T`, or, for a private function that captures nothing, calls no other function recursively and needs no generics, bind a closure instead.
+[A body whose value is not `()` under a signature with no `->`](#spec.functions.named-function-declarations.dynamics-1) is an ordinary type mismatch, [T0001](../error-codes.md#t0001--type-mismatch), whose help line names the fix: write `-> T`, or, for a private function that captures nothing, calls no other function recursively and needs no generics, bind a closure instead.
 
 <details>
 <summary>Formal rules</summary>
@@ -135,7 +135,7 @@ like any other ([scoping-and-shadowing.legality-3](declarations.md#spec.declarat
 
 ## Program Entry Point
 
-The root module must declare exactly one function named `main`, callable with zero
+[The root module must declare exactly one function named `main`](#spec.functions.program-entry-point.legality-1), callable with zero
 arguments, with a body the type checker can type. This is a purely static, declarative
 fact — answerable from the declaration table alone, with no dependency on program
 execution — and a violation is a compile-time error, not a runtime one.
@@ -226,8 +226,7 @@ fun main() -> i64 {
 }
 ```
 
-The type of a function or closure is written as `|ParamTypes| -> ReturnType` (RFC-0154;
-`(ParamTypes) -> ReturnType` before v0.13.0). `->` and the return type are always present
+The type of a function or closure is written as `|ParamTypes| -> ReturnType`. `->` and the return type are always present
 in a written function type.
 
 A named function declared with its own `<T>` generics (`fun identity<T>(x: T) -> T
@@ -251,6 +250,7 @@ at every nesting depth: a function value may be called through it any number of
 times, but using it by value twice — `let a := f; let b := f;` — is a
 use-after-move, even when the underlying value (a named function, or a closure
 whose captures are all `Copy`) is itself copyable ([Closures](#spec.functions.closures.legality-20)).
+
 Copyability doesn't survive the written type: it's [erased the moment such a value
 flows into a slot whose written type is a function type](#spec.functions.first-class-functions.legality-4) —
 a `let` / `var` binding, an ascription, an argument, or a return — and isn't
@@ -268,11 +268,11 @@ function type and keeps the resolved value's own capability.
 
 ##### Legality Rule {#spec.functions.first-class-functions.legality-1}
 
-Function and closure types use `|ParameterTypes| -> ReturnType` (RFC-0154); `->` and the
-return type are always written. Neither `(ParameterTypes) -> ReturnType` (the spelling
-before v0.13.0) nor `fun(ParameterTypes) -> ReturnType` is a function-type syntax.
+Function and closure types use `|ParameterTypes| -> ReturnType`; `->` and the
+return type are always written. Neither `(ParameterTypes) -> ReturnType` nor
+`fun(ParameterTypes) -> ReturnType` is a function-type syntax.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -548,9 +548,13 @@ A `&var` capture requires the outer binding to be [declared `var`](#spec.functio
 and a closure literal [cannot reference its own `let` binding](#spec.functions.closures.legality-13).
 A `[&x]` capture is read-only: [assigning to it, or taking `&var` of it, in the body is a
 compile error at the capture](#spec.functions.closures.legality-21), not a silent
-`mutating` upgrade. Capturing a free variable of a type parameter `T` follows the
+`mutating` upgrade.
+
+Capturing a free variable of a type parameter `T` follows the
 [bounds in scope at the closure's definition](#spec.functions.closures.legality-17) —
-unbounded `T` is non-`Copy` for every instantiation. When an inner closure captures a
+unbounded `T` is non-`Copy` for every instantiation.
+
+When an inner closure captures a
 binding that is itself an *enclosing* closure's capture, [the enclosing closure must list
 it, an inner `[s]` cannot move out of an enclosing `[&s]` borrow, and an inner `[s]` that
 moves an enclosing-held binding makes the enclosing closure
@@ -629,8 +633,7 @@ for the closure value's whole lifetime. [Captured owned values are dropped when 
 closure value is dropped](#spec.functions.closures.dynamics-11), in capture-list order.
 
 Closures [satisfy no aspects](#spec.functions.closures.legality-12): `==`, `<`, `.clone()`,
-and other aspect-gated operations on closure values do not type-check — including `Share`
-once RFC-0158 (`1-under-review`) adds it. [A closure's `Send` / `Sync` follows the
+and other aspect-gated operations on closure values do not type-check. [A closure's `Send` / `Sync` follows the
 aggregate rule over its captures](#spec.functions.closures.legality-14); a `mutating`
 closure is not `Sync`.
 
@@ -641,9 +644,8 @@ closure is not `Sync`.
 
 An anonymous function is written as an optional capture list `[…]`, optional `once` and/or
 `var` qualifiers, a pipe-delimited parameter list `|…|`, an optional `-> ReturnType`
-annotation, and a body block. It may appear wherever an expression is accepted. (RFC-0154:
-before v0.13.0 the parameter list was parenthesized and `->` was written before every
-body; `|…|` self-disambiguates, so `->` now appears only with a return type.)
+annotation, and a body block. It may appear wherever an expression is accepted. The `|…|` parameter list
+self-disambiguates, so `->` appears only with a return type.
 
 A parameter's type annotation is optional. An unannotated parameter takes its type from the
 expected function type (an argument position, an annotated `let`, a struct field with a written
@@ -651,7 +653,7 @@ function type) or, failing that, from the body, exactly as an omitted return typ
 closure whose parameter stays fully generic is polymorphic (`let id := |x| { x }`). A parameter
 that nothing determines is [T0002](../error-codes.md#t0002--annotation-required).
 
-<!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
+<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -679,10 +681,10 @@ that nothing determines is [T0002](../error-codes.md#t0002--annotation-required)
 ##### Legality Rule {#spec.functions.closures.legality-2}
 
 A closure literal is introduced by its `|…|` parameter list; the `->` is written only when
-a return type is (RFC-0154, superseding RFC-0041's rule that `->` precede every body). A
+a return type is. A
 bare block `{ … }` with no preceding `|…|` is a block expression, not a closure.
 
-<!-- rfc.py:last_reviewed 5138c9789e1e7146027a81a7918c12351c3a3b41 -->
+<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md), [rfc-0154](../../rfcs/4-implemented/rfc-0154-pipe-notation-for-closures-and-function-types.md)_</span>
@@ -695,10 +697,9 @@ bare block `{ … }` with no preceding `|…|` is a block expression, not a clos
 
 ##### Legality Rule {#spec.functions.closures.legality-3}
 
-A zero-argument closure is written `|| { body }` (RFC-0154; `() -> { body }` before
-v0.13.0). A bare block `{ … }` is not an anonymous function.
+A zero-argument closure is written `|| { body }`. A bare block `{ … }` is not an anonymous function.
 
-<!-- rfc.py:last_reviewed 512e55f4512665d9745d6aefdc357e1b23b1f8b4 -->
+<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0041](../../rfcs/4-implemented/rfc-0041-lambda-syntax.md)_</span>
@@ -1385,10 +1386,10 @@ When a closure value is dropped, its environment is dropped: each owned capture 
 in capture-list order, as a struct's fields are. A `once`-consumed or partially-moved
 environment drops only its still-owned captures.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Destructor invocation and observable drop order are scheduled separately. Non-empty drop bodies are rejected until #261 lands, so a fixture cannot observe closure-environment field destruction or its order." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Destructor invocation and observable drop order are scheduled separately. Non-empty drop bodies are rejected until destructor invocation lands, so a fixture cannot observe closure-environment field destruction or its order." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Destructor invocation and observable drop order are scheduled separately. Non-empty drop bodies are rejected until #261 lands, so a fixture cannot observe closure-environment field destruction or its order._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Destructor invocation and observable drop order are scheduled separately. Non-empty drop bodies are rejected until destructor invocation lands, so a fixture cannot observe closure-environment field destruction or its order._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.functions.closures.dynamics-12}
@@ -1499,7 +1500,7 @@ the uses in the body that contains it fix its type.
 
 ## Keyword Arguments
 
-A call may name some of its arguments: `connect("db.local", port = 5432, timeout = 30)` binds `port` and `timeout` by name. The
+[A call may name some of its arguments](#spec.functions.keyword-arguments.legality-1): `connect("db.local", port = 5432, timeout = 30)` binds `port` and `timeout` by name. The
 declaration keeps `:` (`port: i64`); only the call side, where a value is bound to a name, takes `=`. Positional arguments bind the leading
 parameters in declaration order and keyword arguments bind the rest, so a purely positional call is unchanged. Each parameter is
 bound once, every parameter must be bound, and a call through a function value is positional only because a function type carries no names.

@@ -1,6 +1,6 @@
 {
   "reference/error-codes.md": {
-    "internal-number": 127,
+    "internal-number": 108,
     "limit-in-prose": 3,
     "long-quote": 2,
     "unlinked-normative": 13
@@ -13,17 +13,8 @@
     "section-links-no-rule": 9,
     "unlinked-normative": 19
   },
-  "reference/spec/expressions.md": {
-    "internal-number": 5,
-    "long-paragraph": 3,
-    "section-links-no-rule": 5,
-    "unlinked-normative": 6
-  },
   "reference/spec/functions.md": {
-    "internal-number": 11,
-    "long-paragraph": 2,
-    "section-links-no-rule": 2,
-    "unlinked-normative": 2
+    "unlinked-normative": 1
   },
   "reference/spec/lexical.md": {
     "limit-in-prose": 1
@@ -32,7 +23,7 @@
     "unlinked-normative": 1
   },
   "reference/spec/ownership.md": {
-    "internal-number": 128,
+    "internal-number": 92,
     "limit-in-prose": 8,
     "long-paragraph": 5,
     "long-quote": 2,
