@@ -939,8 +939,6 @@ An array index expression must have type `u64`.
 
 ## Fixed-size arrays
 
-> **Since:** Fixed-size arrays in v0.8.0.
-
 `[T; N]` is an array type whose length `N` is a non-negative integer literal known at compile time.
 `[T; N]` coerces to `[T]` (not the reverse). `N` must be a non-negative integer literal;
 variables are not permitted.
@@ -1978,8 +1976,8 @@ rather than declared.
 
 ### Open rows {#open-rows}
 
-> **Available in v0.14.0.** RFC-0121 open rows support row extension, decomposition,
-> reusable type positions, and row-conditional implementations.
+Open rows support row extension, decomposition, reusable type positions, and row-conditional
+implementations.
 
 > **Gap** GAP-TYPES-008
 

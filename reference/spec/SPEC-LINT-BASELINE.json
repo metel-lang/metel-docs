@@ -5,7 +5,7 @@
     "unlinked-normative": 13
   },
   "reference/spec/declarations.md": {
-    "internal-number": 24,
+    "internal-number": 23,
     "long-paragraph": 1,
     "long-quote": 1,
     "section-links-no-rule": 9,
@@ -30,13 +30,13 @@
     "unlinked-normative": 1
   },
   "reference/spec/modules.md": {
-    "internal-number": 4,
+    "internal-number": 3,
     "long-paragraph": 1,
     "section-links-no-rule": 9,
     "unlinked-normative": 3
   },
   "reference/spec/ownership.md": {
-    "internal-number": 132,
+    "internal-number": 129,
     "long-paragraph": 5,
     "long-quote": 2,
     "section-links-no-rule": 7,
@@ -47,7 +47,7 @@
     "section-links-no-rule": 8
   },
   "reference/spec/types.md": {
-    "internal-number": 15,
+    "internal-number": 14,
     "long-paragraph": 1,
     "section-links-no-rule": 10,
     "unlinked-normative": 13

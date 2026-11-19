@@ -217,7 +217,7 @@ implementations make their target type available for `as` casts and `?` error co
 </details>
 
 ## String Methods
-> Utilities since v0.9.0. All index-based operations count **Unicode scalar
+> All index-based operations count **Unicode scalar
 > values** (matching `.len()`), and are total — out-of-range indices clamp or
 > return `None` rather than panicking.
 

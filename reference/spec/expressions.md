@@ -158,7 +158,7 @@ satisfy this (`match (a, b) { … }`), as does the unit literal (`match () { …
 | Wildcard | `_` | anything, binds nothing |
 | Binding | `n` | anything, binds to `n` |
 | Literal | `0`, `"hi"`, `true` | exact value |
-| Enum variant | `Direction::North`, `North` | unit variant (qualified or, since v0.11.0, bare) |
+| Enum variant | `Direction::North`, `North` | unit variant (qualified or bare) |
 | Enum with fields | `Shape::Circle { radius }`, `Circle { radius }` | variant, binds fields |
 | Struct | `Point { x, y }`, `Token { kind, .. }` | struct, binds named fields |
 | Tuple | `(a, b)` | tuple, binds elements |

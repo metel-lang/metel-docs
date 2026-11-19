@@ -644,7 +644,7 @@ After `drop(x)` consumes a non-`Copy` binding, that binding may not be used agai
 
 Moving a field out of a struct leaves the containing value **partially moved**. The remaining
 fields stay accessible; the original whole type is no longer available, but the residual
-may be used as a whole at its current type. Since v0.13.0 (RFC-0137) the residual
+may be used as a whole at its current type. The residual
 also gets a named type — `Handle` becomes `Handle.{ .fd }`, not just internal bookkeeping;
 see [Narrowing](#narrowing) below.
 
@@ -1176,7 +1176,7 @@ value (`T0019`), with or without `--move-check`.
 
 ### Passing a residual to a function
 
-Since v0.13.0 (RFC-0137 slice 2, metel-core#858), a residual reached via move-triggered
+A residual reached via move-triggered
 narrowing is passed exactly the same way; nothing here is specific to how the residual
 arose.
 

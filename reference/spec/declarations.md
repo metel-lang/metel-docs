@@ -1153,7 +1153,7 @@ it satisfies row bounds ([Generics — Row bounds](types.md#row-bounds)) and
 row-conditional impl resolution ([Generics — Open rows](types.md#open-rows)) the way a
 plain `struct`'s row never does.
 
-> **Available in v0.14.0 (#1350):** `std::core` provides field-wise `Clone` for a record when every field implements `Clone`.
+`std::core` provides field-wise `Clone` for a record when every field implements `Clone`.
 
 The implementation recursively clones each field and preserves the record's type.
 This does not add `Eq`, `Ord`, or `Hash`; those aspects remain governed by their

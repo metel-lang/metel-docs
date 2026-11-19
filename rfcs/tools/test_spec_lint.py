@@ -41,7 +41,9 @@ class InternalNumbers(unittest.TestCase):
 class ProvenanceMarkers(unittest.TestCase):
     def test_availability_since_and_changed_in_are_flagged(self):
         for line in ("> **Availability:** Since v0.8.0.", "> **Since v0.16.0 (RFC-0219).**",
-                     "> **Changed in v0.11.0: x.**", "text **Since v0.3.0** inline"):
+                     "> **Changed in v0.11.0: x.**", "text **Since v0.3.0** inline", "> **Since:** arrays in v0.8.0.",
+                     "> **Available in v0.14.0.** x", "A bare export (since v0.11.0, bare) works.",
+                     "Since v0.12.1 (metel-core#664), it also loads."):
             self.assertEqual(len(findings(line + "\n", "provenance-marker")), 1, line)
 
     def test_planned_markers_and_ordinary_words_are_not_flagged(self):
