@@ -195,7 +195,7 @@ neither needs `T` or a glob of `m` in scope.
 `std`: a path segment `std` anywhere but the start of a path is a parse error (`P0001`), so
 `import root::std::name` is rejected whether or not a file `std.mtl` exists.
 
-<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>

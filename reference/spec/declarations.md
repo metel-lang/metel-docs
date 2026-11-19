@@ -3,8 +3,7 @@
 `pub` may be prefixed to top-level `fun`, `struct`, `enum`, and `aspect`
 declarations to mark them as accessible from other modules. Top-level `let` and `var`
 bindings remain module-private. See [Modules — Visibility](modules.md#visibility) for
-the full rules. The current `pub` / `var` / `extend` surface spellings are the
-spelling set introduced by RFC-0098.
+the full rules.
 
 ## Variables
 
@@ -21,11 +20,7 @@ fun main() -> i64 {
 
 `let` bindings [cannot be reassigned and must always be initialized](#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
-- `x = newValue` is rejected (reassignment)
-- `x.field = value` is rejected (field assignment through an immutable binding)
-- `&var x` is rejected (taking a mutable reference to an immutable binding)
-
-All three forms require `var`.
+So `x = newValue` (reassignment), `x.field = value` (field assignment through an immutable binding) and `&var x` (taking a mutable reference to an immutable binding) are all [rejected](#spec.declarations.variables.immutable-bindings.legality-1): all three forms require `var`.
 
 ### Record-pattern bindings
 
@@ -112,9 +107,9 @@ A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) :=
 
 A `let` binding must be initialized with the `:=` separator and cannot be assigned
 after initialization. `:=` is the sole separator that introduces a kept binding; the
-plain `=` spelling is a parse error (RFC-0136).
+plain `=` spelling is a parse error.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
@@ -413,11 +408,11 @@ fun main() -> i64 {
 
 A `var` binding must be initialized with the `:=` separator and may be assigned after
 initialization with `=`; `var` is the mutable binding spelling. `:=` introduces a name and `=`
-assigns to an existing place (RFC-0183); the compound assignment operators `+=`, `-=`, `*=`,
+assigns to an existing place; the compound assignment operators `+=`, `-=`, `*=`,
 `/=`, `%=` keep their spelling. The bare `=` spelling for a `var` initializer, and `:=` for a
 reassignment, are parse errors.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0042](../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md), [rfc-0098](../../rfcs/4-implemented/rfc-0098-surface-keyword-renames.md), [rfc-0136](../../rfcs/4-implemented/rfc-0136-walrus-for-kept-bindings.md)_</span>
@@ -475,7 +470,7 @@ fun main() -> i64 {
 }
 ```
 
-An inner function remains scoped to its own block. For example, `helper();` is valid inside `inner()`, but calling `helper();` from `outer()` is a type error.
+An inner function [remains scoped to its own block](#spec.declarations.variables.scoping-and-shadowing.legality-3). For example, `helper();` is valid inside `inner()`, but calling `helper();` from `outer()` is a type error.
 
 <!-- doc-example: expect-fail reason="demonstrates that helper() is not visible from outer() -- the type error is the point" -->
 ```metel
@@ -493,7 +488,7 @@ fun main() {
 }
 ```
 
-A module's top-level names live in two namespaces. Structs, enums, aspects and type aliases
+[A module's top-level names live in two namespaces](#spec.declarations.variables.scoping-and-shadowing.legality-5). Structs, enums, aspects and type aliases
 share the type namespace; functions, `let` and `var` share the value namespace. Declaring a
 name twice in one namespace is an error ([T0037](../error-codes.md#t0037--duplicate-top-level-declaration));
 a type and a value may share a name, and two functions of one name form an overload set.
@@ -1136,6 +1131,8 @@ fun main() -> i64 {
 
 ## Records
 
+[A `record` declaration takes the same form as a `struct`](#spec.declarations.records.legality-1):
+
 ```metel
 record Handle {
     fd: i64,
@@ -1189,11 +1186,11 @@ respectively ([Field-wise row constraints](types.md#field-wise-row-constraints))
 
 `record X { field: Type, ... }` is legal everywhere `struct X { field: Type, ... }` is,
 with an identical declaration body grammar: the same field list, the same generic
-parameter list (including a `record` type parameter used as a row, RFC-0121, RFC-0186), the same construction
+parameter list (including a `record` type parameter used as a row), the same construction
 syntax (including shorthand field init and the zero-field forms), and the same field
 projection syntax as a `struct`'s own row.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1217,13 +1214,12 @@ projection syntax as a `struct`'s own row.
 
 A `record`'s declared row is visible to structural matching: it satisfies a row bound
 (`<record T: .{ ... }>`) and is matched by row-conditional impl resolution against its
-*current* row — the row narrows as fields are moved out (RFC-0137), exactly as it does
+*current* row — the row narrows as fields are moved out, exactly as it does
 for a plain `struct`'s own (invisible) row. A plain `struct`'s row is never visible to
 either mechanism, regardless of width — projecting every field a `struct` declares does
-not earn it `record`'s eligibility, only an explicit `record` declaration does (RFC-0137
-§3's worked example).
+not earn it `record`'s eligibility, only an explicit `record` declaration does.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0120](../../rfcs/4-implemented/rfc-0120-named-records.md)_</span>
@@ -1376,6 +1372,8 @@ same variant value.
 
 ### Instantiation
 
+[A struct-like enum variant with fields cannot omit its constructor fields](#spec.declarations.enums.instantiation.legality-1):
+
 ```metel
 enum Direction { North, South, East, West }
 
@@ -1452,7 +1450,7 @@ fun main() -> i64 {
 
 A **type alias** gives an existing type a name:
 
-<!-- doc-example: skip reason="RFC-0160 type-alias syntax, pending a develop-latest that parses it (metel-core#921)" -->
+<!-- doc-example: skip reason="type-alias syntax, pending a develop-latest that parses it" -->
 ```metel
 type Bytes := List<u8>;
 type Handler := once var |Request, &Config| -> Response;
@@ -1589,6 +1587,8 @@ remainder of its block; the outer alias is unaffected outside it.
 ---
 
 ## Aspects
+
+[An aspect declaration is introduced with the `aspect` keyword](#spec.declarations.aspects.legality-1):
 
 ```metel
 aspect Printable {
@@ -1777,8 +1777,8 @@ terms as positive ones:
 extend<T: !Drop> Container<T>: BulkDrop { ... }
 ```
 
-**Coherence.** Two conditional `extend` blocks of the same aspect for the same type are
-a coherence error (`T0015`) unless they are provably disjoint. Disjointness is
+**Coherence.** [Two conditional `extend` blocks of the same aspect for the same type are
+a coherence error (`T0015`) unless they are provably disjoint](#spec.declarations.aspects.implementing-an-aspect.legality-8). Disjointness is
 established by **syntactic negation** only — one block must carry an explicit negative
 bound that directly negates a positive bound in the other. The compiler performs no
 inference beyond this direct check:
@@ -1828,8 +1828,7 @@ same aspect conflict when some instantiation satisfies both): a competing
 bare-parameter blanket from another module can never pass the orphan check in the
 first place, and a concrete impl overlapping the blanket (e.g. a type implementing
 `Clone` directly while also being `Copy`) is caught by the existing concrete-vs-blanket
-overlap rule with no special case. See
-`public/rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md`.
+overlap rule with no special case.
 
 **Worked example — interaction with equality-constrained bounds.** A conditional
 `extend` block's `where` clause accepts the same equality-constrained bound form
@@ -1970,7 +1969,7 @@ fun rejected(x: dyn Clone) -> i64 { 0 }
 ```
 
 `std::core::Drop` needs no exception to rule 1: its one method is declared
-`fun drop(&var self);` (RFC-0071), an ordinary `&var Self` receiver — `dyn
+`fun drop(&var self);`, an ordinary `&var Self` receiver — `dyn
 Drop` is object-safe the same way `dyn Shape` above is.
 
 <details>
@@ -2066,7 +2065,7 @@ fun main() -> i64 {
 }
 ```
 
-A concrete type that does not implement the target aspect is rejected at the
+[A concrete type that does not implement the target aspect is rejected](#spec.declarations.aspects.dyn-aspect.legality-6) at the
 coercion site itself — a compile-time error, not a deferred runtime failure:
 
 <!-- doc-example: expect-fail reason="Rock does not implement Display -- the coercion is rejected at the let site, not deferred to runtime" -->
@@ -2223,7 +2222,7 @@ provides for the aspect, independent of any other value coerced to the same
 #### Heterogeneous Collections
 
 `List<dyn Aspect>` holds values of different concrete types together, each
-satisfying a common aspect (RFC-0008 §7). `push`'s argument coerces to the
+satisfying a common aspect. `push`'s argument coerces to the
 list's own `dyn Aspect` element type the same way any other argument
 position does (see [Coercion](#coercion) above), and each element then
 dispatches independently (see [Dispatch](#dispatch) above):
@@ -2255,7 +2254,7 @@ fun main() -> i64 {
 }
 ```
 
-A concrete type that does not implement the aspect is rejected at the
+[A concrete type that does not implement the aspect is rejected](#spec.declarations.aspects.dyn-aspect.legality-6) at the
 `push` call site itself, the same as any other argument-position coercion.
 
 `List<T>` implements `Iterable<T>` for every `T`, unrelated to `dyn Aspect`.
@@ -2277,13 +2276,13 @@ extend i64: MyAspect { ... }      // ok: MyAspect is local
 extend i64: Display { ... }       // ok only inside std::core: both are foreign elsewhere
 ```
 
-A violating `extend` block is `T0014 — orphan implementation`. The orphan rule is what
+[A violating `extend` block is `T0014 — orphan implementation`](#spec.declarations.aspects.aspect-implementation-coherence.legality-5). The orphan rule is what
 keeps coherence a local, per-module property: a module can only add aspect
 implementations it owns at least one half of, so no other module's impls need to be
 consulted to know whether a given one is even legal.
 
-**Overlap detection.** Two `extend` blocks of the same aspect conflict when some
-concrete type instantiation would satisfy both. `extend List<i64>: Display` and
+**Overlap detection.** [Two `extend` blocks of the same aspect conflict when some
+concrete type instantiation would satisfy both](#spec.declarations.aspects.aspect-implementation-coherence.legality-6). `extend List<i64>: Display` and
 `extend List<String>: Display` don't conflict — disjoint element types — but
 registering either one twice does. The aspect's own type arguments take part the same way: `extend L: Conv<i64>`
 and `extend L: Conv<String>` don't conflict, but two `extend L: Conv<i64>` blocks do. A conflict is `T0015 — conflicting implementation`,
@@ -2298,7 +2297,7 @@ positive impl generated by the compiler: overlap detection and negative-impl ove
 both apply to it the same way they apply to an explicit `extend` block, while the
 orphan rule does not apply because there is no authored impl site.
 
-**Negative impl priority.** See Negative Impls, below, for the mechanism itself; the priority order coherence establishes is: an explicit negative impl beats an auto-impl or blanket positive impl for the same type, but an explicit positive impl and an explicit negative impl for the same concrete type is itself a `T0015` coherence error, not a priority question.
+**Negative impl priority.** See Negative Impls, below, for the mechanism itself; the priority order coherence establishes is: [an explicit negative impl beats an auto-impl or blanket positive impl for the same type, but an explicit positive impl and an explicit negative impl for the same concrete type is itself a `T0015` coherence error](#spec.declarations.aspects.negative-impls.legality-2), not a priority question.
 
 **What this deliberately doesn't cover.** Coherence here is scoped to a single program's module graph — a future package system, compiling packages separately, needs its own cross-package coherence model, not addressed here. Rejected alternatives (a global overlap check without the orphan rule, last-impl-wins ordering, an open-world assumption, specialisation) are recorded in the RFC, not repeated here — each fails a property this design keeps: coherence errors are local and order-independent, and overlapping impls are always illegal rather than resolved by specificity.
 
@@ -2476,7 +2475,7 @@ extend<T: Display> [T]: Display {
 ```
 
 This is what makes `println([1, 2, 3])` compile: `[1, 2, 3]` has type `[i64; 3]`;
-`i64: Display`; the conditional extend block applies. Coherence for structural impl
+`i64: Display`; [the conditional extend block applies](#spec.declarations.structural-aspect-bounds.legality-2). Coherence for structural impl
 targets follows the same rules as any other conditional block (above) — two impls of
 the same aspect for `[T]` conflict (`T0015`) unless one directly negates a bound the
 other requires.
@@ -2509,9 +2508,13 @@ Once `[T]` owns nothing, an element-wise clone into new backing storage is impos
 already exists and outlives it, not from a buffer the implementation just allocated.
 `Display` and `Eq` are unaffected because they return `String` and `boolean`, not `Self`.
 
-A tuple is a row ([Tuples](types.md#spec.types.tuples.legality-4)), so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`: `(i64, i64)` is all three, `(i64, String)` is `Display` and `Clone` but not `Copy`, and a bound it does not meet is a `T0012` error. A tuple has no `Eq`, `Ord` or `Hash` until operators dispatch through aspects (RFC-0011, metel-core#2031).
+A tuple is a row ([Tuples](types.md#spec.types.tuples.legality-4)), so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`: `(i64, i64)` is all three, `(i64, String)` is `Display` and `Clone` but not `Copy`, and a bound it does not meet is a `T0012` error. A tuple has no `Eq`, `Ord` or `Hash` until operators dispatch through aspects.
 
-**Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. There is no `Callable<A, B>` aspect to bound a function type by. A closure value keeps its own copyability until it flows into a slot with a written function type, where it becomes move-only ([First-Class Functions](functions.md#first-class-functions)), and there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0003`, no method on a function type: it implements no aspect) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
+**Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — [there is no separate `fun(A) -> B` function-pointer type or syntax](#spec.declarations.structural-aspect-bounds.legality-7); `fun(A) -> B` is a parse error. There is [no `Callable<A, B>` aspect to bound a function type by](#spec.declarations.structural-aspect-bounds.legality-8).
+
+A closure value keeps its own copyability until it flows into a slot with a written function type, where it becomes move-only ([First-Class Functions](functions.md#first-class-functions)), and [there is no working `Clone`](#spec.declarations.structural-aspect-bounds.legality-9): `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0003`, no method on a function type: it implements no aspect) regardless of annotation.
+
+[`Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet, and there is no state to drop.](#spec.declarations.structural-aspect-bounds.legality-10)
 
 > **Gap** GAP-FUNCTIONS-002
 
@@ -2749,7 +2752,7 @@ fun deref_display<T: Deref>(x: &T) where T::Target: Display {
 }
 ```
 
-`T::AssocType` is only valid when `T: Aspect` is in scope — writing it without that
+[`T::AssocType` is only valid when `T: Aspect` is in scope](#spec.declarations.aspects.associated-types.legality-5) — writing it without that
 bound is a compile error.
 
 **Equality constraints in bounds.** `Aspect<AssocType = ConcreteType>` asserts both that
@@ -3072,7 +3075,7 @@ Within an aspect declaration, `Self` denotes the type implementing that aspect. 
 
 ### Aspect Bounds on Function Type Parameters
 
-A generic function type parameter may declare an aspect bound using `:` syntax. The bound requires that any concrete type substituted for the parameter implements the named aspect. The named aspect must resolve where the declaration is written; an unknown aspect is error `T0003`, even when the generic function is never called. Passing a type that does not satisfy a resolved bound is error `T0012`, with the span on the offending call-site argument.
+A generic function type parameter may declare an aspect bound using `:` syntax. [The bound requires that any concrete type substituted for the parameter implements the named aspect](#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-7). The named aspect must resolve where the declaration is written; an unknown aspect is error `T0003`, even when the generic function is never called. Passing a type that does not satisfy a resolved bound is error `T0012`, with the span on the offending call-site argument.
 
 ```metel
 fun print_pair<T: Printable>(a: T, b: T) {
@@ -3081,7 +3084,7 @@ fun print_pair<T: Printable>(a: T, b: T) {
 }
 ```
 
-Inside the function body the typechecker treats `T` as having all methods declared by its bound aspects in scope. Calling a method not declared by any bound aspect on a bounded type parameter is a type error.
+[Inside the function body the typechecker treats `T` as having all methods declared by its bound aspects in scope. Calling a method not declared by any bound aspect on a bounded type parameter is a type error](#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-9).
 
 **Multiple bounds — inline `+` or `where` clause (equivalent).** Multiple bounds on a single type parameter may be expressed inline using `+`, or via a `where` clause, or a mix of both. The typechecker merges all declared bounds before enforcement — a type argument must satisfy every bound.
 
@@ -3582,8 +3585,7 @@ fields still drop normally through the ordinary per-field chain.
 > Negative bounds do not by themselves let a type opt out of an aspect an existing
 > blanket impl would otherwise grant — that's Negative Impls, directly below. Negative
 > bounds are a use-site constraint; negative impls are a definition-site declaration
-> that affects what the negative-bound check finds. See Aspect Implementation
-> Coherence, above, for exactly which impls are reachable in the first place.
+> that affects what the negative-bound check finds.
 
 <details>
 <summary>Formal rules</summary>
@@ -3768,7 +3770,7 @@ extend<T> Rc<T>: !Sync;
 ```
 
 More generally, a bodyless `extend` block is permitted whenever the body would be empty
-already (RFC-0102):
+already:
 
 ```metel
 aspect Copy2;
@@ -3780,8 +3782,7 @@ extend Handle: !Send;
 extend Handle: Copy2, !Send;
 ```
 
-A methodless aspect declaration may itself be written bodylessly as `aspect Name;`
-(RFC-0103), as in the `Copy2` example above.
+A methodless aspect declaration may itself be written bodylessly as `aspect Name;`, as in the `Copy2` example above.
 
 `extend Type: Aspect;` is valid only when every method of `Aspect` already has a
 default body and the aspect declares no associated types. `extend Type: !Aspect;` is
@@ -3790,8 +3791,8 @@ always valid, and the braced negative form is retired in favor of the bodyless o
 **Why this needs its own mechanism, not just the absence of a positive impl.** A
 blanket impl can inadvertently grant an aspect to a type that must not have it — `Rc<T>`
 would satisfy an auto-derived `Send` blanket (its field is an ordinary, `Send`-by-value
-integer) even though sharing it across fibers is unsound. A negative impl overrides any
-blanket that would otherwise apply: `Rc<T>: !Send` holds for all `T`, regardless of what
+integer) even though sharing it across fibers is unsound. [A negative impl overrides any
+blanket that would otherwise apply](#spec.declarations.aspects.negative-impls.legality-2): `Rc<T>: !Send` holds for all `T`, regardless of what
 a blanket impl elsewhere says.
 
 **Finality.** No positive impl may coexist with a negative impl for the same type and
@@ -3801,8 +3802,8 @@ allowed case; a negative impl does not propagate to subtypes or supertypes (`ext
 Rc<T>: !Send` says nothing about `Arc<T>`).
 
 **Orphan rules apply the same way as positive impls** (Aspect Implementation Coherence,
-above) — a negative impl is permitted only when the aspect or the type is local to
-the current module or stdlib. A positive and a negative impl for the same concrete
+above) — [a negative impl is permitted only when the aspect or the type is local to
+the current module or stdlib](#spec.declarations.aspects.negative-impls.legality-6). A positive and a negative impl for the same concrete
 type is `T0015`, the same coherence error two conflicting positive impls produce.
 
 <details>
@@ -3985,7 +3986,7 @@ not subtyping; no coercion exists from `Ord` to `Eq`. An `extend T: Ord` require
 A super-aspect entry may be negative. `aspect Copy requires derived Clone, !Drop` declares that no type may
 be granted both `Copy` and `Drop`:
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1801 and #1803" -->
+<!-- doc-example: skip reason="accepted design, not yet implemented" -->
 ```metel
 copy struct H { fd: i64 }
 extend H: Drop { fun drop(&var self) { } }    // error: Copy excludes Drop
@@ -4207,8 +4208,7 @@ The properties of an aspect are read from its declaration by identity. A re-expo
 
 > **Gap** GAP-DECLARATIONS-005
 
-A struct or enum declaration may carry two clauses after its name, and a class keyword before `struct` or `enum`
-(RFC-0207):
+A struct or enum declaration may carry two clauses after its name, and a class keyword before `struct` or `enum`:
 
 ```metel
 copy struct Point { x: i64, y: i64 }            // class keyword: one-word form of `derives Clone, Copy`
@@ -4673,7 +4673,7 @@ A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` cla
 
 ### Aspect Bounds on Struct and Enum Type Parameters
 
-A struct or enum generic type parameter may declare an aspect bound. The bound is enforced at **construction time**: instantiating the type with a concrete type argument that does not implement the bound is error `T0012`, with the span on the offending type argument at the construction call site.
+A struct or enum generic type parameter may declare an aspect bound. The bound is enforced at **construction time**: [instantiating the type with a concrete type argument that does not implement the bound is error `T0012`](#spec.declarations.aspects.aspect-bounds-on-struct-and-enum-type-parameters.legality-2), with the span on the offending type argument at the construction call site.
 
 ```metel
 struct SortedList<T: Comparable> {

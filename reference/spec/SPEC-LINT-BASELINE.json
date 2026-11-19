@@ -6,12 +6,7 @@
     "unlinked-normative": 13
   },
   "reference/spec/declarations.md": {
-    "internal-number": 20,
-    "limit-in-prose": 1,
-    "long-paragraph": 1,
-    "long-quote": 1,
-    "section-links-no-rule": 9,
-    "unlinked-normative": 19
+    "limit-in-prose": 1
   },
   "reference/spec/lexical.md": {
     "limit-in-prose": 1
@@ -23,11 +18,5 @@
     "long-quote": 2,
     "section-links-no-rule": 7,
     "unlinked-normative": 7
-  },
-  "reference/spec/types.md": {
-    "internal-number": 14,
-    "long-paragraph": 1,
-    "section-links-no-rule": 10,
-    "unlinked-normative": 13
   }
 }
