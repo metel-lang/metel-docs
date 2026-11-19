@@ -6,6 +6,7 @@ scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "ADR-0038"
 disposition: known
+rfc: RFC-0128
 review: null
 ---
 

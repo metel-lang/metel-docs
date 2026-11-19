@@ -5,7 +5,7 @@ summary: "`root::name` and `super::name` work through a submodule path but are r
 scope: "architecture/spec/path-normalization.md#path-normalization"
 owner: metel-frontend
 discovered_by: "metel-core#1221"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -34,4 +34,4 @@ the spec gives no such exception. The workaround is an explicit `import`.
 
 ## Resolution
 
-None yet; tracked as `metel-core#1221`.
+Resolved by metel-core#1743. The program this record reproduced is a circular module dependency: the root imports the submodule, and the submodule names `root::helper`, declared in the root. Cycles are a compile error (`GAP-MODULES-001`), and it is now reported as one (`P0001`, at the path) instead of `T0003` undefined name. A `root::` or `super::` path to an item declared directly in the root or parent module resolves wherever the module graph is acyclic. The `// limit:` marker in `path_normalization/mod.rs` is removed in a follow-up core change.

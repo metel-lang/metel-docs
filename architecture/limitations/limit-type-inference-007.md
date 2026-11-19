@@ -6,6 +6,7 @@ scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "size probe run while reviewing the type var generator (LIMIT-TYPE-INFERENCE-005)"
 disposition: known
+tracked_by: metel-core#2094
 review: null
 ---
 
@@ -86,3 +87,5 @@ contributes, still shows super-linear scaling) -- `generalize`/
 `env_free_vars` is directly ruled out; `infer_fun_decl`'s other per-function
 work (param/return-type conversion, `ctx.solve()`'s own bookkeeping,
 `ctx.lookup`/`bind_poly` against `poly_env`) is unexamined.
+
+The residual is tracked as metel-core#2094. Measured on a release build, 2026-11-19, for `n` one-line functions: 1,000 takes 0.78 s, 2,000 takes 2.87 s, 4,000 takes 16.9 s.

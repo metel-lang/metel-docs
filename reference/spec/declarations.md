@@ -2497,8 +2497,6 @@ Once `[T]` owns nothing, an element-wise clone into new backing storage is impos
 already exists and outlives it, not from a buffer the implementation just allocated.
 `Display` and `Eq` are unaffected because they return `String` and `boolean`, not `Self`.
 
-> **Gap** GAP-DECLARATIONS-001
-
 A tuple is a row ([Tuples](types.md#spec.types.tuples.legality-4)), so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`: `(i64, i64)` is all three, `(i64, String)` is `Display` and `Clone` but not `Copy`, and a bound it does not meet is a `T0012` error. A tuple has no `Eq`, `Ord` or `Hash` until operators dispatch through aspects (RFC-0011, metel-core#2031).
 
 **Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](functions.md#first-class-functions)) — there is no separate `fun(A) -> B` function-pointer type or syntax; `fun(A) -> B` is a parse error. There is no `Callable<A, B>` aspect to bound a function type by. A closure value keeps its own copyability until it flows into a slot with a written function type, where it becomes move-only ([First-Class Functions](functions.md#first-class-functions)), and there is no working `Clone`: `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0003`, no method on a function type: it implements no aspect) regardless of annotation. `Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet (RFC-0080, still `1-under-review`), and there is no state to drop.
@@ -2606,12 +2604,10 @@ Array marker-aspect propagation is not part of structural implementation lookup.
 
 ##### Legality Rule {#spec.declarations.structural-aspect-bounds.legality-6}
 
-> **Gap** GAP-DECLARATIONS-001
+A tuple is a row, so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`
+and through a local aspect implementation for its tuple type; a bound it does not meet is `T0012`.
 
-Tuple types have no standard blanket aspect implementations and therefore fail aspect
-bounds unless a separately specified implementation applies.
-
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed e3bcda82e7d6dd9cc14dc080a2f6923bf450aa6b -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0061](../../rfcs/4-implemented/rfc-0061-structural-aspect-bounds.md)_</span>

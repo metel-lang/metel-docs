@@ -5,8 +5,8 @@ summary: "A tuple cannot implement an aspect; use a named struct. An anonymous r
 scope: "reference/spec/declarations.md#spec.declarations.structural-aspect-bounds.legality-6"
 owner: language
 discovered_by: "metel-core#1217 limitation analysis; `reference/spec/types.md` (Planned for v0.14.0 note)"
-disposition: known
-rfc: RFC-0061
+disposition: resolved
+rfc: RFC-0061, RFC-0151
 review: null
 ---
 
@@ -32,10 +32,8 @@ using a named struct instead. Auto-derived aspects are unaffected.
 
 - `spec.declarations.structural-aspect-bounds.legality-6`
 - `RFC-0061`
+- `RFC-0151`
 
 ## Resolution
 
-Records: resolved by metel-core#1306 item 8. Tuples: not scheduled. metel-core#239 and #1217 closed by
-rejecting the impl with a diagnostic (`T0001`, "cannot `extend` a tuple type"), the path those issues
-themselves recommended, so the gap stands until the language decides between per-arity boilerplate and
-variadic generics; no issue tracks that decision yet.
+Resolved by RFC-0151 (`4-implemented`): a tuple is the row of integer labels, so `extend (i64, i64): Area { … }` is a concrete row target, and a tuple satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`. Evidence: `typechecking/aspects/extend_concrete_tuple_target_is_a_row_target`, a local aspect implemented for a tuple and called on a tuple value. A tuple still has no `Eq`, `Ord` or `Hash`; that is operator dispatch (`LIMIT-TYPE-CONSTRUCTION-003`), not this gap.
