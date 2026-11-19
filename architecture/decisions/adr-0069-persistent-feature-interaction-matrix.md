@@ -56,11 +56,24 @@ adjacency list is in the registry), and **Tier C** otherwise.
 
 ### 5. The gate
 
-The gate fails when any Tier A cell in the row of a feature introduced by the release under test is `open`. It
-considers the new features against the whole registry, which is O(N) per release and not O(N²). `partial` cells are
-reported, and they do not block: complete rule coverage of every pair is not a reasonable bar, and `partial` is
-already a recorded, visible state. Tier B and Tier C are reported and never gate. Old-by-old cells stay out of scope
-and may remain open indefinitely; a periodic sweep can fill them in.
+The gate is scoped to the release under test: its new features against the whole registry, which is O(N) per
+release and not O(N²). Old-by-old cells stay out of scope. It fails when any of these holds, and its thresholds
+are the registry's `[gate]` table, which a release may raise and never lower:
+
+- **open-tier-a** — a Tier A cell in a new feature's row is `open`. A bulk deferral excuses this rule, only for
+  the release it names.
+- **joint-fixtures** — a Tier A pair among the release's own features has fewer than `min_joint_fixtures` (2)
+  joint fixtures. One fixture can be a coincidence.
+- **tier-b-evidence** — a Tier B pair among the release's own features is `open` (`tier_b_open_fails`). Tier B
+  pairs in the rest of the registry, and Tier C, are reported and never gate.
+- **feature-floor** — a new feature has evidence in fewer than `feature_tier_a_floor` (50%) of its Tier A pairs.
+  `n/a` pairs do not count against it, and a bulk deferral is not evidence.
+- **expired-bulk** — a `[[bulk]]` deferral of an earlier minor release still has open cells. Without this a
+  deferral outlives its release and the debt silently leaves the gate.
+
+`partial` cells are reported and never block: complete rule coverage of every pair is not a reasonable bar.
+A rule-coverage floor per pair was considered and left out for now; it rewards citing more rules, which the
+script cannot check, and its combined denominator penalises features that own many rules.
 
 ### 6. Tooling and commands
 
@@ -69,11 +82,23 @@ and may remain open indefinitely; a periodic sweep can fill them in.
 `/milestone-integration-test` reads the registry and the script, adds the milestone's features to the registry, and
 reports the delta in `integration/<version>.md`. `/cut-release` Step 1b runs the gate verdict.
 
+### 7. Published metrics
+
+Each release publishes its coverage. `feature_matrix.py <release> --json` is saved next to the integration report
+as `<version>.metrics.json`, the baseline a later release diffs against. `--table` produces the markdown table
+(tiers for the release's own features and against older ones, rule coverage, gate verdict). The report carries it
+with per-feature rows, and the changelog's `## <version>` section carries the compact one between
+`feature-matrix` markers. The GitHub Release body is sourced from that section. `/cut-release` runs
+`--check-table`, which fails on a missing or stale table.
+
 ## Consequences
 
-- The first release to use the registry inherits every open Tier A cell of its new features. For v0.16.0 the 19 pairs
-  among its own features were closed with fixtures, and the 131 new-versus-old pairs are bulk-deferred to
-  metel-core#2086. The backlog is visible and countable, and the deferral entry is removed when it is swept.
+- The first release to use the registry inherits every open Tier A cell of its new features. v0.16.0 was held to
+  the full gate: its own pairs were closed with fixtures (19 first, then 40 more violations of the stricter rules),
+  and 82 new-versus-old Tier A pairs are bulk-deferred to metel-core#2086. The deferral expires at v0.17.0 and is
+  removed when it is swept.
+- A fixture's rule tags are claims the script cannot verify. The gate counts them, so a threshold makes over-tagging
+  more tempting, and re-reviewing the tags of new fixtures is part of the integration session.
 - A feature without spec rule ids has no computable coverage. The script reports such features. A registry seed entry
   that cites no rule is a defect to fix, not an exemption.
 - Spec rule ids become the join key between features and fixtures. Renaming or retiring a rule id breaks coverage

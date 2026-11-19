@@ -97,6 +97,33 @@ were migrated with parser-driven tools.
 **Known limits:** `.[expr]` label variables are not part of v0.16.0; the minting form and
 `Construct` belong to RFC-0114 and are not implemented.
 
+**Feature-interaction coverage:**
+
+<!-- feature-matrix:start -->
+**Feature-interaction coverage for v0.16.0** (24 new features, a registry of 101). A pair has evidence when a fixture cites a rule of each feature.
+
+*New features against each other*
+
+| Tier | Pairs | With evidence | Covered | Partial | Open | Mean rule coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| A (same subsystem) | 84 | 84 (100%) | 1 | 83 | 0 | 46.9% |
+| B (adjacent) | 49 | 49 (100%) | 0 | 49 | 0 | 34.0% |
+| C (other) | 143 | 76 (53%) | 4 | 72 | 67 | 23.1% |
+| **All** | 276 | 209 (76%) | 5 | 204 | 67 | 32.3% |
+
+*New features against older ones*
+
+| Tier | Pairs | With evidence | Covered | Partial | Open | Mean rule coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| A (same subsystem) | 181 | 99 (55%) | 4 | 95 | 82 | 20.4% |
+| B (adjacent) | 299 | 47 (16%) | 1 | 46 | 252 | 5.5% |
+| C (other) | 1368 | 161 (12%) | 1 | 160 | 1207 | 3.6% |
+| **All** | 1848 | 307 (17%) | 6 | 301 | 1541 | 5.6% |
+
+Rules owned by the new features: 147, cited by at least one fixture: 145 (99%).
+Release gate: **PASS**. Open Tier A cells: 0, partial: 178, bulk-deferred: 82. No gate violations.
+<!-- feature-matrix:end -->
+
 ## v0.15.0
 
 **Released 2026-11-02.** The first language-visible release after v0.14.1. It makes named declarations write
