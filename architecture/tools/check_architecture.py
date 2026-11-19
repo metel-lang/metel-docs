@@ -864,7 +864,7 @@ LIMIT_PHRASE_RE = re.compile(
 # Lines that carry such words for another reason: generated fixture/exemption markup,
 # doc-example directives, HTML, headings, and the markers themselves.
 LIMIT_LINT_SKIP_RE = re.compile(
-    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Pending|Since|Changed in)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
+    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Pending|Planned for)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
 )
 
 

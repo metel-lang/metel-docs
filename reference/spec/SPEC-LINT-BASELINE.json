@@ -1,0 +1,64 @@
+{
+  "reference/error-codes.md": {
+    "internal-number": 127,
+    "long-quote": 2,
+    "provenance-marker": 8,
+    "unlinked-normative": 13
+  },
+  "reference/spec.md": {
+    "internal-number": 1,
+    "provenance-marker": 1
+  },
+  "reference/spec/declarations.md": {
+    "internal-number": 30,
+    "long-paragraph": 1,
+    "long-quote": 1,
+    "provenance-marker": 9,
+    "section-links-no-rule": 9,
+    "unlinked-normative": 19
+  },
+  "reference/spec/expressions.md": {
+    "internal-number": 9,
+    "long-paragraph": 3,
+    "provenance-marker": 9,
+    "section-links-no-rule": 5,
+    "unlinked-normative": 6
+  },
+  "reference/spec/functions.md": {
+    "internal-number": 26,
+    "long-paragraph": 2,
+    "provenance-marker": 14,
+    "section-links-no-rule": 2,
+    "unlinked-normative": 2
+  },
+  "reference/spec/lexical.md": {
+    "internal-number": 1,
+    "long-paragraph": 1,
+    "long-quote": 1,
+    "provenance-marker": 4,
+    "unlinked-normative": 1
+  },
+  "reference/spec/modules.md": {
+    "internal-number": 4,
+    "long-paragraph": 1,
+    "provenance-marker": 2,
+    "section-links-no-rule": 9,
+    "unlinked-normative": 3
+  },
+  "reference/spec/ownership.md": {
+    "internal-number": 158,
+    "long-paragraph": 5,
+    "long-quote": 2,
+    "provenance-marker": 15,
+    "section-links-no-rule": 7,
+    "unlinked-normative": 7
+  },
+  "reference/spec/types.md": {
+    "internal-number": 24,
+    "long-paragraph": 1,
+    "long-quote": 1,
+    "provenance-marker": 18,
+    "section-links-no-rule": 10,
+    "unlinked-normative": 13
+  }
+}

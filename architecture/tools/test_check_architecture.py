@@ -688,7 +688,7 @@ class LimitPhrasingLintTests(unittest.TestCase):
         self.assertIn("types.md:3", warnings[0])
 
     def test_marker_and_since_notes_are_not_flagged(self):
-        self.assertEqual([], self.lint("> **Gap** GAP-TYPES-001\n> **Limitation** LIMIT-X-001: not yet built.\n> **Since v0.13.0:** not yet.\n"))
+        self.assertEqual([], self.lint("> **Gap** GAP-TYPES-001\n> **Limitation** LIMIT-X-001: not yet built.\n> **Planned for v0.13.0:** not yet.\n"))
 
     def test_code_fences_html_and_generated_exemptions_are_not_flagged(self):
         text = (

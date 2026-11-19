@@ -244,28 +244,16 @@ honest single status). Concretely:
   actually do this yet" (`impl_status`) without cross-referencing a second system.
   `rfc.py impl-status <id> --set in-progress|implemented` updates it as work proceeds;
   `rfc.py transition <id> --to implemented` sets it to `implemented` automatically.
-- **Inline markers in `reference/spec/*.md` are required, not optional, at every
-  section the RFC touches** — they are **public availability markers first**, with a
-  narrow exception for future-facing features: a `Planned for vX.Y.Z` marker may also
-  include the RFC id so implementation drift can still be tracked against a stable
-  design handle. The spec must say what version first ships a feature, whether the
-  current text is future-facing, and when behavior changed; it must not require the
-  reader to open an RFC file just to learn whether the feature exists. Use versioned
-  wording at the point of use (for example `> **Available in v0.11.0.** ...`,
-  `> **Changed in v0.11.0.** ...`, or `> **Planned for v0.11.0 (RFC-0123).** ...`), not
-  just a global status field. A reader of the spec directly, not the RFC, still needs
-  to see it; a single central table would miss exactly the reader this exists for.
-- **The callout must be exactly one line (2026-07-11)** — no continuation lines in the
-  blockquote, whatever explanatory detail doesn't fit gets cut, not wrapped. This is
-  specifically so that removing it, once the RFC reaches `4-implemented`, is an
-  unambiguous single-line deletion — no risk of leaving orphaned prose behind or having
-  to work out where a multi-line callout ends. The lifecycle tool may still verify that
-  an integrated RFC's content has been merged into the spec, but the public-facing spec
-  text still talks first in terms of released or planned versions. Issue numbers and
-  tracking links stay out of the spec entirely; the RFC id is allowed only inside a
-  future-facing availability marker. Removing a future-facing callout, once the feature
-  ships, still happens in the same change that moves the RFC to `4-implemented`, not as
-  a separately rememberable follow-up.
+- **A `Planned for` marker is required at every section the RFC touches** while the feature is not yet released
+  (2026-11-19: this replaces the earlier availability-marker convention). The public spec states the language as it
+  is: it has no `Since`, `Changed in` or `Available in` callouts, because the changelog and the versioned docs
+  snapshots carry when something shipped. A section an integrated RFC changes carries one line,
+  `> **Planned for vX.Y.Z (RFC-NNNN).** …`, so a reader of the spec directly, not the RFC, sees that the text
+  is ahead of the release. The marker is exactly one line, so removing it, in the same change that moves the RFC
+  to `4-implemented`, is an unambiguous single-line deletion. The lifecycle tool may verify that an integrated
+  RFC's content has been merged into the spec. The RFC id is allowed in a `Planned for` marker and in the other
+  tracking markers (`Gap`, `Limitation`, `Pending`) and nowhere else in the spec; issue numbers and tracking
+  links stay out of the prose entirely.
 
 **Not retroactive.** The 25 RFCs already `4-implemented` before 2026-07-10 predate this
 convention and are not required to carry `impl_status`/`impl_tracking` after the fact —
@@ -605,10 +593,11 @@ edge conditions, or interaction rules over examples that merely restate the obvi
 An example that would not catch a misunderstanding is usually documentation garnish,
 not spec work.
 
-**Public availability is version-based only.** The public spec may say `Since vX.Y.Z.`,
-`Changed in vX.Y.Z: ...`, or `Planned for vX.Y.Z.` It must not mention RFC ids, issue
-numbers, tracking links, or other internal process artifacts. Availability is a product
-question, not a lifecycle question.
+**The public spec has no version provenance.** It states the current language. It has no `Since vX.Y.Z`,
+`Changed in vX.Y.Z` or `Available in` callouts, and it does not mention RFC ids, issue numbers, tracking links or
+other internal process artifacts, except in the tracking markers (`Planned for`, `Gap`, `Limitation`, `Pending`)
+that say what is not yet true. When something shipped is a product question, answered by the changelog and the
+versioned docs snapshots, not by the spec. `rfcs/tools/spec_lint.py` enforces it.
 
 **If spec text and interpreter behavior differ, that is a defect to resolve, not a
 state to normalize.** Either the implementation is fixed to match the spec, or the spec
