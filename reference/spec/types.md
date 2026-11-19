@@ -255,7 +255,7 @@ nested inside arrays, tuples, function types, and record fields. A generic param
 `Self` where it is permitted, resolve as types; any other unknown name is `T0003`, reported when the
 declaration is type-checked even if no value ever reaches the annotation.
 
-<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -326,7 +326,7 @@ fun main() -> i64 {
 A tuple's elements are addressed by zero-based positional selectors. A selector is valid
 only for an element in the tuple's declared arity.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -468,7 +468,7 @@ Equality, ordering and hashing of a tuple are those of every row: the fields com
 A tuple element access `t.n` names the integer label `n` of the tuple's row. An index that is not a
 label of that row is a type error (`T0003`, out of bounds).
 
-<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -2790,7 +2790,7 @@ method is not visible unless `R`'s own bound entails the impl's condition.
 A row bound requires `record` on its type parameter, either at the parameter declaration
 or in a `where` constraint; `record` without a row bound is also a legal any-record bound.
 
-<!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2836,7 +2836,7 @@ trailing `..` and a negative bound in a `where` clause is enforced like an inlin
 A field in a row bound may omit its type, constraining the field label while accepting any
 field type.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0118](../../rfcs/4-implemented/rfc-0118-row-bounds.md)_</span>
@@ -2891,7 +2891,7 @@ A field a row bound lists is accessible via field access (`p.x`) from inside the
 body; a field the bound doesn't list is not, even when a caller's concrete argument
 happens to carry it.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -2971,7 +2971,7 @@ A row bound is satisfied only by a record that has every field the bound lists, 
 where it states one. An argument whose row lacks a listed field is rejected with `T0012`, naming the
 missing label.
 
-<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

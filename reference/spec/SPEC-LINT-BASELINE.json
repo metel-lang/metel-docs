@@ -12,11 +12,6 @@
     "limit-in-prose": 1
   },
   "reference/spec/ownership.md": {
-    "internal-number": 92,
-    "limit-in-prose": 8,
-    "long-paragraph": 5,
-    "long-quote": 2,
-    "section-links-no-rule": 7,
-    "unlinked-normative": 7
+    "limit-in-prose": 6
   }
 }

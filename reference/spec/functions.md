@@ -1506,7 +1506,7 @@ A stand-alone closure has no generics list, so a row variable written in its par
 annotation must be one an enclosing generic function declares; naming any other is an undefined row
 variable (`T0003`). Inside a generic function the closure uses that function's row variable.
 
-<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
