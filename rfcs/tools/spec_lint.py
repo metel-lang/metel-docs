@@ -250,10 +250,16 @@ def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[All
     found: list[Finding] = []
 
     # Quote blocks that are tracking markers are exempt from the number rule.
+    # A marker inside a rule block is labelled "rule", not "quote", so find markers by their opening
+    # line rather than by block label, and take the quote lines that continue them.
     marker_lines: set[int] = set()
-    for start, end in _blocks(lines, labels, "quote"):
-        if MARKER_START_RE.match(lines[start]):
-            marker_lines.update(range(start, end))
+    for i, line in enumerate(lines):
+        if labels[i] in {"code", "gen"} or not MARKER_START_RE.match(line):
+            continue
+        j = i
+        while j < len(lines) and lines[j].startswith(">"):
+            marker_lines.add(j)
+            j += 1
     for i, line in enumerate(lines):
         if labels[i] in {"code", "gen"}:
             continue

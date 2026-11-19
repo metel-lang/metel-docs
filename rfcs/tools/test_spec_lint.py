@@ -27,6 +27,10 @@ class InternalNumbers(unittest.TestCase):
                        "> **Planned for v0.17.0 (RFC-0123).** text"):
             self.assertEqual(findings(marker + "\n", "internal-number"), [], marker)
 
+    def test_a_marker_inside_a_rule_block_is_exempt(self):
+        rule = "##### Legality Rule {#spec.x.y.legality-1}\n\n> **Gap** GAP-X-001\n\nA rule.\n"
+        self.assertEqual(findings(rule, "internal-number"), [])
+
     def test_a_marker_block_continuation_is_exempt_but_a_plain_quote_is_not(self):
         marker = "> **Pending** metel-core#1\n> continues with metel-core#2\n"
         self.assertEqual(findings(marker, "internal-number"), [])
