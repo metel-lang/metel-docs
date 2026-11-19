@@ -104,16 +104,35 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 
 
 def repo_markdown_files():
-    """Every tracked-style markdown file under the repo root, skipping dot-directories.
+    """The repo's markdown corpus: files git knows about (tracked, or untracked and not ignored).
 
-    A dot-directory at the root (`.claude/worktrees/<name>`, a nested checkout of this
-    same repo) is somebody's working copy, not part of the corpus: scanning it reports
-    that copy's own stale citations and dangling paths against this checkout.
+    Asking git instead of walking the filesystem keeps a nested checkout out of the corpus. A
+    `.claude/worktrees/<name>` worktree is somebody's working copy of this same repo: walking
+    the tree read its stale RFC-status citations and dangling paths as ours and failed the
+    pre-push check of the host checkout. git lists a nested repository as one `dir/` entry,
+    which is dropped here. Outside a git work tree (a bare export, a temp directory in a test)
+    it falls back to a walk that skips dot-directories.
     """
-    for f in REPO_ROOT.rglob("*.md"):
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
+            capture_output=True, text=True, timeout=60,
+        )
+        listed = out.stdout.split("\0") if out.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        listed = None
+    if listed is not None:
+        for name in sorted(set(listed)):
+            path = REPO_ROOT / name
+            if name.endswith(".md") and path.is_file():
+                yield path
+        return
+    for f in sorted(REPO_ROOT.rglob("*.md")):
         if any(part.startswith(".") for part in f.relative_to(REPO_ROOT).parts[:-1]):
             continue
         yield f
+
+
 RFCS_DIR = REPO_ROOT / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
 REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"

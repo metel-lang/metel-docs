@@ -13,9 +13,17 @@ import rfc
 
 
 class RepoMarkdownFilesTests(unittest.TestCase):
-    """A nested checkout under a dot-directory (`.claude/worktrees/...`) is not corpus."""
+    """A nested checkout (`.claude/worktrees/...`) is somebody's working copy, not corpus."""
 
-    def test_skips_markdown_under_dot_directories(self):
+    def listed(self, root):
+        old = rfc.REPO_ROOT
+        rfc.REPO_ROOT = root
+        try:
+            return sorted(str(f.relative_to(root)) for f in rfc.repo_markdown_files())
+        finally:
+            rfc.REPO_ROOT = old
+
+    def test_outside_git_it_skips_markdown_under_dot_directories(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             (root / "rfcs").mkdir()
@@ -24,13 +32,27 @@ class RepoMarkdownFilesTests(unittest.TestCase):
             nested = root / ".claude" / "worktrees" / "w" / "rfcs"
             nested.mkdir(parents=True)
             (nested / "b.md").write_text("x")
-            old = rfc.REPO_ROOT
-            rfc.REPO_ROOT = root
-            try:
-                found = sorted(str(f.relative_to(root)) for f in rfc.repo_markdown_files())
-            finally:
-                rfc.REPO_ROOT = old
-        self.assertEqual(found, ["rfcs/a.md", "top.md"])
+            self.assertEqual(self.listed(root), ["rfcs/a.md", "top.md"])
+
+    def test_in_git_it_lists_tracked_and_untracked_but_not_ignored_or_nested_repos(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            git = lambda cwd, *a: subprocess.run(["git", *a], cwd=cwd, check=True, capture_output=True)
+            git(root, "init", "-q", ".")
+            (root / ".gitignore").write_text("ignored.md\n")
+            (root / "tracked.md").write_text("x")
+            git(root, "add", "tracked.md")
+            (root / "untracked.md").write_text("x")
+            (root / "ignored.md").write_text("x")
+            gone = root / "gone.md"
+            gone.write_text("x")
+            git(root, "add", "gone.md")
+            gone.unlink()
+            nested = root / "wt" / "inner"
+            nested.mkdir(parents=True)
+            git(nested, "init", "-q", ".")
+            (nested / "inner.md").write_text("x")
+            self.assertEqual(self.listed(root), ["tracked.md", "untracked.md"])
 
 
 class ScheduledDraftTests(unittest.TestCase):
