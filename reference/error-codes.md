@@ -19,7 +19,7 @@ The source text does not match the Metel grammar.
 
 **Fix:** correct the syntax at the indicated position.
 
-Removed spellings get targeted messages (RFC-0186, metel-core#1653): the `row`
+Removed spellings get targeted messages: the `row`
 generic-parameter kind asks for `record R`; the `all` and unreleased `each` field-wise
 bound spellings ask for `where ..R: A`.
 
@@ -152,6 +152,7 @@ A float literal cannot be represented as an `f64`.
 
 Two types that must be equal are not.
 
+<!-- spec-lint: allow unlinked-normative reason="describes the wording of a diagnostic, which states no language rule" -->
 When both are records, the message names the field that differs instead of printing the two
 types: `the record is missing field `y` (expected `.{ .x: i64, .y: i64 }`, found `.{ .x: integer }`)`,
 ``field `z` is not part of `.{ .x: i64, .y: i64 }` ``, or ``field `x`: expected `i64`, found `String` ``.
@@ -164,11 +165,11 @@ A `?` whose operand is `Result<T, E>` or `Option<T>` but whose enclosing functio
 other one is also this code, with the message "`?` on `Option<String>` needs the enclosing
 function to return `Option<_>`, but it returns `Result<Config, ConfigError>`" and a help line
 naming the bridge: `.ok_or(...)` for an `Option` in a `Result` function, `.ok()` for a `Result`
-in an `Option` function (RFC-0182).
+in an `Option` function.
 
-A `let`-bound closure has one type (RFC-0196), so using it at a second type is this code and names the closure: "`id` has one type, fixed by its first use, so it cannot also be used here: cannot unify an integer literal with `boolean`". When the closure captures nothing, the help line suggests a generic function (`fun id<T>(..) -> .. .{ .. }`).
+A `let`-bound closure has one type, so using it at a second type is this code and names the closure: "`id` has one type, fixed by its first use, so it cannot also be used here: cannot unify an integer literal with `boolean`". When the closure captures nothing, the help line suggests a generic function (`fun id<T>(..) -> .. .{ .. }`).
 
-A named function with no return type returns `()`, so a body whose value is not `()` is this code (RFC-0193):
+A named function with no return type returns `()`, so a body whose value is not `()` is this code:
 "`triple` has no return type, so it returns `()`, but its body evaluates to `i64`". The help line names the
 fix, `-> i64` (omitted when the body's type has an unsolved part), and, for a private function that has
 typed parameters, no generics list, does not call itself, is used only after its declaration and does not
@@ -177,7 +178,7 @@ advice only; the checker does not type-check the rewrite.
 
 When the expected type is the referent of a reference-typed expression (`&T` found where `T`
 is expected), the error carries `= help: read the value out with `*r` (copies a Copy
-referent)` (RFC-0185). A reference is never converted to its referent implicitly.
+referent)`. A reference is never converted to its referent implicitly.
 
 The same code also covers an `extend` block the language does not permit, which is a
 distinct situation sharing one code:
@@ -194,7 +195,7 @@ where one exists.
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
-<summary>Tested by (116)</summary>
+<summary>Tested by (117)</summary>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6InBhcnRpYWxseS1tb3ZlZCBgUGFpcmAiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiIwMl9wYXJ0aWFsX21vdmVfdXNlZF9hc193aG9sZS5tdGwiLCJzb3VyY2UiOiJzdHJ1Y3QgUGFpciB7XG4gICAgbGVmdDogU3RyaW5nLFxuICAgIHJpZ2h0OiBpNjQsXG59XG5cbmZ1biB0YWtlKHBhaXI6IFBhaXIpIC0+IGk2NCB7XG4gICAgcGFpci5yaWdodFxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgcGFpciA6PSBQYWlyIHsgbGVmdCA9IFwiYVwiLCByaWdodCA9IDEgfTtcbiAgICBsZXQgbGVmdDogU3RyaW5nIDo9IHBhaXIubGVmdDtcbiAgICBsZXQgdmFsdWU6IGk2NCA6PSB0YWtlKHBhaXIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbW92ZV9jaGVjay8wMl9wYXJ0aWFsX21vdmVfdXNlZF9hc193aG9sZS5tdGwiLCJuYW1lIjoiMDJfcGFydGlhbF9tb3ZlX3VzZWRfYXNfd2hvbGUubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy9vd25lcnNoaXAubWQjc3BlYy5vd25lcnNoaXAucGFydGlhbC1tb3Zlcy5sZWdhbGl0eS0xIiwiaWQiOiJzcGVjLm93bmVyc2hpcC5wYXJ0aWFsLW1vdmVzLmxlZ2FsaXR5LTEiLCJsYWJlbCI6IlBhcnRpYWwgbW92ZXMgTDEifSx7ImhyZWYiOiJzcGVjL293bmVyc2hpcC5tZCNzcGVjLm93bmVyc2hpcC5uYXJyb3dpbmcubGVnYWxpdHktNCIsImlkIjoic3BlYy5vd25lcnNoaXAubmFycm93aW5nLmxlZ2FsaXR5LTQiLCJsYWJlbCI6Ik5hcnJvd2luZyBMNCJ9XX0="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6InRoZSByZWNvcmQgaXMgbWlzc2luZyBmaWVsZCBgbGVmdGAgKGV4cGVjdGVkIGAueyAubGVmdDogU3RyaW5nLCAucmlnaHQ6IGk2NCB9YCwgZm91bmQgYC57IC5yaWdodDogaW50ZWdlciB9YCkiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiI3Ml9yZWNvcmRfdXNlZF9hc193aG9sZV9hZnRlcl9maWVsZF9tb3ZlLm10bCIsInNvdXJjZSI6ImZ1biB0YWtlKHI6IC57IC5sZWZ0OiBTdHJpbmcsIC5yaWdodDogaTY0IH0pIC0+IGk2NCB7XG4gICAgci5yaWdodFxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgciA6PSAueyAubGVmdCA9IFwiYVwiLnRvX3N0cmluZygpLCAucmlnaHQgPSAxIH07XG4gICAgbGV0IGxlZnQ6IFN0cmluZyA6PSByLmxlZnQ7XG4gICAgbGV0IHZhbHVlOiBpNjQgOj0gdGFrZShyKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL21vdmVfY2hlY2svNzJfcmVjb3JkX3VzZWRfYXNfd2hvbGVfYWZ0ZXJfZmllbGRfbW92ZS5tdGwiLCJuYW1lIjoiNzJfcmVjb3JkX3VzZWRfYXNfd2hvbGVfYWZ0ZXJfZmllbGRfbW92ZS5tdGwiLCJzcGVjTGlua3MiOlt7ImhyZWYiOiJzcGVjL293bmVyc2hpcC5tZCNzcGVjLm93bmVyc2hpcC5uYXJyb3dpbmcubGVnYWxpdHktMSIsImlkIjoic3BlYy5vd25lcnNoaXAubmFycm93aW5nLmxlZ2FsaXR5LTEiLCJsYWJlbCI6Ik5hcnJvd2luZyBMMSJ9XX0="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6InBhcnRpYWxseS1tb3ZlZCBgVHdvYCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6IjczX3JlYXNzaWduaW5nX29ubHlfb25lX29mX3R3b19tb3ZlZF9maWVsZHNfc3RheXNfcGFydGlhbC5tdGwiLCJzb3VyY2UiOiJzdHJ1Y3QgVHdvIHtcbiAgICBsZWZ0OiBTdHJpbmcsXG4gICAgcmlnaHQ6IFN0cmluZyxcbn1cblxuZnVuIHRha2UodDogVHdvKSAtPiBpNjQge1xuICAgIHQubGVmdC5sZW4oKVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICB2YXIgdCA6PSBUd28geyBsZWZ0ID0gXCJhXCIsIHJpZ2h0ID0gXCJiXCIgfTtcbiAgICBsZXQgdGFrZW5fbGVmdCA6PSB0LmxlZnQ7XG4gICAgbGV0IHRha2VuX3JpZ2h0IDo9IHQucmlnaHQ7XG4gICAgdC5sZWZ0ID0gXCJjXCI7XG4gICAgLy8gdC5yaWdodCBpcyBzdGlsbCBtb3ZlZCBvdXQgLS0gcmVhc3NpZ25pbmcgb25seSBvbmUgb2YgdHdvIG1vdmVkIGZpZWxkcyBkb2VzXG4gICAgLy8gbm90IHJlc3RvcmUgd2hvbGUtdmFsdWUgc3RhdHVzOyBgdGAgc3RheXMgcGFydGlhbGx5IG1vdmVkLlxuICAgIGxldCBuIDo9IHRha2UodCk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9tb3ZlX2NoZWNrLzczX3JlYXNzaWduaW5nX29ubHlfb25lX29mX3R3b19tb3ZlZF9maWVsZHNfc3RheXNfcGFydGlhbC5tdGwiLCJuYW1lIjoiNzNfcmVhc3NpZ25pbmdfb25seV9vbmVfb2ZfdHdvX21vdmVkX2ZpZWxkc19zdGF5c19wYXJ0aWFsLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvb3duZXJzaGlwLm1kI3NwZWMub3duZXJzaGlwLnBhcnRpYWwtbW92ZXMubGVnYWxpdHktMyIsImlkIjoic3BlYy5vd25lcnNoaXAucGFydGlhbC1tb3Zlcy5sZWdhbGl0eS0zIiwibGFiZWwiOiJQYXJ0aWFsIG1vdmVzIEwzIn0seyJocmVmIjoic3BlYy9vd25lcnNoaXAubWQjc3BlYy5vd25lcnNoaXAubmFycm93aW5nLmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMub3duZXJzaGlwLm5hcnJvd2luZy5sZWdhbGl0eS0xIiwibGFiZWwiOiJOYXJyb3dpbmcgTDEifV19"></details>
@@ -217,6 +218,7 @@ where one exists.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibGV0X3R1cGxlX3BhdHRlcm5fb2ZfdGhlX3dyb25nX2FyaXR5X2lzX3JlamVjdGVkLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTUxIChtZXRlbC1jb3JlIzIwMjIpOiBhIHR1cGxlIHBhdHRlcm4gaW4gYGxldGAgbXVzdCBtYXRjaCB0aGUgdHVwbGUncyBhcml0eS5cbmZ1biBtYWluKCkge1xuICAgIGxldCAoYSwgYiwgYykgOj0gKDEsIDIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvcmVjb3Jkcy9sZXRfdHVwbGVfcGF0dGVybl9vZl90aGVfd3JvbmdfYXJpdHlfaXNfcmVqZWN0ZWQubXRsIiwibmFtZSI6ImxldF90dXBsZV9wYXR0ZXJuX29mX3RoZV93cm9uZ19hcml0eV9pc19yZWplY3RlZC5tdGwifQ=="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSIsImxpbmUiOiI2Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibGl0ZXJhbF9yb3dfYXJnX2Nsb3NlZF9yb3dfaXNfZXhhY3QubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNDczIChSRkMtMDE4MCk6IGEgY2xvc2VkIGxpdGVyYWwgcm93IG5hbWVzIGV4YWN0bHkgdGhvc2UgZmllbGRzOyBhIHZhbHVlIHdpdGggYW5cbi8vIGV4dHJhIGZpZWxkIGRvZXMgbm90IG1hdGNoIGl0LlxucmVjb3JkIFJlcTxyZWNvcmQgUj4geyBkYXRhOiAueyAuLlIgfSB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCByOiBSZXE8Li57IC5ob3N0OiBTdHJpbmcgfT4gOj0gUmVxIHsgZGF0YSA9IC57IC5ob3N0ID0gXCJ4XCIsIC5wb3J0ID0gMSB9IH07IC8vIEVSUk9SW1QwMDAxXVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvcmVjb3Jkcy9saXRlcmFsX3Jvd19hcmdfY2xvc2VkX3Jvd19pc19leGFjdC5tdGwiLCJuYW1lIjoibGl0ZXJhbF9yb3dfYXJnX2Nsb3NlZF9yb3dfaXNfZXhhY3QubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy90eXBlcy5tZCNzcGVjLnR5cGVzLmdlbmVyaWNzLm9wZW4tcm93cy5sZWdhbGl0eS0xIiwiaWQiOiJzcGVjLnR5cGVzLmdlbmVyaWNzLm9wZW4tcm93cy5sZWdhbGl0eS0xIiwibGFiZWwiOiJPcGVuIHJvd3MgTDEifV19"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSIsImxpbmUiOiI4Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibGl0ZXJhbF9yb3dfYXJnX21pc3NpbmdfZmllbGRfcmVqZWN0ZWQubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNDczIChSRkMtMDE4MCk6IGEgcGFyYW1ldGVyIHR5cGVkIHdpdGggYSBsaXRlcmFsIHJvdyByZXF1aXJlcyBpdHMgZmllbGRzIGF0IHRoZSBjYWxsLlxucmVjb3JkIFJlcTxyZWNvcmQgUj4geyBkYXRhOiAueyAuLlIgfSB9XG5cbmZ1biBob3N0X29mPHJlY29yZCBSPihyOiBSZXE8Li57IC5ob3N0OiBTdHJpbmcsIC4uUiB9PikgLT4gU3RyaW5nIHsgci5kYXRhLmhvc3QgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgciA6PSBSZXEgeyBkYXRhID0gLnsgLnBvcnQgPSAxIH0gfTtcbiAgICBsZXQgXyA6PSBob3N0X29mKHIpOyAvLyBFUlJPUltUMDAwMV1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3JlY29yZHMvbGl0ZXJhbF9yb3dfYXJnX21pc3NpbmdfZmllbGRfcmVqZWN0ZWQubXRsIiwibmFtZSI6ImxpdGVyYWxfcm93X2FyZ19taXNzaW5nX2ZpZWxkX3JlamVjdGVkLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvdHlwZXMubWQjc3BlYy50eXBlcy5nZW5lcmljcy5vcGVuLXJvd3MubGVnYWxpdHktMSIsImlkIjoic3BlYy50eXBlcy5nZW5lcmljcy5vcGVuLXJvd3MubGVnYWxpdHktMSIsImxhYmVsIjoiT3BlbiByb3dzIEwxIn1dfQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCBhcHBseSBgPT0iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDZfZXFfb25fZGlmZmVyZW50X3R5cGVzLm10bCIsInNvdXJjZSI6Ii8vIEJvdGggb3BlcmFuZHMgbXVzdCBoYXZlIG9uZSB0eXBlOiBhbiBpbnRlZ2VyIGlzIG5vdCBhIGZsb2F0LlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHNhbWUgOj0gMSA9PSAxLjU7IC8vIEVSUk9SW1QwMDAxXVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZXF1YWxpdHkvbmVnXzA2X2VxX29uX2RpZmZlcmVudF90eXBlcy5tdGwiLCJuYW1lIjoibmVnXzA2X2VxX29uX2RpZmZlcmVudF90eXBlcy5tdGwiLCJzcGVjTGlua3MiOlt7ImhyZWYiOiJzcGVjL2xleGljYWwubWQjc3BlYy5sZXhpY2FsLm9wZXJhdG9ycy5sZWdhbGl0eS0xIiwiaWQiOiJzcGVjLmxleGljYWwub3BlcmF0b3JzLmxlZ2FsaXR5LTEiLCJsYWJlbCI6Ik9wZXJhdG9ycyBMMSJ9XX0="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18xMDlfcGhhbnRvbV9nZW5lcmljX3N0cnVjdF9hbm5vdGF0aW9uX21pc21hdGNoLm10bCIsInNvdXJjZSI6Ii8vIFRoZSBhbm5vdGF0aW9uIGZpeGVzIHRoZSBwaGFudG9tIHBhcmFtZXRlcjsgaXQgaXMgbm90IGEgbGljZW5zZSB0byBjaGFuZ2UgaXQgKCMxNDMyKS5cbnN0cnVjdCBXaXRuZXNzPFQ+IHsgY291bnQ6IGk2NCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCB0ZXh0OiBXaXRuZXNzPFN0cmluZz4gOj0gV2l0bmVzcyB7IGNvdW50ID0gMSB9O1xuICAgIGxldCBudW1iZXI6IFdpdG5lc3M8aTY0PiA6PSB0ZXh0O1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZ2VuZXJpY3MvbmVnXzEwOV9waGFudG9tX2dlbmVyaWNfc3RydWN0X2Fubm90YXRpb25fbWlzbWF0Y2gubXRsIiwibmFtZSI6Im5lZ18xMDlfcGhhbnRvbV9nZW5lcmljX3N0cnVjdF9hbm5vdGF0aW9uX21pc21hdGNoLm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImNhbm5vdCB1bmlmeSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18xMTFfZ2VuZXJpY19zdHJ1Y3RfbGl0ZXJhbF9maWVsZF9taXNtYXRjaC5tdGwiLCJzb3VyY2UiOiIvLyBBIGhpbnRlZCBmaWVsZCBpcyBzdGlsbCBjaGVja2VkOiBhIFN0cmluZyBsaXRlcmFsIGZvciBhIHU2NCBmaWVsZCBpcyBhIHVzZXIgdHlwZVxuLy8gZXJyb3IsIG5vdCBhbiBpbnRlcm5hbCBvbmUgKCMxNDM4KS5cbnN0cnVjdCBDb3VudGVyPFQ+IHsgbjogdTY0LCB2OiBUIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGMgOj0gQ291bnRlciB7IG4gPSBcIm9uZVwiLCB2ID0gMiB9O1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZ2VuZXJpY3MvbmVnXzExMV9nZW5lcmljX3N0cnVjdF9saXRlcmFsX2ZpZWxkX21pc21hdGNoLm10bCIsIm5hbWUiOiJuZWdfMTExX2dlbmVyaWNfc3RydWN0X2xpdGVyYWxfZmllbGRfbWlzbWF0Y2gubXRsIn0="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjE4Iiwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzEzX3JlZmVyZW5jZV9zY3J1dGluZWVfcGVlbF9kb2VzX25vdF9nZW5lcmFsaXplX3RvX2NhbGxfYXJncy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEwOCBcdTAwYTczOiByZWZlcmVuY2UtdHJhbnNwYXJlbmN5IGlzIHNjb3BlZCB0byBtYXRjaCBzY3J1dGluZWVzIG9ubHkuIEEgYCZDb2xvdXJgXG4vLyB2YWx1ZSB0aGF0IG1hdGNoZXMgZmluZSBhcyBhIHNjcnV0aW5lZSBkb2VzIG5vdCBzaWxlbnRseSB3aWRlbiB0byBgQ29sb3VyYCBpbiBhXG4vLyBjYWxsLWFyZ3VtZW50IHBvc2l0aW9uIC0tIHRoYXQgaXMgYW4gb3JkaW5hcnkgdHlwZSBtaXNtYXRjaCwgbm90IGEgcGVlbC5cblxuZW51bSBDb2xvdXIgeyBSZWQsIEdyZWVuLCBCbHVlIH1cblxuZnVuIHRha2VzX2J5X3ZhbHVlKGM6IENvbG91cikgLT4gU3RyaW5nIHtcbiAgICBtYXRjaCAoYykge1xuICAgICAgICBDb2xvdXI6OlJlZCAgID0+IFwicmVkXCIsXG4gICAgICAgIENvbG91cjo6R3JlZW4gPT4gXCJncmVlblwiLFxuICAgICAgICBDb2xvdXI6OkJsdWUgID0+IFwiYmx1ZVwiLFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGMgOj0gQ29sb3VyOjpHcmVlbjtcbiAgICBsZXQgcjogJkNvbG91ciA6PSAmYztcbiAgICBwcmludGxuKHRha2VzX2J5X3ZhbHVlKHIpKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2VudW1zL25lZ18xM19yZWZlcmVuY2Vfc2NydXRpbmVlX3BlZWxfZG9lc19ub3RfZ2VuZXJhbGl6ZV90b19jYWxsX2FyZ3MubXRsIiwibmFtZSI6Im5lZ18xM19yZWZlcmVuY2Vfc2NydXRpbmVlX3BlZWxfZG9lc19ub3RfZ2VuZXJhbGl6ZV90b19jYWxsX2FyZ3MubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy9leHByZXNzaW9ucy5tZCNzcGVjLmV4cHJlc3Npb25zLnBhdHRlcm4tbWF0Y2hpbmcubWF0Y2hpbmctdGhyb3VnaC1hLXJlZmVyZW5jZS5sZWdhbGl0eS01IiwiaWQiOiJzcGVjLmV4cHJlc3Npb25zLnBhdHRlcm4tbWF0Y2hpbmcubWF0Y2hpbmctdGhyb3VnaC1hLXJlZmVyZW5jZS5sZWdhbGl0eS01IiwibGFiZWwiOiJNYXRjaGluZyB0aHJvdWdoIGEgcmVmZXJlbmNlIEw1In1dfQ=="></details>
@@ -320,9 +322,9 @@ The type checker cannot infer a type without an explicit annotation.
 
 **Fix:** annotate the binding: `let x: i64 = ...`.
 
-A closure bound by a top-level `let` that its own initializer does not determine is also this code: "the type of `id` is not determined by its initializer; annotate its parameters" (RFC-0196). So is an unannotated parameter of a `let`-bound closure inside a generic function: "closure parameter `y` of `id` has no written type; inside a generic function a closure parameter must be annotated".
+A closure bound by a top-level `let` that its own initializer does not determine is also this code: "the type of `id` is not determined by its initializer; annotate its parameters". So is an unannotated parameter of a `let`-bound closure inside a generic function: "closure parameter `y` of `id` has no written type; inside a generic function a closure parameter must be annotated".
 
-A closure parameter written without a type is T0002 only when nothing determines it: the message
+[A closure parameter written without a type is T0002 only when nothing determines it](spec/functions.md#spec.functions.closures.legality-1): the message
 is "closure parameter `x` has no determined type; add an annotation or give the closure an
 expected function type". An expected function type or the body normally fixes it.
 
@@ -352,7 +354,7 @@ Naming `Perhaps`, the former name of the optional type, where nothing declares i
 
 **Fix:** define the variable or function before use, or correct the spelling.
 
-A local `fun` that names a local of its enclosing function (a parameter, a `let` or `var`, `self`, or a closure's capture) is also this code, because a local function is an item and does not capture (RFC-0195): "`bump` is a function and cannot use `n`, a local of `main`", with the two fixes, binding a closure (the rewrite with its capture list) or passing the value as a parameter. Using the enclosing function's type parameter gets "`T` is a type parameter of `outer`; declare `<T>` on `inner`".
+A local `fun` that names a local of its enclosing function (a parameter, a `let` or `var`, `self`, or a closure's capture) is also this code, because a local function is an item and does not capture: "`bump` is a function and cannot use `n`, a local of `main`", with the two fixes, binding a closure (the rewrite with its capture list) or passing the value as a parameter. Using the enclosing function's type parameter gets "`T` is a type parameter of `outer`; declare `<T>` on `inner`".
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -479,7 +481,7 @@ An operator is applied to operands it does not support. Three forms share this c
 - **Mismatched operands.** The two sides of a binary operator disagree, e.g. `1 == "x"`.
   The message names the operator and both types.
 - **Binary arithmetic/ordering** on unsupported types.
-- **Equality** (`==`, `!=`) on anything other than a numeric type, `boolean`, `String` or
+- **[Equality](spec/lexical.md#spec.lexical.operators.legality-1)** (`==`, `!=`) on anything other than a numeric type, `boolean`, `String` or
   `char`. `==` does not yet dispatch through the `Eq` aspect, so structs, enums, arrays,
   tuples and references are rejected; use `.eq(..)` on a type that implements `Eq`.
 
@@ -489,8 +491,13 @@ Address-of (`&`, `&var`) applied to a non-addressable expression — a literal, 
 address.
 
 <!-- rfc.py:fixtures:start -->
-<details class="rigor-fixtures-toggle" open>
-<summary>Tested by (2)</summary>
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (7)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImVxdWFsaXR5IGNvbXBhcmlzb24gcmVxdWlyZXMgYSBwcmltaXRpdmUgb3BlcmFuZCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18wMV9lcV9vbl9yZWZlcmVuY2VzLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMjc5OiBgPT1gIG9uIGAmaTY0YCBwcmV2aW91c2x5IHR5cGVjaGVja2VkIGFuZCB0aGVuIGFib3J0ZWQgYXQgcnVuIHRpbWVcbi8vIHdpdGggYFtJMDAwMV0gaW50ZXJuYWwgZXJyb3I6IGJpbm9wOiB1bnN1cHBvcnRlZCBvcGVyYW5kIHR5cGVzIC4uLiAodHlwZWNoZWNrZXIgc2hvdWxkXG4vLyBoYXZlIGNhdWdodCB0aGlzKWAgXHUyMDE0IGBjb25zdHJ1Y3RfYmlub3BgJ3MgRXEvTmUgYXJtIHJldHVybmVkIGBUeXBlOjpCb29sZWFuYCB3aXRoIG5vXG4vLyBvcGVyYW5kIGNoZWNrIGF0IGFsbCwgYmVzaWRlIGFuIG9yZGVyaW5nIGFybSB0aGF0IGRvZXMgY2hlY2suXG4vL1xuLy8gUmVqZWN0ZWQgcmF0aGVyIHRoYW4gbWFkZSB0byB3b3JrOiByb3V0aW5nIGA9PWAgdGhyb3VnaCB0aGUgYEVxYCBhc3BlY3QgaXMgIzI2MyAvXG4vLyBSRkMtMDA2Mi4gRm9yIHJlZmVyZW5jZXMgc3BlY2lmaWNhbGx5LCBwZWVsaW5nIHdvdWxkIGFsc28gc2lsZW50bHkgc2V0dGxlIHdoZXRoZXIgdHdvXG4vLyByZWZlcmVuY2VzIGNvbXBhcmUgcmVmZXJlbnRzIG9yIGlkZW50aXR5LCB3aGljaCBpcyBkZWxpYmVyYXRlbHkgb3Blbi5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhIDo9IDE7XG4gICAgbGV0IGIgOj0gMTtcbiAgICBsZXQgcDogJmk2NCA6PSAmYTtcbiAgICBsZXQgcTogJmk2NCA6PSAmYjtcbiAgICBsZXQgc2FtZSA6PSBwID09IHE7IC8vIEVSUk9SW1QwMDA1XVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZXF1YWxpdHkvbmVnXzAxX2VxX29uX3JlZmVyZW5jZXMubXRsIiwibmFtZSI6Im5lZ18wMV9lcV9vbl9yZWZlcmVuY2VzLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvbGV4aWNhbC5tZCNzcGVjLmxleGljYWwub3BlcmF0b3JzLmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMubGV4aWNhbC5vcGVyYXRvcnMubGVnYWxpdHktMSIsImxhYmVsIjoiT3BlcmF0b3JzIEwxIn1dfQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImVxdWFsaXR5IGNvbXBhcmlzb24gcmVxdWlyZXMgYSBwcmltaXRpdmUgb3BlcmFuZCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18wMl9lcV9vbl9zdHJ1Y3QubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyNzk6IGA9PWAgb24gYSBzdHJ1Y3QgcHJldmlvdXNseSB0eXBlY2hlY2tlZCBhbmQgdGhlbiBhYm9ydGVkIGF0IHJ1biB0aW1lXG4vLyB3aXRoIGBbSTAwMDFdIGludGVybmFsIGVycm9yOiBiaW5vcDogdW5zdXBwb3J0ZWQgb3BlcmFuZCB0eXBlcyAuLi4gKHR5cGVjaGVja2VyIHNob3VsZFxuLy8gaGF2ZSBjYXVnaHQgdGhpcylgIFx1MjAxNCBgY29uc3RydWN0X2Jpbm9wYCdzIEVxL05lIGFybSByZXR1cm5lZCBgVHlwZTo6Qm9vbGVhbmAgd2l0aCBub1xuLy8gb3BlcmFuZCBjaGVjayBhdCBhbGwsIGJlc2lkZSBhbiBvcmRlcmluZyBhcm0gdGhhdCBkb2VzIGNoZWNrLlxuLy9cbi8vIFJlamVjdGVkIHJhdGhlciB0aGFuIG1hZGUgdG8gd29yazogcm91dGluZyBgPT1gIHRocm91Z2ggdGhlIGBFcWAgYXNwZWN0IGlzICMyNjMgL1xuLy8gUkZDLTAwNjIuIEZvciByZWZlcmVuY2VzIHNwZWNpZmljYWxseSwgcGVlbGluZyB3b3VsZCBhbHNvIHNpbGVudGx5IHNldHRsZSB3aGV0aGVyIHR3b1xuLy8gcmVmZXJlbmNlcyBjb21wYXJlIHJlZmVyZW50cyBvciBpZGVudGl0eSwgd2hpY2ggaXMgZGVsaWJlcmF0ZWx5IG9wZW4uXG5zdHJ1Y3QgUCB7IHg6IGk2NCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhIDo9IFAgeyB4ID0gMSB9O1xuICAgIGxldCBiIDo9IFAgeyB4ID0gMSB9O1xuICAgIGxldCBzYW1lIDo9IGEgPT0gYjsgLy8gRVJST1JbVDAwMDVdXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9lcXVhbGl0eS9uZWdfMDJfZXFfb25fc3RydWN0Lm10bCIsIm5hbWUiOiJuZWdfMDJfZXFfb25fc3RydWN0Lm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvbGV4aWNhbC5tZCNzcGVjLmxleGljYWwub3BlcmF0b3JzLmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMubGV4aWNhbC5vcGVyYXRvcnMubGVnYWxpdHktMSIsImxhYmVsIjoiT3BlcmF0b3JzIEwxIn1dfQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImVxdWFsaXR5IGNvbXBhcmlzb24gcmVxdWlyZXMgYSBwcmltaXRpdmUgb3BlcmFuZCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18wM19lcV9vbl9lbnVtLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMjc5OiBgPT1gIG9uIGFuIGVudW0sIGluY2x1ZGluZyB0aGUgYnVpbHRpbiBgT3B0aW9uYCBwcmV2aW91c2x5IHR5cGVjaGVja2VkIGFuZCB0aGVuIGFib3J0ZWQgYXQgcnVuIHRpbWVcbi8vIHdpdGggYFtJMDAwMV0gaW50ZXJuYWwgZXJyb3I6IGJpbm9wOiB1bnN1cHBvcnRlZCBvcGVyYW5kIHR5cGVzIC4uLiAodHlwZWNoZWNrZXIgc2hvdWxkXG4vLyBoYXZlIGNhdWdodCB0aGlzKWAgXHUyMDE0IGBjb25zdHJ1Y3RfYmlub3BgJ3MgRXEvTmUgYXJtIHJldHVybmVkIGBUeXBlOjpCb29sZWFuYCB3aXRoIG5vXG4vLyBvcGVyYW5kIGNoZWNrIGF0IGFsbCwgYmVzaWRlIGFuIG9yZGVyaW5nIGFybSB0aGF0IGRvZXMgY2hlY2suXG4vL1xuLy8gUmVqZWN0ZWQgcmF0aGVyIHRoYW4gbWFkZSB0byB3b3JrOiByb3V0aW5nIGA9PWAgdGhyb3VnaCB0aGUgYEVxYCBhc3BlY3QgaXMgIzI2MyAvXG4vLyBSRkMtMDA2Mi4gRm9yIHJlZmVyZW5jZXMgc3BlY2lmaWNhbGx5LCBwZWVsaW5nIHdvdWxkIGFsc28gc2lsZW50bHkgc2V0dGxlIHdoZXRoZXIgdHdvXG4vLyByZWZlcmVuY2VzIGNvbXBhcmUgcmVmZXJlbnRzIG9yIGlkZW50aXR5LCB3aGljaCBpcyBkZWxpYmVyYXRlbHkgb3Blbi5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhOiBPcHRpb248aTY0PiA6PSBOb25lO1xuICAgIGxldCBiOiBPcHRpb248aTY0PiA6PSBOb25lO1xuICAgIGxldCBzYW1lIDo9IGEgPT0gYjsgLy8gRVJST1JbVDAwMDVdXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9lcXVhbGl0eS9uZWdfMDNfZXFfb25fZW51bS5tdGwiLCJuYW1lIjoibmVnXzAzX2VxX29uX2VudW0ubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy9sZXhpY2FsLm1kI3NwZWMubGV4aWNhbC5vcGVyYXRvcnMubGVnYWxpdHktMSIsImlkIjoic3BlYy5sZXhpY2FsLm9wZXJhdG9ycy5sZWdhbGl0eS0xIiwibGFiZWwiOiJPcGVyYXRvcnMgTDEifV19"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImVxdWFsaXR5IGNvbXBhcmlzb24gcmVxdWlyZXMgYSBwcmltaXRpdmUgb3BlcmFuZCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18wNF9lcV9vbl9hcnJheS5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzI3OTogYD09YCBvbiBhbiBhcnJheSBwcmV2aW91c2x5IHR5cGVjaGVja2VkIGFuZCB0aGVuIGFib3J0ZWQgYXQgcnVuIHRpbWVcbi8vIHdpdGggYFtJMDAwMV0gaW50ZXJuYWwgZXJyb3I6IGJpbm9wOiB1bnN1cHBvcnRlZCBvcGVyYW5kIHR5cGVzIC4uLiAodHlwZWNoZWNrZXIgc2hvdWxkXG4vLyBoYXZlIGNhdWdodCB0aGlzKWAgXHUyMDE0IGBjb25zdHJ1Y3RfYmlub3BgJ3MgRXEvTmUgYXJtIHJldHVybmVkIGBUeXBlOjpCb29sZWFuYCB3aXRoIG5vXG4vLyBvcGVyYW5kIGNoZWNrIGF0IGFsbCwgYmVzaWRlIGFuIG9yZGVyaW5nIGFybSB0aGF0IGRvZXMgY2hlY2suXG4vL1xuLy8gUmVqZWN0ZWQgcmF0aGVyIHRoYW4gbWFkZSB0byB3b3JrOiByb3V0aW5nIGA9PWAgdGhyb3VnaCB0aGUgYEVxYCBhc3BlY3QgaXMgIzI2MyAvXG4vLyBSRkMtMDA2Mi4gRm9yIHJlZmVyZW5jZXMgc3BlY2lmaWNhbGx5LCBwZWVsaW5nIHdvdWxkIGFsc28gc2lsZW50bHkgc2V0dGxlIHdoZXRoZXIgdHdvXG4vLyByZWZlcmVuY2VzIGNvbXBhcmUgcmVmZXJlbnRzIG9yIGlkZW50aXR5LCB3aGljaCBpcyBkZWxpYmVyYXRlbHkgb3Blbi5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhIDo9IFsxLCAyXTtcbiAgICBsZXQgYiA6PSBbMSwgMl07XG4gICAgbGV0IHNhbWUgOj0gYSA9PSBiOyAvLyBFUlJPUltUMDAwNV1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2VxdWFsaXR5L25lZ18wNF9lcV9vbl9hcnJheS5tdGwiLCJuYW1lIjoibmVnXzA0X2VxX29uX2FycmF5Lm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvbGV4aWNhbC5tZCNzcGVjLmxleGljYWwub3BlcmF0b3JzLmxlZ2FsaXR5LTEiLCJpZCI6InNwZWMubGV4aWNhbC5vcGVyYXRvcnMubGVnYWxpdHktMSIsImxhYmVsIjoiT3BlcmF0b3JzIEwxIn1dfQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImVxdWFsaXR5IGNvbXBhcmlzb24gcmVxdWlyZXMgYSBwcmltaXRpdmUgb3BlcmFuZCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18wNV9lcV9vbl90dXBsZS5tdGwiLCJzb3VyY2UiOiIvLyBBIHR1cGxlIGlzIG5vdCBhIHByaW1pdGl2ZSBvcGVyYW5kIGVpdGhlci5cbmZ1biBtYWluKCkge1xuICAgIGxldCBzYW1lIDo9ICgxLCAyKSA9PSAoMSwgMik7IC8vIEVSUk9SW1QwMDA1XVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZXF1YWxpdHkvbmVnXzA1X2VxX29uX3R1cGxlLm10bCIsIm5hbWUiOiJuZWdfMDVfZXFfb25fdHVwbGUubXRsIiwic3BlY0xpbmtzIjpbeyJocmVmIjoic3BlYy9sZXhpY2FsLm1kI3NwZWMubGV4aWNhbC5vcGVyYXRvcnMubGVnYWxpdHktMSIsImlkIjoic3BlYy5sZXhpY2FsLm9wZXJhdG9ycy5sZWdhbGl0eS0xIiwibGFiZWwiOiJPcGVyYXRvcnMgTDEifV19"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImdvdCBgaTY0YCBhbmQgYFN0cmluZ2AiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMDVfZ2VuZXJpY19maWVsZF9saXRlcmFsX2FkZF9zdHJpbmcubXRsIiwic291cmNlIjoiLy8gU2libGluZyBvZiBuZWdfMDEvbmVnXzAyLCBvbmUgbGV2ZWwgb2YgaW5kaXJlY3Rpb24gcmVtb3ZlZCAoIzIzNiBmb2xsb3ctdXApOlxuLy8gdGhlIG51bWVyaWMgbGl0ZXJhbCBoZXJlIGlzIHJlY292ZXJlZCB0aHJvdWdoIGEgZ2VuZXJpYyBzdHJ1Y3QgZmllbGQgcmF0aGVyXG4vLyB0aGFuIHdyaXR0ZW4gZGlyZWN0bHkgYXQgdGhlIGArYCBzaXRlLiBUaGUgVDAwMDUgbWVzc2FnZSBtdXN0IG5hbWUgdGhlXG4vLyBjb25jcmV0ZSB0eXBlIHRoaXMgcmVzb2x2ZXMgdG8gKGBpNjRgKSwgbm90IHRoZSBpbnRlcm5hbCBUeXBlVmFyIGl0IHdhc1xuLy8gdW5pZmllZCB3aXRoIFx1MjAxNCBzZWUgLnRvbWwgc2lkZWNhci5cbnN0cnVjdCBQYWlyPEEsIEI+IHsgZmlyc3Q6IEEsIHNlY29uZDogQiB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBwIDo9IFBhaXIgeyBmaXJzdCA9IDEsIHNlY29uZCA9IFwieFwiIH07XG4gICAgbGV0IF9iYWQgOj0gcC5maXJzdCArIFwieVwiOyAvLyBFUlJPUltUMDAwNV1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2xpdGVyYWxzL25lZ18wNV9nZW5lcmljX2ZpZWxkX2xpdGVyYWxfYWRkX3N0cmluZy5tdGwiLCJuYW1lIjoibmVnXzA1X2dlbmVyaWNfZmllbGRfbGl0ZXJhbF9hZGRfc3RyaW5nLm10bCJ9"></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA1IiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmlnaWRfb3BlcmF0b3Jfb25fcGFyYW1ldGVyX3JlamVjdGVkLm10bCIsInNvdXJjZSI6Ii8vIE5lZ2F0aXZlIChSRkMtMDE3MyBENSk6IG5vIGFzcGVjdCBncmFudHMgYW4gYXJpdGhtZXRpYyBvciBvcmRlcmluZyBvcGVyYXRvciB5ZXQsIHNvXG4vLyBzdWNoIGFuIG9wZXJhdG9yIG9uIGEgYmFyZSBkZWNsYXJlZCBwYXJhbWV0ZXIgaXMgcmVqZWN0ZWQgKEdBUC1UWVBFUy0wMDUpLiBUaGVcbi8vIHdvcmthcm91bmQgaXMgdG8gcGFzcyB0aGUgb3BlcmF0aW9uIGluLCBvciB0byB3cml0ZSB0aGUgZnVuY3Rpb24gZm9yIHRoZSBjb25jcmV0ZSB0eXBlcy5cbmZ1biBhZGQ8VD4oYTogVCwgYjogVCkgLT4gVCB7IGEgKyBiIH0gLy8gRVJST1JbVDAwMDVdXG5cbmZ1biBtYWluKCkgeyBhZGQoMSwgMik7IH1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2dlbmVyaWNzL3JpZ2lkX29wZXJhdG9yX29uX3BhcmFtZXRlcl9yZWplY3RlZC5tdGwiLCJuYW1lIjoicmlnaWRfb3BlcmF0b3Jfb25fcGFyYW1ldGVyX3JlamVjdGVkLm10bCIsInNwZWNMaW5rcyI6W3siaHJlZiI6InNwZWMvdHlwZXMubWQjc3BlYy50eXBlcy5nZW5lcmljcy5yaWdpZC10eXBlLXBhcmFtZXRlcnMubGVnYWxpdHktMyIsImlkIjoic3BlYy50eXBlcy5nZW5lcmljcy5yaWdpZC10eXBlLXBhcmFtZXRlcnMubGVnYWxpdHktMyIsImxhYmVsIjoiUmlnaWQgdHlwZSBwYXJhbWV0ZXJzIEwzIn1dfQ=="></details>
 </details>
@@ -549,7 +556,7 @@ A `match` expression does not cover all possible values of the scrutinee type.
 
 ### T0010 — Unannotated declaration
 
-A named declaration does not write its signature (RFC-0193). An omitted parameter type is this code on
+A named declaration does not write its signature. An omitted parameter type is this code on
 every named declaration: a private or `pub` free function, a method, or an aspect-method declaration
 (a receiver is exempt). A `pub` function must also write its return type, and a `pub` signature's
 function types are written in full.
@@ -572,14 +579,13 @@ function types are written in full.
 
 A generic type parameter's bound is not satisfied by the concrete type at the call
 site or construction site. Covers both directions: a positive bound (`T: Aspect`)
-requires an implementation that isn't reachable, or a negative bound (`T: !Aspect`,
-RFC-0072) is violated because the concrete type *does* implement the aspect. Also
-covers a conditional `extend` block's own `where`-clause bounds (RFC-0036) failing at a
+requires an implementation that isn't reachable, or a negative bound (`T: !Aspect`) is violated because the concrete type *does* implement the aspect. Also
+covers a conditional `extend` block's own `where`-clause bounds failing at a
 use site — the same check as an ordinary function bound, just reached through an
 implementation block's
 condition instead of a function's generic parameter.
 
-A type satisfying `T: Copy` automatically satisfies `T: !Drop` (RFC-0072 §2.3) even
+A type satisfying `T: Copy` automatically satisfies `T: !Drop` even
 though it implements `Drop` — this is a narrow, Copy/Drop-specific exception, not a
 general rule.
 
@@ -735,7 +741,7 @@ the conflicting positive implementation.
 ### T0013 — Ambiguous aspect method/associated-type resolution
 
 Two different aspects define the same method name on the same receiver type, so a
-call like `value.method()` does not have a unique static target — or (RFC-0082 §3a)
+call like `value.method()` does not have a unique static target — or
 two different aspects bound on the same generic type parameter both declare an
 associated type of the same name, so a bare projection like `T::AssocName` doesn't
 have a unique target either.
@@ -825,7 +831,7 @@ longer overlap.
 
 ### T0016 — Non-diverging `-> !` function
 
-A function declared `-> !` (RFC-0078) contains a reachable path that doesn't
+A function declared `-> !` contains a reachable path that doesn't
 diverge — most commonly an ordinary `return <expr>` where `<expr>` isn't itself
 `!`-typed. A `-> !` function promises never to return; the compiler verifies
 every control-flow path ends in a diverging expression (a `panic`, a `loop`
@@ -844,7 +850,7 @@ function is meant to return normally.
 ### T0017 — Missing associated type definition
 
 An `extend Type: Aspect` block omits a `type Name = ConcreteType;` definition for an
-associated type the aspect declares (RFC-0082 §2). Every implementation of an aspect with
+associated type the aspect declares. Every implementation of an aspect with
 associated types must define all of them.
 
 **Fix:** add the missing `type Item = ConcreteType;` definition to the `extend` block.
@@ -858,7 +864,7 @@ associated types must define all of them.
 
 ### T0018 — Naming the concrete type of an opaque return value
 
-A function returning `extends Aspect` (RFC-0037) hides its concrete return type. Using the
+[A function returning `extends Aspect` hides its concrete return type](spec/declarations.md#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-16). Using the
 result in a position that pins it to a specific type — annotating it, or unifying it with a
 concrete type — defeats that, and is rejected.
 
@@ -876,7 +882,7 @@ generic parameter with the same bound.
 
 This is reported under `--move-check` only, with one exception: using a field that was already moved out of a nominal struct or record (reading it, or projecting it again) is reported without the flag, because the narrowing that makes the field unavailable is a type-level fact. Move checking is off by default.
 
-An ownership rule from RFC-0071 §1/§7 was violated. Eight distinct situations share this
+An ownership rule was violated. Eight distinct situations share this
 code, each with its own message:
 
 - a value used after it was moved;
@@ -1101,7 +1107,7 @@ loop it does not itself contain.
 `extends Aspect` was written somewhere other than a function parameter's type or a
 function's return type — for example, a `let`/`var` annotation, a struct or enum
 variant field, a cast target (`x as extends P`), or a generic bound. Parameter position is
-lowered to a fresh bounded type parameter, and return position is RFC-0037's opaque
+lowered to a fresh bounded type parameter, and return position is an opaque
 return type; every other position is not part of this language version.
 
 **Fix:** name a concrete type instead, or restructure the code so the aspect bound is
@@ -1119,8 +1125,8 @@ expressed through a parameter or return type.
 
 ### T0023 — Assignment through a non-owning view
 
-An index assignment targets a `[T]` value. Since RFC-0126, `[T]` is an unconditionally
-`Copy`, non-owning view — it never grants write access through its indices, independent
+An index assignment targets a `[T]` value. [`[T]` is an unconditionally
+`Copy`, non-owning view](spec/types.md#spec.types.arrays.legality-1) — it never grants write access through its indices, independent
 of whether the binding holding it is `let` or `var`. This is a different failure shape
 than T0006 (all three of T0006's forms are about a `let` binding that declaring it `var`
 would fix); no annotation or binding-mutability change can fix this one.
@@ -1140,19 +1146,18 @@ instead of `[T]` for storage that needs index-write access.
 
 ### T0024 — Read-copy of a non-`Copy` value out of a reference
 
-> **Retired (RFC-0185).** This code no longer fires. It rejected the implicit read-copy of a
-> non-`Copy` value out of a reference (RFC-0067a §3a), a conversion that no longer exists: a
-> reference is never read out implicitly, so `let x: T := r;` is
-> [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed) with a
-> `= help: read the value out with `*r`` line, for a `Copy` referent and a non-`Copy` one
-> alike. An explicit `*r` of a non-`Copy` referent is a move out of a reference, rejected by the
-> move checker ([T0019](#t0019--use-of-moved-value)). The number is never reused.
+> **Retired.** This code no longer fires: a reference is never read out implicitly, so
+> `let x: T := r;` is [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed) with a
+> `= help: read the value out with `*r`` line, and an explicit `*r` of a non-`Copy` referent is a
+> move out of a reference, rejected by the move checker ([T0019](#t0019--use-of-moved-value)).
+> The number is never reused.
 
 **Fix:** call `.clone()` if the type implements `Clone`, or restructure the code to
 take ownership of the value directly instead of reading it through a reference.
 
 ---
 
+<!-- spec-lint: allow unlinked-normative reason="describes how this catalogue is organised, which states no language rule" -->
 The closure cluster reserves the contiguous T0026–T0030 block, split below so each
 code's own coverage is visible rather than folded into one shared entry (an
 implementation gap in only one of the five would otherwise hide behind the other four).
@@ -1251,7 +1256,7 @@ An inner closure borrows a binding held by value in an enclosing closure's captu
 environment. A local that shadows the captured binding is a different binding and may
 be borrowed.
 
-**Fix:** restructure the code until RFC-0122 supplies the necessary borrow analysis.
+**Fix:** restructure the code until a borrow analysis can accept it.
 
 ---
 
@@ -1268,7 +1273,7 @@ be borrowed.
 
 The root module does not declare exactly one function named `main`, non-generic,
 callable with zero arguments, with a body the type checker can type
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Replaces retired `R0001`/`R0002`'s `main`-entry cases — see those entries below.
 
 **Fix:** add `fun main() .{ ... }` (or fix its shape) to your program's root module.
@@ -1285,29 +1290,27 @@ Replaces retired `R0001`/`R0002`'s `main`-entry cases — see those entries belo
 
 ### T0032 — Anonymous row in this position
 
-An anonymous row — the splice `Builder<..>` (RFC-0121 §5) or an open record with an
+An anonymous row — the splice `Builder<..>` or an open record with an
 anonymous tail, `.{ .x: T, .. }` — is a fresh, nameless row variable at each occurrence. It is
 accepted in a function or method parameter, a `let` or `var` annotation, and a closure
 parameter (a closure with such a parameter generalizes, so one closure accepts records of
 different shapes). The splice `Builder<..>` is also accepted in a return type and in a written
 function type.
 
-It is `T0032` in a record or struct field, and an open record `.{ .x: T, .. }` is `T0032` in a
-return type and in a written function type, positions whose meaning is not settled
-(RFC-0181). A named splice (`Builder<..R>`, `R` declared `record`) and a
+[It is `T0032` in a record or struct field, and an open record `.{ .x: T, .. }` is `T0032` in a
+return type and in a written function type](spec/types.md#spec.types.generics.open-rows.legality-5), positions whose meaning is not settled
+. A named splice (`Builder<..R>`, `R` declared `record`) and a
 tail-only `.{ ..R }` are supported everywhere. An undeclared row variable is `T0003`, and a
 `..R` argument for a non-`record` parameter (or a non-record argument for a row
-parameter) is `T0012`
-([metel-core#1310](https://github.com/metel-lang/metel-core/issues/1310),
-[#1478](https://github.com/metel-lang/metel-core/issues/1478)).
+parameter) is `T0012`.
 
 **Fix:** name the row with a `record`-kinded generic parameter and splice it as `..R`, or take the
 open record as a parameter, a `let` annotation or a closure parameter. What works instead depends on the position, and the message says so:
 
 - a **named function's, method's or aspect method declaration's return type**: write the record in full
-  (`-> .{ .x: i64, .y: i64 }`), name a `record` or a type alias for it (RFC-0160), or name a `record` row
+  (`-> .{ .x: i64, .y: i64 }`), name a `record` or a type alias for it, or name a `record` row
   parameter when the row comes from an argument (`-> .{ .x: i64, ..R }`). Leaving the type out never infers it:
-  the function returns `()` (RFC-0193). For a private function with typed parameters and no generics, a
+  the function returns `()`. For a private function with typed parameters and no generics, a
   closure that infers its return type is the other spelling;
 - a **closure's return annotation**: omit the annotation, and the exact record is inferred, or
   write the record in full. A closure cannot name a row parameter;
@@ -1329,8 +1332,7 @@ open record as a parameter, a `let` annotation or a closure parameter. What work
 ### T0033 — A record spread through a reference needs every field `Copy`
 
 Spreading a record through a reference (`.{ ..r }` where `r` is `&{ .. }`) copies its
-fields, so it is accepted only when every field is `Copy` (RFC-0178). RFC-0179 removed the
-by-value case this code used to report: an open-row parameter now takes its whole argument,
+fields, so it is accepted only when every field is `Copy`. The by-value case this code used to report no longer exists: an open-row parameter now takes its whole argument,
 so nothing is forgotten at a call.
 
 **Fix:** make the fields `Copy`, clone the record explicitly, or spread an owned record.
@@ -1353,7 +1355,7 @@ two inherent `extend` blocks of one type whose coverage overlaps. Without this e
 later definition would silently replace the earlier one at dispatch. Methods are not
 overloaded, so different parameter types do not make two same-named methods distinct.
 
-Blocks whose coverage is provably disjoint may reuse a name — `extend W<i64>` and
+[Blocks whose coverage is provably disjoint may reuse a name](spec/declarations.md#spec.declarations.aspects.implementing-an-aspect.legality-8) — `extend W<i64>` and
 `extend W<String>`, bounds that contradict (`T: Tag` and `T: !Tag`), or row bounds that
 contradict on a shared label (`record R: { token, .. }` and `record R: !{ token }`) — and a call
 dispatches to the block the receiver satisfies. The overlap test is the one
@@ -1377,7 +1379,7 @@ no longer overlap.
 ### T0035 — Use not granted by the declared bounds
 
 A generic definition used its type parameter in a way its declared bounds do not grant
-([RFC-0173](../rfcs/4-implemented/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md)):
+:
 a method call on a parameter that has no bounds, or whose bounds do not declare the method,
 or a field access on a parameter with no row bound that names the field. The message names
 the parameter and, for a method, the bounds it has.
@@ -1387,8 +1389,8 @@ aspect Show { fun show(self) -> i64; }
 fun f<T>(x: T) -> i64 { x.show() }   // T has no Show bound
 ```
 
-Inside its own definition a declared parameter is opaque: it supports only what its bounds
-entail. Passing it where a callee requires a bound it lacks is
+[Inside its own definition a declared parameter is opaque: it supports only what its bounds
+entail](spec/types.md#spec.types.generics.rigid-type-parameters.legality-2). Passing it where a callee requires a bound it lacks is
 [T0012](#t0012--aspect-bound-not-satisfied); an operator on a bare parameter is
 [T0005](#t0005--invalid-operand-types); using it as a concrete type, or as another
 parameter, is [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed).
@@ -1413,8 +1415,8 @@ parameter, is [T0001](#t0001--type-mismatch-or-an-impl-that-is-not-allowed).
 
 A by-value open-row parameter over a nominal type that has a `Drop` impl
 (`fun f<record R>(h: Handle.{ .fd, ..R })` given a `Handle`) would drop a narrowed
-`Handle.{ .fd }` in the callee. Drop dispatch against a narrowed residual is not
-implemented (RFC-0137 §5, #949), so the call is rejected (RFC-0179 §1.5). A plain record
+`Handle.{ .fd }` in the callee. [Drop dispatch against a narrowed residual is not
+implemented, so the call is rejected](spec/types.md#spec.types.generics.open-rows.legality-3). A plain record
 that only contains a `Drop` value is not affected.
 
 An owned conversion from a branded `record` to its anonymous row is also rejected when
@@ -1433,7 +1435,7 @@ borrowed open-row view does not consume the record.
 
 ### T0037 — Duplicate top-level declaration
 
-A top-level name is declared twice in one namespace of one module. Structs, enums,
+[A top-level name is declared twice in one namespace of one module](spec/declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-5). Structs, enums,
 aspects and type aliases share the *type* namespace; functions, `let` and `var` share the
 *value* namespace. A type and a value may share a name (`struct Foo` and `fun Foo`
 coexist); two types, or a binding and a function, may not. Two `fun`s of one name are an
@@ -1481,7 +1483,7 @@ the name, and the types `std::core` declares (`List`, `Option`, `Result`, ...) a
 
 ### T0039 — Keyword argument binds no free parameter
 
-A keyword argument names a parameter the callee does not declare, a parameter that a positional argument or an earlier keyword already bound, or the same keyword twice ([RFC-0223](../rfcs/4-implemented/rfc-0223-keyword-arguments-at-every-call.md)). The message lists the callee's parameter names.
+A keyword argument names a parameter the callee does not declare, a parameter that a positional argument or an earlier keyword already bound, or the same keyword twice. The message lists the callee's parameter names.
 
 **Fix:** use one of the callee's parameter names, once.
 
@@ -1535,7 +1537,7 @@ An impl method declares a parameter with a different name from the aspect's meth
 
 ### T0043 — Invalid row-bound entry
 
-A row bound has an entry the language rejects ([RFC-0189](../rfcs/4-implemented/rfc-0189-per-label-negative-row-bounds.md)): a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`.{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
+A row bound has an entry the language rejects: a negative entry (`!.x`) in a closed bound, entries for one label that cannot all hold (`.{ .x, !.x, .. }`), or a negative entry inside an outer `!{ }`.
 
 **Fix:** add `..` to the bound, drop the contradictory entry, or write the positive spelling.
 
@@ -1551,7 +1553,7 @@ A row bound has an entry the language rejects ([RFC-0189](../rfcs/4-implemented/
 
 ### T0044 — Invalid super-aspect list
 
-An aspect's super-aspect list is rejected (RFC-0213): the relation has a cycle (`aspect A requires B;` with `aspect B requires A;`), an aspect names itself (`aspect A requires !A;`), or `derived` marks an entry of a user aspect (only std aspects may carry the mark in v0.16.0). A name that is not a visible aspect is `T0003`.
+[An aspect's super-aspect list is rejected](spec/declarations.md#spec.declarations.aspects.super-aspects.legality-1): the relation has a cycle (`aspect A requires B;` with `aspect B requires A;`), an aspect names itself (`aspect A requires !A;`), or `derived` marks an entry of a user aspect ([only std aspects may carry the mark](spec/declarations.md#spec.declarations.aspects.super-aspects.legality-5)). A name that is not a visible aspect is `T0003`.
 
 **Fix:** break the cycle, drop the self-entry, or remove `deriving` and write both impls by hand.
 
@@ -1567,7 +1569,7 @@ An aspect's super-aspect list is rejected (RFC-0213): the relation has a cycle (
 
 ### T0045 — Misused aspect property
 
-An aspect declaration property is used where the language does not allow it (RFC-0212): `implicit` or `auto` on an aspect that is not declared in the standard library, an `implicit` aspect that does not refine `Clone` through a `deriving` super-aspect or a second `implicit` aspect, a property written twice, or `extend T: A` of a `declared` aspect `A` for a type that has a declaration of its own.
+An aspect declaration property is used where the language does not allow it: `implicit` or `auto` on an aspect that is not declared in the standard library, an `implicit` aspect that does not refine `Clone` through a `deriving` super-aspect or a second `implicit` aspect, a property written twice, or `extend T: A` of a `declared` aspect `A` for a type that has a declaration of its own.
 
 **Fix:** drop the property (only std aspects may carry `implicit` and `auto`), write it once, or grant a `declared` aspect in the type's declaration instead of with `extend`.
 
@@ -1585,7 +1587,7 @@ An aspect declaration property is used where the language does not allow it (RFC
 
 ### T0046 — Invalid declaration-clause entry
 
-An entry of a struct's or enum's colon list or `derives` clause is rejected (RFC-0207): a colon-list entry that is not a `declared` aspect without methods (an aspect granted by derivation such as `Copy`, an aspect with methods, or one that `extend` grants), or a `derives` entry that names an aspect with no derivation. An entry naming no aspect is `T0003`.
+[An entry of a struct's or enum's colon list or `derives` clause is rejected](spec/declarations.md#spec.declarations.aspects.declaration-clauses.legality-1): a colon-list entry that is not a `declared` aspect without methods (an aspect granted by derivation such as `Copy`, an aspect with methods, or one that `extend` grants), or a `derives` entry that names an aspect with no derivation. An entry naming no aspect is `T0003`.
 
 **Fix:** write `derives A` (or `copy struct`) for an aspect that has a derivation, `extend T: A .{ ... }` for the rest.
 
@@ -1634,7 +1636,7 @@ A generic body reuses a value whose copy-or-move status depends on a condition t
 
 ### R0001 — No `main` function defined
 
-> **Retired, replaced by `T0031` (RFC-0167).** The `main`-existence check now runs
+> **Retired, replaced by `T0031`.** The `main`-existence check now runs
 > during typechecking, not lazily at evaluator startup; this code no longer fires.
 > Kept documented, never reused, per this project's rigor-block-id convention
 > (`STYLEGUIDE.md`) — see `T0031` above.
@@ -1643,18 +1645,15 @@ Formerly: execution required a `main` function but none was found.
 
 ### R0002 — `main` is not a valid entry point
 
-> **Retired, split three ways by RFC-0167.** This code no longer fires: `main`
-> exists but has the wrong shape is now `T0031` above; an ordinary (non-`main`) call
-> on a non-callable value is now `I0007` below (merged with what `R0010` became);
-> a generic closure/method with no call-site type context is now `I0009` below, its
-> own code, unrelated to `main`. Kept documented, never reused, per this project's
-> rigor-block-id convention (`STYLEGUIDE.md`).
+> **Retired, split three ways.** This code no longer fires: a wrong-shaped `main` is now `T0031`,
+> a call on a non-callable value is now `I0007`, and a generic closure with no call-site type
+> context is now `I0009`. Kept documented, never reused.
 
 Formerly: `main` existed but was generic or was not a function.
 
 ### R0003 — Undefined variable at runtime
 
-> **Retired, replaced by `I0003` (RFC-0167).** This code no longer fires. Kept
+> **Retired, replaced by `I0003`.** This code no longer fires. Kept
 > documented, never reused, per this project's rigor-block-id convention
 > (`STYLEGUIDE.md`) — see `I0003` below.
 
@@ -1695,7 +1694,7 @@ A tuple element is accessed by an index that does not exist.
 
 ### R0006 — Non-exhaustive match at runtime
 
-> **Retired, replaced by `I0004` (RFC-0167).** This code no longer fires. Kept
+> **Retired, replaced by `I0004`.** This code no longer fires. Kept
 > documented, never reused, per this project's rigor-block-id convention
 > (`STYLEGUIDE.md`) — see `I0004` below.
 
@@ -1704,7 +1703,7 @@ Formerly: a `match` expression reached its end without any arm matching.
 ### R0007 — Arithmetic error
 
 Integer division or remainder by zero, **or** integer overflow on `+`, `-`, `*`, or
-`/` (RFC-0007 D3, amended 2026-08-26 — panics unconditionally in every build; there
+`/` (panics unconditionally in every build; there
 is no debug/release distinction). Floating-point arithmetic never raises this code —
 float overflow and division by zero follow IEEE 754 (`inf`/`-inf`/`NaN`), never a
 panic.
@@ -1719,7 +1718,7 @@ before an operation that could overflow.
 
 ### R0008 — Field not found
 
-> **Retired, replaced by `I0005` (RFC-0167).** This code no longer fires. Kept
+> **Retired, replaced by `I0005`.** This code no longer fires. Kept
 > documented, never reused, per this project's rigor-block-id convention
 > (`STYLEGUIDE.md`) — see `I0005` below.
 
@@ -1727,7 +1726,7 @@ Formerly: a struct or enum value did not have the accessed field.
 
 ### R0009 — Method not found
 
-> **Retired, replaced by `I0006` (RFC-0167).** This code no longer fires. Kept
+> **Retired, replaced by `I0006`.** This code no longer fires. Kept
 > documented, never reused, per this project's rigor-block-id convention
 > (`STYLEGUIDE.md`) — see `I0006` below.
 
@@ -1735,7 +1734,7 @@ Formerly: a method call could not be resolved for the receiver type.
 
 ### R0010 — Call on non-callable value
 
-> **Retired, replaced by `I0007` (RFC-0167).** This code no longer fires, and merges
+> **Retired, replaced by `I0007`.** This code no longer fires, and merges
 > with `R0002`'s ordinary (non-`main`) call-target case. Kept documented, never
 > reused, per this project's rigor-block-id convention (`STYLEGUIDE.md`) — see
 > `I0007` below.
@@ -1745,7 +1744,7 @@ or closure.
 
 ### R0011 — Invalid for-in iterator
 
-> **Retired, replaced by `I0008` (RFC-0167).** This code no longer fires. Kept
+> **Retired, replaced by `I0008`.** This code no longer fires. Kept
 > documented, never reused, per this project's rigor-block-id convention
 > (`STYLEGUIDE.md`) — see `I0008` below.
 
@@ -1787,7 +1786,7 @@ handle the expected case instead.
 
 ### R0014 — Explicit panic
 
-`panic(msg)` (RFC-0078) is called. Always panics unconditionally with `msg`.
+`panic(msg)` is called. Always panics unconditionally with `msg`.
 
 **Fix:** this is not a bug in the interpreter — `panic` is meant for logic
 errors that should never occur in correct code. Handle the expected case with
@@ -1854,153 +1853,153 @@ The program uses a language feature that is not yet supported in this version of
 
 > **Note:** `I0002` and its `not_implemented()` constructor are kept as scaffolding —
 > the intended way to report a *recognized* but not-yet-built construct while a
-> feature is under development. There is no live raise site today. metel-core#992
-> tracks removing the variant and constructor if they stay unused.
+> feature is under development. There is no live raise site today. The variant and
+> constructor are to be removed if they stay unused.
 
-<!-- rfc.py:exemption kind="untestable" ref="metel-core#992" reason="Kept as scaffolding for reporting a recognized-but-unimplemented construct during feature development; there is no live raise site today, so nothing to trigger. metel-core#992 tracks removal if it stays unused." -->
+<!-- rfc.py:exemption kind="untestable" ref="metel-core#992" reason="Kept as scaffolding for reporting a recognized-but-unimplemented construct during feature development; there is no live raise site today, so nothing to trigger. It is to be removed if it stays unused." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Kept as scaffolding for reporting a recognized-but-unimplemented construct during feature development; there is no live raise site today, so nothing to trigger. metel-core#992 tracks removal if it stays unused._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Kept as scaffolding for reporting a recognized-but-unimplemented construct during feature development; there is no live raise site today, so nothing to trigger. It is to be removed if it stays unused._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0003 — Scoping/hoisting invariant violated
 
 A variable name was not found in the current environment at runtime
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Whether a name resolves is a purely static scoping fact; if this fires, the type
 checker approved a program it should not have. Replaces retired `R0003` (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (lvalue.rs, mod.rs), carried over unchanged from retired R0003's own finding. #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Live raise sites exist, but no source program reaches them: nested-function forward references in a var initializer, an if-branch, a call argument, a match arm, a struct-literal field and a while condition all resolve correctly. Not confirmed unreachable either." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (lvalue.rs, mod.rs), carried over unchanged from retired R0003's own finding. #986's follow-up round tried #712's exact precedent (nested-fun forward reference) across 5 more statement positions -- var initializer, if-branch, call-argument, match-arm, struct-literal-field, while-condition -- all resolved correctly, meaning #712's original let-initializer fix was thorough, not narrow. Still no repro found across either investigation round, and still not confirmed unreachable either._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Live raise sites exist, but no source program reaches them: nested-function forward references in a var initializer, an if-branch, a call argument, a match arm, a struct-literal field and a while condition all resolve correctly. Not confirmed unreachable either._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0004 — Exhaustiveness-checker invariant violated
 
 A `match` expression reached its end without any arm matching
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Whether a `match`'s arms are exhaustive is a purely static property of the pattern set
 against the scrutinee type; if this fires, `check_match_exhaustiveness` approved a
 `match` it should not have. Replaces retired `R0006` (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="A known limitation (the type checker approving a match as exhaustive when it is not), carried over unchanged from retired R0006's own finding. #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="A known limitation: the type checker approving a match as exhaustive when it is not. The exhaustiveness check, read end to end for booleans, named enums, never and sized arrays, looks sound on inspection, and no program reproducing it has been found." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: A known limitation (the type checker approving a match as exhaustive when it is not), carried over unchanged from retired R0006's own finding. #986's follow-up round read check_match_exhaustiveness end to end (typechecker/construction/patterns.rs) -- the Boolean/Named-enum/Never/SizedArray cases, is_variant_uninhabited's RFC-0078 uninhabited-payload check, and pattern_covers_variant's enum+variant name matching all look sound on inspection. No construction attempted this round (unlike R0003/R0009) since no plausible gap surfaced worth testing against._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: A known limitation: the type checker approving a match as exhaustive when it is not. The exhaustiveness check, read end to end for booleans, named enums, never and sized arrays, looks sound on inspection, and no program reproducing it has been found._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0005 — Field-resolution invariant violated
 
 A struct or enum value does not have the accessed field
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Whether a type has a given field is a structural fact, checked at the point of the
 `struct`/`enum` declaration; if this fires, that check was wrong. Replaces retired
 `R0008` (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise site, carried over unchanged from retired R0008's own finding, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="A live raise site exists, but every attempted repro (a generic function reading an unconstrained field) is caught statically as T0002 instead. Field access resolves against the accessed value's own concrete fields, not a name-keyed table, so it does not share the aspect-method dispatch collision bug." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise site, carried over unchanged from retired R0008's own finding, but every attempted repro (a generic function reading an unconstrained field) was caught statically as T0002 instead. #986's follow-up round: field access resolves directly against the accessed value's own concrete fields (lvalue.rs's TypedPlace::Field), not through a bare-name-keyed lookup table the way aspect methods do -- so R0009's collision bug (metel-core#989) doesn't obviously carry over here. No new construction attempted this round._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: A live raise site exists, but every attempted repro (a generic function reading an unconstrained field) is caught statically as T0002 instead. Field access resolves against the accessed value's own concrete fields, not a name-keyed table, so it does not share the aspect-method dispatch collision bug._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0006 — Method-dispatch invariant violated
 
 A method call cannot be resolved for the receiver type
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Whether a type has a given method is a structural fact, checked at the point of the
 relevant `extend` block; if this fires, that check was wrong. Replaces retired `R0009`
 (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#989" reason="Confirmed live raise site, carried over unchanged from retired R0009's own finding. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not this raise site -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach this code specifically -- revisit once #989 is fixed." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#989" reason="A live raise site exists. Two same-named aspects in different modules corrupt each other's dispatch resolution (the registry is keyed by bare aspect name, not a qualified path); in the variant tried this surfaced as a false static T0003 rejection, not at this raise site. Revisit once that bug is fixed." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#989: Confirmed live raise site, carried over unchanged from retired R0009's own finding. #986's follow-up round found a real root-cause bug in this exact dispatch machinery: metel-core#989, two same-named aspects in different modules corrupt each other's dispatch resolution (TypeRegistry::aspect_decl_modules is keyed by bare aspect name, not a qualified path). In the variant tried (colliding aspects with differently-named methods) this surfaced as a false *static* T0003 rejection, not this raise site -- construction-time method lookup apparently consults the same corrupted map before dispatch is ever elaborated. A same-method-name variant (also tried) resolved correctly in both import orderings tried, so this mechanism isn't yet confirmed to reach this code specifically -- revisit once #989 is fixed._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#989: A live raise site exists. Two same-named aspects in different modules corrupt each other's dispatch resolution (the registry is keyed by bare aspect name, not a qualified path); in the variant tried this surfaced as a false static T0003 rejection, not at this raise site. Revisit once that bug is fixed._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0007 — Callability invariant violated
 
 A call expression (`f(...)`) is applied to a value that is not a function or closure
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
-Whether a value is callable is a static type fact; in v0.13.0 there is not even a
-dynamic-dispatch mechanism (`dyn Callable`, RFC-0161) that could make it otherwise. If
+.
+Whether a value is callable is a static type fact; there is not even a
+dynamic-dispatch mechanism (`dyn Callable`) that could make it otherwise. If
 this fires, the type checker approved a call it should not have. Replaces retired
 `R0010`, merged with retired `R0002`'s ordinary (non-`main`) call-target case (see both
 above) — both raise sites make the exact same claim, just from different call paths.
 
-> **Note:** if RFC-0161 (`dyn Callable`) ships, this code's classification should be
+> **Note:** if `dyn Callable` ships, this code's classification should be
 > revisited — a dynamically-dispatched call target's callability would then genuinely
 > depend on a runtime value again.
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (merged from retired R0010's own finding and R0002's non-main call-target case), but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Live raise sites exist, but calling a plain i64 variable is caught statically as T0001. Calling a value dynamically has no route to try: the `dyn Callable` / `Callable` aspect that would make a call target depend on a runtime value is deferred, so there is no dynamic-dispatch angle to test." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (merged from retired R0010's own finding and R0002's non-main call-target case), but calling a plain i64 variable was caught statically as T0001. #986's follow-up round: calling a value generically/dynamically has no route to try at all in v0.13.0 -- RFC-0161's dyn Callable / Callable aspect (the mechanism that would make a call target's callability depend on a runtime value rather than a static function type) is deferred in full to a later milestone, so there is currently no dynamic-dispatch angle to test against this code._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Live raise sites exist, but calling a plain i64 variable is caught statically as T0001. Calling a value dynamically has no route to try: the `dyn Callable` / `Callable` aspect that would make a call target depend on a runtime value is deferred, so there is no dynamic-dispatch angle to test._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0008 — Iterator-dispatch invariant violated
 
 A `for x in expr` loop where `expr` does not evaluate to an `Array`, a `Range`, or a
 type implementing `Iterable`
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Whether a type implements `Iterable` is a static bound fact, checked wherever the
 iteration is typed; if this fires, that check was wrong. Replaces retired `R0011`
 (see above).
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Confirmed live raise sites (evaluator/mod.rs), carried over unchanged from retired R0011's own finding, but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#986" reason="Live raise sites exist, but a plain non-iterable typed value (for example `for (x in n)` where `n: i64`) is caught statically as T0001 before reaching this runtime path. User-defined `Iterable` dispatch resolves through the receiver value's own runtime type id, not a name-keyed table, so it is not obviously vulnerable to the aspect-method collision bug." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Confirmed live raise sites (evaluator/mod.rs), carried over unchanged from retired R0011's own finding, but a plain non-iterable typed value (e.g. for (x in n) where n: i64) is caught statically as T0001 before reaching this runtime path. #986's follow-up round: the user-defined-Iterable dispatch this code guards resolves through the receiver value's own runtime type id (resolve_value_type_id + get_regular_method), not a bare-name-keyed table -- unlike R0009's aspect-method path (metel-core#989), this one isn't obviously vulnerable to the same class of collision bug. No construction attempted this round on that basis._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#986: Live raise sites exist, but a plain non-iterable typed value (for example `for (x in n)` where `n: i64`) is caught statically as T0001 before reaching this runtime path. User-defined `Iterable` dispatch resolves through the receiver value's own runtime type id, not a name-keyed table, so it is not obviously vulnerable to the aspect-method collision bug._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0009 — Generic construction-at-call-time invariant violated
 
-A generic closure or method's construction-at-call-time machinery (`metel-core#286`)
+A generic closure or method's construction-at-call-time machinery
 was invoked with no call-site type context available
-([RFC-0167](../rfcs/4-implemented/rfc-0167-reclassify-unsoundness-only-runtime-errors-as-internal-errors-split-r0002.md)).
+.
 Unrelated to call-target shape or `main` entirely — a construction-machinery plumbing
 failure, not a callability question. Replaces retired `R0002`'s other orphan use (see
 above); this is a wholly new code, not a merge into any existing one.
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="untestable" ref="metel-core#991" reason="This code is new with RFC-0167 -- no prior R0002-era reachability finding to carry over. Its two raise sites (call.rs) fire only when a generic closure/method's own captured type_ctx is None, which every construction path that builds a ClosureBody::Untyped value populates unconditionally (Pass 1b and hoist_nested_funs both always pass env.type_ctx.clone()); no construction was found that reaches ClosureBody::Untyped with type_ctx already None." -->
+<!-- rfc.py:exemption kind="untestable" ref="metel-core#991" reason="Its two raise sites fire only when a generic closure or method's own captured type context is missing, which every construction path that builds an untyped closure body populates unconditionally; no construction was found that reaches one with it missing." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — untestable: This code is new with RFC-0167 -- no prior R0002-era reachability finding to carry over. Its two raise sites (call.rs) fire only when a generic closure/method's own captured type_ctx is None, which every construction path that builds a ClosureBody::Untyped value populates unconditionally (Pass 1b and hoist_nested_funs both always pass env.type_ctx.clone()); no construction was found that reaches ClosureBody::Untyped with type_ctx already None._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — untestable: Its two raise sites fire only when a generic closure or method's own captured type context is missing, which every construction path that builds an untyped closure body populates unconditionally; no construction was found that reaches one with it missing._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0010 — Generic definition and construction disagree
 
 The checker accepted a generic definition, but reconstructing that generic body for a
-concrete call rejected it ([RFC-0173](../rfcs/4-implemented/rfc-0173-generic-bodies-are-checked-against-their-declared-bounds.md)).
+concrete call rejected it.
 The definition-time check is the contract, so this signals an implementation invariant
 violation rather than an error at the call site.
 
 **What to do:** please file a bug report at [the Metel issue tracker](https://github.com/metel-lang/metel-core/issues) with the source program that triggered this error.
 
-<!-- rfc.py:exemption kind="untestable" ref="metel-core#1364" reason="I0010 reports a disagreement between two checker passes. No source fixture can correctly require such an implementation-invariant failure; the differential check that exercises the invariant remains tracked by metel-core#1364." -->
+<!-- rfc.py:exemption kind="untestable" ref="metel-core#1364" reason="I0010 reports a disagreement between two checker passes. No source fixture can correctly require such an implementation-invariant failure; the differential check that exercises the invariant is tracked separately." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — untestable: I0010 reports a disagreement between two checker passes. No source fixture can correctly require such an implementation-invariant failure; the differential check that exercises the invariant remains tracked by metel-core#1364._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — untestable: I0010 reports a disagreement between two checker passes. No source fixture can correctly require such an implementation-invariant failure; the differential check that exercises the invariant is tracked separately._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ### I0011 — Move checking could not analyze a body
 
 Under `--move-check`, the move checker could not analyze at least one generic body, so it
-cannot vouch for the program (ADR-0063, abstract generic bodies).
+cannot vouch for the program (abstract generic bodies).
 This is not a move violation: nothing was shown to be used after a move. It is reported
 as its own error because an incomplete analysis must never authorize execution, and a
 program that passes `--move-check` has had every body checked. Default mode, which does

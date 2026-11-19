@@ -1,9 +1,6 @@
 {
   "reference/error-codes.md": {
-    "internal-number": 108,
-    "limit-in-prose": 3,
-    "long-quote": 2,
-    "unlinked-normative": 13
+    "limit-in-prose": 3
   },
   "reference/spec/declarations.md": {
     "limit-in-prose": 1
