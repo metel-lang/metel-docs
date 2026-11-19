@@ -138,7 +138,7 @@ pub struct Token {
 contexts. A qualified path is valid wherever its resolved name is valid; `super` is
 invalid in the root module.
 
-<!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0030](../../rfcs/4-implemented/rfc-0030-module-system-redesign.md)_</span>
@@ -195,7 +195,7 @@ neither needs `T` or a glob of `m` in scope.
 `std`: a path segment `std` anywhere but the start of a path is a parse error (`P0001`), so
 `import root::std::name` is rejected whether or not a file `std.mtl` exists.
 
-<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

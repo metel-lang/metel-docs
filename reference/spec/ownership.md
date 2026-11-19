@@ -4,7 +4,7 @@ title: "Ownership and Move Semantics"
 
 # Ownership and Move Semantics
 
-Whole-binding use-after-move checking is enabled by the opt-in `--move-check` flag.
+[Whole-binding use-after-move checking is enabled by the opt-in `--move-check` flag](#spec.ownership.values-move-by-default.legality-1).
 Without it, reusing a binding moved as a whole is not rejected. Row narrowing and
 widening are ordinary type-checking rules and apply independently of that flag:
 reading a removed field or requiring a wider row is rejected in either mode.
@@ -13,8 +13,8 @@ that are not expressed by row types.
 
 ## Values move by default
 
-A value whose type is not `Copy` has exactly one owner at any point. Assigning it, passing it
-as an argument, or returning it **moves** it: ownership transfers, and the source binding
+A value whose type is not `Copy` has exactly one owner at any point. [Assigning it, passing it
+as an argument, or returning it **moves** it](#spec.ownership.values-move-by-default.legality-1): ownership transfers, and the source binding
 becomes invalid.
 
 ```metel
@@ -85,7 +85,7 @@ of the source binding is rejected.
 
 > **Pending** metel-core#1831 the ownership classes beyond `Copy` and the affine default are accepted by the language but not yet by the checker.
 
-> **Settled in design, effective with the `linear` release (2026-11-07).** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter (legality-7), the Discard-based partial-move rule (legality-6, decision D11) and consuming patterns (partial-move legality-4, decision D12) are decided in design and inert until then; every type is `Discard` before it. A field that mentions no type parameter and is linear forces `linear` on a generic type (decision D10); closures (D14) are settled with RFC-0194; binding-level qualifiers (D15, RFC-0220) are deferred.
+> **Settled in design, inert until the `linear` release.** The computed class of generic instances, unconditional `linear`, conditional `copy` and `T: Discard` on a type parameter ([legality-7](#spec.ownership.ownership-classes.legality-7)), the Discard-based partial-move rule ([legality-6](#spec.ownership.ownership-classes.legality-6)) and consuming patterns ([partial-moves.legality-4](#spec.ownership.partial-moves.legality-4)) are decided; every type is `Discard` before it.
 
 Every type has one of four ownership classes, ordered by how much a value of the type may do:
 
@@ -97,10 +97,13 @@ Every type has one of four ownership classes, ordered by how much a value of the
 | copy | any number | yes | yes |
 
 A named type with no type parameters has a declared class, and the compiler checks it against the fields (a generic instantiation computes its class from its components, as do tuples, arrays and anonymous records; a field that mentions no type parameter and is linear forces `linear` on a generic type too): the declared class must be at
-least as restrictive as every field. A `copy` type needs every field `Copy`; a type with no keyword is affine and may hold no
+least as restrictive as every field.
+
+[A `copy` type needs every field `Copy`](#spec.ownership.copy.legality-1); a type with no keyword is affine and may hold no
 linear field; a `linear` type may hold anything. A mismatch is an error at the field, and the fix-it adds the missing keyword.
-`Drop` is compatible with
-the affine class only: not with copy, because a representation copy cannot run per-owner cleanup, and not with
+
+[`Drop` is compatible with
+the affine class only](#spec.ownership.copy-and-drop-are-mutually-exclusive.legality-1): not with copy, because a representation copy cannot run per-owner cleanup, and not with
 linear, because a linear value is never implicitly discarded.
 
 The class keywords `copy` and `linear` before `struct` and `enum` state the class in one word; affine is the default and has
@@ -110,15 +113,19 @@ no keyword. A closure that captures a linear value is declared `linear` as well.
 **Dropping in generic code.** A generic body can drop a value of a type-parameter type without writing a call:
 at scope end, on an early `return` or `?`, by overwriting a binding, by leaving an argument unused, or by discarding
 an expression statement. Dropping is permitted when the type is [`Discard`](#spec.ownership.ownership-classes.legality-1).
-`Discard` holds for every type that is not linear, and its implementations are never written by a user. A bare type parameter is
+`Discard` holds for every type that is not linear, and its implementations are never written by a user.
+
+A bare type parameter is
 [possibly linear](#spec.ownership.ownership-classes.legality-2): a generic body may move it, return it and pass it,
 but may not drop or copy it unless its bounds say so. Nothing is inferred: a function that
 [drops such a value](#spec.ownership.ownership-classes.legality-3) writes `T: Discard`, as copying writes `T: Copy`, and the
 diagnostic suggests the bound. A generic type's parameters [admit linear arguments by default](#spec.ownership.ownership-classes.legality-7);
-`T: Discard` on a type parameter forbids them. Until `linear` is implemented every type is `Discard`, so a bare type
+`T: Discard` on a type parameter forbids them.
+
+Until `linear` is implemented every type is `Discard`, so a bare type
 parameter behaves as affine and no program changes.
 
-<!-- doc-example: skip reason="accepted design, not yet implemented: metel-core#1831" -->
+<!-- doc-example: skip reason="accepted design, not yet implemented" -->
 ```metel
 fun identity<T>(x: T) -> T { x }       // x is moved into the result: no bound needed
 fun sink<T: Discard>(x: T) { }         // drops x: the bound is written
@@ -137,10 +144,10 @@ type may have a written `Clone`, and a derived `Clone` requires every field to s
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: Discard and Linear are not yet implemented" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="Discard and Linear are not yet implemented" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: Discard and Linear are not yet implemented_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: Discard and Linear are not yet implemented_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-2}
@@ -149,10 +156,10 @@ In a generic body, a value whose type is a bare type parameter may not be droppe
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: every type is Discard until linear is implemented" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="Every type is Discard until linear is implemented" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: every type is Discard until linear is implemented_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: Every type is Discard until linear is implemented_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-3}
@@ -161,10 +168,10 @@ An implicit or explicit drop of a value whose `Discard` depends on a type parame
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1827" reason="RFC-0089: drop sites are not yet recorded and every type is Discard" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1827" reason="Drop sites are not yet recorded and every type is Discard" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1827: RFC-0089: drop sites are not yet recorded and every type is Discard_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1827: Drop sites are not yet recorded and every type is Discard_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-5}
@@ -173,10 +180,10 @@ A linear type may have a written `Clone`. A derived `Clone` requires every field
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: linear types are reserved" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="Linear types are reserved" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: linear types are reserved_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: Linear types are reserved_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-6}
@@ -185,10 +192,10 @@ A partial move out of a nominal aggregate is legal only when the aggregate is kn
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: linear types are reserved" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="Linear types are reserved" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: linear types are reserved_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: Linear types are reserved_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.ownership-classes.legality-7}
@@ -197,10 +204,10 @@ A generic type's class is computed per instantiation from its owned fields. `lin
 
 <!-- rfc.py:last_reviewed 5a5736ded3411d96420faf80578d72a85cfda2e3 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0089: linear types are reserved" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="Linear types are reserved" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0089: linear types are reserved_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: Linear types are reserved_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -208,13 +215,13 @@ A generic type's class is computed per instantiation from its owned fields. `lin
 ## `Copy`
 
 `Copy` marks a type whose values may be duplicated rather than moved. It is **opt in**, and
-granted in the type's declaration (a `declared` aspect, RFC-0212):
+granted in the type's declaration (a `declared` aspect):
 
 ```metel
 copy struct Point { x: f64, y: f64 }
 ```
 
-`struct Point derives Clone, Copy .{ .. }` is the same declaration, and `extend Point: Copy;` is an error.
+`struct Point derives Clone, Copy .{ .. }` is the same declaration, and [`extend Point: Copy;` is an error](#spec.ownership.copy.legality-3).
 
 A type may implement `Copy` only if every one of its fields — or, for an enum, every payload
 in every variant — is itself `Copy`. Fixed-size arrays and tuples are `Copy` when their
@@ -225,7 +232,7 @@ elements are.
 **References:** `&T` is `Copy`. `&var T` is not — an exclusive reference must remain unique,
 so it is moved or reborrowed rather than duplicated.
 
-**Granted in the declaration.** `Copy` is a `declared` aspect ([RFC-0212](declarations.md#spec.declarations.aspects.aspect-declaration-properties.legality-1)):
+**Granted in the declaration.** `Copy` is [a `declared` aspect](declarations.md#spec.declarations.aspects.aspect-declaration-properties.legality-1):
 `copy struct P .{ .. }` and `struct P derives Clone, Copy .{ .. }` grant it ([Declaration Clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)),
 and an `extend P: Copy;` of a type with a declaration is an error. The standard library grants it to the scalars and
 to the structural kinds. Whether a type may be duplicated implicitly is its author's statement: a type from another
@@ -394,8 +401,8 @@ A generic body decides whether a read is a copy or a move from the bounds visibl
 
 ## `Clone`
 
-`Clone` is explicit duplication: `x.clone()` returns another owned value of the same type and the caller keeps the
-original. Calling `clone` is always explicit; the implicit copy of a [`Copy`](#copy) type is the `Clone` the compiler
+`Clone` is explicit duplication: [`x.clone()` returns another owned value of the same type and the caller keeps the
+original](#spec.ownership.clone.legality-1). Calling `clone` is always explicit; the implicit copy of a [`Copy`](#copy) type is the `Clone` the compiler
 provides, done implicitly.
 
 A type gets a `Clone` by writing one (`extend T: Clone .{ .. }`), by deriving it (`struct P derives Clone .{ .. }`,
@@ -512,7 +519,7 @@ A derived `clone` calls the field clones in a defined order: declaration order f
 
 > **Limitation** LIMIT-EVALUATION-005
 
-`Drop` gives a type destructor logic that runs when a value goes out of scope:
+[`Drop` gives a type destructor logic](#spec.ownership.drop.legality-1) that runs when a value goes out of scope:
 
 ```metel
 struct Handle { fd: i64 }
@@ -548,7 +555,7 @@ empty; that status participates in ownership restrictions.
 
 ## `Copy` and `Drop` are mutually exclusive
 
-A type may not implement both. A `Copy` value may be duplicated freely, so there is no single
+[A type may not implement both](#spec.ownership.copy-and-drop-are-mutually-exclusive.legality-1). A `Copy` value may be duplicated freely, so there is no single
 point at which a destructor should run.
 
 <details>
@@ -595,10 +602,10 @@ recursively](#spec.ownership.drop-order.dynamics-2).
 When a scope ends, its still-owned values are dropped in reverse declaration order. A value
 moved to another owner is dropped by that owner instead.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Destructor invocation and drop order are not implemented yet -- non-empty Drop bodies are intentionally rejected until implementation issue #261 (drop order and explicit drop, RFC-0071 3/4) lands. Verified directly: the interpreter has no drop-at-scope-end mechanism to observe order against." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Destructor invocation and drop order are not implemented yet -- non-empty Drop bodies are intentionally rejected until they are. Verified directly: the interpreter has no drop-at-scope-end mechanism to observe order against." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Destructor invocation and drop order are not implemented yet -- non-empty Drop bodies are intentionally rejected until implementation issue #261 (drop order and explicit drop, RFC-0071 3/4) lands. Verified directly: the interpreter has no drop-at-scope-end mechanism to observe order against._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Destructor invocation and drop order are not implemented yet -- non-empty Drop bodies are intentionally rejected until they are. Verified directly: the interpreter has no drop-at-scope-end mechanism to observe order against._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.ownership.drop-order.dynamics-2}
@@ -628,10 +635,10 @@ its fields.
 
 After `drop(x)` consumes a non-`Copy` binding, that binding may not be used again.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Explicit drop(x) is not implemented -- drop is not a built-in name today (verified directly: it produces a T0003 undefined-name error), so this use-after-drop rejection cannot be observed. Tracked by #261, which also depends on move tracking (#579)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Explicit drop(x) is not implemented -- drop is not a built-in name today (verified directly: it produces a T0003 undefined-name error), so this use-after-drop rejection cannot be observed. It also depends on move tracking." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Explicit drop(x) is not implemented -- drop is not a built-in name today (verified directly: it produces a T0003 undefined-name error), so this use-after-drop rejection cannot be observed. Tracked by #261, which also depends on move tracking (#579)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Explicit drop(x) is not implemented -- drop is not a built-in name today (verified directly: it produces a T0003 undefined-name error), so this use-after-drop rejection cannot be observed. It also depends on move tracking._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.ownership.explicit-drop.dynamics-1}
@@ -688,7 +695,7 @@ After a field of a non-`Drop` struct is moved, the remaining fields may be acces
 containing value may not be used at its original whole type. A whole-value use at
 its narrowed residual type, including an empty residual, is legal.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0071](../../rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md)_</span>
@@ -736,10 +743,10 @@ An owning destructuring pattern consumes its scrutinee; matching through a refer
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1843" reason="Patterns still leave a partially moved scrutinee (RFC-0071, RFC-0137 slice 2 pattern narrowing); consuming patterns land with metel-core#1843" -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1843" reason="Patterns still leave a partially moved scrutinee; consuming patterns are not implemented yet" -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1843: Patterns still leave a partially moved scrutinee (RFC-0071, RFC-0137 slice 2 pattern narrowing); consuming patterns land with metel-core#1843_</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1843: Patterns still leave a partially moved scrutinee; consuming patterns are not implemented yet_</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -800,10 +807,10 @@ Record fields may be moved independently, at field granularity like struct field
 moved field's siblings remain individually accessible. Using the record value at its
 original wider type is rejected; whole-value use at its residual type is legal. Moving a field
 **narrows the record's static type** to the fields that remain
-([narrowing.legality-1](#spec.ownership.narrowing.legality-1), RFC-0117) — the same
+([narrowing.legality-1](#spec.ownership.narrowing.legality-1)) — the same
 mechanism struct narrowing uses, minus the brand.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
@@ -815,9 +822,9 @@ mechanism struct narrowing uses, minus the brand.
 
 ##### Legality Rule {#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-3}
 
-A tuple's elements move independently, as a record's fields do, and moving one **narrows the tuple's static type** to the row of the elements that remain ([narrowing.legality-1](#spec.ownership.narrowing.legality-1), RFC-0117). The remainder keeps its labels: moving `t.1` out of `(A, B, C)` leaves `.{ .0: A, .2: C }`, a row with a gap that prints in brace form, and moving the last element of `(A, B)` leaves `.{ .0: A }`, which is the one-element tuple `(A,)`. Nothing renumbers the remainder, because moves, projections and bounds name elements by label and a renumbering would change what `t.2` means; a tuple is got back from a sparse remainder by destructuring it or by an explicit relabelling. A function that takes `(A, C)` takes a dense tuple; the sparse remainder is passed to a parameter with a row bound (`.{ .0: A, ..R }`).
+A tuple's elements move independently, as a record's fields do, and moving one **narrows the tuple's static type** to the row of the elements that remain ([narrowing.legality-1](#spec.ownership.narrowing.legality-1)). The remainder keeps its labels: moving `t.1` out of `(A, B, C)` leaves `.{ .0: A, .2: C }`, a row with a gap that prints in brace form, and moving the last element of `(A, B)` leaves `.{ .0: A }`, which is the one-element tuple `(A,)`. Nothing renumbers the remainder, because moves, projections and bounds name elements by label and a renumbering would change what `t.2` means; a tuple is got back from a sparse remainder by destructuring it or by an explicit relabelling. A function that takes `(A, C)` takes a dense tuple; the sparse remainder is passed to a parameter with a row bound (`.{ .0: A, ..R }`).
 
-<!-- rfc.py:last_reviewed 58b51abc04d9a96abb3604f28b34f09b66dcaa36 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0151](../../rfcs/4-implemented/rfc-0151-tuples-as-numeric-label-rows.md)_</span>
@@ -865,9 +872,8 @@ A projection naming *every* field the struct declares normalizes back to the pla
 struct type instead of staying a distinct residual — `h.{ .fd, .name }` here is just
 `Handle`, still rejected by a row bound the same way a bare `Handle` value already is.
 
-For a **struct** (RFC-0137 slice 2, metel-core#858), `h.name` produces the same branded
-residual type, `h.{ .fd }`, as a projection does. For an **anonymous `record`** (RFC-0117,
-metel-core#789), moving `r.left` out leaves `r : .{ .right: i64 }`. Using the narrowed value
+For a **struct**, [`h.name` produces the same branded
+residual type, `h.{ .fd }`, as a projection does](#spec.ownership.narrowing.legality-1). For an **anonymous `record`**, moving `r.left` out leaves `r : .{ .right: i64 }`. Using the narrowed value
 where the whole type or a wider row is required is a type error at type-check time, not only
 a `--move-check` finding. The converse is an error too and is worded for what it is: a whole
 value where a narrowed type is required (a call argument or an annotated binding) moved
@@ -876,25 +882,26 @@ nothing and is not narrowed implicitly; narrowing is an explicit move or project
 The residual is an ordinary value: it can be bound, passed, returned, dropped, and
 narrowed again. For a value over *N* fields, the space of residual shapes is the subset
 lattice, bounded by 2^*N* — there is no row variable and no unification involved in
-computing it. The rule applies uniformly to a **nominal struct's** row (residual of the
+computing it.
+
+[The rule applies uniformly](#spec.ownership.narrowing.legality-1) to a **nominal struct's** row (residual of the
 same brand, `Handle.{ .fd }`) and to an **anonymous `record`'s** row (the record type with
-the moved label removed, `.{ .fd: i64 }` — no brand clause). A record-typed **field** is
+the moved label removed, `.{ .fd: i64 }` — no brand clause).
+
+A record-typed **field** is
 moved as a **unit** — a residual's row never carries a *narrower* type for a field it
 still holds; narrowing a field of a field in place is
-RFC-0150's. A field read by
+not covered here. A field read by
 value whose type is `Copy` is a copy, not a move, and does not narrow; a field whose type
 is a bare generic parameter or is not yet resolved is held (not dropped from the row)
 until its type is known.
 
-> **Difference between the two.** A struct residual is a distinct type (`Type::Residual`,
-> a brand plus a strict subset row), so a whole-value use after a partial move reports
-> against the binding by name — "a partially-moved `Handle` …". An anonymous record
-> residual is just a `Record` with fewer fields, structurally identical to any other
-> narrower record, so the same mistake reports as an ordinary record-shape mismatch
-> ("cannot unify `{ right }` with `{ left, right }`"). Both are type errors at
-> type-check time.
+> **Difference between the two.** A struct residual is a distinct type (a brand plus a
+> strict subset row), so a whole-value use after a partial move reports against the binding
+> by name. An anonymous record residual is just a record with fewer fields, so the same
+> mistake reports as an ordinary record-shape mismatch. Both are type errors.
 
-An anonymous record narrows in the same way, and reading the moved-out label is rejected:
+[An anonymous record narrows in the same way](#spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-2), and reading the moved-out label is rejected:
 
 <!-- doc-example: expect-fail reason="`left` was moved out, so the anonymous record no longer has it -- T0003 is the point" -->
 ```metel
@@ -1152,11 +1159,11 @@ A struct's own field projection expression moves the named non-`Copy` fields out
 operand and produces exactly the same residual type as the equivalent partial move; the
 operand narrows by the moved fields. A projection through a reference cannot move a
 non-`Copy` field out of it, and a borrowed projection (`&h.{ .f }`, `&var h.{ .f }`) of a
-non-`Copy` field is rejected, because it would move; a borrowing form is reserved for
-RFC-0109 and RFC-0122. Projecting a field that was already moved out is a use of a moved
+non-`Copy` field is rejected, because it would move; a borrowing form is reserved.
+Projecting a field that was already moved out is a use of a moved
 value (`T0019`), with or without `--move-check`.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1184,7 +1191,7 @@ value (`T0019`), with or without `--move-check`.
 ### Passing a residual to a function
 
 A residual reached via move-triggered
-narrowing is passed exactly the same way; nothing here is specific to how the residual
+narrowing [is passed exactly the same way](#spec.ownership.passing-a-residual-to-a-function.legality-1); nothing here is specific to how the residual
 arose.
 
 A parameter naming a struct's own projected type (`Handle.{ .fd }`, or `Self.{ .fd }`
@@ -1237,9 +1244,9 @@ match that row exactly, with no implicit narrowing at the call site.
 > **Gap** GAP-OWNERSHIP-004
 
 A residual (`Doc.{ .title }`, the same brand with fewer fields) is a value of its brand, but it is not the whole type, so the
-language says which aspects it satisfies. Bound satisfaction and dispatch agree: a residual satisfies **structural `Copy`**
+language says which aspects it satisfies. Bound satisfaction and dispatch agree: [a residual satisfies **structural `Copy`**](#spec.ownership.aspects-on-a-residual.legality-1)
 (with the `Clone` that `Copy` provides) and keeps the existing [`Drop` dispatch](#drop-dispatch-against-a-narrowed-residual),
-and **every other aspect that needs an impl is `T0012` on a residual**, whether the whole-type impl is written or derived.
+and [**every other aspect that needs an impl is `T0012` on a residual**](#spec.ownership.aspects-on-a-residual.legality-7), whether the whole-type impl is written or derived.
 
 <!-- doc-example: skip reason="fragment: uses bindings (p, d) declared elsewhere, and the last line is a rejected program" -->
 ```metel
@@ -1251,13 +1258,15 @@ let t := d.{ .title };        // the projection moves the field out
 t.clone()                     // T0012: Clone has no impl for the projection (derived: template not yet available)
 ```
 
-A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ .title }`: its body may read any field the residual no
-longer has. There is no way to write an impl for a residual itself in this release: RFC-0214 (under review) proposes one, and
-until it is implemented a residual has such an aspect only through the rules below. `Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A residual of a type that
+[A hand-written `extend Doc: Clone { … }` does not apply to `Doc.{ .title }`](#spec.ownership.aspects-on-a-residual.legality-2): its body may read any field the residual no
+longer has. There is no way to write an impl for a residual itself: a residual has such an aspect only through the rules below.
+
+[`Point.{ .x }` is `Copy` if `Point` grants `Copy` and `x` is `Copy`, whether or not `y` is. A residual of a type that
 cannot grant `Copy` (a field is not `Copy`) never is, even if the remaining fields are: the declaration says so, not the
-shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously. A type whose `Clone` is written is not `Copy` ([RFC-0206](../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md)),
-so its projections move like the value itself. The `Copy` rule for residuals is native compiler logic in this release, a named exception with a recorded exit
-(GAP-OWNERSHIP-004): it moves to the std row template with no change in accepted programs.
+shape. An empty residual `Point.{}` of a `Copy` brand is `Copy`, because the condition holds vacuously](#spec.ownership.aspects-on-a-residual.legality-1).
+
+A type whose `Clone` is written is not `Copy`,
+so its projections move like the value itself. The `Copy` rule for residuals is native compiler logic, a named exception: it is to move to the std row template with no change in accepted programs.
 
 <details>
 <summary>Formal rules</summary>
@@ -1336,10 +1345,10 @@ The total destructuring of a marked dismantling method suppresses the destructor
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="RFC-0211: row-bounded Drop dispatch against a residual is not implemented (GAP-OWNERSHIP-003)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch against a residual is not implemented." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: RFC-0211: row-bounded Drop dispatch against a residual is not implemented (GAP-OWNERSHIP-003)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch against a residual is not implemented._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-6}
@@ -1351,10 +1360,10 @@ class is recomputed from the surviving components.
 
 <!-- rfc.py:last_reviewed e2c4f1a81fc5ecffc0944d5212b96f75ac81eb40 -->
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="RFC-0211: Discard is not implemented yet." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#1831" reason="Discard is not implemented yet." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: RFC-0211: Discard is not implemented yet._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#1831: Discard is not implemented yet._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-7}
@@ -1386,19 +1395,23 @@ A copy of a `Copy` residual copies its present fields. No absent field is read.
 
 > **Gap** GAP-OWNERSHIP-003
 
-Stage note: the ban of [Ownership classes legality-6](#spec.ownership.ownership-classes.legality-6) governs types whose `drop` receiver is the whole row. The row-bounded permission below is the planned extension (RFC-0137 section 5, metel-core#949) for a type whose receiver names a narrower row, and is not superseded by it.
+Stage note: the ban of [Ownership classes legality-6](#spec.ownership.ownership-classes.legality-6) governs types whose `drop` receiver is the whole row. The row-bounded permission below is the planned extension for a type whose receiver names a narrower row, and is not superseded by it.
 
-A struct implementing `Drop` whose destructor needs a field that has since been narrowed
-away must not silently skip the destructor's work. Dispatch is **row-bounded**: a `Drop`
+[A struct implementing `Drop` whose destructor needs a field that has since been narrowed
+away must not silently skip the destructor's work](#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1). Dispatch is **row-bounded**: a `Drop`
 impl's required field set is the residual row its `drop` method's receiver is declared
 with — the fields named in a projected receiver (`fun drop(&var self: Self.{ .fd })`) or
-in its `where` clause (`fun drop<record R>(&var self: Self.R) where R: { fd, .. }`). A `drop`
+in its `where` clause (`fun drop<record R>(&var self: Self.R) where R: { fd, .. }`).
+
+A `drop`
 method whose receiver is the bare `&var self` requires the struct's whole row, and no
 partial move of such a type is permitted. The destructor fires against any residual of
 the correct brand whose current row is a superset of that declared set, regardless of
-what else has already been moved out. The destructor body is checked against its declared
+what else has already been moved out.
+
+[The destructor body is checked against its declared
 receiver row: it may name only fields in that row, and may call only `self`-methods whose
-own declared receiver row that row satisfies.
+own declared receiver row that row satisfies](#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-4).
 
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is one more checkpoint for
 the same required set — the row information the check depends on is discarded once the
@@ -1414,14 +1427,14 @@ A `Drop` impl's required field set is the residual row its `drop` method's recei
 declared with; a `drop` method with a bare `&var self` receiver requires the struct's
 whole declared row.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented; the unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0137](../../rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); RFC-0071's unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented; the unconditional partial-move-with-Drop ban is still enforced today (behind --move-check, off by default)._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Dynamic Semantics {#spec.ownership.drop-dispatch-against-a-narrowed-residual.dynamics-1}
@@ -1440,10 +1453,10 @@ row is a superset of the impl's required field set.
 Coercing a value of a `Drop`-implementing type to `dyn Aspect` is rejected when the
 value's current row does not satisfy that type's `Drop` impl's required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#949's job. Do not attempt this checkpoint until #949 lands." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Depends on row-bounded Drop dispatch (above). `dyn Aspect` itself is fully implemented -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Depends on row-bounded Drop dispatch (above, RFC-0137 slice 2, metel-core#858). dyn Aspect itself is fully implemented now (RFC-0008, metel-core#865/#863/#864, closed 2026-08-28) -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against, which is metel-core#949's job. Do not attempt this checkpoint until #949 lands._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Depends on row-bounded Drop dispatch (above). `dyn Aspect` itself is fully implemented -- syntax, object safety, and coercion of a value to one -- so the erasure side of this checkpoint is real; what is still missing is the narrowed residual to run it against._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-3}
@@ -1454,10 +1467,10 @@ by an open lower bound (`fun drop<record R>(&var self: Self.R) where R: { a, b, 
 fields named by that declaration are the impl's required field set (legality-1). A bare
 `&var self` names every field.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented; the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (named views for the fixed projection form, a row parameter for the other). Until then a drop receiver is always the whole value and the required set is always the whole row." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (RFC-0109 named views for the fixed projection form, RFC-0147; RFC-0146 for the row-parameter form, RFC-0148). Until then a drop receiver is always the whole value and the required set is always the whole row._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented; the narrowed drop-receiver forms additionally depend on their own not-yet-integrated syntax (named views for the fixed projection form, a row parameter for the other). Until then a drop receiver is always the whole value and the required set is always the whole row._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-4}
@@ -1468,10 +1481,10 @@ destructor body may read or write only fields in that declared row, and may call
 `drop` receiver's declared row. Each is a local check at the access or call site; no
 whole-body or call-graph analysis derives the required field set.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The reject_inert_destructor gate (metel-core#292) additionally rejects any non-empty drop body until destructor invocation (metel-core#261) lands." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#949" reason="Row-bounded Drop dispatch is not implemented; with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The inert-destructor gate additionally rejects any non-empty drop body until destructor invocation lands." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented (RFC-0137 §5, metel-core#949); with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The reject_inert_destructor gate (metel-core#292) additionally rejects any non-empty drop body until destructor invocation (metel-core#261) lands._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#949: Row-bounded Drop dispatch is not implemented; with no narrowed drop-receiver form yet, there is no declared row for a body to be checked against. The inert-destructor gate additionally rejects any non-empty drop body until destructor invocation lands._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
@@ -1481,14 +1494,13 @@ whole-body or call-graph analysis derives the required field set.
 Reassigning a moved-out field [already restores the containing value's whole-value
 status today](#spec.ownership.partial-moves.legality-3), for every struct regardless of
 `Drop` — this is existing, unconditional `--move-check` behavior, not itself part of
-RFC-0137.
+narrowing.
 
 `Handle.{ .fd }` becomes `Handle` again once `name` is reassigned. This formalizes the
 whole-value-restoring behavior reassignment already has; it does not require another RFC.
 Widening does not check the reassembled value against constructor invariants. Ordinary field
-reassignment can already bypass such an invariant independently of narrowing or widening;
-RFC-0114 (Constructor Aspect and Canonical Construction, still `0-draft`) proposes a
-separate solution.
+reassignment can already bypass such an invariant independently of narrowing or widening; that is a
+separate question.
 
 <details>
 <summary>Formal rules</summary>
@@ -1502,7 +1514,7 @@ brand's full declared row, and the write reintroduces it. Widening applies only 
 reassigned back into — a value reached through a reference
 ([references-and-moves.legality-1](#spec.ownership.references-and-moves.legality-1)).
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -1571,7 +1583,7 @@ a binding that was moved as a whole.
 
 ## References and moves
 
-`&T` is `Copy`, so a shared reference is duplicated on use and the original stays valid.
+[`&T` is `Copy`, so a shared reference is duplicated on use and the original stays valid](#spec.ownership.references-and-moves.legality-1).
 
 `&var T` is **not** `Copy` — an exclusive reference must stay unique to be exclusive. It is
 therefore moved on use, with one exception:
