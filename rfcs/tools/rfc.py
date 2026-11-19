@@ -101,6 +101,38 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import spec_lint  # noqa: E402  (a sibling module; the public-spec style lint)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def repo_markdown_files():
+    """The repo's markdown corpus: files git knows about (tracked, or untracked and not ignored).
+
+    Asking git instead of walking the filesystem keeps a nested checkout out of the corpus. A
+    `.claude/worktrees/<name>` worktree is somebody's working copy of this same repo: walking
+    the tree read its stale RFC-status citations and dangling paths as ours and failed the
+    pre-push check of the host checkout. git lists a nested repository as one `dir/` entry,
+    which is dropped here. Outside a git work tree (a bare export, a temp directory in a test)
+    it falls back to a walk that skips dot-directories.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
+            capture_output=True, text=True, timeout=60,
+        )
+        listed = out.stdout.split("\0") if out.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        listed = None
+    if listed is not None:
+        for name in sorted(set(listed)):
+            path = REPO_ROOT / name
+            if name.endswith(".md") and path.is_file():
+                yield path
+        return
+    for f in sorted(REPO_ROOT.rglob("*.md")):
+        if any(part.startswith(".") for part in f.relative_to(REPO_ROOT).parts[:-1]):
+            continue
+        yield f
+
+
 RFCS_DIR = REPO_ROOT / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
 REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"
@@ -437,7 +469,7 @@ def fix_referrers(old_rel, new_rel):
     old_str = str(old_rel)
     new_str = str(new_rel)
     changed = []
-    for f in REPO_ROOT.rglob("*.md"):
+    for f in repo_markdown_files():
         # Same historical-record exemption as status_citation_problems, and for the
         # same reason (found 2026-08-23 rewriting reports/strategy/cycles/2026-08-01/
         # cycle.md's own citation of RFC-0127's path *at that date* to match today's
@@ -1676,7 +1708,7 @@ def retired_host_references():
                 f"{rel}: impl_tracking references a retired host ({tracking}) — "
                 f"canonical host is {CANONICAL_ISSUE_HOST}"
             )
-    for f in sorted(REPO_ROOT.rglob("*.md")):
+    for f in sorted(repo_markdown_files()):
         rel = str(f.relative_to(REPO_ROOT))
         try:
             _, body = parse_file(f)
@@ -1971,7 +2003,7 @@ STATUS_CITATION_RE = re.compile(r"RFC-(\d+[a-z]?)\s*\(([^)]{0,200})\)")
 
 def status_citation_problems(id_to_stage):
     problems = []
-    for f in REPO_ROOT.rglob("*.md"):
+    for f in repo_markdown_files():
         # "archive" dirs (reports/**/archive/) hold dated, superseded snapshots —
         # citing an RFC's then-current status there is historically correct, not
         # stale, and must not be "fixed" to match the present. RFCs sitting in
@@ -3099,7 +3131,7 @@ def cmd_check(args=None):
     problems.extend(status_citation_problems(id_to_stage))
     problems.extend(retired_host_references())
 
-    for f in REPO_ROOT.rglob("*.md"):
+    for f in repo_markdown_files():
         # Same historical-record exemption as status_citation_problems/fix_referrers,
         # same day, same root cause: a dated snapshot citing an RFC's path as it was
         # when written is correct, not dangling, even after that RFC moves stage.
