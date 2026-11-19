@@ -5,7 +5,7 @@ summary: "A pattern ending in `..` is rejected for a concrete anonymous record; 
 scope: "architecture/spec/type-inference.md#type-inference"
 owner: metel-frontend
 discovered_by: "metel-core#1218 limitation analysis; `typechecker/inference/patterns.rs`"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -46,5 +46,4 @@ recorded as an implementation limitation.
 
 ## Resolution
 
-None yet. If the spec decides `..` is not allowed there, this record is
-re-filed as a `GAP-*` (ADR-0057) and superseded.
+Resolved by RFC-0178 (`4-implemented`): record rest patterns are specified in `spec.expressions.record-rest-patterns.legality-1` to `-3`, and the typechecker accepts a pattern ending in `..` against a concrete anonymous record. Evidence: `evaluator/records/anonymous_record_pattern_rest.mtl` is the shape this record reproduced, and it now runs (`x is 1`). The `// limit:` marker in `patterns.rs` is removed in a follow-up core change.

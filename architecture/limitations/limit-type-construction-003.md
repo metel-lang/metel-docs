@@ -6,6 +6,8 @@ scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "metel-core#1217 limitation analysis; `typechecker/construction.rs`"
 disposition: known
+rfc: RFC-0011
+tracked_by: metel-core#2031
 review: null
 ---
 
@@ -46,4 +48,4 @@ issue needs to be found or filed.
 
 ## Resolution
 
-None yet; needs a tracking issue (the cited `#263` no longer matches).
+None yet. Dispatching `==` and `!=` through `Eq` is part of operator overloading aspects (RFC-0011, `1-under-review`), and metel-core#2031 (`Eq` for every row) is blocked on it. The earlier citation, metel-core#263, tracked the hardcoded tuple `Copy` rule and is closed.
