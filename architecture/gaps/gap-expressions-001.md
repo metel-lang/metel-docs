@@ -7,6 +7,7 @@ owner: language
 discovered_by: "RFC-0178 review: borrowed rest patterns need the `&var` splitting rules of RFC-0122"
 disposition: known
 rfc: RFC-0178, RFC-0122
+relates: "GAP-OWNERSHIP-001 (a borrowed remainder needs a borrow checker; this gap is the missing spelling); GAP-TYPES-009 (rest bindings on a record behind a reference, not a tuple split in a generic body)"
 review: null
 ---
 

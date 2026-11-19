@@ -8,6 +8,7 @@ discovered_by: "metel-core#1235 conversion of the `Planned for` notes in `refere
 disposition: planned
 tracked_by: metel-core#949
 rfc: RFC-0137
+relates: "LIMIT-EVALUATION-005 (this is the spec boundary on moving a field out of a Drop type; that is the implementation shortfall that drop bodies never run)"
 review: null
 ---
 

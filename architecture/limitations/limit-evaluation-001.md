@@ -6,6 +6,7 @@ scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
 discovered_by: "ADR-0010; metel-interpreter/docs/evaluator.md, \"Known Limitations\""
 disposition: accepted
+relates: "LIMIT-TYPE-CONSTRUCTION-001 (re-constructing a generic body at each call is an evaluation cost; callee identity is a construction shortfall in the same requirement)"
 review: "revisit if performance becomes a concern — a call-site cache keyed on the concrete type tuple is the documented mitigation path (ADR-0010's own \"Future work\" note)"
 ---
 

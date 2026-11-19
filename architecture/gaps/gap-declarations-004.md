@@ -8,6 +8,7 @@ discovered_by: "RFC-0193 review (metel-core#1665): checking when a let-bound clo
 disposition: planned
 tracked_by: metel-core#933
 rfc: RFC-0131
+relates: "GAP-FUNCTIONS-006 (this is where a let-bound closure becomes visible to the functions above it; that one is the closure's own scope, which rules out recursion)"
 review: null
 ---
 
