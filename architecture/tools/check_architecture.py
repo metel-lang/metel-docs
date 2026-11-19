@@ -853,21 +853,6 @@ def check_pending_markers(language_spec_dir: Path, repo_root: Path, resolver=Non
     return findings
 
 
-# Phrasing that states a limit in prose. A limit belongs in a `> **Gap**` / `> **Limitation**`
-# marker citing a record, so new prose like this is a prompt to write the record.
-LIMIT_PHRASE_RE = re.compile(
-    r"\bnot yet\b|\bdeferred (?:to|pending|until)\b|\bnot supported\b|\bplanned, not implemented\b"
-    r"|\b(?:is|are) (?:only )?planned\b|\bnot (?:yet )?implemented\b|\bfuture release\b"
-    r"|\bnot part of this release\b|\bdoes not (?:yet )?exist\b",
-    re.IGNORECASE,
-)
-# Lines that carry such words for another reason: generated fixture/exemption markup,
-# doc-example directives, HTML, headings, and the markers themselves.
-LIMIT_LINT_SKIP_RE = re.compile(
-    r"^\s*(?:<|#|>\s*\*\*(?:Gap|Limitation|Pending|Planned for)\b|\|)|rigor-backlink|data-fixture|doc-example|rfc\.py:"
-)
-
-
 # A requirement's claim is one or two sentences; rationale and history belong in the ADR it
 # cites (metel-core#1234). Longer claims are flagged, warn-only.
 CLAIM_SOFT_MAX = 300
@@ -1033,48 +1018,6 @@ def tracked_gate_findings(records: list, repo_root: Path, resolver) -> list[Find
     for n in sorted(set(unresolved)):
         gate.append(Finding("architecture records", f"`tracked_by` names metel-core#{n}, which could not be verified (GitHub not reachable); the release gate cannot pass an unverified plan"))
     return gate
-
-
-def _pending_excused_lines(lines: list[str]) -> set[int]:
-    """1-based line numbers of the prose a `> **Pending**` marker excuses (metel-core#1418): the
-    paragraph it sits in and the paragraph just before it, since the marker follows the prose
-    that states the part is not implemented yet."""
-    blocks: list[tuple[int, int]] = []  # (first, last) 0-based lines of each blank-separated block
-    start = None
-    for i, line in enumerate(lines + [""]):
-        if line.strip():
-            start = i if start is None else start
-        elif start is not None:
-            blocks.append((start, i - 1))
-            start = None
-    excused: set[int] = set()
-    for index, (first, last) in enumerate(blocks):
-        if any(PENDING_MARKER_LINE_RE.match(lines[i]) for i in range(first, last + 1)):
-            for a, b in ([blocks[index - 1]] if index else []) + [(first, last)]:
-                excused.update(range(a + 1, b + 2))
-    return excused
-
-
-def lint_limit_phrasing(language_spec_dir: Path, repo_root: Path) -> list[Finding]:
-    """Warn-only (metel-core#1235): limit phrasing in Language Spec prose outside a marker.
-    Never fails the check; the reader decides whether it is a limit that needs a record."""
-    warnings: list[Finding] = []
-    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
-        if path.name.upper() == "STYLEGUIDE.MD":
-            continue
-        in_fence = False
-        lines = path.read_text().splitlines()
-        excused = _pending_excused_lines(lines)
-        for number, line in enumerate(lines, 1):
-            if line.lstrip().startswith("```"):
-                in_fence = not in_fence
-                continue
-            if in_fence or number in excused or LIMIT_LINT_SKIP_RE.search(line):
-                continue
-            m = LIMIT_PHRASE_RE.search(line)
-            if m:
-                warnings.append(Finding(f"{path.relative_to(repo_root)}:{number}", f"limit phrasing `{m.group(0)}` outside a Gap/Limitation marker; if this states a limit, cite or write its record"))
-    return warnings
 
 
 def run_checks(
@@ -1312,7 +1255,7 @@ def main() -> int:
     else:
         print("Skipped-fixture LIMIT-* citations: skipped (needs --core; same structural gap as the arch=[...] cross-check above).")
 
-    warnings = lint_limit_phrasing(LANGUAGE_SPEC_DIR, REPO_ROOT) + lint_claim_length(SPEC_DIR, REPO_ROOT) + fixture_warnings + tracked_warnings
+    warnings = lint_claim_length(SPEC_DIR, REPO_ROOT) + fixture_warnings + tracked_warnings
     if pending_unresolved:
         print(
             "Issue state (pending markers, skipped fixtures, `tracked_by`) not checked for "

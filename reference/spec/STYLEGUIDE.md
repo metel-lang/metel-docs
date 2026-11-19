@@ -58,6 +58,19 @@ the spec's prose, rules, tables or headings. The exception is the tracking marke
 `Planned for`), which cites the record that tracks what is not yet true. Say what a thing does, and let the
 generated backlinks carry the provenance. `rfcs/tools/spec_lint.py` enforces this and the limits below.
 
+**Accepting a lint finding.** A finding that is right is fixed. One that predates a rule is grandfathered by the
+baseline (`reference/spec/SPEC-LINT-BASELINE.json`, which only shrinks). A single justified exception is written
+next to the text, on the line before the paragraph, quote, rule or heading it covers:
+
+```markdown
+<!-- spec-lint: allow limit-in-prose reason="the return type is not yet known at that point of inference, not a limit" -->
+```
+
+This works for every rule. The reason is required and must explain why the finding is correct, `RULE` must be a rule
+name from `spec_lint.py`, and an allow that covers nothing is itself a finding. Before a `##### Legality Rule`
+heading it covers the whole rule block; put it before the heading, never inside the block. `spec_lint.py --allows`
+lists every exception with its reason.
+
 **Keep paragraphs and quotes short.** A prose paragraph or list item is at most 120 words and a quote block at most
 60. Split a long paragraph by claim, and move a long rationale out of a quote into prose or into the rule it
 explains.
@@ -115,7 +128,7 @@ when a rule needs its own wording), a link to the record, and chips from its `tr
 qualifies. `check_architecture.py` requires each marker to cite an existing, active
 record of the kind its label names, and every active `GAP-*` to be cited in the chapter
 its `scope` names. If no record exists yet, write one; do not describe the limit in prose.
-A warn-only lint in the same checker flags limit phrasing ("not yet", "deferred to", "not supported", "planned, not implemented") outside a marker; it never fails the check.
+`rfcs/tools/spec_lint.py` flags limit phrasing ("not yet", "deferred to", "not supported", "planned", "in this release", "under review") outside a marker as `limit-in-prose`; a new one fails CI (see "Accepting a lint finding").
 
 **Cross-references** between spec files: plain relative markdown links —
 `[Modules — Visibility](modules.md#visibility)`.

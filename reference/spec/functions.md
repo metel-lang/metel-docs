@@ -1752,6 +1752,8 @@ the `?`.
 <details>
 <summary>Formal rules</summary>
 
+<!-- spec-lint: allow limit-in-prose reason="type inference order: the return type is not yet known at that point of checking, not a limit" -->
+
 ##### Legality Rule {#spec.functions.the-operator.legality-1}
 
 The `?` operator requires an operand of type `Result<T, E>` or `Option<T>` whose type

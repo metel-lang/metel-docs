@@ -791,6 +791,8 @@ already rejected by [legality-3](#spec.modules.visibility.legality-3).
 </details>
 <!-- rfc.py:fixtures:end -->
 
+<!-- spec-lint: allow limit-in-prose reason="the import error is for a name that does not exist, not a limit of the implementation" -->
+
 ##### Legality Rule {#spec.modules.visibility.legality-9}
 
 A name that a module provides as a public type and a private function can be imported: the

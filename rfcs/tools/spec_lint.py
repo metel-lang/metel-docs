@@ -13,6 +13,17 @@ The rules enforce reference/spec/STYLEGUIDE.md and rfcs/PROCESS.md ("Public avai
   long-quote            a quote block of more than MAX_QUOTE_WORDS words.
   unlinked-normative    a paragraph that states a rule ("is an error", an error code) with no link to a rule.
   section-links-no-rule a section with rules whose prose never links one of them.
+  limit-in-prose        a limit stated in prose ("not yet", "planned", "in this release", "under review") instead of
+                        a `Gap`, `Limitation` or `Pending` marker that cites the record tracking it.
+  allow-invalid         a malformed or useless `spec-lint: allow` comment (below).
+
+A finding that is right is accepted in one of two ways. The baseline grandfathers what predates a rule. A single
+justified exception is written next to the text, on the line before the paragraph, quote or heading it covers:
+
+    <!-- spec-lint: allow RULE reason="why this is correct" -->
+
+The reason is required, RULE must be a rule above, and an allow that covers nothing is itself a finding, so
+exceptions cannot rot. `--allows` lists every one.
 
 Existing violations are grandfathered by reference/spec/SPEC-LINT-BASELINE.json, a ratchet: a count above the
 baseline is a problem, a count below it is a warning to shrink the baseline (a release treats that as a problem).
@@ -52,6 +63,8 @@ RULES = (
     "long-quote",
     "unlinked-normative",
     "section-links-no-rule",
+    "limit-in-prose",
+    "allow-invalid",
 )
 MAX_PARAGRAPH_WORDS = 120
 MAX_QUOTE_WORDS = 60
@@ -72,6 +85,16 @@ NORMATIVE_RE = re.compile(
     r"|is a parse error|must not)\b|\b[TP]\d{4}\b"
 )
 LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s")
+LIMIT_PHRASE_RE = re.compile(
+    r"\bnot yet\b|\bdeferred (?:to|pending|until)\b|\bnot supported\b|\bplanned, not implemented\b"
+    r"|\b(?:is|are) (?:only )?planned\b|\bnot (?:yet )?implemented\b|\bfuture release\b"
+    r"|\bnot part of this release\b|\bdoes not (?:yet )?exist\b|\bin this release\b|\bunder review\b"
+    r"|\bplanned extension\b|\bstage note\b|\bonce [\w`' -]{0,40}(?:lands|ships)\b",
+    re.IGNORECASE,
+)
+PENDING_MARKER_RE = re.compile(r"^>\s*\*\*Pending\*\*")
+ALLOW_RE = re.compile(r'^<!--\s*spec-lint:\s*allow\s+(?P<rule>[\w-]+)\s+reason="(?P<reason>[^"]*)"\s*-->\s*$')
+MIN_REASON_CHARS = 8
 
 
 @dataclass(frozen=True)
@@ -80,6 +103,14 @@ class Finding:
     path: str
     line: int
     detail: str
+
+
+@dataclass(frozen=True)
+class Allow:
+    rule: str
+    path: str
+    line: int
+    reason: str
 
 
 def _label(lines: list[str]) -> list[str]:
@@ -144,6 +175,64 @@ def _blocks(lines: list[str], labels: list[str], kind: str):
 
 
 def lint_text(text: str, path: str) -> list[Finding]:
+    return lint_text_with_allows(text, path)[0]
+
+
+def _pending_excused(lines: list[str]) -> set[int]:
+    """0-based lines of the prose a `> **Pending**` marker excuses: its own block and the one before it."""
+    blocks: list[tuple[int, int]] = []
+    start = None
+    for i, line in enumerate(lines + [""]):
+        if line.strip():
+            start = i if start is None else start
+        elif start is not None:
+            blocks.append((start, i - 1))
+            start = None
+    excused: set[int] = set()
+    for index, (first, last) in enumerate(blocks):
+        if any(PENDING_MARKER_RE.match(lines[i]) for i in range(first, last + 1)):
+            for a, b in ([blocks[index - 1]] if index else []) + [(first, last)]:
+                excused.update(range(a, b + 1))
+    return excused
+
+
+def _allows(lines: list[str], labels: list[str], path: str) -> tuple[list[Allow], list[Finding], dict[Allow, range]]:
+    """The `spec-lint: allow` comments, the findings for bad ones, and the lines each one covers (1-based)."""
+    allows: list[Allow] = []
+    bad: list[Finding] = []
+    covers: dict[Allow, range] = {}
+    for i, line in enumerate(lines):
+        if labels[i] != "html" or "spec-lint:" not in line:
+            continue
+        match = ALLOW_RE.match(line.strip())
+        if not match:
+            bad.append(Finding("allow-invalid", path, i + 1, "expected <!-- spec-lint: allow RULE reason=\"…\" -->"))
+            continue
+        rule, reason = match.group("rule"), match.group("reason").strip()
+        if rule not in RULES or rule == "allow-invalid":
+            bad.append(Finding("allow-invalid", path, i + 1, f"unknown rule `{rule}`"))
+            continue
+        if len(reason) < MIN_REASON_CHARS:
+            bad.append(Finding("allow-invalid", path, i + 1, "the reason is missing or too short to review"))
+            continue
+        first = next((k for k in range(i + 1, len(lines)) if lines[k].strip() and "spec-lint:" not in lines[k]), None)
+        if first is None:
+            bad.append(Finding("allow-invalid", path, i + 1, "nothing follows the comment"))
+            continue
+        last = first
+        if RULE_HEADING_RE.match(lines[first]):
+            while last + 1 < len(lines) and labels[last + 1] == "rule":
+                last += 1
+        else:
+            while last + 1 < len(lines) and lines[last + 1].strip():
+                last += 1
+        allow = Allow(rule, path, i + 1, reason)
+        allows.append(allow)
+        covers[allow] = range(first + 1, last + 2)
+    return allows, bad, covers
+
+
+def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[Allow]]:
     lines = text.split("\n")
     labels = _label(lines)
     found: list[Finding] = []
@@ -174,6 +263,16 @@ def lint_text(text: str, path: str) -> list[Finding]:
         if words > MAX_QUOTE_WORDS:
             found.append(Finding("long-quote", path, start + 1, f"{words} words"))
 
+    excused = _pending_excused(lines)
+    for i, line in enumerate(lines):
+        if labels[i] not in {"text", "quote", "rule"} or i in marker_lines or i in excused:
+            continue
+        if line.lstrip().startswith("<") or line.startswith("#"):
+            continue
+        match = LIMIT_PHRASE_RE.search(line)
+        if match:
+            found.append(Finding("limit-in-prose", path, i + 1, match.group(0)))
+
     headings = [i for i, line in enumerate(lines) if re.match(r"^#{2,3} ", line)] + [len(lines)]
     for a, b in zip(headings, headings[1:]):
         rules = sum(1 for k in range(a, b) if labels[k] == "rule" and re.match(r"^#{5} ", lines[k]))
@@ -182,7 +281,20 @@ def lint_text(text: str, path: str) -> list[Finding]:
         linked = any(RULE_LINK_RE.search(lines[k]) for k in range(a, b) if labels[k] in {"text", "quote", "table"})
         if not linked:
             found.append(Finding("section-links-no-rule", path, a + 1, f"{lines[a][:60]} ({rules} rules)"))
-    return found
+
+    allows, bad, covers = _allows(lines, labels, path)
+    used: set[Allow] = set()
+    kept: list[Finding] = []
+    for f in found:
+        owner = next((al for al in allows if al.rule == f.rule and f.line in covers[al]), None)
+        if owner:
+            used.add(owner)
+        else:
+            kept.append(f)
+    for allow in allows:
+        if allow not in used:
+            bad.append(Finding("allow-invalid", path, allow.line, f"the `{allow.rule}` allow covers no finding"))
+    return kept + bad, allows
 
 
 def lint_all(root: Path = DOCS_ROOT) -> list[Finding]:
@@ -191,6 +303,15 @@ def lint_all(root: Path = DOCS_ROOT) -> list[Finding]:
         path = root / rel
         if path.is_file():
             found.extend(lint_text(path.read_text(encoding="utf-8"), rel))
+    return found
+
+
+def all_allows(root: Path = DOCS_ROOT) -> list[Allow]:
+    found: list[Allow] = []
+    for rel in SPEC_FILES:
+        path = root / rel
+        if path.is_file():
+            found.extend(lint_text_with_allows(path.read_text(encoding="utf-8"), rel)[1])
     return found
 
 
@@ -242,7 +363,12 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--write-baseline", action="store_true", help="record the current counts as the baseline")
     parser.add_argument("--list", metavar="RULE", choices=RULES, help="print every finding of one rule")
+    parser.add_argument("--allows", action="store_true", help="print every `spec-lint: allow` comment with its reason")
     args = parser.parse_args(argv)
+    if args.allows:
+        for allow in all_allows():
+            print(f"{allow.path}:{allow.line}: {allow.rule}: {allow.reason}")
+        return 0
     found = lint_all()
     if args.list:
         for f in found:
