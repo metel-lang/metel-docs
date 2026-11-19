@@ -51,7 +51,7 @@ jobs:
           python-version: "3.x"
 
       - name: RFC tool regression tests
-        run: python3 -m unittest rfcs/tools/test_rfc.py
+        run: python3 -m unittest rfcs/tools/test_rfc.py rfcs/tools/test_spec_lint.py
 
       - name: rfc.py check
         env:

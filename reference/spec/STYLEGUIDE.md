@@ -39,61 +39,46 @@ unrelated issue this way).
 
 ## Prose conventions
 
-**Availability**, at the top of a section introducing something not present since v0.1:
+**No version provenance.** The spec states the language as it is. It has no `Availability`, `Since vX` or
+`Changed in vX` callouts, and a rule's paragraph reads as true today, unconditionally. When a feature shipped and
+how a behaviour changed live in the changelog and in the RFC that drove it (linked from the generated "Referenced
+by" backlinks), and a reader on an older release reads the versioned docs snapshot cut for it. The one
+version-bearing marker is for what is *not yet true*:
 
 ```markdown
-> **Availability:** Since v0.8.0.
-> **Availability:** Matching-error `?` since v0.1.0. `From`-based error coercion since v0.4.0.
+> **Planned for v0.17.0 (RFC-0123).** One sentence on what ships and where it applies.
 ```
 
-Place a section-level `Since` / `Availability` marker immediately after its heading, before
-any prose, examples, or formal rules. It scopes to that heading; name the feature in the
-marker when the section covers more than one capability. Place an inline `Since` or
-`Changed in` marker immediately before the sentence, rule, table, or example it qualifies
-— never at the end of a preceding block where its scope is ambiguous.
+A `Planned for` marker is a single line, written under the heading or rule it qualifies, valid while the version
+is still ahead of the release in progress, and deleted in the change that ships the feature. It may name its RFC so
+drift against the design stays trackable. Nothing else in the spec carries a version.
 
-**Changed**, when a later release altered established behavior — cite the RFC if one
-drove it:
+**No internal numbers in the text.** RFC, ADR, issue and PR numbers, and `GAP-*` / `LIMIT-*` ids, do not appear in
+the spec's prose, rules, tables or headings. The exception is the tracking marker (`Gap`, `Limitation`, `Pending`,
+`Planned for`), which cites the record that tracks what is not yet true. Say what a thing does, and let the
+generated backlinks carry the provenance. `rfcs/tools/spec_lint.py` enforces this and the limits below.
+
+**Accepting a lint finding.** A finding that is right is fixed. One that predates a rule is grandfathered by the
+baseline (`reference/spec/SPEC-LINT-BASELINE.json`, which only shrinks). A single justified exception is written
+next to the text, on the line before the paragraph, quote or heading it covers, or, for a rule block, right after
+the rule's `last_reviewed` line (where `rfc.py` keeps it):
 
 ```markdown
-> **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Option<T>`, not literals.**
+<!-- spec-lint: allow limit-in-prose reason="the return type is not yet known at that point of inference, not a limit" -->
 ```
 
-An inline `Since` or `Changed in` row is provenance, not a secondary container for the
-specification. Keep it to a short availability or before/after summary — normally one
-sentence — then put the complete current rule, explanation, examples, and caveats in
-ordinary prose immediately after it. This keeps the current specification legible even when
-a section has a long history. If several releases changed the same section, mark only the
-individual claims whose history matters; put broader history in a brief end-of-section
-history note or the linked RFCs, rather than turning most of the section into muted callouts.
+This works for every rule. The reason is required and must explain why the finding is correct, `RULE` must be a rule
+name from `spec_lint.py`, and an allow that covers nothing is itself a finding. After a rule's `last_reviewed` line it
+covers the whole rule block; never put it inside the block's text. `rfc.py index --write-spec-origins` moves a comment
+between rules to that spot, so write it there. `spec_lint.py --allows` lists every exception with its reason.
 
-**Decision rule.** Use `Since` / `Availability` only when the marked syntax, rule, or
-capability did not exist in an earlier release. Use `Changed in` only when an already
-specified language surface has different syntax or semantics now. A `Changed in` marker
-must make that distinction legible by naming the old and new behavior; do not label a
-revision `Since` merely because it introduced a new spelling. Do not put both markers on
-the same claim — split an addition from a revision when they are independently useful.
+**Keep paragraphs and quotes short.** A prose paragraph or list item is at most 120 words and a quote block at most
+60. Split a long paragraph by claim, and move a long rationale out of a quote into prose or into the rule it
+explains.
 
-Both are historical records, not permanent fixtures, and both get pruned the same way once
-they stop doing their job:
-
-- A `Changed in` callout stops earning its keep once its "before" side is no longer
-  reconstructable from the section's *current* prose — the old behavior isn't described or
-  implied anywhere nearby anymore.
-- A `Since` / `Availability` callout stops earning its keep once it's doing nothing but
-  re-timestamping a fact the surrounding prose already states in full, with no RFC to trace
-  and no reader-facing "does my installed version have this" question left to answer — the
-  legitimate use above (top of a section, marking that the *whole feature* wasn't always
-  there) is unaffected; it's the mid-paragraph restatement, bare version number only, that's
-  narration.
-
-Either way: cut the callout outright once it fits the description above. Don't downgrade a
-pruned `Changed in` into a bare `Since` just to keep *something* — a callout with nothing
-left to say is nothing left to say, in either spelling. Don't let either linger as trivia
-once nothing nearby still needs it. The one exception is a callout that's the only thing
-marking a `develop`-only behavior change a reader on an older release might still hit —
-`check_doc_examples.py` has no version awareness yet (metel-core#696), so that's a real gap
-this kind of note can be legitimately covering, not narration to prune on sight.
+**State claims in rule blocks, and cite them from prose.** A sentence that states what is an error or an error code
+belongs in a Legality Rule or Dynamic Semantics block, and the prose around it links that rule's id. A section that
+has rules links at least one of them from its prose, so a reader of the discursive text finds the formal claim.
 
 **Gap** and **Limitation**, for something the spec cannot promise yet — an accepted but
 unbuilt feature, a behavior the implementation lacks, a boundary the spec excludes. A
@@ -144,9 +129,7 @@ when a rule needs its own wording), a link to the record, and chips from its `tr
 qualifies. `check_architecture.py` requires each marker to cite an existing, active
 record of the kind its label names, and every active `GAP-*` to be cited in the chapter
 its `scope` names. If no record exists yet, write one; do not describe the limit in prose.
-A warn-only lint in the same checker flags limit phrasing ("not yet", "deferred to", "not supported", "planned, not implemented") outside a marker; it never fails the check.
-Version-provenance callouts (`Since`, `Changed in`) stay as above; only what is *missing*
-uses a marker.
+`rfcs/tools/spec_lint.py` flags limit phrasing ("not yet", "deferred to", "not supported", "planned", "in this release", "under review") outside a marker as `limit-in-prose`; a new one fails CI (see "Accepting a lint finding").
 
 **Cross-references** between spec files: plain relative markdown links —
 `[Modules — Visibility](modules.md#visibility)`.
@@ -157,8 +140,8 @@ the anchor actually exists before linking to it; a typo'd one silently renders a
 text, not a build failure, unless it happens to be caught by Docusaurus's own
 broken-anchor detector.
 
-**Issue references** inline in prose: `metel-core#NNN` (e.g. "Since v0.12.1
-(metel-core#664)").
+**Issue and RFC references** do not appear inline in prose (see "No internal numbers in the text" above); only a
+tracking marker cites a record.
 
 ## Code examples
 
@@ -299,12 +282,10 @@ the block. A block that mostly restates its own section's prose, just in more wo
 sign the prose already carries the claim and the block should shrink to what's left: the
 part that's actually checkable.
 
-Two things belong in the callout above a block, never folded into its own prose:
+Two things belong in the marker above a block, never folded into its own prose:
 
-- **Version and RFC provenance** — the `> **Since...**` / `Changed in`
-  conventions above (a limit uses a `Gap` / `Limitation` marker instead). A block's own paragraph should read as true today, unconditionally;
-  historical framing ("as of v0.13.0, X now means...") is the callout's job, not the
-  claim's.
+- **A limit or a plan** — a `Gap` / `Limitation` / `Pending` / `Planned for` marker. A block's own paragraph
+  reads as true today, unconditionally, with no version or RFC in it; historical framing belongs in the changelog.
 - **A cross-reference to a related rule** — link its id (`[legality-9](#...)`) rather than
   restating what that rule says.
 

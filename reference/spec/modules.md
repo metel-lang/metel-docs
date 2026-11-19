@@ -805,6 +805,8 @@ shadows it. A name the module provides publicly in no namespace is rejected at t
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
+<!-- spec-lint: allow limit-in-prose reason="the import error is for a name that does not exist, not a limit of the implementation" -->
+
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
 <summary>Tested by (3)</summary>

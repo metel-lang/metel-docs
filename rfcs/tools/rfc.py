@@ -97,6 +97,9 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import spec_lint  # noqa: E402  (a sibling module; the public-spec style lint)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 RFCS_DIR = REPO_ROOT / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
@@ -3138,6 +3141,11 @@ def cmd_check(args=None):
     # metel-core#985: the version half needs no corpus; the proof halves self-gate
     # on metel_core_tests_dir() reachability the same way.
     problems.extend(planned_marker_problems())
+
+    # The public spec's style rules (rfcs/tools/spec_lint.py), ratcheted by reference/spec/SPEC-LINT-BASELINE.json.
+    lint_problems, lint_warnings = spec_lint.check_problems(REPO_ROOT)
+    problems.extend(lint_problems)
+    warnings.extend(lint_warnings)
 
     coverage_problems, coverage_info = coverage_check_problems(warnings)
     problems.extend(coverage_problems)

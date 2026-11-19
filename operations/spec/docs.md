@@ -180,3 +180,17 @@ Embedding grows every published version. The intended end state is to fetch the 
 | `implemented by` | `metel-docs/rfcs/tools/rfc.py`; `metel-website` spec-fixture swizzle |
 | `verified by` | `rfc.py check` (drift) |
 | `related` | PROC-DOCS-005 |
+
+### PROC-DOCS-013 — The public spec follows a style, enforced by a ratchet {#proc-docs-013}
+
+The spec states the current language: no version callouts, no RFC, issue or PR numbers outside the tracking markers, short paragraphs and quotes, rules stated in rule blocks and linked from prose. Violations that predate the rule are listed per file in `reference/spec/SPEC-LINT-BASELINE.json`; a new one fails CI, and a fixed one makes the baseline shrink (a warning, a failure under `rfc.py check --strict`). A justified single exception is a `spec-lint: allow RULE reason="…"` comment next to the text; an unused or unexplained one is a finding.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | documentation |
+| `trigger` | a change to a spec chapter, `error-codes.md` or `spec.md` |
+| `produces` | a pass or fail of `rfc.py check`, and the baseline when it is regenerated |
+| `implemented by` | `metel-docs/rfcs/tools/spec_lint.py`, called from `rfc.py check` |
+| `verified by` | core CI job `rfc.py check` and the `rfc-check` workflow; `rfcs/tools/test_spec_lint.py` |
+| `related` | PROC-DOCS-005, PROC-DOCS-006 |

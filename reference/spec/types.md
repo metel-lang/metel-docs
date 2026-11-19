@@ -1236,6 +1236,7 @@ Metel has two reference types:
 "Exclusive" means shared XOR exclusive: a place may have any number of `&T` borrows, or
 exactly one `&var T`, never both.
 
+<!-- spec-lint: allow limit-in-prose reason="states that no coercion from & to &var exists in the language, a design fact and not a limit" -->
 `&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
 aliases — a reference never owns the value it points to.
 

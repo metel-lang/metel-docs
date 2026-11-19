@@ -90,6 +90,7 @@ Requirements that state a rule rather than a step, and assets that are aids, wit
 | `PROC-DOCS-008` | the RFC lifecycle, a flow of its own run by `rfc.py` |
 | `PROC-DOCS-009` | the lifecycle of gap and limitation records, run inside the CI nodes |
 | `PROC-DOCS-012` | what the spec fixture viewer embeds, a build-time property |
+| `PROC-DOCS-013` | the spec style ratchet; checked by `rfc.py check` inside the CI nodes |
 | `PROC-WORK-002` | which tier of verification a change gets, a rule that applies to every node |
 | `PROC-WORK-003` | pairing a change with its documentation and changelog, a rule applied at the pull request |
 | `PROC-WORK-006` | where bugs are scheduled, a rule about milestones rather than a step |
