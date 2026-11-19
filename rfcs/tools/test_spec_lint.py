@@ -82,6 +82,70 @@ class RuleLinks(unittest.TestCase):
         self.assertEqual(findings(linked, "section-links-no-rule"), [])
 
 
+class LimitInProse(unittest.TestCase):
+    def test_a_limit_stated_in_prose_is_flagged(self):
+        for line in ("Named records are planned, not implemented.", "This is not yet supported.",
+                     "There is no way to do this in this release.", "RFC-0214 (under review) proposes one.",
+                     "Stage note: the ban applies.", "That arrives once the effect system lands."):
+            self.assertEqual(len(findings(line + "\n", "limit-in-prose")), 1, line)
+
+    def test_markers_and_the_paragraph_a_pending_marker_follows_are_exempt(self):
+        for text in ("> **Gap** GAP-X-001\n", "> **Limitation** LIMIT-X-001: not yet built.\n",
+                     "> **Planned for v0.17.0.** not yet.\n",
+                     "The new form is not yet implemented.\n\n> **Pending** metel-core#1\n",
+                     "> **Pending** metel-core#1\n> not yet supported here.\n"):
+            self.assertEqual(findings(text, "limit-in-prose"), [], text)
+
+    def test_other_prose_next_to_a_marker_is_still_flagged(self):
+        text = "Not yet supported A.\n\n> **Pending** metel-core#1\n\nAnother form is not yet supported.\n"
+        self.assertEqual([f.line for f in findings(text, "limit-in-prose")], [5])
+
+    def test_html_generated_and_code_lines_are_not_flagged(self):
+        text = ("```\nnot yet\n```\n<!-- rfc.py:exemption kind=\"blocked\" reason=\"not implemented yet\" -->\n"
+                "<span class=\"rigor-backlink\">_Exempt: not implemented._</span>\n")
+        self.assertEqual(findings(text, "limit-in-prose"), [])
+
+
+class Allows(unittest.TestCase):
+    ALLOW = '<!-- spec-lint: allow {rule} reason="{reason}" -->\n'
+
+    def allow(self, rule="limit-in-prose", reason="the phrase is a design fact here"):
+        return self.ALLOW.format(rule=rule, reason=reason)
+
+    def test_an_allow_before_a_paragraph_suppresses_that_rule_in_it(self):
+        text = self.allow() + "This is not yet supported.\n"
+        self.assertEqual(spec_lint.lint_text(text, "x.md"), [])
+
+    def test_an_allow_covers_only_the_next_block(self):
+        text = self.allow() + "First not yet.\n\nSecond not yet.\n"
+        self.assertEqual([f.line for f in findings(text, "limit-in-prose")], [4])
+
+    def test_an_allow_covers_only_its_own_rule(self):
+        text = self.allow() + "RFC-0123 is not yet supported.\n"
+        self.assertEqual(rules(text), ["internal-number"])
+
+    def test_an_allow_before_a_rule_heading_covers_the_whole_rule_block(self):
+        rule = ("##### Legality Rule {#spec.a.b.legality-1}\n\nThis is not yet a thing.\n\n"
+                "<!-- rfc.py:last_reviewed abc -->\n")
+        self.assertEqual(spec_lint.lint_text(self.allow() + "\n" + rule, "x.md"), [])
+        self.assertEqual(rules(rule), ["limit-in-prose"])
+
+    def test_an_allow_that_covers_nothing_is_a_finding(self):
+        self.assertEqual(rules(self.allow() + "A clean paragraph.\n"), ["allow-invalid"])
+
+    def test_a_malformed_unknown_or_unexplained_allow_is_a_finding(self):
+        for text in ('<!-- spec-lint: allow limit-in-prose -->\nnot yet.\n',
+                     self.allow(rule="no-such-rule") + "text\n",
+                     self.allow(reason="x") + "not yet supported.\n",
+                     self.allow() ):
+            self.assertIn("allow-invalid", rules(text), text)
+
+    def test_allows_are_listed_with_their_reason(self):
+        text = self.allow(reason="listed reason") + "This is not yet supported.\n"
+        allows = spec_lint.lint_text_with_allows(text, "x.md")[1]
+        self.assertEqual([(a.rule, a.reason) for a in allows], [("limit-in-prose", "listed reason")])
+
+
 class Baseline(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()

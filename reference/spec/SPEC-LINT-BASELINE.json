@@ -1,6 +1,7 @@
 {
   "reference/error-codes.md": {
     "internal-number": 127,
+    "limit-in-prose": 4,
     "long-quote": 2,
     "provenance-marker": 8,
     "unlinked-normative": 13
@@ -11,6 +12,7 @@
   },
   "reference/spec/declarations.md": {
     "internal-number": 30,
+    "limit-in-prose": 1,
     "long-paragraph": 1,
     "long-quote": 1,
     "provenance-marker": 9,
@@ -33,6 +35,7 @@
   },
   "reference/spec/lexical.md": {
     "internal-number": 1,
+    "limit-in-prose": 2,
     "long-paragraph": 1,
     "long-quote": 1,
     "provenance-marker": 4,
@@ -47,6 +50,7 @@
   },
   "reference/spec/ownership.md": {
     "internal-number": 158,
+    "limit-in-prose": 8,
     "long-paragraph": 5,
     "long-quote": 2,
     "provenance-marker": 15,

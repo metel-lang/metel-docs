@@ -1672,6 +1672,7 @@ An array index is negative or ≥ the array length.
 
 ### R0005 — Tuple index out of bounds
 
+<!-- spec-lint: allow limit-in-prose reason="describes an index that does not exist at runtime, not a feature that is missing" -->
 A tuple element is accessed by an index that does not exist.
 
 ```

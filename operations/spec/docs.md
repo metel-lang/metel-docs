@@ -183,7 +183,7 @@ Embedding grows every published version. The intended end state is to fetch the 
 
 ### PROC-DOCS-013 — The public spec follows a style, enforced by a ratchet {#proc-docs-013}
 
-The spec states the current language: no version callouts, no RFC, issue or PR numbers outside the tracking markers, short paragraphs and quotes, rules stated in rule blocks and linked from prose. Violations that predate the rule are listed per file in `reference/spec/SPEC-LINT-BASELINE.json`; a new one fails CI, and a fixed one makes the baseline shrink (a warning, a failure under `rfc.py check --strict`).
+The spec states the current language: no version callouts, no RFC, issue or PR numbers outside the tracking markers, short paragraphs and quotes, rules stated in rule blocks and linked from prose. Violations that predate the rule are listed per file in `reference/spec/SPEC-LINT-BASELINE.json`; a new one fails CI, and a fixed one makes the baseline shrink (a warning, a failure under `rfc.py check --strict`). A justified single exception is a `spec-lint: allow RULE reason="…"` comment next to the text; an unused or unexplained one is a finding.
 
 | Field | Value |
 |---|---|

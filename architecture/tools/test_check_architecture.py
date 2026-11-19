@@ -671,38 +671,6 @@ class TrackedByStateTests(GapRecordTests):
         self.assertTrue(any("could not be verified" in f for f in blind))
 
 
-class LimitPhrasingLintTests(unittest.TestCase):
-    """Warn-only lint for limits stated in prose instead of a marker (metel-core#1235)."""
-
-    def lint(self, text):
-        root = Path(tempfile.mkdtemp())
-        self.addCleanup(shutil.rmtree, root, True)
-        spec = root / "reference" / "spec"
-        spec.mkdir(parents=True)
-        (spec / "types.md").write_text(text)
-        return [str(w) for w in ca.lint_limit_phrasing(spec, root)]
-
-    def test_prose_limit_is_flagged_with_its_line(self):
-        warnings = self.lint("# T\n\nNamed records are planned, not implemented.\n")
-        self.assertEqual(1, len(warnings))
-        self.assertIn("types.md:3", warnings[0])
-
-    def test_marker_and_since_notes_are_not_flagged(self):
-        self.assertEqual([], self.lint("> **Gap** GAP-TYPES-001\n> **Limitation** LIMIT-X-001: not yet built.\n> **Planned for v0.13.0:** not yet.\n"))
-
-    def test_code_fences_html_and_generated_exemptions_are_not_flagged(self):
-        text = (
-            "```\nnot yet\n```\n"
-            "<span class=\"rigor-backlink\">_Exempt from fixture coverage: not implemented._</span>\n"
-            "<!-- doc-example: expect-fail reason=\"not yet\" -->\n"
-        )
-        self.assertEqual([], self.lint(text))
-
-    def test_lint_never_fails_the_check(self):
-        # Warnings are separate from findings: run_checks does not include them.
-        self.assertFalse(hasattr(ca, "lint_limit_phrasing") and "lint_limit_phrasing" in ca.run_checks.__code__.co_names)
-
-
 class PendingMarkerTests(unittest.TestCase):
     """`> **Pending** metel-core#N` markers (metel-core#1418): the transient "not implemented yet,
     an issue tracks it" marker, valid while the issue is open and has a milestone."""
@@ -768,23 +736,6 @@ class PendingMarkerTests(unittest.TestCase):
     def test_a_marker_in_a_code_fence_is_ignored(self):
         self.chapter("```\n> **Pending**\n```\n")
         self.assertEqual([], self.check(self.OPEN))
-
-    def lint(self, text):
-        (self.spec / "types.md").write_text(text)
-        return [str(w) for w in ca.lint_limit_phrasing(self.spec, self.root)]
-
-    def test_the_marker_line_and_the_prose_it_follows_are_not_flagged(self):
-        text = "# T\n\nThe new form is not yet implemented.\n\n> **Pending** metel-core#1480\n"
-        self.assertEqual([], self.lint(text))
-
-    def test_prose_in_the_marker_paragraph_is_not_flagged(self):
-        self.assertEqual([], self.lint("# T\n\n> **Pending** metel-core#1480\n> not yet supported here.\n"))
-
-    def test_limit_prose_elsewhere_is_still_flagged(self):
-        text = "# T\n\nThe new form is not yet implemented.\n\n> **Pending** metel-core#1480\n\nAnother form is not supported.\n"
-        warnings = self.lint(text)
-        self.assertEqual(1, len(warnings), warnings)
-        self.assertIn("types.md:7", warnings[0])
 
     def test_run_checks_includes_the_pending_markers(self):
         self.assertIn("pending_resolver", ca.run_checks.__code__.co_varnames)
