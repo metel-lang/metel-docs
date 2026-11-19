@@ -188,7 +188,7 @@ distinct situation sharing one code:
   anonymous record, a `fun` type, or an array whose element is not one of the impl's own
   type parameters. Only `extend<T> [T]: Aspect` — the array's element spelled exactly as
   one of the impl's own generics — is implemented today;
-- a `drop` body, while destructor invocation is not yet implemented.
+- a non-empty `drop` body (see [`Drop`](spec/ownership.md#drop)).
 
 **Fix:** each message names the way forward — usually a named struct, or the generic form
 where one exists.
@@ -482,7 +482,7 @@ An operator is applied to operands it does not support. Three forms share this c
   The message names the operator and both types.
 - **Binary arithmetic/ordering** on unsupported types.
 - **[Equality](spec/lexical.md#spec.lexical.operators.legality-1)** (`==`, `!=`) on anything other than a numeric type, `boolean`, `String` or
-  `char`. `==` does not yet dispatch through the `Eq` aspect, so structs, enums, arrays,
+  `char`. `==` is defined on those types only, so structs, enums, arrays,
   tuples and references are rejected; use `.eq(..)` on a type that implements `Eq`.
 
 Address-of (`&`, `&var`) applied to a non-addressable expression — a literal, a call result, a struct/enum construction — is not one of this code's cases: both forms get temporary lifetime extension. See [Expressions — References](spec/expressions.md#references).
@@ -1843,7 +1843,7 @@ The interpreter reached an impossible state. This is a bug in the interpreter �
 
 ### I0002 — Not implemented
 
-The program uses a language feature that is not yet supported in this version of the interpreter.
+The program uses a recognized construct the interpreter has no implementation for.
 
 ```
 [I0002] internal error: generic functions are not supported in v0.1

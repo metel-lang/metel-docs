@@ -150,7 +150,7 @@ interpolation to; Metel does, so no macro workaround is needed.
 > This is not necessarily permanent. Once an effect system exists, whether an effect-performing
 > call should be allowed inside `${…}` is an open design question. An effect-axis restriction
 > (`${…}` may not perform an effect) is the only one that would remain viable, and it is only
-> expressible once an effect system lands. See `algebraic-effects.md` §15 and Open Question 7.
+> expressible with an effect system. See `algebraic-effects.md` §15 and Open Question 7.
 
 ```metel
 fun side_effect() -> i64 {
@@ -343,11 +343,13 @@ A character literal has type `Char`.
 
 ##### Legality Rule {#spec.lexical.operators.legality-1}
 
+> **Limitation** LIMIT-TYPE-CONSTRUCTION-003: `==` does not dispatch through the `Eq` aspect, so only the primitive types are accepted.
+
 `==` and `!=` take two operands of one type, which must be a numeric type, `boolean`, `String` or
 `char`. Two operands of different types are `T0001`; an operand of any other type, a struct, enum,
 array, tuple or reference, is a type error (`T0005`).
 
-<!-- rfc.py:last_reviewed 7aae970193f94e38bc185aef533ec5db127b3c47 -->
+<!-- rfc.py:last_reviewed 3f16a69509d7d1be74c6f1e9d7525eaecc9f3cbe -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
