@@ -1782,8 +1782,6 @@ the `?`.
 <details>
 <summary>Formal rules</summary>
 
-<!-- spec-lint: allow limit-in-prose reason="type inference order: the return type is not yet known at that point of checking, not a limit" -->
-
 ##### Legality Rule {#spec.functions.the-operator.legality-1}
 
 The `?` operator requires an operand of type `Result<T, E>` or `Option<T>` whose type
@@ -1792,6 +1790,8 @@ operand, or any other pairing, is a type error. When the return type is not yet 
 operand's constructor fixes it.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- spec-lint: allow limit-in-prose reason="type inference order: the return type is not yet known at that point of checking, not a limit" -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0182](../../rfcs/4-implemented/rfc-0182-question-mark-on-option.md)_</span>

@@ -124,11 +124,19 @@ class Allows(unittest.TestCase):
         text = self.allow() + "RFC-0123 is not yet supported.\n"
         self.assertEqual(rules(text), ["internal-number"])
 
+    RULE = ("##### Legality Rule {#spec.a.b.legality-1}\n\nThis is not yet a thing.\n\n"
+            "<!-- rfc.py:last_reviewed abc -->\n")
+
     def test_an_allow_before_a_rule_heading_covers_the_whole_rule_block(self):
-        rule = ("##### Legality Rule {#spec.a.b.legality-1}\n\nThis is not yet a thing.\n\n"
-                "<!-- rfc.py:last_reviewed abc -->\n")
-        self.assertEqual(spec_lint.lint_text(self.allow() + "\n" + rule, "x.md"), [])
-        self.assertEqual(rules(rule), ["limit-in-prose"])
+        self.assertEqual(spec_lint.lint_text(self.allow() + "\n" + self.RULE, "x.md"), [])
+        self.assertEqual(rules(self.RULE), ["limit-in-prose"])
+
+    def test_an_allow_after_a_rules_last_reviewed_line_covers_that_rule_block(self):
+        self.assertEqual(spec_lint.lint_text(self.RULE + "\n" + self.allow() + "\nOther text.\n", "x.md"), [])
+        # ...but not the rule above it, nor the prose after.
+        other = "##### Legality Rule {#spec.a.b.legality-2}\n\nA clean rule.\n\n<!-- rfc.py:last_reviewed abc -->\n"
+        text = self.RULE + "\n" + other + "\n" + self.allow() + "\n"
+        self.assertEqual(sorted(f.rule for f in spec_lint.lint_text(text, "x.md")), ["allow-invalid", "limit-in-prose"])
 
     def test_an_allow_that_covers_nothing_is_a_finding(self):
         self.assertEqual(rules(self.allow() + "A clean paragraph.\n"), ["allow-invalid"])
