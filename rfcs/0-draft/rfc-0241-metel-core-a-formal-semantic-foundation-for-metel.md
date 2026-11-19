@@ -24,8 +24,10 @@ The objectives are:
 5. Support for an eventual self-hosted Metel compiler, without tying the formal specification to the compiler's implementation
    language.
 
-Metel-Core is proposed as a formal language, not necessarily as a production compiler intermediate representation; reusing it
-as a typed IR is a possible later direction (section 8.3).
+Metel-Core is proposed first as a formal language. This draft also explores making it the compiler's own typed representation
+layer, so that the formal model and the implementation share one calculus and cannot drift apart, and so that the compiler can
+grow toward compiled code in layers without waiting on the borrow checker (section 7). That direction is exploratory; its
+design choices are open (Open questions 25 to 31).
 
 This is a design draft, direction-setting and not syntax. It fixes the architecture and the research goals and does not attempt
 to finalize the calculus. Nothing here is accepted. Implementation: not started.
@@ -335,9 +337,142 @@ Surface Metel -> Inference and Elaboration -> Typed Metel-Core
 
 A checker implemented and verified in Lean could establish properties of accepted Metel-Core programs. It would not verify the
 backend, and it would not show that elaboration preserves the meaning of Surface Metel. Using it in a strictly standalone
-self-hosted toolchain needs further architectural decisions. This stays exploratory.
+self-hosted toolchain needs further architectural decisions. Section 7 develops this direction in more detail. It stays
+exploratory.
 
-### 7. Incremental milestones
+### 7. Metel-Core as the compiler's representation layer
+
+Section 6 left use as a compiler IR as a possible later direction. This section sets out what that direction would involve and
+why it may be worth taking early. It does not decide the calculus; the unresolved choices are listed as options and in Open
+questions 25 to 31.
+
+The motivating observation is that the formal calculus and the compiler's IR need not be two things. One Core with an
+executable reference evaluator is what ties the formal model to the implementation (the differential testing of section 6),
+and it gives the compiler a place to run checks that do not depend on inference state. It also lets compiled execution be
+reached in layers, each of which erases the checks of the layer above, without the borrow checker or the origin machinery as a
+prerequisite (section 7.5).
+
+#### 7.1 Layers
+
+| Layer | Content | Checks that run on it |
+|---|---|---|
+| L0 Surface AST | parse tree | syntax |
+| L1 Typed surface | the typed AST of today: surface-shaped, for diagnostics | type errors |
+| **L2 Metel-Core** | desugared and fully type-annotated; closures with explicit environments; dispatch explicit; no inference state | a well-formedness lint; the formalized judgments |
+| L3 Instances | monomorphised and keyed (the "Instance preparation" roadmap theme) | none |
+| **L4 Ownership-explicit** | moves, copies, clones and drops as explicit operations, with drop flags | move check, then borrow, origin and linear checks as they are settled |
+| L5 Backend | bytecode, C, wasm or an engine bridge | none |
+
+Each lowering is a function. A statement that it preserves meaning is a candidate proof obligation (milestone 8). The existing
+pattern of a witness type per completed pass (`ElaboratedModuleGraph` records that elaboration ran) generalizes to one witness
+per layer.
+
+#### 7.2 The implementation today (observed 2026-11-19)
+
+From `metel-frontend` (`data/typed_ast.rs`, `pipeline/`):
+
+- There is no core IR. The interpreter evaluates the typed AST directly, and elaboration only resolves `MethodDispatch` per
+  call site.
+- A generic body is checked at its definition for diagnostics but is not typed once for use: a `GenericClosure` keeps its body
+  untyped "for runtime re-evaluation at each call site's concrete type", and generic function bodies are reconstructed per
+  instance at runtime (`construct_generic_body`). The generic-body defects tracked from metel-core#1704 (a reconstruction with
+  empty inference facts) look like one class with this as the cause. That is a hypothesis to verify, not an established fact.
+- Identity is partial. `Ident`, `Path`, `FieldAccess` and `Call` carry `Option` identities that are `None` when no identity
+  context was available, and method dispatch can be chosen by a declaration span (`impl_site`) and a name.
+- Surface forms leak into typed nodes: `Cast` holds a `TypeExpr`, and closures hold surface parameters.
+- Some of Core already exists: coercions are explicit (`SingletonCoerce`, `RowCoerce`, `DynCoerce`), closures carry their call
+  multiplicity and mutation, and places are a distinct node (`TypedPlace`).
+- Row types (`Record`, `OpenRecord`, `SymbolicRow`) and reference types (`Reference`, `MutReference`) are ordinary types; the
+  reference types have no region slot.
+
+#### 7.3 Design rules for Metel-Core
+
+- **Total.** Every identity is present. A missing one is an internal error from the lint. Names live in a side table for
+  printing only.
+- **No inference state and no surface types.** Every binder and node carries a resolved type.
+- **Definite dispatch.** A call targets a function identity or a dictionary projection, never a name or a span.
+- **Structured.** Loops, `break`, `continue` and `return` stay as labelled constructs. A control-flow graph belongs to L4, if
+  and when borrow checking needs one.
+- **A dynamic meaning for moves.** Semantics over a store of locations, where a move leaves its slot uninitialized. The static
+  move check is then the statement that no accepted program reads an uninitialized slot.
+- **Reserved extension points, not features.** A region slot on reference types (to be filled by whatever RFC-0159 settles),
+  effects entering only through `call`, and rows kept in the type language.
+
+#### 7.4 Sketch
+
+Illustrative only; neither the constructs nor their spelling are proposed here.
+
+```text
+types   t ::= prim | Named(NominalId, ts) | Record(row) | Array t | Sized(t, n)
+            | Ref(q, t)                 q in {shared, excl}; later Ref(q, region, t)
+            | Fun(call_mult, call_mut, ts -> t) | Dyn(aspect) | Never
+            | a | forall a. D* -> t     reserved in the datatype; see 7.7
+
+terms   e ::= lit | local(LocalId) | global(FunId, ts, dicts)
+            | let x : t = e in e
+            | call(e, es)               the only place effects can later enter
+            | closure(FunId, env*)      explicit environment, capture modes resolved
+            | ctor / proj(FieldId) / variant(VariantId, es)
+            | match e { p => e }        nested patterns kept; first match wins
+            | loop / break / continue / return     labelled, structured
+            | coerce(kind, e)           Singleton / Row / Dyn
+            | dict(InstId, dicts) | dict_proj(d, MethodId)
+
+places  p ::= local | proj(p, FieldId) | index(p, e) | deref(e)
+ops       read(p)   ref(q, p)   assign(p, e)
+```
+
+Desugarings worth stating: `?` becomes `match` plus `return`; operators and method calls become `call` of a resolved function
+identity; a `GenericClosure` becomes a type abstraction around a closure, typed once; `dyn` is an existential package of a
+dictionary and a value, introduced by `DynCoerce`; `&<rvalue>` (`RefTemp`) becomes a `let` of a temporary plus a `ref`; a panic
+is `Never`, consistent with panics being uncatchable (RFC-0153 section 1a).
+
+#### 7.5 Ownership as a filter, not a prerequisite
+
+If the language has value semantics, a checker is a filter and not an input to code generation: a program accepted by any
+checker means the same under the reference semantics. Ownership analysis then becomes an optimization layer (in-place moves
+instead of copies) and a safety layer, and a compiled profile need not wait on it.
+
+- References that cannot be stored need no lifetimes and compile to plain pointers. A borrow checker later is a pass that only
+  rejects programs.
+- Drop order is observable, so it needs move tracking. Dynamic drop flags are the fallback until static analysis exists.
+- Linear checking is check-only and erased at code generation.
+
+The theorem shape this suggests for the first proof effort: a well-typed, move-checked Core program never reads an
+uninitialized slot. This section does not replace Stages 2 to 4. Borrowing, origins and brands remain the formalization's
+substance. It says that the compiler's progress toward compiled code is not gated on them.
+
+#### 7.6 Staging
+
+Each step can ship on its own:
+
+1. **Define Core and its lint**, lowered from the typed AST, with a textual dump. The interpreter is untouched.
+2. **A Core evaluator**, run differentially against the existing fixture corpus, which acts as the oracle. The spec's numbered
+   Legality and Dynamic Semantics rules and the fixtures that cite them are the link between the formal rules and the
+   implementation. The same evaluator is what compile-time execution needs before any code generation exists (the Comptime
+   theme, RFC-0132). It also gives the "Runtime value semantics" theme a place to make copying and moving explicit.
+3. **Explicit ownership operations (L4)**, with move checking re-expressed over them, which is where "Move check default-on"
+   would get cheaper.
+4. **Instances and a thin backend** for a subset: the "Compiled profile v0" theme, with the borrow checker absent and drops
+   tracked dynamically.
+
+None of this depends on the core-surface freeze, because Core is internal.
+
+#### 7.7 Options for generics (none chosen)
+
+| Option | What it is | For | Against |
+|---|---|---|---|
+| A. Polymorphic Core | System F with dictionary parameters; each generic body typed once | removes the reconstruction defect class; clean to formalize; dictionaries are the "stored ownership interfaces" of the Abstract ownership solver theme | the checker must emit a witness for every bound use, which it does not today; largest work item |
+| B. Monomorphic-only Core | Core exists per instance only, taken from the existing reconstruction | cheapest; reuses what exists | the defect class stays in L1 |
+| C. A, then monomorphization as a pass | polymorphic L2, specialization as L2 to L3 | the principled end state | same cost as A |
+
+One way to keep A or C reachable while starting at B: put the quantifier and dictionary nodes in the Core datatype from the
+start, have the first lowering emit only monomorphic instances, and have the lint reject the reserved nodes until they are
+enabled. A side effect is that a reconstructed instance that has lost a type then fails the lint loudly instead of being wrong
+silently. The formalization could stage the same way: a simply typed calculus with records, closures and a store first, then
+polymorphism and dictionaries. Whether to do this is Open question 25.
+
+### 8. Incremental milestones
 
 Indicative, not a committed roadmap:
 
@@ -353,7 +488,10 @@ Indicative, not a committed roadmap:
 8. **Surface-language correspondence.** Elaboration from Surface Metel into Metel-Core and the preservation of typing and
    semantics.
 
-### 8. Proposed initial outcome
+Milestones 1 and 2 are the formal counterparts of steps 1 and 2 of section 7.6, and milestone 8 is where the lowering-preservation
+statements of section 7.1 belong.
+
+### 9. Proposed initial outcome
 
 The first phase establishes a concrete design for Metel-Core, not a proof of the whole language. Initial deliverables:
 
@@ -388,6 +526,16 @@ This RFC does not change the language and does not decide any of the designs bel
 - **RFC-0071** (integrated, ownership and move semantics), **RFC-0089** (accepted, linear types) and **RFC-0091** (under review,
   linear records): the ownership semantics Stages 1 and 2 formalize. Linearity is deferred in the language; the core may begin
   with affine values only.
+- **Roadmap themes touched by section 7** (named by theme, since none has a cut version): Instance preparation (L3);
+  Compiled profile v0 (L5 for a subset); Runtime value semantics (metel-core#277, which the Core evaluator gives a place to
+  make copying and moving explicit); Comptime (RFC-0132, whose execution model needs an evaluator over typed IR before any code
+  generation); Abstract ownership solver (metel-core#1821, whose stored ownership interfaces and "witnesses carried to
+  elaboration" are the dictionaries of option A in section 7.7); Effects design settlement (Core reserves `call` as the only
+  entry point and decides nothing else).
+- **RFC-0206** (Copy and Clone, implemented): the class of a type decides whether a use copies or moves, so Core's use of a
+  place has to resolve that, statically for concrete types and through a dictionary for a generic parameter.
+- **ADR-0054** (stable identity) supplies the identities Core requires to be total. **metel-core#1704** and the defects
+  tracked from it are the evidence for section 7.2's generic-body point; this RFC does not change how they are fixed in a patch.
 - **RFC-0028** (refused) and **RFC-0052** (superseded) were earlier memory-model and lifetime proposals; nothing here revives them.
 
 ---
@@ -402,6 +550,11 @@ This RFC does not change the language and does not decide any of the designs bel
 3. **Informal specification with testing.** Prose specifications, compiler tests and implementation-driven validation are cheaper
    at first. They give weaker guarantees about subtle interactions between ownership, borrowing and unsafe abstractions. The
    formalization complements testing and does not replace it.
+4. **Keeping Metel-Core a purely formal artifact, never a compiler IR.** Avoids committing the compiler to a calculus that is
+   still moving. It leaves the compiler with no representation on which to run inference-independent checks, and it keeps the
+   formal model and the implementation as two things that have to be kept in correspondence by testing alone.
+5. **A separate compiler IR beside Metel-Core.** The compiler gets a representation shaped for its own needs, free of the
+   calculus's constraints. Two cores then diverge, and the differential test of section 6 has to bridge a larger gap.
 
 ---
 
@@ -413,6 +566,10 @@ This RFC does not change the language and does not decide any of the designs bel
   proofs. Incremental development and careful modularization reduce the cost.
 - **Divergence from implementation.** A verified model does not guarantee that the compiler implements the same semantics.
   Keeping them in correspondence needs dedicated validation work.
+- **Freezing a calculus too early.** Effects, row polymorphism and regions are unsettled. A Core used by the compiler has to be
+  explicitly unstable until they are, with extension points reserved (section 7.3) and nothing decided about them.
+- **Two evaluators during the transition.** The tree-walking interpreter and the Core evaluator coexist while the fixture
+  corpus is run against both. The cost is bounded by the differential run, which is also the check that they agree.
 - **Increased development effort.** Formalization adds work to language development. The expected benefit is more confidence in
   the design, clearer specifications, and the possibility of stronger correctness guarantees.
 
@@ -456,8 +613,25 @@ This RFC does not change the language and does not decide any of the designs bel
 20. Which properties are proved first?
 21. How can language extensions avoid invalidating large parts of existing proofs?
 22. Which checking algorithms get executable Lean implementations?
-23. Should Metel-Core become a production compiler IR?
+23. Should Metel-Core become a production compiler IR? Section 7 and questions 25 to 31 develop the case; none is decided.
 24. How can the formalization best support a self-hosted compiler?
+
+**Compiler representation (section 7)**
+
+25. Generics in Core: polymorphic with dictionary parameters, monomorphic per instance only, or polymorphic with specialization
+    as a later pass (section 7.7)? Can the first datatype reserve the quantifier and dictionary nodes while the first lowering
+    emits monomorphic instances only?
+26. Rows: how much row polymorphism has to survive into compiled code? Is label-offset evidence needed, or can compiled code
+    require closed rows after instance preparation?
+27. Semantic model: is a store of locations with moved-from meaning uninitialized the right dynamic meaning, or should moves be
+    explicit operations from the start (question 2)?
+28. Shape: a structured Core with a control-flow graph only at L4, A-normal form throughout, or a control-flow graph from the
+    start?
+29. Effects: is reserving `call` as the sole entry point enough, or does handler control need a representation decision before
+    Core is used by the compiler?
+30. Placement: a module inside `metel-frontend` reusing its identity types, or a separate crate, and at what point does the Lean
+    project need to import the datatype?
+31. Proof ordering: type safety of Core first, preservation of each lowering first, or both in parallel?
 
 ---
 
