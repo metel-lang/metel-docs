@@ -23,7 +23,7 @@ holds; narrowing a field of a field in place is RFC-0150's."
 
 Reproduced against current `develop`:
 
-```metel
+```metel repro=ok
 struct Inner { b: String, c: String }
 struct Outer { a: Inner, d: String }
 fun take(o: Outer) -> i64 { 1 }

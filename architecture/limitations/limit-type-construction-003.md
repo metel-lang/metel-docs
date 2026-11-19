@@ -18,7 +18,7 @@ Construction accepts `==`/`!=` only when the operand type is numeric,
 that implements `Eq`, is rejected rather than dispatched to the `Eq` aspect.
 Reproduced against current `develop`:
 
-```metel
+```metel repro=T0005
 struct P { x: i64 }
 fun main() {
     let a := P { x = 1 };

@@ -17,7 +17,7 @@ The evaluator never runs a `Drop` implementation. Because a `drop` body
 would then silently never execute, the typechecker rejects any `drop` body
 that is not empty. Reproduced against current `develop`:
 
-```metel
+```metel repro=T0001
 struct G { n: i64 }
 extend G: Drop { fun drop(&var self) { println("dropped"); } }
 fun main() { let g := G { n = 1 }; }

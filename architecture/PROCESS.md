@@ -88,6 +88,13 @@ renders from. A record never names a version: the tracking issue's milestone is 
   in the 2026-11 audit said "tracked as metel-core#N" there and nowhere the tool looked). Resolve
   the record, re-plan it with a new issue in `tracked_by`, or reword the history so it does not
   read as a plan. `--release-gate` refuses to tag on it, like the `tracked_by` case above.
+- **A reproduction is executable.** A ```` ```metel ```` fence in an active record may carry the result
+  its program gives today: ```` ```metel repro=T0002 ```` (rejected with that diagnostic) or
+  ```` ```metel repro=ok ````. metel-core's `tools/check_record_repros.py` runs every such fence against
+  the interpreter in CI and under `--strict` in `/cut-release`; a mismatch means the limitation was
+  fixed or changed shape (resolve the record or update the example). A reproduction is one
+  self-contained file with a `main`; a limitation that needs several modules has none. Here,
+  `check_architecture.py` only checks the spelling.
 - `known`/`accepted`/`mitigated`/`planned` count as **active** for every "does a marker
   still make sense" check below (constant: `GAP_ACTIVE_DISPOSITIONS` /
   `LIMIT_ACTIVE_DISPOSITIONS`, same four values, separately named per tool); `resolved`
