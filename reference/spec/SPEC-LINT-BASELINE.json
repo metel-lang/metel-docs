@@ -6,7 +6,7 @@
     "unlinked-normative": 13
   },
   "reference/spec/declarations.md": {
-    "internal-number": 22,
+    "internal-number": 20,
     "limit-in-prose": 1,
     "long-paragraph": 1,
     "long-quote": 1,
@@ -20,35 +20,24 @@
     "unlinked-normative": 6
   },
   "reference/spec/functions.md": {
-    "internal-number": 13,
+    "internal-number": 11,
     "long-paragraph": 2,
     "section-links-no-rule": 2,
     "unlinked-normative": 2
   },
   "reference/spec/lexical.md": {
-    "internal-number": 1,
-    "limit-in-prose": 2,
-    "long-paragraph": 1,
-    "long-quote": 1,
-    "unlinked-normative": 1
+    "limit-in-prose": 1
   },
   "reference/spec/modules.md": {
-    "internal-number": 3,
-    "long-paragraph": 1,
-    "section-links-no-rule": 9,
-    "unlinked-normative": 3
+    "unlinked-normative": 1
   },
   "reference/spec/ownership.md": {
-    "internal-number": 129,
+    "internal-number": 128,
     "limit-in-prose": 8,
     "long-paragraph": 5,
     "long-quote": 2,
     "section-links-no-rule": 7,
     "unlinked-normative": 7
-  },
-  "reference/spec/runtime.md": {
-    "internal-number": 2,
-    "section-links-no-rule": 8
   },
   "reference/spec/types.md": {
     "internal-number": 14,
