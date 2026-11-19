@@ -80,6 +80,14 @@ renders from. A record never names a version: the tracking issue's milestone is 
   tag on it (metel-core#1525); `LIMIT-*`'s own `planned` check is looser (schema only, no forced RFC
   linkage) — this asymmetry is real, not an oversight described elsewhere in this
   document, and is worth knowing before assuming the two kinds are checked identically.
+- `accepted` is a deliberate boundary and carries no plan: it may not name `tracked_by` (use
+  `planned` if the work is scheduled).
+- **A plan that lives only in prose is still watched.** An active record with no `tracked_by` and no
+  `rfc` whose `## Resolution` cites issues (`metel-core#N` or `#N`) is a warning when every one of
+  those issues is closed: that is how a record outlives its plan (9 of the 11 stale records found
+  in the 2026-11 audit said "tracked as metel-core#N" there and nowhere the tool looked). Resolve
+  the record, re-plan it with a new issue in `tracked_by`, or reword the history so it does not
+  read as a plan. `--release-gate` refuses to tag on it, like the `tracked_by` case above.
 - `known`/`accepted`/`mitigated`/`planned` count as **active** for every "does a marker
   still make sense" check below (constant: `GAP_ACTIVE_DISPOSITIONS` /
   `LIMIT_ACTIVE_DISPOSITIONS`, same four values, separately named per tool); `resolved`
