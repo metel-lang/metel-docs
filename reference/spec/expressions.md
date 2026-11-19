@@ -202,8 +202,6 @@ fun main() -> i64 {
 
 ### Unqualified variant constructors
 
-> **Since v0.11.0 (RFC-0111).**
-
 A bare variant name may be used where the *expected* type determines which enum is meant —
 the expression-position counterpart of "Unqualified variant patterns" below. Both no-field
 and fieldful variants participate, and per RFC-0106 the empty-brace spelling `Red {}` is
@@ -336,8 +334,6 @@ the program must qualify or ascribe it.
 
 ### Unqualified variant patterns
 
-> **Since v0.11.0 (RFC-0107).**
-
 A match arm may name an enum variant without its `Enum::` prefix when the variant
 resolves unambiguously against the scrutinee's known enum type. The candidate enum is
 *only* the scrutinee's own type — this is type-directed resolution, not a lexical import
@@ -375,8 +371,6 @@ catch-all. The fully-qualified form (`Colour::Red`) remains valid everywhere; qu
 is optional, not removed.
 
 ### Struct patterns
-
-> **Since v0.13.0.**
 
 > **Gap** GAP-EXPRESSIONS-001
 
@@ -470,8 +464,6 @@ determine the remainder type after removing those labels; otherwise it is reject
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 ### Matching through a reference
-
-> **Since v0.11.0 (RFC-0108).**
 
 A scrutinee of reference type (`&T`, `&var T`, and chains thereof) matches against `T`'s
 own patterns — reference layers are peeled before pattern resolution, the same way field
@@ -1033,8 +1025,6 @@ binding may be reassigned by the loop body or step expression.
 
 ### For-In
 
-> **Availability:** Array and range iteration since v0.1.0. User-defined `Iterable<T>` implementations since v0.4.0.
-
 [`for-in` works on any type implementing the `Iterable<T>` aspect](runtime.md#spec.runtime.built-in-aspects.iterable-t.legality-1). The loop variable
 receives type `T`. `[T]`, `[T; N]` (array and fixed-size array), and `Range` (produced by
 `..` and `..=`) implement `Iterable<T>` by default. A `[T]` loop binding denotes an
@@ -1238,8 +1228,6 @@ sub-expressions are not evaluated.
 
 ### References
 
-> **Availability:** Since v0.10.0.
-
 References provide explicit aliasing.
 
 ```metel
@@ -1264,8 +1252,6 @@ Rules:
   `*p = v` is the spelling that writes through
 
 Addressable places for both `&` and `&var` include named bindings (`x`), struct field access (`s.field`), tuple element access (`t.0`), array indexing (`arr[i]`), a dereference (`*p` — so `&*p` is a reborrow that shares the referent's storage), and chains thereof (`nested.outer.field`, `t.1.0`).
-
-> **Since v0.12.0:** `&` and `&var` may borrow a temporary expression.
 
 Neither `&expr` nor `&var expr` requires `expr` to be an addressable place. A literal, call
 result, struct or enum construction, or other non-addressable expression is materialized
@@ -1360,8 +1346,6 @@ to the chain's leaf storage. A write through the reference updates that original
 </details>
 
 #### Dereference
-
-> **Changed in v0.11.0 (RFC-0110): `*p` added; assignment to a reference-typed binding now rebinds it, use `*p = v` to write through.**
 
 `*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; as an
 assignment target, `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
@@ -1676,8 +1660,6 @@ fun main() -> i64 {
 - `loop { }` — a loop with no reachable `break` — has type `!` (Never). See [Never Type](types.md#never-type).
 
 ### Break, Continue, and Return
-
-> **Availability:** Since v0.10.0.
 
 [`return`, `break`, and `continue` are expressions of type `!`](types.md#spec.types.never-type.dynamics-1) (Never — see
 [Never Type](types.md#never-type)), not statements. Since `!` is a subtype of

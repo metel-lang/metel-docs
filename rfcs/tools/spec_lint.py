@@ -38,6 +38,7 @@ SPEC_FILES = [
     "reference/spec/functions.md",
     "reference/spec/lexical.md",
     "reference/spec/modules.md",
+    "reference/spec/runtime.md",
     "reference/spec/ownership.md",
     "reference/spec/types.md",
     "reference/error-codes.md",

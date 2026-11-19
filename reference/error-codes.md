@@ -469,10 +469,7 @@ An operator is applied to operands it does not support. Three forms share this c
   `char`. `==` does not yet dispatch through the `Eq` aspect, so structs, enums, arrays,
   tuples and references are rejected; use `.eq(..)` on a type that implements `Eq`.
 
-> **Since v0.12.0:** address-of (`&`, `&var`) applied to a non-addressable expression — a
-> literal, a call result, a struct/enum construction — is no longer one of this code's
-> cases. Both forms now get temporary lifetime extension instead of being rejected; see
-> [Expressions — References](spec/expressions.md#references).
+Address-of (`&`, `&var`) applied to a non-addressable expression — a literal, a call result, a struct/enum construction — is not one of this code's cases: both forms get temporary lifetime extension. See [Expressions — References](spec/expressions.md#references).
 
 **Fix:** use compatible types, cast one operand, or bind the value to a name so it has an
 address.
@@ -860,10 +857,7 @@ generic parameter with the same bound.
 
 ### T0019 — Use of moved value
 
-> **Since v0.12.0, under `--move-check` only,** with one exception: using a field that was
-> already moved out of a nominal struct or record (reading it, or projecting it again) is
-> reported without the flag, because the narrowing that makes the field unavailable is a
-> type-level fact. Move checking is off by default in this release.
+This is reported under `--move-check` only, with one exception: using a field that was already moved out of a nominal struct or record (reading it, or projecting it again) is reported without the flag, because the narrowing that makes the field unavailable is a type-level fact. Move checking is off by default.
 
 An ownership rule from RFC-0071 §1/§7 was violated. Eight distinct situations share this
 code, each with its own message:
@@ -1129,8 +1123,6 @@ instead of `[T]` for storage that needs index-write access.
 
 ### T0024 — Read-copy of a non-`Copy` value out of a reference
 
-> **Since v0.12.1.**
-
 > **Retired (RFC-0185).** This code no longer fires. It rejected the implicit read-copy of a
 > non-`Copy` value out of a reference (RFC-0067a §3a), a conversion that no longer exists: a
 > reference is never read out implicitly, so `let x: T := r;` is
@@ -1149,8 +1141,6 @@ code's own coverage is visible rather than folded into one shared entry (an
 implementation gap in only one of the five would otherwise hide behind the other four).
 
 ### T0026 — Capture list required, incomplete, or incompatible
-
-> **Availability:** Since v0.13.0.
 
 A capture list is required, incomplete, or uses an incompatible capture form.
 
@@ -1173,8 +1163,6 @@ A capture list is required, incomplete, or uses an incompatible capture form.
 
 ### T0027 — Consuming capture without `once`
 
-> **Availability:** Since v0.13.0.
-
 A closure body consumes a capture but the literal/type is not `once`.
 
 **Fix:** mark the closure `once`.
@@ -1193,8 +1181,6 @@ A closure body consumes a capture but the literal/type is not `once`.
 <!-- rfc.py:fixtures:end -->
 
 ### T0028 — Mutating capture without `var`
-
-> **Availability:** Since v0.13.0.
 
 A closure body mutates a capture, or uses `[&var x]`, but is not `var`.
 
@@ -1225,8 +1211,6 @@ A closure body mutates a capture, or uses `[&var x]`, but is not `var`.
 <!-- rfc.py:fixtures:end -->
 
 ### T0029 — `var` closure called through a shared reference
-
-> **Availability:** Since v0.13.0.
 
 A `var` closure is called through a shared reference.
 
@@ -1797,8 +1781,6 @@ ordinary control flow instead of reaching the `panic` call.
 <!-- rfc.py:fixtures:end -->
 
 ### R0015 — Re-entrant mutating closure call
-
-> **Availability:** Since v0.13.0.
 
 A `var` closure tried to call the same closure value again before its current invocation
 finished. This is an uncatchable assertion-class runtime error.

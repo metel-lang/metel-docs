@@ -19,8 +19,6 @@ The unit type `()` is only written explicitly when needed as a type parameter (e
 
 ## Sized Numeric Types
 
-> **Availability:** Since v0.8.0.
-
 Metel provides exact-width numeric types for low-level and systems programming. `i64` and `f64` are the default integer and floating-point types in ordinary code.
 
 **Signed integers:**
@@ -148,8 +146,6 @@ Floating-point overflow follows IEEE 754 behavior.
 </details>
 
 ## Char
-
-> **Availability:** Since v0.8.0.
 
 `Char` represents a single Unicode scalar value. Character literals use single quotes: `'a'`, `'\n'`, `'\u{1F600}'`.
 
@@ -443,8 +439,7 @@ Equality, ordering and hashing of a tuple are those of every row: the fields com
 
 ## Records and Rows at a Glance
 
-> **Availability:** Since v0.14.0. This section is a map; the rules are stated where each
-> topic is specified, linked below.
+This section is a map; the rules are stated where each topic is specified, linked below.
 
 Every product type in Metel has a **row**: the set of its labelled fields, each with a
 type. An [anonymous record](#anonymous-records) *is* its row. A `struct` or `record`
@@ -507,8 +502,6 @@ fun main() {
 ```
 
 ## Anonymous Records
-
-> **Availability:** Since v0.12.0.
 
 A record is a product type whose components are *labelled*, where a tuple's are positional.
 It is written with a dot before the braces, `.{ ... }`, and no keyword (RFC-0225):
@@ -589,7 +582,7 @@ A bare identifier inside projection braces is always a **field label**, never a 
 row variable. Chained projection (`S.{ .a }.{ .b }`) and projection in pattern position are not
 accepted.
 
-> **Since v0.14.0:** An empty projection in type position names the empty branded residual.
+An empty projection in type position names the empty branded residual.
 
 If the nominal type itself declares no fields, this is a full-width projection and
 normalizes to that nominal type. An empty branded residual of a non-empty type
@@ -871,8 +864,6 @@ block rules, not by a record-specific message.
 
 `Array<T>` is the built-in ordered sequence type. The shorthand `[T]` is preferred.
 
-> **Changed in v0.14.0 (RFC-0171):** the shorthand is now prefix `[T]` rather than postfix `T[]`.
-
 ```metel
 fun main() -> i64 {
     let nums: [i64] := [1, 2, 3];
@@ -892,8 +883,6 @@ fun main() -> i64 {
 ```
 
 Arrays are usable in `for-in` loops.
-
-> **Changed in v0.12.0 (RFC-0126):** `[T]` is no longer an owning, mutable buffer.
 
 `[T]` is a non-owning, immutable, unconditionally-`Copy` view over a contiguous run — a
 pointer and a length — produced only by borrowing a `List<T>`, a `[T; N]`, or another slice.
@@ -981,8 +970,6 @@ fun sum(xs: [i64; 3]) -> i64 {
     }
 }
 ```
-
-> **Changed in v0.12.0 (RFC-0126):** unannotated array literals now have `[T; N]`, not `[T]`.
 
 An unannotated literal such as `[1, 2, 3]` has type `[i64; 3]`: its length is statically
 known and it owns its elements. Slices arise only from borrowing, never from a literal. The
@@ -1212,8 +1199,6 @@ Every literal index into `[T; 0]` is statically rejected because it is out of bo
 
 ## References
 
-> **Availability:** Since v0.10.0.
-
 Reference types provide explicit aliasing.
 
 ```metel
@@ -1260,8 +1245,6 @@ fun main() -> i64 {
     return c.value;   // 42
 }
 ```
-
-> **Availability:** `&var` for lvalue paths since v0.10.0.
 
 <details>
 <summary>Formal rules</summary>
@@ -1371,8 +1354,6 @@ the referent out, one `*` per reference layer, and only a `Copy` referent can be
 
 ## List\<T\>
 
-> **Availability:** Since v0.8.0.
-
 `List<T>` is the standard growable-sequence type. Use it when you need to append, pop, or otherwise mutate a sequence. Use `[T]` when the sequence is a borrowed view after construction.
 
 ```metel
@@ -1404,9 +1385,6 @@ fun main() {
 | `as_slice` | `(&self) -> [T]` | View as an immutable array (no copy) |
 
 `List<T>` does not implicitly coerce to `[T]`. Call `.as_slice()` to get a read-only view.
-
-> **Changed in v0.12.0 (RFC-0126):** `as_slice` returns a live borrowed view rather than a
-> copied result.
 
 `as_slice` returns the same underlying storage, and the result remains a view for as long as
 it is used, bounded by `self`'s lifetime. "No copy" therefore describes the value's full
@@ -1497,8 +1475,6 @@ A `List<T>` is distinct from `[T]`; obtaining its array view requires an explici
 </details>
 
 ## Type Ascription
-
-> **Availability:** Since v0.2.0.
 
 The `:` operator [asserts that an expression has a given type](#spec.types.type-ascription.legality-1). It is a type-inference hint that also supplies the expected type for unsizing coercions; it never reads through a reference.
 
@@ -1682,8 +1658,6 @@ any type with an applicable `From<S>` implementation is a valid cast target.
 
 ## Generics
 
-> **Availability:** Built-in generic types (`Option<T>`, `Result<T, E>`, `[T]`) since v0.1.0. User-defined generic functions and types since v0.3.0.
-
 Types and functions can be parameterized with `<T>` syntax.
 
 ```metel
@@ -1849,8 +1823,6 @@ cannot be rejected by it: if it is, the two checks disagree, which is the intern
 
 ### Row bounds
 
-> **Availability:** Since v0.12.0.
-
 A bound written as a row accepts any type carrying at least the listed fields:
 
 ```metel
@@ -1984,9 +1956,6 @@ pair or a configuration fragment — can use an anonymous record.
 Both bound kinds are opted into; they differ only in *granularity*. An **aspect** bound is
 opted into per aspect, by writing an implementation. A **row** bound is opted into per type,
 by choosing the `record` kind. Nothing is implicit in either direction.
-
-> **Since v0.13.0 (RFC-0137, metel-core#857):** a plain `struct`'s row is not visible to
-> row-bound satisfaction.
 
 Every struct is represented internally as `(brand, row)` (see [Ownership —
 Narrowing](ownership.md#narrowing)). The table's "no" is a visibility gate, not the absence
@@ -2946,8 +2915,6 @@ negatively; entries that cannot all hold, such as `.{ .x, !.x, .. }` and `.{ .x:
 
 ## Never Type
 
-> **Availability:** Since v0.10.0.
-
 `!` (Never) is the **uninhabited bottom type** — no value of type `!` can ever be
 constructed. A `loop` with no reachable `break` has type `!`:
 
@@ -3256,8 +3223,6 @@ a reachable ordinary return is a type error.
 `Option<T>` is the built-in optional type. There is no null — all absence is expressed via `Option<T>`.
 
 [The type of `None` is `Option<T>` for some `T` that must be determinable from context](#spec.types.perhaps-t.legality-1). If no context constrains `T` — for example, a bare `let x = None` with no annotation and no subsequent use that pins the element type — the program is a type error. An explicit annotation is required in that case:
-
-> **Changed in v0.11.0 (RFC-0111): `None` and `Some` are ordinary variants of `Option<T>`, not literals.**
 
 `None` and `Some` have no special status in the grammar or the type system. They resolve exactly as `Red` does for a user-declared `enum Colour { Red, .. }` — bare where the expected type determines the enum, qualified (`Option::None`) anywhere. Everything said here about needing a determinable type follows from that general rule rather than from a rule about `None` specifically, and the same is true of `Result<T, E>`'s `Ok`/`Err`. See [Expressions — Unqualified variant constructors](expressions.md#unqualified-variant-constructors).
 
