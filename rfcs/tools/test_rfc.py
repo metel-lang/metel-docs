@@ -12,6 +12,27 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import rfc
 
 
+class RepoMarkdownFilesTests(unittest.TestCase):
+    """A nested checkout under a dot-directory (`.claude/worktrees/...`) is not corpus."""
+
+    def test_skips_markdown_under_dot_directories(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "rfcs").mkdir()
+            (root / "rfcs" / "a.md").write_text("x")
+            (root / "top.md").write_text("x")
+            nested = root / ".claude" / "worktrees" / "w" / "rfcs"
+            nested.mkdir(parents=True)
+            (nested / "b.md").write_text("x")
+            old = rfc.REPO_ROOT
+            rfc.REPO_ROOT = root
+            try:
+                found = sorted(str(f.relative_to(root)) for f in rfc.repo_markdown_files())
+            finally:
+                rfc.REPO_ROOT = old
+        self.assertEqual(found, ["rfcs/a.md", "top.md"])
+
+
 class ScheduledDraftTests(unittest.TestCase):
     def test_open_milestoned_tracker_rejects_draft(self):
         trackers = [{
