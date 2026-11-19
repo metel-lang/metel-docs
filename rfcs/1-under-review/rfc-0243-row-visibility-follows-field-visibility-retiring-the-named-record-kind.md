@@ -2,8 +2,12 @@
 id: rfc-0243
 title: "Row Visibility Follows Field Visibility: Retiring the Named Record Kind"
 date: '2026-11-19'
-status: draft
+status: under-review
+updated: '2026-11-19'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2099'
 ---
+
+> **Status — under review (2026-11-19).** Given a design-settlement tracker (2026-11-19, #2099); unmilestoned
 
 ## Summary
 
