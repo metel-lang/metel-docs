@@ -1,0 +1,295 @@
+{
+  "release": "v0.16.0",
+  "features": 24,
+  "registry_features": 101,
+  "fixtures": 1740,
+  "new_by_new": {
+    "A": {
+      "pairs": 84,
+      "covered": 1,
+      "partial": 83,
+      "open": 0,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 84,
+      "mean_rule_coverage": 0.4691
+    },
+    "B": {
+      "pairs": 49,
+      "covered": 0,
+      "partial": 49,
+      "open": 0,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 49,
+      "mean_rule_coverage": 0.3399
+    },
+    "C": {
+      "pairs": 143,
+      "covered": 4,
+      "partial": 72,
+      "open": 67,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 76,
+      "mean_rule_coverage": 0.231
+    },
+    "all": {
+      "pairs": 276,
+      "covered": 5,
+      "partial": 204,
+      "open": 67,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 209,
+      "mean_rule_coverage": 0.3228
+    }
+  },
+  "new_by_older": {
+    "A": {
+      "pairs": 181,
+      "covered": 4,
+      "partial": 95,
+      "open": 82,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 99,
+      "mean_rule_coverage": 0.2045
+    },
+    "B": {
+      "pairs": 299,
+      "covered": 1,
+      "partial": 46,
+      "open": 252,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 47,
+      "mean_rule_coverage": 0.0551
+    },
+    "C": {
+      "pairs": 1368,
+      "covered": 1,
+      "partial": 160,
+      "open": 1207,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 161,
+      "mean_rule_coverage": 0.0365
+    },
+    "all": {
+      "pairs": 1848,
+      "covered": 6,
+      "partial": 301,
+      "open": 1541,
+      "n/a": 0,
+      "deferred": 0,
+      "with_evidence": 307,
+      "mean_rule_coverage": 0.056
+    }
+  },
+  "rules": {
+    "owned": 147,
+    "cited": 145
+  },
+  "gate": {
+    "verdict": "PASS",
+    "violations": {},
+    "tier_a_open": 0,
+    "tier_a_partial": 178,
+    "tier_a_bulk_deferred": 82
+  },
+  "per_feature": [
+    {
+      "id": "anonymous-record-display",
+      "name": "Display for anonymous records and the empty row",
+      "rules_owned": 9,
+      "rules_cited": 9,
+      "tier_a_pairs": 2,
+      "tier_a_with_evidence": 2
+    },
+    {
+      "id": "aspect-properties-and-supers",
+      "name": "Aspect properties and super-aspect requirements",
+      "rules_owned": 10,
+      "rules_cited": 10,
+      "tier_a_pairs": 19,
+      "tier_a_with_evidence": 11
+    },
+    {
+      "id": "block-local-flow-impls",
+      "name": "Block-local impls and aspect flow arguments",
+      "rules_owned": 3,
+      "rules_cited": 3,
+      "tier_a_pairs": 15,
+      "tier_a_with_evidence": 9
+    },
+    {
+      "id": "clone-semantics",
+      "name": "Derived and built-in Clone behavior",
+      "rules_owned": 7,
+      "rules_cited": 7,
+      "tier_a_pairs": 11,
+      "tier_a_with_evidence": 11
+    },
+    {
+      "id": "copy-class-arguments",
+      "name": "Type arguments on the copy class keyword",
+      "rules_owned": 3,
+      "rules_cited": 3,
+      "tier_a_pairs": 11,
+      "tier_a_with_evidence": 11
+    },
+    {
+      "id": "copy-clone-obligations",
+      "name": "Clone derivation obligations required by Copy",
+      "rules_owned": 32,
+      "rules_cited": 32,
+      "tier_a_pairs": 11,
+      "tier_a_with_evidence": 11
+    },
+    {
+      "id": "copy-function-type",
+      "name": "The copy function-type qualifier",
+      "rules_owned": 11,
+      "rules_cited": 11,
+      "tier_a_pairs": 36,
+      "tier_a_with_evidence": 22
+    },
+    {
+      "id": "declaration-clauses",
+      "name": "Declaration clauses and derives lists",
+      "rules_owned": 18,
+      "rules_cited": 18,
+      "tier_a_pairs": 19,
+      "tier_a_with_evidence": 12
+    },
+    {
+      "id": "declaration-copy",
+      "name": "Copy granted by type declaration",
+      "rules_owned": 15,
+      "rules_cited": 15,
+      "tier_a_pairs": 11,
+      "tier_a_with_evidence": 11
+    },
+    {
+      "id": "derivation-flow-arguments",
+      "name": "Flow arguments on Clone and Copy",
+      "rules_owned": 5,
+      "rules_cited": 5,
+      "tier_a_pairs": 15,
+      "tier_a_with_evidence": 9
+    },
+    {
+      "id": "dotted-row-labels",
+      "name": "Dotted row labels across records, patterns, and types",
+      "rules_owned": 12,
+      "rules_cited": 12,
+      "tier_a_pairs": 15,
+      "tier_a_with_evidence": 10
+    },
+    {
+      "id": "generic-closure-contracts",
+      "name": "Closure contracts checked in generic bodies",
+      "rules_owned": 2,
+      "rules_cited": 2,
+      "tier_a_pairs": 23,
+      "tier_a_with_evidence": 19
+    },
+    {
+      "id": "generic-record-patterns",
+      "name": "Named record patterns checked in generic bodies",
+      "rules_owned": 2,
+      "rules_cited": 2,
+      "tier_a_pairs": 19,
+      "tier_a_with_evidence": 15
+    },
+    {
+      "id": "keyword-arguments",
+      "name": "Keyword arguments at named calls",
+      "rules_owned": 6,
+      "rules_cited": 6,
+      "tier_a_pairs": 13,
+      "tier_a_with_evidence": 10
+    },
+    {
+      "id": "module-qualified-construction",
+      "name": "Module-qualified struct and variant literals",
+      "rules_owned": 2,
+      "rules_cited": 2,
+      "tier_a_pairs": 6,
+      "tier_a_with_evidence": 3
+    },
+    {
+      "id": "negative-row-bounds",
+      "name": "Negative row-bound entries",
+      "rules_owned": 9,
+      "rules_cited": 9,
+      "tier_a_pairs": 15,
+      "tier_a_with_evidence": 8
+    },
+    {
+      "id": "pattern-exhaustiveness",
+      "name": "Pattern exhaustiveness across row-shaped values",
+      "rules_owned": 19,
+      "rules_cited": 19,
+      "tier_a_pairs": 9,
+      "tier_a_with_evidence": 9
+    },
+    {
+      "id": "pub-visibility",
+      "name": "pub visibility and reserved declaration words",
+      "rules_owned": 10,
+      "rules_cited": 10,
+      "tier_a_pairs": 0,
+      "tier_a_with_evidence": 0
+    },
+    {
+      "id": "record-spread-update",
+      "name": "Replacing a field after row spread",
+      "rules_owned": 1,
+      "rules_cited": 1,
+      "tier_a_pairs": 24,
+      "tier_a_with_evidence": 21
+    },
+    {
+      "id": "record-subpatterns",
+      "name": "Record-rest and nested field patterns",
+      "rules_owned": 7,
+      "rules_cited": 7,
+      "tier_a_pairs": 9,
+      "tier_a_with_evidence": 6
+    },
+    {
+      "id": "residual-aspects",
+      "name": "Aspect constraints on residual records",
+      "rules_owned": 14,
+      "rules_cited": 12,
+      "tier_a_pairs": 11,
+      "tier_a_with_evidence": 11
+    },
+    {
+      "id": "statement-assignment",
+      "name": "Assignment is a statement",
+      "rules_owned": 4,
+      "rules_cited": 4,
+      "tier_a_pairs": 13,
+      "tier_a_with_evidence": 10
+    },
+    {
+      "id": "tuple-rows",
+      "name": "Tuple values as numeric-label rows",
+      "rules_owned": 10,
+      "rules_cited": 10,
+      "tier_a_pairs": 31,
+      "tier_a_with_evidence": 25
+    },
+    {
+      "id": "undecided-generic-ownership",
+      "name": "Undecided ownership diagnostics in generic bodies",
+      "rules_owned": 8,
+      "rules_cited": 8,
+      "tier_a_pairs": 11,
+      "tier_a_with_evidence": 11
+    }
+  ]
+}
