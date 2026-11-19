@@ -2,14 +2,17 @@
 id: rfc-0202
 title: "Predicates and Refinement Types"
 date: '2026-11-01'
-status: draft
-updated: '2026-11-14'
+status: under-review
+updated: '2026-11-19'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2098'
 ---
 
 > **Rewritten 2026-11-14.** This RFC was "Refinement and Smart-Constructor Types": a nominal type with a checked constructor for a
 > value predicate. It now also covers predicates over the labels of a row, which two other drafts need (RFC-0151 section 5a, RFC-0125
 > Option A), as the same mechanism. A separate draft for row predicates was folded in and withdrawn before it was merged. The
 > original design is sections 2 and 6.
+
+> **Status — under review (2026-11-19).** Given a design-settlement tracker (2026-11-19, #2098); unmilestoned
 
 ## Summary
 
@@ -254,6 +257,8 @@ infrastructure for path-sensitive facts has precedent.
 - **RFC-0118 / RFC-0123 / RFC-0189:** the row-bound language this extends by one kind of atom, a label-set predicate.
 - **RFC-0096:** the `auto` property reused for row predicates. **RFC-0121 / RFC-0060:** row-conditional impls and coherence.
 - **RFC-0213:** the super-aspect relation, whose "a proof of `A` proves `B`" extension by `aspect B: A satisfying` mirrors.
+- **RFC-0241 (Metel-Core), section 7.9:** where a solver and flow-sensitive refinement would sit on the compiler's typed
+  representation: a pass over Core, with a predicate slot reserved on types and facts through references waiting on borrow checking.
 - **RFC-0170 / RFC-0165 (literal types, unions):** `Port` could be seen as a large union of literal types; refinement avoids
   enumerating it.
 - **RFC-0142 (checked arithmetic):** `checked_*` results feed `try_from`; its totality requirement is the predicate's.

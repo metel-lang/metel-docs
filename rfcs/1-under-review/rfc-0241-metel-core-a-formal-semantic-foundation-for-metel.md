@@ -31,7 +31,7 @@ The objectives are:
 Metel-Core is proposed first as a formal language. This draft also explores making it the compiler's own typed representation
 layer, so that the formal model and the implementation share one calculus and cannot drift apart, and so that the compiler can
 grow toward compiled code in layers without waiting on the borrow checker (section 7). That direction is exploratory; its
-design choices are open (Open questions 25 to 31).
+design choices are open (Open questions 25 to 33).
 
 This is a design draft, direction-setting and not syntax. It fixes the architecture and the research goals and does not attempt
 to finalize the calculus. Nothing here is accepted. Implementation: not started.
@@ -348,7 +348,7 @@ exploratory.
 
 Section 6 left use as a compiler IR as a possible later direction. This section sets out what that direction would involve and
 why it may be worth taking early. It does not decide the calculus; the unresolved choices are listed as options and in Open
-questions 25 to 31.
+questions 25 to 33.
 
 The motivating observation is that the formal calculus and the compiler's IR need not be two things. One Core with an
 executable reference evaluator is what ties the formal model to the implementation (the differential testing of section 6),
@@ -400,7 +400,7 @@ From `metel-frontend` (`data/typed_ast.rs`, `pipeline/`):
 - **A dynamic meaning for moves.** Semantics over a store of locations, where a move leaves its slot uninitialized. The static
   move check is then the statement that no accepted program reads an uninitialized slot.
 - **Reserved extension points, not features.** A region slot on reference types (to be filled by whatever RFC-0159 settles),
-  effects entering only through `call`, and rows kept in the type language.
+  a predicate slot on types (section 7.9, RFC-0202), effects entering only through `call`, and rows kept in the type language.
 
 #### 7.4 Sketch
 
@@ -480,7 +480,7 @@ polymorphism and dictionaries. Whether to do this is Open question 25.
 #### 7.8 Roadmap placement (decided 2026-11-19)
 
 These are scheduling decisions, taken by the language owner, and they bind the roadmap, not the calculus. Every design choice
-in this RFC, including Open questions 25 to 31, stays open. Tracked in metel-core#2095.
+in this RFC, including Open questions 25 to 33, stays open. Tracked in metel-core#2095.
 
 1. **Core representation is a theme in `next`**, ordered directly after Move check default-on. It holds steps 1 and 2 of
    section 7.6 (Core and its lint; the Core evaluator run differentially against the fixture corpus). Step 3 is its own theme,
@@ -496,6 +496,50 @@ in this RFC, including Open questions 25 to 31, stays open. Tracked in metel-cor
 The resulting order after Move check default-on is: Core representation, Comptime, Structural kinds after comptime,
 Ownership-explicit core, Instance preparation, Compiled kernel experiment, then Reference rules (B0), Borrow checking and the
 effects, storage and freeze themes as before.
+
+#### 7.9 Refinement as a later Core extension (exploratory)
+
+RFC-0202 (predicates and refinement types, under review, metel-core#2098) is the surface design. This section records where its
+extension points, a flow-sensitive refinement and a decision procedure, would sit on Metel-Core, and what Core has to leave room
+for now. Nothing here is decided and none of it is built.
+
+**What RFC-0202 already fixes.** A predicate is a pure, total, compile-time-evaluable expression. An obligation is a goal with a
+three-valued answer (Proved, Refuted, Unknown), and Unknown is an error. A solver can only turn Unknown into Proved, so
+acceptance grows monotonically and the meaning of a predicate never changes. Decision procedures are specified in the language,
+in-tree, with no heuristic search and no time limits; an external SMT backend is at most an opt-in tool outside the language
+definition.
+
+**Where each part lives.**
+
+| Part | Layer | Note |
+|---|---|---|
+| `satisfying` predicates, sealed types, row predicates | L0 and L1 | RFC-0202 as written |
+| A predicate slot on types | L2 | reserved, not filled |
+| Verification-condition generation | a pass over L2 | wants every intermediate result named |
+| Facts through mutation and references | L4 | needs ownership information |
+| A discharged obligation used to drop a runtime check | L4 to L5 | proofs as an optimization |
+
+**Staging.** Predicates on by-value, immutable data need no borrow checker (RFC-0202's sealed types, evaluation-only discharge).
+Flow facts about local variables need only move and assignment tracking, which Core's dynamic semantics already has: a write to a
+`var` kills the facts about it, and a fact about a sealed value lives in its type (RFC-0202 open question 1). Facts through
+references wait for borrow checking. This is the same order as section 7.5: the refinement checker is a filter, and a compiled
+profile does not wait on it.
+
+**What is not borrowed from Liquid-style systems.** Inference of refinements by qualifiers makes acceptance depend on a heuristic
+fixpoint, and general SMT makes it depend on a tool's version and timeouts. Named declarations already write every parameter
+(RFC-0193), so signature refinements can be written and only body facts need path conditions. A language-specified fragment, for
+example linear integer arithmetic or RFC-0202's label-set theory, can be formalized and verified in the Lean project of section
+5; Lean 4's own `omega` is an example of that kind of procedure, not a proposed dependency.
+
+**What Core has to leave room for.**
+
+- A predicate slot on types, reserved the way section 7.3 reserves the region slot, and erased at L3.
+- A shape that names intermediate results. Verification-condition generation wants that, which is an argument for A-normal form
+  in Open question 28.
+- A single facts environment, possibly shared between the move check (ownership state) and refinement (flow facts), over
+  Core's explicit guards. That sharing is a hypothesis to test (Open question 33); the move check already does path-sensitive
+  narrowing (RFC-0117).
+- Polymorphic Core if a function is generic over a predicate, with predicates as type-level terms, which bears on Open question 25.
 
 ### 8. Incremental milestones
 
@@ -558,6 +602,10 @@ This RFC does not change the language and does not decide any of the designs bel
   generation); Abstract ownership solver (metel-core#1821, whose stored ownership interfaces and "witnesses carried to
   elaboration" are the dictionaries of option A in section 7.7); Effects design settlement (Core reserves `call` as the only
   entry point and decides nothing else).
+- **RFC-0202** (under review, metel-core#2098, predicates and refinement types): the surface design whose solver and
+  flow-sensitive extension points section 7.9 places on Core. Its goal interface is intended to be hosted by the abstract
+  ownership solver (metel-core#1821, #1813). Its open question 1 (mutation of a sealed value) and Stage 2 of this RFC (borrowing)
+  meet at facts through `&var`.
 - **RFC-0206** (Copy and Clone, implemented): the class of a type decides whether a use copies or moves, so Core's use of a
   place has to resolve that, statically for concrete types and through a dictionary for a generic parameter.
 - **ADR-0054** (stable identity) supplies the identities Core requires to be total. **metel-core#1704** and the defects
@@ -639,7 +687,7 @@ This RFC does not change the language and does not decide any of the designs bel
 20. Which properties are proved first?
 21. How can language extensions avoid invalidating large parts of existing proofs?
 22. Which checking algorithms get executable Lean implementations?
-23. Should Metel-Core become a production compiler IR? Section 7 and questions 25 to 31 develop the case; none is decided.
+23. Should Metel-Core become a production compiler IR? Section 7 and questions 25 to 33 develop the case; none is decided.
 24. How can the formalization best support a self-hosted compiler?
 
 **Compiler representation (section 7)**
@@ -652,12 +700,16 @@ This RFC does not change the language and does not decide any of the designs bel
 27. Semantic model: is a store of locations with moved-from meaning uninitialized the right dynamic meaning, or should moves be
     explicit operations from the start (question 2)?
 28. Shape: a structured Core with a control-flow graph only at L4, A-normal form throughout, or a control-flow graph from the
-    start?
+    start? Verification-condition generation (section 7.9) wants every intermediate result named, which favours A-normal form.
 29. Effects: is reserving `call` as the sole entry point enough, or does handler control need a representation decision before
     Core is used by the compiler?
 30. Placement: a module inside `metel-frontend` reusing its identity types, or a separate crate, and at what point does the Lean
     project need to import the datatype?
 31. Proof ordering: type safety of Core first, preservation of each lowering first, or both in parallel?
+32. Predicate slot: does Core's type language reserve a slot for a predicate on a type, in what form (an opaque term evaluated by
+    comptime, or a term in a fixed logic), and is it erased at L3?
+33. Facts: should flow facts (refinements) and ownership state share one facts-environment mechanism over Core, or stay
+    separate analyses? Which decision-procedure fragment comes first is RFC-0202's question (its section 5), not this one.
 
 ---
 
