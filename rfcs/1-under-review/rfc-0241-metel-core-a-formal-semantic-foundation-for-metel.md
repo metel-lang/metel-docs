@@ -2,8 +2,12 @@
 id: rfc-0241
 title: "Metel-Core: A Formal Semantic Foundation for Metel"
 date: '2026-11-17'
-status: draft
+status: under-review
+updated: '2026-11-19'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2095'
 ---
+
+> **Status — under review (2026-11-19).** Committed to the roadmap as the Core representation theme (2026-11-19, #2095)
 
 ## Summary
 
@@ -453,8 +457,9 @@ Each step can ship on its own:
    theme, RFC-0132). It also gives the "Runtime value semantics" theme a place to make copying and moving explicit.
 3. **Explicit ownership operations (L4)**, with move checking re-expressed over them, which is where "Move check default-on"
    would get cheaper.
-4. **Instances and a thin backend** for a subset: the "Compiled profile v0" theme, with the borrow checker absent and drops
-   tracked dynamically.
+4. **Instances and a thin backend** for a subset: the "Instance preparation" and "Compiled kernel experiment" themes, with the
+   borrow checker absent and drops tracked dynamically. "Compiled profile v0" is not this step: its exit includes the compiled
+   Godot bridge, which waits on the freeze and Interop.
 
 None of this depends on the core-surface freeze, because Core is internal.
 
@@ -471,6 +476,26 @@ start, have the first lowering emit only monomorphic instances, and have the lin
 enabled. A side effect is that a reconstructed instance that has lost a type then fails the lint loudly instead of being wrong
 silently. The formalization could stage the same way: a simply typed calculus with records, closures and a store first, then
 polymorphism and dictionaries. Whether to do this is Open question 25.
+
+#### 7.8 Roadmap placement (decided 2026-11-19)
+
+These are scheduling decisions, taken by the language owner, and they bind the roadmap, not the calculus. Every design choice
+in this RFC, including Open questions 25 to 31, stays open. Tracked in metel-core#2095.
+
+1. **Core representation is a theme in `next`**, ordered directly after Move check default-on. It holds steps 1 and 2 of
+   section 7.6 (Core and its lint; the Core evaluator run differentially against the fixture corpus). Step 3 is its own theme,
+   **Ownership-explicit core**, ordered after Comptime.
+2. **Runtime value semantics (metel-core#277) is folded into Core representation.** The evaluator that stops deep-cloning is the
+   Core evaluator. The separate milestone is closed.
+3. **Instance preparation and Compiled kernel experiment are pulled ahead of Borrow checking** (both move from `later` to
+   `next`). Compiled profile v0 itself stays behind the freeze, for the reason in section 7.6 step 4.
+4. **The roadmap has an explicit design lane.** Themes whose exit is accepted RFCs may have their settlement run in parallel with
+   the implementation chain once their design prerequisites are met; implementation then joins the chain at the theme's numbered
+   position. The numbered order stays the single priority order.
+
+The resulting order after Move check default-on is: Core representation, Comptime, Structural kinds after comptime,
+Ownership-explicit core, Instance preparation, Compiled kernel experiment, then Reference rules (B0), Borrow checking and the
+effects, storage and freeze themes as before.
 
 ### 8. Incremental milestones
 
@@ -526,9 +551,10 @@ This RFC does not change the language and does not decide any of the designs bel
 - **RFC-0071** (integrated, ownership and move semantics), **RFC-0089** (accepted, linear types) and **RFC-0091** (under review,
   linear records): the ownership semantics Stages 1 and 2 formalize. Linearity is deferred in the language; the core may begin
   with affine values only.
-- **Roadmap themes touched by section 7** (named by theme, since none has a cut version): Instance preparation (L3);
-  Compiled profile v0 (L5 for a subset); Runtime value semantics (metel-core#277, which the Core evaluator gives a place to
-  make copying and moving explicit); Comptime (RFC-0132, whose execution model needs an evaluator over typed IR before any code
+- **Roadmap themes touched by section 7** (named by theme, since none has a cut version; placement decided in section 7.8):
+  Core representation (L2, this RFC's tracking theme); Ownership-explicit core (L4); Instance preparation (L3); Compiled kernel
+  experiment (L5 for a subset; Compiled profile v0 stays behind the freeze); Runtime value semantics (metel-core#277, now part
+  of Core representation, where copying and moving become explicit); Comptime (RFC-0132, whose execution model needs an evaluator over typed IR before any code
   generation); Abstract ownership solver (metel-core#1821, whose stored ownership interfaces and "witnesses carried to
   elaboration" are the dictionaries of option A in section 7.7); Effects design settlement (Core reserves `call` as the only
   entry point and decides nothing else).
