@@ -105,17 +105,10 @@ Path roots are:
 
 ### Reserved namespaces
 
-The `std` top-level namespace is reserved for the standard library. User module
-paths may not begin with `std` — a module file at `std.mtl` or anywhere under
-`std/` in the project tree is a compile error:
-
-```
-error: module path `std::…` is reserved for the standard library
-```
-
-`std` is also a reserved keyword and cannot appear as an identifier. Both
-restrictions are consistent: `std` is not a valid name for user code at any
-level.
+The `std` top-level namespace is reserved for the standard library, and `std` is a keyword that
+cannot appear as an identifier. [A user module cannot be named `std`](#spec.modules.paths.legality-3):
+`import root::std::name` is a parse error, so a file `std.mtl`, or one under `std/`, can never be
+imported.
 
 No other top-level names are currently reserved.
 
@@ -194,6 +187,19 @@ neither needs `T` or a glob of `m` in scope.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6InVua25vd24iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJtYWluLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMTc3MjogdGhlIHR5cGUgbXVzdCBiZSBgcHViYCB1bmxlc3MgdGhlIHByZWZpeCBuYW1lcyB0aGUgY3VycmVudCBtb2R1bGUuXG5pbXBvcnQgbGliOjpmO1xuZnVuIG1haW4oKSB7XG4gICAgbGV0IGggOj0gbGliOjpIaWRkZW4geyBuID0gMSB9OyAvLyBFUlJPUltUMDAwM11cbiAgICBwcmludGxuKGYoKSk7XG59XG4ifSx7Im5hbWUiOiJsaWIubXRsIiwic291cmNlIjoic3RydWN0IEhpZGRlbiB7IHB1YiBuOiBpNjQgfVxucHViIGZ1biBmKCkgLT4gaTY0IHsgMSB9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL21vZHVsZV9zZW1hbnRpY3MvYV9wcml2YXRlX3R5cGVfdGhyb3VnaF9hX21vZHVsZV9wcmVmaXhfaXNfdDAwMDMiLCJuYW1lIjoiYV9wcml2YXRlX3R5cGVfdGhyb3VnaF9hX21vZHVsZV9wcmVmaXhfaXNfdDAwMDMifQ=="></details>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNzcyOiBhIHN0cnVjdCBvciBmaWVsZGZ1bC12YXJpYW50IGxpdGVyYWwgd3JpdHRlbiB3aXRoIGEgbW9kdWxlIHByZWZpeCByZXNvbHZlcyBieSB0aGUgdHlwZSB0aGVcbi8vIHByZWZpeCBuYW1lcywgYXMgYSB1bml0IHZhcmlhbnQgb3IgYSBzdGF0aWMgbWV0aG9kIGRvZXMsIHdpdGhvdXQgYSBnbG9iIGltcG9ydC5cbmltcG9ydCBsaWI6OmRvdWJsZTtcbmltcG9ydCBsaWI6OnBheWxvYWQ7XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBjIDo9IGxpYjo6Q291bnRlciB7IG4gPSAyIH07XG4gICAgYXNzZXJ0KGRvdWJsZShjLm4pID09IDQpO1xuICAgIGxldCBiIDo9IGxpYjo6S2luZDo6QiB7IG4gPSA1IH07XG4gICAgYXNzZXJ0KHBheWxvYWQoYikgPT0gNSk7XG4gICAgbGV0IHIgOj0gcm9vdDo6bGliOjpDb3VudGVyIHsgbiA9IDcgfTtcbiAgICBhc3NlcnQoci5uID09IDcpO1xuICAgIGFzc2VydChwYXlsb2FkKGxpYjo6S2luZDo6QSkgPT0gMCk7XG59XG4ifSx7Im5hbWUiOiJsaWIubXRsIiwic291cmNlIjoicHViIGVudW0gS2luZCB7IEEsIEIgeyBwdWIgbjogaTY0IH0gfVxucHViIHN0cnVjdCBDb3VudGVyIHsgcHViIG46IGk2NCB9XG5wdWIgZnVuIGRvdWJsZSh4OiBpNjQpIC0+IGk2NCB7IHJldHVybiB4ICogMjsgfVxucHViIGZ1biBwYXlsb2FkKGs6IEtpbmQpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKGspIHtcbiAgICAgICAgS2luZDo6QSA9PiAwLFxuICAgICAgICBLaW5kOjpCIHsgbiB9ID0+IG4sXG4gICAgfVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9tb2R1bGVfc2VtYW50aWNzL3N0cnVjdF9hbmRfdmFyaWFudF9saXRlcmFsc190aHJvdWdoX2FfbW9kdWxlX3ByZWZpeF9uZWVkX25vX2dsb2IiLCJuYW1lIjoic3RydWN0X2FuZF92YXJpYW50X2xpdGVyYWxzX3Rocm91Z2hfYV9tb2R1bGVfcHJlZml4X25lZWRfbm9fZ2xvYiJ9"></details>
 </details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.modules.paths.legality-3}
+
+`std` is a reserved keyword and the root of the standard-library path. A user module cannot be named
+`std`: a path segment `std` anywhere but the start of a path is a parse error (`P0001`), so
+`import root::std::name` is rejected whether or not a file `std.mtl` exists.
+
+<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlAwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoicGFyc2VfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJtYWluLm10bCIsInNvdXJjZSI6Ii8vIGBzdGRgIGlzIGEga2V5d29yZCBhbmQgdGhlIHN0YW5kYXJkLWxpYnJhcnkgcm9vdDogYSB1c2VyIG1vZHVsZSBuYW1lZCBgc3RkYCBjYW5ub3QgYmUgbmFtZWQgaW4gYSBwYXRoLlxuaW1wb3J0IHJvb3Q6OnN0ZDo6ZjtcblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGYoKSA9PSAxKTtcbn1cbiJ9LHsibmFtZSI6InN0ZC5tdGwiLCJzb3VyY2UiOiJwdWIgZnVuIGYoKSAtPiBpNjQgeyAxIH1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvbW9kdWxlX3NlbWFudGljcy9hX3VzZXJfbW9kdWxlX25hbWVkX3N0ZF9jYW5ub3RfYmVfaW1wb3J0ZWRfaXNfcDAwMDEiLCJuYW1lIjoiYV91c2VyX21vZHVsZV9uYW1lZF9zdGRfY2Fubm90X2JlX2ltcG9ydGVkX2lzX3AwMDAxIn0="></details>
 <!-- rfc.py:fixtures:end -->
 
 </details>

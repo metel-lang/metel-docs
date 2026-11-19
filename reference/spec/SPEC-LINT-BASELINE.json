@@ -13,14 +13,8 @@
     "section-links-no-rule": 9,
     "unlinked-normative": 19
   },
-  "reference/spec/functions.md": {
-    "unlinked-normative": 1
-  },
   "reference/spec/lexical.md": {
     "limit-in-prose": 1
-  },
-  "reference/spec/modules.md": {
-    "unlinked-normative": 1
   },
   "reference/spec/ownership.md": {
     "internal-number": 92,

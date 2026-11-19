@@ -1292,7 +1292,7 @@ nothing outside the expression can alias that cell.
 
 [Tuple elements are assignable](#spec.expressions.assignment.legality-1) like struct fields and array elements — `t.0 = v`, `t.0 += v`,
 and nested or chained forms (`s.pair.0`, `t.1.0`), including through a `&var` reference. An
-out-of-range index is a type error ([T0003](../error-codes.md#t0003--undefined-name)), and a
+[out-of-range index is a type error](types.md#spec.types.tuples.legality-8) ([T0003](../error-codes.md#t0003--undefined-name)), and a
 shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)).
 
 <details>
@@ -1367,8 +1367,8 @@ to the chain's leaf storage. A write through the reference updates that original
 #### Dereference
 
 `*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; [as an
-assignment target](#spec.expressions.assignment.legality-1), `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
-a type error ([T0002](../error-codes.md#t0002--annotation-required)).
+assignment target](#spec.expressions.assignment.legality-1), `*p = v` writes through a `&var T`. [Applying `*` to a non-reference is
+a type error](#spec.expressions.references.legality-1) ([T0002](../error-codes.md#t0002--annotation-required)).
 
 Auto-deref covers **selectors only** — field access, indexing, and method dispatch, where
 the target of the operation is unambiguous. Everywhere else, reading through a reference
