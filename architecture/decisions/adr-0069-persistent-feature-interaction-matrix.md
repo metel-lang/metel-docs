@@ -44,6 +44,11 @@ URL) are set by hand in `tools/feature-matrix/states.toml`, and a hand-set state
 changes. Partial coverage is therefore explicit, and an uncovered pair is either covered, deliberately excluded, or
 tracked.
 
+A third hand-set form, the **bulk deferral**, exists for the bootstrap: an entry in `states.toml` defers every
+still-`open` cell of one tier for one release to a single tracking issue, with a reason. It applies only to cells that
+are still open, so fixture evidence always wins and a cell leaves the deferral as soon as a fixture covers it. It is
+reported separately ("bulk-deferred") and its issue is required, so the backlog stays visible and countable.
+
 ### 4. Risk tiers
 
 A pair is **Tier A** when its features share a subsystem tag, **Tier B** when their subsystems are adjacent (the
@@ -66,9 +71,9 @@ reports the delta in `integration/<version>.md`. `/cut-release` Step 1b runs the
 
 ## Consequences
 
-- The first release to use the registry inherits every open Tier A cell of its new features. For v0.16.0 that is a
-  backlog, and each cell needs a fixture, an `n/a` reason or a deferral issue before the gate passes. That is the
-  intended behaviour, and the backlog is visible and countable.
+- The first release to use the registry inherits every open Tier A cell of its new features. For v0.16.0 the 19 pairs
+  among its own features were closed with fixtures, and the 131 new-versus-old pairs are bulk-deferred to
+  metel-core#2086. The backlog is visible and countable, and the deferral entry is removed when it is swept.
 - A feature without spec rule ids has no computable coverage. The script reports such features. A registry seed entry
   that cites no rule is a defect to fix, not an exemption.
 - Spec rule ids become the join key between features and fixtures. Renaming or retiring a rule id breaks coverage
