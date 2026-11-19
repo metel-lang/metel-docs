@@ -203,9 +203,9 @@ fun main() -> i64 {
 
 ### Unqualified variant constructors
 
-A bare variant name may be used where the *expected* type determines which enum is meant —
+A bare variant name [may be used where the *expected* type determines which enum is meant](#spec.expressions.unqualified-variant-constructors.legality-1) —
 the expression-position counterpart of "Unqualified variant patterns" below. Both no-field
-and fieldful variants participate, and per RFC-0106 the empty-brace spelling `Red {}` is
+and fieldful variants participate, and the empty-brace spelling `Red {}` is
 equally valid:
 
 ```metel
@@ -241,14 +241,18 @@ fun demo(Red: i64) -> i64 {
 }
 ```
 
-**Where no expected type exists, the bare form does not resolve.** There is deliberately no
+**Where no expected type exists, [the bare form does not resolve](#spec.expressions.unqualified-variant-constructors.legality-4).** There is deliberately no
 search for "some enum, somewhere, declaring `Red`". A name that some enum declares as a
 variant is reported as [T0002](../error-codes.md#t0002--annotation-required) ("cannot tell
 which enum `Red` belongs to here"); a name no enum declares stays
 [T0003](../error-codes.md#t0003--undefined-name). Qualify (`Colour::Red`) or ascribe
-(`Red: Colour`). This affects an unannotated `let x = Red;`, an argument to a *generic*
+(`Red: Colour`).
+
+This affects an unannotated `let x = Red;`, an argument to a *generic*
 callee (whose parameter types are not known until the arguments are), and the body of a
-closure with no declared return type. The last is the only closure case: a closure whose
+closure with no declared return type.
+
+The last is the only closure case: a closure whose
 return type is known resolves its body's bare variants, whether it is written
 (`|a: i64| -> Option<i64> { Some { value = a } }`), taken from a function-typed binding
 (`let f: |i64| -> Option<i64> := |a: i64| { Some { value = a } }`) or from a function-typed
@@ -403,8 +407,8 @@ fun kind_and_span(t: Token) -> i64 {
 ```
 
 A field's own visibility applies the same way it does to ordinary field access — see
-[Visibility](modules.md#visibility). An external pattern (outside the struct's declaring
-module) that names a private field is a `T0009` visibility error; the field must be
+[Visibility](modules.md#visibility). [An external pattern (outside the struct's declaring
+module) that names a private field is a `T0009` visibility error](modules.md#spec.modules.visibility.legality-7); the field must be
 omitted, which requires `..`.
 
 A struct pattern's sub-patterns are always plain field bindings — there is no
@@ -443,10 +447,14 @@ ends in `..` may name any subset, including none.
 
 An anonymous-record or nominal `record` pattern may end in `..name`. The binding receives
 the owned anonymous record made from all fields not named by the pattern. Bare `..` remains
-discard-only. The named fields must be entailed present; the row facts must also determine
+discard-only.
+
+[The named fields must be entailed present](#spec.expressions.record-rest-patterns.legality-1); the row facts must also determine
 the remainder type. A presence-only bound without a decomposition is insufficient. Removing
 all fields from a closed row produces `.{}`. Structs, `Drop` types, and borrowed scrutinees are
-not accepted by this form. Every named field is bound by the pattern and follows the
+not accepted by this form.
+
+Every named field is bound by the pattern and follows the
 ordinary ownership rules for pattern bindings; every unmentioned field moves into the
 remainder binding. Matching consumes the scrutinee as a whole. A nominal `record` is
 eligible only when all of its fields are public, and the remainder loses the nominal brand.
@@ -482,8 +490,8 @@ fun name(c: &Colour) -> String {
 }
 ```
 
-Bindings introduced by a pattern matched through a reference copy the referent
-(RFC-0108); the referent must be `Copy` to be bound by value.
+[Bindings introduced by a pattern matched through a reference copy the referent](#spec.expressions.pattern-matching.matching-through-a-reference.dynamics-2),
+so the referent must be `Copy` to be bound by value.
 
 Reference-transparency and unqualified variants compose — peeling happens first, so a bare
 variant resolves against the referent's enum:
@@ -764,9 +772,9 @@ scrutinee value.
 ##### Dynamic Semantics {#spec.expressions.pattern-matching.matching-through-a-reference.dynamics-2}
 
 Bindings introduced while matching through a reference copy values from the peeled
-referent (RFC-0108).
+referent.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed b9ddfd53995f5a5e6b23a5a2a8be84fcb03d67c6 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0108](../../rfcs/4-implemented/rfc-0108-reference-transparent-match-scrutinees.md)_</span>
@@ -847,7 +855,7 @@ fun main() -> i64 {
 }
 ```
 
-`if` is also an expression (both branches must produce the same type):
+`if` is also an expression ([both branches must produce the same type](#spec.expressions.control-flow.if-else.legality-3)):
 
 ```metel
 fun main() -> i64 {
@@ -875,8 +883,8 @@ fun main() -> i64 {
 
 The braceless form desugars to a single-expression block. Three restrictions apply:
 
-1. **Arm style must be consistent.** Both the `then` and `else` arms must use the same style — either both braced or both braceless. Mixing is a parse error.
-2. **Dangling-else is forbidden.** If the outer body is braceless, the body expression must not itself be an `if–else`. Use braces on the outer body to resolve the ambiguity.
+1. **Arm style must be consistent.** [Both the `then` and `else` arms must use the same style](#spec.expressions.control-flow.if-else.legality-5) — either both braced or both braceless. Mixing is a parse error.
+2. **Dangling-else is forbidden.** [If the outer body is braceless, the body expression must not itself be an `if–else`](#spec.expressions.control-flow.if-else.legality-4). Use braces on the outer body to resolve the ambiguity.
    ```metel
    fun main() -> i64 {
        let a := true;
@@ -994,6 +1002,8 @@ fun main() -> i64 {
 ```
 
 ### For
+
+A C-style `for` initializer [may declare a loop-local `var` binding](#spec.expressions.control-flow.for.legality-1):
 
 ```metel
 fun main() -> i64 {
@@ -1276,9 +1286,11 @@ nothing outside the expression can alias that cell.
 > }
 ```
 
-`&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path ([a struct field](#spec.expressions.references.dynamics-1), [tuple element](#spec.expressions.references.dynamics-2), [array element](#spec.expressions.references.dynamics-3), or [chain of projections](#spec.expressions.references.dynamics-4)) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location (RFC-0045, already implemented; this section previously described `&var struct.field` as a non-propagating snapshot, which was the *pre*-RFC-0045 behavior and had never been updated to match). `&` on a field or element also aliases the original storage through the same path machinery, so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
+`&var` requires the operand to be a `var` binding — applying it to a plain `let` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)). `&var` on a lvalue path ([a struct field](#spec.expressions.references.dynamics-1), [tuple element](#spec.expressions.references.dynamics-2), [array element](#spec.expressions.references.dynamics-3), or [chain of projections](#spec.expressions.references.dynamics-4)) produces a true exclusive reference with write-back semantics, matching `&var` on a named binding exactly — writes through it propagate to the original storage location.
 
-Tuple elements are assignable like struct fields and array elements — `t.0 = v`, `t.0 += v`,
+`&` on a field or element also aliases the original storage through [the same path machinery](#spec.expressions.references.dynamics-4), so later writes to the binding remain visible through the shared reference; it is still read-only, so writing through `&T` remains rejected. Reborrowing preserves this: `&*r` shares whatever storage `r` names, and reborrowing a `&var T` as `&T` downgrades to shared. The reverse is rejected — `&var *r` where `r: &T` is a type error ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)), since a shared reference never grants write access.
+
+[Tuple elements are assignable](#spec.expressions.assignment.legality-1) like struct fields and array elements — `t.0 = v`, `t.0 += v`,
 and nested or chained forms (`s.pair.0`, `t.1.0`), including through a `&var` reference. An
 out-of-range index is a type error ([T0003](../error-codes.md#t0003--undefined-name)), and a
 shared `&` grants no write access ([T0006](../error-codes.md#t0006--assignment-to-immutable-binding)).
@@ -1354,8 +1366,8 @@ to the chain's leaf storage. A write through the reference updates that original
 
 #### Dereference
 
-`*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; as an
-assignment target, `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
+`*expr` dereferences a `&T`/`&var T`. As an expression it reads the referent; [as an
+assignment target](#spec.expressions.assignment.legality-1), `*p = v` writes through a `&var T`. Applying `*` to a non-reference is
 a type error ([T0002](../error-codes.md#t0002--annotation-required)).
 
 Auto-deref covers **selectors only** — field access, indexing, and method dispatch, where

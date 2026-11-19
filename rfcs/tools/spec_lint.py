@@ -244,6 +244,21 @@ def _allows(lines: list[str], labels: list[str], path: str) -> tuple[list[Allow]
     return allows, bad, covers
 
 
+EXEMPTION_REF_RE = re.compile(r'(\bref=")[^"]*(")')
+EXEMPTION_BLOCKED_ON_RE = re.compile(r"(— blocked on )metel-(?:core|docs)#\d+")
+
+
+def _without_exemption_ref(line: str) -> str:
+    """A fixture-coverage exemption cites the issue that blocks it in `ref="..."`, and the generated
+    "blocked on <issue>" line repeats it. That citation is a tracking marker by design, like a `Gap`
+    marker, so it is not an internal number; the `reason` text beside it still is."""
+    if "rfc.py:exemption " in line:
+        return EXEMPTION_REF_RE.sub(r"\1\2", line)
+    if "Exempt from fixture coverage" in line:
+        return EXEMPTION_BLOCKED_ON_RE.sub(r"\1", line)
+    return line
+
+
 def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[Allow]]:
     lines = text.split("\n")
     labels = _label(lines)
@@ -264,7 +279,7 @@ def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[All
         if labels[i] in {"code", "gen"}:
             continue
         if i not in marker_lines:
-            for match in NUMBER_RE.finditer(line):
+            for match in NUMBER_RE.finditer(_without_exemption_ref(line)):
                 found.append(Finding("internal-number", path, i + 1, match.group(0)))
         if PROVENANCE_RE.search(line):
             found.append(Finding("provenance-marker", path, i + 1, line.strip()[:70]))
