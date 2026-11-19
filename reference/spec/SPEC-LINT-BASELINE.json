@@ -1,14 +1,1 @@
-{
-  "reference/error-codes.md": {
-    "limit-in-prose": 3
-  },
-  "reference/spec/declarations.md": {
-    "limit-in-prose": 1
-  },
-  "reference/spec/lexical.md": {
-    "limit-in-prose": 1
-  },
-  "reference/spec/ownership.md": {
-    "limit-in-prose": 6
-  }
-}
+{}

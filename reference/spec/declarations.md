@@ -2514,7 +2514,7 @@ A tuple is a row ([Tuples](types.md#spec.types.tuples.legality-4)), so it satisf
 
 A closure value keeps its own copyability until it flows into a slot with a written function type, where it becomes move-only ([First-Class Functions](functions.md#first-class-functions)), and [there is no working `Clone`](#spec.declarations.structural-aspect-bounds.legality-9): `.clone()` on a `|A| -> B` receiver fails to typecheck (`T0003`, no method on a function type: it implements no aspect) regardless of annotation.
 
-[`Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` are not implemented for function types either — there is no canonical string form, function equality is undecidable in general, `Send`/`Sync` aren't implemented for any type yet, and there is no state to drop.](#spec.declarations.structural-aspect-bounds.legality-10)
+[`Display`, `Eq`, `Ord`, `Hash`, `Send`, `Sync`, and `Drop` do not apply to function types either — there is no canonical string form, function equality is undecidable in general, and there is no state to drop.](#spec.declarations.structural-aspect-bounds.legality-10)
 
 > **Gap** GAP-FUNCTIONS-002
 

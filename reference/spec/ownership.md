@@ -108,7 +108,7 @@ linear, because a linear value is never implicitly discarded.
 
 The class keywords `copy` and `linear` before `struct` and `enum` state the class in one word; affine is the default and has
 no keyword. A closure that captures a linear value is declared `linear` as well. `linear` is reserved: the keyword and the
-`Linear` aspect are not yet accepted.
+`Linear` aspect cannot be used.
 
 **Dropping in generic code.** A generic body can drop a value of a type-parameter type without writing a call:
 at scope end, on an early `return` or `?`, by overwriting a binding, by leaving an argument unused, or by discarding
@@ -893,7 +893,7 @@ moved as a **unit** — a residual's row never carries a *narrower* type for a f
 still holds; narrowing a field of a field in place is
 not covered here. A field read by
 value whose type is `Copy` is a copy, not a move, and does not narrow; a field whose type
-is a bare generic parameter or is not yet resolved is held (not dropped from the row)
+is a bare generic parameter or is unresolved at that point is held (not dropped from the row)
 until its type is known.
 
 > **Difference between the two.** A struct residual is a distinct type (a brand plus a
@@ -1028,7 +1028,7 @@ including zero. An anonymous empty residual is `()`: the empty row and the unit 
 ##### Legality Rule {#spec.ownership.narrowing.legality-4}
 
 Using a narrowed value where a wider row, or the whole type, is required is a type error
-at type-check time, not deferred to `--move-check`; every still-present field stays
+at type-check time, independent of `--move-check`; every still-present field stays
 readable and its methods callable. A whole-value use *at* the narrowed type — moving it,
 binding it, passing it to a matching-row parameter — is legal, and `--move-check` does not
 flag it.
@@ -1312,11 +1312,11 @@ may read a field the residual no longer has. A bound `T: A` on a residual is `T0
 
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-3}
 
-A residual does not satisfy an aspect through a **derived** impl either: the derivation is whole-type, and the row template
-that would extend it to residuals is a later RFC. The use-site diagnostic says the template is not yet available and does not
+A residual does not satisfy an aspect through a **derived** impl either: the derivation is whole-type, so it does not extend
+to residuals. The use-site diagnostic says the derived template is unavailable and does not
 name a written impl.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 3f16a69509d7d1be74c6f1e9d7525eaecc9f3cbe -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -1369,9 +1369,9 @@ class is recomputed from the surviving components.
 ##### Legality Rule {#spec.ownership.aspects-on-a-residual.legality-7}
 
 The error for an aspect a residual does not satisfy is `T0012` at the use site. When a written whole-type impl exists, the note
-names it as the cause; when the aspect is derived, the note says the template is not yet available.
+names it as the cause; when the aspect is derived, the note says the derived template is unavailable.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 3f16a69509d7d1be74c6f1e9d7525eaecc9f3cbe -->
 
 
 ##### Dynamic Semantics Rule {#spec.ownership.aspects-on-a-residual.dynamics-1}
@@ -1395,7 +1395,7 @@ A copy of a `Copy` residual copies its present fields. No absent field is read.
 
 > **Gap** GAP-OWNERSHIP-003
 
-Stage note: the ban of [Ownership classes legality-6](#spec.ownership.ownership-classes.legality-6) governs types whose `drop` receiver is the whole row. The row-bounded permission below is the planned extension for a type whose receiver names a narrower row, and is not superseded by it.
+The ban of [Ownership classes legality-6](#spec.ownership.ownership-classes.legality-6) governs types whose `drop` receiver is the whole row. The row-bounded permission below covers a type whose receiver names a narrower row, and is not superseded by it.
 
 [A struct implementing `Drop` whose destructor needs a field that has since been narrowed
 away must not silently skip the destructor's work](#spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1). Dispatch is **row-bounded**: a `Drop`
