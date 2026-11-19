@@ -60,16 +60,17 @@ generated backlinks carry the provenance. `rfcs/tools/spec_lint.py` enforces thi
 
 **Accepting a lint finding.** A finding that is right is fixed. One that predates a rule is grandfathered by the
 baseline (`reference/spec/SPEC-LINT-BASELINE.json`, which only shrinks). A single justified exception is written
-next to the text, on the line before the paragraph, quote, rule or heading it covers:
+next to the text, on the line before the paragraph, quote or heading it covers, or, for a rule block, right after
+the rule's `last_reviewed` line (where `rfc.py` keeps it):
 
 ```markdown
 <!-- spec-lint: allow limit-in-prose reason="the return type is not yet known at that point of inference, not a limit" -->
 ```
 
 This works for every rule. The reason is required and must explain why the finding is correct, `RULE` must be a rule
-name from `spec_lint.py`, and an allow that covers nothing is itself a finding. Before a `##### Legality Rule`
-heading it covers the whole rule block; put it before the heading, never inside the block. `spec_lint.py --allows`
-lists every exception with its reason.
+name from `spec_lint.py`, and an allow that covers nothing is itself a finding. After a rule's `last_reviewed` line it
+covers the whole rule block; never put it inside the block's text. `rfc.py index --write-spec-origins` moves a comment
+between rules to that spot, so write it there. `spec_lint.py --allows` lists every exception with its reason.
 
 **Keep paragraphs and quotes short.** A prose paragraph or list item is at most 120 words and a quote block at most
 60. Split a long paragraph by claim, and move a long rationale out of a quote into prose or into the rule it

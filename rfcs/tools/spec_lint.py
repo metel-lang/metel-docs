@@ -18,7 +18,8 @@ The rules enforce reference/spec/STYLEGUIDE.md and rfcs/PROCESS.md ("Public avai
   allow-invalid         a malformed or useless `spec-lint: allow` comment (below).
 
 A finding that is right is accepted in one of two ways. The baseline grandfathers what predates a rule. A single
-justified exception is written next to the text, on the line before the paragraph, quote or heading it covers:
+justified exception is written next to the text, on the line before the paragraph, quote or heading it covers (for a
+rule block, right after the rule's `last_reviewed` line, where rfc.py keeps it):
 
     <!-- spec-lint: allow RULE reason="why this is correct" -->
 
@@ -214,6 +215,17 @@ def _allows(lines: list[str], labels: list[str], path: str) -> tuple[list[Allow]
             continue
         if len(reason) < MIN_REASON_CHARS:
             bad.append(Finding("allow-invalid", path, i + 1, "the reason is missing or too short to review"))
+            continue
+        before = next((k for k in range(i - 1, -1, -1) if lines[k].strip()), None)
+        if before is not None and "rfc.py:last_reviewed" in lines[before]:
+            # The canonical spot for a rule: right after its `last_reviewed` line, where rfc.py keeps it.
+            head = next((k for k in range(before, -1, -1) if RULE_HEADING_RE.match(lines[k])), None)
+            if head is None:
+                bad.append(Finding("allow-invalid", path, i + 1, "no rule block above the comment"))
+                continue
+            allow = Allow(rule, path, i + 1, reason)
+            allows.append(allow)
+            covers[allow] = range(head + 1, before + 2)
             continue
         first = next((k for k in range(i + 1, len(lines)) if lines[k].strip() and "spec-lint:" not in lines[k]), None)
         if first is None:
