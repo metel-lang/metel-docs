@@ -86,7 +86,7 @@ the curated thematic map.
 - **RFC-0139** — Garbage-Collected Allocators and Allocator-Determined Pointer Types (`1-under-review` ; rfcs/1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md ; date 2026-08-24 ; updated 2026-08-27)
 - **RFC-0140** — Algebraic Effects (`1-under-review` ; rfcs/1-under-review/rfc-0140-algebraic-effects.md ; date 2026-08-25 ; updated 2026-08-25)
 - **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics (`1-under-review` ; rfcs/1-under-review/rfc-0142-division-by-zero-and-checked-arithmetic-ergonomics.md ; date 2026-08-25 ; updated 2026-08-27)
-- **RFC-0143** — Allocator Placement, Storage Identity, and Allocator-Selected Handles (`1-under-review` ; rfcs/1-under-review/rfc-0143-allocator-placement-storage-identity-and-allocator-selected-handles.md ; date 2026-08-26 ; updated 2026-08-27)
+- **RFC-0143** — Allocator Storage Resources and Custody-Aware Typed Allocation (`1-under-review` ; rfcs/1-under-review/rfc-0143-allocator-placement-storage-identity-and-allocator-selected-handles.md ; date 2026-08-26 ; updated 2026-11-18)
 - **RFC-0144** — Reference-Destructuring Patterns (`1-under-review` ; rfcs/1-under-review/rfc-0144-reference-destructuring-patterns.md ; date 2026-08-27)
 - **RFC-0146** — Row-Polymorphic Self-Views (`1-under-review` ; rfcs/1-under-review/rfc-0146-row-polymorphic-self-views.md ; date 2026-08-28 ; updated 2026-08-28)
 - **RFC-0147** — Projection-Receiver Destructors (`1-under-review` ; rfcs/1-under-review/rfc-0147-projection-receiver-destructors.md ; date 2026-08-28 ; updated 2026-08-28)
