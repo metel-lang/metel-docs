@@ -254,8 +254,6 @@ type, independently of the enclosing function's return type.
 
 Tuples are lightweight anonymous product types.
 
-> **Planned (RFC-0151, metel-core#1956).** A tuple is a row of integer labels: `(A, B)` is the closed anonymous record type `.{ .0: A, .1: B }`, `(a, b)` is `.{ .0 = a, .1 = b }`, and `t.0` is field access on the label `.0`. There is one structural product former, so narrowing, row bounds and the row impls apply to a tuple with no separate rule. The rules below state it; each is blocked on the implementation issue it names.
-
 > **Gap** GAP-TYPES-009
 
 ```metel
