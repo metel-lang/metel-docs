@@ -678,6 +678,8 @@ def check_schedule_fields(records: list, repo_root: Path, rfcs_dir: Path) -> lis
         rfc = fm.get("rfc")
         if fm.get("disposition") == "planned" and not tracked_by:
             findings.append(Finding(str(rel), "a `planned` record must name its tracking issue in `tracked_by: metel-core#N`"))
+        if fm.get("disposition") == "accepted" and tracked_by:
+            findings.append(Finding(str(rel), "an `accepted` record is a deliberate boundary and has no plan: drop `tracked_by`, or make the record `planned` if the work is scheduled"))
         if not tracked_by and not rfc:
             continue
         if fm.get("disposition") in ("resolved", "superseded"):
@@ -727,6 +729,41 @@ def tracked_record_problems(records: list, repo_root: Path, resolver, unresolved
             if i.get("state") == "open" and not i.get("milestone"):
                 warnings.append(Finding(rel, f"`tracked_by` names metel-core#{n}, which has no milestone: a planned record must be scheduled"))
     return errors, warnings
+
+
+ISSUE_CITATION_RE = re.compile(r"(?:metel-core)?(?<![\w/])#(\d{2,5})\b|metel-core#(\d{2,5})\b")
+
+
+def resolution_citation_problems(records: list, repo_root: Path, resolver, unresolved=None) -> list:
+    """Warnings for an active record whose `## Resolution` names issues but whose `tracked_by` does
+    not (the plan lives only in prose, where `tracked_record_problems` cannot see it), and every one of
+    those issues is closed. That is how a record outlives its plan: 9 of the 11 stale records found
+    in the 2026-11 audit said "tracked as metel-core#N" in prose, with `tracked_by` empty, and N had
+    long been closed. `records` are `(path, frontmatter, resolution_text)`. A record with a live
+    `tracked_by`, a finished record, and an unreachable GitHub are all left alone."""
+    warnings: list = []
+    for path, fm, resolution in records:
+        if fm.get("disposition") not in GAP_ACTIVE_DISPOSITIONS or fm.get("tracked_by") or fm.get("rfc"):
+            continue
+        numbers = sorted({int(a or b) for a, b in ISSUE_CITATION_RE.findall(resolution)})
+        if not numbers:
+            continue
+        infos = {}
+        for n in numbers:
+            info = resolver(n)
+            if info is None:
+                if unresolved is not None:
+                    unresolved.append(n)
+                continue
+            if not info.get("missing"):
+                infos[n] = info
+        if infos and len(infos) == len(numbers) and all(i.get("state") != "open" for i in infos.values()):
+            warnings.append(Finding(
+                str(path.relative_to(repo_root)),
+                "`## Resolution` cites only closed issues (" + ", ".join(f"metel-core#{n}" for n in infos)
+                + ") and `tracked_by` is empty: resolve the record, or re-plan it with a new tracking issue in `tracked_by`",
+            ))
+    return warnings
 
 
 def check_spec_limit_markers(
@@ -1000,6 +1037,16 @@ def release_gate_findings(references, resolver, milestone: str) -> list[Finding]
     return findings
 
 
+def scheduled_resolutions(repo_root: Path = REPO_ROOT) -> list:
+    """(path, frontmatter, `## Resolution` text) of every gap and limitation record, for the release gate."""
+    out = []
+    for d in (repo_root / "architecture" / "limitations", repo_root / "architecture" / "gaps"):
+        for path in sorted(d.glob("*.md")) if d.is_dir() else []:
+            fm, _, resolution = parse_limitation_file(path)
+            out.append((path, fm, resolution))
+    return out
+
+
 def scheduled_records(repo_root: Path = REPO_ROOT) -> list:
     """(path, frontmatter) of every gap and limitation record, for the release gate."""
     out = []
@@ -1169,6 +1216,14 @@ def run_checks(
         findings.extend(tracked_errors)
         if tracked_warnings is not None:
             tracked_warnings.extend(tracked_stale)
+            tracked_warnings.extend(
+                resolution_citation_problems(
+                    [(p, fm, res) for p, fm, _, res in limitation_records] + [(p, fm, parse_limitation_file(p)[2]) for p, fm, _ in gap_records.values()],
+                    repo_root,
+                    pending_resolver,
+                    pending_unresolved,
+                )
+            )
     findings.extend(
         check_spec_limit_markers(
             language_spec_dir,
@@ -1224,6 +1279,7 @@ def main() -> int:
         refs = pending_references(LANGUAGE_SPEC_DIR, REPO_ROOT, args.core)
         gate = release_gate_findings(refs, gh_issue_resolver, args.release_gate)
         gate += tracked_gate_findings(scheduled_records(), REPO_ROOT, gh_issue_resolver)
+        gate += resolution_citation_problems(scheduled_resolutions(), REPO_ROOT, gh_issue_resolver)
         scope = "spec markers" + (" and skipped fixtures" if args.core else " (pass --core to include skipped fixtures)")
         print(f"Release gate for {args.release_gate}: {len(refs)} pending reference(s) in {scope}.")
         for f in gate:

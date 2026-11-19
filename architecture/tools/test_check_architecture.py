@@ -671,6 +671,60 @@ class TrackedByStateTests(GapRecordTests):
         self.assertTrue(any("could not be verified" in f for f in blind))
 
 
+
+class ResolutionCitationTests(GapRecordTests):
+    """A record whose plan lives only in `## Resolution` prose (`tracked_by` empty) goes stale
+    silently: 9 of the 11 stale records of the 2026-11 audit said "tracked as metel-core#N" there."""
+
+    def corpus(self, resolution="None yet; tracked as metel-core#77.", extra=""):
+        text = VALID_GAP.replace("None yet.", resolution)
+        if extra:
+            text = text.replace("review: null", extra + "\nreview: null")
+        self.write_gap_corpus(gap_text=text)
+
+    def warnings(self, answers, **kw):
+        self.corpus(**kw)
+        warnings, unresolved = [], []
+        self.run_checks(pending_resolver=lambda n: answers.get(n), pending_unresolved=unresolved, tracked_warnings=warnings)
+        return [str(w) for w in warnings], unresolved
+
+    def test_only_closed_issues_in_the_resolution_is_a_warning(self):
+        warnings, _ = self.warnings({77: {"state": "closed", "milestone": "x"}})
+        self.assertTrue(any("cites only closed issues (metel-core#77)" in w for w in warnings))
+
+    def test_a_bare_hash_citation_counts(self):
+        warnings, _ = self.warnings({77: {"state": "closed", "milestone": "x"}}, resolution="Fixed by #77 for the symptom, nothing for the cause.")
+        self.assertTrue(any("cites only closed issues" in w for w in warnings))
+
+    def test_one_open_issue_is_enough(self):
+        warnings, _ = self.warnings({77: {"state": "closed", "milestone": "x"}, 78: {"state": "open", "milestone": "y"}}, resolution="Was #77, now #78.")
+        self.assertEqual([], [w for w in warnings if "cites only closed" in w])
+
+    def test_a_tracked_by_or_an_rfc_means_the_plan_is_not_prose_only(self):
+        self.write_rfc("2-accepted", "0122")
+        for extra in ("tracked_by: metel-core#78", "rfc: RFC-0122"):
+            warnings, _ = self.warnings({77: {"state": "closed", "milestone": "x"}, 78: {"state": "open", "milestone": "y"}}, extra=extra)
+            self.assertEqual([], [w for w in warnings if "cites only closed" in w], extra)
+
+    def test_a_resolved_record_is_not_checked(self):
+        self.corpus()
+        text = VALID_GAP.replace("disposition: known", "disposition: resolved").replace("None yet.", "Fixed by metel-core#77, RFC-0122.")
+        self.write_rfc("4-implemented", "0122")
+        self.write_gap_corpus(gap_text=text.replace("## Affects\n\n- `spec.types.generics.legality-1`", "## Affects\n\n- `spec.types.generics.legality-1`\n- `RFC-0122`"))
+        warnings, unresolved = [], []
+        self.run_checks(pending_resolver=lambda n: {"state": "closed", "milestone": None}, pending_unresolved=unresolved, tracked_warnings=warnings)
+        self.assertEqual([], [str(w) for w in warnings if "cites only closed" in str(w)])
+
+    def test_an_unreachable_github_is_not_a_warning(self):
+        warnings, unresolved = self.warnings({})
+        self.assertEqual([], [w for w in warnings if "cites only closed" in w])
+        self.assertEqual([77], unresolved)
+
+    def test_an_accepted_record_may_not_carry_tracked_by(self):
+        text = VALID_GAP.replace("disposition: known", "disposition: accepted").replace("review: null", "tracked_by: metel-core#77\nreview: 2027-01-01")
+        self.write_gap_corpus(gap_text=text)
+        self.assertTrue(any("`accepted` record is a deliberate boundary" in f for f in [str(f) for f in self.run_checks()]))
+
 class PendingMarkerTests(unittest.TestCase):
     """`> **Pending** metel-core#N` markers (metel-core#1418): the transient "not implemented yet,
     an issue tracks it" marker, valid while the issue is open and has a milestone."""
