@@ -2,8 +2,9 @@
 id: rfc-0164
 title: "Mutating Closures with a Propagating ? Are Call-Once"
 date: '2026-09-02'
-status: draft
-updated: '2026-09-02'
+status: under-review
+updated: '2026-11-20'
+tracking: metel-core#2123
 ---
 
 > **Follow-up to RFC-0153 (Closure Mutation Axis), opened 2026-09-02.** RFC-0153's
@@ -14,6 +15,8 @@ updated: '2026-09-02'
 > what v0.13.0 ships. This RFC proposes tightening the `?` half of it for **v0.13.1**: a
 > `var` closure body that can `?`-propagate is `once`. It is **not** a v0.13.0 blocker and
 > does not change anything about `once` closures, `return`, or `reading` closures.
+
+> **Status — under review (2026-11-20).** Open milestoned tracking issue; PROCESS.md requires review
 
 ## Summary
 

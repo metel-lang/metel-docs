@@ -31,7 +31,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/841'
 `a + b`, `a - b`, `a * b`, and `a / b` also panic on overflow, for every integer
 type, unconditionally (RFC-0007 D3, amended 2026-08-26 to state this plainly instead
 of a debug/release split that was never implemented). Per the spec, a panic
-**terminates the process**, with no in-language recovery at all (RFC-0014, `0-draft`,
+**terminates the process**, with no in-language recovery at all (RFC-0014, `1-under-review`,
 is exploring whether that should ever change, in general, for all panics — §3).
 
 Neither condition has a type-safe or ergonomic alternative today: no `checked_*`
@@ -127,7 +127,7 @@ what §6 asks for division — was never asked at all. §5 and §7 ask it.
 
 ---
 
-## 3. Relationship to RFC-0014 (Panic Recovery, `0-draft`)
+## 3. Relationship to RFC-0014 (Panic Recovery, `1-under-review`)
 
 RFC-0014 asks a general, *reactive* question: once a panic has occurred, should a
 running program be able to catch and recover from it at all? It already names
@@ -585,7 +585,7 @@ above ships, not a substitute for any of it.
   of this document that deferred RFC.
 - RFC-0013 (Integer Overflow Behaviour, `5-superseded` by RFC-0007) — the original,
   narrower overflow-only exploration; superseded, not resurrected here.
-- RFC-0014 (Panic Recovery, `0-draft`) — the general, reactive sibling question;
+- RFC-0014 (Panic Recovery, `1-under-review`) — the general, reactive sibling question;
   relationship stated precisely in §3.
 - `reference/spec/runtime.md`, Panics section — the canonical, integrated statement
   that a panic is unrecoverable and terminates the process; the fact this RFC's
