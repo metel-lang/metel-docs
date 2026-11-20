@@ -105,7 +105,7 @@ Let-bound polymorphic closures are represented in the polymorphic scheme environ
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | `metel-frontend/docs/typechecker.md` |
 
 ##### Requirement {#arch.type-inference.requirement-7}
@@ -135,7 +135,7 @@ one-way `[T; N]` → `[T]` coercion without changing the expression's type ident
 | `specified by` | `#type-inference` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | RFC-0177; `spec.declarations.structural-aspect-bounds.legality-2` |
 
 </details>

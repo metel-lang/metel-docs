@@ -79,7 +79,7 @@ The typechecker treats `[T]` as `Copy` unconditionally, as a deliberate `InferTy
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L4852) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0046, RFC-0126 |
 
 ##### Requirement {#arch.type-construction.requirement-5}
@@ -205,7 +205,7 @@ Construction resolves a value by identity: locals and move state are keyed by th
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::resolve_local`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L465) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::a_local_is_resolved_by_its_binding_not_its_spelling`](https://github.com/metel-lang/metel-core/blob/bba4e6f0278b1b3685205e684f4a33884465b742/metel-frontend/src/pipeline/type_checking/tests.rs#L269) |
-| `last_reviewed` | 58657b2d6f228d493fb7e0d6a3ece3f5aff22213 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1570`, `#1604` |
 
 ##### Requirement {#arch.type-construction.requirement-14}

@@ -32,7 +32,7 @@ Loading a root file yields a `ModuleGraph` in dependency order: a module appears
 | `specified by` | `#parsing` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | RFC-0058, ADR-0023 (hierarchical module paths), ADR-0031 (diamond-dependency path aliasing), `#1147` |
 
 ##### Requirement {#arch.parsing.requirement-2}
@@ -46,7 +46,7 @@ Module source is read through a `SourceProvider` (embedded stdlib plus disk by d
 | `specified by` | `#parsing` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 006a9aafdcb4bc9c7328ad882c08d32737058a51 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | RFC-0058, ADR-0039 |
 
 ##### Requirement {#arch.parsing.requirement-3}
@@ -88,7 +88,7 @@ Keyword disambiguation is a grammar invariant: `keyword` matches a whole word on
 | `specified by` | `#parsing` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0015, ADR-0018 |
 
 ##### Requirement {#arch.parsing.requirement-6}
