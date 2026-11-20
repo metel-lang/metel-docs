@@ -197,7 +197,7 @@ def skeleton(source_rel: str) -> str:
 
 def docs_markdown(root: Path) -> list[Path]:
     out = []
-    for p in root.rglob("*.md"):
+    for p in [*root.rglob("*.md"), *root.rglob("*.mdx")]:  # tutorials are .mdx and link into the spec
         rel = p.relative_to(root).parts
         if any(part.startswith(".") for part in rel):
             continue
@@ -427,6 +427,12 @@ def check_links(root: Path) -> list[str]:
                     continue  # a URL or a site route: not a file in this tree
                 path_part, frag = split_dest(dest)
                 target = (md.parent / path_part).resolve() if path_part else md.resolve()
+                if path_part and not target.exists():
+                    # a doc id without its extension (`tutorials/first-run`) is a valid Docusaurus link
+                    for suffix in (".md", ".mdx"):
+                        if Path(str(target) + suffix).is_file():
+                            target = Path(str(target) + suffix)
+                            break
                 if path_part and not target.exists():
                     problems.append(f"{md.relative_to(root)}:{n}: `{dest}` does not exist")
                 elif frag and target.suffix == ".md" and target.is_file():

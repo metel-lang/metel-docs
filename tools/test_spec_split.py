@@ -212,6 +212,16 @@ class TitleAnchorTests(Tree):
         self.assertIn("(alpha.md#alpha)", alpha.read_text())
 
 
+class MdxTests(Tree):
+    def test_mdx_pages_are_relinked_and_extensionless_doc_ids_are_not_broken_links(self):
+        (self.root / "getting-started").mkdir()
+        (self.root / "getting-started" / "tour.mdx").write_text("See [alpha](../reference/spec/chapter.md#spec.chapter.a.legality-1) and [next](other).\n")
+        (self.root / "getting-started" / "other.mdx").write_text("# Other\n")
+        spec_split.apply(self.plan, False)
+        self.assertIn("(../reference/spec/chapter/alpha.md#spec.chapter.a.legality-1)", (self.root / "getting-started" / "tour.mdx").read_text())
+        self.assertEqual([p for p in spec_split.check_links(self.root) if "missing.md" not in p], [])
+
+
 class PlanTests(Tree):
     def test_an_unplaced_section_is_an_error(self):
         self.plan.write_text(PLAN.replace('[[page]]\nfile = "beta.md"\nsections = ["Beta"]\n', ""))
