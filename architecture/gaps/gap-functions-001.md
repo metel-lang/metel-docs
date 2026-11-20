@@ -2,9 +2,9 @@
 id: GAP-FUNCTIONS-001
 title: "Free-function overloading is implemented but the Language Spec does not describe it"
 summary: "A module can declare several free functions with one name and the compiler resolves calls by exact argument types, but the spec states no rules for it, including whether an overloaded name can be used as a value."
-scope: "reference/spec/functions.md#first-class-functions"
+scope: "reference/spec/functions/first-class-functions.md#first-class-functions"
 owner: language
-discovered_by: "answering whether same-named functions share a SymbolId; checked against reference/spec/functions.md"
+discovered_by: "answering whether same-named functions share a SymbolId; checked against reference/spec/functions/index.md"
 disposition: known
 review: null
 ---

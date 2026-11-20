@@ -232,8 +232,8 @@ elements are.
 **References:** `&T` is `Copy`. `&var T` is not — an exclusive reference must remain unique,
 so it is moved or reborrowed rather than duplicated.
 
-**Granted in the declaration.** `Copy` is [a `declared` aspect](declarations.md#spec.declarations.aspects.aspect-declaration-properties.legality-1):
-`copy struct P .{ .. }` and `struct P derives Clone, Copy .{ .. }` grant it ([Declaration Clauses](declarations.md#spec.declarations.aspects.declaration-clauses.legality-6)),
+**Granted in the declaration.** `Copy` is [a `declared` aspect](declarations/aspects/declaration-properties.md#spec.declarations.aspects.aspect-declaration-properties.legality-1):
+`copy struct P .{ .. }` and `struct P derives Clone, Copy .{ .. }` grant it ([Declaration Clauses](declarations/aspects/declaration-clauses.md#spec.declarations.aspects.declaration-clauses.legality-6)),
 and an `extend P: Copy;` of a type with a declaration is an error. The standard library grants it to the scalars and
 to the structural kinds. Whether a type may be duplicated implicitly is its author's statement: a type from another
 module cannot be made `Copy` by its user.

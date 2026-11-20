@@ -29,5 +29,5 @@ bound.
 ## Resolution
 
 Resolved 2026-10-01: RFC-0120 reached `3-integrated` (spec text committed to
-`reference/spec/declarations.md#records`) and then `4-implemented`, landed in
+`reference/spec/declarations/records.md#records`) and then `4-implemented`, landed in
 metel-core#1303 (tracked by metel-core#1300).

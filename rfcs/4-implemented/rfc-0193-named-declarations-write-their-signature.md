@@ -318,7 +318,7 @@ This lands as a hard cut (Open Questions, 1).
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Named Function
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md`: *Named Function
 Declarations* (`dynamics-1` now correct; `legality-2` rewritten so a named declaration writes every
 parameter's type and its return type, or returns `()`), *Closures* (inference unchanged; the known limit that a stand-alone closure
 cannot name a row parameter in a written return annotation). `reference/spec/modules.md`

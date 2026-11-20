@@ -876,7 +876,7 @@ implementation).
 - **RFC-0129** *(implemented 2026-08-29, opened 2026-08-05)* — Aspect Method Generic Constraint
   Conformance — the substitutability relation between an aspect method's generic
   constraints and its implementation. Implemented in metel-core#897 (#617) and integrated
-  into `reference/spec/declarations.md` (`implementing-an-aspect` legality-12–14).
+  into `reference/spec/declarations/index.md` (`implementing-an-aspect` legality-12–14).
   **Cut to a minimal, sound interim on 2026-08-29:**
   after normalization (alpha-renaming, bound reordering, deduplication, inline-vs-`where`
   placement) the implementation method's generic-constraint conjunction must be
@@ -924,7 +924,7 @@ implementation).
   independence, and opacity rules are unchanged, as is the T0022 restriction
   (metel-core#240/#622) on where the shorthand is legal at all. Explicitly does
   not touch RFC-0038's still-reserved `dyn Aspect`. Integrated:
-  `reference/spec/declarations.md`'s `impl Aspect` shorthand subsection and the
+  `reference/spec/declarations/index.md`'s `impl Aspect` shorthand subsection and the
   `spec.declarations.aspects.aspect-bounds-on-function-type-parameters` rules now
   spell it `extends Aspect`, RFC-0130 co-origin with RFC-0035/0037. Shipped in
   metel-core#908 (grammar `impl_type` → `extends_type`, `impl` kept reserved so the
@@ -939,7 +939,7 @@ implementation).
   interpreter's existing implicit allocation (`Rc<RefCell<Value>>`, already used by
   `Array`/`Reference`/`MutReference` with no allocator annotation) — object safety,
   vtable dispatch, coercion, ownership/drop, heterogeneous collections. Depends only
-  on RFC-0060 (`4-implemented`). Integrated into `reference/spec/declarations.md`'s
+  on RFC-0060 (`4-implemented`). Integrated into `reference/spec/declarations/index.md`'s
   `dyn Aspect` section (`spec.declarations.aspects.dyn-aspect.legality-1..6`,
   `.dynamics-1`); coverage frontmatter added for §§1–8 as part of the retroactive
   lifecycle walk. §3 was split into §3/§3a/§3b so each object-safety rule anchors its
@@ -952,7 +952,7 @@ implementation).
 - **RFC-0061** *(implemented 2026-07-14, was integrated 2026-07-13)* — Structural
   Aspect Bounds — `T[]`/tuples/function-type bounds. Depends on RFC-0060 and
   RFC-0036; both were in place before implementation. Integrated into
-  `reference/spec/declarations.md` as a new "Structural Aspect Bounds" section
+  `reference/spec/declarations/index.md` as a new "Structural Aspect Bounds" section
   right after Aspect Implementation Coherence. Integration also surfaced three real
   groundwork bugs in the interpreter's structural-impl path (non-named impl-target
   crashes, array method-dispatch gating, and structural-target registration being
@@ -963,7 +963,7 @@ implementation).
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
 - **RFC-0036** *(implemented 2026-07-13, was integrated 2026-07-13)* — Conditional Impl
   Blocks — `extend Type<T>: Aspect where T: Bound`, both inline and `where`-clause
-  forms. Integrated into `reference/spec/declarations.md` right after the basic
+  forms. Integrated into `reference/spec/declarations/index.md` right after the basic
   `extend Type: Aspect` example. Fixed a stale error-code collision while integrating:
   the RFC's own §4 example used `T0013`, already claimed (ambiguous aspect
   method/associated-type resolution) by the time this integrated — corrected to reuse
@@ -988,7 +988,7 @@ implementation).
   #548 (2026-07-13) landed that remaining work; see those RFCs' own entries.
 - **RFC-0037** *(implemented 2026-07-13, was integrated 2026-07-13)* — Return-Position
   `impl Aspect` — opaque, monomorphised-per-function return types. Integrated into
-  `reference/spec/declarations.md` right after the parameter-position `impl
+  `reference/spec/declarations/index.md` right after the parameter-position `impl
   Aspect` shorthand. Worked example checks composition with RFC-0082 (Associated
   Types): a function returning `impl Container` still resolves `Container::Item`
   correctly through the caller's method calls, since the opaque type is a real
@@ -1004,7 +1004,7 @@ implementation).
 - **RFC-0060** *(implemented 2026-07-14, was integrated 2026-07-11)* — Aspect Impl
   Coherence — orphan rule, overlap detection, closed-world assumption, auto-impl
   coherence participation, negative-impl priority. Integrated into
-  `reference/spec/declarations.md` as a new section; also surfaced a real,
+  `reference/spec/declarations/index.md` as a new section; also surfaced a real,
   unrelated docs bug while integrating (RFC-0033's recommended error code T0014 was
   already claimed by this RFC's own orphan-rule error, so RFC-0033 was corrected
   rather than silently colliding). Implemented across issues #542, #547, #552, and
@@ -1021,7 +1021,7 @@ implementation).
   aspect side; no new syntax, no new error code (reuses T0014), no new
   overlap-detection machinery (the orphan-rule fix alone confines any one aspect's
   bare-parameter blanket to a single module). Opened 2026-07-11, same review pass as
-  RFC-0096. Integrated into `reference/spec/declarations.md`, expanding the
+  RFC-0096. Integrated into `reference/spec/declarations/index.md`, expanding the
   existing "not covered by this section" deferral note (added while integrating
   RFC-0036) into full spec content with its three worked examples. **Fixed
   2026-07-20:** the frontmatter had claimed `implemented` since integration, but
@@ -1041,7 +1041,7 @@ implementation).
   clippy::pedantic` clean) — zero regressions, since the change only narrows an
   already-`None`-producing path to be explicit rather than changing any outcome.
 - **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
-  — `T: !Aspect`. Integrated into `reference/spec/declarations.md`; its own
+  — `T: !Aspect`. Integrated into `reference/spec/declarations/index.md`; its own
   stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
   #547): enforcement at all four function-call-expression branches plus generic
   struct/enum literal construction, by inverting the same lookup the positive-bound
@@ -1082,7 +1082,7 @@ implementation).
   the existing negative-vs-concrete-positive conflict rule (§2.2/#552, confirmed by
   a regression this fix initially introduced and then corrected).
 - **RFC-0082** *(implemented 2026-07-13, was integrated 2026-07-10)* — Associated
-  Types. Integrated into `reference/spec/declarations.md`; stale
+  Types. Integrated into `reference/spec/declarations/index.md`; stale
   `Region`/`@[r]` naming corrected to `Alloc`/`@a`, and §7 (amending retracted
   RFC-0069's `SubRegion`) marked historical-only rather than integrated. Implemented
   (issue #546): §1/§1.1/§1.2 declaration + bound enforcement + bare-name sugar

@@ -755,14 +755,14 @@ Each stage should include rejecting tests from section 13, not just success-path
 - [RFC-0073 — AutoAlloc](../2-accepted/rfc-0073-auto-alloc.md).
 - [RFC-0077 — Allocator Generics](../2-accepted/rfc-0077-allocator-generics.md).
 - [RFC-0141 — Aspect Objects: Explicit Allocator Placement](../2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md).
-- [RFC-0139 — Garbage-Collected Allocators](../1-under-review/rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md).
-- [RFC-0159 — Abstract Regions and a Dedicated Identity Channel](../1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md).
+- [RFC-0139 — Garbage-Collected Allocators](rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md).
+- [RFC-0159 — Abstract Regions and a Dedicated Identity Channel](rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md).
 - [RFC-0133 — From-Metel List: the Runtime-Sized Buffer Gap](../0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md).
 - [RFC-0172 — Sized and Unsized Kinds](../0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md).
-- [RFC-0124 — Sequence Types](../1-under-review/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md).
-- [RFC-0122 — Borrow Checking](../1-under-review/rfc-0122-borrow-checking.md).
-- [RFC-0067 — Lifetime Anchors](../1-under-review/rfc-0067-lifetime-anchors.md).
-- [RFC-0076 — Brand Types](../1-under-review/rfc-0076-rc-brands.md).
+- [RFC-0124 — Sequence Types](rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md).
+- [RFC-0122 — Borrow Checking](rfc-0122-borrow-checking.md).
+- [RFC-0067 — Lifetime Anchors](rfc-0067-lifetime-anchors.md).
+- [RFC-0076 — Brand Types](rfc-0076-rc-brands.md).
 - [RFC-0026 — Unsafe Blocks](../0-draft/rfc-0026-unsafe-blocks.md).
 - [RFC-0071 — Ownership and Move Semantics](../3-integrated/rfc-0071-ownership-and-move-semantics.md).
 - [RFC-0089 — Linear Types](../2-accepted/rfc-0089-linear-types.md).

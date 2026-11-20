@@ -4,7 +4,7 @@ title: "No higher-rank polymorphism"
 summary: "A function parameter is a monotype, so it cannot be used at two types in one body."
 scope: "reference/spec/types.md#type-inference"
 owner: language
-discovered_by: "metel-core#1218 limitation analysis; fixture `typechecking/generics/limit_01_rank1_fn_arg.mtl`; `reference/spec/functions.md` First-Class Functions"
+discovered_by: "metel-core#1218 limitation analysis; fixture `typechecking/generics/limit_01_rank1_fn_arg.mtl`; `reference/spec/functions/index.md` First-Class Functions"
 disposition: known
 review: null
 ---

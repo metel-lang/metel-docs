@@ -187,7 +187,7 @@ Unicode scalar value.
 
 > **Gap** GAP-TYPES-001
 
-Types are inferred by unification within a declaration (Hindley-Milner, with no inferred polymorphism). A closure has one type, fixed by its uses ([Functions — Closures](functions.md#closures)); polymorphism is written or declared: a generic `fun`, a reference to one, or a closure with a written open-record parameter. Annotations are optional for local bindings and for closure parameters and return types. A named declaration is the exception: it writes the type of every parameter and its return type, or returns `()` ([Functions — Named Function Declarations](functions.md#named-function-declarations)). Annotations may be written explicitly for documentation or to restrict a binding to a less general type.
+Types are inferred by unification within a declaration (Hindley-Milner, with no inferred polymorphism). A closure has one type, fixed by its uses ([Functions — Closures](functions/closures/index.md#closures)); polymorphism is written or declared: a generic `fun`, a reference to one, or a closure with a written open-record parameter. Annotations are optional for local bindings and for closure parameters and return types. A named declaration is the exception: it writes the type of every parameter and its return type, or returns `()` ([Functions — Named Function Declarations](functions/declarations.md#named-function-declarations)). Annotations may be written explicitly for documentation or to restrict a binding to a less general type.
 
 Annotations are required only where there is no expression to infer from:
 - Struct and enum field types
@@ -507,7 +507,7 @@ kind, not by the fields written:
 | | row visible to bounds and row-conditional impls | inherent methods |
 |---|---|---|
 | anonymous record | yes | no |
-| `record` ([Records](declarations.md#records)) | yes | yes |
+| `record` ([Records](declarations/records.md#records)) | yes | yes |
 | `struct` | **no** | yes |
 | `enum` | **no** | yes |
 
@@ -611,7 +611,7 @@ owner:
 
 Arrays are the other structural target: `extend<T> [T]: MyAspect { … }` is supported, per
 the orphan-rule carve-out for structural type constructors — see
-[Declarations — Structural Aspect Bounds](declarations.md#structural-aspect-bounds).
+[Declarations — Structural Aspect Bounds](declarations/aspects/structural-bounds.md#structural-aspect-bounds).
 Auto-derived aspects are unaffected.
 
 ### Projection
@@ -1759,7 +1759,7 @@ a row equation (`where R = .{ .label: Type, ..Rest }`, in which `Rest` is derive
 and lacks the named labels, so `R` never equals `Rest`) and an associated-type binding
 (`T: Iterable<Item = X>` makes `T::Item` equal to `X`). A closure inside the body
 sees the enclosing parameters as rigid; a nested function does not see them and declares its own
-([Functions — Local Functions](functions.md#local-functions)); a recursive generic call
+([Functions — Local Functions](functions/declarations.md#local-functions)); a recursive generic call
 instantiates the callee's parameters afresh.
 
 <!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
@@ -2632,7 +2632,7 @@ extend<record R> .{ ..R }: MyAspect { … }                         // every row
 [All three are permitted once the aspect is local to the implementing module](#spec.types.generics.row-conditional-impls.legality-1): the first is
 exactly one structural type, the others a *row condition* on the receiver. The receiver
 matches an impl when its row meets the condition, whether it is an anonymous record or a
-nominal [`record`](declarations.md#records). Methods are checked per call against the
+nominal [`record`](declarations/records.md#records). Methods are checked per call against the
 concrete receiver, as for every structural target, and the aspect's default methods are
 inherited as for any impl. The field types a target writes must be spelled out: one that
 names an impl type parameter (`extend<T> .{ .w: T }: A`) is rejected, since no receiver's
@@ -2712,7 +2712,7 @@ A row-conditional impl (`extend<record R: .{ ... }> .{ ..R }: Aspect` or `extend
 .{ ..R }: Aspect`) resolves against a value's **current** row, not only its widest
 possible one — for a struct, that is the row of its current residual (narrower after a
 partial move, wider again after the moved field is restored), exactly the same
-current-row behavior [Named Records](declarations.md#records) states for `record`'s own
+current-row behavior [Named Records](declarations/records.md#records) states for `record`'s own
 row-bound satisfaction.
 
 
@@ -3396,7 +3396,7 @@ and its message states that `Perhaps` is now `Option`. That covers `Perhaps` wri
 as a path or the leading segment of one (`Perhaps::None`, `std::core::Perhaps`), as an expression
 or pattern name, and in an import. A module that declares its own `Perhaps` is unaffected, and
 `Option` may be shadowed like `Result` and `List`
-([scoping-and-shadowing legality-9](declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-9)).
+([scoping-and-shadowing legality-9](declarations/variables/scoping-and-shadowing.md#spec.declarations.variables.scoping-and-shadowing.legality-9)).
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
@@ -3442,7 +3442,7 @@ fun main() -> i64 {
 }
 ```
 
-Use `match` to handle both cases, or [`?`](functions.md#spec.functions.the-operator.dynamics-2)
+Use `match` to handle both cases, or [`?`](functions/error-propagation.md#spec.functions.the-operator.dynamics-2)
 to propagate errors.
 
 [`.yolo()`](runtime.md#spec.runtime.panics.dynamics-1) also works on `Result<T, E>`,

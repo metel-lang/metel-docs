@@ -2,7 +2,7 @@
 id: GAP-DECLARATIONS-005
 title: "`derivable` is a property only std aspects have, and the derivations are written by the compiler"
 summary: "`derives A` is legal only for an aspect whose declaration says `derivable`, which only `std::core` can say, and the compiler writes the impl itself; a user cannot make an aspect derivable or register a deriver."
-scope: "reference/spec/declarations.md#spec.declarations.aspects.declaration-clauses.legality-3"
+scope: "reference/spec/declarations/aspects/declaration-clauses.md#spec.declarations.aspects.declaration-clauses.legality-3"
 owner: language
 discovered_by: "language owner review of the v0.16.0 Declarations and derivation milestone, 2026-11-13; metel-core#1829"
 disposition: planned

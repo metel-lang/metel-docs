@@ -2,16 +2,20 @@
   "reference/error-codes.md": {
     "page-size": 1
   },
-  "reference/spec/declarations.md": {
-    "page-size": 1,
-    "section-size": 3
+  "reference/spec/declarations/aspects/declaration-clauses.md": {
+    "section-size": 1
+  },
+  "reference/spec/declarations/aspects/function-parameter-bounds.md": {
+    "section-size": 1
+  },
+  "reference/spec/declarations/variables/record-pattern-bindings.md": {
+    "section-size": 1
   },
   "reference/spec/expressions.md": {
     "page-size": 1,
     "section-size": 1
   },
-  "reference/spec/functions.md": {
-    "page-size": 1,
+  "reference/spec/functions/closures/capture-semantics.md": {
     "section-size": 1
   },
   "reference/spec/ownership.md": {

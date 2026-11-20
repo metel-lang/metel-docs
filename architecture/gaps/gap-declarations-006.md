@@ -2,7 +2,7 @@
 id: GAP-DECLARATIONS-006
 title: "`via` stated a flow for `Copy` only"
 summary: "RESOLVED: RFC-0227 (Derivation Arguments) replaces `via` with an argument list on a `derives` entry, accepted for `Clone` as well as `Copy`, and the `pub` rule applies to both."
-scope: "reference/spec/declarations.md#spec.declarations.aspects.declaration-clauses.legality-11"
+scope: "reference/spec/declarations/aspects/declaration-clauses.md#spec.declarations.aspects.declaration-clauses.legality-11"
 owner: language
 discovered_by: "language owner review of the v0.16.0 Declarations and derivation milestone, 2026-11-13; metel-core#1941"
 disposition: resolved
@@ -28,5 +28,5 @@ fix-it.
 ## Resolution
 
 Resolved 2026-11-16: RFC-0227 reached `3-integrated` (spec text in
-`reference/spec/declarations.md#spec.declarations.aspects.declaration-clauses.legality-11` to `legality-13`) and then
+`reference/spec/declarations/aspects/declaration-clauses.md#spec.declarations.aspects.declaration-clauses.legality-11` to `legality-13`) and then
 `4-implemented`, landed in metel-core#2069 (tracked by metel-core#2067).
