@@ -2,8 +2,12 @@
 id: rfc-0168
 title: "Equality Model and Super-Aspects"
 date: '2026-09-09'
-status: draft
+status: under-review
+updated: '2026-11-20'
+tracking: metel-core#1793
 ---
+
+> **Status — under review (2026-11-20).** Open milestoned tracking issue; PROCESS.md requires review
 
 ## Summary
 
