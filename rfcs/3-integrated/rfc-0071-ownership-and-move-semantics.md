@@ -624,7 +624,7 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    because "exclusive references are not `Copy`" reads like a guarantee of uniqueness and is
    not one.
 4. ~~Closure capture semantics are unspecified.~~ **Resolved 2026-07-24 — the spec already
-   settled it and this RFC had not caught up.** `public/reference/spec/functions.md` states
+   settled it and this RFC had not caught up.** `public/reference/spec/functions/index.md` states
    that "closures capture variables from their enclosing scope **by value**." Under affine
    ownership, by-value capture of a non-`Copy` type is a **move**: the closure takes
    ownership and the enclosing binding is invalid afterwards. Cloning it instead is precisely

@@ -416,7 +416,7 @@ rather than silently left to collide. 5 RFCs remain in the backlog: RFC-0008, 00
 
 **Updated again, same day:** RFC-0072 (Negative Bounds), RFC-0081 (Negative Impls), and
 RFC-0082 (Associated Types) followed RFC-0067a/0078/0083 into `3-integrated` — merged
-into `reference/spec/declarations.md`. All three needed real fixes first, not
+into `reference/spec/declarations/index.md`. All three needed real fixes first, not
 just formalities: RFC-0072's own examples still used pre-split bracket-channel allocator
 syntax (`@[r] T`); RFC-0081 pointed to `#[derive(Send)]` and RFC-0012, both retired
 (now `@derive`/RFC-0093); RFC-0082 still named the allocator aspect `Region` and used

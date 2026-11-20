@@ -408,7 +408,10 @@ def check_links(repo_root: Path) -> list:
 
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
-        return False
+        # A Language Spec page (one page of a chapter that is a directory) is its own scope: the only
+        # anchor naming it is its title, which the rendered page does not have, so it is written bare.
+        page = repo_root / scope
+        return scope.startswith("reference/spec/") and scope.endswith(".md") and page.is_file()
     file_part, anchor = scope.split("#", 1)
     candidate = repo_root / file_part
     if not candidate.exists():

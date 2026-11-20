@@ -622,6 +622,18 @@ class SpecLimitMarkerTests(GapRecordTests):
         self.assertTrue(any("remove them from a resolved or superseded record" in f for f in self.marker_findings()))
 
 
+class SpecPageScopeTests(GapRecordTests):
+    """A gap about a whole page of a chapter that is a directory names the page, with no fragment."""
+
+    def test_a_bare_spec_page_resolves_and_a_missing_page_or_architecture_page_does_not(self):
+        page = self.tmp / "reference" / "spec" / "types" / "tuples.md"
+        page.parent.mkdir(parents=True, exist_ok=True)
+        page.write_text("# Tuples\n")
+        self.assertTrue(ca.resolve_scope_anchor("reference/spec/types/tuples.md", {}, self.tmp))
+        self.assertFalse(ca.resolve_scope_anchor("reference/spec/types/missing.md", {}, self.tmp))
+        self.assertFalse(ca.resolve_scope_anchor("architecture/spec/x.md", {}, self.tmp))
+
+
 class TrackedByStateTests(GapRecordTests):
     """The state of the issues a record's `tracked_by` names (metel-core#1525): resolved through the
     same resolver as pending markers, so a fake one stands in for GitHub."""

@@ -37,8 +37,8 @@ The language's core design principles are:
 | [Modules](spec/modules.md) | Files, modules, imports, path roots, visibility, re-exports |
 | [Type System](spec/types.md) | Primitive types, inference, tuples, [records and rows](spec/types.md#records-and-rows-at-a-glance), arrays, casting, generics, Never, `Option<T>`, `Result<T,E>` |
 | [Ownership](spec/ownership.md) | Moves, `Copy`, `Drop`, drop order, partial moves |
-| [Declarations](spec/declarations.md) | Variables, structs, named records, enums, aspects |
-| [Functions](spec/functions.md) | Functions, closures, the `?` operator |
+| [Declarations](spec/declarations/index.md) | Variables, structs, named records, enums, aspects |
+| [Functions](spec/functions/index.md) | Functions, closures, the `?` operator |
 | [Expressions](spec/expressions.md) | Pattern matching, control flow |
 | [Runtime](spec/runtime.md) | Panics, built-in functions |
 | [Grammar](spec/grammar.md) | Formal grammar |

@@ -4,6 +4,7 @@
     spec_split.py skeleton reference/spec/declarations.md   # print a plan: one page per `##` section
     spec_split.py apply PLAN.toml [--dry-run]                # write the pages, remove the old file, relink
     spec_split.py check-links                                # every relative link and fragment resolves
+    spec_split.py fix-links [--dry-run]                      # repair links that still name a chapter that became a directory
 
 A plan names the chapter file and says which sections go to which page:
 
@@ -44,6 +45,8 @@ RULE_HEAD_RE = re.compile(r"^#{5} (?:Legality Rule|Dynamic Semantics(?: Rule)?) 
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 LINK_RE = re.compile(r"(?<!\\)\]\(([^()\s]+(?:\([^()]*\))?[^()\s]*)(\s+\"[^\"]*\")?\)")
 SECTION_LEVELS = (2, 3, 4)
+# `reference/spec/<page>.md#frag` written as text (record frontmatter, prose), not as a markdown link
+BARE_PAGE_RE = re.compile(r"(reference/spec/[A-Za-z0-9_/.-]+\.md)#([A-Za-z0-9_.-]+)")
 
 
 @dataclass
@@ -187,7 +190,7 @@ def docs_markdown(root: Path) -> list[Path]:
     out = []
     for p in root.rglob("*.md"):
         rel = p.relative_to(root).parts
-        if any(part.startswith(".") for part in rel) or rel[0] in ("release-notes",):
+        if any(part.startswith(".") for part in rel):
             continue
         out.append(p)
     return sorted(out)
@@ -200,6 +203,20 @@ def split_dest(dest: str) -> tuple[str, str]:
 
 def is_external(dest: str) -> bool:
     return bool(re.match(r"^[a-z][a-z0-9+.-]*:", dest)) or dest.startswith("//")
+
+
+def title_slug(text: str) -> str | None:
+    """The slug of a page's `# Title`. The rendered page gives its title no anchor, so a link to that
+    fragment from another page lands nowhere: such a link points at the page."""
+    fenced = False
+    for line in text.split("\n"):
+        if FENCE_RE.match(line):
+            fenced = not fenced
+        m = None if fenced else re.match(r"^#\s+(.*?)\s*$", line)
+        if m:
+            explicit = specindex.EXPLICIT_ID_RE.search(m.group(1))
+            return explicit.group(1) if explicit else specindex.slug(m.group(1))
+    return None
 
 
 def relpath(target: Path, start_dir: Path) -> str:
@@ -261,6 +278,7 @@ def apply(plan_path: Path, dry_run: bool) -> int:
     for p in new_files:
         moved_from[p] = source
 
+    title_slugs = {p: title_slug(c) for p, c in new_files.items()}
     changed: dict[Path, str] = {}
 
     def rewrite_links(body: str, old_loc: Path, new_loc: Path) -> str:
@@ -276,6 +294,8 @@ def apply(plan_path: Path, dry_run: bool) -> int:
                 page = old_frag_page.get(frag, index) if frag else index
                 if page == new_loc and frag:
                     return f"]({'#' + frag}{title})"
+                if frag and frag == title_slugs.get(page):
+                    frag = ""  # a page's own title has no anchor once rendered
                 return f"]({relpath(page, new_loc.parent)}{'#' + frag if frag else ''}{title})"
             if not path_part:
                 return m.group(0)
@@ -317,6 +337,60 @@ def apply(plan_path: Path, dry_run: bool) -> int:
 
 # ------------------------------------------------------------------ check-links
 
+def fix_links(root: Path, dry_run: bool) -> int:
+    """Repair links that still name a chapter file that has become a directory: follow the fragment to its page.
+
+    `apply` does this for the split it performs; this catches what it could not see (a page added to the
+    tree after the split, a link in a file outside the docs tree walked, a branch merged late).
+    """
+    spec = root / specindex.SPEC_REL
+    chapters = {p.name: p for p in spec.iterdir() if p.is_dir() and (p / "index.md").is_file()}
+    pages = specindex.spec_files(root)
+    where = anchor_pages(root, pages)
+    fixed = 0
+    for md in docs_markdown(root):
+        body = md.read_text()
+
+        def fix(m: re.Match) -> str:
+            nonlocal fixed
+            dest, title = m.group(1), m.group(2) or ""
+            if is_external(dest) or dest.startswith(("mailto:", "/")):
+                return m.group(0)
+            path_part, frag = split_dest(dest)
+            if not path_part:
+                return m.group(0)
+            target = (md.parent / path_part).resolve()
+            if target.is_file() and target.suffix == ".md" and frag and spec.resolve() in target.parents:
+                if frag == title_slug(target.read_text()) and frag not in specindex.explicit_anchors(target) and target != md.resolve():
+                    fixed += 1
+                    return f"]({path_part}{title})"
+                return m.group(0)
+            if target.exists() or target.suffix != ".md" or target.parent != spec.resolve() or target.stem not in chapters:
+                return m.group(0)
+            chapter = chapters[target.stem]
+            page = where.get(frag) if frag else None
+            if page is None or specindex.chapter_of(page, root) != target.stem:
+                page = chapter / "index.md"
+            if frag and frag == title_slug(page.read_text()):
+                frag = ""
+            fixed += 1
+            return f"]({relpath(page, md.parent)}{'#' + frag if frag else ''}{title})"
+        new = LINK_RE.sub(fix, body)
+
+        def bare(m: re.Match) -> str:
+            nonlocal fixed
+            target = root / m.group(1)
+            if target.is_file() and m.group(2) == title_slug(target.read_text()) and m.group(2) not in specindex.explicit_anchors(target):
+                fixed += 1
+                return m.group(1)
+            return m.group(0)
+        new = BARE_PAGE_RE.sub(bare, new)
+        if new != body and not dry_run:
+            md.write_text(new)
+    print(f"{fixed} link(s) {'would be ' if dry_run else ''}repaired")
+    return 0
+
+
 def check_links(root: Path) -> list[str]:
     pages = docs_markdown(root)
     cache: dict[Path, tuple[set[str], set[str]]] = {}
@@ -346,6 +420,8 @@ def check_links(root: Path) -> list[str]:
                     explicit, slugs = anchors_of(target)
                     if frag not in explicit and frag not in slugs:
                         problems.append(f"{md.relative_to(root)}:{n}: `{dest}`: no such anchor")
+                    elif frag == title_slug(target.read_text()) and frag not in explicit and target != md.resolve():
+                        problems.append(f"{md.relative_to(root)}:{n}: `{dest}`: the page's own title has no anchor once rendered; link the page")
     return problems
 
 
@@ -357,6 +433,8 @@ def main() -> int:
     ap_ = sub.add_parser("apply")
     ap_.add_argument("plan")
     ap_.add_argument("--dry-run", action="store_true")
+    fl = sub.add_parser("fix-links")
+    fl.add_argument("--dry-run", action="store_true")
     sub.add_parser("check-links")
     args = ap.parse_args()
     if args.cmd == "skeleton":
@@ -364,6 +442,8 @@ def main() -> int:
         return 0
     if args.cmd == "apply":
         return apply(Path(args.plan).resolve(), args.dry_run)
+    if args.cmd == "fix-links":
+        return fix_links(DOCS, args.dry_run)
     problems = check_links(DOCS)
     for p in problems:
         print(p)

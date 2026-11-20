@@ -32,7 +32,7 @@ impl_status: implemented
 
 > **Status — accepted (2026-08-29).** Minimal structural-equality rule (record kind included, resolved-identity comparison) accepted for v0.13.0; admissible-domain inclusion and the entailment engine are RFC-0149. Four adversarial review rounds, no open blockers.
 
-> **Status — integrated (2026-08-29).** Minimal structural-equality rule integrated into reference/spec/declarations.md (implementing-an-aspect legality-12..14), blocked-exempt pending implementation. Domain inclusion is RFC-0149.
+> **Status — integrated (2026-08-29).** Minimal structural-equality rule integrated into reference/spec/declarations/index.md (implementing-an-aspect legality-12..14), blocked-exempt pending implementation. Domain inclusion is RFC-0149.
 
 > **Status — implemented (2026-08-29).** Structural-equality generic-constraint conformance implemented and merged to metel-core develop (PR #897, #617); fixtures under typechecking/aspects/stage21_* cite RFC-0129 sections 1-4.
 
@@ -313,7 +313,7 @@ questions of its own. For the record, where each went:*
 **Outcome:** **Accepted, integrated, and implemented 2026-08-29.** Scope cut to
 normalized structural equality with record kind included; admissible-domain
 inclusion and the entailment relation moved to RFC-0149. Integrated into
-`reference/spec/declarations.md` as
+`reference/spec/declarations/index.md` as
 `spec.declarations.aspects.implementing-an-aspect.legality-12`–`legality-14`, and
 implemented in the frontend typechecker via metel-core#897 (#617), with fixtures
 under `typechecking/aspects/stage21_*`.

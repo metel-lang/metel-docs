@@ -56,9 +56,9 @@ impl_status: implemented
 > takes `self: &var Self` (RFC-0071), satisfying rule 1 by the ordinary case
 > — no exception needed. See §3.
 
-> **Status — integrated (2026-08-30).** Retroactive: dyn Aspect syntax, object safety, representation, coercion, dispatch, and List<dyn Aspect> were spec'd into reference/spec/declarations.md and implemented (metel-core#865/#863/#864, all closed 2026-08-28), but RFC-0008 was never moved past 2-accepted. Adding coverage.spec links for sections 1-8 and running it through the lifecycle.
+> **Status — integrated (2026-08-30).** Retroactive: dyn Aspect syntax, object safety, representation, coercion, dispatch, and List<dyn Aspect> were spec'd into reference/spec/declarations/index.md and implemented (metel-core#865/#863/#864, all closed 2026-08-28), but RFC-0008 was never moved past 2-accepted. Adding coverage.spec links for sections 1-8 and running it through the lifecycle.
 
-> **Status — implemented (2026-08-30).** Retroactive: dyn Aspect is fully implemented and fixture-covered (metel-core#837/#865/#863/#864, all closed 2026-08-28); spec rules in reference/spec/declarations.md carry citing fixtures for every dyn-aspect legality/dynamics anchor. RFC had been stranded at 2-accepted.
+> **Status — implemented (2026-08-30).** Retroactive: dyn Aspect is fully implemented and fixture-covered (metel-core#837/#865/#863/#864, all closed 2026-08-28); spec rules in reference/spec/declarations/index.md carry citing fixtures for every dyn-aspect legality/dynamics anchor. RFC had been stranded at 2-accepted.
 
 ## Summary
 

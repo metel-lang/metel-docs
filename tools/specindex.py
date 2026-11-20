@@ -52,9 +52,9 @@ def chapter_of(path: Path, root: Path) -> str:
 def slug(heading: str) -> str:
     """The anchor Docusaurus gives a heading that has no explicit id."""
     text = EXPLICIT_ID_RE.sub("", heading)
-    text = re.sub(r"[`*_]", "", text).lower()
-    text = re.sub(r"[^a-z0-9\s-]", "", text).strip()
-    return re.sub(r"\s+", "-", text)
+    text = re.sub(r"[`*]", "", text).lower()
+    text = re.sub(r"[^a-z0-9\s_-]", "", text).strip()
+    return text.replace(" ", "-")  # github-slugger: each space is a hyphen, runs are not collapsed
 
 
 def heading_slugs(path: Path) -> dict[str, int]:

@@ -224,7 +224,7 @@ projection the spec already defines for aspects. This RFC adds no bound syntax.
 
 ## Changes on Acceptance
 
-- `reference/spec/functions.md`, *The ? Operator*: Legality Rule 1 restated through `Try` /
+- `reference/spec/functions/index.md`, *The ? Operator*: Legality Rule 1 restated through `Try` /
   `FromResidual`, with `Result` and `Option` as the first two impls; Legality Rule 2 (`From`)
   becomes the bound on the core `Result` impl; Dynamic Semantics gains the `branch` form.
 - `reference/spec/runtime.md`, *Built-in aspects*: `Try`, `FromResidual<R>`, `ControlFlow`.

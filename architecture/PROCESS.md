@@ -357,7 +357,7 @@ carry a one-line pointer to an **Architecture** Atlas record —
 either label in either spec tree). The website renders the record's summary and its
 `tracked_by`/`rfc` chips into that line at build time; the chapter text never copies them
 by hand, so they cannot go stale independently of the record. Real example
-(`reference/spec/functions.md:930`):
+(`reference/spec/functions/index.md:930`):
 
 ```
 > **Limitation** LIMIT-EVALUATION-005: closure environments are not destroyed
@@ -373,7 +373,7 @@ limitations` + `<!-- records:limitations -->` appears only in Architecture Spec 
 `LIMIT-*` (architecture-owned) can be inline-cited from a Language Spec chapter when it's
 concrete and user-visible enough to mention in spec prose (the destructors example above
 is exactly this — a real implementation limitation, filed under `architecture/limitations`,
-mentioned inline in `reference/spec/functions.md` because a Metel programmer reading about
+mentioned inline in `reference/spec/functions/index.md` because a Metel programmer reading about
 closures needs to know it). The reverse (a `GAP-*` inline-cited from an Architecture Spec
 page) is equally legal by the same generic regex, just not yet exercised in the current
 corpus.

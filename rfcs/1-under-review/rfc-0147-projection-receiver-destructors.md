@@ -163,7 +163,7 @@ exclusive" rule see the type exactly as they do for the bare form.
 
 ## 3. One `Drop` impl per type — the forms are a choice, not an overload
 
-A type has at most one `Drop` impl (`reference/spec/declarations.md`, Aspect
+A type has at most one `Drop` impl (`reference/spec/declarations/index.md`, Aspect
 Implementation Coherence). The forms are alternative ways to *write* that one impl,
 selected by the author. No overloading, no dispatch ambiguity, no coherence question
 introduced by this RFC.

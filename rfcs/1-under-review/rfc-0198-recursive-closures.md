@@ -181,7 +181,7 @@ Additive. `let rec` is a new form; no existing program changes.
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Closures*, a rule for `let rec`; the
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md`: *Closures*, a rule for `let rec`; the
 declaration scoping rule (`scoping-and-shadowing.legality-2`) gains the `rec` exception. RFC-0153 §3a and the `R0015` text in `runtime.md` are amended to exempt a direct self-call. GAP-FUNCTIONS-006 is
 resolved. No new error code is proposed.
 
@@ -197,7 +197,7 @@ resolved. No new error code is proposed.
 
 - GAP-FUNCTIONS-006 (metel-core#1667).
 - RFC-0195, RFC-0197, RFC-0193, RFC-0196, RFC-0153, RFC-0050, RFC-0131.
-- `reference/spec/functions.md` (Closures); `reference/spec/declarations.md` (scoping-and-shadowing).
+- `reference/spec/functions/index.md` (Closures); `reference/spec/declarations/index.md` (scoping-and-shadowing).
 
 ---
 

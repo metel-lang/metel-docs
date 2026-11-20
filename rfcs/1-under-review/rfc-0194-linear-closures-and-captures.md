@@ -243,7 +243,7 @@ alias (RFC-0160).
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`, and only after RFC-0089. `reference/spec/functions.md`
+Spec text lands only at `3-integrated`, and only after RFC-0089. `reference/spec/functions/index.md`
 Closures: a legality rule that a closure capturing a `Linear` value is `Linear`, a rule that it is
 called exactly once and cannot be dropped, and the parameter-acceptance table. `ownership.md`:
 the linear-capture rules beside the capture rules. No new error code is proposed: the diagnostics are

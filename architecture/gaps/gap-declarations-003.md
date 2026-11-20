@@ -2,9 +2,9 @@
 id: GAP-DECLARATIONS-003
 title: "No `Ord` or `Hash` aspect exists, so no type has ordering or hashing impls"
 summary: "Neither `Ord` nor `Hash` exists in `std::core`, so no type, arrays included, has an ordering or hashing implementation."
-scope: "reference/spec/declarations.md#structural-aspect-bounds"
+scope: "reference/spec/declarations/aspects/structural-bounds.md"
 owner: language
-discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/declarations.md`"
+discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/declarations/index.md`"
 disposition: known
 rfc: RFC-0062
 review: null

@@ -275,7 +275,7 @@ choices. A later explicit identity API can make that trade-off visible.
 
 ## References
 
-- [RFC-0062 — Ord / Eq Comparison Aspects](../0-draft/rfc-0062-ord-comparison-aspect.md)
+- [RFC-0062 — Ord / Eq Comparison Aspects](rfc-0062-ord-comparison-aspect.md)
 - [RFC-0011 — Operator Overloading Aspects](../1-under-review/rfc-0011-operator-overloading.md)
 - [RFC-0039 — Aspect Alias Syntax](../1-under-review/rfc-0039-aspect-alias-syntax.md)
 - [RFC-0081 — Negative Implementations](../4-implemented/rfc-0081-negative-impls.md)

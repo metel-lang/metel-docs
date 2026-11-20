@@ -34,7 +34,7 @@ coverage:
 > status note confirms "SubRegion interaction removed"); §7 is kept for historical record
 > only, not as still-applicable content.
 
-> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: associated types (type X;/type X = Y;, projection, equality-constrained bounds, object safety). RFC's stale Region/@[r] naming fixed and its RFC-0069 amendment (SubRegion, retracted) marked historical-only, not integrated.
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations/index.md: associated types (type X;/type X = Y;, projection, equality-constrained bounds, object safety). RFC's stale Region/@[r] naming fixed and its RFC-0069 amendment (SubRegion, retracted) marked historical-only, not integrated.
 >
 > **Amended 2026-07-10, later the same day.** §10 Open Question 1 (disambiguation for
 > identically-named associated types) resolved rather than left deferred to a
