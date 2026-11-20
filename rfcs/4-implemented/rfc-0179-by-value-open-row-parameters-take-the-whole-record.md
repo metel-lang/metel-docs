@@ -184,7 +184,7 @@ them, not decided here:
 
 - RFC-0121 §4 and Open Question 1: replace the by-value rule with §1.1, and keep the
   reference-position paragraph.
-- `reference/spec/types.md`, `spec.types.generics.open-rows.legality-3` and the width-subtyping
+- `reference/spec/types/index.md`, `spec.types.generics.open-rows.legality-3` and the width-subtyping
   examples: rewrite for the whole-record rule; the `get_x(wide)` example becomes a passing one.
 - `reference/error-codes.md`: `T0033` loses the by-value case and is retitled for the
   spread-through-reference rule; the `Drop`-brand restriction gets a new entry (the next free code

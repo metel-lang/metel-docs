@@ -403,7 +403,7 @@ Rationale:
 
 ## References
 
-- Language spec: [`spec/declarations.md#aspects`](../../reference/spec/declarations/aspects/index.md), [`spec/types.md#generics`](../../reference/spec/types.md#generics)
+- Language spec: [`spec/declarations.md#aspects`](../../reference/spec/declarations/aspects/index.md), [`spec/types.md#generics`](../../reference/spec/types/generics/index.md)
 - RFC-0001: `docs/public/rfcs/rfc-0001-pointer-syntax.md` (`&` operator — tension with Option B)
 - v0.3: #282–#290 (type variables, generics, monomorphization)
 - v0.4: #292–#296 (aspects and method dispatch)

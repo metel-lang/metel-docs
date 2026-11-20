@@ -41,7 +41,7 @@ thread schedule. That is the access side of the same memory-safety problem: in
 severe security bugs. The figure is about that codebase, not every C or C++
 program, but it illustrates why lifetime and aliasing mistakes deserve a
 language-level model. [Chrome's account](https://security.googleblog.com/2021/09/an-update-on-memory-safety-in-chrome.html)
-has the underlying context; [the affine-semantics prerequisite](./what-affine-means-2026-09-09.md)
+has the underlying context; [the affine-semantics prerequisite](what-affine-means-2026-09-09.md)
 explains the ownership half of the model.
 
 Rust moves these access promises into the compiler's constraint system. A

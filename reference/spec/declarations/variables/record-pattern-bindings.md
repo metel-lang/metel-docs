@@ -27,7 +27,7 @@ Each shorthand field name introduces a local with that field's type. The
 introducing a local for it. The field is consumed as part of matching the
 initializer and is excluded from any `..name` remainder. The pattern follows
 the same field-presence and remainder-typing rules as a record pattern in
-[`match`](../../expressions.md#spec.expressions.record-rest-patterns.legality-1).
+[`match`](../../expressions/patterns/struct-and-record-patterns.md#spec.expressions.record-rest-patterns.legality-1).
 In particular, `..name` requires an owned value whose remainder type is known;
 bare `..` discards unmentioned fields.
 
@@ -71,7 +71,7 @@ well-typed under the record-pattern rules.
 
 ##### Legality Rule {#spec.declarations.variables.record-pattern-bindings.legality-2}
 
-A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) := t;`, `let (p,) := u;` and `let () := v;`, with names, `_` and nested patterns for its elements. It is the record-pattern declaration of the labels the tuple pattern names ([record patterns](../../expressions.md#spec.expressions.record-rest-patterns.legality-3)): the initializer is evaluated once, its elements are moved or copied into the bindings, and the pattern must be irrefutable.
+A `let`, `var` or `let var` declaration may bind a tuple pattern, `let (x, y) := t;`, `let (p,) := u;` and `let () := v;`, with names, `_` and nested patterns for its elements. It is the record-pattern declaration of the labels the tuple pattern names ([record patterns](../../expressions/patterns/matching-through-a-reference.md#spec.expressions.record-rest-patterns.legality-3)): the initializer is evaluated once, its elements are moved or copied into the bindings, and the pattern must be irrefutable.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 

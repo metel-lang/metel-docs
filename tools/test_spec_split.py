@@ -145,6 +145,16 @@ class SplitTests(Tree):
         self.assertEqual([p for p in spec_split.check_links(self.root) if "missing.md" not in p], [])
 
 
+class FrontmatterTests(Tree):
+    def test_a_chapter_with_its_own_frontmatter_keeps_it_in_the_index_once(self):
+        spec = self.root / "reference" / "spec"
+        (spec / "chapter.md").write_text('---\ntitle: "The Chapter"\n---\n\n' + CHAPTER)
+        spec_split.apply(self.plan, False)
+        index = (spec / "chapter" / "index.md").read_text()
+        self.assertTrue(index.startswith('---\ntitle: "The Chapter"\nsidebar_position: 0\n---\n\n# Chapter'))
+        self.assertEqual(index.count("---\n"), 2)
+
+
 class RepairTests(Tree):
     def test_slugs_match_github_slugger_so_a_punctuation_gap_keeps_its_hyphens(self):
         self.assertEqual(specindex.slug("The ? Operator"), "the--operator")

@@ -618,7 +618,7 @@ type.
 
 [Pattern-matching `Token` outside its declaring module follows the same rule as
 construction](#spec.modules.visibility.legality-7) — a private field may not be named in
-the pattern; a `..` rest pattern (see [Struct patterns](expressions.md#struct-patterns))
+the pattern; a `..` rest pattern (see [Struct patterns](expressions/patterns/struct-and-record-patterns.md#struct-patterns))
 must be used to omit it instead. A private field's name also cannot appear in a [public
 signature](#spec.modules.visibility.legality-8), so it never becomes part of the module's API.
 
@@ -685,7 +685,7 @@ rejected with `T0009`. The declaring module retains access to all of its own fie
 including private ones.
 
 The rule follows the field, not the value's current type. A residual (`Token.{ .offset }`,
-[ownership](ownership.md)) keeps its struct's brand, so reading a private field through one,
+[ownership](ownership/index.md)) keeps its struct's brand, so reading a private field through one,
 projecting it (`t.{ .offset }`), or writing it in a residual type (`Token.{ .offset }`) from
 outside the declaring module is the same `T0009`. A residual of public fields only
 (`Token.{ .kind }`) is unrestricted.

@@ -28,7 +28,7 @@ A `declared` aspect is [granted only in the declaration](#spec.declarations.aspe
 Targets with no declaration of their own (primitives, tuples, arrays, anonymous records, references) cannot carry a
 clause; impls for them are allowed only in the aspect's defining module. `implicit` is the one property that is a
 language semantic and not a constraint: it is [restricted to the standard library](#spec.declarations.aspects.aspect-declaration-properties.legality-2).
-Which types satisfy `Copy`, and what the implicit copy does, are specified in [Ownership and Move Semantics](../../ownership.md).
+Which types satisfy `Copy`, and what the implicit copy does, are specified in [Ownership and Move Semantics](../../ownership/index.md).
 
 <details>
 <summary>Formal rules</summary>

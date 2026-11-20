@@ -294,7 +294,7 @@ parameter; declare `record R`".
 - RFC-0125 — Variadic Generics (`all Ts`), RFC-0146 — Row-polymorphic self-views,
   RFC-0174 — Compile-time iteration over a row's fields, RFC-0175 — Label polymorphism
   (examples that use `row R`).
-- `reference/spec/types.md` — "Records and Rows at a Glance", "Open rows", "Field-wise row
+- `reference/spec/types/index.md` — "Records and Rows at a Glance", "Open rows", "Field-wise row
   constraints".
 
 ---

@@ -112,7 +112,7 @@ own build-profile model without Metel having an equivalent to borrow it *onto*.
 Building one solely to give overflow two behaviors was judged not worth it. D3 now
 reads: integer overflow panics unconditionally, in every build; float overflow's
 IEEE-754 half was already correct and is unchanged. See RFC-0007's own "Overflow
-Semantics" section and `reference/spec/types.md`'s
+Semantics" section and `reference/spec/types/index.md`'s
 `spec.types.sized-numeric-types.dynamics-1` for the normative text. metel-core#838
 tracked this; closed by the correction.
 
@@ -590,7 +590,7 @@ above ships, not a substitute for any of it.
 - `reference/spec/runtime.md`, Panics section — the canonical, integrated statement
   that a panic is unrecoverable and terminates the process; the fact this RFC's
   stakes rest on.
-- `reference/spec/types.md`, `spec.types.sized-numeric-types.dynamics-1` — the
+- `reference/spec/types/index.md`, `spec.types.sized-numeric-types.dynamics-1` — the
   corrected (2026-08-26) normative overflow text §2 is grounded in.
 - `reference/error-codes.md`, R0007 — documents both triggers (division/remainder by
   zero, overflow) as of the same correction.

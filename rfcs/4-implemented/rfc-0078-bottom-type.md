@@ -34,7 +34,7 @@ coverage:
 > title ("Region Handles"), predating the 2026-07-05 allocator/lifetime split. Semantic
 > content unchanged.
 
-> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md: ! subtyping, coercion, match exhaustiveness, inhabited-singleton coercion, and -> ! return type. RFC's own stale @[r] allocator syntax fixed first.
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types/index.md: ! subtyping, coercion, match exhaustiveness, inhabited-singleton coercion, and -> ! return type. RFC's own stale @[r] allocator syntax fixed first.
 
 > **Status — implemented (2026-07-12).** Implemented in metel-core sprint/25 (issue #538): ! surface syntax, subtyping/coercion, uninhabited-variant exhaustiveness, inhabited-singleton coercion, -> ! divergence checking.
 

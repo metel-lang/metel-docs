@@ -19,7 +19,7 @@ fun main() -> i64 {
 
 A closure parameter may be annotated with an open record whose tail is anonymous
 (`|p: .{ .x: i64, .. }| { p.x }`); the closure is then polymorphic in that row and accepts
-records of different shapes ([open rows](../../types.md#spec.types.generics.open-rows.legality-5)).
+records of different shapes ([open rows](../../types/generics/open-rows.md#spec.types.generics.open-rows.legality-5)).
 
 [A stand-alone closure has no generics list](capture-semantics.md#spec.functions.closures.legality-28), so it cannot declare a row parameter, and a written
 return annotation cannot name one: `|p: .{ .x: i64, ..R }| -> .{ .x: i64, ..R } { p }` is rejected

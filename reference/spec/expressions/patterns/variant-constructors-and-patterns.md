@@ -1,0 +1,179 @@
+---
+sidebar_position: 3
+---
+
+# Variant Constructors and Patterns
+
+## Unqualified variant constructors
+
+A bare variant name [may be used where the *expected* type determines which enum is meant](#spec.expressions.unqualified-variant-constructors.legality-1) —
+the expression-position counterpart of "Unqualified variant patterns" below. Both no-field
+and fieldful variants participate, and the empty-brace spelling `Red {}` is
+equally valid:
+
+```metel
+enum Colour { Red, Green, Blue }
+
+fun paint(c: Colour) { }
+fun favourite() -> Colour { Green }        // return type supplies the expected type
+
+fun main() {
+    let c: Colour := Red;                   // annotation supplies it
+    paint(Blue);                           // parameter type supplies it
+    let p: Option<i64> := Some { value = 5 };
+    let q: Option<i64> := None;            // `None` is an ordinary variant, not a literal
+}
+```
+
+Resolution is type-directed against the expected type only — never a lexical import of
+variant names — so two enums may both declare `Red` with no ambiguity.
+
+**A bare variant is a last resort, never a shadowing mechanism.** It resolves only when the
+name means nothing else in scope — not a binding, and not a unit struct (`struct Red {}` and
+`enum C { Red }` may coexist, and `Red` then means the struct even where a `C` is expected;
+write `C::Red`).
+
+**An in-scope binding wins over a variant of the same name.** This is the opposite of
+pattern position, and deliberately so: a pattern *introduces* names, so a bare identifier
+there is always the variant, while an expression *uses* names and must resolve to the
+nearest binding or lexical scoping breaks.
+
+```metel
+fun demo(Red: i64) -> i64 {
+    return Red;          // the parameter, not Colour::Red
+}
+```
+
+**Where no expected type exists, [the bare form does not resolve](#spec.expressions.unqualified-variant-constructors.legality-4).** There is deliberately no
+search for "some enum, somewhere, declaring `Red`". A name that some enum declares as a
+variant is reported as [T0002](../../../error-codes.md#t0002--annotation-required) ("cannot tell
+which enum `Red` belongs to here"); a name no enum declares stays
+[T0003](../../../error-codes.md#t0003--undefined-name). Qualify (`Colour::Red`) or ascribe
+(`Red: Colour`).
+
+This affects an unannotated `let x = Red;`, an argument to a *generic*
+callee (whose parameter types are not known until the arguments are), and the body of a
+closure with no declared return type.
+
+The last is the only closure case: a closure whose
+return type is known resolves its body's bare variants, whether it is written
+(`|a: i64| -> Option<i64> { Some { value = a } }`), taken from a function-typed binding
+(`let f: |i64| -> Option<i64> := |a: i64| { Some { value = a } }`) or from a function-typed
+parameter. `None` without a determinable type is reported the same way.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-1}
+
+A bare no-field or fieldful enum variant is valid in expression position when the
+expected type determines its enum and no binding or declaration of that name is in scope.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQxX3VucXVhbGlmaWVkX3ZhcmlhbnRfY29uc3RydWN0b3JzLm10bCIsInNvdXJjZSI6ImVudW0gQ29sb3VyIHsgUmVkLCBHcmVlbiwgQmx1ZSB9XG5cbnN0cnVjdCBIb2xkZXIge1xuICAgIGNvbG91cjogQ29sb3VyLFxuICAgIG1heWJlOiBPcHRpb248aTY0PixcbiAgICBub3RoaW5nOiBPcHRpb248aTY0PixcbiAgICBvazogUmVzdWx0PGk2NCwgU3RyaW5nPixcbiAgICBlcnI6IFJlc3VsdDxpNjQsIFN0cmluZz4sXG59XG5cbmZ1biBwYWludChjOiBDb2xvdXIpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKGMpIHtcbiAgICAgICAgUmVkID0+IDEsXG4gICAgICAgIEdyZWVuID0+IDIsXG4gICAgICAgIEJsdWUgPT4gMyxcbiAgICB9XG59XG5cbmZ1biBmYXZvdXJpdGUoKSAtPiBDb2xvdXIge1xuICAgIEdyZWVuXG59XG5cbmZ1biBzaGFkb3coUmVkOiBpNjQpIC0+IGk2NCB7XG4gICAgcmV0dXJuIFJlZDtcbn1cblxuZnVuIHVud3JhcF9yZXN1bHQocjogUmVzdWx0PGk2NCwgU3RyaW5nPikgLT4gaTY0IHtcbiAgICBtYXRjaCAocikge1xuICAgICAgICBPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIEVyciB7IGVycm9yIH0gPT4gLTEsXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYzogQ29sb3VyIDo9IFJlZDtcbiAgICBsZXQgYzI6IENvbG91ciA6PSBSZWQge307XG4gICAgYXNzZXJ0KHBhaW50KGMpID09IDEpO1xuICAgIGFzc2VydChwYWludChjMikgPT0gMSk7XG4gICAgYXNzZXJ0KHBhaW50KEJsdWUpID09IDMpO1xuICAgIGFzc2VydChwYWludChmYXZvdXJpdGUoKSkgPT0gMik7XG5cbiAgICBsZXQgaG9sZGVyIDo9IEhvbGRlciB7XG4gICAgICAgIGNvbG91ciA9IEJsdWUsXG4gICAgICAgIG1heWJlID0gU29tZSB7IHZhbHVlID0gNSB9LFxuICAgICAgICBub3RoaW5nID0gTm9uZSxcbiAgICAgICAgb2sgPSBPayB7IHZhbHVlID0gOSB9LFxuICAgICAgICBlcnIgPSBFcnIgeyBlcnJvciA9IFwiYmFkXCIgfSxcbiAgICB9O1xuXG4gICAgYXNzZXJ0KHBhaW50KGhvbGRlci5jb2xvdXIpID09IDMpO1xuICAgIGFzc2VydChzaGFkb3coNykgPT0gNyk7XG5cbiAgICBtYXRjaCAoaG9sZGVyLm1heWJlKSB7XG4gICAgICAgIFNvbWUgeyB2YWx1ZSB9ID0+IGFzc2VydCh2YWx1ZSA9PSA1KSxcbiAgICAgICAgTm9uZSA9PiBhc3NlcnQoZmFsc2UpLFxuICAgIH1cblxuICAgIG1hdGNoIChob2xkZXIubm90aGluZykge1xuICAgICAgICBTb21lIHsgdmFsdWUgfSA9PiBhc3NlcnQoZmFsc2UpLFxuICAgICAgICBOb25lID0+IGFzc2VydCh0cnVlKSxcbiAgICB9XG5cbiAgICBhc3NlcnQodW53cmFwX3Jlc3VsdChob2xkZXIub2spID09IDkpO1xuICAgIGFzc2VydCh1bndyYXBfcmVzdWx0KGhvbGRlci5lcnIpID09IC0xKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2VudW1zLzQxX3VucXVhbGlmaWVkX3ZhcmlhbnRfY29uc3RydWN0b3JzLm10bCIsIm5hbWUiOiI0MV91bnF1YWxpZmllZF92YXJpYW50X2NvbnN0cnVjdG9ycy5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQyX3ZhcmlhbnRfZGVmZXJyYWxfcmVzb2x2ZXMubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyODUncyBjaGVjayBtdXN0IG5vdCBmaXJlIG9uIGEgZGVmZXJyYWwgdGhhdCAqZG9lcyogcmVzb2x2ZSwgYXQgYW55IG9mIHRoZVxuLy8gcG9zaXRpb25zIFJGQy0wMTExIHN1cHBvcnRzLCBhbmQgbXVzdCBsZWF2ZSBnZW51aW5lbHkgcG9seW1vcnBoaWMgZGVmZXJyYWxzIGFsb25lLlxuZW51bSBDb2xvdXIgeyBSZWQsIEdyZWVuLCBCbHVlIH1cblxuZnVuIHBhaW50KGM6IENvbG91cikgLT4gaTY0IHsgcmV0dXJuIDE7IH1cbmZ1biBmYXZvdXJpdGUoKSAtPiBDb2xvdXIgeyBHcmVlbiB9XG5cbi8vIEEgY2xvc3VyZSB3aXRoIGEgZGVjbGFyZWQgcmV0dXJuIHR5cGUgZ2l2ZXMgaXRzIGJvZHkgYW4gZXhwZWN0ZWQgdHlwZSwgc28gYSBiYXJlXG4vLyB2YXJpYW50IGluc2lkZSBpdCByZXNvbHZlcyBub3JtYWxseS5cbmZ1biBhbm5vdGF0ZWRfY2xvc3VyZSgpIC0+IENvbG91ciB7XG4gICAgbGV0IGYgOj0gfHwgLT4gQ29sb3VyIHsgUmVkIH07XG4gICAgcmV0dXJuIGYoKTtcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGM6IENvbG91ciA6PSBSZWQ7XG4gICAgYXNzZXJ0KHBhaW50KGMpID09IDEpO1xuICAgIGFzc2VydChwYWludChCbHVlKSA9PSAxKTtcblxuICAgIGxldCBnOiBDb2xvdXIgOj0gZmF2b3VyaXRlKCk7XG4gICAgYXNzZXJ0KHBhaW50KGcpID09IDEpO1xuXG4gICAgbGV0IHA6IE9wdGlvbjxpNjQ+IDo9IFNvbWUgeyB2YWx1ZSA9IDUgfTtcbiAgICBsZXQgcTogT3B0aW9uPGk2ND4gOj0gTm9uZTtcbiAgICBhc3NlcnQocGFpbnQoYW5ub3RhdGVkX2Nsb3N1cmUoKSkgPT0gMSk7XG5cbiAgICAvLyBBbiBlbXB0eSBhcnJheSBsaXRlcmFsIGlzIGRlZmVycmVkIHRvbywgYW5kIGlzICpnZW51aW5lbHkqIHBvbHltb3JwaGljIC0tIHRoZVxuICAgIC8vICMyODUgY2hlY2sgaXMgc2NvcGVkIHRvIGJhcmUgdmFyaWFudHMgcHJlY2lzZWx5IHNvIHRoaXMga2VlcHMgd29ya2luZy5cbiAgICAvLyAoQSBjbG9zdXJlIGhhcyBvbmUgdHlwZSwgUkZDLTAxOTYsIHNvIHRoZSBlbXB0eSBsaXRlcmFsIGlzIHNob3duIGRpcmVjdGx5IHJhdGhlciB0aGFuIHRocm91Z2ggYSBjbG9zdXJlLilcbiAgICBsZXQgaW50czogW2k2NF0gOj0gW107XG4gICAgbGV0IHN0cnM6IFtTdHJpbmddIDo9IFtdO1xuICAgIGFzc2VydChpbnRzLmxlbigpID09IDApO1xuICAgIGFzc2VydChzdHJzLmxlbigpID09IDApO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZW51bXMvNDJfdmFyaWFudF9kZWZlcnJhbF9yZXNvbHZlcy5tdGwiLCJuYW1lIjoiNDJfdmFyaWFudF9kZWZlcnJhbF9yZXNvbHZlcy5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImZpZWxkZnVsX3ZhcmlhbnRfaW5fY2xvc3VyZV93aXRoX2V4cGVjdGVkX3JldHVybl90eXBlLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMTc1Nzogd2hlcmUgdGhlIGNsb3N1cmUncyByZXR1cm4gdHlwZSBpcyBrbm93biwgYSBiYXJlIGZpZWxkZnVsIHZhcmlhbnQgaW4gaXRzIGJvZHlcbi8vIHJlc29sdmVzOiBmcm9tIGEgd3JpdHRlbiBgLT5gLCBmcm9tIGEgZnVuY3Rpb24tdHlwZWQgYmluZGluZywgYW5kIGZyb20gYSBmdW5jdGlvbi10eXBlZCBwYXJhbWV0ZXIuXG5mdW4gYXBwbHkoZjogfGk2NHwgLT4gT3B0aW9uPGk2ND4pIC0+IE9wdGlvbjxpNjQ+IHtcbiAgICByZXR1cm4gZigxKTtcbn1cblxuZnVuIHVud3JhcChvOiBPcHRpb248aTY0PikgLT4gaTY0IHtcbiAgICByZXR1cm4gbWF0Y2ggKG8pIHsgU29tZSB7IHZhbHVlIH0gPT4gdmFsdWUsIE5vbmUgPT4gMCB9O1xufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgd3JpdHRlbiA6PSB8YTogaTY0fCAtPiBPcHRpb248aTY0PiB7IFNvbWUgeyB2YWx1ZSA9IGEgfSB9O1xuICAgIGxldCBib3VuZDogfGk2NHwgLT4gT3B0aW9uPGk2ND4gOj0gfGE6IGk2NHwgeyBTb21lIHsgdmFsdWUgPSBhIH0gfTtcbiAgICBsZXQgcGFzc2VkIDo9IGFwcGx5KHxhOiBpNjR8IHsgU29tZSB7IHZhbHVlID0gYSB9IH0pO1xuICAgIGFzc2VydCh1bndyYXAod3JpdHRlbigxKSkgPT0gMSk7XG4gICAgYXNzZXJ0KHVud3JhcChib3VuZCgyKSkgPT0gMik7XG4gICAgYXNzZXJ0KHVud3JhcChwYXNzZWQpID09IDEpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvZW51bXMvZmllbGRmdWxfdmFyaWFudF9pbl9jbG9zdXJlX3dpdGhfZXhwZWN0ZWRfcmV0dXJuX3R5cGUubXRsIiwibmFtZSI6ImZpZWxkZnVsX3ZhcmlhbnRfaW5fY2xvc3VyZV93aXRoX2V4cGVjdGVkX3JldHVybl90eXBlLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-2}
+
+An in-scope binding of the same name takes precedence over a bare enum variant in
+expression position.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQxX3VucXVhbGlmaWVkX3ZhcmlhbnRfY29uc3RydWN0b3JzLm10bCIsInNvdXJjZSI6ImVudW0gQ29sb3VyIHsgUmVkLCBHcmVlbiwgQmx1ZSB9XG5cbnN0cnVjdCBIb2xkZXIge1xuICAgIGNvbG91cjogQ29sb3VyLFxuICAgIG1heWJlOiBPcHRpb248aTY0PixcbiAgICBub3RoaW5nOiBPcHRpb248aTY0PixcbiAgICBvazogUmVzdWx0PGk2NCwgU3RyaW5nPixcbiAgICBlcnI6IFJlc3VsdDxpNjQsIFN0cmluZz4sXG59XG5cbmZ1biBwYWludChjOiBDb2xvdXIpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKGMpIHtcbiAgICAgICAgUmVkID0+IDEsXG4gICAgICAgIEdyZWVuID0+IDIsXG4gICAgICAgIEJsdWUgPT4gMyxcbiAgICB9XG59XG5cbmZ1biBmYXZvdXJpdGUoKSAtPiBDb2xvdXIge1xuICAgIEdyZWVuXG59XG5cbmZ1biBzaGFkb3coUmVkOiBpNjQpIC0+IGk2NCB7XG4gICAgcmV0dXJuIFJlZDtcbn1cblxuZnVuIHVud3JhcF9yZXN1bHQocjogUmVzdWx0PGk2NCwgU3RyaW5nPikgLT4gaTY0IHtcbiAgICBtYXRjaCAocikge1xuICAgICAgICBPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIEVyciB7IGVycm9yIH0gPT4gLTEsXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYzogQ29sb3VyIDo9IFJlZDtcbiAgICBsZXQgYzI6IENvbG91ciA6PSBSZWQge307XG4gICAgYXNzZXJ0KHBhaW50KGMpID09IDEpO1xuICAgIGFzc2VydChwYWludChjMikgPT0gMSk7XG4gICAgYXNzZXJ0KHBhaW50KEJsdWUpID09IDMpO1xuICAgIGFzc2VydChwYWludChmYXZvdXJpdGUoKSkgPT0gMik7XG5cbiAgICBsZXQgaG9sZGVyIDo9IEhvbGRlciB7XG4gICAgICAgIGNvbG91ciA9IEJsdWUsXG4gICAgICAgIG1heWJlID0gU29tZSB7IHZhbHVlID0gNSB9LFxuICAgICAgICBub3RoaW5nID0gTm9uZSxcbiAgICAgICAgb2sgPSBPayB7IHZhbHVlID0gOSB9LFxuICAgICAgICBlcnIgPSBFcnIgeyBlcnJvciA9IFwiYmFkXCIgfSxcbiAgICB9O1xuXG4gICAgYXNzZXJ0KHBhaW50KGhvbGRlci5jb2xvdXIpID09IDMpO1xuICAgIGFzc2VydChzaGFkb3coNykgPT0gNyk7XG5cbiAgICBtYXRjaCAoaG9sZGVyLm1heWJlKSB7XG4gICAgICAgIFNvbWUgeyB2YWx1ZSB9ID0+IGFzc2VydCh2YWx1ZSA9PSA1KSxcbiAgICAgICAgTm9uZSA9PiBhc3NlcnQoZmFsc2UpLFxuICAgIH1cblxuICAgIG1hdGNoIChob2xkZXIubm90aGluZykge1xuICAgICAgICBTb21lIHsgdmFsdWUgfSA9PiBhc3NlcnQoZmFsc2UpLFxuICAgICAgICBOb25lID0+IGFzc2VydCh0cnVlKSxcbiAgICB9XG5cbiAgICBhc3NlcnQodW53cmFwX3Jlc3VsdChob2xkZXIub2spID09IDkpO1xuICAgIGFzc2VydCh1bndyYXBfcmVzdWx0KGhvbGRlci5lcnIpID09IC0xKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2VudW1zLzQxX3VucXVhbGlmaWVkX3ZhcmlhbnRfY29uc3RydWN0b3JzLm10bCIsIm5hbWUiOiI0MV91bnF1YWxpZmllZF92YXJpYW50X2NvbnN0cnVjdG9ycy5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-3}
+
+Expected types from an annotation, return type, monomorphic call parameter, or
+struct-literal field may direct bare-variant resolution.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQxX3VucXVhbGlmaWVkX3ZhcmlhbnRfY29uc3RydWN0b3JzLm10bCIsInNvdXJjZSI6ImVudW0gQ29sb3VyIHsgUmVkLCBHcmVlbiwgQmx1ZSB9XG5cbnN0cnVjdCBIb2xkZXIge1xuICAgIGNvbG91cjogQ29sb3VyLFxuICAgIG1heWJlOiBPcHRpb248aTY0PixcbiAgICBub3RoaW5nOiBPcHRpb248aTY0PixcbiAgICBvazogUmVzdWx0PGk2NCwgU3RyaW5nPixcbiAgICBlcnI6IFJlc3VsdDxpNjQsIFN0cmluZz4sXG59XG5cbmZ1biBwYWludChjOiBDb2xvdXIpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKGMpIHtcbiAgICAgICAgUmVkID0+IDEsXG4gICAgICAgIEdyZWVuID0+IDIsXG4gICAgICAgIEJsdWUgPT4gMyxcbiAgICB9XG59XG5cbmZ1biBmYXZvdXJpdGUoKSAtPiBDb2xvdXIge1xuICAgIEdyZWVuXG59XG5cbmZ1biBzaGFkb3coUmVkOiBpNjQpIC0+IGk2NCB7XG4gICAgcmV0dXJuIFJlZDtcbn1cblxuZnVuIHVud3JhcF9yZXN1bHQocjogUmVzdWx0PGk2NCwgU3RyaW5nPikgLT4gaTY0IHtcbiAgICBtYXRjaCAocikge1xuICAgICAgICBPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIEVyciB7IGVycm9yIH0gPT4gLTEsXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYzogQ29sb3VyIDo9IFJlZDtcbiAgICBsZXQgYzI6IENvbG91ciA6PSBSZWQge307XG4gICAgYXNzZXJ0KHBhaW50KGMpID09IDEpO1xuICAgIGFzc2VydChwYWludChjMikgPT0gMSk7XG4gICAgYXNzZXJ0KHBhaW50KEJsdWUpID09IDMpO1xuICAgIGFzc2VydChwYWludChmYXZvdXJpdGUoKSkgPT0gMik7XG5cbiAgICBsZXQgaG9sZGVyIDo9IEhvbGRlciB7XG4gICAgICAgIGNvbG91ciA9IEJsdWUsXG4gICAgICAgIG1heWJlID0gU29tZSB7IHZhbHVlID0gNSB9LFxuICAgICAgICBub3RoaW5nID0gTm9uZSxcbiAgICAgICAgb2sgPSBPayB7IHZhbHVlID0gOSB9LFxuICAgICAgICBlcnIgPSBFcnIgeyBlcnJvciA9IFwiYmFkXCIgfSxcbiAgICB9O1xuXG4gICAgYXNzZXJ0KHBhaW50KGhvbGRlci5jb2xvdXIpID09IDMpO1xuICAgIGFzc2VydChzaGFkb3coNykgPT0gNyk7XG5cbiAgICBtYXRjaCAoaG9sZGVyLm1heWJlKSB7XG4gICAgICAgIFNvbWUgeyB2YWx1ZSB9ID0+IGFzc2VydCh2YWx1ZSA9PSA1KSxcbiAgICAgICAgTm9uZSA9PiBhc3NlcnQoZmFsc2UpLFxuICAgIH1cblxuICAgIG1hdGNoIChob2xkZXIubm90aGluZykge1xuICAgICAgICBTb21lIHsgdmFsdWUgfSA9PiBhc3NlcnQoZmFsc2UpLFxuICAgICAgICBOb25lID0+IGFzc2VydCh0cnVlKSxcbiAgICB9XG5cbiAgICBhc3NlcnQodW53cmFwX3Jlc3VsdChob2xkZXIub2spID09IDkpO1xuICAgIGFzc2VydCh1bndyYXBfcmVzdWx0KGhvbGRlci5lcnIpID09IC0xKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2VudW1zLzQxX3VucXVhbGlmaWVkX3ZhcmlhbnRfY29uc3RydWN0b3JzLm10bCIsIm5hbWUiOiI0MV91bnF1YWxpZmllZF92YXJpYW50X2NvbnN0cnVjdG9ycy5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjQyX3ZhcmlhbnRfZGVmZXJyYWxfcmVzb2x2ZXMubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyODUncyBjaGVjayBtdXN0IG5vdCBmaXJlIG9uIGEgZGVmZXJyYWwgdGhhdCAqZG9lcyogcmVzb2x2ZSwgYXQgYW55IG9mIHRoZVxuLy8gcG9zaXRpb25zIFJGQy0wMTExIHN1cHBvcnRzLCBhbmQgbXVzdCBsZWF2ZSBnZW51aW5lbHkgcG9seW1vcnBoaWMgZGVmZXJyYWxzIGFsb25lLlxuZW51bSBDb2xvdXIgeyBSZWQsIEdyZWVuLCBCbHVlIH1cblxuZnVuIHBhaW50KGM6IENvbG91cikgLT4gaTY0IHsgcmV0dXJuIDE7IH1cbmZ1biBmYXZvdXJpdGUoKSAtPiBDb2xvdXIgeyBHcmVlbiB9XG5cbi8vIEEgY2xvc3VyZSB3aXRoIGEgZGVjbGFyZWQgcmV0dXJuIHR5cGUgZ2l2ZXMgaXRzIGJvZHkgYW4gZXhwZWN0ZWQgdHlwZSwgc28gYSBiYXJlXG4vLyB2YXJpYW50IGluc2lkZSBpdCByZXNvbHZlcyBub3JtYWxseS5cbmZ1biBhbm5vdGF0ZWRfY2xvc3VyZSgpIC0+IENvbG91ciB7XG4gICAgbGV0IGYgOj0gfHwgLT4gQ29sb3VyIHsgUmVkIH07XG4gICAgcmV0dXJuIGYoKTtcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGM6IENvbG91ciA6PSBSZWQ7XG4gICAgYXNzZXJ0KHBhaW50KGMpID09IDEpO1xuICAgIGFzc2VydChwYWludChCbHVlKSA9PSAxKTtcblxuICAgIGxldCBnOiBDb2xvdXIgOj0gZmF2b3VyaXRlKCk7XG4gICAgYXNzZXJ0KHBhaW50KGcpID09IDEpO1xuXG4gICAgbGV0IHA6IE9wdGlvbjxpNjQ+IDo9IFNvbWUgeyB2YWx1ZSA9IDUgfTtcbiAgICBsZXQgcTogT3B0aW9uPGk2ND4gOj0gTm9uZTtcbiAgICBhc3NlcnQocGFpbnQoYW5ub3RhdGVkX2Nsb3N1cmUoKSkgPT0gMSk7XG5cbiAgICAvLyBBbiBlbXB0eSBhcnJheSBsaXRlcmFsIGlzIGRlZmVycmVkIHRvbywgYW5kIGlzICpnZW51aW5lbHkqIHBvbHltb3JwaGljIC0tIHRoZVxuICAgIC8vICMyODUgY2hlY2sgaXMgc2NvcGVkIHRvIGJhcmUgdmFyaWFudHMgcHJlY2lzZWx5IHNvIHRoaXMga2VlcHMgd29ya2luZy5cbiAgICAvLyAoQSBjbG9zdXJlIGhhcyBvbmUgdHlwZSwgUkZDLTAxOTYsIHNvIHRoZSBlbXB0eSBsaXRlcmFsIGlzIHNob3duIGRpcmVjdGx5IHJhdGhlciB0aGFuIHRocm91Z2ggYSBjbG9zdXJlLilcbiAgICBsZXQgaW50czogW2k2NF0gOj0gW107XG4gICAgbGV0IHN0cnM6IFtTdHJpbmddIDo9IFtdO1xuICAgIGFzc2VydChpbnRzLmxlbigpID09IDApO1xuICAgIGFzc2VydChzdHJzLmxlbigpID09IDApO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZW51bXMvNDJfdmFyaWFudF9kZWZlcnJhbF9yZXNvbHZlcy5tdGwiLCJuYW1lIjoiNDJfdmFyaWFudF9kZWZlcnJhbF9yZXNvbHZlcy5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.expressions.unqualified-variant-constructors.legality-4}
+
+Without an expected enum type, a bare variant does not resolve by searching other enums;
+the program must qualify or ascribe it.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0111](../../../../rfcs/4-implemented/rfc-0111-unqualified-enum-variants-in-expression-position.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAyIiwiY29sIjpudWxsLCJjb250YWlucyI6InRoZXJlIGlzIG5vIGV4cGVjdGVkIHR5cGUiLCJsaW5lIjoiNCIsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6ImZpZWxkZnVsX3ZhcmlhbnRfaW5fY2xvc3VyZV93aXRob3V0X3JldHVybl90eXBlLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMTc1NzogYSBjbG9zdXJlIHdpdGggbm8gZGVjbGFyZWQgcmV0dXJuIHR5cGUgZ2l2ZXMgaXRzIGJvZHkgbm8gZXhwZWN0ZWQgdHlwZSwgc28gYVxuLy8gYmFyZSBmaWVsZGZ1bCB2YXJpYW50IHRoZXJlIGlzIHJlcG9ydGVkIHJhdGhlciB0aGFuIHJlc29sdmVkIGJ5IHNlYXJjaGluZyBlbnVtcyBmb3IgYFNvbWVgLlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHdyYXAgOj0gfGE6IGk2NHwgeyBTb21lIHsgdmFsdWUgPSBhIH0gfTsgLy8gRVJST1JbVDAwMDJdXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9lbnVtcy9maWVsZGZ1bF92YXJpYW50X2luX2Nsb3N1cmVfd2l0aG91dF9yZXR1cm5fdHlwZS5tdGwiLCJuYW1lIjoiZmllbGRmdWxfdmFyaWFudF9pbl9jbG9zdXJlX3dpdGhvdXRfcmV0dXJuX3R5cGUubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAyIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjgiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTZfbmVnXzEyX3VucmVzb2x2ZWRfdmFyaWFudF9kZWZlcnJhbC5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzI4NTogYSBiYXJlIHZhcmlhbnQgdGhhdCBuZXZlciByZXNvbHZlcyBtdXN0IGJlIHJlcG9ydGVkLCBub3Qgc2lsZW50bHlcbi8vIGFjY2VwdGVkLiBQYXNzIDEgZGVmZXJzIGl0IChSRkMtMDExMSBcdTAwYTczLjEpIGFuZCBvbmx5IHBhc3MgMiByZXNvbHZlcyBpdCBhZ2FpbnN0IGFuXG4vLyBleHBlY3RlZCB0eXBlIC0tIGJ1dCBhbiB1bmNhbGxlZCBjbG9zdXJlJ3MgYm9keSBpcyBuZXZlciBjb25zdHJ1Y3RlZCwgc28gbm8gZXhwZWN0ZWRcbi8vIHR5cGUgZXZlciBhcnJpdmVzIGFuZCBub3RoaW5nIHVzZWQgdG8gbm90aWNlLiBDaGVja2VkIGFmdGVyIHRoZSBmaW5hbCBzb2x2ZSBpbnN0ZWFkLlxuZW51bSBDb2xvdXIgeyBSZWQsIEdyZWVuIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGYgOj0gfHwgeyBSZWQgfTsgLy8gRVJST1JbVDAwMDJdXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9lbnVtcy9zdGFnZTZfbmVnXzEyX3VucmVzb2x2ZWRfdmFyaWFudF9kZWZlcnJhbC5tdGwiLCJuYW1lIjoic3RhZ2U2X25lZ18xMl91bnJlc29sdmVkX3ZhcmlhbnRfZGVmZXJyYWwubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Unqualified variant patterns
+
+A match arm may name an enum variant without its `Enum::` prefix when the variant
+resolves unambiguously against the scrutinee's known enum type. The candidate enum is
+*only* the scrutinee's own type — this is type-directed resolution, not a lexical import
+of variant names — so there is no cross-enum collision to resolve:
+
+```metel
+enum Colour { Red, Green, Blue }
+
+fun name(c: Colour) -> String {
+    match (c) {
+        Red   => "red",
+        Green => "green",
+        Blue  => "blue",
+    }
+}
+```
+
+Fieldful variants may also be written bare:
+
+```metel
+fun unwrap_or_zero(v: Option<i64>) -> i64 {
+    match (v) {
+        Some { value } => value,
+        None           => 0,
+    }
+}
+```
+
+Resolution happens during type-checking, against the scrutinee's concrete type. If that
+type is not a known enum at the point of matching (for example an abstract, aspect-bounded
+type parameter inside a generic function), a bare identifier is an ordinary binding, as
+before. A bare identifier that exactly names a no-field variant of the scrutinee's enum is
+*always* the variant, never a fresh binding — use `_` or a differently-named binding for a
+catch-all. The fully-qualified form (`Colour::Red`) remains valid everywhere; qualification
+is optional, not removed.

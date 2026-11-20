@@ -566,7 +566,7 @@ question 4.
 > **Items 2, 3 and 4 read "Proposed" until 2026-07-26, and that was stale rather than
 > undecided.** All three were adopted normatively when this RFC was integrated — they are the
 > `array elements` / `tuple elements` / `enum payloads` rows of the partial-move table in
-> `public/reference/spec/ownership.md`, written in the same commit that moved this RFC to
+> `public/reference/spec/ownership/index.md`, written in the same commit that moved this RFC to
 > `3-integrated`. The audit text was simply never updated to match the spec it fed. Marked
 > resolved here so the two documents agree; no decision changed, and per PROCESS.md the spec
 > was already the normative statement of all three.

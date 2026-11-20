@@ -257,7 +257,7 @@ Answer these without looking, then check against the text.
 2. RFC-0089 section 1 and 2.1: declared classes and the keywords.
 3. RFC-0089 section 2.2: capabilities as bounds, the demonstration, the std audit, and the rejected alternatives.
    This is where D4 to D10 are argued.
-4. `reference/spec/ownership.md`, "Ownership classes" and "Partial moves": the rules in normative form.
+4. `reference/spec/ownership/index.md`, "Ownership classes" and "Partial moves": the rules in normative form.
 5. RFC-0194 and RFC-0219: closures and function types.
 6. RFC-0220: binding-level qualifiers (draft).
 7. `copy-clone-prior-art-survey.md` and `generic-class-computed-vs-explicit.md`: how other languages answer

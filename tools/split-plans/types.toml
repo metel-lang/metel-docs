@@ -1,0 +1,88 @@
+source = "reference/spec/types.md"
+
+[[page]]
+file = "index.md"
+sections = ["Known gaps"]
+
+[[page]]
+file = "primitives.md"
+title = "Primitive Types"
+sections = ["Primitive Types", "Sized Numeric Types", "Char"]
+
+[[page]]
+file = "type-inference.md"
+sections = ["Type Inference"]
+
+[[page]]
+file = "ascription-and-casting.md"
+title = "Type Ascription and Casting"
+sections = ["Type Ascription", "Type Casting"]
+
+[[page]]
+file = "tuples.md"
+sections = ["Tuples"]
+
+[[page]]
+file = "records/index.md"
+title = "Records and Rows"
+sections = ["Records and Rows at a Glance", "Anonymous Records:own", "Where records may be used"]
+
+[[page]]
+file = "records/projection.md"
+sections = ["Projection"]
+
+[[page]]
+file = "records/record-labels.md"
+sections = ["Record labels"]
+
+[[page]]
+file = "arrays.md"
+title = "Arrays"
+sections = ["Arrays", "Fixed-size arrays"]
+
+[[page]]
+file = "references.md"
+sections = ["References"]
+
+[[page]]
+file = "list.md"
+sections = ['List\<T\>']
+
+[[page]]
+file = "generics/index.md"
+sections = ["Generics:own"]
+
+[[page]]
+file = "generics/rigid-type-parameters.md"
+sections = ["Rigid type parameters"]
+
+[[page]]
+file = "generics/row-bounds.md"
+title = "Row Bounds"
+sections = ["Row bounds", "Why row capability is opt-in", "What satisfies which bound"]
+
+[[page]]
+file = "generics/open-rows.md"
+sections = ["Open rows"]
+
+[[page]]
+file = "generics/field-wise-row-constraints.md"
+sections = ["Field-wise row constraints"]
+
+[[page]]
+file = "generics/implementing-an-aspect-for-a-record.md"
+sections = ["Implementing an aspect for a record"]
+
+[[page]]
+file = "never/index.md"
+sections = ["Never Type:own", "Subtyping and coercion", "Match exhaustiveness", "Inhabited-singleton coercion"]
+
+[[page]]
+file = "never/return-type.md"
+sections = ["`!` as a return type"]
+
+[[page]]
+file = "option-and-result.md"
+title = "Option and Result"
+sections = ["`Option<T>`", "`Result<T, E>`"]
+

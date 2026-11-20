@@ -152,6 +152,15 @@ def relevel(lines: list[str], delta: int) -> list[str]:
     return out
 
 
+def split_frontmatter(lines: list[str]) -> tuple[list[str], list[str]]:
+    """(the frontmatter lines without the fences, the rest) of a chapter's lines before its first section."""
+    if lines and lines[0].strip() == "---":
+        for i in range(1, len(lines)):
+            if lines[i].strip() == "---":
+                return lines[1:i], lines[i + 1 :]
+    return [], lines
+
+
 def render_page(page: Page, position: int) -> str:
     blocks: list[list[str]] = []
     first_level = page.sections[0][0].level
@@ -254,10 +263,14 @@ def apply(plan_path: Path, dry_run: bool) -> int:
             for s in (sec.tree() if tree else [sec]):
                 section_page[id(s)] = target
     index = new_dir / "index.md"
+    own_frontmatter, intro = split_frontmatter(preamble)
+    front = "---\n" + "".join(f"{line}\n" for line in own_frontmatter + ["sidebar_position: 0"]) + "---\n\n"
+    intro_text = "\n".join(intro).strip("\n")
     if index not in new_files:
-        new_files[index] = "---\nsidebar_position: 0\n---\n\n" + "\n".join(preamble).rstrip("\n") + "\n"
+        new_files[index] = front + intro_text + "\n"
     else:
-        new_files[index] = new_files[index].replace("---\n\n", "---\n\n" + "\n".join(preamble).rstrip("\n") + "\n\n", 1)
+        body = new_files[index].split("---\n\n", 1)[1]
+        new_files[index] = front + intro_text + "\n\n" + body
 
     # Old fragment -> new page, from the old file's own sections.
     old_frag_page: dict[str, Path] = {}

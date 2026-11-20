@@ -26,7 +26,7 @@ The language's core design principles are:
 - **Explicit error handling** — errors are values, represented as `Result<T, E>`
 - **Safe memory by default** — affine ownership: a value has one owner, and moves rather
   than being implicitly copied
-  Ownership is enforced only when `--move-check` is passed; without it the interpreter behaves as if every value were `Copy`. See [Ownership and Move Semantics](spec/ownership.md).
+  Ownership is enforced only when `--move-check` is passed; without it the interpreter behaves as if every value were `Copy`. See [Ownership and Move Semantics](spec/ownership/index.md).
 
 
 ## Contents
@@ -35,11 +35,11 @@ The language's core design principles are:
 |---|---|
 | [Lexical Structure](spec/lexical.md) | Comments, identifiers, keywords, literals, operators |
 | [Modules](spec/modules.md) | Files, modules, imports, path roots, visibility, re-exports |
-| [Type System](spec/types.md) | Primitive types, inference, tuples, [records and rows](spec/types.md#records-and-rows-at-a-glance), arrays, casting, generics, Never, `Option<T>`, `Result<T,E>` |
-| [Ownership](spec/ownership.md) | Moves, `Copy`, `Drop`, drop order, partial moves |
+| [Type System](spec/types/index.md) | Primitive types, inference, tuples, [records and rows](spec/types/records/index.md#records-and-rows-at-a-glance), arrays, casting, generics, Never, `Option<T>`, `Result<T,E>` |
+| [Ownership](spec/ownership/index.md) | Moves, `Copy`, `Drop`, drop order, partial moves |
 | [Declarations](spec/declarations/index.md) | Variables, structs, named records, enums, aspects |
 | [Functions](spec/functions/index.md) | Functions, closures, the `?` operator |
-| [Expressions](spec/expressions.md) | Pattern matching, control flow |
+| [Expressions](spec/expressions/index.md) | Pattern matching, control flow |
 | [Runtime](spec/runtime.md) | Panics, built-in functions |
 | [Grammar](spec/grammar.md) | Formal grammar |
 | [Error Codes](error-codes.md) | Every diagnostic the interpreter can report, with a real example |
