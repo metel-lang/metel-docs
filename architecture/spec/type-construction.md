@@ -107,7 +107,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L393) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::typed_ir_has_no_ascription_node`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/type_checking/tests.rs#L17); [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
@@ -219,7 +219,7 @@ The frozen identity tables (the member table and the span → `BindingId` bridge
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph_with_report`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/mod.rs#L411) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::block_local_types_in_two_modules_keep_distinct_ids_through_check_graph`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/tests.rs#L88) |
-| `last_reviewed` | 5c96fccefb930800580084a8f4d2ea8dea05f97c |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1570` |
 
 ##### Requirement {#arch.type-construction.requirement-15}
@@ -233,7 +233,7 @@ A written type name becomes a declaration id in one place, `ConstructCtx::writte
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::written_type_id`](https://github.com/metel-lang/metel-core/blob/674701fb1f16ecdb40424bac7b7a5169867d92c3/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L346) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::block_local_types_in_two_modules_keep_distinct_ids_through_check_graph`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/tests.rs#L89) |
-| `last_reviewed` | 58657b2d6f228d493fb7e0d6a3ece3f5aff22213 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1568`, `#1570` |
 
 </details>

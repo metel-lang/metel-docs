@@ -104,7 +104,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/call.rs::call_runtime_callable`](https://github.com/metel-lang/metel-core/blob/58657b2d6f228d493fb7e0d6a3ece3f5aff22213/metel-interpreter/src/evaluator/call.rs#L175) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/aspects/79_generic_body_empty_collection_args.toml`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/tests/integration/sources/evaluator/aspects/79_generic_body_empty_collection_args.toml#L1); [`metel-interpreter/tests/integration/sources/evaluator/generics/80_generic_construction_at_calltime.toml`](https://github.com/metel-lang/metel-core/blob/b709fee2babd7b8e859dee816eab60a6056c8bd5/metel-interpreter/tests/integration/sources/evaluator/generics/80_generic_construction_at_calltime.toml#L1) |
-| `last_reviewed` | 58657b2d6f228d493fb7e0d6a3ece3f5aff22213 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0010, ADR-0011, `LIMIT-EVALUATION-001` |
 
 ##### Requirement {#arch.evaluation.requirement-8}
