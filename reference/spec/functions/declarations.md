@@ -6,7 +6,7 @@ sidebar_position: 2
 
 ## Named Function Declarations
 
-[Every parameter of a named function is written with its type](#spec.functions.named-function-declarations.legality-2) (a receiver excepted), and the checker never infers a named declaration's signature from its body or its callers. The return type follows `->`; [a function with no return annotation and no `return expr;` returns `()`](#spec.functions.named-function-declarations.dynamics-1). `return expr;` and bare `return;` are both valid. A closure, by contrast, infers its parameter and return types ([Closures](closures/index.md#closures)).
+[Every parameter of a named function is written with its type](#spec.functions.named-function-declarations.legality-2) (a receiver excepted), and the checker never infers a named declaration's signature from its body or its callers. The return type follows `->`; [a function with no return annotation and no `return expr;` returns `()`](#spec.functions.named-function-declarations.dynamics-1). `return expr;` and bare `return;` are both valid. A closure, by contrast, infers its parameter and return types ([Closures](closures/index.md)).
 
 [A body whose value is not `()` under a signature with no `->`](#spec.functions.named-function-declarations.dynamics-1) is an ordinary type mismatch, [T0001](../../error-codes.md#t0001--type-mismatch), whose help line names the fix: write `-> T`, or, for a private function that captures nothing, calls no other function recursively and needs no generics, bind a closure instead.
 
@@ -77,7 +77,7 @@ A function with no return annotation and no `return expr;` returns `()`.
 
 ## Local Functions
 
-A `fun` declared inside a function body is a local function. It is an item, not a value with an environment: [its body sees its own parameters, locals and type parameters, module-level items, and the items declared in enclosing blocks, and does not see the locals or type parameters of the enclosing function](#spec.functions.local-functions.legality-1). What needs an environment is a closure ([Closures](closures/index.md#closures)): it names what it captures and the closure rules check it.
+A `fun` declared inside a function body is a local function. It is an item, not a value with an environment: [its body sees its own parameters, locals and type parameters, module-level items, and the items declared in enclosing blocks, and does not see the locals or type parameters of the enclosing function](#spec.functions.local-functions.legality-1). What needs an environment is a closure ([Closures](closures/index.md)): it names what it captures and the closure rules check it.
 
 <!-- doc-example: expect-fail reason="rejected form: a local function does not capture (the first statement is the error)" -->
 ```metel

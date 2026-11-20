@@ -95,7 +95,7 @@ not several.
 
 **Object safety.** An aspect with associated types is object-safe only if no method
 signature references the associated type directly (see Static Dispatch, below, and
-[`dyn Aspect`](dyn-aspect.md#dyn-aspect)). `Deref` above is *not* object-safe — `deref`
+[`dyn Aspect`](dyn-aspect.md)). `Deref` above is *not* object-safe — `deref`
 returns `&Target`, which varies per implementor, and a vtable entry cannot encode a
 type that differs per implementation.
 

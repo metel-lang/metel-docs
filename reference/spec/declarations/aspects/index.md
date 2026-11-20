@@ -83,7 +83,7 @@ conditional exemption to check against a body that could otherwise be non-empty.
 
 ## Static Dispatch
 
-Aspect dispatch through a generic type parameter or `extends Aspect` is [**static** (resolved at compile time for the concrete type arguments)](#spec.declarations.aspects.static-dispatch-only.dynamics-1): no vtable, no heap allocation, no runtime type erasure. The exception is [`dyn Aspect`](dyn-aspect.md#dyn-aspect), an aspect object, whose calls dispatch through a vtable at runtime by design.
+Aspect dispatch through a generic type parameter or `extends Aspect` is [**static** (resolved at compile time for the concrete type arguments)](#spec.declarations.aspects.static-dispatch-only.dynamics-1): no vtable, no heap allocation, no runtime type erasure. The exception is [`dyn Aspect`](dyn-aspect.md), an aspect object, whose calls dispatch through a vtable at runtime by design.
 
 Method resolution must also be **unambiguous** at compile time. If the same receiver
 type implements two different aspects that both define the same method name, a call

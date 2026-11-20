@@ -203,6 +203,20 @@ def is_external(dest: str) -> bool:
     return bool(re.match(r"^[a-z][a-z0-9+.-]*:", dest)) or dest.startswith("//")
 
 
+def title_slug(text: str) -> str | None:
+    """The slug of a page's `# Title`. The rendered page gives its title no anchor, so a link to that
+    fragment from another page lands nowhere: such a link points at the page."""
+    fenced = False
+    for line in text.split("\n"):
+        if FENCE_RE.match(line):
+            fenced = not fenced
+        m = None if fenced else re.match(r"^#\s+(.*?)\s*$", line)
+        if m:
+            explicit = specindex.EXPLICIT_ID_RE.search(m.group(1))
+            return explicit.group(1) if explicit else specindex.slug(m.group(1))
+    return None
+
+
 def relpath(target: Path, start_dir: Path) -> str:
     return Path(os.path.relpath(target, start_dir)).as_posix()
 
@@ -262,6 +276,7 @@ def apply(plan_path: Path, dry_run: bool) -> int:
     for p in new_files:
         moved_from[p] = source
 
+    title_slugs = {p: title_slug(c) for p, c in new_files.items()}
     changed: dict[Path, str] = {}
 
     def rewrite_links(body: str, old_loc: Path, new_loc: Path) -> str:
@@ -277,6 +292,8 @@ def apply(plan_path: Path, dry_run: bool) -> int:
                 page = old_frag_page.get(frag, index) if frag else index
                 if page == new_loc and frag:
                     return f"]({'#' + frag}{title})"
+                if frag and frag == title_slugs.get(page):
+                    frag = ""  # a page's own title has no anchor once rendered
                 return f"]({relpath(page, new_loc.parent)}{'#' + frag if frag else ''}{title})"
             if not path_part:
                 return m.group(0)
@@ -341,12 +358,19 @@ def fix_links(root: Path, dry_run: bool) -> int:
             if not path_part:
                 return m.group(0)
             target = (md.parent / path_part).resolve()
+            if target.is_file() and target.suffix == ".md" and frag and spec.resolve() in target.parents:
+                if frag == title_slug(target.read_text()) and frag not in specindex.explicit_anchors(target) and target != md.resolve():
+                    fixed += 1
+                    return f"]({path_part}{title})"
+                return m.group(0)
             if target.exists() or target.suffix != ".md" or target.parent != spec.resolve() or target.stem not in chapters:
                 return m.group(0)
             chapter = chapters[target.stem]
             page = where.get(frag) if frag else None
             if page is None or specindex.chapter_of(page, root) != target.stem:
                 page = chapter / "index.md"
+            if frag and frag == title_slug(page.read_text()):
+                frag = ""
             fixed += 1
             return f"]({relpath(page, md.parent)}{'#' + frag if frag else ''}{title})"
         new = LINK_RE.sub(fix, body)
@@ -385,6 +409,8 @@ def check_links(root: Path) -> list[str]:
                     explicit, slugs = anchors_of(target)
                     if frag not in explicit and frag not in slugs:
                         problems.append(f"{md.relative_to(root)}:{n}: `{dest}`: no such anchor")
+                    elif frag == title_slug(target.read_text()) and frag not in explicit and target != md.resolve():
+                        problems.append(f"{md.relative_to(root)}:{n}: `{dest}`: the page's own title has no anchor once rendered; link the page")
     return problems
 
 

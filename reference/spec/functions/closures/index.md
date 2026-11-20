@@ -46,4 +46,4 @@ fun main() {
 }
 ```
 
-A closure has one type. [A `let`-bound closure is used at the one type its uses fix](capture-semantics.md#spec.functions.closures.legality-26), and [a closure bound by a top-level `let` is determined by its own initializer](capture-semantics.md#spec.functions.closures.legality-27). Polymorphism is written or declared: a generic `fun`, a reference to one ([First-Class Functions](../first-class-functions.md#first-class-functions)), or the open-record parameter above.
+A closure has one type. [A `let`-bound closure is used at the one type its uses fix](capture-semantics.md#spec.functions.closures.legality-26), and [a closure bound by a top-level `let` is determined by its own initializer](capture-semantics.md#spec.functions.closures.legality-27). Polymorphism is written or declared: a generic `fun`, a reference to one ([First-Class Functions](../first-class-functions.md)), or the open-record parameter above.

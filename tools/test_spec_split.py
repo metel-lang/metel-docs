@@ -168,6 +168,31 @@ class RepairTests(Tree):
         self.assertIn("(../reference/spec/chapter/alpha.md#spec.chapter.a.legality-1)", (self.root / "release-notes" / "changelog.md").read_text())
 
 
+class TitleAnchorTests(Tree):
+    """A page's own `# Title` has no anchor once rendered, so a link to it from elsewhere names the page."""
+
+    def test_apply_links_the_page_not_its_title_fragment(self):
+        (self.root / "rfcs" / "r.md").write_text("[alpha](../reference/spec/chapter.md#alpha) and [sub](../reference/spec/chapter.md#alpha-sub)\n")
+        spec_split.apply(self.plan, False)
+        body = (self.root / "rfcs" / "r.md").read_text()
+        self.assertIn("(../reference/spec/chapter/alpha.md)", body)
+        self.assertIn("(../reference/spec/chapter/alpha.md#alpha-sub)", body)  # a real section keeps its anchor
+
+    def test_fix_links_and_check_links_know_about_title_fragments(self):
+        spec_split.apply(self.plan, False)
+        (self.root / "rfcs" / "r.md").write_text("[alpha](../reference/spec/chapter/alpha.md#alpha)\n")
+        self.assertTrue(any("own title has no anchor" in p for p in spec_split.check_links(self.root)))
+        spec_split.fix_links(self.root, False)
+        self.assertEqual((self.root / "rfcs" / "r.md").read_text(), "[alpha](../reference/spec/chapter/alpha.md)\n")
+
+    def test_a_link_within_the_page_keeps_its_fragment(self):
+        spec_split.apply(self.plan, False)
+        alpha = self.root / "reference/spec/chapter/alpha.md"
+        alpha.write_text(alpha.read_text() + "\nSee [top](alpha.md#alpha).\n")
+        spec_split.fix_links(self.root, False)
+        self.assertIn("(alpha.md#alpha)", alpha.read_text())
+
+
 class PlanTests(Tree):
     def test_an_unplaced_section_is_an_error(self):
         self.plan.write_text(PLAN.replace('[[page]]\nfile = "beta.md"\nsections = ["Beta"]\n', ""))

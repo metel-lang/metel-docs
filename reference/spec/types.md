@@ -187,7 +187,7 @@ Unicode scalar value.
 
 > **Gap** GAP-TYPES-001
 
-Types are inferred by unification within a declaration (Hindley-Milner, with no inferred polymorphism). A closure has one type, fixed by its uses ([Functions — Closures](functions/closures/index.md#closures)); polymorphism is written or declared: a generic `fun`, a reference to one, or a closure with a written open-record parameter. Annotations are optional for local bindings and for closure parameters and return types. A named declaration is the exception: it writes the type of every parameter and its return type, or returns `()` ([Functions — Named Function Declarations](functions/declarations.md#named-function-declarations)). Annotations may be written explicitly for documentation or to restrict a binding to a less general type.
+Types are inferred by unification within a declaration (Hindley-Milner, with no inferred polymorphism). A closure has one type, fixed by its uses ([Functions — Closures](functions/closures/index.md)); polymorphism is written or declared: a generic `fun`, a reference to one, or a closure with a written open-record parameter. Annotations are optional for local bindings and for closure parameters and return types. A named declaration is the exception: it writes the type of every parameter and its return type, or returns `()` ([Functions — Named Function Declarations](functions/declarations.md#named-function-declarations)). Annotations may be written explicitly for documentation or to restrict a binding to a less general type.
 
 Annotations are required only where there is no expression to infer from:
 - Struct and enum field types
@@ -507,7 +507,7 @@ kind, not by the fields written:
 | | row visible to bounds and row-conditional impls | inherent methods |
 |---|---|---|
 | anonymous record | yes | no |
-| `record` ([Records](declarations/records.md#records)) | yes | yes |
+| `record` ([Records](declarations/records.md)) | yes | yes |
 | `struct` | **no** | yes |
 | `enum` | **no** | yes |
 
@@ -611,7 +611,7 @@ owner:
 
 Arrays are the other structural target: `extend<T> [T]: MyAspect { … }` is supported, per
 the orphan-rule carve-out for structural type constructors — see
-[Declarations — Structural Aspect Bounds](declarations/aspects/structural-bounds.md#structural-aspect-bounds).
+[Declarations — Structural Aspect Bounds](declarations/aspects/structural-bounds.md).
 Auto-derived aspects are unaffected.
 
 ### Projection
@@ -2632,7 +2632,7 @@ extend<record R> .{ ..R }: MyAspect { … }                         // every row
 [All three are permitted once the aspect is local to the implementing module](#spec.types.generics.row-conditional-impls.legality-1): the first is
 exactly one structural type, the others a *row condition* on the receiver. The receiver
 matches an impl when its row meets the condition, whether it is an anonymous record or a
-nominal [`record`](declarations/records.md#records). Methods are checked per call against the
+nominal [`record`](declarations/records.md). Methods are checked per call against the
 concrete receiver, as for every structural target, and the aspect's default methods are
 inherited as for any impl. The field types a target writes must be spelled out: one that
 names an impl type parameter (`extend<T> .{ .w: T }: A`) is rejected, since no receiver's
@@ -2712,7 +2712,7 @@ A row-conditional impl (`extend<record R: .{ ... }> .{ ..R }: Aspect` or `extend
 .{ ..R }: Aspect`) resolves against a value's **current** row, not only its widest
 possible one — for a struct, that is the row of its current residual (narrower after a
 partial move, wider again after the moved field is restored), exactly the same
-current-row behavior [Named Records](declarations/records.md#records) states for `record`'s own
+current-row behavior [Named Records](declarations/records.md) states for `record`'s own
 row-bound satisfaction.
 
 
