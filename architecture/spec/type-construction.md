@@ -149,7 +149,7 @@ Aspect default methods are materialized as typed methods before evaluation: infe
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L22) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0034 |
 
 ##### Requirement {#arch.type-construction.requirement-10}
@@ -191,7 +191,7 @@ Generic runtime reconstruction recovers a struct or enum's type arguments from i
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-frontend/src/pipeline/type_checking/mod.rs#L1312) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml#L1) |
-| `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0043 |
 
 ##### Requirement {#arch.type-construction.requirement-13}

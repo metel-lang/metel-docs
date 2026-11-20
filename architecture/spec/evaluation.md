@@ -67,7 +67,7 @@ Method dispatch preserves the typed AST's receiver mode: value receivers use the
 
 ##### Requirement {#arch.evaluation.requirement-5}
 
-Array values use value semantics at evaluator binding and assignment boundaries: `Environment::define` and `Environment::set` deep-clone their stored value, recursively cloning arrays and nested aggregate contents rather than allowing an ordinary assignment to create a mutable array alias.
+Array values use value semantics at evaluator binding and assignment boundaries: `Environment::define_binding` and `Environment::set_local` deep-clone their stored value, recursively cloning arrays and nested aggregate contents rather than allowing an ordinary assignment to create a mutable array alias.
 
 | Field | Value |
 |---|---|
@@ -76,7 +76,7 @@ Array values use value semantics at evaluator binding and assignment boundaries:
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/mod.rs::define_binding`](https://github.com/metel-lang/metel-core/blob/4bec62bf4414ac915891ad616c175dc87f2c3b42/metel-interpreter/src/evaluator/mod.rs#L1967) |
 | `verified by` | [`metel-interpreter/src/evaluator/mod.rs::define_binding_deep_clones_arrays`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4921); [`metel-interpreter/src/evaluator/mod.rs::set_local_deep_clones_arrays`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L4936) |
-| `last_reviewed` | c5619cae663b522b9c41aaa04f5a82788394dbbe |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0007 |
 
 ##### Requirement {#arch.evaluation.requirement-6}
