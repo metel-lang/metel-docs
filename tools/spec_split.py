@@ -45,6 +45,8 @@ RULE_HEAD_RE = re.compile(r"^#{5} (?:Legality Rule|Dynamic Semantics(?: Rule)?) 
 FENCE_RE = re.compile(r"^\s*(```|~~~)")
 LINK_RE = re.compile(r"(?<!\\)\]\(([^()\s]+(?:\([^()]*\))?[^()\s]*)(\s+\"[^\"]*\")?\)")
 SECTION_LEVELS = (2, 3, 4)
+# `reference/spec/<page>.md#frag` written as text (record frontmatter, prose), not as a markdown link
+BARE_PAGE_RE = re.compile(r"(reference/spec/[A-Za-z0-9_/.-]+\.md)#([A-Za-z0-9_.-]+)")
 
 
 @dataclass
@@ -374,6 +376,15 @@ def fix_links(root: Path, dry_run: bool) -> int:
             fixed += 1
             return f"]({relpath(page, md.parent)}{'#' + frag if frag else ''}{title})"
         new = LINK_RE.sub(fix, body)
+
+        def bare(m: re.Match) -> str:
+            nonlocal fixed
+            target = root / m.group(1)
+            if target.is_file() and m.group(2) == title_slug(target.read_text()) and m.group(2) not in specindex.explicit_anchors(target):
+                fixed += 1
+                return m.group(1)
+            return m.group(0)
+        new = BARE_PAGE_RE.sub(bare, new)
         if new != body and not dry_run:
             md.write_text(new)
     print(f"{fixed} link(s) {'would be ' if dry_run else ''}repaired")

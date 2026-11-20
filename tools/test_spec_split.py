@@ -185,6 +185,15 @@ class TitleAnchorTests(Tree):
         spec_split.fix_links(self.root, False)
         self.assertEqual((self.root / "rfcs" / "r.md").read_text(), "[alpha](../reference/spec/chapter/alpha.md)\n")
 
+    def test_a_bare_path_mention_with_a_title_fragment_loses_it_too(self):
+        spec_split.apply(self.plan, False)
+        gap = self.root / "architecture" / "gaps" / "g.md"
+        gap.write_text('---\nscope: "reference/spec/chapter/alpha.md#alpha"\n---\nand `reference/spec/chapter/beta.md#spec.chapter.b.legality-1`\n')
+        spec_split.fix_links(self.root, False)
+        body = gap.read_text()
+        self.assertIn('scope: "reference/spec/chapter/alpha.md"\n', body)
+        self.assertIn("beta.md#spec.chapter.b.legality-1", body)  # a real anchor stays
+
     def test_a_link_within_the_page_keeps_its_fragment(self):
         spec_split.apply(self.plan, False)
         alpha = self.root / "reference/spec/chapter/alpha.md"

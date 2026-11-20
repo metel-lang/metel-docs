@@ -2,7 +2,7 @@
 id: GAP-FUNCTIONS-002
 title: "`Callable<A, B>` does not exist, so a function type cannot be bounded by an aspect"
 summary: "`Callable<A, B>` is not defined in `std::core`, so a function or closure type cannot satisfy an aspect bound and `dyn Callable` is unavailable."
-scope: "reference/spec/functions/first-class-functions.md#first-class-functions"
+scope: "reference/spec/functions/first-class-functions.md"
 owner: language
 discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/declarations/index.md`"
 disposition: planned
