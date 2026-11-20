@@ -451,7 +451,7 @@ parameterized row.
   and §4 is updated to say so. Its §4.1–4.3 `Drop`-dispatch leak analysis is what RFC-0137
   §5's row-bounded dispatch answers (Open Question 1)
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — the exploration above,
-  formalized and merged into `reference/spec/ownership.md`: adopts the stronger thesis for
+  formalized and merged into `reference/spec/ownership/index.md`: adopts the stronger thesis for
   every struct, and its §2/§3/§5 resolve Open Questions 5, 1, and the premise of 3; §1's
   table above is restated against it. `record` still adds tier-3's row-visibility and
   impl-eligibility on top (§4)

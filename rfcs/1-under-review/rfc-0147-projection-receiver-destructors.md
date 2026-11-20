@@ -8,7 +8,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 ---
 
 > **New RFC, opened 2026-08-28 out of a design discussion on the "Drop dispatch against a
-> narrowed residual" spec section (`reference/spec/ownership.md`, from RFC-0137) and
+> narrowed residual" spec section (`reference/spec/ownership/index.md`, from RFC-0137) and
 > `metel-core#858`. Split 2026-08-28 into the *projection* form (this RFC) and the
 > *row-parametric* form (RFC-0148), so each depends only on the feature RFC it actually
 > needs.**
@@ -29,7 +29,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/887'
 > - **RFC-0109 (Self-View Narrowing, `1-under-review`, `metel-core#842`, v0.18.1)** —
 >   supplies the residual-typed `self` receiver (`view V for S { a }`, `self: &V` =
 >   `self: &S.{ .a }`, and the anonymous `self: &S.{ .a }` form). **Hard dependency.**
-> - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership.md` own the dispatch
+> - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership/index.md` own the dispatch
 >   *rule*, amended 2026-08-28 to the declared-receiver required set this RFC's fixed
 >   form plugs into.
 > - **RFC-0148 (Row-Parametric Destructors)** — the parametric generalization; shares
@@ -178,7 +178,7 @@ on `T`'s own `Drop`-ness needs pre-substitution reasoning) — it inherits that 
 
 ## 4. Relationship to the integrated spec and to RFC-0148
 
-`reference/spec/ownership.md`'s "Drop dispatch against a narrowed residual" is the
+`reference/spec/ownership/index.md`'s "Drop dispatch against a narrowed residual" is the
 normative section, amended 2026-08-28 in lockstep with RFC-0137 §5. This RFC does not
 change that rule; it is the `drop`-specific reading of it for a **fixed** projected
 receiver, and carries the rationale for the amendment.
@@ -234,7 +234,7 @@ receiver, and carries the rationale for the amendment.
 
 ## References
 
-- `reference/spec/ownership.md` — "Drop dispatch against a narrowed residual"
+- `reference/spec/ownership/index.md` — "Drop dispatch against a narrowed residual"
   (`…legality-1` declared-receiver required set, `…legality-3` permitted receiver forms,
   `…legality-4` body containment check, `…dynamics-1` dispatch rule, `…legality-2` `dyn
   Aspect` coercion checkpoint); "`Drop`", "`Copy` and `Drop` are mutually exclusive",

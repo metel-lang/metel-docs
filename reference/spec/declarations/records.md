@@ -22,8 +22,8 @@ A third declaration kind alongside `struct`, `enum` and `aspect`. `record X .{ .
 accepted everywhere `struct X .{ ... }` is — same declaration grammar, same construction
 syntax, same field access, same generic-parameter list, same aspect-impl coherence rules
 — with exactly one difference: a `record`'s declared row is *structurally visible*, so
-it satisfies row bounds ([Generics — Row bounds](../types.md#row-bounds)) and
-row-conditional impl resolution ([Generics — Open rows](../types.md#open-rows)) the way a
+it satisfies row bounds ([Generics — Row bounds](../types/generics/row-bounds.md)) and
+row-conditional impl resolution ([Generics — Open rows](../types/generics/open-rows.md)) the way a
 plain `struct`'s row never does.
 
 `std::core` provides field-wise `Clone` for a record when every field implements `Clone`.
@@ -50,7 +50,7 @@ fun main() {
 
 Records of `Copy` fields are `Copy`, and records of `Display` fields are `Display`, through
 `std::core` impls over `.{ ..R }` with `where ..R: Copy` and `where ..R: Display`
-respectively ([Field-wise row constraints](../types.md#field-wise-row-constraints)).
+respectively ([Field-wise row constraints](../types/generics/field-wise-row-constraints.md)).
 
 <details>
 <summary>Formal rules</summary>

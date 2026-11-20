@@ -354,7 +354,7 @@ above it are.
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
   the reason the split is six-way.
-- **RFC-0137** *(integrated 2026-08-27 — merged into reference/spec/ownership.md and
+- **RFC-0137** *(integrated 2026-08-27 — merged into reference/spec/ownership/index.md and
   types.md, all as "Planned for v0.13.0"; tracked by metel-core#836)* — Nominal Types
   as Branded Rows — formalizes
   `reports/substructural-types/nominal-types-as-branded-rows.md`'s central thesis, left
@@ -404,7 +404,7 @@ above it are.
   `dyn Aspect` checkpoint unchanged. Fixed projected receiver form + rationale: RFC-0147
   (via RFC-0109, v0.18.1 — after this RFC's own representation); row-parametric
   form: RFC-0148 (via RFC-0146 → RFC-0121; RFC-0146 + RFC-0148 share v0.18.1, after RFC-0121's v0.14.0).
-- **RFC-0117** *(integrated 2026-08-29 — merged into reference/spec/ownership.md#narrowing,
+- **RFC-0117** *(integrated 2026-08-29 — merged into reference/spec/ownership/partial-moves/narrowing.md,
   co-origin with RFC-0137; blocked-exempt on metel-core#858 pending move-triggered
   narrowing)* — Row Narrowing — moving a field out narrows the record's type — or a
   nominal struct's, via RFC-0137's brand-preserving narrowing — to the closed 2^*N*
@@ -825,7 +825,7 @@ number, a backwards RFC-0067a split direction).
   structural-row + identity readability test. RFC-0050 RQ4 updated in parallel.
 - **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&var T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
-  Integrated into `reference/spec/types.md` and `expressions.md`; gained a new
+  Integrated into `reference/spec/types/index.md` and `expressions.md`; gained a new
   §3a (type-directed value-copy-out) resolving a gap found writing the worked examples.
   Implemented in `metel-core` (issue #540); §3a amended the same day to state that
   read-copy fires at `return`/`break`/tail-expression positions too (not just `let`/
@@ -1058,7 +1058,7 @@ implementation).
   logic itself — the `TODO(#545)` comments at each check site are resolved.
 - **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
-  `reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
+  `reference/spec/types/index.md`; §4.2's stale pre-split allocator syntax fixed first.
   Implemented in metel-core sprint/25 (issue #538): `!` surface syntax (grammar),
   `panic(msg)` native, general uninhabited-variant exhaustiveness (subsuming
   `Result<T, !>` as the general rule's special case rather than a hardcoded one),

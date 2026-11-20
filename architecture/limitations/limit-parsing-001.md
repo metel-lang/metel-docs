@@ -4,7 +4,7 @@ title: "The dynamic array type's RFC-0171 spelling (`[T]`) does not parse yet"
 summary: "RFC-0171 moves the dynamic array type from postfix `T[]` to prefix `[T]`; the grammar has not migrated, so only `T[]` parses."
 scope: "architecture/spec/parsing.md#parsing"
 owner: metel-frontend
-discovered_by: "RFC-0171 integration pass (reference/spec/types.md 3-integrated cross-check), 2026-09-28"
+discovered_by: "RFC-0171 integration pass (reference/spec/types/index.md 3-integrated cross-check), 2026-09-28"
 disposition: resolved
 review: null
 ---

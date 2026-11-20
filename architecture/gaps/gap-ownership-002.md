@@ -2,9 +2,9 @@
 id: GAP-OWNERSHIP-002
 title: "A deeper move does not narrow the enclosing value's row"
 summary: "Moving `root.a` narrows `root`'s type, but moving `root.a.b` does not: a record-typed field moves as a unit, so the type checker still treats `root` as whole."
-scope: "reference/spec/ownership.md#spec.ownership.narrowing.legality-1"
+scope: "reference/spec/ownership/partial-moves/narrowing.md#spec.ownership.narrowing.legality-1"
 owner: language
-discovered_by: "maintainer note on `flow_state.rs` `moved_shallow_projections`; checked against reference/spec/ownership.md (Narrowing)"
+discovered_by: "maintainer note on `flow_state.rs` `moved_shallow_projections`; checked against reference/spec/ownership/index.md (Narrowing)"
 disposition: planned
 tracked_by: metel-core#900
 review: null

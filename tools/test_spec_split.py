@@ -145,6 +145,16 @@ class SplitTests(Tree):
         self.assertEqual([p for p in spec_split.check_links(self.root) if "missing.md" not in p], [])
 
 
+class FrontmatterTests(Tree):
+    def test_a_chapter_with_its_own_frontmatter_keeps_it_in_the_index_once(self):
+        spec = self.root / "reference" / "spec"
+        (spec / "chapter.md").write_text('---\ntitle: "The Chapter"\n---\n\n' + CHAPTER)
+        spec_split.apply(self.plan, False)
+        index = (spec / "chapter" / "index.md").read_text()
+        self.assertTrue(index.startswith('---\ntitle: "The Chapter"\nsidebar_position: 0\n---\n\n# Chapter'))
+        self.assertEqual(index.count("---\n"), 2)
+
+
 class RepairTests(Tree):
     def test_slugs_match_github_slugger_so_a_punctuation_gap_keeps_its_hyphens(self):
         self.assertEqual(specindex.slug("The ? Operator"), "the--operator")
@@ -200,6 +210,16 @@ class TitleAnchorTests(Tree):
         alpha.write_text(alpha.read_text() + "\nSee [top](alpha.md#alpha).\n")
         spec_split.fix_links(self.root, False)
         self.assertIn("(alpha.md#alpha)", alpha.read_text())
+
+
+class MdxTests(Tree):
+    def test_mdx_pages_are_relinked_and_extensionless_doc_ids_are_not_broken_links(self):
+        (self.root / "getting-started").mkdir()
+        (self.root / "getting-started" / "tour.mdx").write_text("See [alpha](../reference/spec/chapter.md#spec.chapter.a.legality-1) and [next](other).\n")
+        (self.root / "getting-started" / "other.mdx").write_text("# Other\n")
+        spec_split.apply(self.plan, False)
+        self.assertIn("(../reference/spec/chapter/alpha.md#spec.chapter.a.legality-1)", (self.root / "getting-started" / "tour.mdx").read_text())
+        self.assertEqual([p for p in spec_split.check_links(self.root) if "missing.md" not in p], [])
 
 
 class PlanTests(Tree):

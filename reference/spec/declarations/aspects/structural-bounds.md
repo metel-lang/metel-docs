@@ -54,7 +54,7 @@ Once `[T]` owns nothing, an element-wise clone into new backing storage is impos
 already exists and outlives it, not from a buffer the implementation just allocated.
 `Display` and `Eq` are unaffected because they return `String` and `boolean`, not `Self`.
 
-A tuple is a row ([Tuples](../../types.md#spec.types.tuples.legality-4)), so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`: `(i64, i64)` is all three, `(i64, String)` is `Display` and `Clone` but not `Copy`, and a bound it does not meet is a `T0012` error. A tuple has no `Eq`, `Ord` or `Hash` until operators dispatch through aspects.
+A tuple is a row ([Tuples](../../types/tuples.md#spec.types.tuples.legality-4)), so it satisfies an aspect bound through the row impls of `Display`, `Clone` and `Copy`: `(i64, i64)` is all three, `(i64, String)` is `Display` and `Clone` but not `Copy`, and a bound it does not meet is a `T0012` error. A tuple has no `Eq`, `Ord` or `Hash` until operators dispatch through aspects.
 
 **Function types.** A plain function and a closure share one type, `|A| -> B` (see [Functions — First-Class Functions](../../functions/first-class-functions.md)) — [there is no separate `fun(A) -> B` function-pointer type or syntax](#spec.declarations.structural-aspect-bounds.legality-7); `fun(A) -> B` is a parse error. There is [no `Callable<A, B>` aspect to bound a function type by](#spec.declarations.structural-aspect-bounds.legality-8).
 

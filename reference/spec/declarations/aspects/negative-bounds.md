@@ -20,7 +20,7 @@ a function requiring `T: !Drop` must declare it, since the type parameter could 
 instantiated with a `Drop`-implementing type otherwise.
 
 **`Copy` implies `!Drop`.** Since `Copy` and `Drop` are mutually exclusive (see
-[Ownership](../../ownership.md#spec.ownership.copy-and-drop-are-mutually-exclusive.legality-1)), any type satisfying `T: Copy` automatically
+[Ownership](../../ownership/drop.md#spec.ownership.copy-and-drop-are-mutually-exclusive.legality-1)), any type satisfying `T: Copy` automatically
 satisfies `T: !Drop`, derived without an explicit declaration.
 
 **Compound types.** `T: !Drop` is a claim about `T` itself, not its fields — a struct

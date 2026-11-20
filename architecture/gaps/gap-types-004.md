@@ -2,9 +2,9 @@
 id: GAP-TYPES-004
 title: "A blanket row-conditional aspect impl's body cannot require an aspect of every field"
 summary: "RESOLVED: `where each R: Aspect` (RFC-0123) now specifies the per-field quantifier a blanket row-conditional impl's body needs."
-scope: "reference/spec/types.md#implementing-an-aspect-for-a-record"
+scope: "reference/spec/types/generics/implementing-an-aspect-for-a-record.md"
 owner: language
-discovered_by: "metel-core#1235 stale-passage check of `reference/spec/types.md`; narrowed 2026-10-01 once RFC-0121 specified row variables and row-conditional impl resolution, then closed the same day once RFC-0123 specified `all R: Aspect`"
+discovered_by: "metel-core#1235 stale-passage check of `reference/spec/types/index.md`; narrowed 2026-10-01 once RFC-0121 specified row variables and row-conditional impl resolution, then closed the same day once RFC-0123 specified `all R: Aspect`"
 disposition: resolved
 review: null
 ---

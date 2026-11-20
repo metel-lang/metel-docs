@@ -1,0 +1,159 @@
+---
+sidebar_position: 10
+---
+
+# References
+
+Reference types provide explicit aliasing; [an `&var T` may be used where `&T` is expected, but not the reverse](#spec.types.references.legality-1).
+
+```metel
+fun main() -> i64 {
+    var value := 1;
+    let p: &i64 := &value;
+    let q: &var i64 := &var value;
+    *q = *p + 1;
+    return *q;
+}
+```
+
+Metel has two reference types:
+
+- `&T` — shared immutable reference to `T`
+- `&var T` — exclusive mutable reference to `T`
+
+> **Gap** GAP-OWNERSHIP-001
+
+"Exclusive" means shared XOR exclusive: a place may have any number of `&T` borrows, or
+exactly one `&var T`, never both.
+
+<!-- spec-lint: allow limit-in-prose reason="states that no coercion from & to &var exists in the language, a design fact and not a limit" -->
+`&var T` coerces to `&T`. The reverse coercion does not exist. Both are non-owning
+aliases — a reference never owns the value it points to.
+
+`&T` is `Copy`; `&var T` is not, so an exclusive reference is moved on use rather than
+duplicated. Passing one as an argument reborrows instead of moving — see
+[Ownership — References and moves](../ownership/references-and-moves.md).
+
+References are first-class values, but they are distinct from the referent type. Ordinary
+access — field reads/writes, indexing, method dispatch, reading a plain value out — goes
+through auto-deref (selectors only); the explicit dereference operator `*p` (v0.11.0)
+reads through a reference and writes through a `&var T` (`*p = v`). See [Expressions — References](../expressions/references.md).
+
+`&var` accepts arbitrary addressable lvalue paths — struct fields, tuple elements, array elements, and chains thereof. Writes through the resulting `&var T` propagate back to the original storage location:
+
+```metel
+struct Counter { value: i64 }
+
+fun main() -> i64 {
+    var c := Counter { value = 0 };
+    let p: &var i64 := &var c.value;
+    *p = 42;
+    return c.value;   // 42
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.references.legality-1}
+
+An `&var T` reference may be used where `&T` is expected; an `&T` reference may not be
+used where `&var T` is expected.
+
+<!-- rfc.py:last_reviewed 356734ed88bb2af4847fbe11199b889b1f38f586 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0067a](../../../rfcs/4-implemented/rfc-0067a-reference-types.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjA1X211dF9yZWZlcmVuY2VfY29lcmNlc190b19zaGFyZWQubXRsIiwic291cmNlIjoiLy8gUkZDLTAwNjdhIFx1MDBhNzE6ICZ2YXIgVCBjb2VyY2VzIHRvICZUICh0aGUgcmV2ZXJzZSBkb2VzIG5vdCBleGlzdCkuXG5mdW4gcmVhZF9zaGFyZWQocjogJmk2NCkgLT4gaTY0IHtcbiAgICByZXR1cm4gKnI7XG59XG5cbmZ1biBtYWluKCkge1xuICAgIHZhciBuIDo9IDc7XG4gICAgbGV0IG06ICZ2YXIgaTY0IDo9ICZ2YXIgbjtcbiAgICBsZXQgbTI6ICZ2YXIgaTY0IDo9ICZ2YXIgbjtcbiAgICBsZXQgczogJmk2NCA6PSBtMjtcbiAgICBhc3NlcnQocmVhZF9zaGFyZWQocykgPT0gNyk7XG4gICAgYXNzZXJ0KHJlYWRfc2hhcmVkKG0pID09IDcpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVmZXJlbmNlcy8wNV9tdXRfcmVmZXJlbmNlX2NvZXJjZXNfdG9fc2hhcmVkLm10bCIsIm5hbWUiOiIwNV9tdXRfcmVmZXJlbmNlX2NvZXJjZXNfdG9fc2hhcmVkLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Reading a value out of a reference
+
+Reading the value a reference points to is always spelled `*r`. This cannot be a *move*
+(references never own their referent), only a *copy*, and only when the referent's type
+permits copying:
+
+```metel
+fun main() -> i64 {
+    let x := 42;
+    let r: &i64 := &x;
+    let y: i64 := *r;   // explicit read: copies the referent out
+    return y;
+}
+```
+
+[A reference is never implicitly converted to its referent](#spec.types.references.reading-a-value-out-of-a-reference.legality-1), at any position: not a `let`
+or `var` annotation, a call argument, a `return` value, a `break` value, the tail
+expression of a body, an `if`/`else` branch, a `match` arm, or an ascription. Each is a
+type error, [T0001](../../error-codes.md#t0001--type-mismatch), whose help line names the fix:
+
+<!-- doc-example: expect-fail reason="a reference is never read out implicitly -- the T0001 is the point of this example" -->
+```metel
+fun get(r: &i64) -> i64 {
+    r          // error[T0001]: expected i64, found &i64
+               // = help: read the value out with `*r` (copies a Copy referent)
+}
+```
+
+```metel
+fun bump(p: &var i64) -> i64 {
+    *p += 1;
+    *p         // tail expression: explicit read
+}
+```
+
+A chain of reference layers is read one `*` per layer:
+
+```metel
+fun main() -> i64 {
+    let x := 42;
+    let r: &i64 := &x;
+    let rr: &&i64 := &r;
+    let y: i64 := **rr;   // one `*` for each layer
+    return y;
+}
+```
+
+`&var T` still coerces to `&T` where a shared reference is expected
+([spec.types.references.legality-1](#spec.types.references.legality-1)). A non-`Copy` `T`
+cannot be read out of a reference: `*r` of a non-`Copy` referent is a move out of a
+reference, rejected by the move checker (see [Ownership](../ownership/index.md)).
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.references.reading-a-value-out-of-a-reference.legality-1}
+
+A reference-typed expression is never implicitly converted to its referent type. Where a
+non-reference type is expected, a reference-typed expression is a type error; `*r` reads
+the referent out, one `*` per reference layer, and only a `Copy` referent can be read out.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0067a](../../../rfcs/4-implemented/rfc-0067a-reference-types.md), [rfc-0185](../../../rfcs/4-implemented/rfc-0185-remove-type-directed-dereference.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (10)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjAxX3JlYWRfY29weV9hdF9yZXR1cm4ubXRsIiwic291cmNlIjoiLy8gUkZDLTAxODU6IHJlYWRpbmcgYSBwbGFpbiB2YWx1ZSBvdXQgb2YgYSByZWZlcmVuY2UgYXQgYSBgcmV0dXJuYCBpcyBzcGVsbGVkIGAqcGA7XG4vLyB0aGUgcmVmZXJlbmNlIGlzIG5ldmVyIGNvbnZlcnRlZCBpbXBsaWNpdGx5LlxuZnVuIGYoKSAtPiBpNjQge1xuICAgIHZhciBuIDo9IDE7XG4gICAgbGV0IHA6ICZ2YXIgaTY0IDo9ICZ2YXIgbjtcbiAgICAqcCA9IDQ7XG4gICAgcmV0dXJuICpwO1xufVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQoZigpID09IDQpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVmZXJlbmNlcy8wMV9yZWFkX2NvcHlfYXRfcmV0dXJuLm10bCIsIm5hbWUiOiIwMV9yZWFkX2NvcHlfYXRfcmV0dXJuLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjAyX3JlYWRfY29weV9hdF90YWlsX2V4cHJlc3Npb24ubXRsIiwic291cmNlIjoiLy8gUkZDLTAxODU6IGFuIGV4cGxpY2l0IHJlYWQgYCphYCBhdCBhbiBpbXBsaWNpdCB0YWlsIGV4cHJlc3Npb24gKG5vIGByZXR1cm5gXG4vLyBrZXl3b3JkKSwgdGhyb3VnaCBhbiBgaWZgL2BlbHNlYCB3aG9zZSBicmFuY2hlcyByZWFkIG91dCBvZiByZWZlcmVuY2VzLlxuZnVuIHBpY2soY29uZDogYm9vbGVhbiwgYTogJmk2NCwgYjogJmk2NCkgLT4gaTY0IHtcbiAgICBpZiAoY29uZCkgeyAqYSB9IGVsc2UgeyAqYiB9XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCB4IDo9IDEwO1xuICAgIGxldCB5IDo9IDIwO1xuICAgIGFzc2VydChwaWNrKHRydWUsICZ4LCAmeSkgPT0gMTApO1xuICAgIGFzc2VydChwaWNrKGZhbHNlLCAmeCwgJnkpID09IDIwKTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3JlZmVyZW5jZXMvMDJfcmVhZF9jb3B5X2F0X3RhaWxfZXhwcmVzc2lvbi5tdGwiLCJuYW1lIjoiMDJfcmVhZF9jb3B5X2F0X3RhaWxfZXhwcmVzc2lvbi5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjAzX3JlYWRfY29weV9hdF9sb29wX2JyZWFrLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTg1OiBhbiBleHBsaWNpdCByZWFkIGAqcGAgYXMgdGhlIHZhbHVlIG9mIGEgYGxvb3AgeyBicmVhayB2YWx1ZTsgfWAuXG5mdW4gbWFpbigpIHtcbiAgICB2YXIgbiA6PSAwO1xuICAgIGxldCBwOiAmdmFyIGk2NCA6PSAmdmFyIG47XG4gICAgbGV0IHJlc3VsdDogaTY0IDo9IGxvb3Age1xuICAgICAgICBicmVhayAqcDtcbiAgICB9O1xuICAgIGFzc2VydChyZXN1bHQgPT0gMCk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9yZWZlcmVuY2VzLzAzX3JlYWRfY29weV9hdF9sb29wX2JyZWFrLm10bCIsIm5hbWUiOiIwM19yZWFkX2NvcHlfYXRfbG9vcF9icmVhay5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjA3X3JlYWRfY29weV90aHJvdWdoX3JlZmVyZW5jZV9jaGFpbi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDE4NTogcmVhZGluZyBhIHBsYWluIHZhbHVlIG91dCBvZiBhIGNoYWluIG9mIHJlZmVyZW5jZXMgdGFrZXMgb25lIGAqYCBwZXJcbi8vIGxheWVyLlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IG4gOj0gNztcbiAgICBsZXQgcjogJmk2NCA6PSAmbjtcbiAgICBsZXQgcnI6ICYmaTY0IDo9ICZyO1xuICAgIGxldCBycnI6ICYmJmk2NCA6PSAmcnI7XG5cbiAgICBsZXQgeDogaTY0IDo9ICoqcnI7XG4gICAgYXNzZXJ0KHggPT0gNyk7XG5cbiAgICBsZXQgeTogaTY0IDo9ICoqKnJycjtcbiAgICBhc3NlcnQoeSA9PSA3KTtcblxuICAgIC8vIE1peGVkIHNoYXJlZC9tdXQgY2hhaW4uXG4gICAgdmFyIG0gOj0gOTtcbiAgICBsZXQgbXI6ICZ2YXIgaTY0IDo9ICZ2YXIgbTtcbiAgICBsZXQgcm1yOiAmJnZhciBpNjQgOj0gJm1yO1xuICAgIGxldCB6OiBpNjQgOj0gKipybXI7XG4gICAgYXNzZXJ0KHogPT0gOSk7XG5cbiAgICAvLyBBbiBleHBsaWNpdCByZWFkIHRocm91Z2ggYSBjaGFpbiBhdCBgcmV0dXJuYCwgbm90IGp1c3QgYGxldGAuXG4gICAgYXNzZXJ0KHJlYWRfdGhyb3VnaF9jaGFpbigmcnIpID09IDcpO1xufVxuXG5mdW4gcmVhZF90aHJvdWdoX2NoYWluKHJycDogJiYmaTY0KSAtPiBpNjQge1xuICAgIHJldHVybiAqKipycnA7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9yZWZlcmVuY2VzLzA3X3JlYWRfY29weV90aHJvdWdoX3JlZmVyZW5jZV9jaGFpbi5tdGwiLCJuYW1lIjoiMDdfcmVhZF9jb3B5X3Rocm91Z2hfcmVmZXJlbmNlX2NoYWluLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEzX3JlYWRfY29weV9mcm9tX2NhbGxfcmVzdWx0Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMTg1OiBhIGNhbGwgcmV0dXJuaW5nIGAmVGAgaXMgcmVhZCBvdXQgd2l0aCBgKmAgZXhhY3RseSBsaWtlIGEgcmVmZXJlbmNlXG4vLyBiaW5kaW5nIC0tIHNhbWUgcG9zaXRpb24sIHNhbWUgdHlwZXMsIHNhbWUgc3BlbGxpbmcgKGZvcm1lcmx5IFJGQy0wMTEyIFx1MDBhNzEuMCkuXG5cbmZ1biBzaGFyZWQoKSAtPiAmaTY0IHtcbiAgICBsZXQgYSA6PSA0MjtcbiAgICByZXR1cm4gJmE7XG59XG5cbmZ1biBjaGFpbmVkKCkgLT4gJiZpNjQge1xuICAgIGxldCBhIDo9IDQyO1xuICAgIGxldCByOiAmaTY0IDo9ICZhO1xuICAgIHJldHVybiAmcjtcbn1cblxuZnVuIHRocm91Z2hfcmV0dXJuKCkgLT4gaTY0IHtcbiAgICByZXR1cm4gKnNoYXJlZCgpO1xufVxuXG5mdW4gbWFpbigpIHtcbiAgICAvLyBsZXQgYW5ub3RhdGlvblxuICAgIGxldCBuOiBpNjQgOj0gKnNoYXJlZCgpO1xuICAgIGFzc2VydChuID09IDQyKTtcblxuICAgIC8vIGJpbmRpbmcgdGhlIGNhbGwgcmVzdWx0IGZpcnN0LCB0aGVuIGNvcHlpbmcgb3V0IGF0IHRoZSBhbm5vdGF0aW9uXG4gICAgbGV0IHIgOj0gc2hhcmVkKCk7XG4gICAgbGV0IG06IGk2NCA6PSAqcjtcbiAgICBhc3NlcnQobSA9PSA0Mik7XG5cbiAgICAvLyBhc2NyaXB0aW9uXG4gICAgbGV0IGEgOj0gKCpzaGFyZWQoKSk6IGk2NDtcbiAgICBhc3NlcnQoYSA9PSA0Mik7XG5cbiAgICAvLyByZXR1cm4gcG9zaXRpb25cbiAgICBhc3NlcnQodGhyb3VnaF9yZXR1cm4oKSA9PSA0Mik7XG5cbiAgICAvLyBldmVyeSBsYXllciBpcyBwZWVsZWQsIG5vdCBqdXN0IG9uZVxuICAgIGxldCBjOiBpNjQgOj0gKipjaGFpbmVkKCk7XG4gICAgYXNzZXJ0KGMgPT0gNDIpO1xuXG4gICAgLy8gdGhlIHJlZmVyZW5jZSBpdHNlbGYgaXMgc3RpbGwgYXZhaWxhYmxlIHdoZW4gdGhhdCBpcyB3aGF0IGlzIGFza2VkIGZvclxuICAgIGxldCBrZWVwIDo9IHNoYXJlZCgpO1xuICAgIGFzc2VydCgqa2VlcCA9PSA0Mik7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9yZWZlcmVuY2VzLzEzX3JlYWRfY29weV9mcm9tX2NhbGxfcmVzdWx0Lm10bCIsIm5hbWUiOiIxM19yZWFkX2NvcHlfZnJvbV9jYWxsX3Jlc3VsdC5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjE0X211dF9maWVsZF9wb2ludGVyLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMDQ1OiBNdXRhYmxlIGFkZHJlc3Mtb2YgbHZhbHVlIHBhdGhzIFx1MjAxNCBmYXQgcG9pbnRlciAoTXV0RmllbGRQb2ludGVyKSB0ZXN0cy5cbi8vIFJGQy0wMDY3YTogKlQvKm11dCBUIHJlbmFtZWQgdG8gJlQvJnZhciBULiBSRkMtMDE4NTogcmVhZHMgYXJlIGV4cGxpY2l0IGAqcGAuXG5cbnN0cnVjdCBQb2ludCB7IHg6IGk2NCwgeTogaTY0IH1cbnN0cnVjdCBSZWN0IHsgdG9wX2xlZnQ6IFBvaW50LCBib3R0b21fcmlnaHQ6IFBvaW50IH1cblxuZnVuIG1haW4oKSB7XG4gICAgLy8gJnZhciBzdHJ1Y3QuZmllbGQgXHUyMDE0IHdyaXRlIHRocm91Z2ggZmF0IHBvaW50ZXIuXG4gICAgdmFyIHAgOj0gUG9pbnQgeyB4ID0gMSwgeSA9IDIgfTtcbiAgICBsZXQgcHg6ICZ2YXIgaTY0IDo9ICZ2YXIgcC54O1xuICAgICpweCA9IDEwO1xuICAgIGFzc2VydChwLnggPT0gMTApO1xuICAgIGFzc2VydChwLnkgPT0gMik7XG5cbiAgICAvLyAmdmFyIHN0cnVjdC5maWVsZCBcdTIwMTQgY29tcG91bmQgYXNzaWduIHRocm91Z2ggZmF0IHBvaW50ZXIuXG4gICAgKnB4ICs9IDU7XG4gICAgYXNzZXJ0KHAueCA9PSAxNSk7XG5cbiAgICAvLyBSZWFkIHRocm91Z2ggZmF0IHBvaW50ZXIgXHUyMDE0IGV4cGxpY2l0IGAqcHhgIHlpZWxkcyBjdXJyZW50IGZpZWxkIHZhbHVlLlxuICAgIGxldCByZWFkX3g6IGk2NCA6PSAqcHg7XG4gICAgYXNzZXJ0KHJlYWRfeCA9PSAxNSk7XG5cbiAgICAvLyAmdmFyIHR1cGxlIGVsZW1lbnQuXG4gICAgdmFyIHQgOj0gKDEwMCwgMjAwKTtcbiAgICBsZXQgdDE6ICZ2YXIgaTY0IDo9ICZ2YXIgdC4xO1xuICAgICp0MSA9IDk5OTtcbiAgICBhc3NlcnQodC4xID09IDk5OSk7XG4gICAgYXNzZXJ0KHQuMCA9PSAxMDApO1xuXG4gICAgLy8gJnZhciBhcnJheSBlbGVtZW50LlxuICAgIHZhciBhcnI6IFtpNjQ7IDNdIDo9IFsxLCAyLCAzXTtcbiAgICBsZXQgYTE6ICZ2YXIgaTY0IDo9ICZ2YXIgYXJyWzFdO1xuICAgICphMSA9IDQyO1xuICAgIGFzc2VydChhcnJbMF0gPT0gMSk7XG4gICAgYXNzZXJ0KGFyclsxXSA9PSA0Mik7XG4gICAgYXNzZXJ0KGFyclsyXSA9PSAzKTtcblxuICAgIC8vIENvbXBvdW5kIGFzc2lnbiB0aHJvdWdoIGFycmF5IGVsZW1lbnQgZmF0IHBvaW50ZXIuXG4gICAgKmExICs9IDg7XG4gICAgYXNzZXJ0KGFyclsxXSA9PSA1MCk7XG5cbiAgICAvLyBDaGFpbmVkIHBhdGg6ICZ2YXIgb3V0ZXIuaW5uZXIuZmllbGQgKG5lc3RlZCBzdHJ1Y3QpLlxuICAgIHZhciByIDo9IFJlY3Qge1xuICAgICAgICB0b3BfbGVmdCA9ICAgICBQb2ludCB7IHggPSAwLCB5ID0gMCB9LFxuICAgICAgICBib3R0b21fcmlnaHQgPSBQb2ludCB7IHggPSAxMCwgeSA9IDEwIH0sXG4gICAgfTtcbiAgICBsZXQgYnJ4OiAmdmFyIGk2NCA6PSAmdmFyIHIuYm90dG9tX3JpZ2h0Lng7XG4gICAgKmJyeCA9IDIwO1xuICAgIGFzc2VydChyLmJvdHRvbV9yaWdodC54ID09IDIwKTtcbiAgICBhc3NlcnQoci50b3BfbGVmdC54ID09IDApO1xuXG4gICAgLy8gQXV0by1kZXJlZiBmaWVsZCBhY2Nlc3MgdGhyb3VnaCBNdXRGaWVsZFJlZmVyZW5jZSBcdTIwMTQgRmllbGRBY2Nlc3MgYXV0by1kZXJlZi5cbiAgICB2YXIgcSA6PSBQb2ludCB7IHggPSA1LCB5ID0gNyB9O1xuICAgIGxldCBxcHRyOiAmdmFyIFBvaW50IDo9ICZ2YXIgcTtcbiAgICBhc3NlcnQocXB0ci54ID09IDUpO1xuICAgIHFwdHIueSA9IDk5O1xuICAgIGFzc2VydChxLnkgPT0gOTkpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvdHlwZXMvMTRfbXV0X2ZpZWxkX3BvaW50ZXIubXRsIiwibmFtZSI6IjE0X211dF9maWVsZF9wb2ludGVyLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjE1X2FzY3JpcHRpb25fa2VlcHNfZHluX2FuZF9hcnJheV92aWV3X2NvZXJjaW9ucy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDE4NTogYXNjcmlwdGlvbiBuZXZlciByZWFkcyB0aHJvdWdoIGEgcmVmZXJlbmNlLCBidXQgaXQgc3RpbGwgZHJpdmVzIHRoZVxuLy8gdW5zaXppbmcgY29lcmNpb25zIGFuIGV4cGVjdGVkIHR5cGUgYWxyZWFkeSBpbXBsaWVzIChkeW4gZXJhc3VyZSwgYFtUOyBOXWAgLT4gYFtUXWApLlxuYXNwZWN0IFNoYXBlIHsgZnVuIGFyZWEoJnNlbGYpIC0+IGk2NDsgfVxuc3RydWN0IFNxIHsgczogaTY0IH1cbmV4dGVuZCBTcTogU2hhcGUgeyBmdW4gYXJlYSgmc2VsZikgLT4gaTY0IHsgc2VsZi5zICogc2VsZi5zIH0gfVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgZCA6PSAoU3EgeyBzID0gMyB9OiBkeW4gU2hhcGUpO1xuICAgIGFzc2VydChkLmFyZWEoKSA9PSA5KTtcblxuICAgIGxldCB2IDo9IChbMSwgMiwgM106IFtpNjRdKTtcbiAgICBhc3NlcnQodi5sZW4oKSA9PSAzKTtcblxuICAgIGxldCBuIDo9IDU7XG4gICAgbGV0IHI6ICZpNjQgOj0gJm47XG4gICAgYXNzZXJ0KCgqcjogaTY0KSA9PSA1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3JlZmVyZW5jZXMvMTVfYXNjcmlwdGlvbl9rZWVwc19keW5fYW5kX2FycmF5X3ZpZXdfY29lcmNpb25zLm10bCIsIm5hbWUiOiIxNV9hc2NyaXB0aW9uX2tlZXBzX2R5bl9hbmRfYXJyYXlfdmlld19jb2VyY2lvbnMubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6IlQwMDAxIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnXzA2X25vX3JlYWRfY29weV9hdF9jYWxsX2FyZ3VtZW50Lm10bCIsInNvdXJjZSI6Ii8vIFRZUEVDSEVDS19FUlJPUltUMDAwMV1cbi8vIFJGQy0wMTEwOiB1bmRlciB0aGUgR28gbW9kZWwsIHJlYWRpbmcgdGhyb3VnaCBhIHJlZmVyZW5jZSBpcyBpbXBsaWNpdCBvbmx5IGF0XG4vLyBzZWxlY3RvcnMgKGZpZWxkLCBpbmRleCwgbWV0aG9kKS4gQSBjYWxsIGFyZ3VtZW50IGlzIG5vdCBhIHNlbGVjdG9yLCBzbyBwYXNzaW5nIGFcbi8vIHJlZmVyZW5jZSB3aGVyZSB0aGUgcGFyYW1ldGVyIGV4cGVjdHMgdGhlIHJlZmVyZW50IHR5cGUgaXMgYSBoYXJkIG1pc21hdGNoIFx1MjAxNCB3cml0ZVxuLy8gYHRha2VzX2k2NCgqcilgLlxuLy9cbi8vIE5vdGUgdGhlIHJlYXNvbiBSRkMtMDA2N2EgXHUwMGE3M2Egb3JpZ2luYWxseSBnYXZlIGZvciB0aGlzIFx1MjAxNCBcInRoZXJlIGlzIG5vIGRlY2xhcmVkIHR5cGVcbi8vIGZvciB0aGUgYXJndW1lbnQgaXRzZWxmIHRvIGNvbXBhcmUgYWdhaW5zdFwiIFx1MjAxNCBpcyBmYWN0dWFsbHkgd3Jvbmc6IGBwYXJhbV9oaW50c2Bcbi8vIGFscmVhZHkgdGhyZWFkcyB0aGUgcGFyYW1ldGVyJ3MgZGVjbGFyZWQgdHlwZSBoZXJlIGZvciBtb25vbW9ycGhpYyBjYWxsZWVzLiBUaGVcbi8vIGJlaGF2aW9yIGlzIHJpZ2h0OyB0aGUganVzdGlmaWNhdGlvbiB3YXMgbm90LiBTZWUgUkZDLTAxMTIgXHUwMGE3NC4xLCB3aGljaCByZS1leGFtaW5lZFxuLy8gY2xvc2luZyB0aGlzIGdhcCBhbmQgZGVjbGluZWQgaXQgZGVsaWJlcmF0ZWx5IHJhdGhlciB0aGFuIGJ5IGFjY2lkZW50LlxuZnVuIHRha2VzX2k2NCh4OiBpNjQpIHt9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBuIDo9IDU7XG4gICAgbGV0IHI6ICZpNjQgOj0gJm47XG4gICAgdGFrZXNfaTY0KHIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVmZXJlbmNlcy9uZWdfMDZfbm9fcmVhZF9jb3B5X2F0X2NhbGxfYXJndW1lbnQubXRsIiwibmFtZSI6Im5lZ18wNl9ub19yZWFkX2NvcHlfYXRfY2FsbF9hcmd1bWVudC5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6InJlYWQgdGhlIHZhbHVlIG91dCB3aXRoIGAqcmAiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMTRfcmVhZF9jb3B5X29mX25vbl9jb3B5X3ZhbHVlX2F0X2xldF9pc19yZWplY3RlZC5tdGwiLCJzb3VyY2UiOiIvLyBUWVBFQ0hFQ0tfRVJST1JbVDAwMDFdXG4vLyBSRkMtMDE4NSAoZm9ybWVybHkgIzY0OSk6IGEgcmVmZXJlbmNlIGlzIG5ldmVyIGltcGxpY2l0bHkgcmVhZCBvdXQgYXMgaXRzIHJlZmVyZW50LFxuLy8gd2hldGhlciBvciBub3QgdGhlIHJlZmVyZW50IGlzIGBDb3B5YCAtLSBhIGBsZXRgIGFubm90YXRpb24gZG9lcyBub3QgZGVyZWZlcmVuY2UuXG5zdHJ1Y3QgTm90Q29weSB7IHY6IFN0cmluZyB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBvd25lZCA6PSBOb3RDb3B5IHsgdiA9IFwieFwiIH07XG4gICAgbGV0IHI6ICZOb3RDb3B5IDo9ICZvd25lZDtcbiAgICBsZXQgY29weTogTm90Q29weSA6PSByO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVmZXJlbmNlcy9uZWdfMTRfcmVhZF9jb3B5X29mX25vbl9jb3B5X3ZhbHVlX2F0X2xldF9pc19yZWplY3RlZC5tdGwiLCJuYW1lIjoibmVnXzE0X3JlYWRfY29weV9vZl9ub25fY29weV92YWx1ZV9hdF9sZXRfaXNfcmVqZWN0ZWQubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6ImV4cGVjdGVkIGk2NCwgZm91bmQgJmk2NCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ18yMF9pbXBsaWNpdF9yZWFkX29mX2NvcHlfdmFsdWVfaXNfcmVqZWN0ZWQubXRsIiwic291cmNlIjoiLy8gVFlQRUNIRUNLX0VSUk9SW1QwMDAxXVxuLy8gUkZDLTAxODU6IGV2ZW4gYSBgQ29weWAgcmVmZXJlbnQgaXMgbm90IHJlYWQgb3V0IGltcGxpY2l0bHkuIFRoZSBkaWFnbm9zdGljIG5hbWVzXG4vLyB0aGUgZml4OiBgKnJgLlxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHggOj0gNDI7XG4gICAgbGV0IHI6ICZpNjQgOj0gJng7XG4gICAgbGV0IHk6IGk2NCA6PSByO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvcmVmZXJlbmNlcy9uZWdfMjBfaW1wbGljaXRfcmVhZF9vZl9jb3B5X3ZhbHVlX2lzX3JlamVjdGVkLm10bCIsIm5hbWUiOiJuZWdfMjBfaW1wbGljaXRfcmVhZF9vZl9jb3B5X3ZhbHVlX2lzX3JlamVjdGVkLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>

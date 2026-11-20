@@ -211,7 +211,7 @@ a hard cut, or one release in which `Perhaps` remains as a deprecated alias.
 - RFC-0079 — `Perhaps<T>` and `Result<T, E>` (refused; the types as described).
 - RFC-0182 — `?` on `Perhaps`.
 - metel-core#1585, #1570 — by-name lookups of core types, the same sites the rename touches.
-- `reference/spec/types.md` — "Perhaps<T>" (`spec.types.perhaps-t.*`).
+- `reference/spec/types/index.md` — "Perhaps<T>" (`spec.types.perhaps-t.*`).
 
 ---
 

@@ -2,7 +2,7 @@
 id: GAP-EXPRESSIONS-001
 title: "A record rest pattern cannot borrow the remainder through a reference"
 summary: "No form binds the remainder of a record through a reference: a borrowed view of \"everything but these fields\" has no spelling."
-scope: "reference/spec/expressions.md#struct-patterns"
+scope: "reference/spec/expressions/patterns/struct-and-record-patterns.md#struct-patterns"
 owner: language
 discovered_by: "RFC-0178 review: borrowed rest patterns need the `&var` splitting rules of RFC-0122"
 disposition: known

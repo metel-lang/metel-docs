@@ -51,7 +51,7 @@ A suffix [pins the literal to a specific sized type](#spec.lexical.literals.lega
 1_000i64    // i64
 ```
 
-An unsuffixed integer literal [defaults to `i64`](types.md#spec.types.sized-numeric-types.legality-3) when no context constrains its type.
+An unsuffixed integer literal [defaults to `i64`](types/primitives.md#spec.types.sized-numeric-types.legality-3) when no context constrains its type.
 
 **Floats:**
 ```metel
@@ -66,11 +66,11 @@ A suffix pins the literal to a specific sized float type:
 2.0f64      // f64
 ```
 
-An unsuffixed float literal [defaults to `f64`](types.md#spec.types.sized-numeric-types.legality-3) when no context constrains its type.
+An unsuffixed float literal [defaults to `f64`](types/primitives.md#spec.types.sized-numeric-types.legality-3) when no context constrains its type.
 
 Integer and float are [distinct types and do not implicitly coerce](#spec.lexical.literals.legality-3).
 
-**Polymorphic literal coercion.** When the surrounding context provides a numeric type — a `let` annotation, a function parameter type, a struct field type, or a return type — an unsuffixed literal [adopts that type automatically](types.md#spec.types.sized-numeric-types.legality-3):
+**Polymorphic literal coercion.** When the surrounding context provides a numeric type — a `let` annotation, a function parameter type, a struct field type, or a return type — an unsuffixed literal [adopts that type automatically](types/primitives.md#spec.types.sized-numeric-types.legality-3):
 
 ```metel
 let x: i32  := 10;       // 10 is i32

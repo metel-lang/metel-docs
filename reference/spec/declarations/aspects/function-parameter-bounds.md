@@ -80,7 +80,7 @@ fun transform(x: extends Display) -> extends Display {
 }
 ```
 
-The caller may call any method the declared aspect provides, store the value, and pass it to anything accepting the same opaque type or aspect bound — but may not name the concrete type, cast it, or call methods outside the aspect even if the concrete type has them. Ownership (see [Ownership](../../ownership.md)) applies to the concrete type normally; the caller cannot observe which impls it has beyond the declared aspect bound.
+The caller may call any method the declared aspect provides, store the value, and pass it to anything accepting the same opaque type or aspect bound — but may not name the concrete type, cast it, or call methods outside the aspect even if the concrete type has them. Ownership (see [Ownership](../../ownership/index.md)) applies to the concrete type normally; the caller cannot observe which impls it has beyond the declared aspect bound.
 
 **Worked example — interaction with associated types.** A function may return `extends Aspect` where `Aspect` declares an associated type; the caller can still use the aspect's own methods to produce values of that associated type, and those values type-check normally, even though the caller cannot name the opaque type itself:
 
