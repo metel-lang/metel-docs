@@ -7,6 +7,7 @@ owner: language
 discovered_by: "metel-core#1478 review of anonymous open-record tails"
 disposition: accepted
 rfc: RFC-0181
+relates: "GAP-TYPES-012 (function-type position here, field-type position there)"
 review: "revisit if a real function must apply one callback to two differently shaped records it holds"
 ---
 

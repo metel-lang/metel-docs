@@ -35,6 +35,9 @@ jobs:
       - name: Architecture evidence generator regression tests
         run: python3 -m unittest architecture/tools/test_generate_architecture_evidence.py
 
+      - name: Record tool regression tests
+        run: python3 -m unittest architecture/tools/test_record.py
+
       # ADR-0064 (metel-core#1509): the Architecture Spec's evidence cells are placeholders here and
       # are rendered when documentation is published, so there is nothing in this repository that
       # depends on metel-core's code. This job therefore does not check out metel-core: a core pull
@@ -47,6 +50,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python3 architecture/tools/check_architecture.py --check
+
+      # PROC-DOCS-014: every pair of active gap and limitation records that overlap or contradict
+      # is acknowledged in a `relates:` field. A warning here; `/cut-release` runs it with --strict.
+      - name: record.py check
+        run: python3 architecture/tools/record.py check
 
       # The Operations Specification (metel-core#1507): structure, cross-references, and the assets
       # of this repository against operations/inventory.md. Only this repository is checked out, so

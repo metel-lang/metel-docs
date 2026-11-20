@@ -194,3 +194,31 @@ The spec states the current language: no version callouts, no RFC, issue or PR n
 | `implemented by` | `metel-docs/rfcs/tools/spec_lint.py`, called from `rfc.py check`; `tools/specindex.py` and `tools/spec_split.py` for the layout |
 | `verified by` | core CI job `rfc.py check` and the `rfc-check` workflow; `rfcs/tools/test_spec_lint.py` |
 | `related` | PROC-DOCS-005, PROC-DOCS-006 |
+
+### PROC-DOCS-014 — A gap or limitation record is created through a tool that flags overlaps and contradictions {#proc-docs-014}
+
+A record is created with `record.py new`, which numbers it and compares it with every existing record before writing it: similar text, the same spec rule or requirement, the same tracking issue, the same diagnostic for one target, an expected result that disagrees with another record's, a reproduction that does not give its claimed result, a closed or refused tracking reference, a record of the wrong kind. An exact duplicate or a false reproduction blocks; any other overlap needs an acknowledgement, kept in the record as `relates`. `record.py check` applies the overlap rules to every active record pair, so a hand-written file cannot bypass them.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | documentation |
+| `trigger` | creating a gap or limitation record; every `architecture-check` run |
+| `produces` | the record file, or the findings that explain why it was not written; a warning per unacknowledged pair, an error under `--strict` |
+| `implemented by` | `metel-docs/architecture/tools/record.py` and `tools/textsim.py`; the `/new-record` command in metel-core |
+| `verified by` | `architecture/tools/test_record.py`; the `architecture-check` workflow; `/cut-release` runs `record.py check --strict` |
+| `related` | PROC-DOCS-009 |
+
+### PROC-DOCS-015 — A record's reproduction is executable {#proc-docs-015}
+
+A `metel` fence in an active gap or limitation record may carry the result its program gives today (`repro=T0002` or `repro=ok`), and `check_record_repros.py` runs each one against the interpreter, so a limitation that stopped being true is found by a tool, not by an audit.
+
+| Field | Value |
+|---|---|
+| `status` | `implemented` |
+| `owner` | documentation |
+| `trigger` | every core CI run; `/cut-release` runs it with `--strict` |
+| `produces` | a warning per stale reproduction, an error under `--strict` |
+| `implemented by` | `metel-core/tools/check_record_repros.py` |
+| `verified by` | `metel-core/tools/test_check_record_repros.py`; core CI job `tools self-tests` |
+| `related` | PROC-DOCS-009, PROC-DOCS-014 |

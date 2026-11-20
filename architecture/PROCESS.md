@@ -100,6 +100,32 @@ renders from. A record never names a version: the tracking issue's milestone is 
   `LIMIT_ACTIVE_DISPOSITIONS`, same four values, separately named per tool); `resolved`
   and `superseded` do not.
 
+**Creating a record.** A record is created with the tool, never by hand, so that it is compared with the
+ones that exist:
+
+```bash
+python3 architecture/tools/record.py new --kind limit --area TYPE-INFERENCE --title "…" --summary "…" \
+    --description "<what falls short>" --scope architecture/spec/<chapter>.md#<anchor> \
+    --affects arch.<chapter>.requirement-1 [--repro prog.mtl --repro-expect T0002 --core ../metel-core] \
+    [--tracked-by metel-core#N] [--relates LIMIT-X-001="why this is not a duplicate"]
+```
+
+It numbers the record, writes the skeleton and prints what it found. *Overlaps* (shown, ranked, and each needs
+`--relates ID="reason"` before the file is written): text more than 45% similar to another record's (20% when they
+also share a target), the same spec rule or requirement in `affects`, the same tracking issue, the same RFC *and*
+the same subject, the same diagnostic for one target, and an overlap with a `resolved` record (is it a regression?).
+*Contradictions* (an exact duplicate, a reproduction that does not give the result the record claims, and a LIMIT
+that scopes the spec or a GAP that scopes the implementation, block; a closed or refused tracking reference, two
+active records expecting different results for one target, and an `accepted` record against a `planned` one on the
+same subject are shown and need the same acknowledgement). The acknowledgement is kept in the record as
+`relates: "ID (reason); ID (reason)"`; a reason may contain `;` but not `)`. A reproduction runs only when `--core`
+points at a metel-core checkout with a built `target/release/metel`.
+
+`record.py check` applies the overlap and contradiction rules to every pair of active records, so a record written
+or edited by hand is held to the same standard: an unacknowledged pair is a warning on a pull request (the
+`architecture-check` workflow) and an error under `--strict` (`/cut-release`). Acknowledging a pair is a statement
+that the two were compared and say different things; when they do not, merge them.
+
 Code and fixtures cite `arch-*` records or Formal Rules — never a `LIMIT-*`/`GAP-*` id
 directly — with exactly one narrow, deliberate exception: the `// limit:` marker (Level
 3, below), which is a coordinate, never a claim of success, and is therefore not the

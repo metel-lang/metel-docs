@@ -7,6 +7,7 @@ owner: language
 discovered_by: "metel-core#1478 review of anonymous open-record tails"
 disposition: accepted
 rfc: RFC-0181
+relates: "GAP-TYPES-011 (the same anonymous open record, rejected as a return type here and inside a function type there); GAP-TYPES-012 (and as a field type)"
 review: "revisit if a real API needs to hide a record's extra fields from its callers"
 ---
 

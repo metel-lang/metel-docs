@@ -22,7 +22,9 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-core` | `tools/check_doc_examples.py` | PROC-DOCS-010 |
 | `metel-core` | `tools/bump-docs.sh`, `tools/test_bump_docs.sh` | PROC-DOCS-003 |
 | `metel-core` | `tools/changelog-status.sh` | PROC-WORK-003, PROC-RELEASE-008 |
-| `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py` | PROC-CI-001, PROC-CI-006 |
+| `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py`, `check_no_copy_by_name.py` | PROC-CI-001, PROC-CI-006 |
+| `metel-core` | `tools/check_record_repros.py` (+ test) | PROC-DOCS-015 |
+| `metel-core` | `tools/feature_matrix.py` (+ test), `tools/feature-matrix/` | PROC-WORK-007 |
 | `metel-core` | `metel-frontend/src/bin/gen_grammar.rs`, `check_stdlib_docs.rs` | PROC-DOCS-005 |
 | `metel-core` | `metel-interpreter/src/bin/move-check-count.rs` | local: a measurement `/milestone-integration-test` runs (PROC-WORK-007), no contract of its own |
 | `metel-core` | `AGENTS.md` | process document: PROC-WORK-001, PROC-WORK-002, PROC-WORK-003, PROC-WORK-008, PROC-CI-007 |
@@ -36,6 +38,7 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-docs` | `architecture/tools/check_operations.py`, `check_flows.py` (+ tests) | PROC-CI-008 |
 | `metel-docs` | `rfcs/tools/rfc.py` | PROC-DOCS-005, PROC-DOCS-006, PROC-DOCS-008, PROC-DOCS-012, PROC-CI-005 |
 | `metel-docs` | `rfcs/tools/spec_lint.py` (+ test) | PROC-DOCS-013 |
+| `metel-docs` | `architecture/tools/record.py` (+ test), `tools/textsim.py` | PROC-DOCS-014 |
 | `metel-docs` | `tools/specindex.py`, `tools/spec_split.py` (+ test) | PROC-DOCS-013 |
 | `metel-docs` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
 | `metel-website` | `.github/workflows/deploy.yml` | PROC-DEPLOY-001, PROC-DEPLOY-002 |

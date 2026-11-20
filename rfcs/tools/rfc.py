@@ -171,13 +171,8 @@ STAGE_LABELS = {
     "refused": "Status — refused",
 }
 
-STOPWORDS = {
-    "the", "a", "an", "and", "or", "of", "to", "in", "for", "on", "is", "are",
-    "this", "that", "with", "as", "by", "be", "at", "it", "its", "from", "not",
-    "into", "over", "than", "then", "when", "which", "would", "could", "should",
-    "has", "have", "had", "was", "were", "will", "can", "may", "if", "but",
-    "rfc", "rfcs", "one", "two", "also", "these", "those", "any", "all",
-}
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+from textsim import STOPWORDS, tokenize, build_tfidf, cosine_sim  # noqa: E402,F401  (shared with record.py)
 
 
 # --------------------------------------------------------------------------
@@ -313,39 +308,8 @@ def error(msg):
 
 
 # --------------------------------------------------------------------------
-# TF-IDF / cosine similarity — pure Python, no dependencies
+# RFC similarity corpus (the TF-IDF code is in docs/tools/textsim.py)
 # --------------------------------------------------------------------------
-
-def tokenize(text):
-    words = re.findall(r"[a-zA-Z][a-zA-Z0-9_]*", text.lower())
-    return [w for w in words if w not in STOPWORDS and len(w) > 2]
-
-
-def build_tfidf(docs):
-    """docs: dict[doc_id] -> list of tokens. Returns dict[doc_id] -> {term: weight}."""
-    df = Counter()
-    for tokens in docs.values():
-        for term in set(tokens):
-            df[term] += 1
-    n = len(docs)
-    idf = {term: math.log((n + 1) / (freq + 1)) + 1 for term, freq in df.items()}
-    vectors = {}
-    for doc_id, tokens in docs.items():
-        tf = Counter(tokens)
-        length = len(tokens) or 1
-        vectors[doc_id] = {term: (count / length) * idf.get(term, 0) for term, count in tf.items()}
-    return vectors
-
-
-def cosine_sim(v1, v2):
-    common = set(v1) & set(v2)
-    dot = sum(v1[t] * v2[t] for t in common)
-    n1 = math.sqrt(sum(x * x for x in v1.values()))
-    n2 = math.sqrt(sum(x * x for x in v2.values()))
-    if n1 == 0 or n2 == 0:
-        return 0.0
-    return dot / (n1 * n2)
-
 
 def rfc_corpus(char_cap=3000):
     """dict[rfc_id] -> (title, tokens) for every existing RFC."""

@@ -8,6 +8,7 @@ discovered_by: "RFC-0193 review (metel-core#1665): checking when a let-bound clo
 disposition: planned
 tracked_by: metel-core#1667
 rfc: RFC-0198
+relates: "GAP-FUNCTIONS-007 (a closure's own scope and its missing generics list are separate limits of the same literal)"
 review: null
 ---
 
