@@ -336,8 +336,8 @@ def check_links(root: Path) -> list[str]:
                 continue
             for m in LINK_RE.finditer(line):
                 dest = m.group(1)
-                if is_external(dest):
-                    continue
+                if is_external(dest) or dest.startswith("/"):
+                    continue  # a URL or a site route: not a file in this tree
                 path_part, frag = split_dest(dest)
                 target = (md.parent / path_part).resolve() if path_part else md.resolve()
                 if path_part and not target.exists():

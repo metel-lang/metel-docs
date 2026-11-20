@@ -282,7 +282,7 @@ def _size_findings(lines: list[str], labels: list[str], path: str) -> list[Findi
         if level > MAX_HEADING_LEVEL:
             found.append(Finding("heading-depth", path, i + 1, lines[i].strip()[:50]))
     boundaries = [i for i, level in heads if level <= MAX_HEADING_LEVEL] + [len(lines)]
-    for k, (i, level) in enumerate([(i, lv) for i, lv in heads if 2 <= lv <= MAX_HEADING_LEVEL]):
+    for k, (i, level) in enumerate([(i, lv) for i, lv in heads if lv <= MAX_HEADING_LEVEL]):
         end = next(b for b in boundaries if b > i)
         n = sum(1 for j in range(i + 1, end) if labels[j] not in ("gen", "blank"))
         rules = sum(1 for j in range(i + 1, end) if RULE_HEADING_RE.match(lines[j]))
