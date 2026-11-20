@@ -48,7 +48,7 @@ fallbacks ([generic calls](#arch.evaluation.requirement-7), [dynamic aspects](#a
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/pattern/mod.rs::match_pattern`](https://github.com/metel-lang/metel-core/blob/fa9d787ff51e4383f6b09366a6b987da6add9b91/metel-interpreter/src/evaluator/pattern/mod.rs#L24) |
 | `verified by` | [`metel-interpreter/src/evaluator/mod.rs::option_and_result_have_no_dedicated_value_variants`](https://github.com/metel-lang/metel-core/blob/c5619cae663b522b9c41aaa04f5a82788394dbbe/metel-interpreter/src/evaluator/mod.rs#L5010); [`metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/builtins/83_perhaps_result_methods.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0028, `arch.evaluation.requirement-2` |
 
 ##### Requirement {#arch.evaluation.requirement-4}
@@ -118,7 +118,7 @@ Generic functions and let-polymorphic closures retain an untyped body plus typec
 | `specified by` | `#evaluation` |
 | `implements` | [`metel-interpreter/src/evaluator/type_of.rs::value_to_type`](https://github.com/metel-lang/metel-core/blob/5f038b189cb67c5ec40e51d16a3e11a831a4535e/metel-interpreter/src/evaluator/type_of.rs#L23) |
 | `verified by` | [`metel-interpreter/src/evaluator/mod.rs::dyn_aspect_value_rebuilds_its_dyn_type_without_exposing_the_concrete_value`](https://github.com/metel-lang/metel-core/blob/7108945ba39dc4d74aabed7bd0d9b329302d80e0/metel-interpreter/src/evaluator/mod.rs#L5032); [`metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/aspects/91_dyn_aspect_borrowed_reference_dispatch.toml#L1) |
-| `last_reviewed` | d05bbfd47ae51437f565e0142a58f8e8a950d114 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0053, RFC-0008 |
 
 ##### Requirement {#arch.evaluation.requirement-2}
