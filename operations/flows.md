@@ -80,6 +80,7 @@ Requirements that state a rule rather than a step, and assets that are aids, wit
 | Item | Reason |
 |---|---|
 | `/new-rfc` | starts a draft RFC; part of the RFC lifecycle, not of the delivery pipeline (PROC-DOCS-008) |
+| `/new-record` | creates a gap or limitation record; part of the record lifecycle, not of the delivery pipeline (PROC-DOCS-014) |
 | `/review-typechecker` | a review aid with no contract (marked `local` in the inventory) |
 | `PROC-RELEASE-009` | a rule about credentials that every step above obeys |
 | `PROC-DOCS-002` | a rule about who pins which commit; the pins are the gitlink and website bumps drawn above |
