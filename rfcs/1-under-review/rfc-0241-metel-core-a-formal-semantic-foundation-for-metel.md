@@ -31,7 +31,7 @@ The objectives are:
 Metel-Core is proposed first as a formal language. This draft also explores making it the compiler's own typed representation
 layer, so that the formal model and the implementation share one calculus and cannot drift apart, and so that the compiler can
 grow toward compiled code in layers without waiting on the borrow checker (section 7). That direction is exploratory; its
-design choices are open (Open questions 25 to 33).
+design choices are open (Open questions 25 to 37).
 
 This is a design draft, direction-setting and not syntax. It fixes the architecture and the research goals and does not attempt
 to finalize the calculus. Nothing here is accepted. Implementation: not started.
@@ -348,7 +348,7 @@ exploratory.
 
 Section 6 left use as a compiler IR as a possible later direction. This section sets out what that direction would involve and
 why it may be worth taking early. It does not decide the calculus; the unresolved choices are listed as options and in Open
-questions 25 to 33.
+questions 25 to 37.
 
 The motivating observation is that the formal calculus and the compiler's IR need not be two things. One Core with an
 executable reference evaluator is what ties the formal model to the implementation (the differential testing of section 6),
@@ -400,7 +400,8 @@ From `metel-frontend` (`data/typed_ast.rs`, `pipeline/`):
 - **A dynamic meaning for moves.** Semantics over a store of locations, where a move leaves its slot uninitialized. The static
   move check is then the statement that no accepted program reads an uninitialized slot.
 - **Reserved extension points, not features.** A region slot on reference types (to be filled by whatever RFC-0159 settles),
-  a predicate slot on types (section 7.9, RFC-0202), effects entering only through `call`, and rows kept in the type language.
+  a predicate slot on types (section 7.9, RFC-0202), exceptional exits (panic and effect abandonment) and effects entering only through
+  `call` and the panicking primitives (section 7.10), and rows kept in the type language.
 
 #### 7.4 Sketch
 
@@ -480,7 +481,7 @@ polymorphism and dictionaries. Whether to do this is Open question 25.
 #### 7.8 Roadmap placement (decided 2026-11-19)
 
 These are scheduling decisions, taken by the language owner, and they bind the roadmap, not the calculus. Every design choice
-in this RFC, including Open questions 25 to 33, stays open. Tracked in metel-core#2095.
+in this RFC, including Open questions 25 to 37, stays open. Tracked in metel-core#2095.
 
 1. **Core representation is a theme in `next`**, ordered directly after Move check default-on. It holds steps 1 and 2 of
    section 7.6 (Core and its lint; the Core evaluator run differentially against the fixture corpus). Step 3 is its own theme,
@@ -493,9 +494,12 @@ in this RFC, including Open questions 25 to 33, stays open. Tracked in metel-cor
    the implementation chain once their design prerequisites are met; implementation then joins the chain at the theme's numbered
    position. The numbered order stays the single priority order.
 
-The resulting order after Move check default-on is: Core representation, Comptime, Structural kinds after comptime,
-Ownership-explicit core, Instance preparation, Compiled kernel experiment, then Reference rules (B0), Borrow checking and the
-effects, storage and freeze themes as before.
+The order below was revised on 2026-11-20 (section 7.10): Core representation (which no longer waits on move-check default-on),
+Comptime, Structural kinds after comptime, Reference rules (B0), Basic borrow-conflict checking (B1), Ownership-explicit core,
+Instance preparation, Compiled kernel experiment, then the effects, stability and later memory themes. The roadmap runs three
+implementation threads (ownership and safety, numeric, compiler) and a design lane. #277 (the interpreter stops deep-cloning) closes
+Move check default-on instead of living in Core representation. The Core surface freeze is renamed Stability commitment and is no
+longer a prerequisite for compiler, Interop or Godot work.
 
 #### 7.9 Refinement as a later Core extension (exploratory)
 
@@ -540,6 +544,31 @@ example linear integer arithmetic or RFC-0202's label-set theory, can be formali
   Core's explicit guards. That sharing is a hypothesis to test (Open question 33); the move check already does path-sensitive
   narrowing (RFC-0117).
 - Polymorphic Core if a function is generic over a predicate, with predicates as type-level terms, which bears on Open question 25.
+
+#### 7.10 Representations, the first backend and exceptional exits (amended 2026-11-20)
+
+**Two representations, one built now.** Metel-Core is one datatype with two phases, before and after ownership elaboration (sections
+7.1 and 7.6 step 3). The phase is a witness type, as `ElaboratedModuleGraph` is for elaboration, not a second IR. The compiler's
+execution IR (control-flow graph, layouts, calling convention, explicit memory operations) is a separate representation that is
+planned and not built until a trigger requires it: drop flags with early exits that structured Core cannot express, references in the
+compiled subset that need alias facts, effects lowering, a Metel-level optimizer, or a second backend. The rule is that Core contains
+no layout, calling-convention or SSA concepts; layout is a query over types. Checkers (B1, B2, refinement) work on structured Core
+through a derived control-flow view. An early spike in the Ownership-explicit core theme either confirms that this suffices for drop
+elaboration with `break`, `return` and `?`, or names the case that needs a control-flow phase of Core.
+
+**First backend.** LLVM, emitted from monomorphic Core with no second IR for the first kernel. Constraints: no `noalias`, `nonnull`,
+`dereferenceable` or `readonly`, no fast-math flags and no `nsw` or `nuw` without a spec or checker justification (aliasing attributes
+would need B1 facts for the B0 subset); moved-from slots are never read; layout is a query over types; LLVM's opaque pointers need
+types preserved to every access. Scalar natives (the Numeric theme) map to LLVM intrinsics through a backend-neutral contract. The
+integration (textual `.ll` behind a `Backend` trait, or bindings) is open (metel-core#2120).
+
+**Exceptional exits.** A panic is a non-resumable effect handled by effect handlers and arrives with algebraic effects (decided
+2026-11-20). Drop runs during recovery, and an unhandled panic exits immediately. Until effects exist, panics stay hard and
+uncatchable, so Core's `call` and the panicking primitives have an aborting exit only; the formal semantics has an aborted outcome
+designed to become an exceptional exit. Effect abandonment and panic recovery share one cleanup mechanism, so the execution IR needs
+cleanup edges when effects arrive. Until then the kernel is `panic=abort` with `nounwind` as a profile assumption, and installing a
+`Panic` handler under that profile is an error. Panics never cross a native boundary. Whether `Panic` is tracked in effect rows is
+open (metel-core#2121).
 
 ### 8. Incremental milestones
 
@@ -606,6 +635,10 @@ This RFC does not change the language and does not decide any of the designs bel
   flow-sensitive extension points section 7.9 places on Core. Its goal interface is intended to be hosted by the abstract
   ownership solver (metel-core#1821, #1813). Its open question 1 (mutation of a sealed value) and Stage 2 of this RFC (borrowing)
   meet at facts through `&var`.
+- **RFC-0014 (panic recovery) and RFC-0164** (drafts, trackers metel-core#2122 and #2123 in Effects design settlement): a panic is a
+  non-resumable effect, and recovery shares abandonment cleanup with handlers (section 7.10).
+- **RFC-0063, RFC-0143, RFC-0242, RFC-0076, RFC-0159**: Memory model settlement (metel-core#2116) drops the universal storage-identity
+  kind `@s`; Core carries origins and brands, not allocator identities.
 - **RFC-0206** (Copy and Clone, implemented): the class of a type decides whether a use copies or moves, so Core's use of a
   place has to resolve that, statically for concrete types and through a dictionary for a generic parameter.
 - **ADR-0054** (stable identity) supplies the identities Core requires to be total. **metel-core#1704** and the defects
@@ -687,7 +720,7 @@ This RFC does not change the language and does not decide any of the designs bel
 20. Which properties are proved first?
 21. How can language extensions avoid invalidating large parts of existing proofs?
 22. Which checking algorithms get executable Lean implementations?
-23. Should Metel-Core become a production compiler IR? Section 7 and questions 25 to 33 develop the case; none is decided.
+23. Should Metel-Core become a production compiler IR? Section 7 and questions 25 to 37 develop the case; none is decided.
 24. How can the formalization best support a self-hosted compiler?
 
 **Compiler representation (section 7)**
@@ -710,6 +743,11 @@ This RFC does not change the language and does not decide any of the designs bel
     comptime, or a term in a fixed logic), and is it erased at L3?
 33. Facts: should flow facts (refinements) and ownership state share one facts-environment mechanism over Core, or stay
     separate analyses? Which decision-procedure fragment comes first is RFC-0202's question (its section 5), not this one.
+34. Is structured Core with a derived control-flow view sufficient for drop elaboration with `break`, `return` and `?`, or does Core
+    need a control-flow phase (the spike in section 7.10)?
+35. First-backend integration: textual LLVM IR behind a `Backend` trait, or bindings, and which LLVM version to pin (metel-core#2120).
+36. Is `Panic` tracked in effect rows, or ambient (metel-core#2121)?
+37. How are linear values handled under panic and handler abandonment (the Linear types theme)?
 
 ---
 

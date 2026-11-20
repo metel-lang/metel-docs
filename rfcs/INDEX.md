@@ -1346,7 +1346,7 @@ implementation).
   four; the RFC-0008 by-value-`self` object-safety amendment (RFC-0161 OQ1)
   should treat `var self` identically to `self`, not settled here.
 
-- **RFC-0164** *(draft, opened 2026-09-02; v0.13.1)* — Mutating Closures with a
+- **RFC-0164** *(under review 2026-11-20, #2123; opened 2026-09-02)* — Mutating Closures with a
   Propagating `?` Are Call-Once — follow-up to RFC-0153. A `var` (mutating) closure whose
   body can propagate an error out via `?` is classified `once`: an implicitly-chosen
   mid-mutation exit (any `?` in the body, position determined by runtime error, not the
@@ -1482,7 +1482,7 @@ implementation).
 - **RFC-0198** *(under-review 2026-10-30, #1667; opened 2026-10-30)* — Recursive closures — `let rec name := closure`: the name inside the body is the closure being called (call dispatch), not a captured
   reference, so the closure stays movable. Return type written, no `once`, no mutual recursion. Resolves GAP-FUNCTIONS-006 (#1667). Open: spelling, return type, dispatch confirmation.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
-- **RFC-0014** — Panic Recovery. General, reactive question: can a running program
+- **RFC-0014** *(under review 2026-11-20, #2122; panic is a non-resumable effect with handlers, arriving with effects; Drop runs during recovery)* — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
 - **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics. Written
   retroactively 2026-08-25, expanded 2026-08-27: division/remainder by zero and

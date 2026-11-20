@@ -2,8 +2,12 @@
 id: rfc-0014
 title: "Panic Recovery"
 date: '2026-05-21'
-status: draft
+status: under-review
+updated: '2026-11-20'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2122'
 ---
+
+> **Status — under review (2026-11-20).** Committed to Effects design settlement (2026-11-20, #2122): panic is a non-resumable effect
 
 ## Summary
 
