@@ -14,10 +14,12 @@ fun abort(msg: String) -> ! {
 
 [A `-> !` function containing a reachable `return` is a type error](#spec.types.never-type.legality-11).
 
+## The type `!`
+
+[`!` is uninhabited, so no terminating expression constructs a value of it](#spec.types.never-type.legality-1); it is a subtype of every type.
+
 <details>
 <summary>Formal rules</summary>
-
-<!-- rfc.py:last_reviewed 5dfac1feac4da88091b65049e3915d4b09102f21 -->
 
 ##### Legality Rule {#spec.types.never-type.legality-1}
 
@@ -85,6 +87,15 @@ subexpression diverges.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA0X3BhbmljX2NvZXJjZXMubXRsIiwic291cmNlIjoiLy8gUG9zaXRpdmU6IFJGQy0wMDc4IFx1MDBhNzEuMS9cdTAwYTcyIC0tIGBwYW5pYyhtc2cpYCBoYXMgdHlwZSBgIWAsIHdoaWNoIGNvZXJjZXNcbi8vIGltcGxpY2l0bHkgdG8gYW55IHR5cGUgd2hlcmV2ZXIgdGhlIHN1cnJvdW5kaW5nIGNvbnRleHQgaXMgb3RoZXJ3aXNlXG4vLyB1bmNvbnN0cmFpbmVkLlxuXG5mdW4gcGljayhjb25kOiBib29sZWFuKSAtPiBpNjQge1xuICAgIGlmIChjb25kKSB7XG4gICAgICAgIHBhbmljKFwibm9wZVwiKVxuICAgIH0gZWxzZSB7XG4gICAgICAgIDVcbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBwaWNrKGZhbHNlKVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwiLCJuYW1lIjoibmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwifQ=="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Matching on an uninhabited type
+
+[Match exhaustiveness excludes impossible scrutinee values and uninhabited variants](#spec.types.never-type.legality-4).
+
+<details>
+<summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.never-type.legality-4}
 
@@ -170,6 +181,15 @@ When every arm of a match diverges, the match expression has type `!`.
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA0X3BhbmljX2NvZXJjZXMubXRsIiwic291cmNlIjoiLy8gUG9zaXRpdmU6IFJGQy0wMDc4IFx1MDBhNzEuMS9cdTAwYTcyIC0tIGBwYW5pYyhtc2cpYCBoYXMgdHlwZSBgIWAsIHdoaWNoIGNvZXJjZXNcbi8vIGltcGxpY2l0bHkgdG8gYW55IHR5cGUgd2hlcmV2ZXIgdGhlIHN1cnJvdW5kaW5nIGNvbnRleHQgaXMgb3RoZXJ3aXNlXG4vLyB1bmNvbnN0cmFpbmVkLlxuXG5mdW4gcGljayhjb25kOiBib29sZWFuKSAtPiBpNjQge1xuICAgIGlmIChjb25kKSB7XG4gICAgICAgIHBhbmljKFwibm9wZVwiKVxuICAgIH0gZWxzZSB7XG4gICAgICAgIDVcbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBwaWNrKGZhbHNlKVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwiLCJuYW1lIjoibmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
 
+</details>
+
+## `Result` and `Option` with `!`
+
+[`Result<T, !>` has only an `Ok` value](#spec.types.never-type.legality-8), and `Option<!>` only `None`.
+
+<details>
+<summary>Formal rules</summary>
+
 ##### Legality Rule {#spec.types.never-type.legality-8}
 
 `Result<T, !>` has an uninhabited `Err` variant and therefore only an `Ok` value can be
@@ -220,6 +240,15 @@ field type.
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA4X3BlcmhhcHNfbmV2ZXJfZXhoYXVzdGl2ZS5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDA3OCBcdTAwYTc1OiBPcHRpb248IT4gaGFzIG9ubHkgb25lIGluaGFiaXRlZCB2YXJpYW50IC0tIE5vbmUuIFRoZSBTb21lXG4vLyB2YXJpYW50IHdvdWxkIHJlcXVpcmUgYSB2YWx1ZSBvZiB0eXBlICEsIHdoaWNoIGNhbm5vdCBiZSBjb25zdHJ1Y3RlZCwgc29cbi8vIGEgbWF0Y2ggb21pdHRpbmcgU29tZSBpcyBleGhhdXN0aXZlLlxuZnVuIHVzZV9wZXJoYXBzKHA6IE9wdGlvbjwhPikgLT4gaTY0IHtcbiAgICBtYXRjaCAocCkge1xuICAgICAgICBPcHRpb246Ok5vbmUgPT4gMCxcbiAgICAgICAgLy8gU29tZSBvbWl0dGVkIC0tIGV4aGF1c3RpdmU7IFNvbWUgaXMgdW5pbmhhYml0ZWQgd2hlbiBUID0gIS5cbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICB1c2VfcGVyaGFwcyhPcHRpb246Ok5vbmUpXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy90eXBlcy9uZXZlcl8wOF9wZXJoYXBzX25ldmVyX2V4aGF1c3RpdmUubXRsIiwibmFtZSI6Im5ldmVyXzA4X3BlcmhhcHNfbmV2ZXJfZXhoYXVzdGl2ZS5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Functions returning `!`
+
+[A function declared `-> !` is legal only when every reachable control-flow path diverges](#spec.types.never-type.legality-11).
+
+<details>
+<summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.types.never-type.legality-11}
 

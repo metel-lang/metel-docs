@@ -33,6 +33,10 @@ struct Pair<A, B> derives Clone(A, B), Copy(A, B) { a: A, b: B }   // `,` separa
 copy struct View<T> { r: &T }                                        // no flow: Copy for every T
 ```
 
+## The colon list
+
+[A colon-list entry names a visible `declared` aspect with no methods and grants it to the type](#spec.declarations.aspects.declaration-clauses.legality-1); there is no negative entry.
+
 <details>
 <summary>Formal rules</summary>
 
@@ -67,6 +71,15 @@ A declaration clause has no negative entries. An opt-out of an `auto` aspect is 
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlAwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vIG5lZ2F0aXZlIGVudHJpZXMiLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJwYXJzZV9lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6ImNvbG9uX2xpc3RfaGFzX25vX25lZ2F0aXZlX2VudHJpZXNfcDAwMDEubXRsIiwic291cmNlIjoic3RydWN0IEJhZDogIUNsb25lIHsgeDogaTY0IH0gLy8gRVJST1JbUDAwMDFdXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9hc3BlY3RzL2NvbG9uX2xpc3RfaGFzX25vX25lZ2F0aXZlX2VudHJpZXNfcDAwMDEubXRsIiwibmFtZSI6ImNvbG9uX2xpc3RfaGFzX25vX25lZ2F0aXZlX2VudHJpZXNfcDAwMDEubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
+
+</details>
+
+## The `derives` clause
+
+[`derives A` is legal exactly when `A` has a derivation](#spec.declarations.aspects.declaration-clauses.legality-3), and a derived impl takes the place of a written one.
+
+<details>
+<summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-3}
 
@@ -121,6 +134,33 @@ The derived impl holds exactly when every field type has the aspect. A field typ
 </details>
 <!-- rfc.py:fixtures:end -->
 
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-16}
+
+For an aspect `E` with a super-aspect entry marked `derived B`, `derives E` requires that the same declaration derives `B` in its own entry, and so on transitively through `derived` entries of `B`. `copy struct` and `copy enum` count as `derives Clone, Copy`. A missing entry is an error that names the entry to add. A written `extend T: B` for a type whose declaration derives `E` is an error (`T0015`): delete the impl, or, when `E` can be written by hand, write `E` by hand too. `Copy` is granted only in the declaration, so for `Copy` the choices are to delete the written `Clone` or to drop `Copy`. The colon list cannot grant an aspect that has a derivation.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0234](../../../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImNvbmZsaWN0aW5nIGltcGxlbWVudGF0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmZjMDIzNF9hX3dyaXR0ZW5fY2xvbmVfYmVzaWRlX2FfZGVyaXZlZF9vbmVfaXNfdDAwMTUubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMzQ6IGBDb3B5YCByZXF1aXJlcyBhIGRlcml2ZWQgYENsb25lYCwgYW5kIHRoZSBkZXJpdmVkIGltcGwgY2Fubm90IGJlIHJlcGxhY2VkIGJ5IGEgd3JpdHRlbiBvbmUuXG5zdHJ1Y3QgUCBkZXJpdmVzIENsb25lLCBDb3B5IHsgbjogaTY0IH1cbmV4dGVuZCBQOiBDbG9uZSB7IGZ1biBjbG9uZSgmc2VsZikgLT4gUCB7IFAgeyBuID0gMSB9IH0gfSAvLyBFUlJPUltUMDAxNV1cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2FzcGVjdHMvcmZjMDIzNF9hX3dyaXR0ZW5fY2xvbmVfYmVzaWRlX2FfZGVyaXZlZF9vbmVfaXNfdDAwMTUubXRsIiwibmFtZSI6InJmYzAyMzRfYV93cml0dGVuX2Nsb25lX2Jlc2lkZV9hX2Rlcml2ZWRfb25lX2lzX3QwMDE1Lm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6InJlcXVpcmVzIGEgZGVyaXZlZCBgQ2xvbmVgIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmZjMDIzNF9kZXJpdmVzX2NvcHlfd2l0aG91dF9jbG9uZV9pc190MDA0Ni5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDIzNDogYENvcHlgIHJlcXVpcmVzIGEgZGVyaXZlZCBgQ2xvbmVgOyBub3RoaW5nIGlzIGdlbmVyYXRlZCwgc28gdGhlIGVudHJ5IG11c3QgYmUgd3JpdHRlbi5cbnN0cnVjdCBQIGRlcml2ZXMgQ29weSB7IG46IGk2NCB9IC8vIEVSUk9SW1QwMDQ2XVxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9yZmMwMjM0X2Rlcml2ZXNfY29weV93aXRob3V0X2Nsb25lX2lzX3QwMDQ2Lm10bCIsIm5hbWUiOiJyZmMwMjM0X2Rlcml2ZXNfY29weV93aXRob3V0X2Nsb25lX2lzX3QwMDQ2Lm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## The `copy` class keyword
+
+[`copy` before `struct` or `enum` is `derives Clone, Copy`](#spec.declarations.aspects.declaration-clauses.legality-6), and derivation is idempotent per type and aspect.
+
+<details>
+<summary>Formal rules</summary>
+
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-6}
 
 `copy` before `struct` or `enum` is `derives Clone, Copy`. It may be followed by an argument list in parentheses, the flow of both entries: `copy(P1, .., Pk)` is `derives Clone(P1, .., Pk), Copy(P1, .., Pk)`, and `copy()` states no conditions. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented; it takes no argument list.
@@ -162,6 +202,34 @@ Derivation is idempotent per type and aspect: `copy struct T derives Copy` deriv
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImNvcHlfY2xhc3Nfa2V5d29yZF9hbmRfZGVyaXZlc19jb3B5X21ha2VfYV90eXBlX2NvcHkubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMDc6IGBjb3B5IHN0cnVjdCBUYCBpcyBgc3RydWN0IFQgZGVyaXZlcyBDbG9uZSwgQ29weWA7IHRoZSBkZWNsYXJhdGlvbiBpcyB0aGUgZ3JhbnQsIGZvciBzdHJ1Y3RzLCBlbnVtc1xuLy8gYW5kIGdlbmVyaWMgdHlwZXMgYWxpa2UsIGFuZCBkZXJpdmluZyB0d2ljZSBpcyB0aGUgc2FtZSBhcyBvbmNlLlxuY29weSBzdHJ1Y3QgUG9pbnQgeyB4OiBpNjQsIHk6IGk2NCB9XG5zdHJ1Y3QgUGl4ZWwgZGVyaXZlcyBDbG9uZSwgQ29weSB7IHY6IGk2NCB9XG5jb3B5IHN0cnVjdCBCb3RoIGRlcml2ZXMgQ2xvbmUsIENvcHkgeyBuOiBpNjQgfVxuY29weSBzdHJ1Y3QgV3JhcHBlcjxUPiB7IHY6IFQgfVxuY29weSBlbnVtIERpciB7IFVwLCBEb3duIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IHAgOj0gUG9pbnQgeyB4ID0gMSwgeSA9IDIgfTtcbiAgICBsZXQgcSA6PSBwO1xuICAgIGFzc2VydChwLnggKyBxLnkgPT0gMyk7XG4gICAgbGV0IHB4IDo9IFBpeGVsIHsgdiA9IDQgfTtcbiAgICBsZXQgcHkgOj0gcHg7XG4gICAgYXNzZXJ0KHB4LnYgKyBweS52ID09IDgpO1xuICAgIGxldCBiIDo9IEJvdGggeyBuID0gNSB9O1xuICAgIGxldCBjIDo9IGI7XG4gICAgYXNzZXJ0KGIubiArIGMubiA9PSAxMCk7XG4gICAgbGV0IHcgOj0gV3JhcHBlciB7IHYgPSAzIH07XG4gICAgbGV0IHcyIDo9IHc7XG4gICAgYXNzZXJ0KHcudiArIHcyLnYgPT0gNik7XG4gICAgbGV0IGQgOj0gRGlyOjpVcDtcbiAgICBsZXQgZSA6PSBkO1xuICAgIG1hdGNoIChkKSB7IERpcjo6VXAgPT4gYXNzZXJ0KHRydWUpLCBEaXI6OkRvd24gPT4gYXNzZXJ0KGZhbHNlKSB9XG4gICAgbWF0Y2ggKGUpIHsgRGlyOjpVcCA9PiBhc3NlcnQodHJ1ZSksIERpcjo6RG93biA9PiBhc3NlcnQoZmFsc2UpIH1cbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL2FzcGVjdHMvY29weV9jbGFzc19rZXl3b3JkX2FuZF9kZXJpdmVzX2NvcHlfbWFrZV9hX3R5cGVfY29weS5tdGwiLCJuYW1lIjoiY29weV9jbGFzc19rZXl3b3JkX2FuZF9kZXJpdmVzX2NvcHlfbWFrZV9hX3R5cGVfY29weS5tdGwifQ=="></details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-18}
+
+A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` class keyword restates an entry the keyword stands for. When the keyword has no argument list, the explicit entry replaces the keyword's, with its own list: `copy struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and `pub copy struct W<T> derives Clone(T), Copy(T)` states both. When the keyword has an argument list, an explicit `Clone` or `Copy` entry is an error that names both spellings: write `copy(..)` or the `derives` entries, not both. A type whose `Clone` and `Copy` flows differ writes the `derives` entries.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0239](../../../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vdCBib3RoIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmZjMDIzOV9hX2xpc3Rfb25fdGhlX2tleXdvcmRfYW5kX2FuX2V4cGxpY2l0X2VudHJ5X2lzX3QwMDQ2Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMjM5OiB0aGUga2V5d29yZCdzIGxpc3QgaXMgdGhlIGZsb3cgb2YgYm90aCBlbnRyaWVzOyBhbiBleHBsaWNpdCBlbnRyeSBiZXNpZGUgaXQgd291bGQgc3RhdGUgaXQgdHdpY2UuXG5jb3B5KFQpIHN0cnVjdCBXPFQ+IGRlcml2ZXMgQ2xvbmUoVCkgeyB2YWx1ZTogVCB9IC8vIEVSUk9SW1QwMDQ2XVxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9yZmMwMjM5X2FfbGlzdF9vbl90aGVfa2V5d29yZF9hbmRfYW5fZXhwbGljaXRfZW50cnlfaXNfdDAwNDYubXRsIiwibmFtZSI6InJmYzAyMzlfYV9saXN0X29uX3RoZV9rZXl3b3JkX2FuZF9hbl9leHBsaWNpdF9lbnRyeV9pc190MDA0Ni5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6InVzZSBvZiBtb3ZlZCB2YWx1ZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzlfYW5fZXhwbGljaXRfZW50cnlfcmVwbGFjZXNfdGhlX2tleXdvcmRzX2FuZF9pdHNfZmxvd19jb3VudHNfdDAwMTkubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMzkgKG1ldGVsLWNvcmUjMjA3MCk6IHdpdGggYSBiYXJlIGtleXdvcmQgdGhlIGV4cGxpY2l0IGVudHJ5IHJlcGxhY2VzIHRoZSBrZXl3b3JkJ3MsIHNvIGl0cyBzdGF0ZWQgZmxvd1xuLy8gbWFrZXMgYEg8U3RyaW5nPmAgbW92ZS5cbmNvcHkgc3RydWN0IEg8VD4gZGVyaXZlcyBDb3B5KFQpIHsgbjogaTY0IH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGg6IEg8U3RyaW5nPiA6PSBIIHsgbiA9IDEgfTtcbiAgICBsZXQgYSA6PSBoO1xuICAgIGxldCBiIDo9IGg7IC8vIEVSUk9SW1QwMDE5XVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9yZmMwMjM5X2FuX2V4cGxpY2l0X2VudHJ5X3JlcGxhY2VzX3RoZV9rZXl3b3Jkc19hbmRfaXRzX2Zsb3dfY291bnRzX3QwMDE5Lm10bCIsIm5hbWUiOiJyZmMwMjM5X2FuX2V4cGxpY2l0X2VudHJ5X3JlcGxhY2VzX3RoZV9rZXl3b3Jkc19hbmRfaXRzX2Zsb3dfY291bnRzX3QwMDE5Lm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzlfY29weV9rZXl3b3JkX3Rha2VzX3RoZV9mbG93Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMjM5OiBgY29weShUKSBzdHJ1Y3RgIGlzIGBkZXJpdmVzIENsb25lKFQpLCBDb3B5KFQpYDsgYGNvcHkoKWAgc3RhdGVzIG5vIGNvbmRpdGlvbnM7IGFuIGV4cGxpY2l0IGVudHJ5XG4vLyBiZXNpZGUgYSBiYXJlIGtleXdvcmQgcmVwbGFjZXMgdGhlIGtleXdvcmQncyBvd24uXG5wdWIgY29weShUKSBzdHJ1Y3QgQm94ZWQ8VD4geyB2YWx1ZTogVCB9XG5jb3B5KCkgc3RydWN0IElkPFQ+IHsgbjogaTY0IH1cbnB1YiBjb3B5IHN0cnVjdCBXPFQ+IGRlcml2ZXMgQ2xvbmUoVCksIENvcHkoVCkgeyB2YWx1ZTogVCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBiIDo9IEJveGVkIHsgdmFsdWUgPSAzIH07XG4gICAgbGV0IGMgOj0gYjtcbiAgICBhc3NlcnQoYi52YWx1ZSArIGMudmFsdWUgPT0gNik7XG4gICAgbGV0IHMgOj0gQm94ZWQgeyB2YWx1ZSA9IFwic1wiIH07XG4gICAgbGV0IHQgOj0gcy5jbG9uZSgpO1xuICAgIGxldCBpOiBJZDxTdHJpbmc+IDo9IElkIHsgbiA9IDIgfTtcbiAgICBsZXQgaiA6PSBpO1xuICAgIGxldCBrIDo9IGk7XG4gICAgYXNzZXJ0KGoubiArIGsubiA9PSA0KTtcbiAgICBsZXQgdyA6PSBXIHsgdmFsdWUgPSA1IH07XG4gICAgbGV0IHggOj0gdztcbiAgICBhc3NlcnQody52YWx1ZSArIHgudmFsdWUgPT0gMTApO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvYXNwZWN0cy9yZmMwMjM5X2NvcHlfa2V5d29yZF90YWtlc190aGVfZmxvdy5tdGwiLCJuYW1lIjoicmZjMDIzOV9jb3B5X2tleXdvcmRfdGFrZXNfdGhlX2Zsb3cubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Derived `Clone` and `Copy`
+
+[A derived `Clone` clones each field through that field's own `clone`](#spec.declarations.aspects.declaration-clauses.legality-8), and `Copy` requires it.
+
+<details>
+<summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-8}
 
@@ -215,6 +283,34 @@ A derived `Clone` calls the field clones in a defined order: declaration order f
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImNvbmZsaWN0aW5nIGltcGxlbWVudGF0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoid3JpdHRlbl9jbG9uZV9iZXNpZGVfYV9jb3B5X3R5cGVfaXNfdDAwMTUubXRsIiwic291cmNlIjoiLy8gQSBgQ29weWAgdHlwZSdzIGBDbG9uZWAgaXMgdGhlIHByb3ZpZGVkIG9uZSBhbmQgY2Fubm90IGJlIHdyaXR0ZW4gKFJGQy0wMjEzIHNlY3Rpb24gNCBydWxlIDIpLlxuY29weSBzdHJ1Y3QgRiB7IG46IGk2NCB9XG5leHRlbmQgRjogQ2xvbmUgeyBmdW4gY2xvbmUoJnNlbGYpIC0+IEYgeyBGIHsgbiA9IDAgfSB9IH0gLy8gRVJST1JbVDAwMTVdXG5cbnN0cnVjdCBHIGRlcml2ZXMgQ2xvbmUsIENvcHkgeyBuOiBpNjQgfVxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy93cml0dGVuX2Nsb25lX2Jlc2lkZV9hX2NvcHlfdHlwZV9pc190MDAxNS5tdGwiLCJuYW1lIjoid3JpdHRlbl9jbG9uZV9iZXNpZGVfYV9jb3B5X3R5cGVfaXNfdDAwMTUubXRsIn0="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-17}
+
+A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow must be contained in the `Copy` flow, so a larger stated `Clone` flow is an error at the `Copy` impl, naming the parameter. The derived `Clone` of a type at an instantiation where it is `Copy` is the representation copy, the same operation as the implicit copy of a use by value.
+
+<!-- rfc.py:last_reviewed fb8a38f9e3c24652f01d19e5cdbe2da14ac7d5a3 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0227](../../../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0234](../../../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImNsb25lX29mX2FfY29weV9mdW5jdGlvbl9maWVsZF9jb3BpZXNfaXRzX3N0YXRlLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMjA3OCB3aXRoIFJGQy0wMjE5IHJ1bGUgNzogdGhlIGNsb25lIG9mIGEgQ29weSBzdHJ1Y3QgaG9sZGluZyBhIGBjb3B5IHZhcmAgY2xvc3VyZSBvd25zIGFuIGluZGVwZW5kZW50IGNvcHkgb2Zcbi8vIHRoZSBjbG9zdXJlJ3Mgc3RhdGUsIGFzIGEgdXNlIGJ5IHZhbHVlIGRvZXMuXG5jb3B5IHN0cnVjdCBDb3VudGVyIHsgbmV4dDogY29weSB2YXIgfHwgLT4gaTY0IH1cblxuZnVuIHJ1bihjOiBjb3B5IHZhciB8fCAtPiBpNjQpIC0+IGk2NCB7XG4gICAgbGV0IGggOj0gQ291bnRlciB7IG5leHQgPSBjIH07XG4gICAgdmFyIGEgOj0gaC5jbG9uZSgpO1xuICAgIHZhciBiIDo9IGguY2xvbmUoKTtcbiAgICAoYS5uZXh0KSgpICsgKGEubmV4dCkoKSArIChiLm5leHQpKClcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIG4gOj0gMDtcbiAgICBhc3NlcnQocnVuKFtuXSB2YXIgfHwgLT4gaTY0IHsgbGV0IHIgOj0gbjsgbiArPSAxOyByIH0pID09IDEpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbW92ZV9jaGVjay9jbG9uZV9vZl9hX2NvcHlfZnVuY3Rpb25fZmllbGRfY29waWVzX2l0c19zdGF0ZS5tdGwiLCJuYW1lIjoiY2xvbmVfb2ZfYV9jb3B5X2Z1bmN0aW9uX2ZpZWxkX2NvcGllc19pdHNfc3RhdGUubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImNsb25lX29mX2FfY29weV9zdHJ1Y3RfaG9sZGluZ19hX2NvcHlfZnVuY3Rpb24ubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyMDc4OiBhIENvcHkgc3RydWN0IGhvbGRpbmcgYSBgY29weSB8VHwgLT4gVWAgZmllbGQgaXMgQ2xvbmUsIGFuZCBpdHMgY2xvbmUgaXMgdGhlIGNvcHk7IHRoZSBzYW1lIHRocm91Z2ggYVxuLy8gY29weShUKSBrZXl3b3JkLCBhIGZsb3ctc3RhdGluZyBkZXJpdmUsIGFuZCBhIGdlbmVyaWMgc3RydWN0IGhvbGRpbmcgdGhlIGZ1bmN0aW9uLlxuY29weSBzdHJ1Y3QgSG9sZGVyIHsgZjogY29weSB8aTY0fCAtPiBpNjQsIG46IGk2NCB9XG5jb3B5KFQpIHN0cnVjdCBCb3hlZDxUPiB7IHZhbHVlOiBUIH1cbnN0cnVjdCBQYWlyPEEsIEI+IGRlcml2ZXMgQ2xvbmUoQSwgQiksIENvcHkoQSwgQikgeyBhOiBBLCBiOiBCIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGluYzogY29weSB8aTY0fCAtPiBpNjQgOj0gfHh8IHsgeCArIDEgfTtcbiAgICBsZXQgaCA6PSBIb2xkZXIgeyBmID0gaW5jLCBuID0gMSB9O1xuICAgIGxldCBoMiA6PSBoO1xuICAgIGxldCBoMyA6PSBoO1xuICAgIGxldCBjIDo9IGguY2xvbmUoKTtcbiAgICBhc3NlcnQoKGgyLmYpKDEpID09IDIpO1xuICAgIGFzc2VydCgoYy5mKSgyKSA9PSAzKTtcbiAgICBhc3NlcnQoaDMubiA9PSAxKTtcbiAgICBsZXQgYiA6PSBCb3hlZCB7IHZhbHVlID0gaW5jIH07XG4gICAgbGV0IGIyIDo9IGI7XG4gICAgbGV0IGIzIDo9IGI7XG4gICAgYXNzZXJ0KChiMi52YWx1ZSkoMykgPT0gNCk7XG4gICAgYXNzZXJ0KChiMy52YWx1ZSkoNCkgPT0gNSk7XG4gICAgbGV0IHAgOj0gUGFpciB7IGEgPSBpbmMsIGIgPSAyIH07XG4gICAgbGV0IHAyIDo9IHA7XG4gICAgbGV0IHAzIDo9IHA7XG4gICAgYXNzZXJ0KChwMi5hKSg0KSA9PSA1KTtcbiAgICBhc3NlcnQocDMuYiA9PSAyKTtcbiAgICBsZXQgcSA6PSBwLmNsb25lKCk7XG4gICAgYXNzZXJ0KChxLmEpKDUpID09IDYpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbW92ZV9jaGVjay9jbG9uZV9vZl9hX2NvcHlfc3RydWN0X2hvbGRpbmdfYV9jb3B5X2Z1bmN0aW9uLm10bCIsIm5hbWUiOiJjbG9uZV9vZl9hX2NvcHlfc3RydWN0X2hvbGRpbmdfYV9jb3B5X2Z1bmN0aW9uLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6IndoZXJldmVyIGl0IGlzIGBDb3B5YCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzRfYV9jbG9uZV9mbG93X3dpZGVyX3RoYW5fdGhlX2NvcHlfZmxvd19pc190MDA0Ni5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDIzNDogYSB0eXBlIGlzIGBDbG9uZWAgd2hlcmV2ZXIgaXQgaXMgYENvcHlgLCBzbyB0aGUgYENsb25lYCBmbG93IG11c3QgYmUgaW5zaWRlIHRoZSBgQ29weWAgZmxvdy5cbnN0cnVjdCBQPEEsIEI+IGRlcml2ZXMgQ2xvbmUoQSwgQiksIENvcHkoQSkgeyBhOiBBLCBuOiBpNjQgfSAvLyBFUlJPUltUMDA0Nl1cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2FzcGVjdHMvcmZjMDIzNF9hX2Nsb25lX2Zsb3dfd2lkZXJfdGhhbl90aGVfY29weV9mbG93X2lzX3QwMDQ2Lm10bCIsIm5hbWUiOiJyZmMwMjM0X2FfY2xvbmVfZmxvd193aWRlcl90aGFuX3RoZV9jb3B5X2Zsb3dfaXNfdDAwNDYubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Flow
+
+[A `derives` entry for a field-wise aspect may state which type parameters the aspect depends on](#spec.declarations.aspects.declaration-clauses.legality-11); the compiler checks the stated flow or computes it.
+
+<details>
+<summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-11}
 
@@ -409,62 +505,4 @@ fun bad<T>(w: Wrapper<T>) -> (Wrapper<T>, Wrapper<T>) { (w, w) }           // er
 </details>
 <!-- rfc.py:fixtures:end -->
 
-##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-16}
-
-For an aspect `E` with a super-aspect entry marked `derived B`, `derives E` requires that the same declaration derives `B` in its own entry, and so on transitively through `derived` entries of `B`. `copy struct` and `copy enum` count as `derives Clone, Copy`. A missing entry is an error that names the entry to add. A written `extend T: B` for a type whose declaration derives `E` is an error (`T0015`): delete the impl, or, when `E` can be written by hand, write `E` by hand too. `Copy` is granted only in the declaration, so for `Copy` the choices are to delete the written `Clone` or to drop `Copy`. The colon list cannot grant an aspect that has a derivation.
-
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0234](../../../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
-<!-- rfc.py:origins:end -->
-
-<!-- rfc.py:fixtures:start -->
-<details class="rigor-fixtures-toggle" open>
-<summary>Tested by (2)</summary>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE1IiwiY29sIjpudWxsLCJjb250YWlucyI6ImNvbmZsaWN0aW5nIGltcGxlbWVudGF0aW9uIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmZjMDIzNF9hX3dyaXR0ZW5fY2xvbmVfYmVzaWRlX2FfZGVyaXZlZF9vbmVfaXNfdDAwMTUubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMzQ6IGBDb3B5YCByZXF1aXJlcyBhIGRlcml2ZWQgYENsb25lYCwgYW5kIHRoZSBkZXJpdmVkIGltcGwgY2Fubm90IGJlIHJlcGxhY2VkIGJ5IGEgd3JpdHRlbiBvbmUuXG5zdHJ1Y3QgUCBkZXJpdmVzIENsb25lLCBDb3B5IHsgbjogaTY0IH1cbmV4dGVuZCBQOiBDbG9uZSB7IGZ1biBjbG9uZSgmc2VsZikgLT4gUCB7IFAgeyBuID0gMSB9IH0gfSAvLyBFUlJPUltUMDAxNV1cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2FzcGVjdHMvcmZjMDIzNF9hX3dyaXR0ZW5fY2xvbmVfYmVzaWRlX2FfZGVyaXZlZF9vbmVfaXNfdDAwMTUubXRsIiwibmFtZSI6InJmYzAyMzRfYV93cml0dGVuX2Nsb25lX2Jlc2lkZV9hX2Rlcml2ZWRfb25lX2lzX3QwMDE1Lm10bCJ9"></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6InJlcXVpcmVzIGEgZGVyaXZlZCBgQ2xvbmVgIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmZjMDIzNF9kZXJpdmVzX2NvcHlfd2l0aG91dF9jbG9uZV9pc190MDA0Ni5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDIzNDogYENvcHlgIHJlcXVpcmVzIGEgZGVyaXZlZCBgQ2xvbmVgOyBub3RoaW5nIGlzIGdlbmVyYXRlZCwgc28gdGhlIGVudHJ5IG11c3QgYmUgd3JpdHRlbi5cbnN0cnVjdCBQIGRlcml2ZXMgQ29weSB7IG46IGk2NCB9IC8vIEVSUk9SW1QwMDQ2XVxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9yZmMwMjM0X2Rlcml2ZXNfY29weV93aXRob3V0X2Nsb25lX2lzX3QwMDQ2Lm10bCIsIm5hbWUiOiJyZmMwMjM0X2Rlcml2ZXNfY29weV93aXRob3V0X2Nsb25lX2lzX3QwMDQ2Lm10bCJ9"></details>
 </details>
-<!-- rfc.py:fixtures:end -->
-
-##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-17}
-
-A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow must be contained in the `Copy` flow, so a larger stated `Clone` flow is an error at the `Copy` impl, naming the parameter. The derived `Clone` of a type at an instantiation where it is `Copy` is the representation copy, the same operation as the implicit copy of a use by value.
-
-<!-- rfc.py:last_reviewed fb8a38f9e3c24652f01d19e5cdbe2da14ac7d5a3 -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0227](../../../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0234](../../../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md)_</span>
-<!-- rfc.py:origins:end -->
-
-<!-- rfc.py:fixtures:start -->
-<details class="rigor-fixtures-toggle" open>
-<summary>Tested by (3)</summary>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImNsb25lX29mX2FfY29weV9mdW5jdGlvbl9maWVsZF9jb3BpZXNfaXRzX3N0YXRlLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMjA3OCB3aXRoIFJGQy0wMjE5IHJ1bGUgNzogdGhlIGNsb25lIG9mIGEgQ29weSBzdHJ1Y3QgaG9sZGluZyBhIGBjb3B5IHZhcmAgY2xvc3VyZSBvd25zIGFuIGluZGVwZW5kZW50IGNvcHkgb2Zcbi8vIHRoZSBjbG9zdXJlJ3Mgc3RhdGUsIGFzIGEgdXNlIGJ5IHZhbHVlIGRvZXMuXG5jb3B5IHN0cnVjdCBDb3VudGVyIHsgbmV4dDogY29weSB2YXIgfHwgLT4gaTY0IH1cblxuZnVuIHJ1bihjOiBjb3B5IHZhciB8fCAtPiBpNjQpIC0+IGk2NCB7XG4gICAgbGV0IGggOj0gQ291bnRlciB7IG5leHQgPSBjIH07XG4gICAgdmFyIGEgOj0gaC5jbG9uZSgpO1xuICAgIHZhciBiIDo9IGguY2xvbmUoKTtcbiAgICAoYS5uZXh0KSgpICsgKGEubmV4dCkoKSArIChiLm5leHQpKClcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgdmFyIG4gOj0gMDtcbiAgICBhc3NlcnQocnVuKFtuXSB2YXIgfHwgLT4gaTY0IHsgbGV0IHIgOj0gbjsgbiArPSAxOyByIH0pID09IDEpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbW92ZV9jaGVjay9jbG9uZV9vZl9hX2NvcHlfZnVuY3Rpb25fZmllbGRfY29waWVzX2l0c19zdGF0ZS5tdGwiLCJuYW1lIjoiY2xvbmVfb2ZfYV9jb3B5X2Z1bmN0aW9uX2ZpZWxkX2NvcGllc19pdHNfc3RhdGUubXRsIn0="></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImNsb25lX29mX2FfY29weV9zdHJ1Y3RfaG9sZGluZ19hX2NvcHlfZnVuY3Rpb24ubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyMDc4OiBhIENvcHkgc3RydWN0IGhvbGRpbmcgYSBgY29weSB8VHwgLT4gVWAgZmllbGQgaXMgQ2xvbmUsIGFuZCBpdHMgY2xvbmUgaXMgdGhlIGNvcHk7IHRoZSBzYW1lIHRocm91Z2ggYVxuLy8gY29weShUKSBrZXl3b3JkLCBhIGZsb3ctc3RhdGluZyBkZXJpdmUsIGFuZCBhIGdlbmVyaWMgc3RydWN0IGhvbGRpbmcgdGhlIGZ1bmN0aW9uLlxuY29weSBzdHJ1Y3QgSG9sZGVyIHsgZjogY29weSB8aTY0fCAtPiBpNjQsIG46IGk2NCB9XG5jb3B5KFQpIHN0cnVjdCBCb3hlZDxUPiB7IHZhbHVlOiBUIH1cbnN0cnVjdCBQYWlyPEEsIEI+IGRlcml2ZXMgQ2xvbmUoQSwgQiksIENvcHkoQSwgQikgeyBhOiBBLCBiOiBCIH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGluYzogY29weSB8aTY0fCAtPiBpNjQgOj0gfHh8IHsgeCArIDEgfTtcbiAgICBsZXQgaCA6PSBIb2xkZXIgeyBmID0gaW5jLCBuID0gMSB9O1xuICAgIGxldCBoMiA6PSBoO1xuICAgIGxldCBoMyA6PSBoO1xuICAgIGxldCBjIDo9IGguY2xvbmUoKTtcbiAgICBhc3NlcnQoKGgyLmYpKDEpID09IDIpO1xuICAgIGFzc2VydCgoYy5mKSgyKSA9PSAzKTtcbiAgICBhc3NlcnQoaDMubiA9PSAxKTtcbiAgICBsZXQgYiA6PSBCb3hlZCB7IHZhbHVlID0gaW5jIH07XG4gICAgbGV0IGIyIDo9IGI7XG4gICAgbGV0IGIzIDo9IGI7XG4gICAgYXNzZXJ0KChiMi52YWx1ZSkoMykgPT0gNCk7XG4gICAgYXNzZXJ0KChiMy52YWx1ZSkoNCkgPT0gNSk7XG4gICAgbGV0IHAgOj0gUGFpciB7IGEgPSBpbmMsIGIgPSAyIH07XG4gICAgbGV0IHAyIDo9IHA7XG4gICAgbGV0IHAzIDo9IHA7XG4gICAgYXNzZXJ0KChwMi5hKSg0KSA9PSA1KTtcbiAgICBhc3NlcnQocDMuYiA9PSAyKTtcbiAgICBsZXQgcSA6PSBwLmNsb25lKCk7XG4gICAgYXNzZXJ0KChxLmEpKDUpID09IDYpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbW92ZV9jaGVjay9jbG9uZV9vZl9hX2NvcHlfc3RydWN0X2hvbGRpbmdfYV9jb3B5X2Z1bmN0aW9uLm10bCIsIm5hbWUiOiJjbG9uZV9vZl9hX2NvcHlfc3RydWN0X2hvbGRpbmdfYV9jb3B5X2Z1bmN0aW9uLm10bCJ9"></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6IndoZXJldmVyIGl0IGlzIGBDb3B5YCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzRfYV9jbG9uZV9mbG93X3dpZGVyX3RoYW5fdGhlX2NvcHlfZmxvd19pc190MDA0Ni5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDIzNDogYSB0eXBlIGlzIGBDbG9uZWAgd2hlcmV2ZXIgaXQgaXMgYENvcHlgLCBzbyB0aGUgYENsb25lYCBmbG93IG11c3QgYmUgaW5zaWRlIHRoZSBgQ29weWAgZmxvdy5cbnN0cnVjdCBQPEEsIEI+IGRlcml2ZXMgQ2xvbmUoQSwgQiksIENvcHkoQSkgeyBhOiBBLCBuOiBpNjQgfSAvLyBFUlJPUltUMDA0Nl1cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2FzcGVjdHMvcmZjMDIzNF9hX2Nsb25lX2Zsb3dfd2lkZXJfdGhhbl90aGVfY29weV9mbG93X2lzX3QwMDQ2Lm10bCIsIm5hbWUiOiJyZmMwMjM0X2FfY2xvbmVfZmxvd193aWRlcl90aGFuX3RoZV9jb3B5X2Zsb3dfaXNfdDAwNDYubXRsIn0="></details>
-</details>
-<!-- rfc.py:fixtures:end -->
-
-##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-18}
-
-A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` class keyword restates an entry the keyword stands for. When the keyword has no argument list, the explicit entry replaces the keyword's, with its own list: `copy struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and `pub copy struct W<T> derives Clone(T), Copy(T)` states both. When the keyword has an argument list, an explicit `Clone` or `Copy` entry is an error that names both spellings: write `copy(..)` or the `derives` entries, not both. A type whose `Clone` and `Copy` flows differ writes the `derives` entries.
-
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0239](../../../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
-<!-- rfc.py:origins:end -->
-
-<!-- rfc.py:fixtures:start -->
-<details class="rigor-fixtures-toggle" open>
-<summary>Tested by (3)</summary>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDQ2IiwiY29sIjpudWxsLCJjb250YWlucyI6Im5vdCBib3RoIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoicmZjMDIzOV9hX2xpc3Rfb25fdGhlX2tleXdvcmRfYW5kX2FuX2V4cGxpY2l0X2VudHJ5X2lzX3QwMDQ2Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMjM5OiB0aGUga2V5d29yZCdzIGxpc3QgaXMgdGhlIGZsb3cgb2YgYm90aCBlbnRyaWVzOyBhbiBleHBsaWNpdCBlbnRyeSBiZXNpZGUgaXQgd291bGQgc3RhdGUgaXQgdHdpY2UuXG5jb3B5KFQpIHN0cnVjdCBXPFQ+IGRlcml2ZXMgQ2xvbmUoVCkgeyB2YWx1ZTogVCB9IC8vIEVSUk9SW1QwMDQ2XVxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9yZmMwMjM5X2FfbGlzdF9vbl90aGVfa2V5d29yZF9hbmRfYW5fZXhwbGljaXRfZW50cnlfaXNfdDAwNDYubXRsIiwibmFtZSI6InJmYzAyMzlfYV9saXN0X29uX3RoZV9rZXl3b3JkX2FuZF9hbl9leHBsaWNpdF9lbnRyeV9pc190MDA0Ni5tdGwifQ=="></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE5IiwiY29sIjpudWxsLCJjb250YWlucyI6InVzZSBvZiBtb3ZlZCB2YWx1ZSIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzlfYW5fZXhwbGljaXRfZW50cnlfcmVwbGFjZXNfdGhlX2tleXdvcmRzX2FuZF9pdHNfZmxvd19jb3VudHNfdDAwMTkubXRsIiwic291cmNlIjoiLy8gUkZDLTAyMzkgKG1ldGVsLWNvcmUjMjA3MCk6IHdpdGggYSBiYXJlIGtleXdvcmQgdGhlIGV4cGxpY2l0IGVudHJ5IHJlcGxhY2VzIHRoZSBrZXl3b3JkJ3MsIHNvIGl0cyBzdGF0ZWQgZmxvd1xuLy8gbWFrZXMgYEg8U3RyaW5nPmAgbW92ZS5cbmNvcHkgc3RydWN0IEg8VD4gZGVyaXZlcyBDb3B5KFQpIHsgbjogaTY0IH1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGg6IEg8U3RyaW5nPiA6PSBIIHsgbiA9IDEgfTtcbiAgICBsZXQgYSA6PSBoO1xuICAgIGxldCBiIDo9IGg7IC8vIEVSUk9SW1QwMDE5XVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvYXNwZWN0cy9yZmMwMjM5X2FuX2V4cGxpY2l0X2VudHJ5X3JlcGxhY2VzX3RoZV9rZXl3b3Jkc19hbmRfaXRzX2Zsb3dfY291bnRzX3QwMDE5Lm10bCIsIm5hbWUiOiJyZmMwMjM5X2FuX2V4cGxpY2l0X2VudHJ5X3JlcGxhY2VzX3RoZV9rZXl3b3Jkc19hbmRfaXRzX2Zsb3dfY291bnRzX3QwMDE5Lm10bCJ9"></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InJmYzAyMzlfY29weV9rZXl3b3JkX3Rha2VzX3RoZV9mbG93Lm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMjM5OiBgY29weShUKSBzdHJ1Y3RgIGlzIGBkZXJpdmVzIENsb25lKFQpLCBDb3B5KFQpYDsgYGNvcHkoKWAgc3RhdGVzIG5vIGNvbmRpdGlvbnM7IGFuIGV4cGxpY2l0IGVudHJ5XG4vLyBiZXNpZGUgYSBiYXJlIGtleXdvcmQgcmVwbGFjZXMgdGhlIGtleXdvcmQncyBvd24uXG5wdWIgY29weShUKSBzdHJ1Y3QgQm94ZWQ8VD4geyB2YWx1ZTogVCB9XG5jb3B5KCkgc3RydWN0IElkPFQ+IHsgbjogaTY0IH1cbnB1YiBjb3B5IHN0cnVjdCBXPFQ+IGRlcml2ZXMgQ2xvbmUoVCksIENvcHkoVCkgeyB2YWx1ZTogVCB9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBiIDo9IEJveGVkIHsgdmFsdWUgPSAzIH07XG4gICAgbGV0IGMgOj0gYjtcbiAgICBhc3NlcnQoYi52YWx1ZSArIGMudmFsdWUgPT0gNik7XG4gICAgbGV0IHMgOj0gQm94ZWQgeyB2YWx1ZSA9IFwic1wiIH07XG4gICAgbGV0IHQgOj0gcy5jbG9uZSgpO1xuICAgIGxldCBpOiBJZDxTdHJpbmc+IDo9IElkIHsgbiA9IDIgfTtcbiAgICBsZXQgaiA6PSBpO1xuICAgIGxldCBrIDo9IGk7XG4gICAgYXNzZXJ0KGoubiArIGsubiA9PSA0KTtcbiAgICBsZXQgdyA6PSBXIHsgdmFsdWUgPSA1IH07XG4gICAgbGV0IHggOj0gdztcbiAgICBhc3NlcnQody52YWx1ZSArIHgudmFsdWUgPT0gMTApO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE1LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvYXNwZWN0cy9yZmMwMjM5X2NvcHlfa2V5d29yZF90YWtlc190aGVfZmxvdy5tdGwiLCJuYW1lIjoicmZjMDIzOV9jb3B5X2tleXdvcmRfdGFrZXNfdGhlX2Zsb3cubXRsIn0="></details>
-</details>
-<!-- rfc.py:fixtures:end -->
-
-</details>
-
----

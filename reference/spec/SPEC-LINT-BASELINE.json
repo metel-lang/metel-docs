@@ -1,29 +1,5 @@
 {
   "reference/error-codes.md": {
     "page-size": 1
-  },
-  "reference/spec/declarations/aspects/declaration-clauses.md": {
-    "section-size": 1
-  },
-  "reference/spec/declarations/aspects/function-parameter-bounds.md": {
-    "section-size": 1
-  },
-  "reference/spec/declarations/variables/record-pattern-bindings.md": {
-    "section-size": 1
-  },
-  "reference/spec/expressions/patterns/matching-through-a-reference.md": {
-    "section-size": 1
-  },
-  "reference/spec/functions/closures/capture-semantics.md": {
-    "section-size": 1
-  },
-  "reference/spec/types/generics/implementing-an-aspect-for-a-record.md": {
-    "section-size": 1
-  },
-  "reference/spec/types/generics/open-rows.md": {
-    "section-size": 1
-  },
-  "reference/spec/types/never/return-type.md": {
-    "section-size": 1
   }
 }

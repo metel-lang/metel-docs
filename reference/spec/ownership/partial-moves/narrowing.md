@@ -82,7 +82,7 @@ type-level reading of the move state.
 
 **A residual's row is never visible to structural matching, regardless of its width.**
 This is unchanged from today's rule that only a `record` (not a `struct`) satisfies a
-[row bound](../../types/generics/implementing-an-aspect-for-a-record.md#spec.types.generics.row-bounds.legality-4) — eligibility for
+[row bound](../../types/generics/row-bounds.md#spec.types.generics.row-bounds.legality-4) — eligibility for
 structural matching is scoped to the brand alone, fixed at declaration, never to row
 content. A struct value narrowed down to every one of its own fields is still,
 unambiguously, that struct — not a same-shaped anonymous record, and not a

@@ -15,9 +15,34 @@ fun main() -> i64 {
 }
 ```
 
-`let` bindings [cannot be reassigned and must always be initialized](record-pattern-bindings.md#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
+`let` bindings [cannot be reassigned and must always be initialized](index.md#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
-So `x = newValue` (reassignment), `x.field = value` (field assignment through an immutable binding) and `&var x` (taking a mutable reference to an immutable binding) are all [rejected](record-pattern-bindings.md#spec.declarations.variables.immutable-bindings.legality-1): all three forms require `var`.
+So `x = newValue` (reassignment), `x.field = value` (field assignment through an immutable binding) and `&var x` (taking a mutable reference to an immutable binding) are all [rejected](index.md#spec.declarations.variables.immutable-bindings.legality-1): all three forms require `var`.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.variables.immutable-bindings.legality-1}
+
+A `let` binding must be initialized with the `:=` separator and cannot be assigned
+after initialization. `:=` is the sole separator that introduces a kept binding; the
+plain `=` spelling is a parse error.
+
+<!-- rfc.py:last_reviewed 6fecc8dcbfdd36500a77b2f6139e5f5ef970ce10 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0042](../../../../rfcs/4-implemented/rfc-0042-let-mut-bindings.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlAwMDAxIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoicGFyc2VfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfMTRfbGVnYWN5X2VxdWFsc19iaW5kaW5nX3NlcGFyYXRvci5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEzNjogYGxldGAvYHZhcmAgZGVjbGFyYXRpb25zIGFuZCBhc3NvY2lhdGVkLXR5cGVcbi8vIGRlZmluaXRpb24gdXNlIGA6PWAgKFJGQy0wMTgzIG1vdmVkIHBsYWluIHJlYXNzaWdubWVudCBiYWNrIHRvIGA9YCkuIFRoZSBvbGQgYD1gIHNlcGFyYXRvciBpcyBhIGhhcmQgcGFyc2UgZXJyb3IgXHUyMDE0IG5vIGFsaWFzLlxuLy8gKENvbXBvdW5kIGArPWAgZXRjLiBhbmQgc3RydWN0LWZpZWxkIGA9YCBhcmUgdW5hZmZlY3RlZDsgc2VlIG5lZ18xNS4pXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgeCA9IDE7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTUuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3BhcnNpbmcvbmVnXzE0X2xlZ2FjeV9lcXVhbHNfYmluZGluZ19zZXBhcmF0b3IubXRsIiwibmFtZSI6Im5lZ18xNF9sZWdhY3lfZXF1YWxzX2JpbmRpbmdfc2VwYXJhdG9yLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA2IiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjMiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJzdGFnZTRfbmVnXzA1X2NvbXBvdW5kX2Fzc2lnbl90b19sZXQubXRsIiwic291cmNlIjoiLy8gQ29tcG91bmQgYXNzaWdubWVudCB0byBhbiBpbW11dGFibGUgYmluZGluZyBpcyBUMDAwNiwgc2FtZSBhcyBwbGFpbiBhc3NpZ24uXG5sZXQgbjogaTY0IDo9IDEwO1xubiArPSA1OyAvLyBFUlJPUltUMDAwNl1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNS4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL2Z1bmN0aW9ucy9zdGFnZTRfbmVnXzA1X2NvbXBvdW5kX2Fzc2lnbl90b19sZXQubXRsIiwibmFtZSI6InN0YWdlNF9uZWdfMDVfY29tcG91bmRfYXNzaWduX3RvX2xldC5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
 
 ## Mutable Bindings
 
