@@ -488,7 +488,7 @@ anonymous-readable; degrades to skipping that one ref, never to failing the buil
 network hiccup. Runs unconditionally, not gated behind the fixture-corpus reachability §5's
 other checks need, so it fires from a bare docs-internal checkout too, not only from inside
 metel-core. First real instance, and the worked example above: `spec.functions.turbofish.
-legality-2` (`public/reference/spec/functions.md`).
+legality-2` (`public/reference/spec/functions/index.md`).
 
 **The rule that matters more than the mechanism: a rigor block always states the accepted
 design, never the present-day bug.** Found the hard way — an earlier draft of

@@ -1,0 +1,99 @@
+source = "reference/spec/declarations.md"
+
+[[page]]
+file = "index.md"
+sections = ["Known gaps"]
+
+[[page]]
+file = "variables/index.md"
+sections = ["Variables:own", "Immutable Bindings", "Mutable Bindings"]
+
+[[page]]
+file = "variables/record-pattern-bindings.md"
+sections = ["Record-pattern bindings"]
+
+[[page]]
+file = "variables/scoping-and-shadowing.md"
+sections = ["Scoping and Shadowing"]
+
+[[page]]
+file = "structs/index.md"
+sections = ["Structs:own", "Methods", "Generic Structs"]
+
+[[page]]
+file = "structs/instantiation-and-field-access.md"
+sections = ["Instantiation and Field Access"]
+
+[[page]]
+file = "structs/receiver-forms.md"
+sections = ["Receiver Forms"]
+
+[[page]]
+file = "records.md"
+sections = ["Records"]
+
+[[page]]
+file = "enums.md"
+sections = ["Enums"]
+
+[[page]]
+file = "type-aliases.md"
+sections = ["Type Aliases"]
+
+[[page]]
+file = "aspects/index.md"
+sections = ["Aspects:own", "Bodyless Aspect Declarations", "Static Dispatch"]
+
+[[page]]
+file = "aspects/implementing-an-aspect.md"
+sections = ["Implementing an Aspect"]
+
+[[page]]
+file = "aspects/dyn-aspect.md"
+sections = ["`dyn Aspect`"]
+
+[[page]]
+file = "aspects/coherence.md"
+sections = ["Aspect Implementation Coherence"]
+
+[[page]]
+file = "aspects/structural-bounds.md"
+sections = ["Structural Aspect Bounds"]
+
+[[page]]
+file = "aspects/associated-types.md"
+sections = ["Associated Types"]
+
+[[page]]
+file = "aspects/default-methods.md"
+title = "Default Methods and Self"
+sections = ["Default Methods", "The Self Type"]
+
+[[page]]
+file = "aspects/function-parameter-bounds.md"
+sections = ["Aspect Bounds on Function Type Parameters"]
+
+[[page]]
+file = "aspects/negative-bounds.md"
+sections = ["Negative Bounds"]
+
+[[page]]
+file = "aspects/negative-impls.md"
+sections = ["Negative Impls"]
+
+[[page]]
+file = "aspects/super-aspects.md"
+sections = ["Super-Aspects"]
+
+[[page]]
+file = "aspects/declaration-properties.md"
+sections = ["Aspect Declaration Properties"]
+
+[[page]]
+file = "aspects/declaration-clauses.md"
+sections = ["Declaration Clauses"]
+
+[[page]]
+file = "aspects/type-parameter-bounds.md"
+sections = ["Aspect Bounds on Struct and Enum Type Parameters"]
+

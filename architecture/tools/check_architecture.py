@@ -86,6 +86,9 @@ import sys
 from pathlib import Path
 import tomllib
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+import specindex  # noqa: E402  (finds spec pages and anchors whatever the directory layout)
+
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 SPEC_DIR = REPO_ROOT / "architecture" / "spec"
 LIMITATIONS_DIR = REPO_ROOT / "architecture" / "limitations"
@@ -405,7 +408,10 @@ def check_links(repo_root: Path) -> list:
 
 def resolve_scope_anchor(scope: str, all_section_ids_by_file: dict, repo_root: Path) -> bool:
     if "#" not in scope:
-        return False
+        # A Language Spec page (one page of a chapter that is a directory) is its own scope: the only
+        # anchor naming it is its title, which the rendered page does not have, so it is written bare.
+        page = repo_root / scope
+        return scope.startswith("reference/spec/") and scope.endswith(".md") and page.is_file()
     file_part, anchor = scope.split("#", 1)
     candidate = repo_root / file_part
     if not candidate.exists():
@@ -498,12 +504,27 @@ def validate_record(
     return findings
 
 
+def scope_chapter(scope_path: str) -> str:
+    """`declarations` for `reference/spec/declarations.md` and `reference/spec/declarations/aspects/dyn.md`."""
+    parts = Path(scope_path).parts
+    rest = parts[parts.index("spec") + 1 :] if "spec" in parts else parts[-1:]
+    return rest[0][:-3] if len(rest) == 1 and rest[0].endswith(".md") else rest[0]
+
+
+def chapter_page(language_spec_dir: Path, area: str) -> Path | None:
+    """The page that carries a chapter's closing sections: `area.md`, or `area/index.md` when the chapter is split."""
+    for candidate in (language_spec_dir / f"{area.lower()}.md", language_spec_dir / area.lower() / "index.md"):
+        if candidate.is_file():
+            return candidate
+    return None
+
+
 def language_spec_ids(language_spec_dir: Path) -> set:
     """Every explicit or heading anchor in the Language Spec chapters."""
     if not language_spec_dir.is_dir():
         return set()
     ids: set = set()
-    for path in sorted(language_spec_dir.glob("*.md")):
+    for path in specindex.spec_files(language_spec_dir.parents[1]):
         ids |= markdown_anchors(path)
     return ids
 
@@ -532,8 +553,8 @@ def check_known_gaps_sections(language_spec_dir: Path, repo_root: Path) -> list:
     `GAP-*` records (ADR-0057 §3, metel-core#1182)."""
     findings: list = []
     for area in GAP_AREAS:
-        chapter = language_spec_dir / f"{area.lower()}.md"
-        if not chapter.is_file():
+        chapter = chapter_page(language_spec_dir, area)
+        if chapter is None:
             continue
         rel = chapter.relative_to(repo_root)
         section = known_gaps_section(chapter.read_text())
@@ -577,7 +598,7 @@ def check_gap_records(
     gap_ids: dict = {}
     gaps: list = []
 
-    spec_files = sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []
+    spec_files = specindex.spec_files(language_spec_dir.parents[1]) if language_spec_dir.is_dir() else []
     anchors_by_file = {p.resolve(): markdown_anchors(p) for p in spec_files}
     all_spec_ids = set().union(*anchors_by_file.values()) if anchors_by_file else set()
 
@@ -594,7 +615,7 @@ def check_gap_records(
         scope = fm.get("scope", "")
         if scope and not scope.startswith("reference/spec/"):
             findings.append(Finding(str(rel), f"`scope: {scope}` must point into `reference/spec/` (a GAP describes the Language Spec)"))
-        elif area and scope and Path(scope.split("#", 1)[0]).stem.upper() != area:
+        elif area and scope and scope_chapter(scope.split("#", 1)[0]).upper() != area:
             findings.append(Finding(str(rel), f"`{record_id}` area `{area}` does not match the chapter its `scope` points into"))
 
         rfc_targets = [t for t in affects if RFC_REF_RE.match(t)]
@@ -802,7 +823,7 @@ def check_spec_limit_markers(
     gaps = {rid: fm for rid, (_, fm, _) in gap_records.items()}
     limits = {fm.get("id"): fm for _, fm, _, _ in limit_records}
     cited: dict = {}
-    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+    for path in specindex.spec_files(language_spec_dir.parents[1]) if language_spec_dir.is_dir() else []:
         if path.name.upper() == "STYLEGUIDE.MD":
             continue
         rel = path.relative_to(repo_root)
@@ -821,11 +842,11 @@ def check_spec_limit_markers(
                 findings.append(Finding(str(rel), f"marker cites `{record_id}`, which is `{fm.get('disposition')}`; remove the marker (only active records are cited)"))
                 continue
             if prefix == "GAP":
-                cited.setdefault(record_id, set()).add(path.name)
+                cited.setdefault(record_id, set()).add(specindex.chapter_of(path, language_spec_dir.parents[1]))
     if require_gap_citations:
         for record_id, fm in gaps.items():
             chapter = Path(fm.get("scope", "").split("#", 1)[0])
-            if fm.get("disposition") in active and chapter.name not in cited.get(record_id, set()):
+            if fm.get("disposition") in active and scope_chapter(str(chapter)) not in cited.get(record_id, set()):
                 findings.append(Finding(str(chapter), f"active `{record_id}` is not cited by a `> **Gap** {record_id}` marker in this chapter"))
     return findings
 
@@ -884,7 +905,7 @@ def check_pending_markers(language_spec_dir: Path, repo_root: Path, resolver=Non
     milestone. A closed issue is a stale marker. Numbers the resolver could not reach are
     appended to `unresolved`, never reported as findings."""
     findings: list = []
-    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+    for path in specindex.spec_files(language_spec_dir.parents[1]) if language_spec_dir.is_dir() else []:
         if path.name.upper() == "STYLEGUIDE.MD":
             continue
         rel = str(path.relative_to(repo_root))
@@ -1018,7 +1039,7 @@ def pending_references(language_spec_dir: Path, repo_root: Path, core_root: Path
     in the Language Spec chapters and, with a metel-core checkout, the `skip = "pending: #N"`
     fixtures (metel-core#1514)."""
     refs: list[tuple[str, int]] = []
-    for path in sorted(language_spec_dir.glob("*.md")) if language_spec_dir.is_dir() else []:
+    for path in specindex.spec_files(language_spec_dir.parents[1]) if language_spec_dir.is_dir() else []:
         if path.name.upper() == "STYLEGUIDE.MD":
             continue
         text = FENCE_RE.sub("", path.read_text())

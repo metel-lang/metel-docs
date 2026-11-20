@@ -2,7 +2,7 @@
 id: GAP-FUNCTIONS-005
 title: "Explicit type arguments are not supported on a function with a row parameter"
 summary: "`name::<…>(…)` on a function that takes an open-record (row) parameter is rejected with a targeted error; the row is inferred from the arguments."
-scope: "reference/spec/functions.md#spec.functions.turbofish.legality-1"
+scope: "reference/spec/functions/calls.md#spec.functions.turbofish.legality-1"
 owner: language
 discovered_by: "metel-core#1646; found while checking explicit instantiation for RFC-0186's open question 5"
 disposition: planned

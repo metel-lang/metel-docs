@@ -2,7 +2,7 @@
 id: GAP-TYPES-008
 title: "A record literal accepts at most one row spread"
 summary: "No form combines the fields of two rows into one record: merging two generic records has no spelling."
-scope: "reference/spec/types.md#open-rows"
+scope: "reference/spec/types/generics/open-rows.md#open-rows"
 owner: language
 discovered_by: "RFC-0178 review"
 disposition: known

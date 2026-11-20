@@ -24,7 +24,7 @@ status: refused
 >    brackets at all. The specific ambiguity this RFC gave up `[expr; N]` to avoid
 >    evaporated independently, four days after this RFC cited it.
 > 2. **Reverting costs nothing.** RFC-0084 was accepted but never implemented or applied
->    — `public/reference/spec/types.md`, `expressions.md`, `runtime.md`, the changelog,
+>    — `public/reference/spec/types/index.md`, `expressions.md`, `runtime.md`, the changelog,
 >    and the getting-started tutorials all still use `[T; N]` today, exactly as RFC-0053
 >    left them. There is no migration in either direction; this RFC now simply stops
 >    proposing one.

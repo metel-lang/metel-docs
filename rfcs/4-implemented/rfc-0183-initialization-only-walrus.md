@@ -372,7 +372,7 @@ A review against the grammar and the corpus found four things this RFC did not s
 - RFC-0100 — keyword arguments (`method(param1 = 4)`), interacts via §2.
 - RFC-0098 — surface keyword renames (precedent for pre-1.0 lexical migrations).
 - RFC-0020 — rebranding (no-edition-gating breaking-change precedent).
-- `reference/spec/declarations.md` — `mutable-bindings.legality-1` and the scoping rules
+- `reference/spec/declarations/index.md` — `mutable-bindings.legality-1` and the scoping rules
   citing `:=`; `reference/spec/grammar.md` — `AssignOp`.
 
 ---

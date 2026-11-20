@@ -183,7 +183,7 @@ Embedding grows every published version. The intended end state is to fetch the 
 
 ### PROC-DOCS-013 — The public spec follows a style, enforced by a ratchet {#proc-docs-013}
 
-The spec states the current language: no version callouts, no RFC, issue or PR numbers outside the tracking markers, short paragraphs and quotes, rules stated in rule blocks and linked from prose. Violations that predate the rule are listed per file in `reference/spec/SPEC-LINT-BASELINE.json`; a new one fails CI, and a fixed one makes the baseline shrink (a warning, a failure under `rfc.py check --strict`). A justified single exception is a `spec-lint: allow RULE reason="…"` comment next to the text; an unused or unexplained one is a finding.
+The spec states the current language: no version callouts, no RFC, issue or PR numbers outside the tracking markers, short paragraphs and quotes, rules stated in rule blocks and linked from prose, and a hierarchy of short pages and sections (a chapter is a file or a directory of pages; rule ids do not depend on the page). Violations that predate the rule are listed per file in `reference/spec/SPEC-LINT-BASELINE.json`; a new one fails CI, and a fixed one makes the baseline shrink (a warning, a failure under `rfc.py check --strict`). A justified single exception is a `spec-lint: allow RULE reason="…"` comment next to the text; an unused or unexplained one is a finding.
 
 | Field | Value |
 |---|---|
@@ -191,7 +191,7 @@ The spec states the current language: no version callouts, no RFC, issue or PR n
 | `owner` | documentation |
 | `trigger` | a change to a spec chapter, `error-codes.md` or `spec.md` |
 | `produces` | a pass or fail of `rfc.py check`, and the baseline when it is regenerated |
-| `implemented by` | `metel-docs/rfcs/tools/spec_lint.py`, called from `rfc.py check` |
+| `implemented by` | `metel-docs/rfcs/tools/spec_lint.py`, called from `rfc.py check`; `tools/specindex.py` and `tools/spec_split.py` for the layout |
 | `verified by` | core CI job `rfc.py check` and the `rfc-check` workflow; `rfcs/tools/test_spec_lint.py` |
 | `related` | PROC-DOCS-005, PROC-DOCS-006 |
 

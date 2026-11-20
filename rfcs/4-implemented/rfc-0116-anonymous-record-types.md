@@ -35,7 +35,7 @@ coverage:
 > **Status — accepted (2026-07-24).** OQ1 resolved empirically -- record_lit added to primary_expr, 755 tests green, bare braces parse, if-blocks unaffected, change reverted. Parenthesised conditions make Rust's struct-literal ambiguity structurally impossible. OQ2 scoped out (chained/pattern projection rejected initially). OQ3 reassigned to RFC-0118/0119: an anonymous record has no declaring module, so no private label can leak through it. OQ4 (RFC-0099) is not in this release.
 
 > **Status — integrated 2026-07-24, targeting v0.12.0.** A new "Anonymous Records" section
-> is merged into `public/reference/spec/types.md`, placed after Tuples as the labelled
+> is merged into `public/reference/spec/types/index.md`, placed after Tuples as the labelled
 > counterpart to the positional product type, covering the former, exactness, structural
 > identity, punning, the usability rules, and projection. Two one-line availability markers
 > added.
@@ -77,7 +77,7 @@ coverage:
 > parenthesised conditions make Rust's struct-literal-in-condition ambiguity structurally
 > impossible.
 
-> **Status — integrated (2026-07-24).** Anonymous Records section merged into public/reference/spec/types.md after Tuples; two availability markers. Cross-checked against RFC-0115/0118/0071/0114. Grammar feasibility verified by prototype (755 tests green, reverted).
+> **Status — integrated (2026-07-24).** Anonymous Records section merged into public/reference/spec/types/index.md after Tuples; two availability markers. Cross-checked against RFC-0115/0118/0071/0114. Grammar feasibility verified by prototype (755 tests green, reverted).
 
 > **Status — implemented (2026-07-25).** Anonymous record types shipped in v0.12.0 (#576, merged e1c0492). Type-former, literals, punning, single projection in expression and type position, structural identity with canonical label sorting, exactness, patterns, Send/Sync composition, and the impl-rejection rules. Two limits recorded in the RFC rather than closed: no local-aspect impls on records (blocked on #581, which affects every structural target) and no impl-based aspect satisfaction at all as a consequence.
 

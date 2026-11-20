@@ -45,7 +45,7 @@ These are available in every module without any `import` declaration (provided b
 
 `assert` is overloaded — [the two-argument form carries the panic message](#spec.runtime.built-in-functions.dynamics-2).
 
-`panic`'s return type `!` [coerces to whatever type its calling context expects](types.md#spec.types.never-type.legality-2) — see [Never Type](types.md#never-type).
+`panic`'s return type `!` [coerces to whatever type its calling context expects](types/never/return-type.md#spec.types.never-type.legality-2) — see [Never Type](types/never/index.md).
 
 `print` and `println` [require their argument to implement `Display`](#spec.runtime.built-in-functions.legality-1)
 (`print<T: Display>`): passing a struct or enum with no `Display`
@@ -194,7 +194,7 @@ aspect From<S> {
 }
 ```
 
-[`i64` implements `From<f64>` (truncating cast) and `f64` implements `From<i64>`](#spec.runtime.built-in-aspects.from-s.legality-1). The [`as` operator desugars to `T::from(value)`](types.md#spec.types.type-casting.dynamics-1). User-defined types may implement `From<S>` to enable `as` casts and `?` error coercion.
+[`i64` implements `From<f64>` (truncating cast) and `f64` implements `From<i64>`](#spec.runtime.built-in-aspects.from-s.legality-1). The [`as` operator desugars to `T::from(value)`](types/ascription-and-casting.md#spec.types.type-casting.dynamics-1). User-defined types may implement `From<S>` to enable `as` casts and `?` error coercion.
 
 <details>
 <summary>Formal rules</summary>

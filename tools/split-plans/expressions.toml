@@ -1,0 +1,49 @@
+source = "reference/spec/expressions.md"
+
+[[page]]
+file = "index.md"
+sections = ["Known gaps"]
+
+[[page]]
+file = "patterns/index.md"
+sections = ["Pattern Matching:own", "Pattern Kinds", "Examples"]
+
+[[page]]
+file = "patterns/variant-constructors-and-patterns.md"
+title = "Variant Constructors and Patterns"
+sections = ["Unqualified variant constructors", "Unqualified variant patterns"]
+
+[[page]]
+file = "patterns/struct-and-record-patterns.md"
+title = "Struct and Record Patterns"
+sections = ["Struct patterns", "Record rest patterns"]
+
+[[page]]
+file = "patterns/matching-through-a-reference.md"
+sections = ["Matching through a reference"]
+
+[[page]]
+file = "control-flow/index.md"
+sections = ["Control Flow:own", "While", "Loop"]
+
+[[page]]
+file = "control-flow/if-else.md"
+sections = ["If / Else"]
+
+[[page]]
+file = "control-flow/for-loops.md"
+title = "For Loops"
+sections = ["For", "For-In"]
+
+[[page]]
+file = "control-flow/break-continue-return.md"
+sections = ["Break, Continue, and Return"]
+
+[[page]]
+file = "assignment.md"
+sections = ["Assignment"]
+
+[[page]]
+file = "references.md"
+sections = ["References"]
+

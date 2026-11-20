@@ -141,7 +141,7 @@ an ordinary type argument inside the alias body, so this needs a fixture and no 
 ## 4. Changes to existing documents on acceptance
 
 - RFC-0121 §5 and `reference/spec/grammar.md` (generated from `grammar.pest`): the `RowArg` production.
-- `reference/spec/types.md`, `spec.types.generics.open-rows.legality-1`: row arguments may be
+- `reference/spec/types/index.md`, `spec.types.generics.open-rows.legality-1`: row arguments may be
   literal rows.
 - Fixtures: a written-return-type setter and `build`; a method setter chain; the closed forms
   `..{}` and `..{ host: String }` as a return type and an annotation; a possibly-present label

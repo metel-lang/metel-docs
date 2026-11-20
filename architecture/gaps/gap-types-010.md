@@ -2,7 +2,7 @@
 id: GAP-TYPES-010
 title: "A function cannot return an open record while hiding its extra fields"
 summary: "An open record with an anonymous tail is rejected as a return type, so an API cannot promise only some fields of the record it returns."
-scope: "reference/spec/types.md#open-rows"
+scope: "reference/spec/types/generics/open-rows.md#open-rows"
 owner: language
 discovered_by: "metel-core#1478 review of anonymous open-record tails"
 disposition: accepted

@@ -255,10 +255,10 @@ and documentation examples is not measured; see below.
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/types.md`, *Type Inference* (GAP-TYPES-001):
+Spec text lands only at `3-integrated`. `reference/spec/types/index.md`, *Type Inference* (GAP-TYPES-001):
 "Hindley-Milner with let-polymorphism" becomes inference within a body with polymorphism only from
 written or declared parameters, and "annotations are optional for all bindings" is narrowed together
-with RFC-0193. `reference/spec/functions.md`: *Closures*, a rule that a closure has one type. No new
+with RFC-0193. `reference/spec/functions/index.md`: *Closures*, a rule that a closure has one type. No new
 error code is proposed; the mismatch is `T0001`.
 
 ## Acceptance criteria for a prototype
@@ -310,7 +310,7 @@ No contradiction with the integrated spec or the sibling RFCs was found.
 - RFC-0193 (named declarations do not infer), RFC-0195 (local functions do not capture), RFC-0197 (generic
   closures), RFC-0187 (no warning channel), RFC-0138.
 - GAP-FUNCTIONS-006, GAP-FUNCTIONS-007, GAP-TYPES-001.
-- `reference/spec/types.md` (Type Inference); fixtures `generics/52_let_polymorphism`,
+- `reference/spec/types/index.md` (Type Inference); fixtures `generics/52_let_polymorphism`,
   `generics/102_generic_fn_reference_reused_at_multiple_types`, `move_check/abstract_let_polymorphic_closure`.
 
 ---

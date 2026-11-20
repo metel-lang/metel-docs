@@ -2,7 +2,7 @@
 id: GAP-TYPES-009
 title: "Tuples have no rest pattern or spread over their numeric-label row"
 summary: "A tuple cannot be split into its first element and the rest, or extended, in a generic body."
-scope: "reference/spec/types.md#tuples"
+scope: "reference/spec/types/tuples.md"
 owner: language
 discovered_by: "RFC-0178 review"
 disposition: known

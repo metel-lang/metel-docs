@@ -1,0 +1,48 @@
+source = "reference/spec/ownership.md"
+
+[[page]]
+file = "index.md"
+sections = ["Values move by default", "Closures", "What ownership does not cover", "Known gaps"]
+
+[[page]]
+file = "classes.md"
+sections = ["Ownership classes"]
+
+[[page]]
+file = "copy.md"
+sections = ["`Copy`"]
+
+[[page]]
+file = "clone.md"
+sections = ["`Clone`"]
+
+[[page]]
+file = "drop.md"
+title = "Drop"
+sections = ["`Drop`", "`Copy` and `Drop` are mutually exclusive", "Drop order", "Explicit drop"]
+
+[[page]]
+file = "partial-moves/index.md"
+sections = ["Partial moves:own", "Which constructs support partial moves"]
+
+[[page]]
+file = "partial-moves/narrowing.md"
+sections = ["Narrowing"]
+
+[[page]]
+file = "partial-moves/residuals.md"
+title = "Residuals"
+sections = ["Passing a residual to a function", "Aspects on a residual"]
+
+[[page]]
+file = "partial-moves/drop-dispatch.md"
+sections = ["Drop dispatch against a narrowed residual"]
+
+[[page]]
+file = "partial-moves/widening.md"
+sections = ["Widening"]
+
+[[page]]
+file = "references-and-moves.md"
+sections = ["References and moves"]
+

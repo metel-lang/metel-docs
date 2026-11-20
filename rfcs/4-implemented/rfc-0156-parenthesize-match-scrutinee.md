@@ -184,7 +184,7 @@ OQ#4 reasoning applies unchanged).
 
 ## Spec integration
 
-At `3-integrated`, `reference/spec/expressions.md` "Pattern Matching" gains a Legality
+At `3-integrated`, `reference/spec/expressions/index.md` "Pattern Matching" gains a Legality
 Rule stating the scrutinee must be parenthesized, and RFC-0156 is recorded as its
 origin:
 
@@ -244,7 +244,7 @@ real work is the sweep, which has three recent precedents (RFC-0098, RFC-0130, R
   **RFC-0107** (Unqualified Enum Variants in Match Patterns, implemented),
   **RFC-0018** (Match Arm Blocks, implemented) — the match-semantics RFCs this change
   explicitly does **not** touch.
-- `reference/spec/expressions.md` "Pattern Matching" — the spec section that gains the
+- `reference/spec/expressions/index.md` "Pattern Matching" — the spec section that gains the
   new Legality Rule at integration.
 
 ---

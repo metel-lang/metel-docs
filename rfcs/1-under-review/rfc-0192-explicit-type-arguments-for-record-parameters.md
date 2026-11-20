@@ -157,7 +157,7 @@ costly the placeholder RFC moves ahead of this one; the rule above does not chan
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md` *Turbofish*:
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md` *Turbofish*:
 `legality-1` states that arguments pin the declared generics in declaration order and that the
 argument for a `record` parameter is the record (new Legality Rule for the argument's checks
 and for the count); the `> Gap GAP-FUNCTIONS-005` marker is removed on implementation. The

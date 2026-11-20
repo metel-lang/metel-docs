@@ -45,18 +45,20 @@ from pathlib import Path
 
 DOCS_ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = DOCS_ROOT / "reference" / "spec" / "SPEC-LINT-BASELINE.json"
-SPEC_FILES = [
-    "reference/spec/declarations.md",
-    "reference/spec/expressions.md",
-    "reference/spec/functions.md",
-    "reference/spec/lexical.md",
-    "reference/spec/modules.md",
-    "reference/spec/runtime.md",
-    "reference/spec/ownership.md",
-    "reference/spec/types.md",
-    "reference/error-codes.md",
-    "reference/spec.md",
-]
+sys.path.insert(0, str(DOCS_ROOT / "tools"))
+import specindex  # noqa: E402  (finds spec pages whatever the directory layout)
+
+# Pages under reference/spec that are not the specification's prose: the style guide carries the
+# rules' own worked examples and grammar.md is generated.
+EXCLUDED = {"STYLEGUIDE.md", "grammar.md"}
+
+
+def spec_pages(root: Path = DOCS_ROOT) -> list[str]:
+    """Paths relative to the docs root of every page the lint covers, in a stable order."""
+    base = specindex.spec_root(root)
+    pages = [p.relative_to(root).as_posix() for p in specindex.spec_files(root)
+             if not (p.parent == base and p.name in EXCLUDED)]
+    return pages + ["reference/error-codes.md", "reference/spec.md"]
 RULES = (
     "internal-number",
     "provenance-marker",
@@ -65,9 +67,19 @@ RULES = (
     "unlinked-normative",
     "section-links-no-rule",
     "limit-in-prose",
+    "section-size",
+    "page-size",
+    "heading-depth",
     "allow-invalid",
 )
 MAX_PARAGRAPH_WORDS = 120
+# Hierarchy: a reader finds a topic by walking pages and sections, so none is long. A section's own text
+# (its subsections count separately, generated blocks and blank lines not at all) and a page are measured
+# in lines; a rule block is a `#####` heading and does not count as a level.
+MAX_SECTION_LINES = 250
+MAX_SECTION_RULES = 12
+MAX_PAGE_LINES = 600
+MAX_HEADING_LEVEL = 4
 MAX_QUOTE_WORDS = 60
 
 NUMBER_RE = re.compile(
@@ -79,7 +91,7 @@ PROVENANCE_RE = re.compile(
     r"\*\*(?:Availability:|Since\b|Changed in\b|Available in\b)"
     r"|\b(?:[Ss]ince|[Aa]vailable in|[Cc]hanged in|[Aa]dded in|[Ii]ntroduced in) v\d+\.\d+"
 )
-RULE_HEADING_RE = re.compile(r"^#{5} (?:Legality Rule|Dynamic Semantics) \{#")
+RULE_HEADING_RE = re.compile(r"^#{5} (?:Legality Rule|Dynamic Semantics(?: Rule)?) \{#")
 RULE_LINK_RE = re.compile(r"#spec\.[a-z0-9_.-]+\.(?:legality|dynamics)-\d+")
 NORMATIVE_RE = re.compile(
     r"\b(?:is an error|are an error|is rejected|are rejected|is illegal|is a compile error|is a type error"
@@ -259,10 +271,30 @@ def _without_exemption_ref(line: str) -> str:
     return line
 
 
+def _size_findings(lines: list[str], labels: list[str], path: str) -> list[Finding]:
+    """`section-size`, `page-size` and `heading-depth`: how the page is put together, not what it says."""
+    found: list[Finding] = []
+    counted = [i for i, lab in enumerate(labels) if lab not in ("gen", "blank")]
+    if len(counted) > MAX_PAGE_LINES:
+        found.append(Finding("page-size", path, 1, f"{len(counted)} lines"))
+    heads = [(i, len(lines[i]) - len(lines[i].lstrip("#"))) for i, lab in enumerate(labels) if lab == "head"]
+    for i, level in heads:
+        if level > MAX_HEADING_LEVEL:
+            found.append(Finding("heading-depth", path, i + 1, lines[i].strip()[:50]))
+    boundaries = [i for i, level in heads if level <= MAX_HEADING_LEVEL] + [len(lines)]
+    for k, (i, level) in enumerate([(i, lv) for i, lv in heads if lv <= MAX_HEADING_LEVEL]):
+        end = next(b for b in boundaries if b > i)
+        n = sum(1 for j in range(i + 1, end) if labels[j] not in ("gen", "blank"))
+        rules = sum(1 for j in range(i + 1, end) if RULE_HEADING_RE.match(lines[j]))
+        if n > MAX_SECTION_LINES or rules > MAX_SECTION_RULES:
+            found.append(Finding("section-size", path, i + 1, f"{lines[i].strip()[:40]}: {n} lines, {rules} rules"))
+    return found
+
+
 def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[Allow]]:
     lines = text.split("\n")
     labels = _label(lines)
-    found: list[Finding] = []
+    found: list[Finding] = _size_findings(lines, labels, path)
 
     # Quote blocks that are tracking markers are exempt from the number rule.
     # A marker inside a rule block is labelled "rule", not "quote", so find markers by their opening
@@ -332,7 +364,7 @@ def lint_text_with_allows(text: str, path: str) -> tuple[list[Finding], list[All
 
 def lint_all(root: Path = DOCS_ROOT) -> list[Finding]:
     found: list[Finding] = []
-    for rel in SPEC_FILES:
+    for rel in spec_pages(root):
         path = root / rel
         if path.is_file():
             found.extend(lint_text(path.read_text(encoding="utf-8"), rel))
@@ -341,7 +373,7 @@ def lint_all(root: Path = DOCS_ROOT) -> list[Finding]:
 
 def all_allows(root: Path = DOCS_ROOT) -> list[Allow]:
     found: list[Allow] = []
-    for rel in SPEC_FILES:
+    for rel in spec_pages(root):
         path = root / rel
         if path.is_file():
             found.extend(lint_text_with_allows(path.read_text(encoding="utf-8"), rel)[1])

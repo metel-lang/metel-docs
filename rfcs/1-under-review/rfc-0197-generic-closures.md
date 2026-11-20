@@ -226,7 +226,7 @@ Additive. No existing program changes meaning: a leading `<` after the qualifier
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Closures* legality-1 (the form)
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md`: *Closures* legality-1 (the form)
 and legality-23 (the order), a new legality rule for the binder, and the removal of GAP-FUNCTIONS-007.
 `reference/spec/grammar.md` is generated from `grammar.pest`. `types.md` (open rows) gains the closure case.
 Error codes: none proposed; a missing bound is the function error.
@@ -245,7 +245,7 @@ Error codes: none proposed; a missing bound is the function error.
 - GAP-FUNCTIONS-007 (metel-core#1668); GAP-FUNCTIONS-006.
 - RFC-0193, RFC-0195, RFC-0196, RFC-0198, RFC-0154, RFC-0050, RFC-0121, RFC-0178, RFC-0186, RFC-0192, RFC-0163.
 - metel-core#1544, #1691, #1693, #288.
-- `grammar.pest` (`closure_expr`, `generic_params`, `where_clause`); `reference/spec/functions.md` (Closures, legality 1 and 23).
+- `grammar.pest` (`closure_expr`, `generic_params`, `where_clause`); `reference/spec/functions/index.md` (Closures, legality 1 and 23).
 - Scala 3 polymorphic function literals.
 
 ---

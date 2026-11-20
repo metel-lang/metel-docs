@@ -635,7 +635,7 @@ These are explicit **review gates**, not permission for safe implementations to 
 
 ## References
 
-- [RFC-0241 — Metel-Core](../0-draft/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md)
+- [RFC-0241 — Metel-Core](rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md)
 - [RFC-0071 — Ownership and Move Semantics](../3-integrated/rfc-0071-ownership-and-move-semantics.md)
 - [RFC-0089 — Linear Types](../2-accepted/rfc-0089-linear-types.md)
 - [RFC-0067A — Reference Types](../4-implemented/rfc-0067a-reference-types.md)
@@ -654,8 +654,8 @@ These are explicit **review gates**, not permission for safe implementations to 
 - [RFC-0126 — Borrowed Array Views](../4-implemented/rfc-0126-t-as-a-copy-borrowed-view.md)
 - [RFC-0171 — Prefix Array Types](../4-implemented/rfc-0171-prefix-array-type-syntax-t-and-t-n.md)
 - [RFC-0124 — Sequence Types](../1-under-review/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md)
-- [RFC-0172 — Sized/Unsized Kinds](../0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md)
-- [RFC-0133 — From-Metel `List` Buffer Gap](../0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md)
+- [RFC-0172 — Sized/Unsized Kinds](rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md)
+- [RFC-0133 — From-Metel `List` Buffer Gap](rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md)
 - [RFC-0132 — Comptime Execution](../1-under-review/rfc-0132-comptime-execution-model-comptime-let-comptime-fun-comptime-if.md)
 
 ## Decision

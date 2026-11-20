@@ -37,6 +37,30 @@ similar-sounding title, is not the same as confirming it actually says what you'
 to cite it for — this has gone wrong for real (a `blocked` exemption once cited a closed,
 unrelated issue this way).
 
+## Layout: chapters, pages and sections
+
+A chapter is one file (`lexical.md`) or, when it outgrows one page, a directory (`declarations/`). A directory
+holds an `index.md` with the chapter's heading, its introduction and its closing `## Known gaps` section, and
+one page per topic beneath it; a topic with parts of its own is a directory too (`declarations/aspects/index.md`
+beside `dyn.md`, `coherence.md`). A page starts at `#` and its sections nest `##`, `###`, `####`; a rule block is
+`#####` and is not a level. Each page carries `sidebar_position` frontmatter, which orders it in the sidebar.
+
+A rule's id is `spec.<chapter>.<section>.<rule>` and does not depend on the page, so moving a section never
+renames a rule and links are written `page.md#spec...`.
+
+Keep the hierarchy shallow in size, not in depth: a **section** holds at most 250 lines of its own text and 12
+rules, a **page** at most 600 lines, and no heading goes below `####` (`spec_lint.py`: `section-size`,
+`page-size`, `heading-depth`; the pages that predate the rule are in the baseline). A section over the limit is
+split into subsections, or the subsections into pages. To split a chapter into pages use the tool, which keeps
+every anchor and rewrites every link by anchor:
+
+```bash
+python3 tools/spec_split.py skeleton reference/spec/<chapter>.md > plan.toml   # edit: group sections into pages
+python3 tools/spec_split.py apply plan.toml --dry-run
+python3 tools/spec_split.py apply plan.toml && python3 tools/spec_split.py check-links
+python3 rfcs/tools/rfc.py index --write-spec-origins   # then the checks of "Verifying before you ship"
+```
+
 ## Prose conventions
 
 **No version provenance.** The spec states the language as it is. It has no `Availability`, `Since vX` or

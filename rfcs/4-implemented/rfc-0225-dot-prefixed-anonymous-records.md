@@ -18,7 +18,7 @@ impl_status: implemented
 
 > **Status — accepted (2026-11-12).** Accepted by the language owner after parser-prototype evidence (21 fixtures, migrated corpus passes, RFC-0221's objection answered) and an adversarial review whose findings were fixed
 
-> **Status — integrated (2026-11-12).** Integrated into reference/spec/types.md (record-labels legality-2, 4 to 7); the docs sweep ships with it; implementation tracked in metel-core#1949
+> **Status — integrated (2026-11-12).** Integrated into reference/spec/types/index.md (record-labels legality-2, 4 to 7); the docs sweep ships with it; implementation tracked in metel-core#1949
 
 > **Status — implemented (2026-11-12).** Implemented: metel-core#1949 (PR #1950), docs integrated in #612, pin bumped in #1951
 

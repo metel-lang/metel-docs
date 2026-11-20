@@ -2,9 +2,9 @@
 id: GAP-OWNERSHIP-003
 title: "A field cannot be moved out of a `Drop` type, even where its destructor would not need it"
 summary: "Moving a field out of a `Drop` type is always rejected; row-bounded `Drop` dispatch would allow it where the destructor does not need that field."
-scope: "reference/spec/ownership.md#spec.ownership.partial-moves.legality-2"
+scope: "reference/spec/ownership/partial-moves/index.md#spec.ownership.partial-moves.legality-2"
 owner: language
-discovered_by: "metel-core#1235 conversion of the `Planned for` notes in `reference/spec/ownership.md` (RFC-0137 §5)"
+discovered_by: "metel-core#1235 conversion of the `Planned for` notes in `reference/spec/ownership/index.md` (RFC-0137 §5)"
 disposition: planned
 tracked_by: metel-core#949
 rfc: RFC-0137
@@ -15,7 +15,7 @@ review: null
 ## Gap
 
 The Language Spec bans moving a field out of a `Drop` type unconditionally
-([legality-2](../../reference/spec/ownership.md#spec.ownership.partial-moves.legality-2)),
+([legality-2](../../reference/spec/ownership/partial-moves/index.md#spec.ownership.partial-moves.legality-2)),
 so a destructor never runs against a value whose fields have been narrowed
 away. RFC-0137 §5 replaces the ban with row-bounded `Drop` dispatch: a `Drop`
 impl's required field set is the residual row its `drop` receiver declares,

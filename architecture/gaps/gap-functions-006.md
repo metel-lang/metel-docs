@@ -2,7 +2,7 @@
 id: GAP-FUNCTIONS-006
 title: "A `let`-bound closure cannot call itself"
 summary: "A closure bound by `let` is not in scope in its own body, so it cannot be recursive; recursion needs a named `fun`."
-scope: "reference/spec/functions.md#spec.functions.closures.legality-1"
+scope: "reference/spec/functions/closures/capture-semantics.md#spec.functions.closures.legality-1"
 owner: language
 discovered_by: "RFC-0193 review (metel-core#1665): checking when a let-bound closure can replace a private function"
 disposition: planned

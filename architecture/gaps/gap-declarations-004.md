@@ -2,7 +2,7 @@
 id: GAP-DECLARATIONS-004
 title: "`let` and `var` bindings are not hoisted, so a function cannot use a later closure binding"
 summary: "A `fun` is hoisted but a `let`-bound closure is visible only from its declaration onward, so a function declared above it cannot call it."
-scope: "reference/spec/declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-2"
+scope: "reference/spec/declarations/variables/scoping-and-shadowing.md#spec.declarations.variables.scoping-and-shadowing.legality-2"
 owner: language
 discovered_by: "RFC-0193 review (metel-core#1665): checking when a let-bound closure can replace a private function"
 disposition: planned

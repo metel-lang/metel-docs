@@ -2,7 +2,7 @@
 id: GAP-OWNERSHIP-004
 title: "Structural `Copy` for named types and their residuals is a compiler rule, not something the language can express"
 summary: "A residual of a `Copy` brand is `Copy` over its present fields by a rule the compiler hardcodes; the language has no way to state an aspect over the fields of a brand's residual, so the rule cannot be written in std or by a user."
-scope: "reference/spec/ownership.md#spec.ownership.aspects-on-a-residual.legality-1"
+scope: "reference/spec/ownership/partial-moves/residuals.md#spec.ownership.aspects-on-a-residual.legality-1"
 owner: language
 discovered_by: "language owner review of the v0.16.0 Declarations and derivation milestone, 2026-11-13; metel-core#1823"
 disposition: planned

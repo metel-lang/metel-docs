@@ -2,9 +2,9 @@
 id: GAP-TYPES-002
 title: "The storage model of `List<T>` and its boundary with `T[]` and `[T; N]` is not specified"
 summary: "How a growable `List<T>` allocates and grows its storage, and where it ends and `T[]` and `[T; N]` begin, is not fully specified."
-scope: "reference/spec/types.md#arrays"
+scope: "reference/spec/types/arrays.md"
 owner: language
-discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/types.md`"
+discovered_by: "metel-core#1235 records pass over the limit-phrasing lint of `reference/spec/types/index.md`"
 disposition: known
 review: null
 ---

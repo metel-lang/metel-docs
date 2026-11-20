@@ -318,12 +318,12 @@ This lands as a hard cut (Open Questions, 1).
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md`: *Named Function
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md`: *Named Function
 Declarations* (`dynamics-1` now correct; `legality-2` rewritten so a named declaration writes every
 parameter's type and its return type, or returns `()`), *Closures* (inference unchanged; the known limit that a stand-alone closure
 cannot name a row parameter in a written return annotation). `reference/spec/modules.md`
 visibility: the targeted error for `pub let`, and the written-function-type rule (§3).
-`reference/spec/types.md`: *Type Inference* (GAP-TYPES-001) says "Hindley-Milner with let-polymorphism.
+`reference/spec/types/index.md`: *Type Inference* (GAP-TYPES-001) says "Hindley-Milner with let-polymorphism.
 Annotations are optional for all bindings, including function parameters and return types"; it is
 narrowed to local bindings, closure parameters and closure return types, with named declarations
 written (RFC-0196 narrows the let-polymorphism half further). The open-rows text updates the `T0032`
