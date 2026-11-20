@@ -2,7 +2,7 @@
 id: GAP-TYPES-005
 title: "No spelling for an operator on a generic parameter"
 summary: "An operator such as `+` or `<` on a bare type parameter is rejected, and no aspect exists that grants it."
-scope: "reference/spec/types.md#rigid-type-parameters"
+scope: "reference/spec/types/generics/rigid-type-parameters.md"
 owner: language
 discovered_by: "RFC-0173 review (D5): the stdlib has no arithmetic or ordering aspects, so a generic body cannot be given a bound that grants an operator"
 disposition: known

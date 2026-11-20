@@ -19,7 +19,7 @@ function must write its parameter types (RFC-0193, `T0010`), so the closure
 parameter is now the only place this shows. Reproduced against current
 `develop`:
 
-```metel
+```metel repro=T0002
 struct Point { x: i64, y: i64 }
 fun main() {
     let get_x := |p| { p.x };

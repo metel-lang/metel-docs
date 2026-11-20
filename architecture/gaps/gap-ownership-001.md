@@ -2,9 +2,9 @@
 id: GAP-OWNERSHIP-001
 title: "No borrow checking: reference exclusivity and duration are not enforced"
 summary: "Nothing prevents a shared and an exclusive reference to the same place from coexisting."
-scope: "reference/spec/ownership.md#what-ownership-does-not-cover"
+scope: "reference/spec/ownership/index.md#what-ownership-does-not-cover"
 owner: language
-discovered_by: "metel-core#1212 limitation analysis; `reference/spec/ownership.md` (References and Moves); `typed_ast` `RefTemp` note"
+discovered_by: "metel-core#1212 limitation analysis; `reference/spec/ownership/index.md` (References and Moves); `typed_ast` `RefTemp` note"
 disposition: known
 tracked_by: metel-core#1293
 rfc: RFC-0122, RFC-0067
@@ -21,7 +21,7 @@ proposes and which is still under review.
 
 `T[]` inherits the same hole. RFC-0126 describes it as "produced only by
 borrowing a `List<T>`, a `[T; N]`, or another slice"
-([spec.types.arrays.legality-1](../../reference/spec/types.md#spec.types.arrays.legality-1)),
+([spec.types.arrays.legality-1](../../reference/spec/types/arrays.md#spec.types.arrays.legality-1)),
 but nothing tracks how long that borrow may live — storing a `T[]` in a
 struct field or returning one out of the function whose local it was
 borrowed from typechecks and runs cleanly, for the same reason `&T`/`&var T`
@@ -83,7 +83,7 @@ not a language guarantee, and will not hold once the Compiled Profile
 A plain reference-typed struct field escapes the same way, reproduced
 2026-09-29 against current `develop`:
 
-```metel
+```metel repro=ok
 struct Holder { r: &i64 }
 
 fun make() -> Holder {

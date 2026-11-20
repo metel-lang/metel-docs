@@ -13,16 +13,20 @@ or warns when one is missing from this table or a row names something that no lo
 |---|---|---|
 | `metel-core` | `.github/workflows/ci.yml` | PROC-CI-001, PROC-CI-002, PROC-DOCS-005 |
 | `metel-core` | `.github/workflows/release.yml` | PROC-RELEASE-002 to PROC-RELEASE-007, PROC-RELEASE-009 |
-| `metel-core` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
+| `metel-core` | `.githooks/pre-commit`, `pre-push`, `commit-msg`, `tools/push_scope.py` | PROC-CI-006 |
 | `metel-core` | `.claude/commands/cut-release.md` | PROC-RELEASE-001, PROC-RELEASE-008 |
 | `metel-core` | `.claude/commands/gap-analysis.md`, `milestone-integration-test.md` | PROC-WORK-007, PROC-WORK-005, PROC-WORK-006 |
 | `metel-core` | `.claude/commands/start-issue.md`, `ship-issue.md` | PROC-WORK-001, PROC-CI-007 |
 | `metel-core` | `.claude/commands/new-rfc.md` | PROC-DOCS-008 |
+| `metel-core` | `.claude/commands/new-record.md` | PROC-DOCS-014 |
 | `metel-core` | `.claude/commands/review-typechecker.md` | local: a review aid, no contract |
 | `metel-core` | `tools/check_doc_examples.py` | PROC-DOCS-010 |
+| `metel-core` | `tools/sweep_pub.py` | local: a one-shot sweep for RFC-0218 (`public` to `pub`), no contract |
 | `metel-core` | `tools/bump-docs.sh`, `tools/test_bump_docs.sh` | PROC-DOCS-003 |
 | `metel-core` | `tools/changelog-status.sh` | PROC-WORK-003, PROC-RELEASE-008 |
-| `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py` | PROC-CI-001, PROC-CI-006 |
+| `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py`, `check_no_copy_by_name.py` | PROC-CI-001, PROC-CI-006 |
+| `metel-core` | `tools/check_record_repros.py` (+ test) | PROC-DOCS-015 |
+| `metel-core` | `tools/feature_matrix.py` (+ test), `tools/feature-matrix/` | PROC-WORK-007 |
 | `metel-core` | `metel-frontend/src/bin/gen_grammar.rs`, `check_stdlib_docs.rs` | PROC-DOCS-005 |
 | `metel-core` | `metel-interpreter/src/bin/move-check-count.rs` | local: a measurement `/milestone-integration-test` runs (PROC-WORK-007), no contract of its own |
 | `metel-core` | `AGENTS.md` | process document: PROC-WORK-001, PROC-WORK-002, PROC-WORK-003, PROC-WORK-008, PROC-CI-007 |
@@ -36,12 +40,15 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-docs` | `architecture/tools/check_operations.py`, `check_flows.py` (+ tests) | PROC-CI-008 |
 | `metel-docs` | `rfcs/tools/rfc.py` | PROC-DOCS-005, PROC-DOCS-006, PROC-DOCS-008, PROC-DOCS-012, PROC-CI-005 |
 | `metel-docs` | `rfcs/tools/spec_lint.py` (+ test) | PROC-DOCS-013 |
+| `metel-docs` | `architecture/tools/record.py` (+ test), `tools/textsim.py` | PROC-DOCS-014 |
+| `metel-docs` | `tools/specindex.py`, `tools/spec_split.py` (+ test), `tools/check_keywords.py` (+ test) | PROC-DOCS-013 |
 | `metel-docs` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
 | `metel-website` | `.github/workflows/deploy.yml` | PROC-DEPLOY-001, PROC-DEPLOY-002 |
 | `metel-website` | `.github/workflows/promote.yml` | PROC-DEPLOY-003 |
 | `metel-website` | `.github/workflows/publish-docs.yml` | PROC-DEPLOY-006 |
 | `metel-website` | `.github/workflows/next.yml`, `scripts/prepare-next-docs.mjs` | PROC-DEPLOY-004, PROC-DEPLOY-005 |
-| `metel-website` | `.github/workflows/check-showcases.yml`, `plugin-tests.yml` | PROC-DEPLOY-007 |
+| `metel-website` | `.github/workflows/preview.yml` | local: a manual non-production preview deployment, no contract |
+| `metel-website` | `.github/workflows/check-showcases.yml`, `plugin-tests.yml`, `prism-drift.yml`, `scripts/check-prism-drift.mjs` (+ test) | PROC-DEPLOY-007 |
 | `metel-website` | `scripts/build-rfc-index.mjs`, `build-spec-index.mjs` (the `prebuild` step) | PROC-DOCS-005 (search data computed at build) |
 | `metel-website` | `scripts/check-mdx-site-drift.mjs` | PROC-DOCS-011 |
 | `metel-website` | `src/remark/*.mjs` | PROC-DOCS-005 (views computed at build), PROC-DOCS-007 |

@@ -104,7 +104,7 @@ names a shifted row. A refinement on the argument does not say what comes back. 
 **Prerequisites**, none of which exists:
 
 - (i) a `comptime` function whose result is a type usable in a signature (RFC-0132, under review);
-- (ii) the predicate itself, which RFC-0202 (predicates and refinement types, a draft) supplies as `Dense` and `Tuple`. A row's labels are a finite set, so a predicate over them is
+- (ii) the predicate itself, which RFC-0202 (predicates and refinement types, under review) supplies as `Dense` and `Tuple`. A row's labels are a finite set, so a predicate over them is
   decidable, which keeps the machinery small. RFC-0118's row bounds are already a restricted predicate language over rows
   (presence, absence, type of a label); "the integer labels are `.0 .. .N-1`" is the one statement they cannot make, because it
   quantifies over an unbounded set. The smallest first step is a **built-in bound** (`R: Tuple`, RFC-0151 section 5a) that a
@@ -121,7 +121,7 @@ identifier labels, which makes a tuple the special case and positional operation
 
 - **For:** one mechanism for every positional operation and for any shape; no operator in the type language; the refinement
   gives a principled reading of residuals, preconditions and subtyping; mixed rows are handled by the same predicate.
-- **Against:** the largest prerequisite list of the three designs; a predicate feature that is still a draft (RFC-0202); the open question on
+- **Against:** the largest prerequisite list of the three designs; a predicate feature that is still under review (RFC-0202); the open question on
   RFC-0132 is decisive for the result type; and if the result type needs a length, it needs const generics too.
 
 **Relation to Option C.** C's `Cons<A, R>` and `Tail<R>` are what A's comptime function would compute, written as built-in

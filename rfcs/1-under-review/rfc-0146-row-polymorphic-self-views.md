@@ -8,7 +8,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 ---
 
 > **New RFC, opened 2026-08-28 out of a design discussion on the integrated spec's
-> "Drop dispatch against a narrowed residual" section (`reference/spec/ownership.md`,
+> "Drop dispatch against a narrowed residual" section (`reference/spec/ownership/index.md`,
 > from RFC-0137) and `metel-core#858` (row-bounded `Drop` dispatch, RFC-0137 slice 2).**
 > That discussion identified two distinct missing constructs — a *named row variable in
 > receiver position* (`Self.R`), and a *destructor parameterized over which residual it
@@ -41,7 +41,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/886'
 > - **RFC-0118 (Row Bounds, implemented)** — `{ a, .. }` open-bound spelling, reused
 >   verbatim for the `where` clause here.
 > - **RFC-0137 (Nominal Types as Branded Rows, `3-integrated`)** — the `(brand, row)`
->   representation and the narrowing lattice, now in `reference/spec/ownership.md`
+>   representation and the narrowing lattice, now in `reference/spec/ownership/index.md`
 >   ("Partial moves", "Narrowing", "Passing a residual to a function", "Drop dispatch
 >   against a narrowed residual"). Cited as normative spec, with RFC-0137 as design
 >   history.
@@ -308,7 +308,7 @@ RFC-0121's own status blockquote when it happens.
 
 ## References
 
-- `reference/spec/ownership.md` — "Partial moves", "Narrowing", "Passing a residual to
+- `reference/spec/ownership/index.md` — "Partial moves", "Narrowing", "Passing a residual to
   a function", "Drop dispatch against a narrowed residual" (RFC-0137, integrated); the
   normative rules this RFC's receiver types and use-site checks build on
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — design history for the

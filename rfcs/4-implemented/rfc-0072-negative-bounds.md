@@ -29,7 +29,7 @@ coverage:
 > updated to the ratified value-channel form (`@a T`, `(@a: A)`). The bound mechanism
 > itself is unaffected; only the allocator examples illustrating it were stale.
 
-> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: T: !Aspect negative bounds. RFC's own stale @[r] bracket-channel syntax fixed first.
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations/index.md: T: !Aspect negative bounds. RFC's own stale @[r] bracket-channel syntax fixed first.
 
 > **Status — implemented (2026-07-12).** Enforced at all call sites + literal construction; issue #547
 

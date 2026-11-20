@@ -1,0 +1,112 @@
+---
+sidebar_position: 9
+---
+
+# Break, Continue, and Return
+
+[`return`, `break`, and `continue` are expressions of type `!`](../../types/never/return-type.md#spec.types.never-type.dynamics-1) (Never — see
+[Never Type](../../types/never/index.md)), not statements. Since `!` is a subtype of
+every type, they're valid anywhere an expression is valid — a block tail with
+no trailing `;`, a braceless `if`-arm, a match-arm body, or nested inside
+another expression — not just as a semicolon-terminated statement on its own
+line:
+
+```metel
+fun pick(ok: boolean) -> i64 {
+    if (ok) return 42;   // braceless if-arm, no braces needed
+    0
+}
+
+fun compute() -> i64 {
+    var i := 0;
+    loop {
+        i = i + 1;
+        if (i == 5) {
+            break i * 10   // loop-body tail, no trailing `;`
+        }
+    }
+}
+
+fun classify(value: i64) -> i64 {
+    match (value) {
+        0 => 0,
+        1 => return 10,   // match-arm body, same as any other expression arm
+        _ => 20,
+    }
+}
+
+fun nested(c: boolean) -> i64 {
+    let x := if (c) return 99 else 0;   // nested expression position
+    x
+}
+```
+
+[`break` exits the innermost loop](#spec.expressions.control-flow.break-continue-and-return.dynamics-1); `break expr` exits a `loop` and produces
+`expr` as the loop's value (`break` with no value produces `Unit`).
+[`continue` skips to the next iteration of the innermost loop](#spec.expressions.control-flow.break-continue-and-return.dynamics-2). `return`/
+`return expr` [returns from the enclosing function](#spec.expressions.control-flow.break-continue-and-return.dynamics-3), using the function's
+declared return type (or `Unit`, if omitted):
+
+```metel
+fun returns_unit() {
+    return;
+}
+
+fun returns_value() -> i64 {
+    return 42;
+}
+
+fun main() -> i64 {
+    returns_unit();
+    return returns_value();
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-1}
+
+`break` transfers control out of the innermost enclosing loop. In a value-producing
+`loop`, `break expr` supplies that loop's result and bare `break` supplies `()`.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle">
+<summary>Tested by (4)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEzX2xvb3AubXRsIiwic291cmNlIjoiZnVuIG1haW4oKSB7XG4gICAgLy8gQnJlYWsgd2l0aCBhIHZhbHVlLlxuICAgIGxldCB4IDo9IGxvb3AgeyBicmVhayA0MjsgfTtcbiAgICBhc3NlcnQoeCA9PSA0Mik7XG4gICAgLy8gQ29udGludWUgc2tpcHMgdGhlIGN1cnJlbnQgaXRlcmF0aW9uLlxuICAgIHZhciBjb3VudCA6PSAwO1xuICAgIHZhciBpIDo9IDA7XG4gICAgbG9vcCB7XG4gICAgICAgIGlmIChpID49IDUpIHsgYnJlYWs7IH1cbiAgICAgICAgaSA9IGkgKyAxO1xuICAgICAgICBpZiAoaSA9PSAzKSB7IGNvbnRpbnVlOyB9XG4gICAgICAgIGNvdW50ID0gY291bnQgKyAxO1xuICAgIH1cbiAgICBhc3NlcnQoY291bnQgPT0gNCk7XG4gICAgLy8gQXNzaWdubWVudHMgaW5zaWRlIHRoZSBsb29wIGFyZSB2aXNpYmxlIGluIHN1YnNlcXVlbnQgaXRlcmF0aW9ucy5cbiAgICB2YXIgYWNjIDo9IDA7XG4gICAgdmFyIGogOj0gMTtcbiAgICBsb29wIHtcbiAgICAgICAgaWYgKGogPiA1KSB7IGJyZWFrOyB9XG4gICAgICAgIGFjYyArPSBqO1xuICAgICAgICBqICs9IDE7XG4gICAgfVxuICAgIGFzc2VydChhY2MgPT0gMTUpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY29udHJvbF9mbG93LzEzX2xvb3AubXRsIiwibmFtZSI6IjEzX2xvb3AubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjkxX25lc3RlZF9icmVha19wcm9wYWdhdGlvbi5tdGwiLCJzb3VyY2UiOiIvLyBJc3N1ZSAjMjI5OiBhIGBicmVha2Agd3JpdHRlbiBhcyBhIG5lc3RlZCBgaWZgLXRhaWwgb3IgbWF0Y2gtYXJtLXRhaWwgbXVzdFxuLy8gc3RpbGwgY29ycmVjdGx5IHByb3BhZ2F0ZSB0byB0aGUgZW5jbG9zaW5nIGxvb3AncyBvd24gaW5mZXJyZWQgdHlwZSAtLVxuLy8gYGZpbmRfbG9vcF9icmVha190eXBlYCBwcmV2aW91c2x5IG9ubHkgY2hlY2tlZCBgYmxvY2suc3RtdHNgLCBuZXZlclxuLy8gYGJsb2NrLnRhaWxgIGFuZCBuZXZlciByZWN1cnNlZCBpbnRvIGBNYXRjaGAsIGJvdGggcHJlLWV4aXN0aW5nIGdhcHMgb25seVxuLy8gcmVhY2hhYmxlIGluIHByYWN0aWNlIG9uY2UgYGJyZWFrYCBjb3VsZCBiZSBhIHRhaWwgZXhwcmVzc2lvbiBhdCBhbGwuXG5mdW4gdmlhX2lmKGM6IGJvb2xlYW4pIC0+IGk2NCB7XG4gICAgbG9vcCB7XG4gICAgICAgIGlmIChjKSB7IGJyZWFrIDcgfVxuICAgIH1cbn1cblxuZnVuIHZpYV9tYXRjaChjOiBib29sZWFuKSAtPiBpNjQge1xuICAgIGxvb3Age1xuICAgICAgICBtYXRjaCAoYykge1xuICAgICAgICAgICAgdHJ1ZSA9PiBicmVhayA4LFxuICAgICAgICAgICAgZmFsc2UgPT4gYnJlYWsgOCxcbiAgICAgICAgfVxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KHZpYV9pZih0cnVlKSA9PSA3KTtcbiAgICBhc3NlcnQodmlhX21hdGNoKHRydWUpID09IDgpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY29udHJvbF9mbG93LzkxX25lc3RlZF9icmVha19wcm9wYWdhdGlvbi5tdGwiLCJuYW1lIjoiOTFfbmVzdGVkX2JyZWFrX3Byb3BhZ2F0aW9uLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFic3RyYWN0X3ZhbHVlX2xvb3AubXRsIiwic291cmNlIjoiZnVuIGV4dHJhY3RlZDxUPih2YWx1ZTogVCkgLT4gVCB7XG4gICAgbG9vcCB7IGJyZWFrIHZhbHVlOyB9XG59XG5cbmZ1biBuZXN0ZWQ8VD4odmFsdWU6IFQpIC0+IFQge1xuICAgIGxvb3Age1xuICAgICAgICBsZXQgcmVzdWx0IDo9IGxvb3AgeyBicmVhayB2YWx1ZTsgfTtcbiAgICAgICAgYnJlYWsgcmVzdWx0O1xuICAgIH1cbn1cblxuZnVuIHJldHVybmluZzxUPih2YWx1ZTogVCwgbWFyazogJnZhciBpNjQpIHtcbiAgICAqbWFyayA9IDE7XG4gICAgbGV0IHJlc3VsdDogKCkgOj0gbG9vcCB7IGJyZWFrIGlmICh0cnVlKSB7IHJldHVybjsgfSBlbHNlIHsgcmV0dXJuOyB9OyB9O1xuICAgICptYXJrID0gMjtcbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGV4dHJhY3RlZCg3KSA9PSA3KTtcbiAgICBhc3NlcnQobmVzdGVkKDkpID09IDkpO1xuICAgIHZhciBtYXJrIDo9IDA7XG4gICAgcmV0dXJuaW5nKDEsICZ2YXIgbWFyayk7XG4gICAgYXNzZXJ0KG1hcmsgPT0gMSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9tb3ZlX2NoZWNrL2Fic3RyYWN0X3ZhbHVlX2xvb3AubXRsIiwibmFtZSI6ImFic3RyYWN0X3ZhbHVlX2xvb3AubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InN0YWdlNl8wOV9uZXN0ZWRfbG9vcF9icmVhay5tdGwiLCJzb3VyY2UiOiIvLyBTdGFnZSA2OiBicmVhayBuZXN0ZWQgaW5zaWRlIGlmIGJyYW5jaGVzIGlzIHZpc2libGUgdG8gZmluZF9sb29wX2JyZWFrX3R5cGUuXG5cbi8vIGJyZWFrIGluc2lkZSBpZi10aGVuIGJyYW5jaCBvbmx5XG5sZXQgX2E6IGk2NCA6PSBsb29wIHtcbiAgICBpZiAodHJ1ZSkgeyBicmVhayA0MjsgfVxufTtcblxuLy8gYnJlYWsgaW4gYm90aCB0aGVuIGFuZCBlbHNlIGJyYW5jaGVzXG5sZXQgX2I6IGk2NCA6PSBsb29wIHtcbiAgICBpZiAodHJ1ZSkgeyBicmVhayA0MjsgfSBlbHNlIHsgYnJlYWsgMDsgfVxufTtcblxuLy8gaW5uZXIgbG9vcCBicmVhayBkb2VzIG5vdCBlc2NhcGUgdG8gb3V0ZXIgbG9vcDsgb3V0ZXIgZGl2ZXJnZXMgKE5ldmVyKS5cbi8vIEJvdGggdHJhaWxpbmctc2VtaWNvbG9uIGFuZCBuby1zZW1pY29sb24gZm9ybXMgYXJlIHZhbGlkIGluIHN0YXRlbWVudCBwb3NpdGlvbi5cbmZ1biBkaXZlcmdlX291dGVyX3dpdGhfc2VtaSgpIC0+IGk2NCB7XG4gICAgbG9vcCB7XG4gICAgICAgIGxvb3AgeyBicmVhayBcImlubmVyXCI7IH07XG4gICAgICAgIGxvb3AgeyBicmVhayBcImlubmVyXCI7IH07XG4gICAgfVxufVxuXG5mdW4gZGl2ZXJnZV9vdXRlcl9ub19zZW1pKCkgLT4gaTY0IHtcbiAgICBsb29wIHtcbiAgICAgICAgbG9vcCB7IGJyZWFrIFwiaW5uZXJcIjsgfVxuICAgICAgICBsb29wIHsgYnJlYWsgXCJpbm5lclwiOyB9XG4gICAgfVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvY29udHJvbF9mbG93L3N0YWdlNl8wOV9uZXN0ZWRfbG9vcF9icmVhay5tdGwiLCJuYW1lIjoic3RhZ2U2XzA5X25lc3RlZF9sb29wX2JyZWFrLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-2}
+
+`continue` abandons the current iteration of the innermost enclosing loop and begins its
+next iteration.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjEzX2xvb3AubXRsIiwic291cmNlIjoiZnVuIG1haW4oKSB7XG4gICAgLy8gQnJlYWsgd2l0aCBhIHZhbHVlLlxuICAgIGxldCB4IDo9IGxvb3AgeyBicmVhayA0MjsgfTtcbiAgICBhc3NlcnQoeCA9PSA0Mik7XG4gICAgLy8gQ29udGludWUgc2tpcHMgdGhlIGN1cnJlbnQgaXRlcmF0aW9uLlxuICAgIHZhciBjb3VudCA6PSAwO1xuICAgIHZhciBpIDo9IDA7XG4gICAgbG9vcCB7XG4gICAgICAgIGlmIChpID49IDUpIHsgYnJlYWs7IH1cbiAgICAgICAgaSA9IGkgKyAxO1xuICAgICAgICBpZiAoaSA9PSAzKSB7IGNvbnRpbnVlOyB9XG4gICAgICAgIGNvdW50ID0gY291bnQgKyAxO1xuICAgIH1cbiAgICBhc3NlcnQoY291bnQgPT0gNCk7XG4gICAgLy8gQXNzaWdubWVudHMgaW5zaWRlIHRoZSBsb29wIGFyZSB2aXNpYmxlIGluIHN1YnNlcXVlbnQgaXRlcmF0aW9ucy5cbiAgICB2YXIgYWNjIDo9IDA7XG4gICAgdmFyIGogOj0gMTtcbiAgICBsb29wIHtcbiAgICAgICAgaWYgKGogPiA1KSB7IGJyZWFrOyB9XG4gICAgICAgIGFjYyArPSBqO1xuICAgICAgICBqICs9IDE7XG4gICAgfVxuICAgIGFzc2VydChhY2MgPT0gMTUpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvY29udHJvbF9mbG93LzEzX2xvb3AubXRsIiwibmFtZSI6IjEzX2xvb3AubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InN0YWdlNl8xMF9sb29wX2NvbnRyb2xfc3RhdGVtZW50cy5tdGwiLCJzb3VyY2UiOiIvLyBgYnJlYWtgIGFuZCBgY29udGludWVgIHJlbWFpbiB2YWxpZCBpbiBldmVyeSBsb29wIGZvcm0uXG5cbmZ1biB3aGlsZV9jb250cm9scygpIHtcbiAgICB2YXIgaSA6PSAwO1xuICAgIHdoaWxlIChpIDwgMykge1xuICAgICAgICBpICs9IDE7XG4gICAgICAgIGlmIChpIDwgMikge1xuICAgICAgICAgICAgY29udGludWU7XG4gICAgICAgIH1cbiAgICAgICAgYnJlYWs7XG4gICAgfVxufVxuXG5mdW4gZm9yX2NvbnRyb2xzKCkge1xuICAgIGZvciAodmFyIGkgOj0gMDsgaSA8IDM7IGkgKz0gMSkge1xuICAgICAgICBpZiAoaSA8IDIpIHtcbiAgICAgICAgICAgIGNvbnRpbnVlO1xuICAgICAgICB9XG4gICAgICAgIGJyZWFrO1xuICAgIH1cbn1cblxuZnVuIGZvcl9pbl9jb250cm9scygpIHtcbiAgICBmb3IgKGl0ZW0gaW4gWzEsIDIsIDNdKSB7XG4gICAgICAgIGlmIChpdGVtIDwgMikge1xuICAgICAgICAgICAgY29udGludWU7XG4gICAgICAgIH1cbiAgICAgICAgYnJlYWs7XG4gICAgfVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvY29udHJvbF9mbG93L3N0YWdlNl8xMF9sb29wX2NvbnRyb2xfc3RhdGVtZW50cy5tdGwiLCJuYW1lIjoic3RhZ2U2XzEwX2xvb3BfY29udHJvbF9zdGF0ZW1lbnRzLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.expressions.control-flow.break-continue-and-return.dynamics-3}
+
+`return expr` transfers control out of the enclosing function with `expr` as its result;
+bare `return` returns `()`.
+
+<!-- rfc.py:last_reviewed 3b5f8e02ba5c01e56fe960064a697f6247f0ced7 -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6IjgxX3JldHVybl9leGl0c19lYXJseV9hbmRfYmFyZV9yZXR1cm5faXNfdW5pdC5tdGwiLCJzb3VyY2UiOiJmdW4gZWFybHkoZmxhZzogYm9vbGVhbikgLT4gaTY0IHtcbiAgICBpZiAoZmxhZykge1xuICAgICAgICByZXR1cm4gNDI7XG4gICAgfVxuICAgIGxldCBfb25seV9yZWFjaGVkX3dpdGhvdXRfZWFybHlfcmV0dXJuIDo9IDEgLyAwO1xuICAgIDBcbn1cblxuZnVuIHJldHVybnNfdW5pdCgpIHtcbiAgICByZXR1cm47XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGFzc2VydChlYXJseSh0cnVlKSA9PSA0Mik7XG4gICAgbGV0IHVuaXQ6ICgpIDo9IHJldHVybnNfdW5pdCgpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvZnVuY3Rpb25zLzgxX3JldHVybl9leGl0c19lYXJseV9hbmRfYmFyZV9yZXR1cm5faXNfdW5pdC5tdGwiLCJuYW1lIjoiODFfcmV0dXJuX2V4aXRzX2Vhcmx5X2FuZF9iYXJlX3JldHVybl9pc191bml0Lm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
+
+</details>

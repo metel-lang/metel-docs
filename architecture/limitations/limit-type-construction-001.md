@@ -33,4 +33,4 @@ fallback at the point `callee_id` is `None`, not by identity alone.
 
 ## Resolution
 
-None yet. ADR-0041 and ADR-0042 call this the deferred first-class-function environment question, and the sealed-accessor work they tie it to has no scheduled consumer (metel-core#542, the coherence stage they cited, is closed). The `typed_ast` doc comments on `callee_id` still state it.
+None yet. ADR-0041 and ADR-0042 call this the deferred first-class-function environment question, and the sealed-accessor work they tie it to has no scheduled consumer (the coherence stage they cited has shipped). The `typed_ast` doc comments on `callee_id` still state it.

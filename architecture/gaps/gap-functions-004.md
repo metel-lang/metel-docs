@@ -2,7 +2,7 @@
 id: GAP-FUNCTIONS-004
 title: "`?` is defined for the core `Result` and `Option` only; there is no `Try` aspect"
 summary: "`?` works on the core `Result` and `Option` and on no other type; a user-defined type cannot be propagated with `?`. A future `Try` aspect would generalise the rule."
-scope: "reference/spec/functions.md#spec.functions.the-operator.legality-1"
+scope: "reference/spec/functions/error-propagation.md#spec.functions.the-operator.legality-1"
 owner: language
 discovered_by: "RFC-0182 review (metel-core#1593); alternative 2 and Open Question 1"
 disposition: known

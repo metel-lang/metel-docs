@@ -566,7 +566,7 @@ question 4.
 > **Items 2, 3 and 4 read "Proposed" until 2026-07-26, and that was stale rather than
 > undecided.** All three were adopted normatively when this RFC was integrated — they are the
 > `array elements` / `tuple elements` / `enum payloads` rows of the partial-move table in
-> `public/reference/spec/ownership.md`, written in the same commit that moved this RFC to
+> `public/reference/spec/ownership/index.md`, written in the same commit that moved this RFC to
 > `3-integrated`. The audit text was simply never updated to match the spec it fed. Marked
 > resolved here so the two documents agree; no decision changed, and per PROCESS.md the spec
 > was already the normative statement of all three.
@@ -624,7 +624,7 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    because "exclusive references are not `Copy`" reads like a guarantee of uniqueness and is
    not one.
 4. ~~Closure capture semantics are unspecified.~~ **Resolved 2026-07-24 — the spec already
-   settled it and this RFC had not caught up.** `public/reference/spec/functions.md` states
+   settled it and this RFC had not caught up.** `public/reference/spec/functions/index.md` states
    that "closures capture variables from their enclosing scope **by value**." Under affine
    ownership, by-value capture of a non-`Copy` type is a **move**: the closure takes
    ownership and the enclosing binding is invalid afterwards. Cloning it instead is precisely

@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-19'
+generated_on: '2026-11-20'
 ---
 
 # RFC Registry
@@ -13,13 +13,12 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**242 RFCs total.** 41 draft, 55 under review, 10 accepted, 2 integrated (108 live), 99 implemented, 19 superseded, 16 refused (134 settled).
+**242 RFCs total.** 36 draft, 60 under review, 10 accepted, 2 integrated (108 live), 99 implemented, 19 superseded, 16 refused (134 settled).
 
-## Draft (41)
+## Draft (36)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
-- **RFC-0014** — Panic Recovery (`0-draft` ; rfcs/0-draft/rfc-0014-panic-recovery.md ; date 2026-05-21)
 - **RFC-0015** — Unwrap Syntax (`0-draft` ; rfcs/0-draft/rfc-0015-unwrap-syntax.md ; date 2026-05-21)
 - **RFC-0017** — Language Edition System (`0-draft` ; rfcs/0-draft/rfc-0017-language-edition-system.md ; date 2026-05-22)
 - **RFC-0026** — Unsafe Blocks (`0-draft` ; rfcs/0-draft/rfc-0026-unsafe-blocks.md ; date 2026-05-24)
@@ -34,8 +33,6 @@ the curated thematic map.
 - **RFC-0128** — Exportable overload sets and shadow-versus-extend semantics (`0-draft` ; rfcs/0-draft/rfc-0128-exportable-overload-sets-and-shadow-versus-extend-semantics.md ; date 2026-08-04)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
-- **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`0-draft` ; rfcs/0-draft/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-09-02)
-- **RFC-0168** — Equality Model and Super-Aspects (`0-draft` ; rfcs/0-draft/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09)
 - **RFC-0170** — Literal Types and Discriminated Structural Unions (`0-draft` ; rfcs/0-draft/rfc-0170-literal-types-and-discriminated-structural-unions.md ; date 2026-09-27)
 - **RFC-0172** — Sized and Unsized Kinds, and a Generalized Unsizing Coercion (`0-draft` ; rfcs/0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md ; date 2026-10-01)
 - **RFC-0175** — Label Polymorphism (`0-draft` ; rfcs/0-draft/rfc-0175-label-polymorphism.md ; date 2026-10-06 ; updated 2026-11-07)
@@ -44,7 +41,6 @@ the curated thematic map.
 - **RFC-0199** — Lazy<T> — Deferred, Once-Evaluated Values (`0-draft` ; rfcs/0-draft/rfc-0199-lazy-t.md ; date 2026-11-01)
 - **RFC-0200** — Newtypes with Aspect Forwarding (`0-draft` ; rfcs/0-draft/rfc-0200-newtypes.md ; date 2026-11-01)
 - **RFC-0201** — Pattern Synonyms (`0-draft` ; rfcs/0-draft/rfc-0201-pattern-synonyms.md ; date 2026-11-01)
-- **RFC-0202** — Predicates and Refinement Types (`0-draft` ; rfcs/0-draft/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-14)
 - **RFC-0203** — List Comprehensions (`0-draft` ; rfcs/0-draft/rfc-0203-list-comprehensions.md ; date 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`0-draft` ; rfcs/0-draft/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01)
 - **RFC-0216** — Constructing Rows and Residuals from Per-Field Results (`0-draft` ; rfcs/0-draft/rfc-0216-constructing-rows-and-residuals-from-per-field-results.md ; date 2026-11-05 ; updated 2026-11-07)
@@ -56,13 +52,13 @@ the curated thematic map.
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0238** — Derivation Registration (`0-draft` ; rfcs/0-draft/rfc-0238-derivation-registration.md ; date 2026-11-16)
 - **RFC-0240** — Spelling of Written Function Types (`0-draft` ; rfcs/0-draft/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16)
-- **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`0-draft` ; rfcs/0-draft/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17)
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 
-## Under Review (55)
+## Under Review (60)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
+- **RFC-0014** — Panic Recovery (`1-under-review` ; rfcs/1-under-review/rfc-0014-panic-recovery.md ; date 2026-05-21 ; updated 2026-11-20)
 - **RFC-0039** — aspect Alias Syntax (`1-under-review` ; rfcs/1-under-review/rfc-0039-aspect-alias-syntax.md ; date 2026-06-01 ; updated 2026-09-01)
 - **RFC-0067** — Lifetime Anchors (`1-under-review` ; rfcs/1-under-review/rfc-0067-lifetime-anchors.md ; date 2026-06-28 ; updated 2026-09-09)
 - **RFC-0076** — Brand Types (`1-under-review` ; rfcs/1-under-review/rfc-0076-rc-brands.md ; date 2026-06-29 ; updated 2026-08-27)
@@ -97,7 +93,9 @@ the curated thematic map.
 - **RFC-0158** — Share and Clone: Separating Aliasing from Duplication (`1-under-review` ; rfcs/1-under-review/rfc-0158-share-and-clone-separating-aliasing-from-duplication.md ; date 2026-08-31 ; updated 2026-08-31)
 - **RFC-0159** — Abstract Regions and a Dedicated Identity Channel (`1-under-review` ; rfcs/1-under-review/rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md ; date 2026-09-01 ; updated 2026-09-01)
 - **RFC-0161** — Callable Object Contract (dyn Callable) (`1-under-review` ; rfcs/1-under-review/rfc-0161-callable-object-contract-dyn-callable.md ; date 2026-09-01 ; updated 2026-09-22)
+- **RFC-0164** — Mutating Closures with a Propagating ? Are Call-Once (`1-under-review` ; rfcs/1-under-review/rfc-0164-mutating-closures-with-a-propagating-are-call-once.md ; date 2026-09-02 ; updated 2026-11-20)
 - **RFC-0165** — Structural Union Types (`1-under-review` ; rfcs/1-under-review/rfc-0165-structural-union-types.md ; date 2026-09-02 ; updated 2026-09-02)
+- **RFC-0168** — Equality Model and Super-Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0168-equality-model-and-super-aspects.md ; date 2026-09-09 ; updated 2026-11-20)
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-11-07)
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
@@ -105,6 +103,7 @@ the curated thematic map.
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
+- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-19)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-03)
 - **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-04)
@@ -115,6 +114,7 @@ the curated thematic map.
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
+- **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
 - **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
 
 ## Accepted (10)

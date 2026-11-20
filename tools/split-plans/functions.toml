@@ -1,0 +1,43 @@
+source = "reference/spec/functions.md"
+
+[[page]]
+file = "index.md"
+sections = ["Known gaps"]
+
+[[page]]
+file = "declarations.md"
+title = "Function Declarations"
+sections = ["Named Function Declarations", "Local Functions", "Program Entry Point", "Associated Functions"]
+
+[[page]]
+file = "first-class-functions.md"
+sections = ["First-Class Functions"]
+
+[[page]]
+file = "closures/index.md"
+sections = ["Closures:own"]
+
+[[page]]
+file = "closures/capture-lists.md"
+sections = ["Capture lists"]
+
+[[page]]
+file = "closures/call-multiplicity.md"
+sections = ["Call multiplicity and the mutation axis"]
+
+[[page]]
+file = "closures/capture-semantics.md"
+sections = ["Capture semantics"]
+
+[[page]]
+file = "calls.md"
+title = "Calls"
+sections = ["Keyword Arguments", "Turbofish"]
+
+[[page]]
+file = "error-propagation.md"
+sections = ["The ? Operator"]
+
+[[page]]
+file = "native-functions.md"
+sections = ["Native Functions (Standard Library Only)"]

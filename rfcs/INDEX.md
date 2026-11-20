@@ -354,7 +354,7 @@ above it are.
   allocator). Also carries RFC-0090 §6's declined "records as the universal foundation"
   reframing. **Depends on nothing** — the only piece of the cluster buildable today, and
   the reason the split is six-way.
-- **RFC-0137** *(integrated 2026-08-27 — merged into reference/spec/ownership.md and
+- **RFC-0137** *(integrated 2026-08-27 — merged into reference/spec/ownership/index.md and
   types.md, all as "Planned for v0.13.0"; tracked by metel-core#836)* — Nominal Types
   as Branded Rows — formalizes
   `reports/substructural-types/nominal-types-as-branded-rows.md`'s central thesis, left
@@ -404,7 +404,7 @@ above it are.
   `dyn Aspect` checkpoint unchanged. Fixed projected receiver form + rationale: RFC-0147
   (via RFC-0109, v0.18.1 — after this RFC's own representation); row-parametric
   form: RFC-0148 (via RFC-0146 → RFC-0121; RFC-0146 + RFC-0148 share v0.18.1, after RFC-0121's v0.14.0).
-- **RFC-0117** *(integrated 2026-08-29 — merged into reference/spec/ownership.md#narrowing,
+- **RFC-0117** *(integrated 2026-08-29 — merged into reference/spec/ownership/partial-moves/narrowing.md,
   co-origin with RFC-0137; blocked-exempt on metel-core#858 pending move-triggered
   narrowing)* — Row Narrowing — moving a field out narrows the record's type — or a
   nominal struct's, via RFC-0137's brand-preserving narrowing — to the closed 2^*N*
@@ -825,7 +825,7 @@ number, a backwards RFC-0067a split direction).
   structural-row + identity readability test. RFC-0050 RQ4 updated in parallel.
 - **RFC-0067a** *(implemented 2026-07-11)* — Reference Types — plain `&T`/`&var T`,
   auto-deref. No allocator/borrow-checker dependency; already sequenced into Cluster A.
-  Integrated into `reference/spec/types.md` and `expressions.md`; gained a new
+  Integrated into `reference/spec/types/index.md` and `expressions.md`; gained a new
   §3a (type-directed value-copy-out) resolving a gap found writing the worked examples.
   Implemented in `metel-core` (issue #540); §3a amended the same day to state that
   read-copy fires at `return`/`break`/tail-expression positions too (not just `let`/
@@ -876,7 +876,7 @@ implementation).
 - **RFC-0129** *(implemented 2026-08-29, opened 2026-08-05)* — Aspect Method Generic Constraint
   Conformance — the substitutability relation between an aspect method's generic
   constraints and its implementation. Implemented in metel-core#897 (#617) and integrated
-  into `reference/spec/declarations.md` (`implementing-an-aspect` legality-12–14).
+  into `reference/spec/declarations/index.md` (`implementing-an-aspect` legality-12–14).
   **Cut to a minimal, sound interim on 2026-08-29:**
   after normalization (alpha-renaming, bound reordering, deduplication, inline-vs-`where`
   placement) the implementation method's generic-constraint conjunction must be
@@ -924,7 +924,7 @@ implementation).
   independence, and opacity rules are unchanged, as is the T0022 restriction
   (metel-core#240/#622) on where the shorthand is legal at all. Explicitly does
   not touch RFC-0038's still-reserved `dyn Aspect`. Integrated:
-  `reference/spec/declarations.md`'s `impl Aspect` shorthand subsection and the
+  `reference/spec/declarations/index.md`'s `impl Aspect` shorthand subsection and the
   `spec.declarations.aspects.aspect-bounds-on-function-type-parameters` rules now
   spell it `extends Aspect`, RFC-0130 co-origin with RFC-0035/0037. Shipped in
   metel-core#908 (grammar `impl_type` → `extends_type`, `impl` kept reserved so the
@@ -939,7 +939,7 @@ implementation).
   interpreter's existing implicit allocation (`Rc<RefCell<Value>>`, already used by
   `Array`/`Reference`/`MutReference` with no allocator annotation) — object safety,
   vtable dispatch, coercion, ownership/drop, heterogeneous collections. Depends only
-  on RFC-0060 (`4-implemented`). Integrated into `reference/spec/declarations.md`'s
+  on RFC-0060 (`4-implemented`). Integrated into `reference/spec/declarations/index.md`'s
   `dyn Aspect` section (`spec.declarations.aspects.dyn-aspect.legality-1..6`,
   `.dynamics-1`); coverage frontmatter added for §§1–8 as part of the retroactive
   lifecycle walk. §3 was split into §3/§3a/§3b so each object-safety rule anchors its
@@ -952,7 +952,7 @@ implementation).
 - **RFC-0061** *(implemented 2026-07-14, was integrated 2026-07-13)* — Structural
   Aspect Bounds — `T[]`/tuples/function-type bounds. Depends on RFC-0060 and
   RFC-0036; both were in place before implementation. Integrated into
-  `reference/spec/declarations.md` as a new "Structural Aspect Bounds" section
+  `reference/spec/declarations/index.md` as a new "Structural Aspect Bounds" section
   right after Aspect Implementation Coherence. Integration also surfaced three real
   groundwork bugs in the interpreter's structural-impl path (non-named impl-target
   crashes, array method-dispatch gating, and structural-target registration being
@@ -963,7 +963,7 @@ implementation).
 - **RFC-0071** — Ownership and Move Semantics — affine-by-default foundation.
 - **RFC-0036** *(implemented 2026-07-13, was integrated 2026-07-13)* — Conditional Impl
   Blocks — `extend Type<T>: Aspect where T: Bound`, both inline and `where`-clause
-  forms. Integrated into `reference/spec/declarations.md` right after the basic
+  forms. Integrated into `reference/spec/declarations/index.md` right after the basic
   `extend Type: Aspect` example. Fixed a stale error-code collision while integrating:
   the RFC's own §4 example used `T0013`, already claimed (ambiguous aspect
   method/associated-type resolution) by the time this integrated — corrected to reuse
@@ -988,7 +988,7 @@ implementation).
   #548 (2026-07-13) landed that remaining work; see those RFCs' own entries.
 - **RFC-0037** *(implemented 2026-07-13, was integrated 2026-07-13)* — Return-Position
   `impl Aspect` — opaque, monomorphised-per-function return types. Integrated into
-  `reference/spec/declarations.md` right after the parameter-position `impl
+  `reference/spec/declarations/index.md` right after the parameter-position `impl
   Aspect` shorthand. Worked example checks composition with RFC-0082 (Associated
   Types): a function returning `impl Container` still resolves `Container::Item`
   correctly through the caller's method calls, since the opaque type is a real
@@ -1004,7 +1004,7 @@ implementation).
 - **RFC-0060** *(implemented 2026-07-14, was integrated 2026-07-11)* — Aspect Impl
   Coherence — orphan rule, overlap detection, closed-world assumption, auto-impl
   coherence participation, negative-impl priority. Integrated into
-  `reference/spec/declarations.md` as a new section; also surfaced a real,
+  `reference/spec/declarations/index.md` as a new section; also surfaced a real,
   unrelated docs bug while integrating (RFC-0033's recommended error code T0014 was
   already claimed by this RFC's own orphan-rule error, so RFC-0033 was corrected
   rather than silently colliding). Implemented across issues #542, #547, #552, and
@@ -1021,7 +1021,7 @@ implementation).
   aspect side; no new syntax, no new error code (reuses T0014), no new
   overlap-detection machinery (the orphan-rule fix alone confines any one aspect's
   bare-parameter blanket to a single module). Opened 2026-07-11, same review pass as
-  RFC-0096. Integrated into `reference/spec/declarations.md`, expanding the
+  RFC-0096. Integrated into `reference/spec/declarations/index.md`, expanding the
   existing "not covered by this section" deferral note (added while integrating
   RFC-0036) into full spec content with its three worked examples. **Fixed
   2026-07-20:** the frontmatter had claimed `implemented` since integration, but
@@ -1041,7 +1041,7 @@ implementation).
   clippy::pedantic` clean) — zero regressions, since the change only narrows an
   already-`None`-producing path to be explicit rather than changing any outcome.
 - **RFC-0072** *(implemented 2026-07-12, was integrated 2026-07-10)* — Negative Bounds
-  — `T: !Aspect`. Integrated into `reference/spec/declarations.md`; its own
+  — `T: !Aspect`. Integrated into `reference/spec/declarations/index.md`; its own
   stale bracket-channel allocator examples (`@[r] T`) fixed first. Implemented (issue
   #547): enforcement at all four function-call-expression branches plus generic
   struct/enum literal construction, by inverting the same lookup the positive-bound
@@ -1058,7 +1058,7 @@ implementation).
   logic itself — the `TODO(#545)` comments at each check site are resolved.
 - **RFC-0078** *(implemented 2026-07-12)* — Bottom Type `!` — subtyping, coercion, match
   exhaustiveness, inhabited-singleton coercion, `-> !` returns. Integrated into
-  `reference/spec/types.md`; §4.2's stale pre-split allocator syntax fixed first.
+  `reference/spec/types/index.md`; §4.2's stale pre-split allocator syntax fixed first.
   Implemented in metel-core sprint/25 (issue #538): `!` surface syntax (grammar),
   `panic(msg)` native, general uninhabited-variant exhaustiveness (subsuming
   `Result<T, !>` as the general rule's special case rather than a hardcoded one),
@@ -1082,7 +1082,7 @@ implementation).
   the existing negative-vs-concrete-positive conflict rule (§2.2/#552, confirmed by
   a regression this fix initially introduced and then corrected).
 - **RFC-0082** *(implemented 2026-07-13, was integrated 2026-07-10)* — Associated
-  Types. Integrated into `reference/spec/declarations.md`; stale
+  Types. Integrated into `reference/spec/declarations/index.md`; stale
   `Region`/`@[r]` naming corrected to `Alloc`/`@a`, and §7 (amending retracted
   RFC-0069's `SubRegion`) marked historical-only rather than integrated. Implemented
   (issue #546): §1/§1.1/§1.2 declaration + bound enforcement + bare-name sugar
@@ -1346,7 +1346,7 @@ implementation).
   four; the RFC-0008 by-value-`self` object-safety amendment (RFC-0161 OQ1)
   should treat `var self` identically to `self`, not settled here.
 
-- **RFC-0164** *(draft, opened 2026-09-02; v0.13.1)* — Mutating Closures with a
+- **RFC-0164** *(under review 2026-11-20, #2123; opened 2026-09-02)* — Mutating Closures with a
   Propagating `?` Are Call-Once — follow-up to RFC-0153. A `var` (mutating) closure whose
   body can propagate an error out via `?` is classified `once`: an implicitly-chosen
   mid-mutation exit (any `?` in the body, position determined by runtime error, not the
@@ -1482,7 +1482,7 @@ implementation).
 - **RFC-0198** *(under-review 2026-10-30, #1667; opened 2026-10-30)* — Recursive closures — `let rec name := closure`: the name inside the body is the closure being called (call dispatch), not a captured
   reference, so the closure stays movable. Return type written, no `once`, no mutual recursion. Resolves GAP-FUNCTIONS-006 (#1667). Open: spelling, return type, dispatch confirmation.
 - **RFC-0005** — Warn on unreachable match arms — **empty stub, no content written.**
-- **RFC-0014** — Panic Recovery. General, reactive question: can a running program
+- **RFC-0014** *(under review 2026-11-20, #2122; panic is a non-resumable effect with handlers, arriving with effects; Drop runs during recovery)* — Panic Recovery. General, reactive question: can a running program
   catch a panic after it fires. See RFC-0142, its proactive sibling.
 - **RFC-0142** — Division by Zero and Checked Arithmetic Ergonomics. Written
   retroactively 2026-08-25, expanded 2026-08-27: division/remainder by zero and
@@ -1784,7 +1784,7 @@ implementation).
   The nominal alias RFC-0160 rejected and left room for. Read with RFC-0202.
 - **RFC-0201** *(draft 2026-11-01)* — Pattern synonyms: named, user-defined patterns exposing a matching
   interface that differs from the representation. Adjacent to RFC-0109 and RFC-0170.
-- **RFC-0202** *(draft 2026-11-01; rewritten 2026-11-14)* — Predicates and refinement types. One mechanism for a pure, total,
+- **RFC-0202** *(under-review 2026-11-19 — metel-core#2098, unmilestoned; drafted 2026-11-01, rewritten 2026-11-14)* — Predicates and refinement types. One mechanism for a pure, total,
   compile-time-evaluable predicate over a subject: a value known only at run time gives a sealed nominal type with a checked
   construction (`type T := U satisfying (…)`, `try_from`, literals checked at compile time); a row, known at compile time, gives an
   aspect granted by shape (`Dense`, `Tuple`), usable as a bound with no wrapper. Entailment by extension, propositional coherence,
@@ -1874,7 +1874,7 @@ generated file as the exact source of truth.
 - **RFC-0238** *(draft 2026-11-16)* — Derivation registration. An aspect becomes derivable by implementing the std aspect `Derivable` for itself (`extend Serialize: Derivable { type Args; comptime fun derive(..) }`); `derives A(args)` resolves through that impl, the orphan rule decides who may register, and `derivable` stops being a std-only property. Supersedes the registration half of RFC-0093 when accepted. Depends on RFC-0227 and RFC-0237.
 - **RFC-0239** *(implemented, #2072; tracker metel-core#2071, v0.16.0)* — Arguments on the `copy` class keyword. `copy(T) struct Foo<T>` is `derives Clone(T), Copy(T)`: the class keyword takes the flow of the declaration it stands for, so a `pub` generic copyable type keeps the one-word form. `copy struct` with no list is unchanged; an explicit entry beside it replaces the keyword's, and a list plus an explicit entry is an error. Depends on RFC-0227 and RFC-0234 (implemented).
 - **RFC-0240** *(draft 2026-11-16)* — Spelling of written function types. Separates two questions: the generic spelling (`dyn Callable<Args, Ret> + markers` per RFC-0232, or an alias `Fun<Args, Ret>` with the parameters as a row) and the sugar over it (the pipe form `|T| -> R` of RFC-0154, `fun(T) -> R`, `Fun(T) -> R`, or none). Prior art (Rust's `Fn(A) -> R` over a tuple row, Swift's SE-0110), what RFC-0154 decided and how each sugar answers it, costs. Related to RFC-0232.
-- **RFC-0241** *(draft 2026-11-17)* — Metel-Core: a formal semantic foundation for Metel. Direction-setting, not syntax. Proposes a minimal explicitly typed core language and abstract machine defining ownership, borrowing and memory-access semantics independently of the surface syntax and the compiler, formalized incrementally in Lean 4 (declarative judgments, executable checkers, preservation/progress/memory safety). Four staged scopes (ownership, borrowing, origins, brands and access witnesses), the arena case study, differential testing against the compiler, Metel-Core as a possible typed IR. Adjacent to RFC-0122, RFC-0159, RFC-0076, RFC-0143.
+- **RFC-0241** *(under-review 2026-11-19 — metel-core#2095, theme Core representation; drafted 2026-11-17)* — Metel-Core: a formal semantic foundation for Metel. Direction-setting, not syntax. Proposes a minimal explicitly typed core language and abstract machine defining ownership, borrowing and memory-access semantics independently of the surface syntax and the compiler, formalized incrementally in Lean 4 (declarative judgments, executable checkers, preservation/progress/memory safety). Four staged scopes (ownership, borrowing, origins, brands and access witnesses), the arena case study, differential testing against the compiler, Metel-Core as the compiler's typed representation layer (section 7: layers L0-L5, design rules, staging, generics options left open; checks as a filter so compiled code need not wait on the borrow checker; refinement as a later Core extension, section 7.9, read with RFC-0202). Adjacent to RFC-0122, RFC-0159, RFC-0076, RFC-0143.
 - **RFC-0242** *(draft 2026-11-17, replaced 2026-11-18)* — Library-defined references and generalized place access. Replacement draft under the same ID: an integrated model separating value ownership, storage custody and validity, location stability and access authority. Compiler-tracked access witnesses (acquire, project, reborrow, split, establish), first-class custodians, `@s` storage identity with `depends valid(@s)` and a checked `revokes @s` effect, `'b` brands, `&r` borrow regions. Case studies: arena boxes and keys, `Rc`, branded cells, tracing GC. Proposes `[T]` as an unsized payload with `&[T]`/`&var [T]` views, revising RFC-0126 and RFC-0171. Interaction table with 25 RFCs; overlaps RFC-0143 (`T@a`) and RFC-0159. Companion of RFC-0241.
 - **RFC-0243** *(under review 2026-11-19 — metel-core#2099, unmilestoned)* — Row visibility follows field visibility: retiring the named record kind. A struct and a `record` differ by one bit (the row is visible to structural matching, which forces every field public). After views (RFC-0109, RFC-0144, RFC-0146 to RFC-0148) and RFC-0209's per-aspect gate, asks whether that bit needs a declaration kind. Options-listing draft with worked examples: keep `record` (O1); public row ambient (O2); public row for bounds with nominal granting for impls (O3); per-field `derives Exposed` (O4); hybrid (O5); `ToRecord` as the mechanism (O6); label namespacing (O7); opaque views for private parts with four disjointness policies. Non-binding lean stated; nothing decided. Builds on RFC-0209; adjacent to RFC-0120, RFC-0137, RFC-0109, RFC-0119, RFC-0202, RFC-0241.
 - **RFC-0231** *(implemented 2026-11-14, #2024, metel-core#2028)* — Unit as the empty row. `()` is the empty closed row `.{}` and the primitive unit type is retired as a separate type. Extracted from RFC-0151 section 6 and implemented before it. An anonymous empty residual becomes `()`; a branded one stays branded, and the spec's "neither empty form is `Unit`" is amended accordingly. Accepts `extend (): A`, prints `()`, deletes `Type::Unit` and `Value::Unit`: about 76 sites, and RFC-0221's text already relies on the unification, which the compiler has not done (measured: `()` and `.{}` do not unify).

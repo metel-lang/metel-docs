@@ -2,12 +2,13 @@
 id: GAP-DECLARATIONS-004
 title: "`let` and `var` bindings are not hoisted, so a function cannot use a later closure binding"
 summary: "A `fun` is hoisted but a `let`-bound closure is visible only from its declaration onward, so a function declared above it cannot call it."
-scope: "reference/spec/declarations.md#spec.declarations.variables.scoping-and-shadowing.legality-2"
+scope: "reference/spec/declarations/variables/scoping-and-shadowing.md#spec.declarations.variables.scoping-and-shadowing.legality-2"
 owner: language
 discovered_by: "RFC-0193 review (metel-core#1665): checking when a let-bound closure can replace a private function"
 disposition: planned
 tracked_by: metel-core#933
 rfc: RFC-0131
+relates: "GAP-FUNCTIONS-006 (this is where a let-bound closure becomes visible to the functions above it; that one is the closure's own scope, which rules out recursion)"
 review: null
 ---
 
@@ -15,7 +16,7 @@ review: null
 
 `fun` declarations are hoisted to the top of their block; `let` and `var` bindings are sequential. A function that calls a module-level `let`-bound closure is therefore accepted when it follows the binding and is `T0003: undefined name` when it precedes it:
 
-```metel
+```metel repro=T0003
 fun main() { println(f(1)); }       // T0003: undefined name `f`
 let f := |a: i64| { a + 1 };
 ```

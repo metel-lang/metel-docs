@@ -2,7 +2,7 @@
 id: GAP-TYPES-012
 title: "A record or struct field cannot have an open-record type with an anonymous tail"
 summary: "An anonymous open record is rejected as a field type, so a field cannot hold 'any record with at least these fields'."
-scope: "reference/spec/types.md#open-rows"
+scope: "reference/spec/types/generics/open-rows.md#open-rows"
 owner: language
 discovered_by: "metel-core#1478 review of anonymous open-record tails"
 disposition: accepted

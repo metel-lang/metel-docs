@@ -2,7 +2,7 @@
 id: GAP-DECLARATIONS-007
 title: "A direct call among several impls of one aspect is not resolved by its expected type"
 summary: "A call that two impls of one aspect for different type arguments could answer is a `T0013` error even where the expected type decides it (`let a: i64 := l.conv()`); so is a call through a parameter bound twice by the aspect."
-scope: "reference/spec/declarations.md#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18"
+scope: "reference/spec/declarations/aspects/function-parameter-bounds.md#spec.declarations.aspects.aspect-bounds-on-function-type-parameters.legality-18"
 owner: language
 discovered_by: "metel-core#1987, stage 2; language owner decision 2026-11-13 (resolve by the expected type; an unannotated call stays an ambiguity error)"
 disposition: planned

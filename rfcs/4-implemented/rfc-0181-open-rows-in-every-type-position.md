@@ -141,7 +141,7 @@ None.
 - RFC-0121 §1 and §5 — row parameters and the grammar of row tails.
 - RFC-0179 — by-value open-row parameters take the whole record.
 - RFC-0160 — type aliases.
-- `reference/error-codes.md`, `T0032`; `reference/spec/types.md`, `legality-5`.
+- `reference/error-codes.md`, `T0032`; `reference/spec/types/index.md`, `legality-5`.
 - `architecture/gaps/`: GAP-TYPES-010, GAP-TYPES-011, GAP-TYPES-012.
 - metel-core#1478 — the change that made annotations and closure parameters work.
 - metel-core#1480 — this RFC's tracker.

@@ -2,7 +2,7 @@
 id: GAP-FUNCTIONS-007
 title: "A closure cannot name a type parameter, a bound or a row fact"
 summary: "A closure has no generics list, so it cannot declare a type parameter, bound, `where` clause or row fact, nor tie a written return type to a parameter's row."
-scope: "reference/spec/functions.md#spec.functions.closures.legality-1"
+scope: "reference/spec/functions/closures/capture-semantics.md#spec.functions.closures.legality-1"
 owner: language
 discovered_by: "metel-core#1544 §2 (closure row binders), extended by the RFC-0193 review (metel-core#1665)"
 disposition: planned

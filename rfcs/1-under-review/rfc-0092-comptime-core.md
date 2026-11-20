@@ -200,7 +200,7 @@ double work to reconcile — no content conflict here, just independent confirma
 
 A `type` (e.g. `Point`, `i64`, `Option<T>`) can be bound, passed, and returned like any
 other comptime-known value. This is also the natural explanation for Metel's existing
-`<T>` generics (spec: `public/reference/spec/types.md`, "Generics"): Zig does not have
+`<T>` generics (spec: `public/reference/spec/types/index.md`, "Generics"): Zig does not have
 `<T>`-style generics as a mechanism separate from comptime — `fun first(comptime T: type, arr: T[])`
 *is* how Zig spells a generic function, because a compile-time-known `type` parameter
 is just an ordinary parameter, staged. Under this RFC, `fun first<T>(arr: T[])` is
@@ -351,7 +351,7 @@ as an unrelated feature.
 
 **Cons:** requires `type` to become a first-class comptime value and a reflection
 primitive over it — both new to the language, not currently specified anywhere in the
-type system (`public/reference/spec/types.md`'s "Generics" section has no notion of
+type system (`public/reference/spec/types/index.md`'s "Generics" section has no notion of
 `type`-as-value). Emitting a coherence-checked impl from arbitrary user code raises
 soundness questions not yet worked out. The row-reuse in §2 is itself not yet fully
 specified (ordering, visibility, attributes).
@@ -382,7 +382,7 @@ specified (ordering, visibility, attributes).
    concrete mechanism underneath RFC-0008's assumed monomorphisation) but not
    load-bearing for derive itself. Confirm whether pursuing it is in scope here or
    belongs in a generics-specific RFC — no such RFC currently exists;
-   `public/reference/spec/types.md`'s "Generics" section is the only current
+   `public/reference/spec/types/index.md`'s "Generics" section is the only current
    specification.
 5. **Incremental rollout.** Can `typeinfo`'s `TypeInfo` enum be introduced starting with
    only the `Struct` arm (sufficient for every aspect in RFC-0093's initial derivable
@@ -455,7 +455,7 @@ or it sits unused exactly as long as this one did.
   2026-08-13; normative for `comptime let`/`fun`/`if`, `pub comptime let`, and
   comptime-known non-type generic parameters (RFC-0053's deferred const generics). **This
   RFC depends on it.**
-- Language spec: `public/reference/spec/types.md` ("Generics" section — no current
+- Language spec: `public/reference/spec/types/index.md` ("Generics" section — no current
   notion of `type`-as-value)
 - RFC-0090 (Structural Records — Rows and Tiers) — row concept reused by `typeinfo`'s
   struct arm (§2); its Tier system is the model for reflection vs. runtime conversion
