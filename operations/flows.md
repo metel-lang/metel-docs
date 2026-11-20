@@ -31,7 +31,7 @@ flowchart TD
     coreCi["ci.yml: test, clippy, fmt and the policy checks<br/>PROC-CI-001, PROC-CI-005, PROC-CI-008"]
     develop["rebase-merge into develop<br/>PROC-CI-007"]
     rolling["ci.yml publishes develop-latest<br/>PROC-CI-004"]
-    siteCi["check-showcases.yml, plugin-tests.yml<br/>on metel-website pull requests<br/>PROC-DEPLOY-007"]
+    siteCi["check-showcases.yml, plugin-tests.yml, prism-drift.yml<br/>on metel-website pull requests<br/>PROC-DEPLOY-007"]
     next["next.yml rebuilds /docs/next<br/>every six hours, off by default<br/>PROC-DEPLOY-004, PROC-DEPLOY-005"]
 
     issue --> start --> local
