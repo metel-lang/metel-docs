@@ -39,7 +39,7 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-docs` | `rfcs/tools/rfc.py` | PROC-DOCS-005, PROC-DOCS-006, PROC-DOCS-008, PROC-DOCS-012, PROC-CI-005 |
 | `metel-docs` | `rfcs/tools/spec_lint.py` (+ test) | PROC-DOCS-013 |
 | `metel-docs` | `architecture/tools/record.py` (+ test), `tools/textsim.py` | PROC-DOCS-014 |
-| `metel-docs` | `tools/specindex.py`, `tools/spec_split.py` (+ test) | PROC-DOCS-013 |
+| `metel-docs` | `tools/specindex.py`, `tools/spec_split.py` (+ test), `tools/check_keywords.py` (+ test) | PROC-DOCS-013 |
 | `metel-docs` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
 | `metel-website` | `.github/workflows/deploy.yml` | PROC-DEPLOY-001, PROC-DEPLOY-002 |
 | `metel-website` | `.github/workflows/promote.yml` | PROC-DEPLOY-003 |

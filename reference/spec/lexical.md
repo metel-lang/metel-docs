@@ -26,11 +26,12 @@ By convention:
 ## Keywords
 
 ```
-as        aspect    break     continue  else      enum      export
-extend    false     for       fun       if        impl      import
-let       loop      match     pub       public    return    root
-self      std       struct    super     true      var       where
-while
+and       as        aspect    break     continue  derived   dyn
+else      enum      export    extend    extends   false     for
+fun       if        impl      import    let       loop      match
+mut       once      or        pub       public    record    requires
+return    root      self      std       struct    super     true
+var       where     while
 ```
 
 `pub` is the visibility keyword. `public` is its legacy spelling and stays reserved, so [using it is a parse error](modules.md#spec.modules.visibility.legality-1), as with `impl` and `mut`.
