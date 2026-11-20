@@ -68,14 +68,14 @@ aspect implementations may coexist for the same type](#spec.declarations.aspects
 
 **Aspect implementation method signatures.** Each implementation method must
 conform to the aspect's declaration of that method. The aspect signature is first
-[specialized](../variables/record-pattern-bindings.md#spec.declarations.aspects.implementing-an-aspect.legality-12) with
+[specialized](implementing-an-aspect.md#spec.declarations.aspects.implementing-an-aspect.legality-12) with
 the block's target type for `Self`, its aspect arguments, and its associated-type
 definitions; receiver form, ordinary parameter count and types, and result type
 must then be equal. The method's generic constraints must be
-[structurally equal](../variables/record-pattern-bindings.md#spec.declarations.aspects.implementing-an-aspect.legality-13)
+[structurally equal](implementing-an-aspect.md#spec.declarations.aspects.implementing-an-aspect.legality-13)
 to the aspect method's after normalization — neither weakened nor strengthened —
 with record kind part of the comparison. A method that does not conform is
-[rejected at its own declaration](../variables/record-pattern-bindings.md#spec.declarations.aspects.implementing-an-aspect.legality-14)
+[rejected at its own declaration](implementing-an-aspect.md#spec.declarations.aspects.implementing-an-aspect.legality-14)
 and does not satisfy the aspect.
 
 ```metel
@@ -354,7 +354,7 @@ and identifies the unsatisfied condition.
 ## Coherence
 
 **Coherence.** [Two conditional `extend` blocks of the same aspect for the same type are
-a coherence error (`T0015`) unless they are provably disjoint](../variables/record-pattern-bindings.md#spec.declarations.aspects.implementing-an-aspect.legality-8). Disjointness is
+a coherence error (`T0015`) unless they are provably disjoint](implementing-an-aspect.md#spec.declarations.aspects.implementing-an-aspect.legality-8). Disjointness is
 established by **syntactic negation** only — one block must carry an explicit negative
 bound that directly negates a positive bound in the other. The compiler performs no
 inference beyond this direct check:

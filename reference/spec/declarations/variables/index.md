@@ -15,9 +15,9 @@ fun main() -> i64 {
 }
 ```
 
-`let` bindings [cannot be reassigned and must always be initialized](record-pattern-bindings.md#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
+`let` bindings [cannot be reassigned and must always be initialized](index.md#spec.declarations.variables.immutable-bindings.legality-1). Mutability lives entirely on the binding — a `let` binding is immutable regardless of what value it holds. This means:
 
-So `x = newValue` (reassignment), `x.field = value` (field assignment through an immutable binding) and `&var x` (taking a mutable reference to an immutable binding) are all [rejected](record-pattern-bindings.md#spec.declarations.variables.immutable-bindings.legality-1): all three forms require `var`.
+So `x = newValue` (reassignment), `x.field = value` (field assignment through an immutable binding) and `&var x` (taking a mutable reference to an immutable binding) are all [rejected](index.md#spec.declarations.variables.immutable-bindings.legality-1): all three forms require `var`.
 
 <details>
 <summary>Formal rules</summary>

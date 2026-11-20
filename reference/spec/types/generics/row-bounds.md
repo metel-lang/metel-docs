@@ -23,7 +23,7 @@ fun h<record T: .{ .x: f64, .. }>(p: T)    // open:  T has at least `x`
 ```
 
 A record pattern's own trailing `..` reads the bound's listed fields the same way
-[field access](implementing-an-aspect-for-a-record.md#spec.types.generics.row-bounds.legality-6) does, and — unlike field access
+[field access](row-bounds.md#spec.types.generics.row-bounds.legality-6) does, and — unlike field access
 — can discard the rest of an open bound's unlisted fields rather than being unable to name
 them at all:
 
@@ -90,7 +90,7 @@ fun tag<record T: !{ id: String }>(t: T) -> i64 { … }    // no `String`-typed 
 Note the second form is satisfied by a record whose `id` is an `i64` — it does not have a
 `String` `id`. Write `!{ id }` for "no `id` of any type".
 
-**[A row bound is satisfied by a record, not by a nominal struct.](implementing-an-aspect-for-a-record.md#spec.types.generics.row-bounds.legality-4)** The `record` marker on the
+**[A row bound is satisfied by a record, not by a nominal struct.](row-bounds.md#spec.types.generics.row-bounds.legality-4)** The `record` marker on the
 type parameter says so at the declaration; a bare `<T: { … }>` is an error.
 
 The marker may be written at the parameter or in a `where` clause — the two are equivalent,

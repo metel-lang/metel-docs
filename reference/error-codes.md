@@ -1355,7 +1355,7 @@ two inherent `extend` blocks of one type whose coverage overlaps. Without this e
 later definition would silently replace the earlier one at dispatch. Methods are not
 overloaded, so different parameter types do not make two same-named methods distinct.
 
-[Blocks whose coverage is provably disjoint may reuse a name](spec/declarations/variables/record-pattern-bindings.md#spec.declarations.aspects.implementing-an-aspect.legality-8) — `extend W<i64>` and
+[Blocks whose coverage is provably disjoint may reuse a name](spec/declarations/aspects/implementing-an-aspect.md#spec.declarations.aspects.implementing-an-aspect.legality-8) — `extend W<i64>` and
 `extend W<String>`, bounds that contradict (`T: Tag` and `T: !Tag`), or row bounds that
 contradict on a shared label (`record R: { token, .. }` and `record R: !{ token }`) — and a call
 dispatches to the block the receiver satisfies. The overlap test is the one
