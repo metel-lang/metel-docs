@@ -13,13 +13,15 @@ or warns when one is missing from this table or a row names something that no lo
 |---|---|---|
 | `metel-core` | `.github/workflows/ci.yml` | PROC-CI-001, PROC-CI-002, PROC-DOCS-005 |
 | `metel-core` | `.github/workflows/release.yml` | PROC-RELEASE-002 to PROC-RELEASE-007, PROC-RELEASE-009 |
-| `metel-core` | `.githooks/pre-commit`, `pre-push`, `commit-msg` | PROC-CI-006 |
+| `metel-core` | `.githooks/pre-commit`, `pre-push`, `commit-msg`, `tools/push_scope.py` | PROC-CI-006 |
 | `metel-core` | `.claude/commands/cut-release.md` | PROC-RELEASE-001, PROC-RELEASE-008 |
 | `metel-core` | `.claude/commands/gap-analysis.md`, `milestone-integration-test.md` | PROC-WORK-007, PROC-WORK-005, PROC-WORK-006 |
 | `metel-core` | `.claude/commands/start-issue.md`, `ship-issue.md` | PROC-WORK-001, PROC-CI-007 |
 | `metel-core` | `.claude/commands/new-rfc.md` | PROC-DOCS-008 |
+| `metel-core` | `.claude/commands/new-record.md` | PROC-DOCS-014 |
 | `metel-core` | `.claude/commands/review-typechecker.md` | local: a review aid, no contract |
 | `metel-core` | `tools/check_doc_examples.py` | PROC-DOCS-010 |
+| `metel-core` | `tools/sweep_pub.py` | local: a one-shot sweep for RFC-0218 (`public` to `pub`), no contract |
 | `metel-core` | `tools/bump-docs.sh`, `tools/test_bump_docs.sh` | PROC-DOCS-003 |
 | `metel-core` | `tools/changelog-status.sh` | PROC-WORK-003, PROC-RELEASE-008 |
 | `metel-core` | `tools/clippy_allow_ratchet.py`, `check_no_semantic_name_lookup.py`, `check_no_flat_module_dir_collision.py`, `check_no_copy_by_name.py` | PROC-CI-001, PROC-CI-006 |
