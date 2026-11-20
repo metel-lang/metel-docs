@@ -2,8 +2,12 @@
 id: rfc-0241
 title: "Metel-Core: A Formal Semantic Foundation for Metel"
 date: '2026-11-17'
-status: draft
+status: under-review
+updated: '2026-11-20'
+tracking: metel-core#2095
 ---
+
+> **Status — under review (2026-11-20).** Open milestoned tracking issue; PROCESS.md requires review
 
 ## Summary
 
