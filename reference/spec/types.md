@@ -616,7 +616,7 @@ Auto-derived aspects are unaffected.
 
 ### Projection
 
-A nominal type's row may be projected to a named subset, written with a dot to distinguish
+[A nominal type's row may be projected to a named subset](#spec.types.anonymous-records.dynamics-2), written with a dot to distinguish
 it from a struct literal:
 
 ```metel

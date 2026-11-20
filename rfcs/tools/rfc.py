@@ -99,6 +99,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import spec_lint  # noqa: E402  (a sibling module; the public-spec style lint)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+import specindex  # noqa: E402  (finds spec pages and anchors whatever the directory layout)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
@@ -757,7 +759,7 @@ def all_spec_block_ids():
     anything pointing at it at all". A block an RFC never claims (a real,
     valid state -- not every rule needs one) still has to have a fixture."""
     ids = set()
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         for line in spec_path.read_text().split("\n"):
             m = SPEC_BLOCK_HEADING_RE.match(line)
             if m:
@@ -774,7 +776,7 @@ def spec_block_bodies():
     part, but callers only ever regex-search this for that one specific
     marker, so no further split is needed here."""
     blocks = {}
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         lines = spec_path.read_text().split("\n")
         i, n = 0, len(lines)
         while i < n:
@@ -862,7 +864,7 @@ def scan_spec_exemptions():
     A block with no trigger has no entry here -- the normal, common case
     (most rules have a real fixture), not a gap needing a placeholder."""
     exemptions = {}
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         lines = spec_path.read_text().split("\n")
         for idx, line in enumerate(lines):
             m = SPEC_BLOCK_HEADING_RE.match(line)
@@ -999,7 +1001,7 @@ def planned_marker_problems():
     dev = current_dev_version()
     dev_v = _semver(dev) if dev else None
 
-    spec_files = [p for p in sorted(SPEC_DIR.glob("*.md")) if p.name != "STYLEGUIDE.md"]
+    spec_files = specindex.pages_under(SPEC_DIR, include_styleguide=False)
 
     # --- version check: applies to every Planned-for marker, spec + error codes.
     if dev_v:
@@ -1247,7 +1249,8 @@ def _spec_fixture_marker(toml_path, core_root, include_spec_links=False):
         links = []
         for spec_id in _sidecar_spec_ids(toml_text):
             label, file = _spec_id_label(spec_id)
-            links.append({"id": spec_id, "label": label, "href": f"spec/{file}.md#{spec_id}"})
+            page = specindex.page_for(REPO_ROOT, spec_id) or f"{file}.md"
+            links.append({"id": spec_id, "label": label, "href": f"spec/{page}#{spec_id}"})
         if links:
             payload["specLinks"] = links
     raw = base64.b64encode(
@@ -1409,7 +1412,7 @@ def write_spec_origins():
     fixtures_by_id = scan_spec_citations(tests_dir) if tests_dir is not None else None
     core_root = tests_dir.parent.parent if tests_dir is not None else None
     changed = []
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         text = spec_path.read_text()
         new_text = regenerate_backlinks_in_text(
             text, spec_path, origins_by_id, fixtures_by_id, core_root
@@ -1433,7 +1436,7 @@ def spec_origins_drift_problems():
     fixtures_by_id = scan_spec_citations(tests_dir) if tests_dir is not None else None
     core_root = tests_dir.parent.parent if tests_dir is not None else None
     problems = []
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         text = spec_path.read_text()
         if (
             regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root)
