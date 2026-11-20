@@ -39,7 +39,7 @@ Once inference has solved a body and the frontend has frozen its resolution, no 
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, ADR-0041, ADR-0042 |
 
 ##### Requirement {#arch.resolution.requirement-2}
@@ -53,7 +53,7 @@ Bindings and value references get structural identities (`LocalId`, `RefId`) fro
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054 (2026-09-10 amendment) |
 
 ##### Requirement {#arch.resolution.requirement-3}
@@ -95,7 +95,7 @@ The identity walk covers every body of code, including a module's bare top-level
 | `specified by` | `#resolution` |
 | `implements` | _Generated at publish._ |
 | `verified by` | _Generated at publish._ |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1570` |
 
 </details>

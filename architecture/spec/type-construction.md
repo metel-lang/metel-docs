@@ -154,7 +154,7 @@ Aspect default methods are materialized as typed methods before evaluation: infe
 
 ##### Requirement {#arch.type-construction.requirement-10}
 
-Free-function overload selection is exact-match, and construction stamps the selected callable's `SymbolId` on the typed call, an id derived from the program and so identical on every compilation; the runtime dispatches it through its symbol-value registry, and overload sets stay module-local.
+Free-function overload selection is exact-match on the argument types, after any keyword names in the call have narrowed the candidates to those whose own parameters they name, and construction stamps the selected callable's `SymbolId` on the typed call, an id derived from the program and so identical on every compilation; the runtime dispatches it through its symbol-value registry, and overload sets stay module-local.
 
 | Field | Value |
 |---|---|
@@ -163,7 +163,7 @@ Free-function overload selection is exact-match, and construction stamps the sel
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/overload/mod.rs::id_for`](https://github.com/metel-lang/metel-core/blob/7605f111964ad23992af57dfc3f639852f73e451/metel-frontend/src/pipeline/type_checking/overload/mod.rs#L48) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::overload_ids_do_not_depend_on_what_was_compiled_earlier_in_the_process`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/tests.rs#L155); [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
