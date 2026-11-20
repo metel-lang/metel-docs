@@ -12,7 +12,7 @@ impl_status: implemented
 
 > **Status — accepted (2026-08-23).** Design settled -- own Unresolved Questions section: none load-bearing, pure lexical rename with a precedented migration process (RFC-0098). No remaining open question blocks it
 
-> **Status — integrated (2026-08-30).** Renamed anonymous type-position impl Aspect to extends Aspect throughout reference/spec/declarations.md (dyn Aspect complement prose, the shorthand subsection, and spec.declarations.aspects.aspect-bounds-on-function-type-parameters legality-1/2/3/4/5/6/12/14/15/16 + dynamics-1/2). RFC-0130 is a co-origin of those rules alongside RFC-0035/0037; the block form extend Type: Aspect is untouched.
+> **Status — integrated (2026-08-30).** Renamed anonymous type-position impl Aspect to extends Aspect throughout reference/spec/declarations/index.md (dyn Aspect complement prose, the shorthand subsection, and spec.declarations.aspects.aspect-bounds-on-function-type-parameters legality-1/2/3/4/5/6/12/14/15/16 + dynamics-1/2). RFC-0130 is a co-origin of those rules alongside RFC-0035/0037; the block form extend Type: Aspect is untouched.
 
 > **Status — implemented (2026-08-30).** RFC-0130 shipped in metel-core#908 (merged to develop 2026-08-30): grammar impl_type -> extends_type, parser, T0022/T0018 diagnostics, fixture sweep, and the neg_13 hard-switch guard. The AST node keeps its internal name ImplAspect per the RFC's own Grammar section.
 
@@ -221,7 +221,7 @@ The only real work is the sweep itself, not any remaining design decision.
 - metel-core#240 / #622 (T0022, landed this session) — the most recent code using
   the `impl Aspect` spelling; its diagnostic text and six negative fixtures are
   exactly what an implementation of this RFC would need to update.
-- `public/reference/spec/declarations.md:859-888` — current spec text this RFC
+- `public/reference/spec/declarations/index.md:859-888` — current spec text this RFC
   would rewrite once integrated.
 
 ---

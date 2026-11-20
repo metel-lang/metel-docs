@@ -2,7 +2,7 @@
   "release": "v0.16.0",
   "features": 24,
   "registry_features": 101,
-  "fixtures": 1740,
+  "fixtures": 1767,
   "new_by_new": {
     "A": {
       "pairs": 84,
@@ -74,7 +74,7 @@
       "n/a": 0,
       "deferred": 0,
       "with_evidence": 161,
-      "mean_rule_coverage": 0.0365
+      "mean_rule_coverage": 0.0366
     },
     "all": {
       "pairs": 1848,

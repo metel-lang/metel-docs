@@ -27,6 +27,17 @@ class InternalNumbers(unittest.TestCase):
                        "> **Planned for v0.17.0 (RFC-0123).** text"):
             self.assertEqual(findings(marker + "\n", "internal-number"), [], marker)
 
+    def test_an_exemptions_own_ref_is_exempt_but_its_reason_is_not(self):
+        ref = '<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Not built." -->\n'
+        span = '<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#261: Not built._</span>\n'
+        self.assertEqual(findings(ref + "\n" + span, "internal-number"), [])
+        reason = '<!-- rfc.py:exemption kind="blocked" ref="metel-core#261" reason="Waits for #261." -->\n'
+        self.assertEqual(len(findings(reason, "internal-number")), 1)
+
+    def test_a_marker_inside_a_rule_block_is_exempt(self):
+        rule = "##### Legality Rule {#spec.x.y.legality-1}\n\n> **Gap** GAP-X-001\n\nA rule.\n"
+        self.assertEqual(findings(rule, "internal-number"), [])
+
     def test_a_marker_block_continuation_is_exempt_but_a_plain_quote_is_not(self):
         marker = "> **Pending** metel-core#1\n> continues with metel-core#2\n"
         self.assertEqual(findings(marker, "internal-number"), [])
@@ -106,6 +117,40 @@ class LimitInProse(unittest.TestCase):
         text = ("```\nnot yet\n```\n<!-- rfc.py:exemption kind=\"blocked\" reason=\"not implemented yet\" -->\n"
                 "<span class=\"rigor-backlink\">_Exempt: not implemented._</span>\n")
         self.assertEqual(findings(text, "limit-in-prose"), [])
+
+
+class Hierarchy(unittest.TestCase):
+    """How the spec is put together: short pages, short sections, shallow headings (`section-size`,
+    `page-size`, `heading-depth`)."""
+
+    @staticmethod
+    def rules(n):
+        return "".join(f"##### Legality Rule {{#spec.x.s.legality-{i}}}\n\nA rule.\n\n<!-- rfc.py:last_reviewed abc -->\n\n" for i in range(n))
+
+    def test_a_section_over_the_line_limit_is_flagged_and_its_subsections_are_counted_apart(self):
+        long_section = "## Big\n\n" + "\n".join(f"line {i}" for i in range(spec_lint.MAX_SECTION_LINES + 5)) + "\n"
+        self.assertEqual(len(findings(long_section, "section-size")), 1)
+        split = "## Big\n\n" + "\n".join(f"line {i}" for i in range(200)) + "\n\n### Sub\n\n" + "\n".join(f"line {i}" for i in range(200)) + "\n"
+        self.assertEqual(findings(split, "section-size"), [])
+
+    def test_a_section_with_too_many_rules_is_flagged(self):
+        self.assertEqual(len(findings("## S\n\n" + self.rules(spec_lint.MAX_SECTION_RULES + 1), "section-size")), 1)
+        self.assertEqual(findings("## S\n\n" + self.rules(spec_lint.MAX_SECTION_RULES), "section-size"), [])
+
+    def test_blank_lines_and_generated_blocks_are_not_counted(self):
+        body = "\n\n".join(f"line {i}" for i in range(spec_lint.MAX_SECTION_LINES - 10))
+        generated = "<!-- rfc.py:fixtures:start -->\n" + "x\n" * 400 + "<!-- rfc.py:fixtures:end -->\n"
+        self.assertEqual(findings("## S\n\n" + body + "\n" + generated, "section-size"), [])
+
+    def test_a_page_over_the_limit_is_flagged(self):
+        page = "# P\n\n" + "".join(f"## S{i}\n\n" + "text\n" * 20 + "\n" for i in range(spec_lint.MAX_PAGE_LINES // 20))
+        self.assertEqual(len(findings(page, "page-size")), 1)
+        self.assertEqual(findings("# P\n\n## S\n\ntext\n", "page-size"), [])
+
+    def test_a_fifth_heading_level_is_flagged_but_a_rule_block_is_not(self):
+        self.assertEqual(len(findings("# P\n\n##### Deep\n\ntext\n", "heading-depth")), 1)
+        self.assertEqual(findings("# P\n\n" + self.rules(1), "heading-depth"), [])
+        self.assertEqual(findings("# P\n\n##### Dynamic Semantics Rule {#spec.x.s.dynamics-1}\n\ntext\n", "heading-depth"), [])
 
 
 class Allows(unittest.TestCase):

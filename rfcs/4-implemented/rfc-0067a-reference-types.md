@@ -41,7 +41,7 @@ coverage:
 > specifically, not to this rename. Supersedes RFC-0043 (Regular Pointers). Amends RFC-0044
 > (Explicit Receiver Semantics).
 
-> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types.md and expressions.md: &T/&mut T reference types replace *T/*mut T, auto-deref, and a new type-directed value-copy-out rule resolving a gap found while writing worked examples (RFC amended, see its own status note).
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/types/index.md and expressions.md: &T/&mut T reference types replace *T/*mut T, auto-deref, and a new type-directed value-copy-out rule resolving a gap found while writing worked examples (RFC amended, see its own status note).
 
 > **Amended 2026-07-11, after implementation (issue #540).** §3a's own text named only
 > `let`/`mut` bindings and explicit ascription as read-copy sites — implementing it

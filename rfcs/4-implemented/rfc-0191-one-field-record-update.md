@@ -213,8 +213,8 @@ Exit check: no contradiction with the integrated spec (open rows, spread, move a
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/types.md` (anonymous records, "collisions
-do not override") and `reference/spec/expressions.md` (record literal typing) change; the
+Spec text lands only at `3-integrated`. `reference/spec/types/index.md` (anonymous records, "collisions
+do not override") and `reference/spec/expressions/index.md` (record literal typing) change; the
 `T0012` case "present in the spread" splits into the table's three rows. No new error code: a
 retyped replacement is `T0001`, an undetermined label stays `T0012`, a non-`Copy` field read
 through a reference stays `T0033`.

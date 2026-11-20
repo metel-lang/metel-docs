@@ -31,7 +31,7 @@ flowchart TD
     coreCi["ci.yml: test, clippy, fmt and the policy checks<br/>PROC-CI-001, PROC-CI-005, PROC-CI-008"]
     develop["rebase-merge into develop<br/>PROC-CI-007"]
     rolling["ci.yml publishes develop-latest<br/>PROC-CI-004"]
-    siteCi["check-showcases.yml, plugin-tests.yml<br/>on metel-website pull requests<br/>PROC-DEPLOY-007"]
+    siteCi["check-showcases.yml, plugin-tests.yml, prism-drift.yml<br/>on metel-website pull requests<br/>PROC-DEPLOY-007"]
     next["next.yml rebuilds /docs/next<br/>every six hours, off by default<br/>PROC-DEPLOY-004, PROC-DEPLOY-005"]
 
     issue --> start --> local
@@ -80,6 +80,8 @@ Requirements that state a rule rather than a step, and assets that are aids, wit
 | Item | Reason |
 |---|---|
 | `/new-rfc` | starts a draft RFC; part of the RFC lifecycle, not of the delivery pipeline (PROC-DOCS-008) |
+| `/new-record` | creates a gap or limitation record; part of the record lifecycle, not of the delivery pipeline (PROC-DOCS-014) |
+| `preview.yml` | a manual non-production preview of the site (marked `local` in the inventory); it deploys no release and aliases neither staging nor production |
 | `/review-typechecker` | a review aid with no contract (marked `local` in the inventory) |
 | `PROC-RELEASE-009` | a rule about credentials that every step above obeys |
 | `PROC-DOCS-002` | a rule about who pins which commit; the pins are the gitlink and website bumps drawn above |
@@ -91,6 +93,8 @@ Requirements that state a rule rather than a step, and assets that are aids, wit
 | `PROC-DOCS-009` | the lifecycle of gap and limitation records, run inside the CI nodes |
 | `PROC-DOCS-012` | what the spec fixture viewer embeds, a build-time property |
 | `PROC-DOCS-013` | the spec style ratchet; checked by `rfc.py check` inside the CI nodes |
+| `PROC-DOCS-014` | creating a record, a step of its lifecycle (PROC-DOCS-009); the pair audit runs inside the CI nodes |
+| `PROC-DOCS-015` | executable reproductions; run by core CI and at the gate |
 | `PROC-WORK-002` | which tier of verification a change gets, a rule that applies to every node |
 | `PROC-WORK-003` | pairing a change with its documentation and changelog, a rule applied at the pull request |
 | `PROC-WORK-006` | where bugs are scheduled, a rule about milestones rather than a step |

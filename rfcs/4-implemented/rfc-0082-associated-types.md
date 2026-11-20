@@ -34,12 +34,12 @@ coverage:
 > status note confirms "SubRegion interaction removed"); §7 is kept for historical record
 > only, not as still-applicable content.
 
-> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations.md: associated types (type X;/type X = Y;, projection, equality-constrained bounds, object safety). RFC's stale Region/@[r] naming fixed and its RFC-0069 amendment (SubRegion, retracted) marked historical-only, not integrated.
+> **Status — integrated (2026-07-10).** Integrated into public/reference/spec/declarations/index.md: associated types (type X;/type X = Y;, projection, equality-constrained bounds, object safety). RFC's stale Region/@[r] naming fixed and its RFC-0069 amendment (SubRegion, retracted) marked historical-only, not integrated.
 >
 > **Amended 2026-07-10, later the same day.** §10 Open Question 1 (disambiguation for
 > identically-named associated types) resolved rather than left deferred to a
 > nonexistent "type inference RFC" — type inference is already specified
-> (`public/reference/spec/types.md` §Type Inference) and implemented (RFC-0031), so
+> (`public/reference/spec/types/index.md` §Type Inference) and implemented (RFC-0031), so
 > there was no future RFC for this to actually wait on. First pass proposed `<T as
 > Aspect>::AssocType`, borrowed from Rust without checking it against Metel's own
 > grammar (`as` already has two other uses — import renaming, cast).
@@ -246,7 +246,7 @@ covers that case completely.
 **No new resolution machinery, no new grammar, and no dependency on a future
 type-inference RFC.** §4's equality constraint and ordinary type inference/ascription
 (both already specified and implemented — Hindley-Milner with let-polymorphism, RFC-0031;
-ascription, `public/reference/spec/types.md` §Type Ascription) are sufficient. The
+ascription, `public/reference/spec/types/index.md` §Type Ascription) are sufficient. The
 original deferral to "the type inference RFC" assumed a future foundational RFC would
 need to define new syntax for this; no such RFC exists or is planned, and no new syntax
 turned out to be needed either.

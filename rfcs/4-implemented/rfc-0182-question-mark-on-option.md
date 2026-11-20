@@ -49,7 +49,7 @@ implementation (see `metel_rfc_before_implementation`).
 ### The gap
 
 `?` is defined over `Result<T, E>` only
-([`spec.functions.the-operator.legality-1`](../../reference/spec/functions.md#spec.functions.the-operator.legality-1)),
+([`spec.functions.the-operator.legality-1`](../../reference/spec/functions/error-propagation.md#spec.functions.the-operator.legality-1)),
 and the spec says so on purpose: "`?` does not apply to `Option<T>` in this language
 version". Every other absence-returning API in the language is `Option`: `std::env::get`,
 list and map lookups, `Result::ok`, `Option::and_then`. A function that chains them cannot
@@ -231,7 +231,7 @@ operator signals; `.ok()` makes the discard visible at the site (`parse(s).ok()?
 
 ## 5. Specification changes (on acceptance)
 
-`reference/spec/functions.md`, "The ? Operator":
+`reference/spec/functions/index.md`, "The ? Operator":
 
 - **Legality Rule 1** now reads: the operand must be `Result<T, E>` or `Option<T>` and the
   enclosing return type must be the same type constructor; any other pairing is a type error.
@@ -295,7 +295,7 @@ leave #1589's complaint standing.
 - RFC-0015 — unwrap syntax (`.yolo()` as a method); `?` as a compiler form.
 - RFC-0004 — `main` return type.
 - RFC-0153 — closure mutation axis (`dynamics-13`, early exit through `?`).
-- `reference/spec/functions.md` — "The ? Operator".
+- `reference/spec/functions/index.md` — "The ? Operator".
 
 ---
 

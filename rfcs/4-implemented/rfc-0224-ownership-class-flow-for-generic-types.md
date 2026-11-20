@@ -26,7 +26,7 @@ impl_status: implemented
 
 > **Status — accepted (2026-11-10).** Accepted by the language owner 2026-11-10 after the adversarial review, the grammar decision and the prototype experiment
 
-> **Status — integrated (2026-11-10).** Integrated into reference/spec/declarations.md (declaration-clauses legality-11 to 15); RFC-0206 and RFC-0207 amended; implementation tracked in metel-core#1941
+> **Status — integrated (2026-11-10).** Integrated into reference/spec/declarations/index.md (declaration-clauses legality-11 to 15); RFC-0206 and RFC-0207 amended; implementation tracked in metel-core#1941
 
 > **Status — implemented (2026-11-12).** All four steps landed: #1941 (via clause), #1818 (stored flows), #1819 (computed flows), #1820 (rule 3 error).
 

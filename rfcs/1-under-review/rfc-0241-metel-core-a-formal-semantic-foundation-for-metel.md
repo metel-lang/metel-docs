@@ -3,11 +3,11 @@ id: rfc-0241
 title: "Metel-Core: A Formal Semantic Foundation for Metel"
 date: '2026-11-17'
 status: under-review
-updated: '2026-11-19'
-tracking: 'https://github.com/metel-lang/metel-core/issues/2095'
+updated: '2026-11-20'
+tracking: metel-core#2095
 ---
 
-> **Status — under review (2026-11-19).** Committed to the roadmap as the Core representation theme (2026-11-19, #2095)
+> **Status — under review (2026-11-20).** Open milestoned tracking issue; PROCESS.md requires review
 
 ## Summary
 

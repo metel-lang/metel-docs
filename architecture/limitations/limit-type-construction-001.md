@@ -6,7 +6,7 @@ scope: "architecture/spec/type-construction.md#type-construction"
 owner: metel-frontend
 discovered_by: "ADR-0041, ADR-0042 (corroborated independently in both)"
 disposition: known
-review: "revisit once #542 has a concrete consumer for the sealed-accessor work ADR-0042 ties this to"
+review: "revisit if a consumer of a first-class callee identity appears"
 ---
 
 ## Limitation
@@ -33,5 +33,4 @@ fallback at the point `callee_id` is `None`, not by identity alone.
 
 ## Resolution
 
-None yet. ADR-0042 ties full closure to "once #542 has a concrete consumer"
-for the related sealed-accessor work; no scheduled fix as of this writing.
+None yet. ADR-0041 and ADR-0042 call this the deferred first-class-function environment question, and the sealed-accessor work they tie it to has no scheduled consumer (the coherence stage they cited has shipped). The `typed_ast` doc comments on `callee_id` still state it.

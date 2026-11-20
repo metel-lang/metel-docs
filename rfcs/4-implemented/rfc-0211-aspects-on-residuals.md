@@ -20,7 +20,7 @@ impl_status: implemented
 > this RFC keeps the rules that apply in v0.16.0; the template half (a granted aspect's row template applying to
 > every residual) is RFC-0217, under review. The title changed from "Aspect Templates on Residuals".
 
-> **Status — integrated (2026-11-13).** Integrated into reference/spec/ownership.md (aspects-on-a-residual legality 1 to 7, dynamics 1); implementation tracked in metel-core#1830.
+> **Status — integrated (2026-11-13).** Integrated into reference/spec/ownership/index.md (aspects-on-a-residual legality 1 to 7, dynamics 1); implementation tracked in metel-core#1830.
 
 > **Status — implemented (2026-11-16).**
 

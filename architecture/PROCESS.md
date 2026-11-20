@@ -80,10 +80,51 @@ renders from. A record never names a version: the tracking issue's milestone is 
   tag on it (metel-core#1525); `LIMIT-*`'s own `planned` check is looser (schema only, no forced RFC
   linkage) — this asymmetry is real, not an oversight described elsewhere in this
   document, and is worth knowing before assuming the two kinds are checked identically.
+- `accepted` is a deliberate boundary and carries no plan: it may not name `tracked_by` (use
+  `planned` if the work is scheduled).
+- **A plan that lives only in prose is still watched.** An active record with no `tracked_by` and no
+  `rfc` whose `## Resolution` cites issues (`metel-core#N` or `#N`) is a warning when every one of
+  those issues is closed: that is how a record outlives its plan (9 of the 11 stale records found
+  in the 2026-11 audit said "tracked as metel-core#N" there and nowhere the tool looked). Resolve
+  the record, re-plan it with a new issue in `tracked_by`, or reword the history so it does not
+  read as a plan. `--release-gate` refuses to tag on it, like the `tracked_by` case above.
+- **A reproduction is executable.** A ```` ```metel ```` fence in an active record may carry the result
+  its program gives today: ```` ```metel repro=T0002 ```` (rejected with that diagnostic) or
+  ```` ```metel repro=ok ````. metel-core's `tools/check_record_repros.py` runs every such fence against
+  the interpreter in CI and under `--strict` in `/cut-release`; a mismatch means the limitation was
+  fixed or changed shape (resolve the record or update the example). A reproduction is one
+  self-contained file with a `main`; a limitation that needs several modules has none. Here,
+  `check_architecture.py` only checks the spelling.
 - `known`/`accepted`/`mitigated`/`planned` count as **active** for every "does a marker
   still make sense" check below (constant: `GAP_ACTIVE_DISPOSITIONS` /
   `LIMIT_ACTIVE_DISPOSITIONS`, same four values, separately named per tool); `resolved`
   and `superseded` do not.
+
+**Creating a record.** A record is created with the tool, never by hand, so that it is compared with the
+ones that exist:
+
+```bash
+python3 architecture/tools/record.py new --kind limit --area TYPE-INFERENCE --title "…" --summary "…" \
+    --description "<what falls short>" --scope architecture/spec/<chapter>.md#<anchor> \
+    --affects arch.<chapter>.requirement-1 [--repro prog.mtl --repro-expect T0002 --core ../metel-core] \
+    [--tracked-by metel-core#N] [--relates LIMIT-X-001="why this is not a duplicate"]
+```
+
+It numbers the record, writes the skeleton and prints what it found. *Overlaps* (shown, ranked, and each needs
+`--relates ID="reason"` before the file is written): text more than 45% similar to another record's (20% when they
+also share a target), the same spec rule or requirement in `affects`, the same tracking issue, the same RFC *and*
+the same subject, the same diagnostic for one target, and an overlap with a `resolved` record (is it a regression?).
+*Contradictions* (an exact duplicate, a reproduction that does not give the result the record claims, and a LIMIT
+that scopes the spec or a GAP that scopes the implementation, block; a closed or refused tracking reference, two
+active records expecting different results for one target, and an `accepted` record against a `planned` one on the
+same subject are shown and need the same acknowledgement). The acknowledgement is kept in the record as
+`relates: "ID (reason); ID (reason)"`; a reason may contain `;` but not `)`. A reproduction runs only when `--core`
+points at a metel-core checkout with a built `target/release/metel`.
+
+`record.py check` applies the overlap and contradiction rules to every pair of active records, so a record written
+or edited by hand is held to the same standard: an unacknowledged pair is a warning on a pull request (the
+`architecture-check` workflow) and an error under `--strict` (`/cut-release`). Acknowledging a pair is a statement
+that the two were compared and say different things; when they do not, merge them.
 
 Code and fixtures cite `arch-*` records or Formal Rules — never a `LIMIT-*`/`GAP-*` id
 directly — with exactly one narrow, deliberate exception: the `// limit:` marker (Level
@@ -342,7 +383,7 @@ carry a one-line pointer to an **Architecture** Atlas record —
 either label in either spec tree). The website renders the record's summary and its
 `tracked_by`/`rfc` chips into that line at build time; the chapter text never copies them
 by hand, so they cannot go stale independently of the record. Real example
-(`reference/spec/functions.md:930`):
+(`reference/spec/functions/index.md:930`):
 
 ```
 > **Limitation** LIMIT-EVALUATION-005: closure environments are not destroyed
@@ -358,7 +399,7 @@ limitations` + `<!-- records:limitations -->` appears only in Architecture Spec 
 `LIMIT-*` (architecture-owned) can be inline-cited from a Language Spec chapter when it's
 concrete and user-visible enough to mention in spec prose (the destructors example above
 is exactly this — a real implementation limitation, filed under `architecture/limitations`,
-mentioned inline in `reference/spec/functions.md` because a Metel programmer reading about
+mentioned inline in `reference/spec/functions/index.md` because a Metel programmer reading about
 closures needs to know it). The reverse (a `GAP-*` inline-cited from an Architecture Spec
 page) is equally legal by the same generic regex, just not yet exercised in the current
 corpus.

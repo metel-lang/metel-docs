@@ -2,11 +2,12 @@
 id: GAP-TYPES-011
 title: "A written function type cannot say it accepts any record with at least these fields"
 summary: "An open record with an anonymous tail is rejected inside a function type, and a named row fixes the row for the whole signature, so no written type means 'works for every wider record'."
-scope: "reference/spec/types.md#open-rows"
+scope: "reference/spec/types/generics/open-rows.md#open-rows"
 owner: language
 discovered_by: "metel-core#1478 review of anonymous open-record tails"
 disposition: accepted
 rfc: RFC-0181
+relates: "GAP-TYPES-012 (function-type position here, field-type position there)"
 review: "revisit if a real function must apply one callback to two differently shaped records it holds"
 ---
 

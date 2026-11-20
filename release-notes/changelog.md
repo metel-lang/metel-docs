@@ -4,9 +4,9 @@ title: "Metel Language Changelog"
 
 # Changelog
 
-## v0.16.0 (unreleased)
+## v0.16.0
 
-The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
+**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
 spelled, how values are assigned, how types are built and how rows are written; most of them are breaking
 spelling changes with a mechanical migration, and the repository's own sources, fixtures and documentation
 were migrated with parser-driven tools.
@@ -117,7 +117,7 @@ were migrated with parser-driven tools.
 |---|---:|---:|---:|---:|---:|---:|
 | A (same subsystem) | 181 | 99 (55%) | 4 | 95 | 82 | 20.4% |
 | B (adjacent) | 299 | 47 (16%) | 1 | 46 | 252 | 5.5% |
-| C (other) | 1368 | 161 (12%) | 1 | 160 | 1207 | 3.6% |
+| C (other) | 1368 | 161 (12%) | 1 | 160 | 1207 | 3.7% |
 | **All** | 1848 | 307 (17%) | 6 | 301 | 1541 | 5.6% |
 
 Rules owned by the new features: 147, cited by at least one fixture: 145 (99%).
@@ -1913,7 +1913,7 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Structs: literals, field access, methods (`impl`), `var self`, associated functions
 - Enums: unit and struct-like variants, `impl` blocks
 - Built-in generic types: `Perhaps<T>`, `Result<T, E>`, `Array<T>` / `T[]` (as special cases; user-defined generics are v0.3.0)
-- Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions.md#pattern-kinds))
+- Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions/patterns/index.md#pattern-kinds))
 - Control flow: `if`/`else`, `while`, `for`, `for-in` (arrays and ranges only), `loop`, `break`/`continue`, `return`
 - Type casting: `as` for `i64 ↔ f64`
 - Never type (`!`)
@@ -1921,7 +1921,7 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Built-in functions (see [Built-in Functions](../reference/spec/runtime.md#built-in-functions))
 
 **Not included (v0.3.0+):**
-- User-defined generic functions and types (see [Generics](../reference/spec/types.md#generics))
-- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations.md#aspects))
-- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions.md#the--operator))
-- User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions.md#for-in))
+- User-defined generic functions and types (see [Generics](../reference/spec/types/generics/index.md))
+- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations/aspects/index.md))
+- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions/error-propagation.md))
+- User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions/control-flow/for-loops.md#for-in))

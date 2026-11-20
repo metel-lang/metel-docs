@@ -4,7 +4,7 @@ title: "RFC-0167's error-code reclassification and main-entry Legality Rule are 
 summary: "Six R00NN codes still fire instead of their I00NN replacements; the main-entry check still runs at evaluator startup instead of typechecking, under retired R0001/R0002."
 scope: "architecture/spec/evaluation.md#evaluation"
 owner: metel-interpreter
-discovered_by: "RFC-0167 integration pass (reference/spec/functions.md, reference/error-codes.md 3-integrated cross-check), 2026-09-28"
+discovered_by: "RFC-0167 integration pass (reference/spec/functions/index.md, reference/error-codes.md 3-integrated cross-check), 2026-09-28"
 disposition: resolved
 review: null
 ---
@@ -32,7 +32,7 @@ documentation-and-numbering decision made now (per RFC-0167's own Migration sect
 "new number assignment happens at integration time"), not yet backed by matching
 interpreter behavior. The nine new/retired-target entries in `error-codes.md`
 (`T0031`, `I0003`-`I0009`) and the new `spec.functions.program-entry-point.legality-1`
-rule in `reference/spec/functions.md` are exempted from fixture coverage for this
+rule in `reference/spec/functions/index.md` are exempted from fixture coverage for this
 reason; the eight retired entries (`R0001`/`R0002`/`R0003`/`R0006`/`R0008`/`R0009`/
 `R0010`/`R0011`) keep their own existing fixtures/exemptions unchanged, since they
 still accurately describe today's actual behavior.

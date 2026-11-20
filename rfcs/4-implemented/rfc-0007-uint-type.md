@@ -157,7 +157,7 @@ to give overflow two behaviors instead of one. **D3 is amended: integer overflow
 panics unconditionally, in every build. Float overflow's half of D3 (IEEE 754, no
 panicking) was correct as shipped and is unchanged.**
 
-See `reference/spec/types.md`'s `spec.types.sized-numeric-types.dynamics-1` for the
+See `reference/spec/types/index.md`'s `spec.types.sized-numeric-types.dynamics-1` for the
 corrected normative text. metel-core#838 tracked this; closed by this correction —
 no implementation change was needed, since the implementation was right all along.
 

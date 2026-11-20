@@ -4,7 +4,7 @@ title: "Mutating Closures with a Propagating ? Are Call-Once"
 date: '2026-09-02'
 status: under-review
 updated: '2026-11-20'
-tracking: 'https://github.com/metel-lang/metel-core/issues/2123'
+tracking: metel-core#2123
 ---
 
 > **Follow-up to RFC-0153 (Closure Mutation Axis), opened 2026-09-02.** RFC-0153's
@@ -16,7 +16,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2123'
 > `var` closure body that can `?`-propagate is `once`. It is **not** a v0.13.0 blocker and
 > does not change anything about `once` closures, `return`, or `reading` closures.
 
-> **Status — under review (2026-11-20).** Committed to Effects design settlement (2026-11-20, #2123)
+> **Status — under review (2026-11-20).** Open milestoned tracking issue; PROCESS.md requires review
 
 ## Summary
 

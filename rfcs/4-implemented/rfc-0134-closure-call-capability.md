@@ -34,7 +34,7 @@ by default, `once` only when written** (§3): the CFG consumption analysis of §
 body moves a non-`Copy` capture out is a compile error at the definition site. `many`
 satisfies a `once` slot by first-order directional matching, delivered by RFC-0152.
 
-> **Status — integrated (2026-09-01).** Closure cluster spec-integrated: reference/spec/functions.md Closures section rewritten as Legality Rules 1-25 / Dynamic Semantics 1-15; this RFC's sections anchor at Legality 8/9/20 and Dynamics 10; coverage.spec frontmatter added; fixtures blocked on implementation (metel-core#925). Shape: ADR-0052.
+> **Status — integrated (2026-09-01).** Closure cluster spec-integrated: reference/spec/functions/index.md Closures section rewritten as Legality Rules 1-25 / Dynamic Semantics 1-15; this RFC's sections anchor at Legality 8/9/20 and Dynamics 10; coverage.spec frontmatter added; fixtures blocked on implementation (metel-core#925). Shape: ADR-0052.
 
 > **Status — implemented (2026-09-02).**
 

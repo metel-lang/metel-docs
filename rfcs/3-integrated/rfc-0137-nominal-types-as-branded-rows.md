@@ -79,7 +79,7 @@ impl_status: in-progress
 
 > **Status — accepted (2026-08-27).** All four Open Questions closed or determined not to block acceptance, this time verified directly against the interpreter rather than argued from prose alone (Open Questions 5, 6, 8 resolved 2026-08-27, see that section). Open Question 5 in particular was caught and corrected mid-review: the first resolution pass wrongly generalized an owned-binding finding to the reference-parameter shape Sec6's own example used; checked separately, narrowing through a reference is already unreachable under RFC-0071 Sec7.1, independent of this RFC.
 
-> **Status — integrated (2026-08-27).** Merged into reference/spec/ownership.md (Narrowing, Passing a residual to a function, Drop dispatch against a narrowed residual, Widening subsections) and reference/spec/types.md (What satisfies which bound reframe). Everything marked Planned for v0.13.0 with blocked fixture-coverage exemptions -- nothing in RFC-0137 is implemented yet. Cross-checked against RFC-0071 (3-integrated), RFC-0116/RFC-0118 (implemented), and RFC-0008 (implemented, the dyn Aspect coercion checkpoint) -- no new soundness gap found beyond what RFC-0137's own text already identifies.
+> **Status — integrated (2026-08-27).** Merged into reference/spec/ownership/index.md (Narrowing, Passing a residual to a function, Drop dispatch against a narrowed residual, Widening subsections) and reference/spec/types/index.md (What satisfies which bound reframe). Everything marked Planned for v0.13.0 with blocked fixture-coverage exemptions -- nothing in RFC-0137 is implemented yet. Cross-checked against RFC-0071 (3-integrated), RFC-0116/RFC-0118 (implemented), and RFC-0008 (implemented, the dyn Aspect coercion checkpoint) -- no new soundness gap found beyond what RFC-0137's own text already identifies.
 
 > **Slice 1 implemented (metel-core#857, v0.13.0).** §1-4: the `(brand, row)` representation, branded field projection, full-width normalization to the plain struct type, and passing a projection-produced residual to a function. `spec.ownership.narrowing.legality-2`, `spec.ownership.passing-a-residual-to-a-function.legality-1`.
 >
@@ -936,7 +936,7 @@ by this revision alone.
 
 **§5 amended 2026-08-28 — `Drop` required set declared on the `drop` receiver, not
 inferred from the body.** A design change to `3-integrated` content, made in lockstep
-with the matching `reference/spec/ownership.md` edit
+with the matching `reference/spec/ownership/index.md` edit
 (`spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-1`): the required
 field set is the residual row the `drop` method's receiver is declared with, and the
 2026-08-25 fixed-point-over-`self`-methods resolution of Open Question 2 is superseded as

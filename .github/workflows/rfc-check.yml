@@ -51,7 +51,7 @@ jobs:
           python-version: "3.x"
 
       - name: RFC tool regression tests
-        run: python3 -m unittest rfcs/tools/test_rfc.py rfcs/tools/test_spec_lint.py
+        run: python3 -m unittest rfcs/tools/test_rfc.py rfcs/tools/test_spec_lint.py tools/test_spec_split.py tools/test_check_keywords.py
 
       - name: rfc.py check
         env:
@@ -63,3 +63,12 @@ jobs:
       # the registry only; the fixture slots are checked where the corpus is.
       - name: rfc.py index --check-drift
         run: python3 rfcs/tools/rfc.py index --check-drift
+
+      # lexical.md's keyword list must name the words the parser reserves. grammar.pest lives in
+      # metel-core, so it is fetched from `develop` (a public read; the built-in token covers it).
+      - name: keyword list matches the parser
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/metel-lang/metel-core/contents/metel-frontend/src/grammar.pest?ref=develop" --jq '.content' | base64 -d > "$RUNNER_TEMP/grammar.pest"
+          python3 tools/check_keywords.py --grammar "$RUNNER_TEMP/grammar.pest" --require
