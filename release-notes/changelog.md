@@ -4,9 +4,9 @@ title: "Metel Language Changelog"
 
 # Changelog
 
-## v0.16.0 (unreleased)
+## v0.16.0
 
-The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
+**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
 spelled, how values are assigned, how types are built and how rows are written; most of them are breaking
 spelling changes with a mechanical migration, and the repository's own sources, fixtures and documentation
 were migrated with parser-driven tools.
@@ -117,7 +117,7 @@ were migrated with parser-driven tools.
 |---|---:|---:|---:|---:|---:|---:|
 | A (same subsystem) | 181 | 99 (55%) | 4 | 95 | 82 | 20.4% |
 | B (adjacent) | 299 | 47 (16%) | 1 | 46 | 252 | 5.5% |
-| C (other) | 1368 | 161 (12%) | 1 | 160 | 1207 | 3.6% |
+| C (other) | 1368 | 161 (12%) | 1 | 160 | 1207 | 3.7% |
 | **All** | 1848 | 307 (17%) | 6 | 301 | 1541 | 5.6% |
 
 Rules owned by the new features: 147, cited by at least one fixture: 145 (99%).
