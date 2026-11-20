@@ -1922,6 +1922,6 @@ Initial language version. Implemented by the tree-walk interpreter.
 
 **Not included (v0.3.0+):**
 - User-defined generic functions and types (see [Generics](../reference/spec/types.md#generics))
-- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations.md#aspects))
-- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions.md#the--operator))
+- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations/aspects/index.md#aspects))
+- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions/error-propagation.md#the--operator))
 - User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions.md#for-in))

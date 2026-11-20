@@ -4,6 +4,7 @@
     spec_split.py skeleton reference/spec/declarations.md   # print a plan: one page per `##` section
     spec_split.py apply PLAN.toml [--dry-run]                # write the pages, remove the old file, relink
     spec_split.py check-links                                # every relative link and fragment resolves
+    spec_split.py fix-links [--dry-run]                      # repair links that still name a chapter that became a directory
 
 A plan names the chapter file and says which sections go to which page:
 
@@ -187,7 +188,7 @@ def docs_markdown(root: Path) -> list[Path]:
     out = []
     for p in root.rglob("*.md"):
         rel = p.relative_to(root).parts
-        if any(part.startswith(".") for part in rel) or rel[0] in ("release-notes",):
+        if any(part.startswith(".") for part in rel):
             continue
         out.append(p)
     return sorted(out)
@@ -317,6 +318,44 @@ def apply(plan_path: Path, dry_run: bool) -> int:
 
 # ------------------------------------------------------------------ check-links
 
+def fix_links(root: Path, dry_run: bool) -> int:
+    """Repair links that still name a chapter file that has become a directory: follow the fragment to its page.
+
+    `apply` does this for the split it performs; this catches what it could not see (a page added to the
+    tree after the split, a link in a file outside the docs tree walked, a branch merged late).
+    """
+    spec = root / specindex.SPEC_REL
+    chapters = {p.name: p for p in spec.iterdir() if p.is_dir() and (p / "index.md").is_file()}
+    pages = specindex.spec_files(root)
+    where = anchor_pages(root, pages)
+    fixed = 0
+    for md in docs_markdown(root):
+        body = md.read_text()
+
+        def fix(m: re.Match) -> str:
+            nonlocal fixed
+            dest, title = m.group(1), m.group(2) or ""
+            if is_external(dest) or dest.startswith(("mailto:", "/")):
+                return m.group(0)
+            path_part, frag = split_dest(dest)
+            if not path_part:
+                return m.group(0)
+            target = (md.parent / path_part).resolve()
+            if target.exists() or target.suffix != ".md" or target.parent != spec.resolve() or target.stem not in chapters:
+                return m.group(0)
+            chapter = chapters[target.stem]
+            page = where.get(frag) if frag else None
+            if page is None or specindex.chapter_of(page, root) != target.stem:
+                page = chapter / "index.md"
+            fixed += 1
+            return f"]({relpath(page, md.parent)}{'#' + frag if frag else ''}{title})"
+        new = LINK_RE.sub(fix, body)
+        if new != body and not dry_run:
+            md.write_text(new)
+    print(f"{fixed} link(s) {'would be ' if dry_run else ''}repaired")
+    return 0
+
+
 def check_links(root: Path) -> list[str]:
     pages = docs_markdown(root)
     cache: dict[Path, tuple[set[str], set[str]]] = {}
@@ -357,6 +396,8 @@ def main() -> int:
     ap_ = sub.add_parser("apply")
     ap_.add_argument("plan")
     ap_.add_argument("--dry-run", action="store_true")
+    fl = sub.add_parser("fix-links")
+    fl.add_argument("--dry-run", action="store_true")
     sub.add_parser("check-links")
     args = ap.parse_args()
     if args.cmd == "skeleton":
@@ -364,6 +405,8 @@ def main() -> int:
         return 0
     if args.cmd == "apply":
         return apply(Path(args.plan).resolve(), args.dry_run)
+    if args.cmd == "fix-links":
+        return fix_links(DOCS, args.dry_run)
     problems = check_links(DOCS)
     for p in problems:
         print(p)

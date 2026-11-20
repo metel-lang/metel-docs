@@ -145,6 +145,29 @@ class SplitTests(Tree):
         self.assertEqual([p for p in spec_split.check_links(self.root) if "missing.md" not in p], [])
 
 
+class RepairTests(Tree):
+    def test_slugs_match_github_slugger_so_a_punctuation_gap_keeps_its_hyphens(self):
+        self.assertEqual(specindex.slug("The ? Operator"), "the--operator")
+        self.assertEqual(specindex.slug("`dyn Aspect` and more {#x}"), "dyn-aspect-and-more")
+        self.assertEqual(specindex.slug("Open rows"), "open-rows")
+
+    def test_fix_links_follows_a_link_that_still_names_a_chapter_that_became_a_directory(self):
+        spec_split.apply(self.plan, False)
+        (self.root / "release-notes").mkdir()
+        (self.root / "release-notes" / "changelog.md").write_text(
+            "See [beta](../reference/spec/chapter.md#spec.chapter.b.legality-1) and [chapter](../reference/spec/chapter.md#nope).\n")
+        spec_split.fix_links(self.root, False)
+        body = (self.root / "release-notes" / "changelog.md").read_text()
+        self.assertIn("(../reference/spec/chapter/beta.md#spec.chapter.b.legality-1)", body)
+        self.assertIn("(../reference/spec/chapter/index.md#nope)", body)  # unknown fragment: the chapter's index
+
+    def test_release_notes_are_relinked_by_apply_too(self):
+        (self.root / "release-notes").mkdir()
+        (self.root / "release-notes" / "changelog.md").write_text("[a](../reference/spec/chapter.md#spec.chapter.a.legality-1)\n")
+        spec_split.apply(self.plan, False)
+        self.assertIn("(../reference/spec/chapter/alpha.md#spec.chapter.a.legality-1)", (self.root / "release-notes" / "changelog.md").read_text())
+
+
 class PlanTests(Tree):
     def test_an_unplaced_section_is_an_error(self):
         self.plan.write_text(PLAN.replace('[[page]]\nfile = "beta.md"\nsections = ["Beta"]\n', ""))
