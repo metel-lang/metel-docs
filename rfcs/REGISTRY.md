@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**241 RFCs total.** 36 draft, 59 under review, 10 accepted, 2 integrated (107 live), 99 implemented, 19 superseded, 16 refused (134 settled).
+**242 RFCs total.** 36 draft, 60 under review, 10 accepted, 2 integrated (108 live), 99 implemented, 19 superseded, 16 refused (134 settled).
 
 ## Draft (36)
 
@@ -54,7 +54,7 @@ the curated thematic map.
 - **RFC-0240** — Spelling of Written Function Types (`0-draft` ; rfcs/0-draft/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16)
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 
-## Under Review (59)
+## Under Review (60)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -115,6 +115,7 @@ the curated thematic map.
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
+- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
 
 ## Accepted (10)
 
