@@ -47,6 +47,7 @@ or warns when one is missing from this table or a row names something that no lo
 | `metel-website` | `.github/workflows/promote.yml` | PROC-DEPLOY-003 |
 | `metel-website` | `.github/workflows/publish-docs.yml` | PROC-DEPLOY-006 |
 | `metel-website` | `.github/workflows/next.yml`, `scripts/prepare-next-docs.mjs` | PROC-DEPLOY-004, PROC-DEPLOY-005 |
+| `metel-website` | `.github/workflows/preview.yml` | local: a manual non-production preview deployment, no contract |
 | `metel-website` | `.github/workflows/check-showcases.yml`, `plugin-tests.yml`, `prism-drift.yml`, `scripts/check-prism-drift.mjs` (+ test) | PROC-DEPLOY-007 |
 | `metel-website` | `scripts/build-rfc-index.mjs`, `build-spec-index.mjs` (the `prebuild` step) | PROC-DOCS-005 (search data computed at build) |
 | `metel-website` | `scripts/check-mdx-site-drift.mjs` | PROC-DOCS-011 |
