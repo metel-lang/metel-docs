@@ -3,6 +3,7 @@ id: rfc-0238
 title: "Derivation Registration"
 date: '2026-11-16'
 status: draft
+tracking: 'https://github.com/metel-lang/metel-core/issues/2158'
 ---
 
 ## Summary
