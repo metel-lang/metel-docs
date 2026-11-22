@@ -2,8 +2,12 @@
 id: rfc-0238
 title: "Derivation Registration"
 date: '2026-11-16'
-status: draft
+status: under-review
+updated: '2026-11-22'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2158'
 ---
+
+> **Status — under review (2026-11-22).** Taken to review as part of the metel-core v0.17.0 plan (#2158)
 
 ## Summary
 
