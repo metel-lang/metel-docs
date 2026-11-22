@@ -1408,6 +1408,21 @@ implementation).
   allocates a continuation for every operation uniformly) and the interpolation question
   above. Tracked by metel-core#834, milestoned v0.21.1 (new milestone, created
   specifically for this RFC — the furthest-out existing milestone was v0.17.0).
+- **RFC-0245** *(draft, opened 2026-11-22)* — Effect Rows and Marker Effects — a checked
+  row of effects on functions, closures and callable types, in one calculus with two entry
+  kinds: marker entries (declared labels such as `FileRead`, `Network`, `Diverge`, never
+  erased by a handler) and operation entries (RFC-0140's interfaces, with the Koka
+  `fun`/`ctl`/`final ctl` classification, which decides RFC-0140's open question 4, and at
+  most one handler per label, which decides its open question 6). The keywords `effect`
+  and `effects` replace RFC-0140's `^`. Rows are upper bounds, inferred on closures and
+  private functions, kept through generics, aspect dispatch and `dyn`, with a subset
+  coercion that reuses RFC-0232's marker mechanism; a named function with no row is
+  unrestricted, so existing programs keep their meaning. `Panic` stays ambient, with an
+  opt-in no-panic guarantee (spelling open: a marker or `!Panic`) that cannot use plain
+  integer arithmetic until RFC-0142 exists. Native effect metadata on std's roughly 160
+  `native` declarations. Design tracked by metel-core#1672 (v0.17.0, stage "Effects
+  design settlement"; implementation is the stage "Effect rows and markers"). It carries no
+  `tracking:` field while it is a draft (a draft may not), so the tracker is named here.
 
 ## Small, mostly standalone syntax/ergonomics items
 
