@@ -148,9 +148,9 @@ inferred. This is gradual: existing programs keep their meaning, and a restricti
 **Rule 5 (row parameters).** A row can be abstracted over with a **row binder**, `<..E>` (RFC-0208), so a higher-order function
 passes its callback's row through (the `apply` example above). An open row is written with the existing rest convention,
 `effects .{ .FileRead, ..E }`. This **depends on RFC-0208, which is under review**: today the only binder for a row is `record E`
-(RFC-0186), which also lets `E` be used as a type, and an effect row must not be. Until RFC-0208 is accepted a row parameter would
-have to be `record E` with the rule that it appears only inside an `effects` position, which is a restriction the binder makes
-unnecessary (Open questions 3).
+(RFC-0186), which also lets `E` be used as a type, and an effect row must not be. RFC-0208 is additive (it adds a binder and removes
+nothing), and it is settled and implemented in the same release as this RFC (metel-core#1789 and #2167, in the stage that implements
+this one), so no interim restriction on `record E` is needed.
 
 **Rule 6 (no erasure).** An effect is never erased by a type: not by a coercion to `dyn`, not by a generic parameter, not by a
 closure being stored in a field. Where a row is lost, the result is the top row, which is rejected by any bounded context.
@@ -427,9 +427,9 @@ languages and should be checked before this RFC leaves review.
 3. **Rows as `.{ … }`, what remains.** The notation and the entry forms are settled (section 1); to confirm or decide:
    (a) that the grammar accepts a label-only entry, `.FileRead`, in an `effects` position that is not a record type or a row bound
    (today `row_bound` and `record_type` do, and a record type's fields require a type);
-   (b) the row binder: RFC-0208 (`<..E>`, under review, not in the v0.17.0 plan) is the right kind because a row is not a value. Does
-   RFC-0208 move into the same release, or does the slice use `record E` restricted to `effects` positions until it lands, and what
-   does the restriction look like?;
+   (b) the row binder: RFC-0208 (`<..E>`) is the right kind because a row is not a value, and it joins the same release (decided
+   2026-11-22; #1789, #2167). Still open from RFC-0208 and relevant here: a turbofish argument for a row parameter (RFC-0192), so
+   that `apply::<i64, i64, .{ .FileRead }>(..)` can pin a row;
    (c) rule 0, a closed row as an upper bound, and whether it needs a marker on the clause or only the `effects` keyword;
    (d) that a label not in the vocabulary is an error, and how the vocabulary is scoped: structural labels give one program-wide
    namespace, so who may declare a marker, and how a library avoids a clash, is open, and matters for user-declared natives (Interop);
