@@ -34,7 +34,8 @@ A row is written as an ordinary Metel row, `.{ … }`, with the entries Metel ro
 the open tail `..R`. The empty row `.{}` is the same row as `()` (RFC-0231).
 
 It also settles three questions the effects work depends on: the **surface** (the keywords `effect` and `effects`, not RFC-0140's
-`^`), how `Panic` is treated (it stays **ambient**: not a tracked label, but a **no-panic guarantee** is available where asked),
+`^`), how `Panic` is treated (**left open**: the working position is that it stays **ambient**, not a tracked label, with a **no-panic
+guarantee** available where asked; the alternative is to track it in rows),
 and how an operation's **control behaviour** (returns once, may capture, never returns) is classified, so that handling an
 operation never hides that it can abort.
 
@@ -231,16 +232,24 @@ type, and `Never` also describes operations such as `panic` that are not infinit
 The checker may reject terminating programs and does not try to decide termination. It provides no running-time bound: a huge finite
 computation can still stall a UI, and blocking IO needs its own policy.
 
-### 8. Panic, and a no-panic guarantee *(spelling provisional)*
+### 8. Panic, and a no-panic guarantee *(open)*
 
-`Panic` is **ambient**: it is not a tracked label, so rows list declared markers only and a function is not annotated merely because
-it indexes, divides or asserts. Panics are still effects in the algebraic sense (RFC-0014: non-resumable, handled by handlers, Drop
-runs during recovery, an unhandled panic exits immediately), and a handler can catch one. Tracking it would put `effects .{ .Panic }`
-on almost every function, because the spec makes integer overflow panic unconditionally, alongside division by zero, out-of-bounds
+Whether `Panic` is a tracked label is **left open** by this RFC. Panics are effects in the algebraic sense (RFC-0014: non-resumable,
+handled by handlers, Drop runs during recovery, an unhandled panic exits immediately), and a handler can catch one. The question is
+whether they appear in rows. The spec's sources of panic are integer overflow (unconditionally), division by zero, out-of-bounds
 access, `.yolo()` on an absent or error value, a failing `assert` and a direct `panic`.
 
-A guarantee is still needed, by RFC-0202's predicates (no panic, overflow or division by zero) and by restricted interpolation.
-It is **opt-in**: a function may declare that it does not panic, and then the compiler checks it.
+- **Position A, ambient.** `Panic` is not a tracked label, so rows list declared markers only and a function is not annotated merely
+  because it indexes, divides or asserts. This is the **working position** of metel-core#2121 for v0.17.0. Its cost: tracking `Panic`
+  later breaks every explicit row that omitted it, so it is to be revisited before the Stability commitment.
+- **Position B, tracked in rows** (Koka's `exn`). `.Panic` is an ordinary label, and `effects .{}` then guarantees no panic. It is
+  precise, and reversible later with less breakage (dropping a label breaks only code that wrote it). Its cost: every function that
+  does arithmetic, indexes or asserts writes `.Panic`, and most of the roughly 145 `core` natives would carry it.
+
+Either way a **guarantee** is needed, by RFC-0202's predicates (no panic, overflow or division by zero) and by restricted
+interpolation. Under B it is the absence of `.Panic` from a closed row, with no further machinery. Under A it must be **opt-in**: a
+function may declare that it does not panic, and then the compiler checks it. The rest of this section describes that opt-in
+guarantee; its content is the same under either position.
 
 - **What it promises:** no language-level panic. **What it does not:** freedom from out-of-memory, process signals or host failure,
   and not termination (`Diverge` is separate).
@@ -250,7 +259,7 @@ It is **opt-in**: a function may declare that it does not panic, and then the co
 - **Known limit, accepted:** plain integer arithmetic is unavailable in such a body, because integer overflow panics, until checked
   arithmetic (RFC-0142, metel-core#841, outside v0.17.0) exists. RFC-0202 predicates over integers meet the same limit.
 
-Two spellings are candidates, to be chosen in review (Open questions 1):
+Under position A, two spellings are candidates, to be chosen in review (Open questions 1):
 
 1. **A positive marker**, working name `NoPanic`, in the marker mechanism of RFC-0232: presence is the guarantee.
 2. **A negative entry** `!.Panic` in the row, `effects .{ .FileRead, !.Panic }`. With rows written as `.{ … }` this needs **no new
@@ -270,8 +279,8 @@ native(@std.core.list_new) fun new() -> List<T> effects .{};
 ```
 
 A native with no row is unrestricted by rule 4 and cannot be called from a body with a declared row. Every std native is annotated
-before the release that ships this (a std audit item), and a native with unknown external behaviour stays unrestricted. A native
-that may panic carries no panic metadata (section 8). User-declared natives and the contract for them belong to Interop and extend
+before the release that ships this (a std audit item), and a native with unknown external behaviour stays unrestricted. Under position A of
+section 8 a native that may panic carries no panic metadata; under B it carries `.Panic`. User-declared natives and the contract for them belong to Interop and extend
 this metadata.
 
 ### 10. What is deliberately not here
@@ -292,7 +301,7 @@ this metadata.
 | What a callback may do | convention | a checked row on its type |
 | What a native does | undocumented | trusted row on each `native` declaration |
 | A callable's type | markers (RFC-0232) | markers plus a row, one coercion rule |
-| Panic-freedom | not expressible | an opt-in, checked guarantee |
+| Panic-freedom | not expressible | a checked guarantee (opt-in if `Panic` stays ambient) |
 | Existing programs | unrestricted | unchanged: a row restricts only where written |
 
 ---
@@ -308,8 +317,8 @@ this metadata.
   this RFC and keeps handlers out of v0.17.0.
 - **RFC-0113 (context parameters).** RFC-0140 section 11 reads the row as the handler context. This RFC does not depend on RFC-0113
   (markers have no handler, capability APIs start with explicit parameters), but rule 9 relies on its uniqueness discipline.
-- **RFC-0014 and RFC-0164.** A panic is a non-resumable effect handled by handlers; section 8 only decides that it is not tracked in
-  rows and that a guarantee exists.
+- **RFC-0014 and RFC-0164.** A panic is a non-resumable effect handled by handlers; section 8 sets out the two positions on whether it
+  is tracked in rows, without choosing, and describes the guarantee both need.
 - **RFC-0202.** Its predicates must not panic, overflow or divide by zero; section 8 is the mechanism, with the integer limit.
 - **RFC-0010 and metel-core#1674.** Interpolation lowers to ordinary calls before type checking, so the row sees the lowered form; the
   policy that restricts it is #1674's.
@@ -332,7 +341,7 @@ this metadata.
 | Bare braces, `effects { FileRead, ..E }`, with per-declaration identity | Introduces a row-like form of its own that does not reuse RFC-0189's entries, the open-tail rest syntax or the row-kinded parameter, and makes `!Panic` and `effect E` new grammar. It does keep declaration identity across modules, which the chosen form trades for the existing notation. |
 | Every marker a typed entry, `.fs: FileRead` | Gives markers nominal identity through a unit-like type, but each entry then needs a role label nobody wants to name, and the row grows two names per marker. |
 | Marker effects as ordinary aspects (`effect aspect`) | Any type could then implement one, so `extend T: FileRead` could manufacture a permission or erase an effect. A label is not implementable. |
-| Track `Panic` in rows (Koka's `exn`) | Precise and reversible later, but with explicit rows every function that does arithmetic, indexes or asserts must write `effects .{ .Panic }`, and most of the `core` natives would carry it; the slice's tests do not need it. Decided against for v0.17.0 (metel-core#2121), revisited before the Stability commitment. |
+| Track `Panic` in rows (Koka's `exn`) | **Not rejected: this is position B of section 8, left open.** Precise and reversible later, but with explicit rows every function that does arithmetic, indexes or asserts must write `effects .{ .Panic }`, and most of the `core` natives would carry it; the v0.17.0 slice's tests do not need it. The working position for v0.17.0 is ambient (metel-core#2121), revisited before the Stability commitment. |
 | Effects by subtyping instead of row polymorphism | Koka chose rows because the constraints get complex and combining polymorphism with subtyping can make inference undecidable. The subset rule here is applied at coercions, not solved in unification. |
 | Infer every named function's row | A public signature would change when a body does, and a missing annotation would read as evidence of purity. Inference is limited to private functions and closures (rule 4). |
 | Rows required on every named function | Breaks every existing program for no new guarantee. The gradual rule keeps them. |
@@ -358,11 +367,17 @@ languages and should be checked before this RFC leaves review.
 
 ## Open questions
 
-1. **The spelling of the no-panic guarantee** (section 8): a positive marker or the negative entry `!.Panic`, which needs no new
+1. **Is `Panic` tracked in rows, or ambient?** (section 8) Position A, ambient, is the working position for v0.17.0
+   (metel-core#2121); position B, tracked as `.Panic`, is precise and cheaper to reverse. This RFC leaves it open. Evidence that would
+   decide it: how much std and user code carries `.Panic` under B, whether the opt-in guarantee under A is used in practice, and
+   whether tracking it later is acceptable before the Stability commitment.
+   **If ambient (A), the spelling of the no-panic guarantee:** a positive marker or the negative entry `!.Panic`, which needs no new
    grammar. If `!.Panic`: how `.Panic` is exempt from the rule that a closed row excludes unlisted labels (rule 0 makes a closed row
    an upper bound, so the exemption must be stated); whether a positive `.Panic` entry is meaningless or rejected; that the bound
    needs an analysis of the body, not an impl-table lookup as in RFC-0072; and whether panic-freedom is **inferred** from visible
    bodies and stated only on public or opaque functions, which would remove most of the annotation burden.
+   **If tracked (B):** what migration looks like for the std natives and existing programs, and whether `.Panic` is inferred for
+   private functions so that only public signatures state it.
 2. **The default for a named function with no row** (rule 4): unrestricted, with inference for private functions. Is "unrestricted"
    the right top element, and should a `pub` function without a row be a warning?
 3. **Rows as `.{ … }`, what remains.** The notation and the entry forms are settled (section 1); to confirm or decide:
