@@ -1413,8 +1413,10 @@ implementation).
   kinds: marker entries (declared labels such as `FileRead`, `Network`, `Diverge`, never
   erased by a handler) and operation entries (RFC-0140's interfaces, with the Koka
   `fun`/`ctl`/`final ctl` classification, which decides RFC-0140's open question 4, and at
-  most one handler per label, which decides its open question 6). The keywords `effect`
-  and `effects` replace RFC-0140's `^`. Rows are upper bounds, inferred on closures and
+  most one handler per interface, which decides its open question 6). The keywords `effect`
+  and `effects` replace RFC-0140's `^`, and a row is written as an ordinary Metel row,
+  `effects .{ .FileRead, !.Panic, ..E }`, reusing RFC-0189's entries, the open tail and the
+  row-kinded parameter (labels are structural, RFC-0221). Rows are upper bounds, inferred on closures and
   private functions, kept through generics, aspect dispatch and `dyn`, with a subset
   coercion that reuses RFC-0232's marker mechanism; a named function with no row is
   unrestricted, so existing programs keep their meaning. `Panic` stays ambient, with an

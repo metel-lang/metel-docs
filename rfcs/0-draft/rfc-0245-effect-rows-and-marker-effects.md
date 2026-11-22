@@ -18,17 +18,20 @@ expected when `E ⊆ F`, and a closure's row is inferred from its body and kept 
 type erasure.
 
 ```metel
-effect FileRead;                                   // a marker: a label, not a value
+effect FileRead;                                   // a marker: puts the label `.FileRead` in the vocabulary
 effect Console { fun read_line() -> String; }      // an operation interface (RFC-0140)
 
-fun load_config(fs: &ReadDirectory, path: &String) -> Result<String, ReadError> effects { FileRead } { .. }
-fun uppercase(s: &String) -> String effects {} { .. }                          // no tracked effects
+fun load_config(fs: &ReadDirectory, path: &String) -> Result<String, ReadError> effects .{ .FileRead } { .. }
+fun uppercase(s: &String) -> String effects .{} { .. }                         // the empty row: no tracked effects
 
-fun apply<T, U, effect E>(x: T, f: once |T| -> U effects E) -> U effects E { f(x) }
+fun apply<T, U, record E>(x: T, f: once |T| -> U effects .{ ..E }) -> U effects .{ ..E } { f(x) }
 
 apply(3, |n| n + 1);                    // E is inferred: the closure has no tracked effects
-apply(3, |n| { retry_forever(); n });   // E is { Diverge } and the caller's own row must allow it
+apply(3, |n| { retry_forever(); n });   // E is .{ .Diverge } and the caller's own row must allow it
 ```
+
+A row is written as an ordinary Metel row, `.{ … }`, with the entries Metel rows already have (RFC-0189): `.x`, `.x: T`, `!.x` and
+the open tail `..R`. The empty row `.{}` is the same row as `()` (RFC-0231).
 
 It also settles three questions the effects work depends on: the **surface** (the keywords `effect` and `effects`, not RFC-0140's
 `^`), how `Panic` is treated (it stays **ambient**: not a tracked label, but a **no-panic guarantee** is available where asked),
@@ -66,8 +69,8 @@ made on 2026-11-22 (metel-core#2139), and states what remains open.
 ### 1. Entries: markers and operations *(provisional syntax)*
 
 ```metel
-effect Diverge;                          // a marker entry: a label with declaration identity
-effect Console {                         // an operation entry: an interface a handler implements
+effect Diverge;                          // a marker: declares the label `.Diverge` in the effect vocabulary
+effect Console {                         // an operation interface a handler implements
     fun read_line() -> String;
     fun write_line(s: &String);
 }
@@ -75,7 +78,23 @@ effect Console {                         // an operation entry: an interface a h
 
 A semicolon declares a **marker**; a body declares an **operation interface**. A marker is a label, not an aspect that types can
 implement: `extend T: FileRead` is an error, because that would let any type manufacture a permission or erase a function's
-effects. A label has **declaration identity across modules**: two identically spelled declarations are different labels.
+effects.
+
+In a row, the two kinds of entry take the two entry forms rows already have:
+
+| Entry | Written | Meaning |
+|---|---|---|
+| marker | `.FileRead` | the label `.FileRead` (a label of any type, in RFC-0189's terms) |
+| operation | `.console: Console` | a handler role `.console` for the interface `Console`, possibly applied, `.state: State<S>` (RFC-0140 section 11: a row of role and handler) |
+| absence | `!.Panic` | no such label (section 8) |
+| open tail | `..E` | the rest of a row parameter |
+
+**Labels are structural.** RFC-0221 makes a row label a name, written `.name` and never bare, so `.FileRead` is the same label
+wherever it is written. The `effect FileRead;` declaration puts the label into the **vocabulary**, and a label in an `effects` row
+that is not in the vocabulary is an error: without that, a typo in a negative entry (`!.Panik`) would silently guarantee nothing.
+Two declarations of one label in a program are an error, not two labels. This trades per-declaration identity for the existing row
+notation. Effects are restrictions, so a collision makes a class coarser, never unsound; operation entries keep nominal identity
+through their interface type. Who may declare a marker, and how a library avoids a clash, is an open point (Open questions 3).
 
 Operation labels and marker labels have **distinct names**: an operation `Console` is handled by a handler that may itself use a
 terminal, which leaves the markers `ConsoleRead` and `ConsoleWrite` in the residual row. The same operation handled by a fixed
@@ -87,16 +106,21 @@ fabricate filesystem or network authority; it needs a capability for it.
 
 **Initial marker vocabulary** (proposal): `ConsoleRead`, `ConsoleWrite`, `FileRead`, `FileWrite`, `Network`, `Process`, `Env`,
 `Clock`, `Random` and `Diverge`. Allocation, blocking and a runtime-managed release marker are **not** in the first vocabulary:
-`effects {}` means "no tracked effects", not "allocation-free" or "cheap" (see Open questions 7). Effect inheritance and aliases
+`effects .{}` means "no tracked effects", not "allocation-free" or "cheap" (see Open questions 7). Effect inheritance and aliases
 (`Net: IO`) are deferred until the direction of subsumption is specified; the first version has independent labels and explicit sets.
 
 ### 2. Rows *(provisional syntax)*
 
 ```metel
-fun f(..) -> T effects { FileRead, Network } { .. }     // a declared upper bound
-fun g(..) -> T effects {} { .. }                        // no tracked effects
-fun h(..) -> T { .. }                                   // no row: see rule 4
+fun f(..) -> T effects .{ .FileRead, .Network } { .. }  // a declared upper bound
+fun g(..) -> T effects .{} { .. }                        // no tracked effects
+fun h(..) -> T { .. }                                    // no row: see rule 4
 ```
+
+**Rule 0 (what a closed row means here).** As a record type, a closed row `.{ .a }` has exactly the field `.a`. In an `effects`
+position a closed row is an **upper bound**: at most these labels. A row with an open tail, `.{ .a, ..E }`, is "these labels and
+whatever `E` stands for". The relation in rule 3 is the same one as row narrowing (RFC-0117), read as "a callee's needs are a
+projection of what the context provides": the context row is the wider one.
 
 **Rule 1 (upper bound).** A row is an upper bound: it does not say every execution performs every listed effect. A body *fits* a
 row when the union of the effects of every evaluated subexpression, every invoked operation and every implicit call is a subset
@@ -114,16 +138,17 @@ it cannot be called from a body whose row is declared. A private (non-`pub`) fun
 its body; a `pub` function never has one inferred, so a public signature does not change when a body does. A closure's row is always
 inferred. This is gradual: existing programs keep their meaning, and a restriction applies exactly where a row is written.
 
-**Rule 5 (row parameters).** A row can be abstracted over with a row parameter, `effect E`, so a higher-order function passes its
-callback's row through (the `apply` example above). Open rows and unions are written with the existing rest convention,
-`effects { FileRead, ..E }` *(provisional; see Open questions 3)*.
+**Rule 5 (row parameters).** A row can be abstracted over with the existing row-kinded generic parameter, `record E` (RFC-0186,
+RFC-0208), so a higher-order function passes its callback's row through (the `apply` example above). An open row is written with the
+existing rest convention, `effects .{ .FileRead, ..E }`. Whether a row with no values behind it is accepted where a record-kinded
+parameter is expected is to be confirmed (Open questions 3).
 
 **Rule 6 (no erasure).** An effect is never erased by a type: not by a coercion to `dyn`, not by a generic parameter, not by a
 closure being stored in a field. Where a row is lost, the result is the top row, which is rejected by any bounded context.
 
 ### 3. Callables and RFC-0232
 
-A written function type carries its row after the result: `once |T| -> U effects E`. By RFC-0232 a written function type is
+A written function type carries its row after the result: `once |T| -> U effects .{ ..E }`. By RFC-0232 a written function type is
 `dyn Callable<Args, Ret>` with markers; the row is one more component of that type. Two properties follow.
 
 - **The direction of widening is the reverse of a capability marker.** For `Copy`, `CallMany` and `CallShared` a callable that
@@ -138,7 +163,7 @@ A written function type carries its row after the result: `once |T| -> U effects
 ### 4. Generics and polymorphism
 
 A generic function bounded by a callable keeps the row of whatever it is instantiated with. A bound may constrain it:
-`F: Callable<.{ .0: T }, U> + effects { FileRead }` states that `F` may perform at most `FileRead`. The result row of a function
+`F: Callable<.{ .0: T }, U> + effects .{ .FileRead }` states that `F` may perform at most `.FileRead`. The result row of a function
 that calls a row-polymorphic callback includes the callback's row, as `apply` shows. Row inference is first-order: it solves for
 `E` at a call site from the argument's row, as type arguments are solved today, and does not introduce subtyping constraints into
 unification (the same choice Koka makes, see Prior art).
@@ -178,9 +203,10 @@ it handles itself, is `fun`. Handling a `ctl` or `final ctl` operation inside a 
 **not** make the block control-transparent: the label disappearing must not hide that the handler may abort. A policy that
 requires "always returns" (restricted interpolation, a restricted callback) checks control-transparency in addition to the row.
 
-**Rule 9 (one handler per label).** In a row, labels form a set, and in the first version **at most one handler of a given
-operation label is in scope** (RFC-0113's "ambiguity is always a compile error", RFC-0140 section 11). A nested `handle` of a
-label already handled is rejected. This is the conservative answer to RFC-0140 open question 6, chosen because it can be relaxed
+**Rule 9 (one handler per interface).** The entries of a row form a set with at most one entry per operation interface, and in
+the first version **at most one handler of a given interface is in scope** (RFC-0113's "ambiguity is always a compile error",
+RFC-0140 section 11, where the label is the type). A nested `handle` of an interface already handled is rejected. A role label
+such as `.console` is then a name for the interface's one entry, not a way to hold two. This is the conservative answer to RFC-0140 open question 6, chosen because it can be relaxed
 later (to scoped labels, with an explicit way to address the outer handler, as Koka's duplicate labels do) without breaking
 programs that were accepted under it, whereas the reverse cannot.
 
@@ -209,7 +235,7 @@ computation can still stall a UI, and blocking IO needs its own policy.
 
 `Panic` is **ambient**: it is not a tracked label, so rows list declared markers only and a function is not annotated merely because
 it indexes, divides or asserts. Panics are still effects in the algebraic sense (RFC-0014: non-resumable, handled by handlers, Drop
-runs during recovery, an unhandled panic exits immediately), and a handler can catch one. Tracking it would put `effects { Panic }`
+runs during recovery, an unhandled panic exits immediately), and a handler can catch one. Tracking it would put `effects .{ .Panic }`
 on almost every function, because the spec makes integer overflow panic unconditionally, alongside division by zero, out-of-bounds
 access, `.yolo()` on an absent or error value, a failing `assert` and a direct `panic`.
 
@@ -227,19 +253,20 @@ It is **opt-in**: a function may declare that it does not panic, and then the co
 Two spellings are candidates, to be chosen in review (Open questions 1):
 
 1. **A positive marker**, working name `NoPanic`, in the marker mechanism of RFC-0232: presence is the guarantee.
-2. **A negative entry** `!Panic` in the row, `effects { FileRead, !Panic }`, following RFC-0189 (negative row entries) and RFC-0072
-   (`T: !Aspect`). `Panic` is then an ordinary label that is *unchecked by default*, and `!Panic` opts in to checking. This reads
-   uniformly with `Diverge`, whose guarantee is also its absence, and it makes tracking `Panic` by default later a change of
-   default and not of vocabulary. Internally it can still be a positive guarantee bit, so section 3 is unaffected.
+2. **A negative entry** `!.Panic` in the row, `effects .{ .FileRead, !.Panic }`. With rows written as `.{ … }` this needs **no new
+   grammar**: RFC-0189 already implements negative entries (`!.x`), and RFC-0072 the same idea for aspects (`T: !Aspect`). `.Panic`
+   is then an ordinary label that is *unchecked by default*, and `!.Panic` opts in to checking. This reads uniformly with `Diverge`,
+   whose guarantee is also its absence, and it makes tracking `Panic` by default later a change of default and not of vocabulary.
+   Internally it can still be a positive guarantee bit, so section 3 is unaffected.
 
 ### 9. Native effect metadata
 
 A `native` declaration states its row, and the row is **trusted**: it is the declaration's promise about the host code.
 
 ```metel
-native(@std.fs.read)  pub fun read(path: String) -> Result<String, OsError> effects { FileRead };
-native(@std.core.print) pub fun print(s: String) effects { ConsoleWrite };
-native(@std.core.list_new) fun new() -> List<T> effects {};
+native(@std.fs.read)  pub fun read(path: String) -> Result<String, OsError> effects .{ .FileRead };
+native(@std.core.print) pub fun print(s: String) effects .{ .ConsoleWrite };
+native(@std.core.list_new) fun new() -> List<T> effects .{};
 ```
 
 A native with no row is unrestricted by rule 4 and cannot be called from a body with a declared row. Every std native is annotated
@@ -272,11 +299,11 @@ this metadata.
 
 ## Interactions
 
-- **RFC-0232 and RFC-0161.** The row rides on the callable type and reuses the marker mechanism's widening (section 3). The
-  `effect E` row parameter is a new kind of generic parameter; whether it reuses RFC-0208's row-only generic parameters is an open
-  point (Open questions 3).
+- **RFC-0232 and RFC-0161.** The row rides on the callable type and reuses the marker mechanism's widening (section 3). The row
+  parameter is the existing row-kinded generic parameter (`record E`, RFC-0186 and RFC-0208); that a row with no values behind it is
+  accepted there is to be confirmed (Open questions 3).
 - **RFC-0140.** One calculus with two entry kinds (sections 1 and 6). This RFC decides its open questions 4 (the `fun`/`ctl`/`final
-  ctl` classification) and 6 (at most one handler per label, relaxable). RFC-0140's `^ E` notation is replaced by the keywords here.
+  ctl` classification) and 6 (at most one handler per interface, relaxable). RFC-0140's `^ E` notation is replaced by the keywords here.
   Its sections 2, 3, 6, 7 and 8 rest on allocator tags that Memory model settlement (metel-core#2116) amends; that is independent of
   this RFC and keeps handlers out of v0.17.0.
 - **RFC-0113 (context parameters).** RFC-0140 section 11 reads the row as the handler context. This RFC does not depend on RFC-0113
@@ -288,7 +315,10 @@ this metadata.
   policy that restricts it is #1674's.
 - **RFC-0241 (Core).** Core must reserve effect information (its open questions 29 and 36); rows are checked in the frontend and
   add no runtime representation, so Core only needs a place to carry them for later phases.
-- **RFC-0189, RFC-0072.** Negative entries and negative bounds are the model for candidate 2 of section 8.
+- **RFC-0189, RFC-0221, RFC-0231, RFC-0186, RFC-0208, RFC-0117.** The row notation: entries `.x`, `.x: T` and `!.x` (RFC-0189), labels
+  written `.name` and never bare (RFC-0221), the empty row `.{}` equal to `()` (RFC-0231), the row-kinded parameter (RFC-0186,
+  RFC-0208), and narrowing as the relation behind rule 3 (RFC-0117). Negative entries are also what candidate 2 of section 8 is.
+- **RFC-0072.** Negative bounds on aspects (`T: !Aspect`), the same idea for a different kind of bound.
 - **RFC-0194 (linear closures).** A closure that captures a linear value is linear; its row is independent. Exactly-once consumption
   matters for handlers, not for rows.
 
@@ -298,9 +328,11 @@ this metadata.
 
 | Alternative | Why it loses |
 |---|---|
-| Keep RFC-0140's `^ E` notation | A symbol for a clause that restricts a body, used in bounds, on parameters and on types, reads worse than a keyword, and the pipe notation for function types (RFC-0154) already makes the type position crowded. Keywords also let `effects {}` state "no tracked effects" without a separate `pure`. This is the #1662 draft's recommendation (its decision 7). |
+| Keep RFC-0140's `^ E` notation | A symbol for a clause that restricts a body, used in bounds, on parameters and on types, reads worse than a keyword, and the pipe notation for function types (RFC-0154) already makes the type position crowded. Keywords also let `effects .{}` state "no tracked effects" without a separate `pure`. This is the #1662 draft's recommendation (its decision 7). |
+| Bare braces, `effects { FileRead, ..E }`, with per-declaration identity | Introduces a row-like form of its own that does not reuse RFC-0189's entries, the open-tail rest syntax or the row-kinded parameter, and makes `!Panic` and `effect E` new grammar. It does keep declaration identity across modules, which the chosen form trades for the existing notation. |
+| Every marker a typed entry, `.fs: FileRead` | Gives markers nominal identity through a unit-like type, but each entry then needs a role label nobody wants to name, and the row grows two names per marker. |
 | Marker effects as ordinary aspects (`effect aspect`) | Any type could then implement one, so `extend T: FileRead` could manufacture a permission or erase an effect. A label is not implementable. |
-| Track `Panic` in rows (Koka's `exn`) | Precise and reversible later, but with explicit rows every function that does arithmetic, indexes or asserts must write `effects { Panic }`, and most of the `core` natives would carry it; the slice's tests do not need it. Decided against for v0.17.0 (metel-core#2121), revisited before the Stability commitment. |
+| Track `Panic` in rows (Koka's `exn`) | Precise and reversible later, but with explicit rows every function that does arithmetic, indexes or asserts must write `effects .{ .Panic }`, and most of the `core` natives would carry it; the slice's tests do not need it. Decided against for v0.17.0 (metel-core#2121), revisited before the Stability commitment. |
 | Effects by subtyping instead of row polymorphism | Koka chose rows because the constraints get complex and combining polymorphism with subtyping can make inference undecidable. The subset rule here is applied at coercions, not solved in unification. |
 | Infer every named function's row | A public signature would change when a body does, and a missing annotation would read as evidence of purity. Inference is limited to private functions and closures (rule 4). |
 | Rows required on every named function | Breaks every existing program for no new guarantee. The gradual rule keeps them. |
@@ -326,19 +358,26 @@ languages and should be checked before this RFC leaves review.
 
 ## Open questions
 
-1. **The spelling of the no-panic guarantee** (section 8): a positive marker or `!Panic`. If `!Panic`: how `Panic` is exempt from the
-   rule that a closed row excludes unlisted labels; whether a positive `effects { Panic }` is meaningless or rejected; that the bound
+1. **The spelling of the no-panic guarantee** (section 8): a positive marker or the negative entry `!.Panic`, which needs no new
+   grammar. If `!.Panic`: how `.Panic` is exempt from the rule that a closed row excludes unlisted labels (rule 0 makes a closed row
+   an upper bound, so the exemption must be stated); whether a positive `.Panic` entry is meaningless or rejected; that the bound
    needs an analysis of the body, not an impl-table lookup as in RFC-0072; and whether panic-freedom is **inferred** from visible
    bodies and stated only on public or opaque functions, which would remove most of the annotation burden.
 2. **The default for a named function with no row** (rule 4): unrestricted, with inference for private functions. Is "unrestricted"
    the right top element, and should a `pub` function without a row be a warning?
-3. **Row syntax and the row-parameter kind.** `effects { A, ..E }` follows the open-row convention for records; `effect E` introduces a
-   parameter of a new kind. Does it reuse RFC-0208's row-only generic parameters, or is it a separate kind with its own rules?
+3. **Rows as `.{ … }`, what remains.** The notation and the entry forms are settled (section 1); to confirm or decide:
+   (a) that the grammar accepts a label-only entry, `.FileRead`, in an `effects` position that is not a record type or a row bound
+   (today `row_bound` and `record_type` do, and a record type's fields require a type);
+   (b) that a row with no values behind it is accepted by the row-kinded parameter `record E`;
+   (c) rule 0, a closed row as an upper bound, and whether it needs a marker on the clause or only the `effects` keyword;
+   (d) that a label not in the vocabulary is an error, and how the vocabulary is scoped: structural labels give one program-wide
+   namespace, so who may declare a marker, and how a library avoids a clash, is open, and matters for user-declared natives (Interop);
+   (e) whether an operation entry needs its role label (`.console: Console`) or can be written by its interface alone.
 4. **Control classification details** (section 6). Is the class per operation or per interface? Is `fun` the right default? Is
    control-transparency (rule 8) the right condition for restricted interpolation, or must it also bound how many times an operation
    is performed?
-5. **One handler per label** (rule 9). Relaxing it to scoped labels is non-breaking, but what does addressing the outer handler look like,
-   and does RFC-0113's uniqueness rule survive it?
+5. **One handler per interface** (rule 9). Relaxing it to scoped entries is non-breaking, but what does addressing the outer handler
+   look like, and does RFC-0113's uniqueness rule survive it?
 6. **Cross-module boundaries and trust.** What stops a function from declaring a row its body does not fit, in a module compiled
    separately? How are trusted native rows audited, and is `unsafe` needed to declare one?
 7. **Vocabulary.** Whether allocation, blocking, nondeterminism, clock access and a runtime-managed release need separate labels, and
@@ -346,7 +385,7 @@ languages and should be checked before this RFC leaves review.
 8. **Implicit cleanup and generic destruction.** The destruction-effect summary of section 10 is a prerequisite to the full
    restriction guarantee, not polish: how does generic code destroying an unknown `T` bound its cleanup?
 9. **Termination rules** for finite loops and mutual recursion, and where proof ends and trust begins across modules.
-10. **Interaction with comptime** (RFC-0132): is a `comptime fun` required to have `effects {}`, and the no-panic guarantee where a
+10. **Interaction with comptime** (RFC-0132): is a `comptime fun` required to have `effects .{}`, and the no-panic guarantee where a
     predicate evaluates?
 
 ---
@@ -355,8 +394,9 @@ languages and should be checked before this RFC leaves review.
 
 Staged, each step independent of the next, and **marker entries and rows only** in v0.17.0 (the stage "Effect rows and markers"):
 
-1. The keywords and grammar for `effect`, `effects` and the row parameter; operation interfaces parse and are typed as labels, with
-   no runtime (handlers are RFC-0140's).
+1. The keywords and grammar for `effect` and for an `effects` clause that takes a `.{ … }` row, the vocabulary check, and the
+   row-kinded parameter; operation interfaces parse and are typed as entries, with no runtime (handlers are RFC-0140's). The first
+   task is to confirm that the grammar accepts a label-only entry there (Open questions 3a).
 2. The row component of the callable type, the coercion rule and closure inference, on RFC-0232's mechanism.
 3. Aspect-method rows and implementation checking; `dyn` rows.
 4. The std native audit: a row on each of the roughly 160 `native` declarations.
