@@ -2,8 +2,12 @@
 id: rfc-0205
 title: "Hole Sections and Operator Functions"
 date: '2026-11-01'
-status: draft
+status: under-review
+updated: '2026-11-22'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2142'
 ---
+
+> **Status — under review (2026-11-22).** Taken to review as part of the metel-core v0.17.0 plan (#2142)
 
 ## Summary
 
