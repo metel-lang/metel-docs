@@ -3,6 +3,7 @@ id: rfc-0244
 title: "Unconditional derivation and the conditional marker"
 date: '2026-11-22'
 status: draft
+tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
 ---
 
 ## Summary
