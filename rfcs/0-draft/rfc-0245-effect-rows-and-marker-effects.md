@@ -204,6 +204,14 @@ it handles itself, is `fun`. Handling a `ctl` or `final ctl` operation inside a 
 **not** make the block control-transparent: the label disappearing must not hide that the handler may abort. A policy that
 requires "always returns" (restricted interpolation, a restricted callback) checks control-transparency in addition to the row.
 
+**Rule 8a (early exits are control too).** `?`, `return` and `break` are non-local control flow that is not an operation, and rule 8
+as written does not see them. A body that contains one whose target lies **outside** a restricted region is not control-transparent
+with respect to that region. The case that matters is interpolation: in `"${ f()? }"` the `?` returns from the *enclosing function*
+in the middle of building a string, an exit invisible at the placeholder, whereas a `?` inside a restricted callback returns from the
+callback and stays local. The language already treats a propagating `?` as an implicitly chosen exit once: RFC-0164 classifies a
+mutating closure with one as call-once. A restricted region therefore either rejects an early exit that leaves it or records it as
+a control behaviour of the region; which, and how it composes with `Try` (RFC-0190), is open (Open questions 11).
+
 **Rule 9 (one handler per interface).** The entries of a row form a set with at most one entry per operation interface, and in
 the first version **at most one handler of a given interface is in scope** (RFC-0113's "ambiguity is always a compile error",
 RFC-0140 section 11, where the label is the type). A nested `handle` of an interface already handled is rejected. A role label
@@ -213,6 +221,26 @@ programs that were accepted under it, whereas the reverse cannot.
 
 Evidence passing is an implementation strategy for handlers and is not part of this RFC. The classification is what lets an
 implementation avoid capturing a continuation for `fun` operations.
+
+#### Errors as values, and abort *(proposed position, open)*
+
+Metel handles an expected failure as a value: `Result<T, E>` and `Option<T>` are ordinary types, and `?` is an early `return` that
+rebuilds the enclosing return type (RFC-0182, generalized by `Try` and `FromResidual` in RFC-0190). An abort operation (`final ctl`)
+does a similar job in effect-polymorphic code, and a panic is itself a non-resumable effect (RFC-0014). Three mechanisms can fail a
+computation, and nothing yet says how they relate. The position proposed here, to be confirmed with RFC-0014:
+
+- **`Result` and `?` remain the idiom for recoverable, expected errors.** The error is visible in the function's type.
+- **An effect is behaviour that is not in the type.** A function that returns `Result` gets no effect label for failing; an abort
+  entry appears in a row only for an operation that really is one.
+- **No `Exception` effect in std at first.** Handlers are not in v0.17.0, and an `Exception` effect beside `Result` would give two
+  competing styles before there is evidence for either.
+- **When handlers arrive, bridges both ways** are specified: a standard handler that turns an abort into `Err`, and `?` rebuilding
+  an enclosing type through `FromResidual` (RFC-0190) as the way back. RFC-0014 carries the related open question of whether
+  recovering from a panic produces a `Result<T, PanicError>`.
+
+A linear value live at an exit is the same question in both worlds: RFC-0089 section 2.2 lists an early `return` or `?` as an
+implicit drop that needs `T: Discard`, so such a value is rejected at `?`, and the Linear types stage extends the rule to handler
+abandonment and panic recovery (they have no implicit drop).
 
 ### 7. Divergence
 
@@ -317,8 +345,15 @@ this metadata.
   this RFC and keeps handlers out of v0.17.0.
 - **RFC-0113 (context parameters).** RFC-0140 section 11 reads the row as the handler context. This RFC does not depend on RFC-0113
   (markers have no handler, capability APIs start with explicit parameters), but rule 9 relies on its uniqueness discipline.
-- **RFC-0014 and RFC-0164.** A panic is a non-resumable effect handled by handlers; section 8 sets out the two positions on whether it
-  is tracked in rows, without choosing, and describes the guarantee both need.
+- **RFC-0014.** A panic is a non-resumable effect handled by handlers; section 8 sets out the two positions on whether it is tracked
+  in rows, without choosing, and describes the guarantee both need. RFC-0014's own open question of how recovery relates to `Result`
+  is the one this RFC's subsection on errors as values defers to it.
+- **RFC-0164.** A mutating closure with a propagating `?` is call-once, because the exit is implicitly chosen: the precedent for
+  treating an early exit as control (rule 8a).
+- **RFC-0190 and RFC-0182 (`?`, `Try`, `FromResidual`).** `?` rebuilds the enclosing return type; it is the way back from an abort to a
+  value, and a control edge that rule 8a must see. RFC-0190 is scheduled with Numeric and operator model, after this release.
+- **RFC-0089 section 2.2.** An early `return` or `?` is an implicit drop needing `T: Discard`; handler abandonment and panic recovery
+  are the same kind of site, which the Linear types stage states.
 - **RFC-0202.** Its predicates must not panic, overflow or divide by zero; section 8 is the mechanism, with the integer limit.
 - **RFC-0010 and metel-core#1674.** Interpolation lowers to ordinary calls before type checking, so the row sees the lowered form; the
   policy that restricts it is #1674's.
@@ -402,6 +437,12 @@ languages and should be checked before this RFC leaves review.
 9. **Termination rules** for finite loops and mutual recursion, and where proof ends and trust begins across modules.
 10. **Interaction with comptime** (RFC-0132): is a `comptime fun` required to have `effects .{}`, and the no-panic guarantee where a
     predicate evaluates?
+11. **Early exits in restricted regions** (rule 8a). Is `?`, `return` or `break` crossing a restricted region rejected, or recorded as a
+    control behaviour of the region? Does the answer for `${ f()? }` differ from the one for a restricted callback? How does it
+    compose with a `Try` type other than `Result` and `Option` (RFC-0190)? Restricted interpolation (metel-core#1674) needs the answer.
+12. **`Result`, `?` and abort** (the subsection after rule 9). The proposed position (`Result` as the idiom, no `Exception` effect at
+    first, bridges when handlers arrive) is to be confirmed with RFC-0014, together with its open question of what recovering from a
+    panic produces.
 
 ---
 
