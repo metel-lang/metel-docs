@@ -1416,7 +1416,7 @@ implementation).
   most one handler per interface, which decides its open question 6). The keywords `effect`
   and `effects` replace RFC-0140's `^`, and a row is written as an ordinary Metel row,
   `effects .{ .FileRead, !.Panic, ..E }`, reusing RFC-0189's entries, the open tail and the
-  row-kinded parameter (labels are structural, RFC-0221). Rows are upper bounds, inferred on closures and
+  row binder `<..E>` of RFC-0208, a dependency, since a row is not a value (labels are structural, RFC-0221). Rows are upper bounds, inferred on closures and
   private functions, kept through generics, aspect dispatch and `dyn`, with a subset
   coercion that reuses RFC-0232's marker mechanism; a named function with no row is
   unrestricted, so existing programs keep their meaning. Whether `Panic` is
