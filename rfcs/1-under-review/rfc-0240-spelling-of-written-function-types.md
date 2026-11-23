@@ -34,7 +34,10 @@ is `.{ .0: i64, .1: String }`, and `()` is the empty row (RFC-0231). The qualifi
 `once fun(i64) -> i64`, `copy once Fun<(i64,), i64>`.
 
 Whatever the choice, it changes spelling only: the type, its meaning, the qualifiers and every rule about them stay as RFC-0154,
-RFC-0153, RFC-0219 and RFC-0232 state them. This is a design draft. Nothing here is accepted.
+RFC-0153, RFC-0219 and RFC-0232 state them.
+
+**Decided 2026-11-23 (language owner):** the sugar is `fun(T) -> R`, the generic spelling is `Fun<Args, Ret>`, the closure literal
+stays `|x| { .. }`, and the qualifiers stay in prefix position. See Decision; the RFC is not yet accepted.
 
 ---
 
@@ -153,16 +156,37 @@ alone is for (the common case), and by the sugar being syntax only: it desugars 
 ## Open questions
 
 1. **Is there a generic spelling beside `dyn Callable<..> + markers`?** An alias `Fun<Args, Ret>`, or only the `dyn` form.
-2. **Which sugar, if any.** The draft lays them out without choosing.
+   **Decided 2026-11-23:** the alias `Fun<Args, Ret>`.
+2. **Which sugar, if any.** The draft lays them out without choosing. **Decided 2026-11-23:** `fun(T) -> R`.
 3. **Does the closure literal change with the type?** Keeping the annotation and the literal in one shape was RFC-0154's main reason.
-   If the type moves off the pipe, the literal can stay (`|n| { .. }`) or follow it.
-4. **Is two spellings acceptable?** Section "Question 2" argues it is; the alternative is the generic form alone.
+   If the type moves off the pipe, the literal can stay (`|n| { .. }`) or follow it. **Decided 2026-11-23:** the literal stays
+   `|x| { .. }`, as in Rust, where literals use pipes and types use `fn(..)`.
+4. **Is two spellings acceptable?** Section "Question 2" argues it is; the alternative is the generic form alone. **Decided
+   2026-11-23:** yes. The sugar is syntax only and desugars at parse time to the one type.
 5. **Is `Fun` a reserved name or an ordinary std type?** A reserved name cannot be shadowed or imported under another name.
-6. **The unary row in the generic form.** `Fun<(i64,), R>`, or a separate spelling for the common case.
-7. **Ordering with RFC-0232.** The generic form is a restatement of RFC-0232; should the two be decided together?
+   **Decided 2026-11-23:** an ordinary std type alias.
+6. **The unary row in the generic form.** `Fun<(i64,), R>`, or a separate spelling for the common case. **Decided 2026-11-23:**
+   `Fun<(i64,), R>`; the sugar `fun(i64) -> R` is the separate spelling for the common case.
+7. **Ordering with RFC-0232.** The generic form is a restatement of RFC-0232; should the two be decided together? **Decided
+   2026-11-23:** `Fun<Args, Ret>` lands with RFC-0232, since it names RFC-0232's erased form. The sugar does not depend on RFC-0232
+   and can land first.
 
 ---
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** decided by the language owner on 2026-11-23, pending the acceptance review against RFC-0154, RFC-0232 and RFC-0219.
+
+1. **Sugar: `fun(P0, .., Pn) -> R`.** It replaces the pipe form `|P0, .., Pn| -> R` in type position. The pipe spelling of a
+   type becomes a parse error that names the new one; there is no transition period, since the language has no users. The
+   one-tuple-argument case is `fun((A, B)) -> R`, and no arguments is `fun() -> R`.
+2. **Generic: `Fun<Args, Ret>`**, an ordinary std type alias for RFC-0232's `dyn Callable<Args, Ret>` with its markers. `Args` is
+   a row, so a tuple type lists the parameters (`Fun<(i64,), R>` for one) and a record type lists keyword parameters. It lands
+   with RFC-0232.
+3. **The closure literal is unchanged:** `|x| { .. }`, with its capture list and qualifiers where they are.
+4. **The qualifiers stay in prefix position**, order-insensitive as before: `once fun(i64) -> i64`, `copy var fun(&T) -> boolean`.
+   The `var fun` reading the draft worried about only arises in type position, where no binding can start.
+
+The meaning of a function type, its qualifiers and every rule about them are unchanged (RFC-0154, RFC-0153, RFC-0219, RFC-0232).
+The migration of std, the fixtures and the spec is mechanical but is done by a parser-driven rewrite, not a regex, and checked by
+compiling every example.
