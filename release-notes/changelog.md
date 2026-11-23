@@ -6,10 +6,11 @@ title: "Metel Language Changelog"
 
 ## v0.16.0
 
-**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
-spelled, how values are assigned, how types are built and how rows are written; most of them are breaking
-spelling changes with a mechanical migration, and the repository's own sources, fixtures and documentation
-were migrated with parser-driven tools.
+**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`), the settlement of `Copy` and `Clone`, and
+the move of tuples and the unit type onto rows. The release changes how a declaration is spelled, how a value is assigned, how a call
+passes its arguments, how a record, a tuple and a row are written and matched, and how `Copy` is granted and `Clone` is derived. Most
+of the language-visible changes are breaking spelling changes with a mechanical migration, and the repository's own sources,
+fixtures and documentation were migrated with parser-driven tools.
 
 **Breaking changes:**
 
@@ -48,6 +49,31 @@ were migrated with parser-driven tools.
 - A record literal that spreads a record may replace a field the spread's row proves present (RFC-0191,
   `metel-core#1867`): `.{ ..s, .a = 10 }`.
 
+**Tuples, records and patterns (RFC-0151, RFC-0231, RFC-0219):**
+
+- A tuple is a row of integer labels (RFC-0151, `metel-core#2029`, `#2030`, `#2032`): `(A, B)`, `(a, b)`, `(p, q)` and `t.0` are
+  notation for the closed row `.{ .0: A, .1: B }`, its value, its pattern and field access on the label `.0`. The separate tuple
+  type is gone, with its own `Copy` and `Clone` rules: a tuple is `Display`, `Clone` and `Copy` through the row impls. A closed row
+  whose labels are exactly `0 .. N-1` prints as a tuple. `r.0` is field access on a record, a residual, a row extension and a
+  row-bounded type parameter, and a row may mix integer and identifier labels. Fields are ordered by label, integer labels first
+  in numeric order, so `.2` comes before `.10`.
+- Tuple forms (`metel-core#2022`, `#2023`, `#2038`): a trailing comma makes a one-element tuple in an expression, a type and a pattern
+  (`(a,)`, `(A,)`), and without it the parentheses group (`(T)` is `T`). The empty tuple pattern `()` is accepted in declarations and
+  match arms, and a tuple pattern is accepted in `let`, `var` and `let var`, so `var (a, b) := t;` binds mutable names.
+- A record pattern entry may bind a row label to a different name: `.label: name`, beside the pun `.label` and the discard
+  `.label: _` (RFC-0151, `metel-core#2030`). Any pattern may follow the colon (`metel-core#2035`), and a struct or bare variant
+  there is resolved against the field's type (`metel-core#2053`, `#2054`). A record pattern is irrefutable when its sub-patterns are,
+  so a declaration rejects a refutable one (T0008), and a `match` over a record, a tuple included, is checked as a pattern matrix:
+  arms with refutable sub-patterns cover a type together (`metel-core#2040`, `#2041`, `#2042`).
+- `()` is the empty closed row `.{}` (RFC-0231, `metel-core#2024`, `#2026`): one type and one value, with no separate unit type.
+  `extend (): A` is accepted as a spelling of `extend .{}: A`, and writing both is T0015. An anonymous record prints as its source form.
+- The `copy` function-type qualifier (RFC-0219, `metel-core#2049`, `#2050`): `copy |T| -> U` is a written function type whose
+  values are copyable, and it combines with `once` and `var` in any order. A slot of that type, whether a call argument, an annotated
+  binding, a return, a block or branch tail, a struct field or an array element, takes only a function value proved copyable. A
+  move-only value there is T0001, and the message says what makes a function value copyable. `copy` before a closure literal is
+  a parse error (P0001): whether a closure is copyable is derived from its captures, and the qualifier is how a function type
+  asks for it.
+
 **Copy and Clone (RFC-0206, RFC-0207, RFC-0212, RFC-0213):**
 
 - **Breaking:** `Copy` is granted in a type's declaration. `extend T: Copy;` for a struct, enum or record is an error
@@ -80,6 +106,21 @@ were migrated with parser-driven tools.
 - `--move-check` no longer fails with the internal error I0011 when a generic body's ownership is undecided: it is
   T0047, naming the type (`metel-core#1814`).
 
+- Aspects on a residual (RFC-0211, `metel-core#1830`): a residual of a nominal brand is `Copy` only when the brand's declaration
+  grants `Copy` and every present field is `Copy`. A written or derived impl of the whole type does not apply to it. Every other
+  bound or method call that fails on a residual is T0012, with a note naming the cause.
+- Computed flows (RFC-0224, `metel-core#1818`, `#1819`, `#1938`, `#1941`, `#1964`): the `Copy` flow of a declaration with no argument
+  list is computed exactly. A flow argument is `Copy` by the rule of its own type form, a derived `Clone` gets its own exact flow,
+  and declarations in function bodies are solved with the other declarations of their block. A `Copy` grant written in a block
+  body is honoured for the block-local type (`metel-core#1908`). A `pub` generic type must state a non-empty flow
+  (`metel-core#1820`). `Option<i64>` is copied and `Option<String>` still moves (`metel-core#1752`, `#2009`).
+- A use-after-move of a non-`Copy` nominal says why it is not `Copy`: that `Wrapper<T>` is `Copy` only when `T` is and `T` has no
+  `Copy` bound, or that the argument is itself not `Copy` (`metel-core#1959`). When the stored facts cannot name the reason, the
+  message says it is a checker limitation and not a finding about the program.
+- `x.clone()` with `x: &&U` clones the `&U` it points at, since a shared reference is `Clone` for every referent (`metel-core#1929`).
+- A record spread does not move the field it replaces under `--move-check`, including through an abstract row (RFC-0191,
+  `metel-core#1887`).
+
 **Fixes:**
 
 - A struct or fieldful-variant literal written with a module prefix resolves without a glob import: after
@@ -91,6 +132,27 @@ were migrated with parser-driven tools.
 - An explicit `derives Copy(T)` or `derives Clone(T)` beside the `copy` keyword replaces the keyword's own entry, so
   its flow counts; it used to be dropped, which made `H<String>` copyable in `copy struct H<T> derives Copy(T)`
   (`metel-core#2070`).
+
+- A bound that names an aspect type argument (`X: Conv<i64>`) was satisfied by an impl with a different argument, so a `String`
+  came back typed as `i64`. It is now T0012, naming what the type implements, for a local function and for one imported from another
+  module (`metel-core#1984`, `#1988`). A negative impl overrides a blanket positive one (`metel-core#1985`).
+- A call through a bound runs the impl for the bound's aspect type arguments, and a call through two bounds of one aspect that both
+  provide the method is T0013, where it was a misleading T0001 (`metel-core#1987`).
+- A bare-parameter blanket impl (`extend<T> T: Marker`) overlaps an explicit impl of the same aspect and is T0015, with or without
+  aspect type arguments (`metel-core#1992`). Impls written in a block body are checked for coherence, orphan and negative-impl rules
+  like module-level ones, where they were never checked (`metel-core#1993`, `#1997`).
+- Block-local types and impls: an impl records its aspect type arguments, associated types and negative impls, hand-written methods
+  are recorded and run, an impl of a type declared in a generic function's body is built once and analysed, and a generic body that
+  declares local types is analysed with their impls (`metel-core#1969`, `#1970`, `#1973`, `#1974`, `#1979`).
+- `--move-check` keeps a closure's ownership contract in a generic body when the closure is held in an array, a shared type argument or
+  a nested aggregate, passed through a generic call or returned through a generic method, and a function item joins the contracts
+  (`metel-core#1960`, `#1982`, `#2000`, `#2010`, `#2011`, `#2012`, `#2013`, `#2014`). A method of an impl of an aspect with type
+  arguments is analysed (`metel-core#1994`), record sub-patterns are retained in generic bodies (`metel-core#2035`), and a closure
+  call result in a generic body and a `Copy` struct with a literal type argument no longer give false errors (`metel-core#2085`,
+  `#2079`).
+- In a generic body the `Copy` of a record that takes no type arguments is decided as a concrete body decides it, which removes a
+  false T0019 (`metel-core#2009`). A generic impl's associated function is callable through its type path
+  (`metel-core#1888`).
 
 **Development note:** RFC-0100's constructor-call experiment is withdrawn (`metel-core#1945`): structs,
   named records and fieldful enum variants again use nominal braces such as
