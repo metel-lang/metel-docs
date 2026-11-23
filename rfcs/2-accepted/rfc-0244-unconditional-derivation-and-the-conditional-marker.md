@@ -2,8 +2,8 @@
 id: rfc-0244
 title: "Unconditional derivation and the conditional marker"
 date: '2026-11-22'
-status: under-review
-updated: '2026-11-22'
+status: accepted
+updated: '2026-11-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
 ---
 
@@ -14,6 +14,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
 > meaning silently. Three corrections follow: std's `List` declares no `derives` (Interaction, Std), the grammar sketch of section 1
 > repeated the parentheses of `derive_args`, and the legacy `via` clause is now stated. The four open questions are decided
 > (below), and this RFC is accepted before RFC-0238, which adopts section 5 (#2151).
+
+> **Status — accepted (2026-11-23).** Accepted after the acceptance review: consistent with RFC-0227, 0234, 0239, 0207 and 0224; open questions decided; accepted before RFC-0238 (metel-core#2150, #2151)
 
 ## Summary
 

@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-22'
+generated_on: '2026-11-23'
 ---
 
 # RFC Registry
@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**244 RFCs total.** 34 draft, 64 under review, 10 accepted, 2 integrated (110 live), 99 implemented, 19 superseded, 16 refused (134 settled).
+**244 RFCs total.** 34 draft, 63 under review, 11 accepted, 2 integrated (110 live), 99 implemented, 19 superseded, 16 refused (134 settled).
 
 ## Draft (34)
 
@@ -52,7 +52,7 @@ the curated thematic map.
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 - **RFC-0245** — Effect Rows and Marker Effects (`0-draft` ; rfcs/0-draft/rfc-0245-effect-rows-and-marker-effects.md ; date 2026-11-22)
 
-## Under Review (64)
+## Under Review (63)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -117,9 +117,8 @@ the curated thematic map.
 - **RFC-0240** — Spelling of Written Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16 ; updated 2026-11-22)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
 - **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
-- **RFC-0244** — Unconditional derivation and the conditional marker (`1-under-review` ; rfcs/1-under-review/rfc-0244-unconditional-derivation-and-the-conditional-marker.md ; date 2026-11-22 ; updated 2026-11-22)
 
-## Accepted (10)
+## Accepted (11)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -131,6 +130,7 @@ the curated thematic map.
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
+- **RFC-0244** — Unconditional derivation and the conditional marker (`2-accepted` ; rfcs/2-accepted/rfc-0244-unconditional-derivation-and-the-conditional-marker.md ; date 2026-11-22 ; updated 2026-11-23)
 
 ## Integrated (2)
 
