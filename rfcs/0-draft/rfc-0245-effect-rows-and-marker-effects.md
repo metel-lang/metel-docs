@@ -162,10 +162,18 @@ through abstract dispatch contributes the row the aspect method declares (sectio
 **Rule 3 (widening).** For fixed argument and result types, a callable with row `E` is accepted where a callable with row `F` is
 expected when `E ⊆ F`. The rule changes nothing about ownership, multiplicity, parameter variance or capability parameters.
 
-**Rule 4 (no row).** A named function with no `effects` clause is **unrestricted**: its row is the top row, it may do anything, and
-it cannot be called from a body whose row is declared. A private (non-`pub`) function without a clause has its row **inferred** from
-its body; a `pub` function never has one inferred, so a public signature does not change when a body does. A closure's row is always
-inferred. This is gradual: existing programs keep their meaning, and a restriction applies exactly where a row is written.
+**Rule 4 (no row).** A named function with no `effects` clause is **unrestricted for markers**: its row is the top row of markers,
+it may perform any marker, and it cannot be called from a body whose row is declared. A private (non-`pub`) function without a clause
+has its row **inferred** from its body, operations included; a `pub` function never has one inferred, so a public signature does not
+change when a body does. A closure's row is always inferred. This is gradual: existing programs keep their meaning, and a restriction
+applies exactly where a row is written.
+
+**Rule 4a (operations are never implied).** The top row covers markers only. An operation entry is declared, never inferred from the
+absence of a row: a `pub` function, an aspect method or any function with no clause that performs an operation, directly or by calling
+something whose row contains one that is not handled inside it, is an error, not an unrestricted function. It must list the operation
+in an `effects` clause. An operation is discharged by a handler and has a control class (section 6), so it cannot be a silent part of
+"anything". If the top row included operations, every call to an unrestricted function would be a potential suspension point for a
+control operation, and every existing program would change meaning.
 
 **Rule 5 (row parameters).** A row can be abstracted over with a **row binder**, `<..E>` (RFC-0208), so a higher-order function
 passes its callback's row through (the `apply` example above). An open row is written with the existing rest convention,
@@ -175,7 +183,8 @@ nothing), and it is settled and implemented in the same release as this RFC (met
 this one), so no interim restriction on `record E` is needed.
 
 **Rule 6 (no erasure).** An effect is never erased by a type: not by a coercion to `dyn`, not by a generic parameter, not by a
-closure being stored in a field. Where a row is lost, the result is the top row, which is rejected by any bounded context.
+closure being stored in a field. Where a marker row cannot be kept, the result is the top row of markers, which is rejected by any
+bounded context. An operation entry is never dropped this way (rule 4a): a coercion that cannot carry it is an error.
 
 ### 3. Callables and RFC-0232
 
@@ -203,11 +212,12 @@ unification (the same choice Koka makes, see Prior art).
 
 An aspect method signature may declare a row. An implementation's row must be a subset of its aspect's declared row for that
 method (an implementation may do less, never more). A call through a bound `T: A` contributes the aspect's declared row. A method
-with no declared row is unrestricted by rule 4, so a bounded context cannot call it; this is the conservative reading and it is
-why an aspect meant to be callable from restricted code states a row on each method.
+with no declared row is unrestricted for markers by rule 4, so a bounded context cannot call it, and by rule 4a it performs no
+operation; this is the conservative reading and it is why an aspect meant to be callable from restricted code states a row on each
+method, and why an aspect method that is meant to perform an operation must declare it.
 
 A `dyn` value's row is part of its type (section 3). Reflection, dynamic dispatch and unsafe operations provide no unlabelled
-bypass: each yields the top row.
+bypass: each yields the top row of markers, and none can perform an operation that its caller did not declare.
 
 ### 6. Operation entries and control classification *(decides RFC-0140 open questions 4 and 6)*
 
@@ -450,8 +460,10 @@ languages and should be checked before this RFC leaves review.
    is **inferred** from visible bodies and stated only on public or opaque functions, which would remove most of the annotation burden.
    **If tracked (B):** what migration looks like for the std natives and existing programs, and whether `.Panic` is inferred for
    private functions so that only public signatures state it.
-2. **The default for a named function with no row** (rule 4): unrestricted, with inference for private functions. Is "unrestricted"
-   the right top element, and should a `pub` function without a row be a warning?
+2. **The default for a named function with no row** (rules 4 and 4a): unrestricted for markers, with inference for private
+   functions, and never for operations. Is "unrestricted for markers" the right top element, and should a `pub` function without a
+   row be a warning? Is an error the right outcome for a `pub` function that performs an operation without declaring it, or should
+   the compiler offer the row it would infer?
 3. **Rows as `.{ … }`, what remains.** Settled in this draft: the notation and entry forms (section 1); the grammar, one general
    change (a label-only field in a record type means `.x: ()`) and no effect-specific production (section 2); a closed row as an upper bound, fixed by the keyword `effects` alone
    (rule 0); the row binder, RFC-0208's `<..E>`, which joins the same release (#1789, #2167); only std declares markers in this
