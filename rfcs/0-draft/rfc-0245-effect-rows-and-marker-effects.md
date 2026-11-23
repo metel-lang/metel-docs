@@ -18,7 +18,7 @@ expected when `E ⊆ F`, and a closure's row is inferred from its body and kept 
 type erasure.
 
 ```metel
-effect FileRead;                                   // a marker: puts the label `.FileRead` in the vocabulary
+effect FileRead;                                   // a marker, declared in std: puts `.FileRead` in the vocabulary
 effect Console { fun read_line() -> String; }      // an operation interface (RFC-0140)
 
 fun load_config(fs: &ReadDirectory, path: &String) -> Result<String, ReadError> effects .{ .FileRead } { .. }
@@ -99,9 +99,18 @@ In a row, the two kinds of entry take the two entry forms rows already have:
 **Labels are structural.** RFC-0221 makes a row label a name, written `.name` and never bare, so `.FileRead` is the same label
 wherever it is written. The `effect FileRead;` declaration puts the label into the **vocabulary**, and a label in an `effects` row
 that is not in the vocabulary is an error: without that, a typo in a negative entry (`!.Panik`) would silently guarantee nothing.
-Two declarations of one label in a program are an error, not two labels. This trades per-declaration identity for the existing row
-notation. Effects are restrictions, so a collision makes a class coarser, never unsound; operation entries keep nominal identity
-through their interface type. Who may declare a marker, and how a library avoids a clash, is an open point (Open questions 3).
+This trades per-declaration identity for the existing row notation. Effects are restrictions, so a collision would make a class
+coarser, never unsound; operation entries keep nominal identity through their interface type.
+
+**Only std declares markers in this release.** User code uses them in rows and may declare operation interfaces, but cannot declare a
+new marker. Labels share one program-wide namespace, so a marker declared by a library could clash with another's, and no marker
+needs minting yet: the only primitive effects come from std's `native` declarations (section 9). How a library mints a marker, and
+how it avoids a clash, is settled with Interop, which needs it for user-declared natives.
+
+**The role label of an operation entry is required.** `.console: Console` keeps entries uniform with records (`.x: T`) and with
+RFC-0221's rule that a label is never bare. It is redundant under rule 9 (one entry per interface), but it is what would let a
+relaxed rule 9 hold two handlers of one interface under distinct roles (`.a: State<i64>`, `.b: State<i64>`) with no new notion of
+scoped labels. A lint suggests the interface name in snake case as the role.
 
 Operation labels and marker labels have **distinct names**: an operation `Console` is handled by a handler that may itself use a
 terminal, which leaves the markers `ConsoleRead` and `ConsoleWrite` in the residual row. The same operation handled by a fixed
@@ -124,10 +133,17 @@ fun g(..) -> T effects .{} { .. }                        // no tracked effects
 fun h(..) -> T { .. }                                    // no row: see rule 4
 ```
 
-**Rule 0 (what a closed row means here).** As a record type, a closed row `.{ .a }` has exactly the field `.a`. In an `effects`
-position a closed row is an **upper bound**: at most these labels. A row with an open tail, `.{ .a, ..E }`, is "these labels and
-whatever `E` stands for". The relation in rule 3 is the same one as row narrowing (RFC-0117), read as "a callee's needs are a
-projection of what the context provides": the context row is the wider one.
+**Grammar.** The `effects` clause is its own production, built from parts of the grammar that exist: the keyword `effects`, then
+`.{`, a list of `row_field` entries (`bang? label (":" type)?`, as in a row bound, so a label-only entry like `.FileRead` and a
+negative entry like `!.Panic` already parse), an optional named tail (`row_tail`, `".." ident?`, as in an open record type), and `}`.
+No existing rule is changed and there is no new token. Neither existing rule serves on its own: a row bound has label-only and
+negative entries but its tail is a bare `..` with no name, and an open record type has a named tail but every field needs a type.
+
+**Rule 0 (what a closed row means here).** As a record type, a closed row `.{ .a }` has exactly the field `.a`. After the keyword
+`effects` a closed row is an **upper bound**: at most these labels. The keyword alone fixes this, since the clause is its own
+production and is not read as a record type or a row bound; no further marker is needed. A row with an open tail, `.{ .a, ..E }`, is
+"these labels and whatever `E` stands for". The relation in rule 3 is the same one as row narrowing (RFC-0117), read as "a callee's
+needs are a projection of what the context provides": the context row is the wider one.
 
 **Rule 1 (upper bound).** A row is an upper bound: it does not say every execution performs every listed effect. A body *fits* a
 row when the union of the effects of every evaluated subexpression, every invoked operation and every implicit call is a subset
@@ -424,16 +440,15 @@ languages and should be checked before this RFC leaves review.
    private functions so that only public signatures state it.
 2. **The default for a named function with no row** (rule 4): unrestricted, with inference for private functions. Is "unrestricted"
    the right top element, and should a `pub` function without a row be a warning?
-3. **Rows as `.{ … }`, what remains.** The notation and the entry forms are settled (section 1); to confirm or decide:
-   (a) that the grammar accepts a label-only entry, `.FileRead`, in an `effects` position that is not a record type or a row bound
-   (today `row_bound` and `record_type` do, and a record type's fields require a type);
-   (b) the row binder: RFC-0208 (`<..E>`) is the right kind because a row is not a value, and it joins the same release (decided
-   2026-11-22; #1789, #2167). Still open from RFC-0208 and relevant here: a turbofish argument for a row parameter (RFC-0192), so
-   that `apply::<i64, i64, .{ .FileRead }>(..)` can pin a row;
-   (c) rule 0, a closed row as an upper bound, and whether it needs a marker on the clause or only the `effects` keyword;
-   (d) that a label not in the vocabulary is an error, and how the vocabulary is scoped: structural labels give one program-wide
-   namespace, so who may declare a marker, and how a library avoids a clash, is open, and matters for user-declared natives (Interop);
-   (e) whether an operation entry needs its role label (`.console: Console`) or can be written by its interface alone.
+3. **Rows as `.{ … }`, what remains.** Settled in this draft: the notation and entry forms (section 1); the grammar, a production of
+   its own built from `row_field` and `row_tail` (section 2); a closed row as an upper bound, fixed by the keyword `effects` alone
+   (rule 0); the row binder, RFC-0208's `<..E>`, which joins the same release (#1789, #2167); only std declares markers in this
+   release; the role label of an operation entry is required, with a lint; a label not in the vocabulary is an error. Still open:
+   (a) a turbofish argument for a row parameter (RFC-0192, shared with RFC-0208), so that `apply::<i64, i64, .{ .FileRead }>(..)` can
+   pin a row;
+   (b) how a library mints a marker, and how it avoids a clash in the program-wide label namespace: deferred to Interop, which needs
+   it for user-declared natives, but the answer may change what a label is (a namespaced label, or a declaration that registers a
+   name), so it is a question for this RFC to hand over explicitly.
 4. **Control classification details** (section 6). Is the class per operation or per interface? Is `fun` the right default? Is
    control-transparency (rule 8) the right condition for restricted interpolation, or must it also bound how many times an operation
    is performed?
@@ -461,9 +476,9 @@ languages and should be checked before this RFC leaves review.
 
 Staged, each step independent of the next, and **marker entries and rows only** in v0.17.0 (the stage "Effect rows and markers"):
 
-1. The keywords and grammar for `effect` and for an `effects` clause that takes a `.{ … }` row, the vocabulary check, and the
-   row binder (RFC-0208); operation interfaces parse and are typed as entries, with no runtime (handlers are RFC-0140's). The first
-   task is to confirm that the grammar accepts a label-only entry there (Open questions 3a).
+1. The keyword `effect` (markers, std only; operation interfaces, anywhere), the `effects` production of section 2, the vocabulary
+   check, and the row binder (RFC-0208); operation interfaces parse and are typed as entries, with no runtime (handlers are
+   RFC-0140's). The role-label lint lands with it.
 2. The row component of the callable type, the coercion rule and closure inference, on RFC-0232's mechanism.
 3. Aspect-method rows and implementation checking; `dyn` rows.
 4. The std native audit: a row on each of the roughly 160 `native` declarations.
