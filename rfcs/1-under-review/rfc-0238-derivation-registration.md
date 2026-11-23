@@ -73,9 +73,17 @@ For `struct T derives A(a, b: c)`:
 3. Run `derive(T, args)` at comptime. The result must be one impl declaration; see section 4.
 4. The declaration is added to the program as an ordinary impl.
 
-No parentheses means every argument takes its default: a `Flow` parameter's default is the flow the compiler computes from the
-fields (RFC-0227), and a field with no default makes the clause an error ("`A` requires arguments"). A derivation whose `Args` is
-the empty row accepts none.
+The argument for a `Flow` parameter (RFC-0244) is a flow, or its absence:
+- a bare entry gives every `Flow` parameter the **empty** flow, which holds for every argument and is an error if a field's
+  aspect depends on a type parameter (the fix-it names `?`);
+- `(..)` gives a `Flow` parameter the flow the compiler **computes** from the fields (RFC-0227), and is an error on a derivation
+  with no `Flow` parameter;
+- a parameter of another type takes its default under both forms (`rename_all: String = "none"`), and a field with no default makes
+  the clause an error ("`A` requires arguments").
+
+A derivation whose `Args` is the empty row accepts none. The deriver does not see impls (section 5): a conditional derivation emits
+bounds on the parameters of its flow, and the ordinary checks decide. `(..)` does not make a derivation fallible, so no
+failure-tolerant counterpart of `derive` is needed.
 
 ### 3. The field-wise combinator and std
 
@@ -127,6 +135,8 @@ become the impls of section 3.
 ## Interaction with other work
 
 - **RFC-0227** (under review): defines the clause arguments and the built-in flow; this RFC makes the signature a user's to declare.
+- **RFC-0244** (implemented): a bare entry is unconditional and `(..)` computes the flow; section 2 applies that to a derivation's
+  `Flow` parameters.
 - **RFC-0237** (draft): aspects as comptime values, and `Self` of kind `Aspect`. A prerequisite.
 - **RFC-0234** (under review): the `derived` mark (RFC-0235) is an obligation to derive another aspect and is independent of registration. Opening
   it to user aspects (RFC-0213 question 9) is no longer a generation question; whether to open it is question 1 below.
