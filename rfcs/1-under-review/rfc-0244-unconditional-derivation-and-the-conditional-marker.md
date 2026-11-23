@@ -56,9 +56,11 @@ This is a design draft. Nothing here is accepted. It amends RFC-0227, RFC-0238 a
    The conditional form is the one that takes a decision about the public interface (RFC-0227 section 3), so it is the one
    that should be visible.
 4. **Computing is a decision, and the default should not take it silently.** A field edit can change which instantiations of a
-   type are Copy. That is why RFC-0227 section 3 makes a `pub` type state its flow. Making the computed form a marked, opt-in
-   choice moves the same principle from `pub` types to every type: a declaration that does not say "computed" gets exactly what
-   it says.
+   type are Copy. RFC-0227 section 3 answers that for a `pub` type by making it state its flow. That rule has two halves, and this
+   RFC treats them separately. *Consent:* a declaration that does not say "computed" gets exactly what it says, and making the
+   computed form a marked, opt-in choice extends that to every type. *Edit-time diagnostic:* a field edit must not change a public
+   interface silently. `?` cannot give that second half, because the declaration says "computed" and a field edit still changes the
+   public bounds with no error, so a `pub` type keeps the rule even where it would write `?` (section 4).
 5. **`copy` should mean what it says.** A reader of `copy struct S<T>` should be able to conclude that `S<X>` is Copy for any `X`
    without reading the fields.
 
@@ -118,6 +120,10 @@ has two spellings, and the rule applies to the one that computes:
 So a public generic type that is conditionally Copy still writes `derives Clone(T), Copy(T)`: the flow stays visible in the
 interface. `copy(T)` was RFC-0239's one-word spelling of that, and this RFC removes it. That is its cost (see Costs).
 
+The marker does not lift the rule because they answer different silences: `?` removes the silent default, and the rule removes the
+silent interface change at a field edit (Motivation 4). Today a broken use of a changed type is a loud error at the use site, so the
+rule protects separately compiled consumers, which Metel has no package system for yet (metel-core#1357).
+
 ### 5. Derivations that take arguments (RFC-0238)
 
 RFC-0238 section 2 says that with no parentheses every argument takes its default, and that the default of a `Flow` parameter is the
@@ -150,6 +156,7 @@ Strictness needs no new check. `derives A()` already requires the empty flow to 
 | `?` as a comptime `try_derive` that skips on failure | A conditional impl is not a yes or no at the declaration; it is a condition on the parameters, evaluated per instantiation. RFC-0238 section 5 has the deriver emit bounds, and the checks decide. A skip-on-failure derivation would need the deriver to see impls, which section 5 rules out. |
 | Default conditional everywhere (Rust's derive) | The over-constraint of Rust's heuristic and, for a public type, an interface that moves with its fields (RFC-0227). |
 | `copy` strict only on `pub` types | Two meanings for one keyword, depending on visibility. |
+| Allow `pub copy?` (the marker as the author's consent) | `?` answers the silent default, not the silent interface change: the declaration says "computed" and a field edit still changes the public bounds with no error. Relaxing the rule later is non-breaking and tightening it later is not, so it starts strict. Decided 2026-11-23 (kept after discussion); revisit with the package system (metel-core#1357) and evidence of the cost. |
 | Make a bare `derives A()` an error as redundant | The two are the same; see question 1. |
 
 ---
