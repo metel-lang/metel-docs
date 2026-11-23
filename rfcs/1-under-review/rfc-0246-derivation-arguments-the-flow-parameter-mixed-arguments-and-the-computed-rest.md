@@ -18,8 +18,8 @@ case RFC-0238 leaves open: a derivation that takes a flow **and** other argument
    parameters. The type of a flow is a row of them.
 2. `Flow` is a **trailing positional parameter**. Leading positional arguments bind to the leading numeric labels of `Args`, the
    flow collects the positionals after them, and named labels are keyword arguments, as in RFC-0223.
-3. **`..` is the computed flow**, a value like any other flow: `derives Clone(..)`. It replaces the postfix `?` that RFC-0244 put on a
-   `derives` entry, which is not an argument and so does not fit the call. The class keyword keeps its mark: `copy?` is
+3. **`..` is the computed flow**, a value like any other flow: `derives Clone(..)`. RFC-0244 spells the computed flow this
+   way, and this RFC states what it is in the call: a value, not a mark on the entry. The class keyword keeps its mark: `copy?` is
    `derives Clone(..), Copy(..)`.
 
 ```metel
@@ -34,17 +34,17 @@ struct Slot<T>    derives Clone(..)                                   { v: T }  
 struct Tag<T>     derives Serialize("tag")                            { n: i64 }      // empty flow, the default
 ```
 
-This is a design draft. It amends RFC-0244 (the `?` mark on an entry), refines RFC-0238 sections 1 to 3 and extends the argument list of
-RFC-0227.
+This is a design draft. It refines RFC-0238 sections 1 to 3 and extends the argument list of RFC-0227. RFC-0244 already spells the
+computed flow `(..)`.
 
 ---
 
 ## Motivation
 
-1. **`derives A?` is not a call.** RFC-0238 makes `derives A(args)` a call to a comptime function whose arguments are checked against a
-   parameter row. A postfix `?` is a second mechanism beside the arguments: RFC-0238 section 2 has to special-case it ("the mark
-   after the aspect name decides the `Flow` parameters"), and it has no answer for a derivation with two `Flow` parameters or none.
-   If "computed" is a value, the call needs no special case.
+1. **A postfix mark on an entry is not a call.** RFC-0238 makes `derives A(args)` a call to a comptime function whose arguments are
+   checked against a parameter row. A postfix `?` would be a second mechanism beside the arguments: RFC-0238 section 2 would have to
+   special-case it, and it has no answer for a derivation with two `Flow` parameters or none. Because "computed" is a value, the
+   call needs no special case, which is why RFC-0244 spells it `(..)`.
 2. **RFC-0238 does not say how a flow shares `Args` with other arguments.** Positional arguments are numeric labels (`.0`, `.1`), and
    `Flow` is "a row of positional type parameters of any width", so it claims every numeric label. `.{ .0: String, ..Flow }` has two
    `.0`s, and `derives A(T, "x")` has nowhere to put `"x"`. Std needs nothing more than a bare `Flow` (`Clone`, `Copy`), so the gap
@@ -106,8 +106,8 @@ concrete row and never sees `..`.
 
 - `derives Clone(..)` and `derives Copy(..)` are the computed forms of RFC-0227 and RFC-0244. A bare `derives Clone` is the empty flow, as in
   RFC-0244.
-- `..` is accepted only in a `Flow` position, and an `Args` with no `Flow` rejects it ("`A` takes no flow"). This replaces RFC-0244's
-  error for `?` on a derivation with no `Flow` parameter.
+- `..` is accepted only in a `Flow` position, and an `Args` with no `Flow` rejects it ("`A` takes no flow"). This is RFC-0244's
+  error for `(..)` on a derivation with no `Flow` parameter, stated for every derivation.
 - The `pub` rule of RFC-0227 applies to `..` as it applied to `?`: a `pub` generic type may use it only when the computed set is
   empty, and otherwise states the flow.
 
@@ -119,8 +119,8 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
 
 ### 5. What changes in the implemented specification
 
-- RFC-0244 sections 1 and 2: the `?` suffix on a `derives` entry is replaced by `(..)`. Meaning, error cases and the `pub` rule are
-  unchanged. The grammar loses `derive_query` from `derives_clause`, and `derive_args` accepts a lone `..`.
+- RFC-0244 sections 1 and 2 already spell the computed flow `(..)`, and the grammar's `derive_args` accepts a lone `..` (metel-core#2153).
+  Nothing changes there.
 - RFC-0227: the argument list of a field-wise derivation may be the single entry `..`.
 - RFC-0238 section 2: the clause on marks goes. Section 1 gains the `..Flow` row tail, and section 3 names `Flow` as the trailing
   positional parameter.
@@ -131,7 +131,7 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
 
 | Alternative | Why not |
 |---|---|
-| Keep `derives A?` as RFC-0244 has it | A postfix mark outside the call. It cannot say which `Flow` parameter it applies to when there are two, and RFC-0238 section 2 has to special-case it. |
+| A postfix `?` on the entry (`derives A?`) | A postfix mark outside the call. It cannot say which `Flow` parameter it applies to when there are two, and RFC-0238 section 2 has to special-case it. |
 | The flow is a keyword parameter only: `derives A(flow = (T, U), name = "x")` | Unambiguous, but it makes the common case, `derives Clone(T)`, longer, and needs a sugar rule to get the short form back. |
 | Gather every positional argument that is a type parameter into the flow | Type-directed: which parameter an argument binds to depends on what it is. A derivation that wants a `type` argument for another purpose is ambiguous with a flow entry. |
 | The flow first, other arguments after | The width of the flow is unbounded, so the boundary between flow and the leading positionals cannot be found without types. A trailing flow has a fixed start. |
@@ -144,7 +144,7 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
 ## Interaction with other work
 
 - **RFC-0227** (implemented): defines the argument list and the flow. This RFC adds `..` to the list and names the entry type.
-- **RFC-0244** (implemented): replaces its `?` on an entry with `(..)`. Its default (empty flow), the `pub` rule, `copy?` and the
+- **RFC-0244** (implemented): spells the computed flow `(..)` on an entry. Its default (empty flow), the `pub` rule, `copy?` and the
   error for a bare entry whose field needs a parameter stay, with the fix-it naming `derives A(..)`.
 - **RFC-0238** (under review): this RFC supplies the binding rule it lacks. It should adopt sections 1 to 3 here, or be amended with
   them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected. RFC-0238's examples write a keyword argument
@@ -159,9 +159,6 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
 
 ## Costs
 
-- **Respelling an implemented form.** v0.17.0 implements `derives A?` (metel-core#2153). If this RFC is accepted before the release,
-  the respelling is mechanical (`derives X?` becomes `derives X(..)`, a rewrite of about two dozen declarations and the spec rules);
-  after the release it is a breaking change.
 - **A row tail with renumbering.** `..Flow` after declared positionals numbers its entries from the next label. RFC-0125 records that
   positional renumbering of a row is not built and that how to write it is undecided (its designs A, B and C), so this is not a small
   extension. A `Flow` that is the **only** positional entry (`Args = Flow`, which is all std's `Clone` and `Copy` need) renumbers

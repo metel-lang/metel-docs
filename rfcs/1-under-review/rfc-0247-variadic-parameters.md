@@ -2,8 +2,12 @@
 id: rfc-0247
 title: "Variadic parameters"
 date: '2026-11-23'
-status: draft
+status: under-review
+updated: '2026-11-23'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2173'
 ---
+
+> **Status — under review (2026-11-23).** Taken to review as part of the metel-core v0.17.0 plan (#2173)
 
 ## Summary
 

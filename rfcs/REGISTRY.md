@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**246 RFCs total.** 35 draft, 64 under review, 10 accepted, 3 integrated (112 live), 99 implemented, 19 superseded, 16 refused (134 settled).
+**246 RFCs total.** 34 draft, 65 under review, 10 accepted, 3 integrated (112 live), 99 implemented, 19 superseded, 16 refused (134 settled).
 
-## Draft (35)
+## Draft (34)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -51,9 +51,8 @@ the curated thematic map.
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 - **RFC-0245** — Effect Rows and Marker Effects (`0-draft` ; rfcs/0-draft/rfc-0245-effect-rows-and-marker-effects.md ; date 2026-11-22)
-- **RFC-0247** — Variadic parameters (`0-draft` ; rfcs/0-draft/rfc-0247-variadic-parameters.md ; date 2026-11-23)
 
-## Under Review (64)
+## Under Review (65)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -119,6 +118,7 @@ the curated thematic map.
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
 - **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
 - **RFC-0246** — Derivation arguments: the flow parameter, mixed arguments and the computed rest (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-23)
+- **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
 
 ## Accepted (10)
 
