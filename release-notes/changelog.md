@@ -20,12 +20,16 @@ were migrated with parser-driven tools.
   not being declared is a parse error; `:=` only introduces a name (`let`, `var`, record-pattern declarations,
   `type`). An assignment is written as a block statement ending in `;`, as a match-arm body or in a `for`
   header's init and update clauses; it is not an operand, argument, initializer, condition, closure body or block
-  tail, so a block ending in an assignment needs its `;`, `{ x = 1 }` is a record and a closure that assigns is
+  tail, so a block ending in an assignment needs its `;` and a closure that assigns is
   `|v| { total = v; }`. Migrate with `metel-frontend/examples/assign_migrate`, run under the old grammar.
 
 - A label of a row is written `.name` (RFC-0221, `metel-core#1863`): in an anonymous record literal, pattern,
-  type and row bound and in a projection list, `{ .x = 1, .y }`, `{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
+  type and row bound and in a projection list, `.{ .x = 1, .y }`, `.{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
   field there is a parse error, and a pun of a numeric label is an error. Migrate with `label_migrate`.
+- An anonymous record starts with `.{` (RFC-0225, `metel-core#1943`, `#1949`): the value `.{ .x = 0 }`, the type
+  `.{ .x: i64 }`, a record pattern, an open record type, a row bound and a row equation all open with the dot, and the
+  closing delimiter stays `}`, so a record is never mistaken for a block. A plain `{ .x = 0 }` in those positions is a parse error
+  that says to insert the `.`. The repository's own sources, fixtures and documentation were migrated with a parser-driven tool.
 - `aspect`, `extends` and `public` are now reserved words (`metel-core#1876`): the keyword rule matched a keyword
   that is a prefix of another first, so they had parsed as identifiers.
 - The `From::from` parameter of the aspect and its impls is named `value` (`metel-core#1859`), so impls repeat the
@@ -39,10 +43,10 @@ were migrated with parser-driven tools.
   arguments evaluate in the order written. New codes: T0039 (keyword binds no free parameter), T0040 (positional
   after keyword), T0041 (keyword in a call through a function value), T0042 (impl parameter name differs from the
   aspect's).
-- Row-bound entries may be negative (RFC-0189, `metel-core#1866`): `{ .path: String, !.token, !.session: u64, .. }`.
+- Row-bound entries may be negative (RFC-0189, `metel-core#1866`): `.{ .path: String, !.token, !.session: u64, .. }`.
   The whole-row `!{ .. }` is sugar for the entry form. New code T0043 (invalid row-bound entry).
 - A record literal that spreads a record may replace a field the spread's row proves present (RFC-0191,
-  `metel-core#1867`): `{ ..s, .a = 10 }`.
+  `metel-core#1867`): `.{ ..s, .a = 10 }`.
 
 **Copy and Clone (RFC-0206, RFC-0207, RFC-0212, RFC-0213):**
 
