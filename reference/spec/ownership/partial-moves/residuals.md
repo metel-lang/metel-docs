@@ -91,7 +91,7 @@ so its projections move like the value itself. The `Copy` rule for residuals is 
 
 A residual `T.{ .fields }` of a nominal type `T` is `Copy` exactly when `T`'s declaration grants `Copy` and the residual's
 **present** fields are `Copy`. It then has `Clone` by the entailment of `Copy`, and its `clone` is the copy. The rule is evaluated over the present
-fields: for `copy struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is `Copy`: the condition
+fields: for `copy? struct W<T> { n: i64, value: T }`, `W<String>.{ .n }` is `Copy`. An empty residual `T.{}` of such a brand is `Copy`: the condition
 holds when no field is present, and a copy of it copies no field.
 
 <!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
