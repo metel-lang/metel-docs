@@ -134,7 +134,7 @@ The `Clone` of a `Copy` type is derived and cannot be written: a written `extend
 
 ##### Legality Rule {#spec.ownership.copy.legality-5}
 
-For an instantiation `T<A>`, `T<A>: Copy` holds when every field's type is `Copy` there, and the type is not `Drop`. It is judged per instantiation, not as a bound on the type parameters, so `copy struct View<T> { r: &T }` is `Copy` for every `T`, while `copy struct Wrapper<T> { v: T }` is `Copy` exactly when `T` is.
+For an instantiation `T<A>`, `T<A>: Copy` holds when every field's type is `Copy` there, and the type is not `Drop`. It is judged per instantiation, not as a bound on the type parameters, so `copy struct View<T> { r: &T }` is `Copy` for every `T`, while `copy? struct Wrapper<T> { v: T }` is `Copy` exactly when `T` is.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 

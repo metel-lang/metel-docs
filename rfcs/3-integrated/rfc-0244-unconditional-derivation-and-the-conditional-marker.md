@@ -2,9 +2,18 @@
 id: rfc-0244
 title: "Unconditional derivation and the conditional marker"
 date: '2026-11-22'
-status: accepted
+status: integrated
 updated: '2026-11-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/2153'
+impl_status: not-started
+coverage:
+  "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
+  "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-13" }
+  "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-6" }
+  "4": { spec: "spec.declarations.aspects.declaration-clauses.legality-13" }
+  "5": { kind: blocked, ref: rfc-0238, reason: "Section 5 adopts RFC-0238's argument defaults, and RFC-0238 is a draft that has no spec text yet." }
+  "6": { spec: "spec.declarations.aspects.declaration-clauses.legality-5" }
 ---
 
 > **Status — under review (2026-11-22).** Taken to review as part of the metel-core v0.17.0 plan (#2150)
@@ -16,6 +25,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
 > (below), and this RFC is accepted before RFC-0238, which adopts section 5 (#2151).
 
 > **Status — accepted (2026-11-23).** Accepted after the acceptance review: consistent with RFC-0227, 0234, 0239, 0207 and 0224; open questions decided; accepted before RFC-0238 (metel-core#2150, #2151)
+
+> **Status — integrated (2026-11-23).** Integrated into the spec: declaration-clauses rules 5, 6, 11, 13 and 18 and the Copy and residual examples; checked against RFC-0227, 0234, 0239, 0207, 0224 (metel-core#2150)
 
 ## Summary
 

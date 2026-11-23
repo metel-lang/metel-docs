@@ -6,6 +6,8 @@ sidebar_position: 23
 
 > **Gap** GAP-DECLARATIONS-005
 
+> **Pending** metel-core#2153 (RFC-0244) a bare `derives` and the `copy` keyword still compute the flow, and `?` is not read yet.
+
 A struct or enum declaration may carry two clauses after its name, and a class keyword before `struct` or `enum`:
 
 ```metel
@@ -23,9 +25,7 @@ asks the compiler to write the impl of an aspect that has a derivation (`Copy`, 
 `derives Clone, Copy`, and `linear` is reserved. Derivation is always explicit: a type with neither a `derives` entry nor
 an `extend` of an aspect does not have it.
 
-A generic type that derives a field-wise aspect states, when it is `pub`, which of its type parameters the aspect depends on,
-its **flow**. The flow is an argument to the derivation, written in parentheses after the entry: `derives Copy(T)`,
-`derives Clone(A, B)`. `derives Clone()` states no conditions, and an entry with no parentheses asks the compiler to compute the flow. The `copy` class keyword takes the list directly, `pub copy(T) struct W<T> { value: T }`, for both of its entries:
+A generic type that derives a field-wise aspect has a **flow**: the type parameters the aspect depends on. A bare entry (`derives Clone`) and the `copy` class keyword state an empty flow, so the aspect holds for every argument. A `?` after the entry (`derives Clone?`, `copy?`) asks the compiler to compute the flow from the fields, and an argument list in parentheses states it: `derives Copy(T)`, `derives Clone(A, B)`. The `copy` class keyword takes no argument list.
 
 ```metel
 struct Wrapper<T> derives Clone(T), Copy(T) { value: T }           // Wrapper<X> is Copy exactly when X is
@@ -115,9 +115,13 @@ A derived impl and a written `extend` of the same aspect for one type overlap an
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-5}
 
-The derived impl holds exactly when every field type has the aspect. A field type that does not is an error at the declaration, next to the field. For a generic type a type parameter must have the aspect only where a field's aspect depends on it: a parameter held only behind a shared reference, or only through a type whose own flow leaves it out, is not bounded. So `copy struct Wrapper<T>` is `Copy` exactly when `T` is, and `copy struct View<T> { r: &T }` is `Copy` for every `T`. A type declared inside a function body is solved with the other declarations of its block.
+The derived impl holds exactly when every field type has the aspect. A field type that does not is an error at the declaration, next to the field. For a generic type the flow says which type parameters must have the aspect: a bare entry states none, so a field whose aspect depends on a parameter is an error there, and with `?` the compiler computes the flow, which names a parameter only where a field's aspect depends on it. A parameter held only behind a shared reference, or only through a type whose own flow leaves it out, is not bounded. So `copy? struct Wrapper<T>` is `Copy` exactly when `T` is, and `copy struct View<T> { r: &T }` is `Copy` for every `T`. A type declared inside a function body is solved with the other declarations of its block.
 
 <!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0244](../../../../rfcs/3-integrated/rfc-0244-unconditional-derivation-and-the-conditional-marker.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -163,12 +167,12 @@ For an aspect `E` with a super-aspect entry marked `derived B`, `derives E` requ
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-6}
 
-`copy` before `struct` or `enum` is `derives Clone, Copy`. It may be followed by an argument list in parentheses, the flow of both entries: `copy(P1, .., Pk)` is `derives Clone(P1, .., Pk), Copy(P1, .., Pk)`, and `copy()` states no conditions. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented; it takes no argument list.
+`copy` before `struct` or `enum` is `derives Clone, Copy`, and `copy?` is `derives Clone?, Copy?`. The keyword takes no argument list: `copy(T)`, `copy(A, B)` and `copy()` are errors whose message names the replacement, `copy?` to compute the flow or `derives Clone(T), Copy(T)` to state it. `linear` before `struct` or `enum` is reserved and is an error until linear types are implemented; it takes neither an argument list nor `?`.
 
 <!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0206](../../../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md), [rfc-0239](../../../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0206](../../../../rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md), [rfc-0207](../../../../rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md), [rfc-0234](../../../../rfcs/4-implemented/rfc-0234-super-aspect-derivation-is-an-obligation.md), [rfc-0239](../../../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md), [rfc-0244](../../../../rfcs/3-integrated/rfc-0244-unconditional-derivation-and-the-conditional-marker.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -205,7 +209,7 @@ Derivation is idempotent per type and aspect: `copy struct T derives Copy` deriv
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-18}
 
-A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` class keyword restates an entry the keyword stands for. When the keyword has no argument list, the explicit entry replaces the keyword's, with its own list: `copy struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and `pub copy struct W<T> derives Clone(T), Copy(T)` states both. When the keyword has an argument list, an explicit `Clone` or `Copy` entry is an error that names both spellings: write `copy(..)` or the `derives` entries, not both. A type whose `Clone` and `Copy` flows differ writes the `derives` entries.
+A `derives` entry for `Clone` or `Copy` in a declaration that has the `copy` class keyword restates an entry the keyword stands for, and the explicit entry replaces the keyword's, with its own mark: `copy? struct P<T> derives Clone(T)` states the `Clone` flow and leaves the `Copy` flow computed, and `pub copy struct W<T> derives Clone(T), Copy(T)` states both. A type whose `Clone` and `Copy` flows differ writes the `derives` entries.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
@@ -314,7 +318,7 @@ A type that derives `Copy` is `Clone` wherever it is `Copy`: the `Clone` flow mu
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-11}
 
-An entry of a `derives` clause for a field-wise aspect (`Copy`, `Clone`) may be followed by an argument list in parentheses, one or more type parameters of the declaration separated by commas. The named parameters are the type's **flow** for that aspect: `N<A..>` has the aspect exactly when `N` derives it, the exclusions of the aspect hold at the instantiation, and every argument at a position in the flow has it. The `copy` class keyword takes the list in its own position ([class keywords](#spec.declarations.aspects.declaration-clauses.legality-6)). An argument list on a derivation that takes none, on a negative entry, or naming something that is not a type parameter of the declaration is an error, and so is the former `via` clause. A parameter of row or record kind is not accepted in the flow.
+An entry of a `derives` clause for a field-wise aspect (`Copy`, `Clone`) is written bare, with `?`, or followed by an argument list in parentheses, one or more type parameters of the declaration separated by commas. The named parameters are the type's **flow** for that aspect: `N<A..>` has the aspect exactly when `N` derives it, the exclusions of the aspect hold at the instantiation, and every argument at a position in the flow has it. A bare entry states an empty flow and `?` computes it ([flow of a bare or marked entry](#spec.declarations.aspects.declaration-clauses.legality-13)); `?` and an argument list do not combine. The `copy` class keyword takes no list ([class keywords](#spec.declarations.aspects.declaration-clauses.legality-6)). An argument list on a derivation that takes none, on a negative entry, or naming something that is not a type parameter of the declaration is an error, and so is `?` on a derivation that is not field-wise or on `linear`, and so is the former `via` clause. A parameter of row or record kind is not accepted in the flow.
 
 <!-- doc-example: expect-fail reason="the second declaration is the error the rule shows: `via` is replaced by the argument list" -->
 ```metel
@@ -325,7 +329,7 @@ struct Old<T> derives Copy via T { value: T }   // error: `via` is replaced by t
 <!-- rfc.py:last_reviewed 7ff6bac2f3c159c0d57a74f61abbe3fcb3000089 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0224](../../../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0239](../../../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0224](../../../../rfcs/4-implemented/rfc-0224-ownership-class-flow-for-generic-types.md), [rfc-0227](../../../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0239](../../../../rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md), [rfc-0244](../../../../rfcs/3-integrated/rfc-0244-unconditional-derivation-and-the-conditional-marker.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -357,7 +361,7 @@ The stated flow must contain every type parameter that a field's aspect depends 
 
 <!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: `Copy(A)` does not cover `B`" -->
 ```metel
-struct Bad<A, B> derives Clone, Copy(A) { a: A, b: B }   // error: field `b` depends on `B`, which `Copy(A)` does not cover
+struct Bad<A, B> derives Clone(A, B), Copy(A) { a: A, b: B }   // error: field `b` depends on `B`, which `Copy(A)` does not cover
 struct Handle<T> derives Clone(T), Copy(T) { id: i64 }   // accepted: Copy only when T is, whatever the fields become
 ```
 
@@ -384,18 +388,18 @@ struct Handle<T> derives Clone(T), Copy(T) { id: i64 }   // accepted: Copy only 
 
 ##### Legality Rule {#spec.declarations.aspects.declaration-clauses.legality-13}
 
-A `derives` entry for a field-wise aspect without an argument list states the flow the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may omit the list. A `pub` generic type may omit it only when the computed set is empty; otherwise the omission is an error with a fix-it showing the computed set, which for a bare `copy` keyword is `copy(..)`. A `copy` keyword with a list states the flow of both entries and satisfies this rule. An empty list (`derives Clone()`) states no conditions on the parameters, and is an error when a field holds a parameter by value. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
+A bare `derives` entry for a field-wise aspect, and the bare `copy` keyword, state an empty flow: every field's aspect must hold for every instantiation, and a field that depends on a type parameter is an error at the field, with a fix-it that names `?` and the computed set. An entry with `?` states the flow the compiler computes: the smallest set that satisfies the previous rule. A non-`pub` type may use `?`. A `pub` generic type may use `?` only when the computed set is empty; otherwise it is an error (`T0046`) with a fix-it that states the set, `derives Clone(T), Copy(T)`. `copy?` is `derives Clone?, Copy?` and follows the same rule. An empty list (`derives Clone()`) is the bare entry. The stated or computed set is stored as the type's interface, and outside the defining module a client relies only on it.
 
-<!-- doc-example: expect-fail reason="the first declaration is the error the rule shows: a public generic type omits a non-empty flow" -->
+<!-- doc-example: skip reason="the `?` mark is not read by the parser yet" -->
 ```metel
-pub struct W<T> derives Clone(T), Copy { value: T }   // error: a public generic type must state its flow: `derives Copy(T)`
-pub copy struct V<T> { r: &T }                         // accepted: the computed flow is empty
+pub copy? struct W<T> { value: T }   // error (T0046): a public generic type states its flow: `derives Clone(T), Copy(T)`
+pub copy? struct V<T> { r: &T }      // accepted: the computed flow is empty
 ```
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0227](../../../../rfcs/4-implemented/rfc-0227-derivation-arguments.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0227](../../../../rfcs/4-implemented/rfc-0227-derivation-arguments.md), [rfc-0244](../../../../rfcs/3-integrated/rfc-0244-unconditional-derivation-and-the-conditional-marker.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
