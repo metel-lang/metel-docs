@@ -6,10 +6,11 @@ title: "Metel Language Changelog"
 
 ## v0.16.0
 
-**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
-spelled, how values are assigned, how types are built and how rows are written; most of them are breaking
-spelling changes with a mechanical migration, and the repository's own sources, fixtures and documentation
-were migrated with parser-driven tools.
+**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`), the settlement of `Copy` and `Clone`, and
+the move of tuples and the unit type onto rows. The release changes how a declaration is spelled, how a value is assigned, how a call
+passes its arguments, how a record, a tuple and a row are written and matched, and how `Copy` is granted and `Clone` is derived. Most
+of the language-visible changes are breaking spelling changes with a mechanical migration, and the repository's own sources,
+fixtures and documentation were migrated with parser-driven tools.
 
 **Breaking changes:**
 
@@ -69,7 +70,9 @@ were migrated with parser-driven tools.
 - The `copy` function-type qualifier (RFC-0219, `metel-core#2049`, `#2050`): `copy |T| -> U` is a written function type whose
   values are copyable, and it combines with `once` and `var` in any order. A slot of that type, whether a call argument, an annotated
   binding, a return, a block or branch tail, a struct field or an array element, takes only a function value proved copyable. A
-  move-only value there is T0001, and the message says what makes a function value copyable.
+  move-only value there is T0001, and the message says what makes a function value copyable. `copy` before a closure literal is
+  a parse error (P0001): whether a closure is copyable is derived from its captures, and the qualifier is how a function type
+  asks for it.
 
 **Copy and Clone (RFC-0206, RFC-0207, RFC-0212, RFC-0213):**
 
