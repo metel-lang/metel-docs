@@ -30,8 +30,9 @@ apply(3, |n| n + 1);                    // E is inferred: the closure has no tra
 apply(3, |n| { retry_forever(); n });   // E is .{ .Diverge } and the caller's own row must allow it
 ```
 
-A row is written as an ordinary Metel row, `.{ … }`, with the entries Metel rows already have (RFC-0189): `.x`, `.x: T`, `!.x` and
-the open tail `..R`. The empty row `.{}` is the same row as `()` (RFC-0231).
+A row is written as an ordinary Metel row type, `.{ … }` (RFC-0121), with the entries a row type has: `.x: T`, and the open tail
+`..R`. The empty row `.{}` is the same row as `()` (RFC-0231). One general change makes marker entries short: in a row **type**, a
+label-only entry `.x` is shorthand for `.x: ()`, a presence entry. It is not specific to effects.
 
 **A row is not a value.** An effect row exists only in types and is erased after checking. `E` in `apply<T, U, ..E>` is a **row
 binder** (RFC-0208): a generic parameter that stands only for a row, never for a type, so a bare `E` is not a type and naming it is an
@@ -87,18 +88,22 @@ A semicolon declares a **marker**; a body declares an **operation interface**. A
 implement: `extend T: FileRead` is an error, because that would let any type manufacture a permission or erase a function's
 effects.
 
-In a row, the two kinds of entry take the two entry forms rows already have:
+In a row, the two kinds of entry are the two entry forms a row type has:
 
 | Entry | Written | Meaning |
 |---|---|---|
-| marker | `.FileRead` | the label `.FileRead` (a label of any type, in RFC-0189's terms) |
+| marker | `.FileRead` | the label `.FileRead`; shorthand for `.FileRead: ()`, a presence entry |
 | operation | `.console: Console` | a handler role `.console` for the interface `Console`, possibly applied, `.state: State<S>` (RFC-0140 section 11: a row of role and handler) |
-| absence | `!.Panic` | no such label (section 8) |
-| open tail | `..E` | the rest of a row parameter |
+| open tail | `..E` | the rest of a row parameter (RFC-0121) |
+
+A row bound has a label-only entry too, with the reading its position allows: `.x` there means "present, of any type" (RFC-0189).
+In a type there is no "any type", so the trivial type `()` is the reading. Neither is effect-specific. A negative entry (`!.x`) is a
+row-**bound** form and has no place inside a row type, so an effect row lists only what a body may do; the no-panic guarantee is
+therefore not written as a negative entry in the row (section 8).
 
 **Labels are structural.** RFC-0221 makes a row label a name, written `.name` and never bare, so `.FileRead` is the same label
 wherever it is written. The `effect FileRead;` declaration puts the label into the **vocabulary**, and a label in an `effects` row
-that is not in the vocabulary is an error: without that, a typo in a negative entry (`!.Panik`) would silently guarantee nothing.
+that is not in the vocabulary is an error, because it is almost always a typo that would otherwise over- or under-allow silently.
 This trades per-declaration identity for the existing row notation. Effects are restrictions, so a collision would make a class
 coarser, never unsound; operation entries keep nominal identity through their interface type.
 
@@ -133,11 +138,12 @@ fun g(..) -> T effects .{} { .. }                        // no tracked effects
 fun h(..) -> T { .. }                                    // no row: see rule 4
 ```
 
-**Grammar.** The `effects` clause is its own production, built from parts of the grammar that exist: the keyword `effects`, then
-`.{`, a list of `row_field` entries (`bang? label (":" type)?`, as in a row bound, so a label-only entry like `.FileRead` and a
-negative entry like `!.Panic` already parse), an optional named tail (`row_tail`, `".." ident?`, as in an open record type), and `}`.
-No existing rule is changed and there is no new token. Neither existing rule serves on its own: a row bound has label-only and
-negative entries but its tail is a bare `..` with no name, and an open record type has a named tail but every field needs a type.
+**Grammar.** The `effects` clause is the keyword followed by an ordinary row *type*, `record_type` or `open_record_type` (RFC-0121),
+read as a row of effects. There is no effect-specific production. The one change is general: a record-type field may be
+label-only, `record_type_field = label (":" type_expr)?`, with `.x` meaning `.x: ()` (section 1). Today a type field requires a
+type, so this is accepted nowhere and changes nothing that parses now. The alternatives do not serve: a row **bound** already has
+label-only entries, but its tail is a bare `..` by design (RFC-0121 names a remainder with a `where` equation, which "subsumes the
+bound"), and an effect row needs a named tail in argument and result positions, as `Callable<.{ .0: A }, R>`'s `Args` does.
 
 **Rule 0 (what a closed row means here).** As a record type, a closed row `.{ .a }` has exactly the field `.a`. After the keyword
 `effects` a closed row is an **upper bound**: at most these labels. The keyword alone fixes this, since the clause is its own
@@ -313,12 +319,15 @@ guarantee; its content is the same under either position.
 
 Under position A, two spellings are candidates, to be chosen in review (Open questions 1):
 
-1. **A positive marker**, working name `NoPanic`, in the marker mechanism of RFC-0232: presence is the guarantee.
-2. **A negative entry** `!.Panic` in the row, `effects .{ .FileRead, !.Panic }`. With rows written as `.{ … }` this needs **no new
-   grammar**: RFC-0189 already implements negative entries (`!.x`), and RFC-0072 the same idea for aspects (`T: !Aspect`). `.Panic`
-   is then an ordinary label that is *unchecked by default*, and `!.Panic` opts in to checking. This reads uniformly with `Diverge`,
-   whose guarantee is also its absence, and it makes tracking `Panic` by default later a change of default and not of vocabulary.
-   Internally it can still be a positive guarantee bit, so section 3 is unaffected.
+1. **A positive callable marker**, working name `NoPanic`, in the marker mechanism of RFC-0232 (`|T| -> U + NoPanic effects .{ … }`):
+   presence is the guarantee. It is **not a row entry**, for a reason of polarity: a marker adds guarantees (a callable that has it is
+   accepted more widely), while a row entry adds effects (a callable that has more is accepted less widely), so the two widen in
+   opposite directions and do not belong in one set.
+2. **A negative entry** `!.Panic`, as RFC-0189 and RFC-0072 write absence (`T: !Aspect`). `.Panic` would be an ordinary label that is
+   *unchecked by default*, and `!.Panic` would opt in to checking, which reads uniformly with `Diverge`, whose guarantee is also its
+   absence. But a negative entry is a row-**bound** form, and an `effects` row is a row type (section 2), so it is **not available
+   inside the row**. It would have to be written as a bound on the function or on a row parameter, or `effects` would take an exception,
+   which is the effect-specific notation this RFC avoids. Candidate 2 is therefore weaker than it was when rows were bounds.
 
 ### 9. Native effect metadata
 
@@ -383,10 +392,12 @@ this metadata.
   policy that restricts it is #1674's.
 - **RFC-0241 (Core).** Core must reserve effect information (its open questions 29 and 36); rows are checked in the frontend and
   add no runtime representation, so Core only needs a place to carry them for later phases.
-- **RFC-0189, RFC-0221, RFC-0231, RFC-0186, RFC-0208, RFC-0117.** The row notation: entries `.x`, `.x: T` and `!.x` (RFC-0189), labels
+- **RFC-0121, RFC-0221, RFC-0231, RFC-0186, RFC-0208, RFC-0117.** The row notation: row types with named tails (RFC-0121), labels
   written `.name` and never bare (RFC-0221), the empty row `.{}` equal to `()` (RFC-0231), the row binder `<..R>` for a
   row-only parameter (RFC-0208, under review; RFC-0186's `record R` stands for a record type), and narrowing as the relation behind
-  rule 3 (RFC-0117). Negative entries are also what candidate 2 of section 8 is.
+  rule 3 (RFC-0117). The one grammar change is a label-only field in a record type, meaning `.x: ()`.
+- **RFC-0189.** Its negative entries (`!.x`) and label-only entries are row-**bound** forms; a label-only entry there means "present,
+  of any type", and a negative entry has no place inside a row type, which is why candidate 2 of section 8 is weaker.
 - **RFC-0072.** Negative bounds on aspects (`T: !Aspect`), the same idea for a different kind of bound.
 - **RFC-0194 (linear closures).** A closure that captures a linear value is linear; its row is independent. Exactly-once consumption
   matters for handlers, not for rows.
@@ -431,17 +442,18 @@ languages and should be checked before this RFC leaves review.
    (metel-core#2121); position B, tracked as `.Panic`, is precise and cheaper to reverse. This RFC leaves it open. Evidence that would
    decide it: how much std and user code carries `.Panic` under B, whether the opt-in guarantee under A is used in practice, and
    whether tracking it later is acceptable before the Stability commitment.
-   **If ambient (A), the spelling of the no-panic guarantee:** a positive marker or the negative entry `!.Panic`, which needs no new
-   grammar. If `!.Panic`: how `.Panic` is exempt from the rule that a closed row excludes unlisted labels (rule 0 makes a closed row
-   an upper bound, so the exemption must be stated); whether a positive `.Panic` entry is meaningless or rejected; that the bound
-   needs an analysis of the body, not an impl-table lookup as in RFC-0072; and whether panic-freedom is **inferred** from visible
-   bodies and stated only on public or opaque functions, which would remove most of the annotation burden.
+   **If ambient (A), the spelling of the no-panic guarantee:** a positive callable marker (it fits a row type, and does not mix
+   guarantees with effects), or the negative entry `!.Panic`, which is not available inside an `effects` row (section 8). If
+   `!.Panic`: where it is written (a bound on the function or a row parameter, or an exception for `effects`); how `.Panic` is exempt
+   from the rule that a closed row excludes unlisted labels (rule 0 makes a closed row an upper bound, so the exemption must be
+   stated); that the bound needs an analysis of the body, not an impl-table lookup as in RFC-0072. For either: whether panic-freedom
+   is **inferred** from visible bodies and stated only on public or opaque functions, which would remove most of the annotation burden.
    **If tracked (B):** what migration looks like for the std natives and existing programs, and whether `.Panic` is inferred for
    private functions so that only public signatures state it.
 2. **The default for a named function with no row** (rule 4): unrestricted, with inference for private functions. Is "unrestricted"
    the right top element, and should a `pub` function without a row be a warning?
-3. **Rows as `.{ … }`, what remains.** Settled in this draft: the notation and entry forms (section 1); the grammar, a production of
-   its own built from `row_field` and `row_tail` (section 2); a closed row as an upper bound, fixed by the keyword `effects` alone
+3. **Rows as `.{ … }`, what remains.** Settled in this draft: the notation and entry forms (section 1); the grammar, one general
+   change (a label-only field in a record type means `.x: ()`) and no effect-specific production (section 2); a closed row as an upper bound, fixed by the keyword `effects` alone
    (rule 0); the row binder, RFC-0208's `<..E>`, which joins the same release (#1789, #2167); only std declares markers in this
    release; the role label of an operation entry is required, with a lint; a label not in the vocabulary is an error. Still open:
    (a) a turbofish argument for a row parameter (RFC-0192, shared with RFC-0208), so that `apply::<i64, i64, .{ .FileRead }>(..)` can
@@ -476,8 +488,8 @@ languages and should be checked before this RFC leaves review.
 
 Staged, each step independent of the next, and **marker entries and rows only** in v0.17.0 (the stage "Effect rows and markers"):
 
-1. The keyword `effect` (markers, std only; operation interfaces, anywhere), the `effects` production of section 2, the vocabulary
-   check, and the row binder (RFC-0208); operation interfaces parse and are typed as entries, with no runtime (handlers are
+1. The keyword `effect` (markers, std only; operation interfaces, anywhere), the `effects` clause of section 2 (a row type after a keyword) with the
+   one general grammar change, a label-only field in a record type, the vocabulary check, and the row binder (RFC-0208); operation interfaces parse and are typed as entries, with no runtime (handlers are
    RFC-0140's). The role-label lint lands with it.
 2. The row component of the callable type, the coercion rule and closure inference, on RFC-0232's mechanism.
 3. Aspect-method rows and implementation checking; `dyn` rows.

@@ -1415,13 +1415,14 @@ implementation).
   `fun`/`ctl`/`final ctl` classification, which decides RFC-0140's open question 4, and at
   most one handler per interface, which decides its open question 6). The keywords `effect`
   and `effects` replace RFC-0140's `^`, and a row is written as an ordinary Metel row,
-  `effects .{ .FileRead, !.Panic, ..E }`, reusing RFC-0189's entries, the open tail and the
-  row binder `<..E>` of RFC-0208, a dependency, since a row is not a value (labels are structural, RFC-0221). Rows are upper bounds, inferred on closures and
+  `effects .{ .FileRead, ..E }`, an ordinary row type (RFC-0121) with one general change (a
+  label-only field means `.x: ()`), the open tail and the row binder `<..E>` of RFC-0208, a
+  dependency, since a row is not a value (labels are structural, RFC-0221). Rows are upper bounds, inferred on closures and
   private functions, kept through generics, aspect dispatch and `dyn`, with a subset
   coercion that reuses RFC-0232's marker mechanism; a named function with no row is
   unrestricted, so existing programs keep their meaning. Whether `Panic` is
   tracked in rows or ambient is left open (working position for v0.17.0: ambient, with an
-  opt-in no-panic guarantee whose spelling is also open, a marker or `!.Panic`) and the
+  opt-in no-panic guarantee whose spelling is also open, a callable marker or a negative entry) and the
   guarantee cannot use plain integer arithmetic until RFC-0142 exists. Native effect metadata on std's roughly 160
   `native` declarations. Design tracked by metel-core#1672 (v0.17.0, stage "Effects
   design settlement"; implementation is the stage "Effect rows and markers"). It carries no
