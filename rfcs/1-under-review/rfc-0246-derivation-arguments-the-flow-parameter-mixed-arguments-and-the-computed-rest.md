@@ -19,8 +19,8 @@ case RFC-0238 leaves open: a derivation that takes a flow **and** other argument
 2. `Flow` is a **trailing positional parameter**. Leading positional arguments bind to the leading numeric labels of `Args`, the
    flow collects the positionals after them, and named labels are keyword arguments, as in RFC-0223.
 3. **`..` is the computed flow**, a value like any other flow: `derives Clone(..)`. RFC-0244 spells the computed flow this
-   way, and this RFC states what it is in the call: a value, not a mark on the entry. The class keyword keeps its mark: `copy?` is
-   `derives Clone(..), Copy(..)`.
+   way, and this RFC states what it is in the call: a value, not a mark on the entry. The class keyword has no computed form:
+   a conditional type writes `derives Clone(..), Copy(..)`.
 
 ```metel
 extend Serialize: Derivable {
@@ -113,9 +113,10 @@ concrete row and never sees `..`.
 
 ### 4. The class keyword
 
-`copy` is `derives Clone, Copy`, and `copy?` is `derives Clone(..), Copy(..)`. The keyword takes no argument list (RFC-0244), so `?`
-survives only on the keyword, as one character of sugar for a pair of entries. An explicit `derives Clone(T)` beside `copy?` replaces
-the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 section 3.
+`copy` is `derives Clone, Copy` with no condition on the type parameters, and it has no computed form (decided 2026-11-23, question 6).
+A type that is `Copy` only for some arguments writes the entries: `derives Clone(..), Copy(..)` to compute the condition, or
+`derives Clone(T), Copy(T)` to state it. The keyword then means one thing, and the only spelling of "computed" is `(..)`, a value in
+the call. An explicit `derives` entry beside `copy` still replaces the keyword's entry for that aspect, as in RFC-0244 section 3.
 
 ### 5. What changes in the implemented specification
 
@@ -137,15 +138,16 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
 | The flow first, other arguments after | The width of the flow is unbounded, so the boundary between flow and the leading positionals cannot be found without types. A trailing flow has a fixed start. |
 | A value `computed` in place of `..`: `Clone(flow = computed)` | A new keyword and a keyword argument for the one thing every field-wise derivation does. `..` already means "the rest" in rows and patterns. |
 | `derives A[T]` for the flow | `[]` is held by RFC-0050. |
-| `copy(..)` for the keyword form | It brings back the argument list RFC-0244 removed from the keyword, which reads as an argument to `copy`. `copy?` stays. |
+| A computed form on the keyword | `copy?` (the `?` already means error propagation in expressions), `copy(..)` (brings back the argument list RFC-0244 removed from the keyword), `infer copy` and `auto copy` (a word, and `auto` already names an aspect property). Each adds a second spelling of `(..)`; the keyword stays unconditional (question 6). |
 
 ---
 
 ## Interaction with other work
 
 - **RFC-0227** (implemented): defines the argument list and the flow. This RFC adds `..` to the list and names the entry type.
-- **RFC-0244** (implemented): spells the computed flow `(..)` on an entry. Its default (empty flow), the `pub` rule, `copy?` and the
-  error for a bare entry whose field needs a parameter stay, with the fix-it naming `derives A(..)`.
+- **RFC-0244** (implemented): spells the computed flow `(..)` on an entry. Its default (empty flow), the `pub` rule and the error for a
+  bare entry whose field needs a parameter stay, with the fix-it naming `derives A(..)`. Its `copy?` is removed: the keyword has no
+  computed form (question 6).
 - **RFC-0238** (under review): this RFC supplies the binding rule it lacks. It should adopt sections 1 to 3 here, or be amended with
   them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected. RFC-0238's examples write a keyword argument
   `rename_all: "camel"`, while RFC-0223 writes `name = value`; this RFC uses RFC-0223's form, and RFC-0238 should follow.
@@ -164,8 +166,9 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
   extension. A `Flow` that is the **only** positional entry (`Args = Flow`, which is all std's `Clone` and `Copy` need) renumbers
   nothing and is unaffected. A flow after leading positionals needs RFC-0125's answer, or a rest parameter (RFC-0247).
 - **A flow must come last among the positionals.** `derives A(T, "x")` is an error, and the message has to say why.
-- **Two spellings of one idea.** `copy?` keeps a mark that `derives` no longer has. It is keyword sugar and expands to the call form,
-  so a reader of the expansion sees only `(..)`.
+- **A conditional type is longer to write.** Without a keyword form, a type that is `Copy` only for some arguments writes
+  `derives Clone(..), Copy(..)` where `copy?` was one word. A `pub` type already wrote the stated entries, so private and public
+  types now read alike.
 
 ---
 
@@ -186,8 +189,9 @@ the keyword's `Clone` entry and leaves its `Copy` computed, as in RFC-0244 secti
 5. **What does `..` mean for a derivation that is not field-wise?** The computed flow is defined by the field dependence of the aspect
    being derived. A user derivation that takes a `Flow` for another purpose has no such definition. Recommendation: `..` is legal only
    for a `Flow` that is the flow of the emitted impl, which section 1 already states as the meaning of the type.
-6. **Keep `copy?`?** The alternative is no keyword mark: conditional types write `derives Clone(..), Copy(..)`, and `copy` means
-   unconditional only. That is one rule, and it is longer for a common case. Recommendation: keep `copy?`.
+6. **A computed form on the `copy` keyword?** Decided 2026-11-23: none. `copy` means unconditional only, and a conditional type writes
+   `derives Clone(..), Copy(..)`. That is one rule and one spelling of "computed", at the cost of length for a common case. The
+   spellings considered and dropped are listed under Alternatives.
 
 ---
 
