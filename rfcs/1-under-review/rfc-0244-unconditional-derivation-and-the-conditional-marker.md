@@ -8,6 +8,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
 ---
 
 > **Status — under review (2026-11-22).** Taken to review as part of the metel-core v0.17.0 plan (#2150)
+>
+> **Review (2026-11-23).** Checked against RFC-0227, RFC-0234, RFC-0239, RFC-0207, RFC-0224 and the grammar. Consistent: the changes it
+> makes to each are the ones stated here, and every program the new default affects fails to compile with a fix-it, none changes
+> meaning silently. Three corrections follow: std's `List` declares no `derives` (Interaction, Std), the grammar sketch of section 1
+> repeated the parentheses of `derive_args`, and the legacy `via` clause is now stated. The four open questions are decided
+> (below), and this RFC is accepted before RFC-0238, which adopts section 5 (#2151).
 
 ## Summary
 
@@ -64,9 +70,13 @@ This is a design draft. Nothing here is accepted. It amends RFC-0227, RFC-0238 a
 
 ```
 derive_entry = { type_path ~ derive_mark? }
-derive_mark  = { "?" | "(" ~ derive_args? ~ ")" }
+derive_mark  = { "?" | derive_args }
+derive_args  = { "(" ~ (ident ~ ("," ~ ident)* ~ ","?)? ~ ")" }
 class_kw     = { copy_kw ~ "?"? | linear_kw }
 ```
+
+`derive_args` is the rule that exists today. The legacy `via` clause (RFC-0224) is untouched: it still parses so that it can be
+rejected with its message naming the stated form, and `via` does not combine with `?`.
 
 `?` directly follows the aspect name and takes no argument list. `?` and `(..)` do not combine: `derives Clone?(T)` is a parse error
 ("`?` computes the condition and `(..)` states it; write one"). `?` is accepted on every entry whose derivation is field-wise
@@ -151,8 +161,8 @@ Strictness needs no new check. `derives A()` already requires the empty flow to 
   restated by section 4 above and is unchanged in effect for the computed form. Its examples change: `Plain<T> derives Clone` becomes
   `derives Clone?`.
 - **RFC-0238** (draft). Section 2's default for `Flow` parameters changes as in section 5 above, and section 3's std impls are
-  unchanged. This RFC and RFC-0238 should be accepted in an order that states the default once; if RFC-0238 is accepted first, it
-  adopts section 5.
+  unchanged. This RFC and RFC-0238 should be accepted in an order that states the default once.
+  **Decided 2026-11-23:** this RFC is accepted first, and RFC-0238 adopts section 5 when it is accepted (metel-core#2151).
 - **RFC-0239** (implemented). Sections 1, 2 and 4 are superseded; the first rule of section 3 stays. The RFC moves to
   `5-superseded` only if the whole of it is replaced; this RFC supersedes the argument list, and states the remainder in section 3.
 - **RFC-0234** (implemented). The keyword stays the one-word form of `derives Clone, Copy`. The flow entailment of section 2 of that
@@ -161,7 +171,8 @@ Strictness needs no new check. `derives A()` already requires the empty flow to 
 - **RFC-0224** (integrated). Rules 1 to 3 and 9 are unchanged. Rule 3's fix-it text changes.
 - **RFC-0219** (implemented). `copy` before a closure literal and in a written function type are different positions and
   unaffected. `?` is not accepted there.
-- **Std** (`core.mtl`). `Option`, `Result` and `List` already write `derives Clone(T), Copy(T)`; they do not change.
+- **Std** (`core.mtl`). `Option` and `Result` already state their flows (`derives Clone(T), Copy(T)` and `derives Clone(T, E),
+  Copy(T, E)`), so they do not change. `List` declares no `derives`.
 
 ---
 
@@ -187,16 +198,16 @@ Strictness needs no new check. `derives A()` already requires the empty flow to 
 
 1. **Is `derives A()` still legal?** It is now the same as `derives A`. Keeping both is harmless and a spelling the user may have
    written on purpose to be explicit. Rejecting it removes the redundancy. Recommendation: keep it legal and say so, since removing it
-   breaks existing programs for nothing.
+   breaks existing programs for nothing. **Decided 2026-11-23:** it stays legal, and the spec says it is the same as `derives A`.
 2. **Should a one-word spelling of the public conditional case exist?** Without `copy(T)`, `pub` conditionally-Copy types write
    `derives Clone(T), Copy(T)`. A later RFC could give the stated form a different, clearer spelling (the `where` form in the
    alternatives is one candidate) without touching `?`. Recommendation: leave it, and revisit when the `derives` stated form is
-   next changed.
+   next changed. **Decided 2026-11-23:** no one-word spelling; a `pub` conditionally-`Copy` type writes `derives Clone(T), Copy(T)`.
 3. **Does `?` apply to a user's derivation before RFC-0238 is accepted?** Only std's `Clone` and `Copy` have a field-wise
    derivation today, so section 5 has no user-visible effect until then. Recommendation: accept this RFC for the two std derivations
-   and let RFC-0238 adopt section 5.
+   and let RFC-0238 adopt section 5. **Decided 2026-11-23:** as recommended; implementation covers std's `Clone` and `Copy`.
 4. **Other class keywords.** `linear` is reserved. If it takes a flow later, this RFC does not decide whether `linear?` exists;
-   section 1 rejects it for now.
+   section 1 rejects it for now. **Decided 2026-11-23:** no `linear?`; `linear` stays reserved.
 
 ---
 
