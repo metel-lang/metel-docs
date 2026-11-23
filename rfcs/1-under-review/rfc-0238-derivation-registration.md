@@ -137,6 +137,9 @@ become the impls of section 3.
 - **RFC-0227** (under review): defines the clause arguments and the built-in flow; this RFC makes the signature a user's to declare.
 - **RFC-0244** (implemented): a bare entry is unconditional and `(..)` computes the flow; section 2 applies that to a derivation's
   `Flow` parameters.
+- **RFC-0246** (under review): how a clause's arguments bind to `Args` when a derivation takes a flow and other arguments, the type of a
+  flow entry, and `..` as the computed flow. Sections 1 to 3 here should follow it. Its examples write a keyword argument
+  `rename_all = "camel"` (RFC-0223), where this RFC's examples write `rename_all: "camel"`.
 - **RFC-0237** (draft): aspects as comptime values, and `Self` of kind `Aspect`. A prerequisite.
 - **RFC-0234** (under review): the `derived` mark (RFC-0235) is an obligation to derive another aspect and is independent of registration. Opening
   it to user aspects (RFC-0213 question 9) is no longer a generation question; whether to open it is question 1 below.
