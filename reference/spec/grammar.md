@@ -52,12 +52,14 @@ AspectProperty           → "declared"
                          | "derivable"
                          | "implicit"
                          | "auto"
-ClassKeyword             → "copy" DeriveArgs?
+ClassKeyword             → "copy" ( DeriveQuery | DeriveArgs )?
                          | "linear"
 ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
-DerivesClause            → "derives" ClauseEntry ( DeriveArgs | ViaClause )? ( "," ClauseEntry ( DeriveArgs | ViaClause )? )*
+DerivesClause            → "derives" ClauseEntry ( DeriveQuery | DeriveArgs | ViaClause )? ( "," ClauseEntry ( DeriveQuery | DeriveArgs | ViaClause )? )*
 ViaClause                → "via" IDENTIFIER ( "+" IDENTIFIER )*
-DeriveArgs               → "(" ( IDENTIFIER ( "," IDENTIFIER )* ","? )? ")"
+DeriveArgs               → "(" ( DeriveRest | ( IDENTIFIER ( "," IDENTIFIER )* ","? )? ) ")"
+DeriveRest               → ".."
+DeriveQuery              → "?"
 ClauseEntry              → "!"? TypePath
 SuperAspects             → "requires" SuperAspect ( "," SuperAspect )*
 SuperAspect              → "!"? "derived"? TypePath
