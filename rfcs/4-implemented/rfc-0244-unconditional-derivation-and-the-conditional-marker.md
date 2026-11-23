@@ -2,18 +2,17 @@
 id: rfc-0244
 title: "Unconditional derivation and the conditional marker"
 date: '2026-11-22'
-status: integrated
+status: implemented
 updated: '2026-11-23'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2150'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/2153'
-impl_status: not-started
+impl_status: implemented
 coverage:
   "1": { spec: "spec.declarations.aspects.declaration-clauses.legality-11" }
   "2": { spec: "spec.declarations.aspects.declaration-clauses.legality-13" }
   "3": { spec: "spec.declarations.aspects.declaration-clauses.legality-6" }
   "4": { spec: "spec.declarations.aspects.declaration-clauses.legality-13" }
-  "5": { kind: blocked, ref: rfc-0238, reason: "Section 5 adopts RFC-0238's argument defaults, and RFC-0238 is a draft that has no spec text yet." }
-  "6": { spec: "spec.declarations.aspects.declaration-clauses.legality-5" }
+  "5": { spec: "spec.declarations.aspects.declaration-clauses.legality-5" }
 ---
 
 > **Status — under review (2026-11-22).** Taken to review as part of the metel-core v0.17.0 plan (#2150)
@@ -22,11 +21,13 @@ coverage:
 > makes to each are the ones stated here, and every program the new default affects fails to compile with a fix-it, none changes
 > meaning silently. Three corrections follow: std's `List` declares no `derives` (Interaction, Std), the grammar sketch of section 1
 > repeated the parentheses of `derive_args`, and the legacy `via` clause is now stated. The four open questions are decided
-> (below), and this RFC is accepted before RFC-0238, which adopts section 5 (#2151).
+> (below), and the rule for a derivation that takes arguments (bare gives an empty `Flow`, `?` the computed one) is stated once, in RFC-0238 section 2 (#2151).
 
 > **Status — accepted (2026-11-23).** Accepted after the acceptance review: consistent with RFC-0227, 0234, 0239, 0207 and 0224; open questions decided; accepted before RFC-0238 (metel-core#2150, #2151)
 
 > **Status — integrated (2026-11-23).** Integrated into the spec: declaration-clauses rules 5, 6, 11, 13 and 18 and the Copy and residual examples; checked against RFC-0227, 0234, 0239, 0207, 0224 (metel-core#2150)
+
+> **Status — implemented (2026-11-23).** Implemented in metel-core#2153: bare derives and copy are unconditional, ? computes the flow, copy(..) is removed; the rule for derivations that take arguments moved to RFC-0238 section 2
 
 ## Summary
 
@@ -137,21 +138,7 @@ The marker does not lift the rule because they answer different silences: `?` re
 silent interface change at a field edit (Motivation 4). Today a broken use of a changed type is a loud error at the use site, so the
 rule protects separately compiled consumers, which Metel has no package system for yet (metel-core#1357).
 
-### 5. Derivations that take arguments (RFC-0238)
-
-RFC-0238 section 2 says that with no parentheses every argument takes its default, and that the default of a `Flow` parameter is the
-computed flow. Under this RFC:
-
-- a bare entry gives a `Flow` parameter the **empty** flow, with the check of section 2;
-- `?` gives every `Flow` parameter of the derivation the **computed** flow, and is an error on a derivation with no `Flow`
-  parameter;
-- parameters of other types (`rename_all: String = "none"`) take their defaults as before, under both forms.
-
-Nothing else in RFC-0238 changes. The deriver does not see impls (RFC-0238 section 5): a conditional derivation emits bounds on the
-parameters of its flow and the ordinary checks decide. `?` does not make a derivation fallible, so no failure-tolerant counterpart of
-`derive` is needed.
-
-### 6. The legality of the strict form is the existing legality 1
+### 5. The legality of the strict form is the existing legality 1
 
 Strictness needs no new check. `derives A()` already requires the empty flow to be sufficient (RFC-0227 section 2, rule 1), and
 `copy() struct Id<T> { n: i64 }` is accepted today for that reason. This RFC changes which spelling reaches that check.
@@ -180,9 +167,9 @@ Strictness needs no new check. `derives A()` already requires the empty flow to 
   "no parentheses" means the empty flow. Section 1's `derives Clone()` is the same as `derives Clone`. Section 3 (the `pub` rule) is
   restated by section 4 above and is unchanged in effect for the computed form. Its examples change: `Plain<T> derives Clone` becomes
   `derives Clone?`.
-- **RFC-0238** (draft). Section 2's default for `Flow` parameters changes as in section 5 above, and section 3's std impls are
-  unchanged. This RFC and RFC-0238 should be accepted in an order that states the default once.
-  **Decided 2026-11-23:** this RFC is accepted first, and RFC-0238 adopts section 5 when it is accepted (metel-core#2151).
+- **RFC-0238** (under review). A derivation that takes arguments reads the marks of this RFC: a bare entry gives each `Flow`
+  parameter the empty flow and `?` the computed one. RFC-0238 section 2 states that rule, so it is stated once, and this RFC
+  covers std's `Clone` and `Copy` (metel-core#2151).
 - **RFC-0239** (implemented). Sections 1, 2 and 4 are superseded; the first rule of section 3 stays. The RFC moves to
   `5-superseded` only if the whole of it is replaced; this RFC supersedes the argument list, and states the remainder in section 3.
 - **RFC-0234** (implemented). The keyword stays the one-word form of `derives Clone, Copy`. The flow entailment of section 2 of that
@@ -224,8 +211,9 @@ Strictness needs no new check. `derives A()` already requires the empty flow to 
    alternatives is one candidate) without touching `?`. Recommendation: leave it, and revisit when the `derives` stated form is
    next changed. **Decided 2026-11-23:** no one-word spelling; a `pub` conditionally-`Copy` type writes `derives Clone(T), Copy(T)`.
 3. **Does `?` apply to a user's derivation before RFC-0238 is accepted?** Only std's `Clone` and `Copy` have a field-wise
-   derivation today, so section 5 has no user-visible effect until then. Recommendation: accept this RFC for the two std derivations
-   and let RFC-0238 adopt section 5. **Decided 2026-11-23:** as recommended; implementation covers std's `Clone` and `Copy`.
+   derivation today, so the marks have no user-visible effect on a user's aspect until then. Recommendation: accept this RFC for
+   the two std derivations and let RFC-0238 state the rule for derivations that take arguments. **Decided 2026-11-23:** as
+   recommended; RFC-0238 section 2 states it, and this implementation covers std's `Clone` and `Copy`.
 4. **Other class keywords.** `linear` is reserved. If it takes a flow later, this RFC does not decide whether `linear?` exists;
    section 1 rejects it for now. **Decided 2026-11-23:** no `linear?`; `linear` stays reserved.
 
