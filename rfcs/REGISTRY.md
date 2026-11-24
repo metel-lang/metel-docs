@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-23'
+generated_on: '2026-11-24'
 ---
 
 # RFC Registry
@@ -117,7 +117,7 @@ the curated thematic map.
 - **RFC-0240** — Spelling of Written Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16 ; updated 2026-11-22)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
 - **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
-- **RFC-0246** — Derivation arguments: the flow parameter, mixed arguments and the computed rest (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-23)
+- **RFC-0246** — Derivation arguments: the flow parameter and mixed arguments (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-24)
 - **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
 
 ## Accepted (10)

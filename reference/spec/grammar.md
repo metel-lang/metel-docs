@@ -57,8 +57,7 @@ ClassKeyword             → "copy" ( DeriveQuery | DeriveArgs )?
 ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
 DerivesClause            → "derives" ClauseEntry ( DeriveQuery | DeriveArgs | ViaClause )? ( "," ClauseEntry ( DeriveQuery | DeriveArgs | ViaClause )? )*
 ViaClause                → "via" IDENTIFIER ( "+" IDENTIFIER )*
-DeriveArgs               → "(" ( DeriveRest | ( IDENTIFIER ( "," IDENTIFIER )* ","? )? ) ")"
-DeriveRest               → ".."
+DeriveArgs               → "(" ( IDENTIFIER ( "," IDENTIFIER )* ","? )? ")"
 DeriveQuery              → "?"
 ClauseEntry              → "!"? TypePath
 SuperAspects             → "requires" SuperAspect ( "," SuperAspect )*
