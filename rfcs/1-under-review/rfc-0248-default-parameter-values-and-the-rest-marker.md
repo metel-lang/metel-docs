@@ -2,8 +2,12 @@
 id: rfc-0248
 title: "Default parameter values and the rest marker"
 date: '2026-11-24'
-status: draft
+status: under-review
+updated: '2026-11-24'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2181'
 ---
+
+> **Status — under review (2026-11-24).** Design settled with the language owner: explicit `..`, defaults on any parameter, the general `(..)` for derivations, and the widened visibility rule (section 7).
 
 ## Summary
 

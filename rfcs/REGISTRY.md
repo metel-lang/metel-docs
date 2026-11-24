@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**247 RFCs total.** 35 draft, 65 under review, 10 accepted, 2 integrated (112 live), 100 implemented, 19 superseded, 16 refused (135 settled).
+**247 RFCs total.** 34 draft, 66 under review, 10 accepted, 2 integrated (112 live), 100 implemented, 19 superseded, 16 refused (135 settled).
 
-## Draft (35)
+## Draft (34)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -51,9 +51,8 @@ the curated thematic map.
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 - **RFC-0245** — Effect Rows and Marker Effects (`0-draft` ; rfcs/0-draft/rfc-0245-effect-rows-and-marker-effects.md ; date 2026-11-22)
-- **RFC-0248** — Default parameter values and the rest marker (`0-draft` ; rfcs/0-draft/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24)
 
-## Under Review (65)
+## Under Review (66)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -120,6 +119,7 @@ the curated thematic map.
 - **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
 - **RFC-0246** — Derivation arguments: the flow parameter, mixed arguments and the computed rest (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
+- **RFC-0248** — Default parameter values and the rest marker (`1-under-review` ; rfcs/1-under-review/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24 ; updated 2026-11-24)
 
 ## Accepted (10)
 
