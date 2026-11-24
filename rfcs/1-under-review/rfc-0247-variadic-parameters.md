@@ -158,8 +158,9 @@ selects the fixed one. Two variadic candidates that both match are an ambiguous 
 4. **A variadic function type.** Section 4 says there is none. Does a program need to write a type that quantifies over arity, or is the
    generic `Callable` impl enough?
 5. **Overloads.** Is "fixed-arity beats variadic" the right rule, and do two matching variadics need a tie-break instead of an error?
-6. **Defaults before the rest.** RFC-0223 does not say whether a function parameter may have a default. If one may, a defaulted positional
-   before a rest makes the split of extras ambiguous. Recommendation: forbid a default before a rest parameter.
+6. **Defaults before the rest.** Metel has no default parameter values (RFC-0223 rule 3); whether it should is metel-core#2181. If it
+   gains them, a defaulted positional before a rest makes the split of extras ambiguous. Recommendation: forbid a default before a rest
+   parameter.
 7. **RFC-0246's flow.** Should a derivation's `Args` be written as a parameter list with a rest parameter, `derive(Target, name: String,
    ..flow: Flow)`, in place of RFC-0246's `..Flow` row tail with renumbering? It avoids renumbering and is the stronger reason to accept this.
 8. **Placement.** This is drafted for v0.17.0, after the Function types stage (RFC-0232). RFC-0125 is committed to a later release and says

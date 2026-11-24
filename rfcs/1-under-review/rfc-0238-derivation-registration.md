@@ -18,7 +18,7 @@ impl: the clause's arguments are the impl's `Args`, and its `derive` function em
 aspect Serialize { fun serialize(&self) -> String; }
 
 extend Serialize: Derivable {
-    type Args = .{ .rename_all: String = "none" };
+    type Args = .{ .rename_all: String };
     comptime fun derive(Target: type, args: Self::Args) -> Decl {
         // reads typeinfo(Target), emits one `extend Target: Serialize { .. }`
     }
@@ -63,7 +63,8 @@ pub aspect Derivable for Aspect {
 
 `Self` is an aspect (RFC-0237 section 3). `Decl` is the comptime value of one declaration (RFC-0092 section 3), here an impl.
 `Args` is the type of the clause's arguments, a row (RFC-0151, RFC-0223): positional arguments are numeric labels (`.0`, `.1`),
-keyword arguments are named labels, and a field with a default makes its argument optional.
+keyword arguments are named labels. Every argument is required: Metel has no default values for parameters (RFC-0223 rule 3),
+and this RFC adds none (metel-core#2181). The one exception is a `Flow` parameter, whose absence is the empty flow (RFC-0244).
 
 ### 2. Resolution
 
@@ -78,8 +79,8 @@ The argument for a `Flow` parameter (RFC-0244) is a flow, or its absence:
   aspect depends on a type parameter (the fix-it names `(..)`);
 - `(..)` gives a `Flow` parameter the flow the compiler **computes** from the fields (RFC-0227), and is an error on a derivation
   with no `Flow` parameter;
-- a parameter of another type takes its default under both forms (`rename_all: String = "none"`), and a field with no default makes
-  the clause an error ("`A` requires arguments").
+- a parameter of another type has no default: it is passed under both forms, and a missing one makes the clause an error
+  ("`A` requires `rename_all`").
 
 A derivation whose `Args` is the empty row accepts none. The deriver does not see impls (section 5): a conditional derivation emits
 bounds on the parameters of its flow, and the ordinary checks decide. `(..)` does not make a derivation fallible, so no
