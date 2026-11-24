@@ -1409,6 +1409,7 @@ implementation).
   above. Tracked by metel-core#834, milestoned v0.21.1 (new milestone, created
   specifically for this RFC — the furthest-out existing milestone was v0.17.0).
 - **RFC-0245** *(draft, opened 2026-11-22)* — Effect Rows and Marker Effects — a checked
+- **RFC-0249** *(draft 2026-11-24)* — Lang items replace aspect declaration properties. A std-only `#lang_item("key")` attribute marks the types and aspects the compiler knows by identity (`Copy`, `Clone`, `Drop`, `Display`, `Iterable`, `From`, the primitives, `Option`, `Result`, ...), replacing the closed `builtins!` table and the string-keyed special cases (`"Drop"` about 17 sites, `"Clone"` about 11). Retires the `implicit` and `auto` aspect properties; `declared` and `derivable` become meta-aspects identified by lang items. Supersedes RFC-0212 and reopens the lang-item alternative that RFC-0206 §8 rejected. Stage 1 (identity lookups, no syntax) is independent of the rest.
   row of effects on functions, closures and callable types, in one calculus with two entry
   kinds: marker entries (declared labels such as `FileRead`, `Network`, `Diverge`, never
   erased by a handler) and operation entries (RFC-0140's interfaces, with the Koka
