@@ -29,7 +29,8 @@ struct Boxed<T> derives Clone(T), Copy(T)     { v: T }      // a stated flow
 struct Pair<A, B> derives Clone(..), Copy(..) { a: A, b: B } // the flow's default: what the fields need, (A, B)
 ```
 
-`..` means the same thing in every call. This is a design draft, tracked by metel-core#2181. Nothing here is accepted.
+`..` means the same thing in every call. On a `pub` type, the old `pub` rule for computed flows becomes an instance of an existing
+visibility rule, widened: a public interface is not decided by a private field (section 7). This is a design draft, tracked by metel-core#2181. Nothing here is accepted.
 
 ---
 
@@ -123,11 +124,46 @@ extend Clone: Derivable {
 So `(..)` in a `derives` clause is the general `..` of a call, and the only thing particular to derivations is the default std
 declares for its flow.
 
-The `pub` rule (RFC-0227 section 3) returns in the form RFC-0244 gave it: a `pub` generic type may use `(..)` only when the flow it
-yields is empty, because a computed flow is an interface a field edit could change. A `pub` type states its flow. This is a rule about
-derivations, not about `..`.
+On a `pub` type, `(..)` is limited by the visibility rule of section 7, not by a rule of its own.
 
-### 7. Overloads
+### 7. A public interface is not decided by a private field
+
+The `pub` rule of RFC-0227 section 3 (in RFC-0244's form: a `pub` generic type may use a computed flow only when it is empty) is
+replaced by a widening of an existing visibility rule. Today `modules.md` legality-8 says a private field's name cannot appear in a
+public signature, so that it never becomes part of the module's API. It becomes (decided 2026-11-24):
+
+> A public interface is not decided by a private field: a private field's name may not appear in it, and a private field may not
+> determine any part of it.
+
+The derived impls of a `pub` type, with their conditions, are part of its interface. So `(..)` on a `pub` type is an error exactly when
+a private field contributes a parameter to the computed flow:
+
+```metel
+pub struct Pair<A, B> derives Clone(..), Copy(..) { pub a: A, pub b: B }     // ok: the flow comes from public fields
+pub struct Token<T>   derives Clone(..), Copy(..) { pub kind: T, span: i64 } // ok: the private `span` contributes nothing
+pub struct Handle<T>  derives Clone(..), Copy(..) { id: u64, tag: T }        // error: the private `tag` decides the flow;
+                                                                             // state `Clone(T), Copy(T)`, or make `tag` pub
+```
+
+- **Why.** A computed condition decided by a private field is an interface its author can change without seeing it: a private field
+  edit that adds a parameter tightens the condition and breaks downstream code, while the author's own build stays green. A public
+  field's type is already part of the API, so a flow computed from public fields changes only when the API visibly does.
+- **The empty case falls out.** An empty computed flow has no contributing field, so no private one; RFC-0244's "only when empty"
+  exception needs no statement.
+- **Checking is not deciding.** A stated flow, and the strict check of a bare entry, read private fields freely: they only produce
+  errors for the author, and the interface is what is written.
+- **It is more permissive than the rule it replaces.** A `pub` type whose contributing fields are public may use `(..)`, which is the
+  common case for plain data types.
+- **Mechanism.** `needed_flow` reports, with each parameter of the flow, the fields that contributed it (RFC-0227's dependence analysis
+  already has this), and the check is made when the `derives` clause of a `pub` declaration is evaluated. The diagnostic names the
+  private field.
+- **Likely further instances**, not settled here: automatically derived properties such as `Send`/`Sync` (RFC-0080) and inferred
+  effects (RFC-0245) face the same question, and this rule is the answer they would take.
+
+So nothing about `pub` is particular to derivations: `(..)` is the general `..`, and what a public header may compute is a visibility
+rule.
+
+### 8. Overloads
 
 A call with `..` considers only the overload candidates that have a default for every parameter `..` would bind. Selection is
 otherwise unchanged and stays static.
@@ -159,6 +195,8 @@ struct literals to calls.
 | Defaults in a row type (`.{ .x: i64 = 1 }`) | Puts a value in a type: whether `.{ .x: i64 = 1 }` is `.{ .x: i64 }`, and how a default takes part in unification, have no good answer. Removed from RFC-0238 and RFC-0246 (#2181). |
 | Call-site spread `f(a, ..t)` in this RFC | The same `..` family, but useful without defaults and the dual of a rest parameter (RFC-0247 question 3). Left to its own RFC (decided 2026-11-24). |
 | Keep `(..)` as a `derives`-only form | The special case this RFC removes. |
+| Keep RFC-0244's `pub` rule as a derivation rule | Safe, but the one place where `(..)` would not be the general `..`. Replaced by the widened visibility rule, which gives the same guarantee and more (decided 2026-11-24). |
+| Drop the `pub` rule and leave tightening to API-compatibility tooling | General, like `cargo-semver-checks` or Elm's package manager, but no tooling exists yet, and a private field deciding a public condition is a visibility question the language already answers for names. |
 | A flow is always stated | No computed flow at all; tried in metel-core#2182 and closed unmerged (2026-11-24). The ergonomic cost of writing and maintaining every flow was judged too high. |
 
 ---
@@ -176,9 +214,15 @@ struct literals to calls.
   "at least `A`" form and no extra `pub` rule. Question 5 (`..` for a derivation that is not field-wise): `..` uses whatever default
   that deriver declares for its flow, and is an error if it declares none, so no special legality rule is needed.
 - **RFC-0238** (under review): `derive`'s signature is a parameter list, not a `type Args` row.
-- **RFC-0244** (implemented): a bare entry stays the empty flow; `(..)` stays, now as the general `..`.
+- **RFC-0244** (implemented): a bare entry stays the empty flow; `(..)` stays, now as the general `..`. Its `pub` restriction is
+  replaced by section 7.
+- **RFC-0227** (implemented): its section 3 `pub` rule is replaced by section 7.
+- **Modules spec**, visibility legality-8: widened by section 7, from a private field's name to any part of a public interface it
+  decides.
+- **RFC-0080** (Send/Sync): a likely further instance of section 7.
 - **RFC-0240** (under review): a function type has full arity; defaults are not part of it.
-- **RFC-0245** (draft): a default's effects are the call's.
+- **RFC-0245** (draft): a default's effects are the call's. Inferred effects of a `pub` function would be another instance of
+  section 7.
 - **RFC-0092, RFC-0132** (comptime): defaults of `comptime` functions, and `needed_flow`.
 
 ---
@@ -187,7 +231,9 @@ struct literals to calls.
 
 - **A call that uses defaults writes `..`.** That is one token more than Kotlin or Swift, and it is the point.
 - **Evaluation at the call.** A default is code that runs at each call that uses it, in the callee's parameter scope.
-- **Overloads.** `..` adds a filter to candidate selection (section 7).
+- **Overloads.** `..` adds a filter to candidate selection (section 8).
+- **Contribution tracking.** `needed_flow` reports which fields contributed each parameter, so that section 7 can name the private
+  field that decides a public flow.
 - **Derivations depend on rest parameters.** Section 6 needs RFC-0247, or the trailing positional of RFC-0246, to give `derive` a rest
   parameter.
 
