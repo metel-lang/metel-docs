@@ -74,15 +74,17 @@ For `struct T derives A(a, b = c)`:
 3. Run `derive(T, args)` at comptime. The result must be one impl declaration; see section 4.
 4. The declaration is added to the program as an ordinary impl.
 
-The argument for a `Flow` parameter (RFC-0244, RFC-0246) is a list of type parameters, or its absence. A flow is stated, never computed:
+The argument for a `Flow` parameter (RFC-0244) is a flow, or its absence:
 - a bare entry gives every `Flow` parameter the **empty** flow, which holds for every argument and is an error if a field's
-  aspect depends on a type parameter; the fix-it states every parameter the fields need;
-- a list states the flow, and the compiler checks that it contains every parameter a field's aspect depends on;
+  aspect depends on a type parameter (the fix-it names `(..)`);
+- `(..)` gives a `Flow` parameter the flow the compiler **computes** from the fields (RFC-0227), and is an error on a derivation
+  with no `Flow` parameter;
 - a parameter of another type has no default: it is passed under both forms, and a missing one makes the clause an error
   ("`A` requires `rename_all`").
 
 A derivation whose `Args` is the empty row accepts none. The deriver does not see impls (section 5): a conditional derivation emits
-bounds on the parameters of its flow, and the ordinary checks decide.
+bounds on the parameters of its flow, and the ordinary checks decide. `(..)` does not make a derivation fallible, so no
+failure-tolerant counterpart of `derive` is needed.
 
 ### 3. The field-wise combinator and std
 
@@ -96,8 +98,9 @@ extend Clone: Derivable {
 ```
 
 `Flow` is the type of a row of positional type parameters of `Target` of any width (`(T, U)` is `.{ .0 = T, .1 = U }`; row
-polymorphism is RFC-0125's). A `Flow` is always stated (RFC-0246), so no computed
-flow can become a public interface silently, and no `pub` rule is needed. Other parameters (`rename_all`) are ordinary. Until comptime runs this code, the compiler provides the two impls natively with the same signature (the state of RFC-0227).
+polymorphism is RFC-0125's). A parameter of type `Flow` is the one the `pub` rule of
+RFC-0227 applies to: a `pub` generic type must state it, unless the computed flow is empty. Other parameters (`rename_all`) are
+ordinary. Until comptime runs this code, the compiler provides the two impls natively with the same signature (the state of RFC-0227).
 
 ### 4. The emitted impl is an ordinary impl
 
@@ -132,10 +135,11 @@ become the impls of section 3.
 
 ## Interaction with other work
 
-- **RFC-0227** (implemented): defines the clause arguments and the built-in flow; this RFC makes the signature a user's to declare.
-- **RFC-0244** (implemented): a bare entry is unconditional; section 2 applies that to a derivation's `Flow` parameters.
+- **RFC-0227** (under review): defines the clause arguments and the built-in flow; this RFC makes the signature a user's to declare.
+- **RFC-0244** (implemented): a bare entry is unconditional and `(..)` computes the flow; section 2 applies that to a derivation's
+  `Flow` parameters.
 - **RFC-0246** (under review): how a clause's arguments bind to `Args` when a derivation takes a flow and other arguments, the type of a
-  flow entry, and that a flow is stated, never computed. Sections 1 to 3 here should follow it.
+  flow entry, and `..` as the computed flow. Sections 1 to 3 here should follow it.
 - **RFC-0237** (draft): aspects as comptime values, and `Self` of kind `Aspect`. A prerequisite.
 - **RFC-0234** (under review): the `derived` mark (RFC-0235) is an obligation to derive another aspect and is independent of registration. Opening
   it to user aspects (RFC-0213 question 9) is no longer a generation question; whether to open it is question 1 below.
