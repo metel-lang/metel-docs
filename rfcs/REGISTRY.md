@@ -51,7 +51,7 @@ the curated thematic map.
 - **RFC-0237** — Aspects as Comptime Values (`0-draft` ; rfcs/0-draft/rfc-0237-aspects-as-comptime-values.md ; date 2026-11-16)
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 - **RFC-0245** — Effect Rows and Marker Effects (`0-draft` ; rfcs/0-draft/rfc-0245-effect-rows-and-marker-effects.md ; date 2026-11-22)
-- **RFC-0249** — Lang items replace aspect declaration properties (`0-draft` ; rfcs/0-draft/rfc-0249-lang-items-replace-aspect-declaration-properties.md ; date 2026-11-24)
+- **RFC-0249** — Lang items replace aspect declaration properties (`0-draft` ; rfcs/0-draft/rfc-0249-lang-items-replace-aspect-declaration-properties.md ; date 2026-11-23)
 
 ## Under Review (66)
 
