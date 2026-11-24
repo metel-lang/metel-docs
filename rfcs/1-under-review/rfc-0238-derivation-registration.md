@@ -24,7 +24,7 @@ extend Serialize: Derivable {
     }
 }
 
-struct User derives Serialize(rename_all: "camel") { name: String, age: i64 }
+struct User derives Serialize(rename_all = "camel") { name: String, age: i64 }
 ```
 
 `derivable` stops being a property that only std aspects can have. `derives A` is legal exactly when `A: Derivable`, and who may
@@ -67,7 +67,7 @@ keyword arguments are named labels, and a field with a default makes its argumen
 
 ### 2. Resolution
 
-For `struct T derives A(a, b: c)`:
+For `struct T derives A(a, b = c)`:
 1. Find the impl of `Derivable` for `A`. None: `A` has no derivation and the clause is an error ("`A` is not derivable").
 2. Check the clause's arguments against `<A as Derivable>::Args`, as a call's arguments are checked against a parameter row.
 3. Run `derive(T, args)` at comptime. The result must be one impl declaration; see section 4.
@@ -75,7 +75,7 @@ For `struct T derives A(a, b: c)`:
 
 The argument for a `Flow` parameter (RFC-0244) is a flow, or its absence:
 - a bare entry gives every `Flow` parameter the **empty** flow, which holds for every argument and is an error if a field's
-  aspect depends on a type parameter (the fix-it names `?`);
+  aspect depends on a type parameter (the fix-it names `(..)`);
 - `(..)` gives a `Flow` parameter the flow the compiler **computes** from the fields (RFC-0227), and is an error on a derivation
   with no `Flow` parameter;
 - a parameter of another type takes its default under both forms (`rename_all: String = "none"`), and a field with no default makes
@@ -127,7 +127,7 @@ property of the aspect.
 ### 7. The `derivable` property
 
 The `derivable` property of an aspect declaration (RFC-0212) is replaced by the impl: `derives A` is legal exactly when `A: Derivable`.
-The other properties (`declared`, `implicit`, `auto`) are unchanged and stay std-only. Std's `derivable` marks on `Clone` and `Copy`
+The other properties are unchanged: `declared` is open to every aspect, `implicit` stays std-only, and `auto` stays deferred. Std's `derivable` marks on `Clone` and `Copy`
 become the impls of section 3.
 
 ---
@@ -138,8 +138,7 @@ become the impls of section 3.
 - **RFC-0244** (implemented): a bare entry is unconditional and `(..)` computes the flow; section 2 applies that to a derivation's
   `Flow` parameters.
 - **RFC-0246** (under review): how a clause's arguments bind to `Args` when a derivation takes a flow and other arguments, the type of a
-  flow entry, and `..` as the computed flow. Sections 1 to 3 here should follow it. Its examples write a keyword argument
-  `rename_all = "camel"` (RFC-0223), where this RFC's examples write `rename_all: "camel"`.
+  flow entry, and `..` as the computed flow. Sections 1 to 3 here should follow it.
 - **RFC-0237** (draft): aspects as comptime values, and `Self` of kind `Aspect`. A prerequisite.
 - **RFC-0234** (under review): the `derived` mark (RFC-0235) is an obligation to derive another aspect and is independent of registration. Opening
   it to user aspects (RFC-0213 question 9) is no longer a generation question; whether to open it is question 1 below.

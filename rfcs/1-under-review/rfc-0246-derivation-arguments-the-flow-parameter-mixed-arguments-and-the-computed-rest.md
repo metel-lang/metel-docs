@@ -149,8 +149,7 @@ the call. An explicit `derives` entry beside `copy` still replaces the keyword's
   bare entry whose field needs a parameter stay, with the fix-it naming `derives A(..)`. Its `copy?` is removed: the keyword has no
   computed form (question 6).
 - **RFC-0238** (under review): this RFC supplies the binding rule it lacks. It should adopt sections 1 to 3 here, or be amended with
-  them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected. RFC-0238's examples write a keyword argument
-  `rename_all: "camel"`, while RFC-0223 writes `name = value`; this RFC uses RFC-0223's form, and RFC-0238 should follow.
+  them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected.
 - **RFC-0223** (implemented): the binding rules are its rules. A derivation clause is the one call whose parameter list is a row.
 - **RFC-0125, RFC-0151** (row types): the `..Flow` tail renumbers positional labels after the declared ones, which RFC-0125 says is not
   built and not yet decided (question 3).
