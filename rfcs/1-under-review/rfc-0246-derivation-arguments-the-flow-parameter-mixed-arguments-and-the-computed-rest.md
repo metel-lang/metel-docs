@@ -24,14 +24,14 @@ case RFC-0238 leaves open: a derivation that takes a flow **and** other argument
 
 ```metel
 extend Serialize: Derivable {
-    type Args = .{ .0: String, .rename_all: String = "none", ..Flow };
+    type Args = .{ .0: String, .rename_all: String, ..Flow };
     comptime fun derive(Target: type, args: Self::Args) -> Decl { /* .. */ }
 }
 
-struct Pair<A, B> derives Serialize("pair", A, B)                     { a: A, b: B }  // .0 = "pair", flow = (A, B)
-struct Item<T>    derives Serialize("item", rename_all = "camel", T)  { v: T }        // keyword and flow
-struct Slot<T>    derives Clone(..)                                   { v: T }        // computed flow
-struct Tag<T>     derives Serialize("tag")                            { n: i64 }      // empty flow, the default
+struct Pair<A, B> derives Serialize("pair", A, B, rename_all = "none")  { a: A, b: B }  // .0 = "pair", flow = (A, B)
+struct Item<T>    derives Serialize("item", T, rename_all = "camel")    { v: T }        // flow, then the keyword
+struct Slot<T>    derives Clone(..)                                     { v: T }        // computed flow
+struct Tag<T>     derives Serialize("tag", rename_all = "none")         { n: i64 }      // no flow given: the empty flow
 ```
 
 This is a design draft. It refines RFC-0238 sections 1 to 3 and extends the argument list of RFC-0227. RFC-0244 already spells the
@@ -71,8 +71,8 @@ is **conditional on**, that is, the parameters `P` for which the impl carries th
 
 ### 2. Binding
 
-`<A as Derivable>::Args` is a row. Numeric labels are positional parameters, named labels are keyword parameters, and a label with a
-default is optional (RFC-0238 section 1, RFC-0223). This RFC adds one form of row tail:
+`<A as Derivable>::Args` is a row. Numeric labels are positional parameters, named labels are keyword parameters, and every label must be
+bound: there are no default values (RFC-0223 rule 3; metel-core#2181). This RFC adds one form of row tail:
 
 > `..Flow` at the end of a row type contributes the flow. Its entries are the positional labels that **follow** the numeric labels
 > declared before it: in `.{ .0: String, ..Flow }` the first flow entry is `.1`.
@@ -83,17 +83,19 @@ anywhere, as in any row. A call binds as RFC-0223 says:
 1. Positional arguments bind to the declared numeric labels in order, then the rest are the flow entries.
 2. Keyword arguments bind named labels; a keyword that binds no label is an error (as `T0039`), and a positional after a keyword is an
    error (as `T0040`).
-3. A label with a default may be omitted. An omitted flow is the **empty** flow (RFC-0244).
+3. Every declared label must be bound. The flow is the one exception: an omitted flow is the **empty** flow (RFC-0244), which is a rule
+   of `Flow` and not a default value.
 
-So, for `Args = .{ .0: String, .rename_all: String = "none", ..Flow }`:
+So, for `Args = .{ .0: String, .rename_all: String, ..Flow }`:
 
 | Clause | Binds |
 |---|---|
-| `derives A("x", T, U)` | `.0 = "x"`, flow `(T, U)` |
-| `derives A("x", rename_all = "camel", T)` | `.0 = "x"`, `.rename_all = "camel"`, flow `(T)` |
-| `derives A("x")` | `.0 = "x"`, empty flow |
-| `derives A(T, "x")` | error: `T` is not a `String`, and `"x"` is not a type parameter. The message says the leading positional arguments come before the flow. |
-| `derives A` | error: `.0` has no default ("`A` requires arguments") |
+| `derives A("x", T, U, rename_all = "none")` | `.0 = "x"`, flow `(T, U)`, `.rename_all = "none"` |
+| `derives A("x", T, rename_all = "camel")` | `.0 = "x"`, flow `(T)`, `.rename_all = "camel"` |
+| `derives A("x", rename_all = "none")` | `.0 = "x"`, empty flow, `.rename_all = "none"` |
+| `derives A("x", rename_all = "camel", T)` | error: a positional argument after a keyword (as `T0040`). The flow is positional, so it comes before the keywords. |
+| `derives A(T, "x", rename_all = "none")` | error: `T` is not a `String`, and `"x"` is not a type parameter. The message says the leading positional arguments come before the flow. |
+| `derives A` | error: `.0` and `.rename_all` are not bound ("`A` requires arguments") |
 
 A flow always comes after the leading positionals. That is the cost of one rule instead of a type-directed one (see Alternatives).
 
@@ -149,8 +151,7 @@ the call. An explicit `derives` entry beside `copy` still replaces the keyword's
   bare entry whose field needs a parameter stay, with the fix-it naming `derives A(..)`. Its `copy?` is removed: the keyword has no
   computed form (question 6).
 - **RFC-0238** (under review): this RFC supplies the binding rule it lacks. It should adopt sections 1 to 3 here, or be amended with
-  them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected. RFC-0238's examples write a keyword argument
-  `rename_all: "camel"`, while RFC-0223 writes `name = value`; this RFC uses RFC-0223's form, and RFC-0238 should follow.
+  them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected.
 - **RFC-0223** (implemented): the binding rules are its rules. A derivation clause is the one call whose parameter list is a row.
 - **RFC-0125, RFC-0151** (row types): the `..Flow` tail renumbers positional labels after the declared ones, which RFC-0125 says is not
   built and not yet decided (question 3).
