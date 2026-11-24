@@ -159,7 +159,7 @@ struct literals to calls.
 | Defaults in a row type (`.{ .x: i64 = 1 }`) | Puts a value in a type: whether `.{ .x: i64 = 1 }` is `.{ .x: i64 }`, and how a default takes part in unification, have no good answer. Removed from RFC-0238 and RFC-0246 (#2181). |
 | Call-site spread `f(a, ..t)` in this RFC | The same `..` family, but useful without defaults and the dual of a rest parameter (RFC-0247 question 3). Left to its own RFC (decided 2026-11-24). |
 | Keep `(..)` as a `derives`-only form | The special case this RFC removes. |
-| A flow is always stated | Merged state of metel-core#2182, not merged: no computed flow at all. The ergonomic cost (writing and maintaining every flow) was judged too high. |
+| A flow is always stated | No computed flow at all; tried in metel-core#2182 and closed unmerged (2026-11-24). The ergonomic cost of writing and maintaining every flow was judged too high. |
 
 ---
 
@@ -171,8 +171,10 @@ struct literals to calls.
 - **RFC-0247** (under review): a rest parameter with no arguments is empty, and may declare a default; question 6 is answered (section 5)
   and question 7 (a parameter list for `derive`) is adopted.
 - **RFC-0246** (under review): its trailing `Flow` becomes a rest parameter of `derive`, which replaces the renumbering row tail
-  `..Flow` and its dependence on RFC-0125. Its question 5 ("a computed flow anywhere?") is reopened by this RFC: `(..)` returns as the
-  general `..`.
+  `..Flow` and its dependence on RFC-0125. This answers three of its open questions. Question 3 (row tail or rest parameter): a rest
+  parameter. Question 1 (is `(A, ..)` accepted?): it is, and means `(A)`, because `..` fills only unbound parameters, so there is no
+  "at least `A`" form and no extra `pub` rule. Question 5 (`..` for a derivation that is not field-wise): `..` uses whatever default
+  that deriver declares for its flow, and is an error if it declares none, so no special legality rule is needed.
 - **RFC-0238** (under review): `derive`'s signature is a parameter list, not a `type Args` row.
 - **RFC-0244** (implemented): a bare entry stays the empty flow; `(..)` stays, now as the general `..`.
 - **RFC-0240** (under review): a function type has full arity; defaults are not part of it.
