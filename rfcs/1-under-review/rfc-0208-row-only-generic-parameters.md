@@ -22,8 +22,8 @@ extend<..R> .{ R }: Display where R: Display { … }
 
 ## 1. Type bounds, row binders and extraction
 
-1. In bound position, `T: .{ .id: i32 }` requires at least the named field. Other fields
-   are permitted. A value parameter typed `.{ .id: i32 }` still names an exact anonymous
+1. In bound position, `T: .{ .id: i32 }` requires exactly the named field. Write
+   `T: .{ .id: i32, .. }` to permit other fields. A value parameter typed `.{ .id: i32 }` names an exact anonymous
    record type. The bound preserves the argument type and its brand. RFC-0243 governs
    which fields of a nominal type are eligible.
 2. A parameter bound by `<..R>` denotes labelled fields. Use `R` as a record tail

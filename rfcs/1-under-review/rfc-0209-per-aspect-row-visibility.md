@@ -19,6 +19,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 
 ## Summary
 
+The language owner decided on 2026-11-25 that nominal types explicitly opt in to
+row-based aspect implementations, and that a selected derivation may inspect private
+fields of its target. Anonymous records continue to match applicable row impls. How a
+derive selects an implementation, including whether it reuses an anonymous-record impl
+through row extraction, remains open. The direct template application described below is
+one candidate, not a settled mechanism. Structural bounds see public fields as described
+in RFC-0243, so statements below that a struct satisfies no row bound are superseded by
+that decision.
+
 Today a nominal type's row is invisible to row-conditional impls: a plain `struct` never
 matches an impl over `.{ ..R }`, and a `record` declaration matches every such impl (RFC-0137,
 RFC-0120's tiers). This RFC adds a middle position, **row visibility per aspect**: a header
@@ -170,9 +179,8 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 2. **Records gated or automatic** (section 2).
 3. **Residuals**: whether a template applies to a narrowed residual `Doc.{ .title }`, and the
    `Drop` and move interactions (a follow-up RFC).
-4. **Field privacy**: a template in the aspect's module reads fields the type's module may
-   keep private (RFC-0116's rule for record fields); whether visibility overrides privacy for
-   the granted aspect.
+4. **Field privacy**: the selected derivation may inspect private fields. How to grant
+   and confine this authority in generated code remains open.
 5. **Which aspects have templates.** Whether a user derivable aspect may provide one, and what
    makes a template's `where` bound the check of the entry.
 6. **R1 or R2**: resolved. R2, the exact per-instantiation condition, is the rule (RFC-0206 rule 3).

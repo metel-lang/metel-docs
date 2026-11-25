@@ -83,6 +83,20 @@ RFC-0208), which the declaration kind makes easy to confuse.
 
 ## Design space
 
+**Decisions for this review (2026-11-25).** Structural bounds see the public fields of
+the matched type, consistently inside and outside its declaring module. An exact bound
+requires that public row to contain exactly the listed fields; `..` permits more. A
+nominal type must explicitly opt in to a row-based aspect implementation. Anonymous
+records continue to match applicable row implementations automatically. A derive request
+authorizes its selected derivation to inspect the target's private fields, without exposing
+those fields to ordinary structural bounds. The mechanism selecting the derivation and
+the treatment of residuals remain open. These decisions refine the options below; they do
+For a residual or named view, structural matching sees the intersection of the fields
+present in the residual and the public fields of its brand. The named `record`
+declaration kind is retired (language owner, 2026-11-25).
+Migration must preserve existing plain-aspect behavior with explicit grants where
+needed. The exact grant mechanism remains open.
+
 Five questions, answered independently by the options below.
 
 - **A. Declaration.** Is exposure a declaration *kind*, a *modifier or clause* on a struct, or *derived from field visibility*?
@@ -354,13 +368,12 @@ and O4 they do not.
 ## Open questions
 
 1. Which option, or combination, is the target (O1 to O7, V1 or V2)?
-2. Bounds: public row, exposed row, or per-type entry?
+2. Bounds: public row, as decided above.
 3. Is RFC-0209's per-aspect entry extended to plain aspects, or does a plain aspect keep `extend` only, so that a struct can never match
    its blanket impls?
-4. Does exposure imply `pub`, and may a template or bound in another module read a private field of an exposed type (RFC-0209 open
-   question 4)?
-5. Does a narrowed residual's public row equal the narrowing intersected with the public row, and what does that do to RFC-0137
-   section 3's worked example?
+4. A selected derivation may inspect private fields as decided above. How that authority is represented and constrained remains open.
+5. A narrowed residual's public row is its present fields intersected with the brand's
+   public fields. RFC-0137 section 3's worked example needs amendment at integration.
 6. Enums: a variant-wise form is out of scope (RFC-0209 section 3). Does anything here apply to them?
 7. Generic types: `derives Exposed` or the entry on a generic `pub` type, and which type parameters it depends on (the field-wise
    derive rule in the spec).
