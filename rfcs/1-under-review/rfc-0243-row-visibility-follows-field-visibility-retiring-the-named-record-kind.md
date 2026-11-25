@@ -85,12 +85,13 @@ RFC-0208), which the declaration kind makes easy to confuse.
 
 **Decisions for this review (2026-11-25).** Structural bounds see the public fields of
 the matched type, consistently inside and outside its declaring module. An exact bound
-requires that public row to contain exactly the listed fields; `..` permits more. A
+requires that public row to contain exactly the listed fields; `..` permits more. Exactness
+asserts nothing about private fields and does not grant access to or construction of them. A
 nominal type must explicitly opt in to a row-based aspect implementation. Anonymous
 records continue to match applicable row implementations automatically. A derive request
 authorizes its selected derivation to inspect the target's private fields, without exposing
 those fields to ordinary structural bounds. The mechanism selecting the derivation and
-the treatment of residuals remain open. These decisions refine the options below; they do
+the treatment of residual aspects remain open. These decisions refine the options below.
 For a residual or named view, structural matching sees the intersection of the fields
 present in the residual and the public fields of its brand. The named `record`
 declaration kind is retired (language owner, 2026-11-25).
@@ -377,8 +378,7 @@ and O4 they do not.
 6. Enums: a variant-wise form is out of scope (RFC-0209 section 3). Does anything here apply to them?
 7. Generic types: `derives Exposed` or the entry on a generic `pub` type, and which type parameters it depends on (the field-wise
    derive rule in the spec).
-8. Opaque views: field-disjointness policy (D1 to D4), whether a view may span public and private fields, and whether abstract names
-   compose per field.
+8. Opaque views are deferred to RFC-0251, including disjointness and composition.
 9. Whether row-conditional impl coherence (RFC-0121, RFC-0060) already rejects overlapping blanket impls of the same aspect.
 10. Spelling and scope of the lint, and whether the aspect-in-scope rule exists.
 11. Label namespacing: module-owned names or generative label values, and how `.[L]` label variables interact.
