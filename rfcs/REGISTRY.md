@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-24'
+generated_on: '2026-11-25'
 ---
 
 # RFC Registry
@@ -70,7 +70,7 @@ the curated thematic map.
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
 - **RFC-0100** — Explicit and inferred nominal construction (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-11-11 ; updated 2026-11-11)
-- **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-08-27)
+- **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-11-25)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
 - **RFC-0124** — Sequence Types: Fixed Arrays, Slices, and the Growable List (`1-under-review` ; rfcs/1-under-review/rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md ; date 2026-07-25 ; updated 2026-09-01)
@@ -105,8 +105,8 @@ the curated thematic map.
 - **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-19)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`1-under-review` ; rfcs/1-under-review/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01 ; updated 2026-11-22)
-- **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-03)
-- **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-04)
+- **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-25)
+- **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-25)
 - **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0214** — Aspect Impls for Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04 ; updated 2026-11-13)
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
@@ -117,7 +117,7 @@ the curated thematic map.
 - **RFC-0238** — Derivation Registration (`1-under-review` ; rfcs/1-under-review/rfc-0238-derivation-registration.md ; date 2026-11-16 ; updated 2026-11-22)
 - **RFC-0240** — Spelling of Written Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16 ; updated 2026-11-22)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
-- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-19)
+- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-25)
 - **RFC-0246** — Derivation arguments: the flow parameter, mixed arguments and the computed rest (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0248** — Default parameter values and the rest marker (`1-under-review` ; rfcs/1-under-review/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24 ; updated 2026-11-24)

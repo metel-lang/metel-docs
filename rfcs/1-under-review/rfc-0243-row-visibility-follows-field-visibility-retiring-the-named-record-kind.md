@@ -3,7 +3,7 @@ id: rfc-0243
 title: "Row Visibility Follows Field Visibility: Retiring the Named Record Kind"
 date: '2026-11-19'
 status: under-review
-updated: '2026-11-19'
+updated: '2026-11-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2099'
 ---
 
@@ -22,7 +22,7 @@ It lists every option discussed, with worked examples of what each gains and cos
 decided. The options differ on four questions: what a struct's row exposes to structural matching, who consents to the exposure,
 what the exposure grants (function bounds, blanket impls, or both), and how callers reach the private parts of a row.
 
-This is a design draft. It changes no syntax and decides no spelling; the spellings below are illustrative.
+This is a design draft. Proposed row bounds and binders follow RFC-0208. Other new spellings below are illustrative.
 
 ---
 
@@ -196,9 +196,11 @@ impl resolution is still gated on RFC-0121, and the borrow examples cannot run b
 
 ```metel
 struct Session { pub token: Token, user: String }       // O2: only `token` is public, so only `token` matches
-fun refresh<record T: .{ .token: Token, .. }>(t: &var T) { … }
+fun refresh<T: .{ .token: Token }>(t: &var T) { … }
 refresh(&var session);                                  // OK from any module
 ```
+
+In this proposed bound, `T` retains the Session brand. Extracting `..T` for public structural matching yields only `token`; a row binder matching the remaining fields receives an empty row.
 
 Today `Session` is a struct (never matches) or a record (`user` forced public). Under O4b the same would be
 `struct Session { pub token: Token, pub id: i64, user: String } derives Exposed(.token)`, and a bound on `.id` would be rejected with
@@ -227,7 +229,7 @@ local fix at the field.
 ```metel
 // library
 pub aspect Identified { fun describe(&self) -> String; }
-extend<row R: .{ .id: i64, .. }> Identified for R { … }          // invented spelling
+extend<..R> .{ .id: i64, R }: Identified { … }
 
 // downstream
 struct Invoice { pub id: i64, pub total: f64 }    // id = invoice number

@@ -3,7 +3,7 @@ id: rfc-0109
 title: "Self-View Narrowing"
 date: '2026-07-18'
 status: under-review
-updated: '2026-08-27'
+updated: '2026-11-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 ---
 
@@ -186,6 +186,12 @@ the RFC-0137 reading it's not a new checking philosophy at all, just the field-a
 rule every residual type already has.
 
 ## 3. Composition and disjointness
+
+With RFC-0208, `Handle.{ .fd, R }` under `<..R>` ranges over residuals of
+`Handle` retaining `fd`. The fixed view `view Fd for Handle { fd }` names the
+empty-tail case. A function bound `T: .{ .fd: i32 }` instead asks for a field of
+the given type. Under RFC-0243's public-row option, any eligible brand can meet
+that bound, while a receiver typed as `Fd` retains the `Handle` brand.
 
 Two views of the same struct are two named points in RFC-0137 §2's subset lattice,
 so both properties that matter are inherited, not separately defined:

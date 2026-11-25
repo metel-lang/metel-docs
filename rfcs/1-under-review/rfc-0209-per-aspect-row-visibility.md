@@ -3,7 +3,7 @@ id: rfc-0209
 title: "Per-Aspect Row Visibility"
 date: '2026-11-02'
 status: under-review
-updated: '2026-11-04'
+updated: '2026-11-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 ---
 
@@ -27,7 +27,7 @@ impls of that one aspect.
 
 ```metel
 // std, in the aspect's module: the aspect's row template (exists today for records)
-extend<record R> .{ ..R }: Clone where ..R: Clone { … }
+extend<..R> .{ R }: Clone where R: Clone { … }
 
 struct Doc derives Clone { title: String, tags: List<String> }   // Doc's row is visible to Clone's template
 struct Handle { fd: i64 }                                 // not visible to any row template
@@ -35,7 +35,7 @@ struct Handle { fd: i64 }                                 // not visible to any 
 
 The derivation behind a `derives` or marker entry is then not a separate mechanism. `struct Doc derives Clone` is
 `extend Doc: Clone` supplied by the aspect's existing template, applied to `Doc`'s row, and
-checked field by field through the template's `where ..R: Clone`. No new parameter kind and no
+checked field by field through the template's `where R: Clone`. No new parameter kind and no
 derive attribute are added.
 
 ---
@@ -69,11 +69,10 @@ struct's narrowed residual and an opted-in `record` from being confusable.
    to the row-conditional impls of aspect `A` exactly when its declaration header lists `A`, after the colon for a marker aspect or after
    `derives` for a derivable one (RFC-0207), or, for a `record` declaration, as section 2 provides. Otherwise it is
    invisible, as today.
-2. **A row template.** An `extend` of `A` whose target is `.{ ..R }` (with `R` a row, RFC-0208, or
-   a `record R` today) is a row template. A template applies to a nominal type `T` that has
+2. **A row template.** An `extend` of `A` whose target is `.{ R }` for a binder `<..R>` (RFC-0208), or equivalently `.{ ..T }` for a record type parameter `T` is a row template. A template applies to a nominal type `T` that has
    granted visibility to `A` when every field type of `T` satisfies the template's `where`
-   clause on `..R`.
-3. **`Self` in a template** denotes the type the template matched: the anonymous record `.{ ..R }`
+   clause on `R`.
+3. **`Self` in a template** denotes the type the template matched: the anonymous record `.{ R }`
    for an anonymous record, and `T` for a nominal type. A template method that returns `Self`
    returns a `T`. Field access by label (`self.[label]`) needs no relabelling, so a template
    that only reads works unchanged.
@@ -130,7 +129,7 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 
 ## 5. Alternatives considered
 
-1. **A brand parameter kind**, `extend<struct S, ..R> S.{ ..R }: A where ..R: A`. Declined: it
+1. **A brand parameter kind**, `extend<struct S, ..R> S.{ R }: A where R: A`. Declined: it
    adds a parameter kind, and RFC-0137's rule that a struct never matches a row-conditional impl
    still needs an opt-in, so the gate returns under another name.
 2. **Reuse `ToRecord`/`FromRecord`** (RFC-0119): `clone = from_record(self.to_record().clone())`.
