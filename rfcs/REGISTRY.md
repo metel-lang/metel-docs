@@ -105,7 +105,7 @@ the curated thematic map.
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
-- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-19)
+- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-26)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`1-under-review` ; rfcs/1-under-review/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01 ; updated 2026-11-22)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-25)
