@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**253 RFCs total.** 37 draft, 68 under review, 10 accepted, 2 integrated (117 live), 100 implemented, 20 superseded, 16 refused (136 settled).
+**253 RFCs total.** 37 draft, 67 under review, 11 accepted, 2 integrated (117 live), 100 implemented, 20 superseded, 16 refused (136 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0251** — Opaque Views for Private State (`0-draft` ; rfcs/0-draft/rfc-0251-opaque-views-for-private-state.md ; date 2026-11-25)
 - **RFC-0252** — Opaque Types and Borrowable Projections (`0-draft` ; rfcs/0-draft/rfc-0252-opaque-types-and-borrowable-projections.md ; date 2026-11-25)
 
-## Under Review (68)
+## Under Review (67)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -71,7 +71,6 @@ the curated thematic map.
 - **RFC-0095** — Attributes and Metadata (`1-under-review` ; rfcs/1-under-review/rfc-0095-attributes-and-metadata.md ; date 2026-07-09 ; updated 2026-09-01)
 - **RFC-0096** — Auto-Impl Aspects — Compiler-Recognized Structural Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md ; date 2026-07-11 ; updated 2026-09-03)
 - **RFC-0099** — Dot-Separated Module Paths (`1-under-review` ; rfcs/1-under-review/rfc-0099-dot-separated-module-paths.md ; date 2026-07-13 ; updated 2026-08-23)
-- **RFC-0100** — Nominal Construction Through a Unified Type and Value Namespace (`1-under-review` ; rfcs/1-under-review/rfc-0100-constructor-call-construction.md ; date 2026-11-11 ; updated 2026-11-26)
 - **RFC-0109** — Self-View Narrowing (`1-under-review` ; rfcs/1-under-review/rfc-0109-self-view-narrowing-and-reference-destructuring-patterns.md ; date 2026-07-18 ; updated 2026-11-25)
 - **RFC-0113** — Context Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0113-context-parameters.md ; date 2026-07-21 ; updated 2026-08-23)
 - **RFC-0122** — Borrow Checking (`1-under-review` ; rfcs/1-under-review/rfc-0122-borrow-checking.md ; date 2026-07-24 ; updated 2026-09-01)
@@ -126,7 +125,7 @@ the curated thematic map.
 - **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-26)
 - **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-26)
 
-## Accepted (10)
+## Accepted (11)
 
 - **RFC-0063** — Allocator Handles (`2-accepted` ; rfcs/2-accepted/rfc-0063-allocator-handles.md ; date 2026-06-24 ; updated 2026-07-10)
 - **RFC-0065** — Allocator and Lifetime Ergonomics (`2-accepted` ; rfcs/2-accepted/rfc-0065-allocator-ergonomics.md ; date 2026-06-27 ; updated 2026-07-20)
@@ -135,6 +134,7 @@ the curated thematic map.
 - **RFC-0073** — AutoAlloc (`2-accepted` ; rfcs/2-accepted/rfc-0073-auto-alloc.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0077** — Allocator Generics (`2-accepted` ; rfcs/2-accepted/rfc-0077-allocator-generics.md ; date 2026-06-29 ; updated 2026-07-10)
 - **RFC-0089** — Linear Types (`2-accepted` ; rfcs/2-accepted/rfc-0089-linear-types.md ; date 2026-07-09 ; updated 2026-11-05)
+- **RFC-0100** — Nominal Construction Through a Unified Type and Value Namespace (`2-accepted` ; rfcs/2-accepted/rfc-0100-constructor-call-construction.md ; date 2026-11-11 ; updated 2026-11-26)
 - **RFC-0119** — Record Conversions (`2-accepted` ; rfcs/2-accepted/rfc-0119-record-conversions.md ; date 2026-07-24 ; updated 2026-09-27)
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
