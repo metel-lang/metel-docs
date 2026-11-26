@@ -3,7 +3,7 @@ id: rfc-0238
 title: "Derivation Registration"
 date: '2026-11-16'
 status: under-review
-updated: '2026-11-22'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2158'
 ---
 
@@ -114,9 +114,19 @@ free items; RFC-0094 generalises `emit` and is not assumed.
 
 ### 5. What a deriver sees
 
-A deriver receives `Target` and its arguments and may call `typeinfo(Target)` (RFC-0092 section 2). It does not see impls: it cannot
-ask whether a field type implements `Clone`, because it emits the bounds and the ordinary checks decide. This keeps derivation
-independent of the order of impls and rules out cycles (a deriver whose result depends on an impl it is itself deriving).
+A deriver receives `Target` and its arguments and may call `typeinfo(Target)` (RFC-0092 section 2). For a type parameter of
+`Target`, nothing here changes: the deriver never asks about impls for it, it emits a `where` bound over the field's own type
+and the ordinary checks decide — the existing field-wise combinator for `Clone`/`Copy` (section 3) works exactly this way
+already and is unaffected by what follows.
+
+For a concrete type, a deriver may ask whether it implements a given aspect (language owner, 2026-11-26), existence only, never
+the value an impl's body computes. This query is a dependency edge in the same module/declaration graph RFC-0031 already
+builds and topologically orders: resolving it may require running another type's own pending derivation first, exactly as
+resolving an ordinary name reference may require checking another module's declaration first. A genuine cycle through these
+edges — including the degenerate case of a deriver asking about the very aspect it is deriving for `Target` itself — is
+rejected the same way the graph already rejects any other circular dependency, not silently accepted or deadlocked. This
+permits a strategy-selecting derivation (format through `Display` when a field has it, fall back otherwise) without
+reintroducing order-dependence: the answer is fixed by the graph's structure, not by which derivation happened to run first.
 
 ### 6. Who may provide a derivation
 
@@ -170,6 +180,8 @@ become the impls of section 3.
 - A deriver is comptime code, so the feature waits on comptime. The clause arguments (RFC-0227) do not.
 - `Derivable` makes `Self` of kind `Aspect` real, which is RFC-0237's cost.
 - Two representations of std's derivations (native now, Metel later) must agree until the native one is retired.
+- Letting a deriver ask about another concrete type's impls (section 5) extends RFC-0031's module/declaration graph with
+  derivation-dependency edges and reuses its cycle detection for them; this wiring is not yet specified.
 
 ---
 
@@ -179,8 +191,10 @@ become the impls of section 3.
    which is safe for user aspects. Does this RFC enable it, or leave it std-only?
 2. **Template derivations.** RFC-0222's `derives Builder` makes a struct's row visible to a row template and emits no impl. Is `Builder`
    a `Derivable` whose `derive` returns a non-impl declaration, or a separate derivation form?
-3. **May a deriver ask about impls?** Section 5 says no. A derivation that depends on whether a field type has an aspect (for example
-   to choose a strategy) cannot be written. Is the restriction acceptable?
+3. **May a deriver ask about impls?** Resolved (language owner, 2026-11-26): yes, for a concrete type, as a dependency edge in
+   the module/declaration graph (section 5) — a real cycle through it is rejected like any other circular dependency, rather
+   than the capability being forbidden outright. Never for a type parameter, which stays with the existing field-wise
+   combinator.
 4. **The `Decl` type.** Section 1 uses RFC-0092's single-declaration `emit`; whether a deriver returns a `Decl` or calls `emit` is a
    comptime detail this RFC does not fix.
 5. **Several impls from one derive.** A derivation that needs a helper impl (an aspect and its super-aspect) cannot emit two. RFC-0234's
