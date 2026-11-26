@@ -3,7 +3,7 @@ id: rfc-0253
 title: "Generic Targets in Residual Type Projections"
 date: '2026-11-25'
 status: under-review
-updated: '2026-11-25'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2194'
 ---
 
@@ -85,6 +85,25 @@ second struct with the same `value` field does not become `Value<String>`. A typ
 naming a private field does not authorize an external caller to access that field or
 permit a private field name in a public signature.
 
+**Declaring a `pub` alias that retains a private field is a different operation from accessing that field, and only the
+second is rejected** — an adversarial check against rule 3 and open question 4, whose wording ("a chain of aliases cannot
+expose a private field in a public signature") is ambiguous between the two:
+
+```metel
+// in Box's own module
+struct Box<T> { pub value: T, secret: T }
+pub type Inner<T> := Box<T>.{ .value, secret };   // legal: written where `secret` is visible
+
+// elsewhere
+fun peek<T>(b: &Inner<T>) -> &T { &b.secret }     // error: `secret` is private to Box's module
+```
+
+`Inner<T>`'s declaration is legal because it is written inside `Box`'s module, where `secret` is visible — being `pub`
+as a *type* does not change that, the same way a `pub` function may return a value whose fields stay private. Ordinary
+residual field-access visibility (RFC-0109 `legality-8`) applies to `Inner<T>` exactly as it would to `Box<T>` directly,
+because the alias is transparent (RFC-0160): this RFC adds no privacy rule on top of that one, it only confirms the
+existing rule survives expansion.
+
 ## Alternatives
 
 A dedicated generic `view Value<T> for Box<T> { value }` supplies a convenient name but
@@ -120,7 +139,11 @@ not viable if the same grammar excludes generic arguments in the projection base
    Propagation through aliases and open residual tails across modules needs integration review.
 4. **Privacy:** apply existing visibility rules after expansion and substitution; a
    chain of aliases cannot expose a private field in a public signature (language owner,
-   2026-11-25). The implementing phases and diagnostics need integration review.
+   2026-11-25). **Disambiguated:** this governs *access* to the field from outside the
+   declaring module, not the alias *declaration* itself — a `pub` alias retaining a
+   private field in its projected row is legal to declare wherever that field is visible
+   (worked example above); only an external access to it is rejected. The implementing
+   phases and diagnostics need integration review.
 5. **Full width:** a projection of every declared field normalizes to the instantiated
    nominal type, including when some fields are private (language owner, 2026-11-25).
    Chained projection type syntax is deferred to RFC-0150; associated types and inference

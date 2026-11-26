@@ -124,7 +124,7 @@ the curated thematic map.
 - **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0248** — Default parameter values and the rest marker (`1-under-review` ; rfcs/1-under-review/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24 ; updated 2026-11-24)
 - **RFC-0250** — Named Extend Blocks (`1-under-review` ; rfcs/1-under-review/rfc-0250-named-extend-blocks.md ; date 2026-11-25 ; updated 2026-11-26)
-- **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-25)
+- **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-26)
 - **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-25)
 
 ## Accepted (10)
