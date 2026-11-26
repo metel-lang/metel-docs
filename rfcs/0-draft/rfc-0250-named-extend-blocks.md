@@ -3,6 +3,7 @@ id: rfc-0250
 title: "Named Extend Blocks"
 date: '2026-11-25'
 status: draft
+updated: '2026-11-26'
 ---
 
 ## Summary
@@ -24,17 +25,55 @@ extend Invoice: Identified using IdentifiedById;
 ```
 
 The selected block supplies an ordinary coherent implementation for `Invoice`. The
-provider's row requirements must hold and its body is checked. This is a design draft;
-no spelling, status transition, or interaction with derived `Clone` is decided.
+provider's row requirements must hold and its body is checked.
+
+**A minimal slice of this is decided (language owner, 2026-11-26): section 0.** It closes RFC-0243's migration gap — a
+struct migrated from a `record` regaining a plain aspect's lost blanket match — without settling this RFC's general
+provider-selection design. Everything else here (multiple providers, label mapping, comptime provider values, residual
+selection, interaction with derived `Clone`, the active-vs-inactive-blanket question) remains undecided, a design draft.
+
+## 0. The decided slice: migration naming
+
+**A row-conditional impl may carry a name, and `extend T: A using Name;` is accepted when `Name`'s own `where` clause is
+satisfied by `T`'s public row (RFC-0243) and every method of `A` is by-reference-only — never returning or consuming
+`Self` by value (language owner, 2026-11-26).** Acceptance installs `Name`'s methods for `T` as an ordinary, coherent
+impl of `A`.
+
+- **The name is always required, with no bare/unnamed shortcut**, even in a case where only one candidate could ever
+  legally match. This is a deliberate choice, not an oversight: a bare `extend T: A;` would be ambiguous to a *reader*
+  (which behavior did this adopt?) even where RFC-0121's coherence rule makes it unambiguous to the *compiler* — the two
+  are different properties, and this slice optimizes for the reader. Naming also means this slice needs no uniqueness
+  proof over existing row-conditional impls of `A`, unlike an earlier draft of this idea: the name picks the impl
+  directly, so a second, differently-named provider existing elsewhere is simply not this grant's concern.
+- **The by-reference-only restriction is what keeps this slice narrow.** It avoids RFC-0209's open question of
+  constructing `Self` from a row — a method that only reads through `&self`/`&var self` needs no such construction
+  (RFC-0209 section 1 already says a template that only reads "works unchanged"). An aspect with a `Self`-by-value
+  method (Clone-shaped) has no grant here at all, named or not; it needs a handwritten impl, or whatever this RFC
+  eventually settles for that case.
+- **Naming an existing impl changes nothing about it for anonymous records.** An unnamed blanket impl stays exactly as
+  active and ambient as it always was; adding a name is purely an additional way to *refer* to it from a `using` clause,
+  never a change to its own activation. This sidesteps section 2's "active vs. inactive" question entirely for this
+  slice — a named provider here is active by inheriting whatever activation it already had.
+- **Predicate-only aspects (`satisfying`, RFC-0202) never use this form.** They have no body to adopt and are granted
+  through the colon list instead (RFC-0202 section 6), never `extend`. This slice is exclusively for aspects with real,
+  by-reference-only methods.
+- **Migration mechanics.** For each existing `record` with a plain aspect's blanket match that would otherwise be lost
+  on retirement (RFC-0243), a migration tool can compute the match today and emit one `extend T: A using Name;` per
+  (type, aspect) pair — mechanically, since the match itself is unaffected by naming. A match whose aspect fails the
+  by-reference restriction has no bridge here and is flagged for manual follow-up rather than silently dropped.
 
 ## Motivation
 
-RFC-0243's emerging direction lets public fields satisfy structural bounds while a
-nominal type opts in to a row-based aspect implementation. A bodyless grant such as
-`extend Invoice: Identified;` leaves the implementation to be selected implicitly. Naming
-the provider makes the chosen behavior reviewable and permits useful diagnostics when its
-requirements are not met. It can also support migration of named records that currently
-receive a plain aspect through a blanket implementation.
+RFC-0243's decided direction lets public fields satisfy structural bounds while a
+nominal type opts in to a row-based aspect implementation. A bare grant with no provider
+named would leave the implementation selected implicitly — readable to the compiler
+(RFC-0121's coherence rule admits at most one match per aspect) but not to a human at the
+grant site, who cannot tell whose behavior was just adopted without searching the
+dependency graph. Naming the provider, always, makes the chosen behavior reviewable and
+permits useful diagnostics when its requirements are not met — section 0 settles exactly
+this much, for migrating a named record's lost plain-aspect blanket match. The rest of
+this document is about the general case: several candidate providers for one aspect,
+which does need disambiguation beyond naming alone.
 
 ## 1. Proposed model
 
@@ -141,7 +180,10 @@ impl, and coherence must account for its domain.
 ## 5. Alternatives
 
 A bodyless grant inferred from shape requires no provider names, but must define selection
-and ambiguity. Listing fields in a grant identifies the row, but not a unique provider.
+and ambiguity. **Declined for section 0's slice** (language owner, 2026-11-26): even where
+RFC-0121's coherence makes the match unambiguous to the compiler, it stays unnamed and
+unreviewable to a reader, which is exactly what naming is for. Listing fields in a grant
+identifies the row, but not a unique provider.
 A handwritten impl forwarding to library functions is explicit and works without
 selectable impls, at the cost of repeating aspect methods. Label arguments or mappings
 could make a provider reusable for differently named fields, but require their own
@@ -149,7 +191,9 @@ label-polymorphism and checking rules and are not assumed here.
 
 ## Open questions
 
-1. Is a named block an active blanket impl, an inactive provider, or can it be either?
+1. Is a named block an active blanket impl, an inactive provider, or can it be either? **Orthogonal to section 0's
+   slice**: naming an *existing* blanket impl there changes nothing about its own activation, whichever this is decided
+   to be; it only matters for a provider declared named from the start.
 2. What syntax names the provider, selects it and supplies explicit generic arguments?
    Are names public API and can they be imported or re-exported?
 3. Which orphan rules govern declaring the provider and selecting it? Can an aspect owner
@@ -157,9 +201,14 @@ label-polymorphism and checking rules and are not assumed here.
 4. How do overlap checks handle conditional generic selections, negative impls, auto
    impls and existing anonymous-record blankets?
 5. How are `Self`, associated types and construction checked when the nominal target is
-   not known at provider definition? May a provider return `Self` at all?
+   not known at provider definition? May a provider return `Self` at all? **Resolved for
+   section 0's slice** by exclusion: a by-reference-only provider never constructs `Self`,
+   so the question doesn't arise there. Open for any provider that returns or consumes
+   `Self` by value.
 6. Which fields can the selected provider read, including private fields? Does explicit
-   selection confer any authority beyond the public row, and how is it scoped?
+   selection confer any authority beyond the public row, and how is it scoped? **Resolved
+   for section 0's slice**: no authority beyond the public row is granted, full stop.
+   Private-field authority is open for a future, broader selection form.
 7. Can the grant provide label arguments or a mapping? How are label collisions and
    bounds checked without confusing mapping with implicit renaming?
 8. How do multiple super-aspect obligations, generic aspect arguments and provider
@@ -169,11 +218,18 @@ label-polymorphism and checking rules and are not assumed here.
 11. Can provider names become comptime values, and can a derivation select one? This is
     deferred with the derived `Clone` / field-wise `Clone` interaction.
 12. What migration preserves named-record blanket behavior without guessing a provider
-    when several candidates exist?
+    when several candidates exist? **Resolved for the single-candidate case** (section
+    0): RFC-0121's coherence already forbids two overlapping row-conditional impls of the
+    same aspect, so there is nothing to guess there. Still open if "several candidates"
+    means something coherence doesn't already rule out (e.g. across differently-scoped
+    imports) — needs a concrete example before it's known whether this is a real case.
 13. Does a selected nominal implementation behave as a brand-specific impl under the
     current brand-priority rule, and how does it interact with the provider's own active
-    blanket impl and with other matching row impls?
+    blanket impl and with other matching row impls? **Resolved for section 0's slice**:
+    the grant materializes an ordinary impl, so existing dispatch (brand-specific before
+    row-conditional) already covers it with no new rule. Open for the general case's
+    "provider's own active blanket" interaction.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** *(pending, except section 0's slice — decided, language owner, 2026-11-26)*

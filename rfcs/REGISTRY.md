@@ -52,7 +52,7 @@ the curated thematic map.
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 - **RFC-0245** — Effect Rows and Marker Effects (`0-draft` ; rfcs/0-draft/rfc-0245-effect-rows-and-marker-effects.md ; date 2026-11-22)
 - **RFC-0249** — Lang items replace aspect declaration properties (`0-draft` ; rfcs/0-draft/rfc-0249-lang-items-replace-aspect-declaration-properties.md ; date 2026-11-23)
-- **RFC-0250** — Named Extend Blocks (`0-draft` ; rfcs/0-draft/rfc-0250-named-extend-blocks.md ; date 2026-11-25)
+- **RFC-0250** — Named Extend Blocks (`0-draft` ; rfcs/0-draft/rfc-0250-named-extend-blocks.md ; date 2026-11-25 ; updated 2026-11-26)
 - **RFC-0251** — Opaque Views for Private State (`0-draft` ; rfcs/0-draft/rfc-0251-opaque-views-for-private-state.md ; date 2026-11-25)
 - **RFC-0252** — Opaque Types and Borrowable Projections (`0-draft` ; rfcs/0-draft/rfc-0252-opaque-types-and-borrowable-projections.md ; date 2026-11-25)
 
@@ -233,7 +233,7 @@ the curated thematic map.
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`4-implemented` ; rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-16 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1808)
 - **RFC-0207** — Declaration Clauses: derives and the Colon List (`4-implemented` ; rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1800)
 - **RFC-0211** — Aspects on Residuals (`4-implemented` ; rfcs/4-implemented/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-16 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1830)
-- **RFC-0212** — Aspect Declaration Properties (`4-implemented` ; rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1803)
+- **RFC-0212** — Aspect Declaration Properties (`4-implemented` ; rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1803)
 - **RFC-0213** — Super-Aspects (`4-implemented` ; rfcs/4-implemented/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1801)
 - **RFC-0218** — Spell Visibility pub (`4-implemented` ; rfcs/4-implemented/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1837)
 - **RFC-0219** — The copy Function-Type Qualifier (`4-implemented` ; rfcs/4-implemented/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-15 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2048)
