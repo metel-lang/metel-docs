@@ -99,8 +99,7 @@ local-binary evidence, not a release-tag experiment.
 
 **The program above is precisely what this revision makes impossible to write.** Under a
 unified namespace, declaring `struct Ticket` and `fun Ticket` in the same module is an
-ordinary name collision, caught at the two declarations themselves — the same diagnostic
-`fun Ticket` twice already gets today, not a new rule invented for this RFC. There is
+ordinary name collision, caught at the two declarations themselves. There is
 therefore no case left in which `Ticket(args)`'s meaning could depend on what the
 arguments look like: by the time any call is type-checked, `Ticket` already resolved,
 unambiguously, to one declaration. The bug is removed by making its precondition
@@ -115,23 +114,37 @@ for readability on its own merits is a fair question, taken up in Alternatives.
 **A module's nominal type declarations (`struct`, `enum`) and its ordinary value
 declarations (`fun`, `let`/`var` at module scope) share one namespace.** Declaring two
 of these under the same name in the same scope — two structs, two functions, a struct and
-a function, an enum and a `let` — is an ordinary redeclaration error, exactly the
-diagnostic two same-named functions already produce today. This is not a new collision
-rule layered on top of the existing one; it is the existing same-kind collision check,
-widened to run across kinds instead of stopping at a kind boundary.
+a function, an enum and a `let` — is an ordinary redeclaration error.
+
+**This is new resolver work, not a free reuse of an existing check (checked against
+RFC-0030/RFC-0031, both implemented).** The bug example above is itself the proof: it
+already compiles one `struct Ticket` and one `fun Ticket` in the same file today, with no
+redeclaration error at all — only the argument-dependent dispatch heuristic this revision
+removes. That is not an oversight in the current implementation; it follows directly from
+how the two are tracked. `ModuleExports` keeps `pub_schemes: HashMap<String, Scheme>`
+(values) and `pub_types: HashMap<String, TypeDef>` (types) as two separate maps, so a
+module already exports a type and a value of the same name with no conflict. Import
+conflict detection (`ScopedEnv = HashMap<String, Binding>`, error `T0011`) is seeded only
+from `pub_schemes`; `pub_types` never feeds the same table, so type lookups go through an
+entirely separate path that the existing import-conflict check does not see at all. Both
+gaps — local, same-module declarations (the primary one, and what the bug actually was)
+and cross-module imports (secondary, same shape) — need a genuinely new check that looks
+across `pub_types` and `pub_schemes` (and their local, pre-export counterparts), not an
+extension of `T0011` as currently scoped. See open question 1 for what shape that check
+should take.
 
 ```metel
 struct Ticket { value: i64 }
-fun Ticket(input: i64) -> i64 { input + 100 }   // error: `Ticket` is already declared
-                                                  // (a struct), same as redeclaring a function
+fun Ticket(input: i64) -> i64 { input + 100 }   // error (new check): `Ticket` is already
+                                                  // declared as a struct
 ```
 
-- **Imports follow the existing import-collision rule, unchanged, now applied across
-  kinds.** Importing a type named `Ticket` from one module and a function named `Ticket`
-  from another into the same scope collides exactly as importing two same-named values
-  from two modules already does; the existing resolution (an error, or qualification)
-  is reused, not re-specified here. *(Needs confirming against the module system's own
-  rules — open question 1.)*
+- **Imports need the same new cross-kind check, not a reuse of `T0011` as it stands.**
+  Importing a type named `Ticket` from one module and a function named `Ticket` from
+  another into the same scope must collide the same way the local case does — but today's
+  `T0011` detection is seeded only from `pub_schemes` (values), so a cross-kind import
+  collision is invisible to it as currently implemented (see above; open question 1 lays
+  out the two credible ways to close this, and recommends one).
 - **Scope, not program-wide, governs the collision.** Two different modules may each have
   their own `Ticket` — one a struct, one a function — exactly as two modules may each
   declare their own function named `f` today; the namespace is unified per scope, not
@@ -334,20 +347,47 @@ type/value namespace making that syntax sound, ordinary positional/keyword rules
 explicit whole-row operands with `..{ ... }` literal notation, no implicit construction
 from bare names, and the inferred compact form deferred to its own future RFC.
 
-**Remaining acceptance work:** parser and resolver prototypes for cross-kind name
-collision detection; a corpus-wide audit for existing type/value name pairs that would
-newly collide; interaction review with the module system's existing import-collision
-rules (open question 1); a decision on whether aspects, type aliases or generic
-parameters also join the unified namespace (open question 2); exact-row, visibility and
+**Remaining acceptance work:** a resolver prototype for the new cross-kind collision
+check (section 1, open question 1 recommends the additive shape, not a `pub_schemes`/
+`pub_types` merge); a corpus-wide audit for existing type/value name pairs that would
+newly collide; a decision on whether aspects, type aliases or generic parameters also
+join the unified namespace (open question 2); exact-row, visibility and
 single-evaluation fixtures carried over from the prior revision. These are evidence
 requirements, not completed checks.
 
 ## Open questions
 
-1. **Does the module system's existing import-collision rule already generalize cleanly
-   across kinds, or does it need its own amendment?** This revision assumes it reuses
-   unchanged; that assumption needs checking against the module system's own RFCs before
-   acceptance.
+1. **Resolved — it does not already generalize, checked against RFC-0030 and RFC-0031
+   (both implemented).** `ModuleExports` tracks `pub_schemes` (values) and `pub_types`
+   (types) as two separate maps, so a module already exports a type and a value under one
+   name with no conflict today. The import-conflict table (`ScopedEnv`, error `T0011`) is
+   seeded only from `pub_schemes` — `pub_types` never reaches it, so a type/value import
+   collision is currently invisible to it, the same way a type/value *local* declaration
+   collision is invisible to whatever checks local redeclarations today (the bug example
+   in Motivation is direct proof: it already compiles both declarations in one file with
+   no error). Unification needs a genuinely new check, at both the local-declaration level
+   and the import level, comparing names across `pub_types` and `pub_schemes` (and their
+   pre-export, module-local equivalents) rather than within either alone.
+
+   Two credible ways to build it:
+   - **(a) Merge `pub_schemes` and `pub_types` into one map** (e.g. an `Item` enum wrapping
+     either a `Scheme` or a `TypeDef`). Directly expresses "one namespace" in the data
+     structure itself, but is invasive: it touches RFC-0030/0031's existing, already-
+     implemented separation, and every consumer of either map independently.
+   - **(b) Keep the two maps exactly as they are, and add one new, additive check**
+     — at each module's own declaration-collection pass, do its local type-declaration
+     names and local value-declaration names overlap; at each importing scope, do the
+     type names and value names being brought in (combined with local names at that
+     scope) overlap. Reject any overlap. This changes nothing about how `pub_schemes`
+     and `pub_types` are populated or consumed elsewhere; it only adds a pass that reads
+     both and compares their key sets.
+
+   **Recommendation: (b).** It gets the same language-level guarantee without touching
+   machinery RFC-0030/0031 already ship and presumably already have fixture coverage for;
+   (a) would need re-verifying all of that coverage against a changed representation for
+   no additional guarantee. Whether the new check's error reuses `T0011` or gets its own
+   code is an implementation detail for whichever ADR eventually specifies it (PROCESS.md's
+   convention), not something this RFC needs to pin down.
 2. **Does unification extend beyond struct/enum vs. fun/let?** Aspect names, type
    aliases and generic type parameters are explicitly not addressed here. Each is a
    separate decision, not an implied consequence of this one.
