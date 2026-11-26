@@ -47,6 +47,29 @@ because there is structurally only ever one `Struct` to call. The inferred compa
 withdrawn from this proposal; whether and how to reintroduce it is a separate, later
 question, addressed once a real namespace collision is no longer there to interact with it.
 
+**This revision explicitly reverses metel-core#1560, a recent, deliberate, already-implemented
+language-owner decision — not a green-field choice.** While this RFC's construction syntax was
+being reworked, a separate bug (`LIMIT-NAME-RESOLUTION-005`: the symbol table silently shared one
+id between unrelated declarations) was fixed on 2026-10-23, and fixing it required settling the
+adjacent policy question of whether a type and a value may share a name at all. The decision,
+quoted from the issue: *"structs, enums, aspects and type aliases share the type namespace;
+functions, `let` and `var` share the value namespace; a type and a value may share a name (`struct
+Foo` + `fun Foo` still coexist)."* The follow-up issue (metel-core#1571, closed 2026-10-24) went
+further and gave the symbol table a `(module, namespace, name)` key, with type and value as the two
+namespace values, specifically so `struct Foo` and `fun Foo` get distinct, independently-trackable
+identities — fixing the bug *while preserving* coexistence as policy, pinned by a dedicated fixture.
+
+**Why reversing it is still worth it.** `#1560` settled whether the symbol table could correctly
+track two coexisting declarations (yes, once fixed) — a question about identity bookkeeping. It did
+not, and from where it stood could not, settle whether *construction via plain call syntax* stays
+sound when they coexist, because that is a question about a different layer (call resolution, not
+symbol identity), and the concrete evidence that it does not stay sound is this RFC's own reverted
+implementation (metel-core#1945/#1946), discovered on essentially the same scenario around the same
+time. `#1560`'s fix is not undone by this revision — duplicate-name detection *within* one namespace
+(`T0037`) stays exactly as implemented. What this revision reverses is narrower: the one policy
+choice `#1560` made *alongside* that fix, once a concrete, costly consequence of that specific
+choice is in hand that `#1560` itself had no way to anticipate.
+
 ## Summary
 
 Nominal construction is an ordinary call:
@@ -116,44 +139,54 @@ declarations (`fun`, `let`/`var` at module scope) share one namespace.** Declari
 of these under the same name in the same scope — two structs, two functions, a struct and
 a function, an enum and a `let` — is an ordinary redeclaration error.
 
-**This is new resolver work, not a free reuse of an existing check (checked against
-RFC-0030/RFC-0031, both implemented).** The bug example above is itself the proof: it
-already compiles one `struct Ticket` and one `fun Ticket` in the same file today, with no
-redeclaration error at all — only the argument-dependent dispatch heuristic this revision
-removes. That is not an oversight in the current implementation; it follows directly from
-how the two are tracked. `ModuleExports` keeps `pub_schemes: HashMap<String, Scheme>`
-(values) and `pub_types: HashMap<String, TypeDef>` (types) as two separate maps, so a
-module already exports a type and a value of the same name with no conflict. Import
-conflict detection (`ScopedEnv = HashMap<String, Binding>`, error `T0011`) is seeded only
-from `pub_schemes`; `pub_types` never feeds the same table, so type lookups go through an
-entirely separate path that the existing import-conflict check does not see at all. Both
-gaps — local, same-module declarations (the primary one, and what the bug actually was)
-and cross-module imports (secondary, same shape) — need a genuinely new check that looks
-across `pub_types` and `pub_schemes` (and their local, pre-export counterparts), not an
-extension of `T0011` as currently scoped. See open question 1 for what shape that check
-should take.
+**This is a narrower, more surgical change than it might sound, checked directly against the
+current implementation history (metel-core#1560, #1571, both closed and merged 2026-10-23/24) —
+and it reverses one specific, recent policy choice rather than building unification from
+nothing.** `#1560` fixed a silent symbol-identity bug by giving every declaration a
+`(module, namespace, name)` key, with type and value as the two namespace values, and
+*deliberately* decided that a type and a value may share a `name` as long as their `namespace`
+differs — the quoted policy in Design History. `#1571` then made that key real throughout
+`ModuleScope` bindings, imports, exports and the reference resolver, which "tries the value
+namespace and then the type namespace for a bare name." Duplicate-name detection (`T0037`)
+already runs correctly *within* one namespace value; it does not run *across* the two, because
+`#1560` explicitly asked it not to.
+
+**Unification is this: stop treating type and value as two namespace values, and make the
+duplicate check that already exists for one namespace value cover both.** It does not need a
+new parallel structure, a merged map, or a new resolver pass — the namespace dimension is
+already a clean, first-class part of the key; this narrows it to a single value (or, equivalently,
+makes the existing duplicate check look up a name under *either* namespace instead of only its
+own). The bare-name resolver's "value, then type" fallback becomes moot for a name's own
+declaration-site check, since at most one declaration can exist per name once unified; whatever
+is left of that fallback order for other purposes is a question for whoever implements this, not
+settled here.
 
 ```metel
 struct Ticket { value: i64 }
-fun Ticket(input: i64) -> i64 { input + 100 }   // error (new check): `Ticket` is already
-                                                  // declared as a struct
+fun Ticket(input: i64) -> i64 { input + 100 }   // error: `Ticket` is already declared as a
+                                                  // struct -- the duplicate check `#1560` built
+                                                  // for one namespace value now covers both
 ```
 
-- **Imports need the same new cross-kind check, not a reuse of `T0011` as it stands.**
-  Importing a type named `Ticket` from one module and a function named `Ticket` from
-  another into the same scope must collide the same way the local case does — but today's
-  `T0011` detection is seeded only from `pub_schemes` (values), so a cross-kind import
-  collision is invisible to it as currently implemented (see above; open question 1 lays
-  out the two credible ways to close this, and recommends one).
+- **Imports need the same narrowing, not a separate mechanism.** Per `#1571`, "an import or
+  re-export brings a name in every namespace the source module provides it in." Importing a
+  type named `Ticket` from one module and a function named `Ticket` from another into the
+  same scope must collide the same way the local case does; since both already go through the
+  one namespace-aware import path `#1571` built, this is the same narrowing as the local
+  case, not a second thing to design.
 - **Scope, not program-wide, governs the collision.** Two different modules may each have
   their own `Ticket` — one a struct, one a function — exactly as two modules may each
   declare their own function named `f` today; the namespace is unified per scope, not
   flattened across the whole program.
+- **Aspects and type aliases join automatically, not as a separate decision.** `#1560`'s
+  existing policy already groups `struct`, `enum`, `aspect` and `type` alias declarations
+  into one type namespace; unifying that with the value namespace carries all four along
+  (open question 2). Nothing here needs to separately re-decide including them.
 - **What does *not* unify.** Enum variant names stay in their existing, separately-scoped
   namespace (RFC-0107/RFC-0111): unifying module-level types and values says nothing about
-  `Option::Some` or its unqualified exposure. Aspect names, generic type parameters, and
-  type aliases are not addressed by this section — whether any of them should also join
-  the unified namespace is open question 2, not assumed here.
+  `Option::Some` or its unqualified exposure. Generic type parameters do not unify either —
+  they are ordinary lexical shadowing, scoped to one declaration's own signature, the same
+  mechanism a function parameter already uses (open question 2).
 - **What this buys, beyond fixing the lookup bug:** one namespace per scope is the more
   common model outside Rust/Haskell-lineage languages, and removes a whole class of
   "is this shadowing a type or a function" question before it can be asked. What it
@@ -306,13 +339,17 @@ section 6. RFC-0111's enum-variant rules remain. RFC-0225 owns anonymous record 
 its literals stay structural. RFC-0114 owns canonical validation, fallibility and
 privileged minting.
 
-No compiler behaviour is changed merely by revising this RFC. Before any grammar or
-namespace-resolution change ships, the existing std library and test corpus need an
-audit for any current type/value name pairs that would become a redeclaration error
-under section 1 — this is new migration work section 1 introduces that the prior
-`new`/`.(...)` revision did not need, since that revision kept both namespaces separate.
-Implement prototypes first; acceptance and spec integration precede product
-implementation.
+No compiler behaviour is changed merely by revising this RFC. The audit this revision's
+namespace unification needs (open question 4) has already been run against the real
+`metel-core` checkout, not left for later: 9 files out of 2,385 have a type/value name
+pair that would become a redeclaration error under section 1, all of them test fixtures,
+none in the standard library, several being `metel-core#1560`'s own fixtures (including the
+one that deliberately pins coexistence as legal). This is new migration work section 1
+introduces that the prior `new`/`.(...)` revision did not need, since that revision kept
+both namespaces separate — but it is bounded and small, not a rename campaign. It also
+means revisiting two *closed* issues (`#1560`, `#1571`) whose own acceptance criteria
+assumed coexistence would remain a permanent invariant. Implement prototypes first;
+acceptance and spec integration precede product implementation.
 
 ## Alternatives and decision
 
@@ -347,59 +384,71 @@ type/value namespace making that syntax sound, ordinary positional/keyword rules
 explicit whole-row operands with `..{ ... }` literal notation, no implicit construction
 from bare names, and the inferred compact form deferred to its own future RFC.
 
-**Remaining acceptance work:** a resolver prototype for the new cross-kind collision
-check (section 1, open question 1 recommends the additive shape, not a `pub_schemes`/
-`pub_types` merge); a corpus-wide audit for existing type/value name pairs that would
-newly collide; a decision on whether aspects, type aliases or generic parameters also
-join the unified namespace (open question 2); exact-row, visibility and
+**Remaining acceptance work:** a prototype narrowing the `(module, namespace, name)` key's
+namespace dimension to one value (section 1, open question 1); updating or retiring the
+fixtures `metel-core#1560`/`#1571` added to pin coexistence as legal (open question 4, a
+real audit already run); revisiting those two closed issues' own acceptance criteria,
+which assumed coexistence would remain a permanent invariant; exact-row, visibility and
 single-evaluation fixtures carried over from the prior revision. These are evidence
 requirements, not completed checks.
 
 ## Open questions
 
-1. **Resolved — it does not already generalize, checked against RFC-0030 and RFC-0031
-   (both implemented).** `ModuleExports` tracks `pub_schemes` (values) and `pub_types`
-   (types) as two separate maps, so a module already exports a type and a value under one
-   name with no conflict today. The import-conflict table (`ScopedEnv`, error `T0011`) is
-   seeded only from `pub_schemes` — `pub_types` never reaches it, so a type/value import
-   collision is currently invisible to it, the same way a type/value *local* declaration
-   collision is invisible to whatever checks local redeclarations today (the bug example
-   in Motivation is direct proof: it already compiles both declarations in one file with
-   no error). Unification needs a genuinely new check, at both the local-declaration level
-   and the import level, comparing names across `pub_types` and `pub_schemes` (and their
-   pre-export, module-local equivalents) rather than within either alone.
-
-   Two credible ways to build it:
-   - **(a) Merge `pub_schemes` and `pub_types` into one map** (e.g. an `Item` enum wrapping
-     either a `Scheme` or a `TypeDef`). Directly expresses "one namespace" in the data
-     structure itself, but is invasive: it touches RFC-0030/0031's existing, already-
-     implemented separation, and every consumer of either map independently.
-   - **(b) Keep the two maps exactly as they are, and add one new, additive check**
-     — at each module's own declaration-collection pass, do its local type-declaration
-     names and local value-declaration names overlap; at each importing scope, do the
-     type names and value names being brought in (combined with local names at that
-     scope) overlap. Reject any overlap. This changes nothing about how `pub_schemes`
-     and `pub_types` are populated or consumed elsewhere; it only adds a pass that reads
-     both and compares their key sets.
-
-   **Recommendation: (b).** It gets the same language-level guarantee without touching
-   machinery RFC-0030/0031 already ship and presumably already have fixture coverage for;
-   (a) would need re-verifying all of that coverage against a changed representation for
-   no additional guarantee. Whether the new check's error reuses `T0011` or gets its own
-   code is an implementation detail for whichever ADR eventually specifies it (PROCESS.md's
-   convention), not something this RFC needs to pin down.
-2. **Does unification extend beyond struct/enum vs. fun/let?** Aspect names, type
-   aliases and generic type parameters are explicitly not addressed here. Each is a
-   separate decision, not an implied consequence of this one.
-3. **Is the readability objection from position (2) still live, now that its original
-   cause (coexistence) is gone?** If reviewers still want a visual construction marker
-   on readability grounds alone, that is an argument for revisiting position (3) instead
-   of this one, not a soundness objection to this revision.
-4. **What does the corpus-wide audit actually find?** Until it runs, the real migration
-   cost of section 1 (how many existing type/value name collisions would need renaming)
-   is unknown; this could turn out to be a non-event or a real rename campaign.
-5. **Interaction with aspect-object dispatch and trait-object-shaped calls**, if any
-   exist, needs checking against unification — not investigated here.
+1. **Resolved — checked against the actual current implementation history
+   (metel-core#1560, #1571; both closed, merged 2026-10-23/24), which supersedes an earlier
+   draft of this answer based on the older RFC-0030/RFC-0031 prose.** The symbol table is
+   already keyed `(module, namespace, name)` with type and value as the two namespace
+   values (`#1571`), and duplicate-name detection (`T0037`) already runs correctly within
+   one namespace value — it does not run across both, because `#1560` explicitly decided
+   it should not. Unification is narrower than "add new resolver machinery": it is
+   collapsing that one dimension of an already-well-factored key from two values to one, so
+   the duplicate check `#1560`/`#1571` already built does the rest unchanged. Imports
+   inherit this for free too, since `#1571`'s "an import brings a name in every namespace
+   the source module provides it in" already threads the namespace dimension through
+   `ModuleScope`, imports, exports and the reference resolver — narrowing it in one place
+   narrows it everywhere that dimension is read. Whether the resulting error reuses `T0037`
+   or gets its own code, and what becomes of the reference resolver's "value, then type"
+   fallback order once at most one declaration can exist per name, are implementation
+   details for whichever follow-up issue does this, not settled here.
+2. **Resolved — unification reaches aspects and type aliases automatically, by the
+   existing grouping `#1560` already decided; generic type parameters are a different
+   question, answered no.** `#1560`'s policy already puts structs, enums, aspects and type
+   aliases in the one type namespace being unified with the value namespace here, so this
+   RFC does not need to separately decide to include them — excluding any of the four would
+   be the thing needing its own justification, not the default. Generic type parameters are
+   different in kind: they are scoped to a single declaration's own signature and shadow
+   outer bindings under the language's ordinary lexical-scoping rules, the same way a
+   function parameter already can; that is pre-existing shadowing, not module-level
+   redeclaration, and unification does not change it.
+3. **Genuinely open, and independent of `#1560`'s own reasoning.** `#1560`'s decision to
+   allow coexistence was a symbol-identity policy call, not a readability judgment — it
+   says nothing about whether plain call-syntax construction reads well, so this question
+   cannot be answered by appeal to that history either way. If reviewers still want a
+   visual construction marker on readability grounds alone, independent of the soundness
+   issue this revision fixes, that is an argument for revisiting position (3) instead of
+   this one — a style preference, not a defect in this revision. Plain call syntax for
+   construction is also unremarkable in mainstream languages outside the Rust/Haskell
+   lineage (Python, Kotlin, Scala's `apply` convention, Swift's call-syntax initializers all
+   construct with no dedicated marker), which is relevant context for whoever judges this,
+   not a verdict in itself.
+4. **Resolved — audited directly against the real metel-core checkout, not left
+   hypothetical.** A scan of all 2,385 `.mtl` files under `metel-core/` for a top-level
+   `struct`/`enum` name also used as a top-level `fun`/`let`/`var` name in the same file
+   found exactly 9 matches, every one a test fixture, none in the standard library
+   (`metel-frontend/stdlib/`). Several are `#1560`'s own fixtures, including the one that
+   deliberately pins coexistence as legal (`a_type_and_a_function_may_share_a_name.mtl`,
+   cited by name in its own comment). The real migration cost is small and bounded — not a
+   rename campaign — but it specifically means retiring or inverting `#1560`'s own
+   regression fixture into a negative test, and revisiting that closed issue's acceptance
+   criteria, which assumed coexistence was a permanent invariant rather than a point-in-time
+   policy.
+5. **Resolved — not a real interaction, pruned.** A `dyn Aspect` value that happens to be
+   callable (for example a `dyn Callable<..>`, RFC-0232) is invoked as an ordinary value
+   call; the thing being called already lives in the value namespace regardless of this
+   RFC. There is no scenario here in which an *aspect name itself* is called with `(args)`
+   syntax the way a type or function name is, so unification does not interact with
+   aspect-object dispatch at all. This was an overcautious question with nothing concrete
+   behind it; PROCESS.md's "prune harder" rule applies.
 
 **Lifecycle outcome:** Under review, tracked by metel-core#807. No acceptance, spec
 integration or implementation transition is claimed.
