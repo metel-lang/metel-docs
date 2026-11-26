@@ -2,9 +2,12 @@
 id: rfc-0250
 title: "Named Extend Blocks"
 date: '2026-11-25'
-status: draft
+status: under-review
 updated: '2026-11-26'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2196'
 ---
+
+> **Status — under review (2026-11-26).** Section 0's migration-naming slice is decided and committed to closing RFC-0243's migration gap in v0.17.0
 
 ## Summary
 
