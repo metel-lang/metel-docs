@@ -22,7 +22,7 @@ It lists every option discussed, with worked examples of what each gains and cos
 left after the decisions below. **The core questions are decided** (2026-11-25): bounds see the public row, the `record`
 declaration kind is retired, and a nominal type must explicitly opt in to a row-based aspect *implementation* — the general
 opt-in mechanism for that is deferred to RFC-0250, but the one narrow case this RFC's own migration needs (a struct regaining
-a lost plain-aspect blanket match) already has a settled spelling, RFC-0202 section 6. What remains open is enums, generic
+a lost plain-aspect blanket match) already has a settled spelling, RFC-0250 section 0. What remains open is enums, generic
 grants, opaque views, and residual matching, each tracked below against the RFC or decision that owns it; a few non-blocking
 tooling questions were pruned rather than carried forward (see Open questions).
 
@@ -59,7 +59,7 @@ wants_a_record(h)   // T0012: `Handle` is a struct, but a struct never satisfies
    keeps exactly two capabilities no struct has: (a) satisfying a row *bound* on a function parameter, and (b) matching the blanket
    `extend`s of *plain* aspects (granted by `extend` only), for which RFC-0209 section 2 changes nothing.
 3. **RFC-0202.** A struct never satisfies a row bound, so a tuple struct (RFC-0151 section 7) cannot satisfy `Tuple` or `Dense`
-   without a "checked impl form" that RFC-0202 defers.
+   without the colon-list's checked `satisfying` entry (RFC-0202 section 6), now specified.
 4. **No partial exposure.** A struct cannot expose some fields to matching, and a `record` must publish all of them. A type with a
    public `token` and a private `user` can be neither matched on `token` nor kept private on `user`.
 5. **Core and the formal model.** RFC-0241 would carry one nominal-with-row kind instead of two that differ by a flag.
@@ -138,11 +138,12 @@ matches blanket impls with no declaration. `record` is retired as a kind; "all f
 
 **O3. Public row for bounds, nominal granting for impls.** Row bounds on function parameters see the public row (as O2). Foreign
 blanket row-conditional impls apply to brandless rows only. A nominal type receives an aspect through an explicit,
-shape-checked impl: RFC-0202 section 6's checked impl form (`extend T: A;`), accepted when the type's public row satisfies
-either a `satisfying` predicate or, for an ordinary by-reference-only aspect, the condition of exactly one visible
-row-conditional impl. RFC-0209's header-entry mechanism (a `derives`/`: A` list entry granting visibility to a row *template*)
-is a different, still-deferred spelling for a broader case — reusing an existing impl's behavior through a declared aspect
-list rather than a bodyless `extend`; RFC-0250 explores it further.
+shape-checked grant, split by whether the aspect has a body: a predicate aspect (no methods) is granted through the colon
+list's checked `satisfying` entry (RFC-0202 section 6 — `struct T: satisfying A`, never `extend`); an ordinary,
+by-reference-only aspect backed by an existing row-conditional impl is granted through `extend T: A using Name;`, always
+named (RFC-0250 section 0). RFC-0209's header-entry mechanism (a `derives`/`: A` list entry granting visibility to a row
+*template*) is a different, still-deferred spelling for a broader case — selecting among several providers, or reusing a
+field-wise template that constructs `Self`; RFC-0250 explores that general case further.
 
 **O4. Exposure per field, through a derive.** A field is matchable only if it is exposed: `derives Exposed(.token)` names the fields,
 and an optional `exposed struct` could be sugar for exposing all public fields. Exposure implies `pub`, because a bound lets generic
@@ -205,7 +206,7 @@ opaque views:
 |---|---|---|---|---|---|---|
 | O1 | yes | records only | records only (plain aspects) | no | none | none |
 | O2 | no, they start matching | all `pub` fields | all, ambient | via `pub` | none | RFC-0120 retired; RFC-0137 section 3 amended |
-| O3 | no for bounds | all `pub` fields | by explicit entry per aspect | via `pub` | checked `extend T: A;` | RFC-0121 narrowed; builds on RFC-0209 and RFC-0202 |
+| O3 | no for bounds | all `pub` fields | by explicit entry per aspect | via `pub` | colon-list `satisfying` (RFC-0202); `extend ... using Name` (RFC-0250) | RFC-0121 narrowed; builds on RFC-0202 and RFC-0250 |
 | O4a | yes | exposed types | exposed types | no | `Exposed` | small |
 | O4b | yes | exposed fields | exposed fields | yes | `Exposed` + labels as derive args | small, plus RFC-0227 |
 | O5 | no for bounds | all `pub` fields | exposed (per type or field) | yes | `Exposed` | small |
@@ -293,18 +294,23 @@ refresh(&var r);                     // mutates the record, not the original
 session := Session::from_record(r);  // needs every field visible; bypasses constructor invariants
 ```
 
-**E9. Explicit nominal granting (O3), now specified: RFC-0202 section 6.**
+**E9. Explicit nominal granting (O3), now specified: RFC-0250 section 0, for an aspect with a body.**
 
 ```metel
+pub named extend IdentifiedById<..R> .{ .id: i64, R }: Identified { fun describe(&self) -> String { … } }
+
 struct Invoice { pub id: i64, pub total: f64 }
-invoice.describe();              // error: Invoice does not implement Identified
-extend Invoice: Identified;      // checked against the shape: the public row has `.id: i64`,
-                                  // and exactly one visible row-conditional impl of Identified matches it
-invoice.describe();              // OK
+invoice.describe();                          // error: Invoice does not implement Identified
+extend Invoice: Identified using IdentifiedById;  // checked against the shape: the public row has `.id: i64`
+invoice.describe();                          // OK
 ```
 
-`Order` never opts in and never gets `describe`. This is also the migration bridge: a `record Invoice` retired into a
-`struct` that automatically matched `Identified`'s blanket impl regains it with this one line, per lost (type, aspect) pair.
+`Order` never opts in and never gets `describe`. The provider is always named, even though `IdentifiedById` is the only
+legal match for `Identified` here (RFC-0121's coherence forbids a second, overlapping one) — naming is for the reader,
+not to disambiguate. This is also the migration bridge: a `record Invoice` retired into a `struct` that automatically
+matched `Identified`'s blanket impl regains it with this one line, per lost (type, aspect) pair. A *pure marker* aspect
+(no methods, like `Positive`) uses the colon list instead (RFC-0202 section 6: `struct Config: satisfying Positive;`),
+never this form.
 
 **E10. Migration (O2, O3).**
 
@@ -324,12 +330,14 @@ non-binding lean.
 
 1. **Bounds see the public row** (the bound half of O2). **Decided.** The caller passes the value explicitly, a bound only
    reads fields already public, and adding a public field can only widen what satisfies a bound, so gating bounds buys little.
-2. **Impl granting is per (type, aspect).** The narrow case — an existing by-reference-only aspect's row-conditional impl — is
-   specified: RFC-0202 section 6. The general case, an aspect's own declared template selected through a header entry or a
-   named provider, is deferred to RFC-0250. This makes a per-type `Exposed` marker unnecessary for impls, and it is finer than
-   O5.
+2. **Impl granting is per (type, aspect).** A predicate aspect (no methods) is granted through the colon list's checked
+   `satisfying` entry, specified: RFC-0202 section 6. A by-reference-only aspect backed by an existing row-conditional
+   impl is granted through `extend T: A using Name;`, always named: the narrow case is specified, RFC-0250 section 0. The
+   general case, several candidate providers, label mapping, or an aspect's own declared template, is deferred to the
+   rest of RFC-0250. This makes a per-type `Exposed` marker unnecessary for impls, and it is finer than O5.
 3. **Retire the `record` declaration kind.** **Decided.** A record is now a struct with public fields plus whatever grant
-   mechanism applies (RFC-0202 section 6 today; RFC-0250 for the general case). The `record` parameter kind stays.
+   mechanism applies — RFC-0202 section 6 for a predicate aspect, RFC-0250 section 0 for a behavior-bearing one, the rest
+   of RFC-0250 for the general case. The `record` parameter kind stays.
 4. **Opaque views (V2) with D1**, staged after reference rules and borrow checking, because they need disjointness reasoning.
 5. **`ToRecord` unchanged** (O6): convert when you want a different value, grant when you want the same one accepted.
 6. **Label namespacing later** (O7), in the label RFCs. It composes with the above: adoption only narrows what a field matches.
@@ -359,10 +367,12 @@ and O4 they do not.
 - **RFC-0119** (accepted): unchanged under every option except O6 B.
 - **RFC-0121, RFC-0060**: row-conditional impls and their coherence; O3 narrows the first, and the same-aspect overlap check in E5
   depends on the second.
-- **RFC-0202**: tuple structs with public numeric fields satisfy `Tuple` and `Dense` directly under O2 and O3; section 6's
-  checked impl form is O3's specified spelling for the narrow, by-reference-only plain-aspect case, and this RFC's migration
-  gap is its motivating example.
-- **RFC-0207, RFC-0227**: `derives` and its arguments, the vehicle for O4.
+- **RFC-0202**: tuple structs with public numeric fields satisfy `Tuple` and `Dense` directly under O2 and O3, via section
+  6's colon-list `satisfying` entry — the predicate-aspect half of O3's spelling.
+- **RFC-0250**: section 0's `extend T: A using Name;` is O3's spelling for a by-reference-only plain aspect backed by an
+  existing row-conditional impl, always named; this RFC's migration gap is its motivating example.
+- **RFC-0207, RFC-0212, RFC-0227**: `derives` and its arguments, the vehicle for O4; RFC-0212's `declared` property is
+  what RFC-0202's `satisfying` refines for the predicate-aspect case above.
 - **RFC-0221, RFC-0188, RFC-0175**: the dotted-label rule (bare members versus row labels) supports "a struct's fields are not labels
   until projected through the exposed row"; O7 lives here.
 - **RFC-0186, RFC-0192, RFC-0208**: the `record` and `..R` parameter kinds, unchanged.
@@ -392,12 +402,13 @@ and O4 they do not.
 ## Open questions
 
 1. **Resolved (2026-11-25).** Bounds see the public row (the bound half of O2); the `record` kind is retired; a nominal type
-   opts in to a row-based impl explicitly. The narrow opt-in case is RFC-0202 section 6; the general case is deferred to
-   RFC-0250.
+   opts in to a row-based impl explicitly. The narrow opt-in cases are RFC-0202 section 6 (a predicate aspect) and RFC-0250
+   section 0 (a by-reference-only aspect backed by an existing impl, always named); the general case is deferred to the
+   rest of RFC-0250.
 2. Bounds: public row, as decided above. *(Resolved — see 1.)*
-3. **Resolved for the narrow case:** a plain aspect's opt-in is RFC-0202 section 6's ordinary `extend T: A;`, not an
-   extension of RFC-0209's header-entry mechanism. Whether RFC-0209's own header-entry grant is ever extended to plain
-   aspects is a separate question tracked against RFC-0209's own resolution, not a blocker here.
+3. **Resolved for the narrow case:** a plain aspect's opt-in is `extend T: A using Name;` (RFC-0250 section 0), always
+   named, not an extension of RFC-0209's header-entry mechanism. Whether RFC-0209's own header-entry grant is ever
+   extended to plain aspects is a separate question tracked against RFC-0209's own resolution, not a blocker here.
 4. A selected derivation may inspect private fields as decided above. How that authority is represented and constrained
    remains open — tracked with RFC-0250, since it only arises for the general (not the narrow, by-reference-only) case.
 5. A narrowed residual's public row is its present fields intersected with the brand's
@@ -414,9 +425,10 @@ and O4 they do not.
 9. **Row coherence:** the current spec rejects same-aspect row-conditional impls unless
    their conditions are provably disjoint; the frontend implements overlap checking and
    has a `T0015` fixture for `{ a, .. }` versus `{ b, .. }`. Current brand-specific impls
-   take priority over matching row-conditional impls (RFC-0202 section 6's second case
-   relies on this already). How explicit *provider* selection interacts with that
-   priority remains an RFC-0250 question, non-blocking for this RFC's own narrower scope.
+   take priority over matching row-conditional impls; RFC-0250 section 0's grant
+   materializes an ordinary impl, so this priority already covers it with no new rule. How
+   explicit *provider* selection interacts with that priority for the general, multi-provider
+   case remains an RFC-0250 question, non-blocking for this RFC's own narrower scope.
 
 Three non-blocking items were pruned from this list rather than carried forward (PROCESS.md's "prune harder" rule): the
 primitive-label lint and aspect-in-scope rule are tooling conventions, not open design questions (lean point 7); label
@@ -426,10 +438,11 @@ a question this RFC needs to carry.
 
 ## Implementation notes
 
-Not started. A plausible order: the checked impl form (RFC-0202 section 6) and the public-row bounds rule together, since
-neither waits on the other; then retire the `record` declaration kind and amend RFC-0137 section 3 and the spec chapter;
-then whatever RFC-0209's own resolution adds beyond what section 6 already covers, if anything; then opaque views after
-reference rules and borrow checking (RFC-0122), as a user of RFC-0241's place algebra; then label namespacing if wanted.
+Not started. A plausible order: the colon-list `satisfying` entry (RFC-0202 section 6) and the public-row bounds rule
+together, since neither waits on the other; then RFC-0250 section 0's named `using` form for behavior-bearing aspects; then
+retire the `record` declaration kind and amend RFC-0137 section 3 and the spec chapter; then whatever RFC-0209's own
+resolution adds beyond what these cover, if anything; then opaque views after reference rules and borrow checking
+(RFC-0122), as a user of RFC-0241's place algebra; then label namespacing if wanted.
 
 ---
 
