@@ -45,8 +45,9 @@ extend Doc: Clone<record R> where ..R: Clone {          // RFC-0214 row-generic 
 2. **RFC-0214 cannot offer a written template without it.** A row-generic residual impl (RFC-0214
    section 1) exists so that an author can write `Clone` once for every width of a brand with their own
    tweak. Its `Self`-returning methods need a way to produce a residual.
-3. **The std templates need the same thing.** RFC-0209's `Copy`/`Clone`/`Eq` templates generate
-   exactly this code. Specifying the construction makes the template mechanism user-accessible instead
+3. **The std templates need the same thing.** The row-template mechanism RFC-0209 (superseded) proposed for
+   `Copy`/`Clone`/`Eq` would have generated exactly this code; whatever mechanism eventually replaces it
+   needs the same construction. Specifying the construction makes the template mechanism user-accessible instead
    of a compiler privilege, which is the point of the settlement's "as few exceptions as possible".
 4. **A residual is produced only by projection or partial move today** (RFC-0137). A type with a
    private field cannot let outside code forge a residual, so the construction must be restricted.
@@ -90,7 +91,8 @@ spread of RFC-0100 §7, as `new Type(..r)` is for a struct.
 - **RFC-0214** — the row-generic impl form is the consumer.
 - **RFC-0137** — residual types, the constructor-invariant risk of section 6.
 - **RFC-0123, RFC-0208** — `where ..R: A` and the row binder.
-- **RFC-0209, RFC-0217** — the std templates are the compiler's instance of this mechanism.
+- **RFC-0217** — the std templates would be the compiler's instance of this mechanism once a successor to
+  RFC-0209 (superseded) exists.
 - **RFC-0093 / RFC-0092** — derive functions and `emit`; the alternative route to construction.
 
 ## Alternatives considered

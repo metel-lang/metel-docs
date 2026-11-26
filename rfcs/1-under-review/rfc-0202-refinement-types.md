@@ -3,7 +3,7 @@ id: rfc-0202
 title: "Predicates and Refinement Types"
 date: '2026-11-01'
 status: under-review
-updated: '2026-11-19'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2098'
 ---
 
@@ -82,7 +82,7 @@ user-declared row predicate (which the row side wants) that is a second `satisfy
 | a literal `8080` where a `Port` is wanted | an `i64` value | at compile time | checked, then coerced to `Port` |
 | `Tuple`, `Dense` | a row | always, at compile time | a bound; nothing wrapped |
 | `NonEmpty<T>` (`self.len() > 0`) | a value of `T[]` | at run time | a sealed type |
-| `extend Config: Positive` | a type, checked at the impl | at compile time | deferred (section 5) |
+| `struct Config: satisfying Positive` | a type, checked at the declaration | at compile time | section 6 |
 
 ---
 
@@ -237,15 +237,49 @@ infrastructure for path-sensitive facts has precedent.
 5. The goal interface is stated minimally here. The abstract ownership solver (#1813, goals answered yes with a witness, no, or
    unknown) is the intended first host, decided when that solver exists.
 
+**No longer deferred: the checked impl form is specified in section 6** (language owner, 2026-11-26). It touches RFC-0137's
+rule that a struct never satisfies a row bound, as expected when this was deferred; RFC-0243 carries that amendment.
+
 **Deferred in this RFC.**
 
-- *A checked impl form*: `extend Config: Positive;` accepted only if the predicate holds for that type at the impl site, the
-  predicate analogue of `derives`. It matters for tuple structs (RFC-0151 section 7), because a struct never satisfies a row bound
-  (RFC-0137), and for RFC-0207's user markers, which are an unchecked promise until a predicate can check them (RFC-0207 rule 1).
-  It touches RFC-0137's rule and gets its own look.
 - *Length predicates and indexing* (`Len(N)`, `Tuple<N + 1>`): they need a compile-time integer in a bound, which is const generics
   (RFC-0053 deferred them; #1811 waits on RFC-0132's compile-time `N`).
 - *Predicates over field types* beyond what row bounds already say.
+
+### 6. Granting a predicate aspect: the colon list, refined, never `extend`
+
+A predicate aspect has no body — `Dense` and `Tuple` have none — so it is never granted through `extend`: there is nothing
+to extend, and `extend` stays reserved for aspects with real behavior (RFC-0250's `using Name`, a different and unrelated
+mechanism, below). Instead (language owner, 2026-11-26), `satisfying` is an explicit refinement of RFC-0212's `declared`
+property, and granting a predicate aspect to a named type is an extension of RFC-0207's existing colon list, not a new
+grant site.
+
+- **Both keywords are written explicitly on the aspect's own declaration; neither implies the other.**
+  `declared aspect Positive satisfying (self > 0);` is declared *and* has a condition. `declared` alone is RFC-0207's
+  original, unchecked promise. `satisfying` alone is a predicate usable wherever section 3 already applies one ambiently —
+  closed rows, open-row bounds — but it has **no named-type grant path at all**: `declared` is what opens that door, and
+  writing `satisfying` does not open it on its own. A colon-list entry naming an aspect that is `satisfying` but not
+  `declared` is rejected (`declared` required).
+- **A `declared` aspect's colon-list entry is bare (`T: A`) unless `A` is also `satisfying`, in which case the entry must be
+  `T: satisfying A`.** A bare entry naming a `declared, satisfying` aspect is a hard error — `satisfying A` is required,
+  never silently accepted as the unchecked form. `satisfying A`'s predicate is evaluated with `self` bound to `T`'s row, by
+  the same rule section 3 already uses for a closed row: inspecting its labels, with no annotation, proof or solver.
+  Accepted iff the predicate holds. No body is installed; the grant only records that `A` holds for `T`, the same fact
+  bounds already read from a row directly.
+- **This reuses RFC-0212 section 1's existing rule, not a new one.** `declared` already makes `extend T: A` an error with
+  a fix-it, for any `declared` aspect, checked or not — `satisfying` adds a second, checked colon-list entry to the one
+  door `declared` already opens; it does not change what `extend` does.
+
+This directly answers the motivating example above, now spelled `struct Config: satisfying Positive;`, and is RFC-0207's
+answer for a `declared` user marker (rule 1): the marker stops being an unchecked promise once both keywords are written.
+`A: Derivable` (RFC-0238) is a different and unrelated route to a type's aspects — a comptime deriver computes a new impl's
+body by running restricted code against `typeinfo(T)`, where this section only records a fact some other declaration
+already states; a `satisfying` aspect has no deriver to register, and this section's grant never calls one.
+
+**This section does not close RFC-0243's migration gap.** A struct migrated from a `record` that automatically matched a
+plain aspect's *blanket impl* — real behavior, not a fact — needs RFC-0250's `extend T: A using Name;`, always named, never
+bare. That belongs there: this section is for facts with no body; RFC-0250's mechanism is for adopting someone else's body
+by explicit reference.
 
 ---
 
@@ -255,7 +289,20 @@ infrastructure for path-sensitive facts has precedent.
 - **RFC-0132 / RFC-0092 (comptime):** the predicate and the literal check run through comptime; its restrictions are the predicate's.
 - **RFC-0151 / RFC-0125:** `Tuple` and `Dense` are what they name and need. RFC-0125's Option A takes `R: Tuple` and `R: Dense`.
 - **RFC-0118 / RFC-0123 / RFC-0189:** the row-bound language this extends by one kind of atom, a label-set predicate.
-- **RFC-0096:** the `auto` property reused for row predicates. **RFC-0121 / RFC-0060:** row-conditional impls and coherence.
+- **RFC-0096:** the `auto` property, a separate std-reserved category from `declared`/`satisfying` (section 6).
+- **RFC-0121 / RFC-0060:** row-conditional impls and coherence; unaffected by section 6, which never involves one — a
+  predicate aspect has no impl, named or otherwise.
+- **RFC-0137 / RFC-0243:** section 6 touches RFC-0137's rule that a struct never satisfies a row bound without an explicit
+  entry. RFC-0243's migration gap (named records losing an automatic plain-aspect *blanket impl* on retirement) motivated
+  this section's design but is closed by RFC-0250's `using Name`, not by section 6 — section 6 only ever grants a fact with
+  no body.
+- **RFC-0212:** section 1's `declared` is the property `satisfying` refines (section 6); both keywords are required,
+  explicitly, on the aspect's own declaration, and `declared`'s existing "`extend` is an error" rule is what section 6
+  relies on rather than restating.
+- **RFC-0238:** `Derivable` is a different and unrelated route to a type's aspects; section 6 states that the two do not
+  compose.
+- **RFC-0250:** the mechanism for adopting an existing aspect's *behavior* by explicit reference (`extend T: A using
+  Name;`, always named, never bare) — complementary to, and never confused with, this section's predicate-only grants.
 - **RFC-0213:** the super-aspect relation, whose "a proof of `A` proves `B`" extension by `aspect B: A satisfying` mirrors.
 - **RFC-0241 (Metel-Core), section 7.9:** where a solver and flow-sensitive refinement would sit on the compiler's typed
   representation: a pass over Core, with a predicate slot reserved on types and facts through references waiting on borrow checking.
@@ -265,7 +312,8 @@ infrastructure for path-sensitive facts has precedent.
 - **RFC-0119 (record conversions):** `try_from` follows the same naming; fallible direction.
 - **RFC-0201 (pattern synonyms):** a partial synonym over a refined type gives `match` support.
 - **RFC-0160 (aliases):** plain aliases stay transparent; only `satisfying` on a `type` introduces identity.
-- **RFC-0207 / RFC-0212:** user markers (`declared aspect`) stay an unchecked promise until the checked impl form exists.
+- **RFC-0207 / RFC-0212:** user markers (`declared aspect`) stay an unchecked promise until also made `satisfying` and
+  checked by section 6.
 - **RFC-0211 / RFC-0214:** a residual's predicates are decided afresh; an impl for a residual may name one.
 
 ---
@@ -330,6 +378,10 @@ infrastructure for path-sensitive facts has precedent.
 - **Type subjects:** the standard library declares `Dense` and `Tuple`; the compiler grants them from a row's label set and
   implements that `Tuple` implies `Dense`. Bounds, negative bounds, impl selection and coherence reuse the aspect machinery, so no new
   bound class is needed. No new syntax beyond `satisfying`.
+- **Granting a predicate aspect (section 6):** extends RFC-0207's colon-list grammar with a `satisfying <name>` entry form,
+  alongside the existing bare one. `declared` and `satisfying` are both read from the aspect's own declaration (RFC-0212);
+  no new grammar is needed on `extend` itself, since this section never touches it. `T0045`-style rejects: a bare entry for
+  a `declared, satisfying` aspect, and any colon-list entry at all for a `satisfying`-without-`declared` aspect.
 - **Goals:** obligations are recorded as goals with a three-valued discharge; the first discharger is evaluation and the
   propositional rules of section 4.
 - **Fixtures:** each predicate on closed rows (satisfied, gap, identifier label, open), a bound on a parameter, an impl over `Tuple`,

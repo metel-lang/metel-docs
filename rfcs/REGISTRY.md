@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-25'
+generated_on: '2026-11-26'
 ---
 
 # RFC Registry
@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**253 RFCs total.** 38 draft, 68 under review, 10 accepted, 2 integrated (118 live), 100 implemented, 19 superseded, 16 refused (135 settled).
+**253 RFCs total.** 37 draft, 68 under review, 10 accepted, 2 integrated (117 live), 100 implemented, 20 superseded, 16 refused (136 settled).
 
-## Draft (38)
+## Draft (37)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -52,7 +52,6 @@ the curated thematic map.
 - **RFC-0242** — Library-Defined References and Generalized Place Access (`0-draft` ; rfcs/0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md ; date 2026-11-17 ; updated 2026-11-18)
 - **RFC-0245** — Effect Rows and Marker Effects (`0-draft` ; rfcs/0-draft/rfc-0245-effect-rows-and-marker-effects.md ; date 2026-11-22)
 - **RFC-0249** — Lang items replace aspect declaration properties (`0-draft` ; rfcs/0-draft/rfc-0249-lang-items-replace-aspect-declaration-properties.md ; date 2026-11-23)
-- **RFC-0250** — Named Extend Blocks (`0-draft` ; rfcs/0-draft/rfc-0250-named-extend-blocks.md ; date 2026-11-25)
 - **RFC-0251** — Opaque Views for Private State (`0-draft` ; rfcs/0-draft/rfc-0251-opaque-views-for-private-state.md ; date 2026-11-25)
 - **RFC-0252** — Opaque Types and Borrowable Projections (`0-draft` ; rfcs/0-draft/rfc-0252-opaque-types-and-borrowable-projections.md ; date 2026-11-25)
 
@@ -101,15 +100,14 @@ the curated thematic map.
 - **RFC-0169** — Mutable-By-Value Receivers and Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0169-mutable-by-value-receivers-and-parameters.md ; date 2026-09-22 ; updated 2026-09-22)
 - **RFC-0174** — Compile-time iteration over a row's fields (`1-under-review` ; rfcs/1-under-review/rfc-0174-compile-time-iteration-over-a-row-s-fields.md ; date 2026-10-03 ; updated 2026-11-07)
 - **RFC-0190** — Try Aspect (`1-under-review` ; rfcs/1-under-review/rfc-0190-try-aspect.md ; date 2026-10-28 ; updated 2026-10-28)
-- **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-10-29)
+- **RFC-0192** — Explicit Type Arguments for Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0192-explicit-type-arguments-for-record-parameters.md ; date 2026-10-29 ; updated 2026-11-26)
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
-- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-19)
+- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-26)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`1-under-review` ; rfcs/1-under-review/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01 ; updated 2026-11-22)
-- **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-25)
-- **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-25)
+- **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-26)
 - **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0214** — Aspect Impls for Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04 ; updated 2026-11-13)
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
@@ -117,15 +115,16 @@ the curated thematic map.
 - **RFC-0220** — Binding-Level Linear Qualifiers (`1-under-review` ; rfcs/1-under-review/rfc-0220-binding-level-linear-qualifiers.md ; date 2026-11-06 ; updated 2026-11-06)
 - **RFC-0228** — Aspects with type arguments: impl identity, bound satisfaction and method selection (`1-under-review` ; rfcs/1-under-review/rfc-0228-aspects-with-type-arguments-impl-identity-bound-satisfaction-and-method-selection.md ; date 2026-11-13 ; updated 2026-11-13)
 - **RFC-0232** — Function Types as Regular Types (`1-under-review` ; rfcs/1-under-review/rfc-0232-function-types-as-regular-types.md ; date 2026-11-16 ; updated 2026-11-16)
-- **RFC-0238** — Derivation Registration (`1-under-review` ; rfcs/1-under-review/rfc-0238-derivation-registration.md ; date 2026-11-16 ; updated 2026-11-22)
+- **RFC-0238** — Derivation Registration (`1-under-review` ; rfcs/1-under-review/rfc-0238-derivation-registration.md ; date 2026-11-16 ; updated 2026-11-26)
 - **RFC-0240** — Spelling of Written Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16 ; updated 2026-11-22)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
-- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-25)
+- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-26)
 - **RFC-0246** — Derivation arguments: the flow parameter, mixed arguments and the computed rest (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0248** — Default parameter values and the rest marker (`1-under-review` ; rfcs/1-under-review/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24 ; updated 2026-11-24)
-- **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-25)
-- **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-25)
+- **RFC-0250** — Named Extend Blocks (`1-under-review` ; rfcs/1-under-review/rfc-0250-named-extend-blocks.md ; date 2026-11-25 ; updated 2026-11-26)
+- **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-26)
+- **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-26)
 
 ## Accepted (10)
 
@@ -233,7 +232,7 @@ the curated thematic map.
 - **RFC-0206** — Copy and Clone: A Sealed Implicit Copy and an Explicit Clone (`4-implemented` ; rfcs/4-implemented/rfc-0206-copy-and-clone-sealed-implicit-copy.md ; date 2026-11-02 ; updated 2026-11-16 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1808)
 - **RFC-0207** — Declaration Clauses: derives and the Colon List (`4-implemented` ; rfcs/4-implemented/rfc-0207-declaration-clauses-derives-and-the-colon-list.md ; date 2026-11-02 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1800)
 - **RFC-0211** — Aspects on Residuals (`4-implemented` ; rfcs/4-implemented/rfc-0211-aspects-on-residuals.md ; date 2026-11-02 ; updated 2026-11-16 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1830)
-- **RFC-0212** — Aspect Declaration Properties (`4-implemented` ; rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1803)
+- **RFC-0212** — Aspect Declaration Properties (`4-implemented` ; rfcs/4-implemented/rfc-0212-aspect-declaration-properties.md ; date 2026-11-04 ; updated 2026-11-26 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1803)
 - **RFC-0213** — Super-Aspects (`4-implemented` ; rfcs/4-implemented/rfc-0213-super-aspects.md ; date 2026-11-04 ; updated 2026-11-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1801)
 - **RFC-0218** — Spell Visibility pub (`4-implemented` ; rfcs/4-implemented/rfc-0218-spell-visibility-pub.md ; date 2026-11-06 ; updated 2026-11-09 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/1837)
 - **RFC-0219** — The copy Function-Type Qualifier (`4-implemented` ; rfcs/4-implemented/rfc-0219-the-copy-function-type-qualifier.md ; date 2026-11-06 ; updated 2026-11-15 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2048)
@@ -248,7 +247,7 @@ the curated thematic map.
 - **RFC-0239** — Arguments on the copy Class Keyword (`4-implemented` ; rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md ; date 2026-11-16 ; updated 2026-11-16 ; impl implemented ; tracking 2072)
 - **RFC-0244** — Unconditional derivation and the conditional marker (`4-implemented` ; rfcs/4-implemented/rfc-0244-unconditional-derivation-and-the-conditional-marker.md ; date 2026-11-22 ; updated 2026-11-23 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2153)
 
-## Superseded (19)
+## Superseded (20)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -268,6 +267,7 @@ the curated thematic map.
 - **RFC-0105** — Struct-Embedded Aspect Lists (`5-superseded` ; rfcs/5-superseded/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-11-16)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`5-superseded` ; rfcs/5-superseded/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-11-16)
+- **RFC-0209** — Per-Aspect Row Visibility (`5-superseded` ; rfcs/5-superseded/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-26)
 - **RFC-0226** — Explicit and inferred nominal construction (`5-superseded` ; rfcs/5-superseded/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Refused (16)

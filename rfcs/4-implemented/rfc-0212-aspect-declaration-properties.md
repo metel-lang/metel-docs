@@ -3,7 +3,7 @@ id: rfc-0212
 title: "Aspect Declaration Properties"
 date: '2026-11-04'
 status: implemented
-updated: '2026-11-13'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1795'
 coverage:
   "1": { spec: "spec.declarations.aspects.aspect-declaration-properties.legality-1" }
@@ -217,6 +217,10 @@ extend Token: !Send;                                      // opt-out of an auto 
 - **RFC-0060 / RFC-0081 / RFC-0071 §4** — coherence, negative impls and the `Copy`/`Drop` exclusion.
 - **RFC-0125 / RFC-0132 / metel-core#739** — tuples, arrays and function types.
 - **RFC-0123 / RFC-0186** — the field-wise bound `where ..R: A`, the form of the rule.
+- **RFC-0202** *(under review)* — proposes `satisfying` as an explicit refinement of `declared`: both keywords written on
+  the aspect's own declaration, neither implying the other; a `satisfying` aspect without `declared` has no named-type
+  colon-list entry at all. Reuses this RFC's section 1 rule (`extend T: A` is an error for a `declared` aspect) rather than
+  restating it. Not decided until RFC-0202 is accepted.
 
 ## Open questions
 

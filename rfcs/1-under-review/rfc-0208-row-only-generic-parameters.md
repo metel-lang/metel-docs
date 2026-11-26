@@ -3,7 +3,7 @@ id: rfc-0208
 title: "Row-Only Generic Parameters"
 date: '2026-11-02'
 status: under-review
-updated: '2026-11-25'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1789'
 ---
 
@@ -95,20 +95,35 @@ the declaration of the parameter to suggest the correct spelling.
 
 ## Open questions
 
-1. **Explicit row arguments:** the row-literal spelling is `..{ .name: i64 }` (language
-   owner, 2026-11-25). Its integration with RFC-0192's application syntax remains to check.
+1. **Resolved (language owner, 2026-11-26).** The row-literal spelling is `..{ .name: i64 }`.
+   A `<..R>` parameter's turbofish argument is that row literal, checked by exactly
+   RFC-0192's existing rule (declaration-order pinning, the row bound, the field-wise
+   bound, disjointness) — applied to a row argument where RFC-0192 applies it to a
+   `record R` argument, since RFC-0192's rule was already stated generically over "the
+   type each argument denotes" and never assumed a record brand. No new rule is needed;
+   RFC-0192 itself should gain a line extending its scope to `<..R>` explicitly, since its
+   current text only names `record R`.
 2. **Row equations**: the left operand is the bound row `R` and a literal row on the right
    is written `..{ .token: Token }`. An open literal may use a provably disjoint row tail,
    `..{ .token: Token, Rest }` (language owner, 2026-11-25). Equation solving and inference
    across generic boundaries need review.
-3. **A lint or rewrite** for `record R` parameters used only as `..R`.
+3. *(Pruned, PROCESS.md's "prune harder" rule, 2026-11-26.)* A lint or rewrite for
+   `record R` parameters used only as `..R` is a tooling convenience, not a design
+   question blocking acceptance.
 4. **Row bounds at the binder or in `where`:** both are allowed with the same meaning
    (language owner, 2026-11-25).
 5. **Tuple packs:** resolved. RFC-0151's numeric rows use the same row kind (language
    owner, 2026-11-25); positional operations remain with RFC-0125.
 6. **Residual tails:** `Handle.{ .fd, R }` preserves `Handle`'s brand and requires a
-   disjoint remainder (language owner, 2026-11-25). Its precise interaction and spelling
-   with RFC-0146's `Self.R` remains to reconcile.
+   disjoint remainder (language owner, 2026-11-25). **Not blocking:** RFC-0146 (the other
+   half of this question, `Self.R` in receiver position) is committed to the v0.18.1
+   milestone (issue #886), a release after this one — a dated dependency that isn't
+   landing alongside this RFC either way. Worth a note for whoever picks up RFC-0146
+   then, not a question this RFC needs to answer now: RFC-0146's `where R: { fd, .. }`
+   lower bound on a receiver-only `<row R>` looks like it may already be expressible as
+   this RFC's general `Self.{ .fd, R }` splice, which would make RFC-0146's separate
+   `<row R>`/`Self.R`/`where` apparatus redundant rather than a second spelling to
+   reconcile — but that's RFC-0146's call to make against its own v0.18.1 timeline.
 
 ---
 

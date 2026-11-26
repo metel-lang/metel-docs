@@ -120,7 +120,8 @@ extend DocTitle: Clone {
 **Row-generic impl.** The impl is generic over the whole row of the brand through a row binder
 (RFC-0208), with a field-wise bound (RFC-0123) and a body that walks the row (RFC-0174). It applies to
 the whole type and to every residual whose present fields all satisfy the bound. It is the written
-counterpart of a derivation: the compiler's row template (RFC-0209, RFC-0217) is this impl, generated.
+counterpart of a derivation: the compiler's row template, if a successor to RFC-0209 (superseded) exists, would be
+this impl, generated (RFC-0217).
 
 ```metel
 extend Doc: Display<record R> where ..R: Display {      // spelling provisional (RFC-0208: `extend<..R>`)
@@ -152,8 +153,9 @@ method, RFC-0216. `derives` stays the normal path; this is the power-user form.
 
 **Self-returning methods.** In a row-bounded impl `Self` is the matched residual, of unknown width. A
 method that returns `Self` or takes it by value cannot construct the missing fields, so it is an error
-in a row-bounded impl unless the missing fields are handled by a template (`where ..R: A`, RFC-0123,
-RFC-0209). `Clone` therefore needs the exact-shape form, the template, or the row-generic form with
+in a row-bounded impl unless the missing fields are handled by a template (`where ..R: A`, RFC-0123) —
+a template mechanism for nominal types that RFC-0209 proposed and is now superseded, unowned until a
+successor exists. `Clone` therefore needs the exact-shape form, the template, or the row-generic form with
 residual construction (RFC-0216). Methods that only read
 (`fmt`, `eq(&self, other: &Self)` over the required fields) are fine.
 
@@ -170,9 +172,10 @@ residual construction (RFC-0216). Methods that only read
    that are equal, a row-bounded impl whose required set the shape contains and an exact-shape impl for
    it, two row-bounded impls whose required sets are both contained) overlap and are `T0015`. There is
    no most-specific rule.
-4. **Templates.** If the type's header grants the aspect, the row template (RFC-0209, RFC-0217)
-   already covers every residual, and a residual impl of the same aspect, including a row-generic one
-   (which covers the whole type too, so a separate whole-type impl overlaps it), overlaps it (`T0015`), as a
+4. **Templates.** If the type's header grants the aspect through whatever mechanism eventually succeeds
+   RFC-0209 (superseded), the row template (RFC-0217) would cover every residual, and a residual impl of
+   the same aspect, including a row-generic one (which covers the whole type too, so a separate
+   whole-type impl overlaps it), would overlap it (`T0015`), as a
    written impl overlaps a derived one (RFC-0207 rule 4). A type that wants a written residual impl does
    not derive that aspect.
 5. **Full width.** A residual whose row is the whole type normalises to the plain type (RFC-0137). An exact-shape impl for the full row is the whole-type impl, and writing both is `T0015`.
@@ -219,7 +222,8 @@ extend Row: PartialEq {
   check against a concrete row and needs no row variable in impl resolution.
 - **RFC-0174, RFC-0208, RFC-0123, RFC-0216** — the row-generic form: the field loop, the row binder,
   the field-wise bound, and construction of the `Self`-returning result. Only this form depends on them.
-- **RFC-0209, RFC-0217** — templates for granted aspects; written impls cover the cases templates do not.
+- **RFC-0217** — templates for granted aspects, pending a successor to RFC-0209 (superseded); written impls
+  cover the cases templates do not regardless.
 - **RFC-0206, RFC-0212, RFC-0213** — `Copy` on a residual (rule 6), `declared` (rule 7),
   super-aspects (rule 6). Not a dependency of any of them.
 - **RFC-0207 / RFC-0093** — derived against written impls (rule 4).

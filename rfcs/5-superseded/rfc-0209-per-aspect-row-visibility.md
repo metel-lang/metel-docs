@@ -2,9 +2,10 @@
 id: rfc-0209
 title: "Per-Aspect Row Visibility"
 date: '2026-11-02'
-status: under-review
-updated: '2026-11-25'
+status: superseded
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
+superseded_by: rfc-0243, rfc-0250
 ---
 
 > **Note, 2026-11-05.** The `Copy`/`Clone` settlement was redesigned (RFC-0206): `Copy` is a sealed implicit
@@ -16,6 +17,21 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 > written impl that overlaps a template is `T0015` (RFC-0207 rule 4), and no refining `extend`.
 
 > **Status — under review (2026-11-04).** Tracker milestoned; reviewed as part of the Copy/Clone settlement (RFC-0206, RFC-0212)
+
+> **Status — superseded (2026-11-26).** Its own content is subsumed: the opt-in principle is independently stated in RFC-0243's Decisions block, the actual grant mechanisms that ship (colon-list satisfying, extend...using) never use its header-entry/template design, and Copy/Clone stay on their native path (RFC-0206/0207), unaffected by it
+
+## Reconciliation (2026-11-26)
+
+**Carried forward, under a different RFC:**
+- The opt-in principle (a nominal type never automatically satisfies a row-conditional impl) is independently restated in RFC-0243's Decisions block, which no longer cites this RFC as its source.
+- Per-instantiation generic checking (section 1 "Generic types", R2) is RFC-0206 rule 3's rule, already settled and implemented there.
+- Coherence with a written `extend` (open question 7, resolved here) is RFC-0207 rule 4 / RFC-0213 section 4's rule, already settled elsewhere.
+
+**Did not carry forward, and has no current replacement:**
+- The header-entry mechanism itself (section 1, legality 1-2) — a `derives`/`: A` list entry granting a nominal type's row visibility to an aspect's *template*, which then supplies method bodies by matching. Neither replacement uses it: RFC-0202 section 6 grants a predicate fact with no body at all; RFC-0250 section 0 grants an existing impl's behavior through `extend T: A using Name;`, named, never through a declaration-header entry.
+- Constructing `Self` from a row in a template body (open question 1) — needed for a `Clone`-shaped template, deliberately excluded from RFC-0250 section 0's by-reference-only slice, unowned elsewhere.
+- Field-privacy authority for a derivation (open question 4), and records gated vs. automatic (open question 2) / residual template application (open question 3) — open questions about this same now-unused mechanism; they lapse with it.
+- **Three drafts built directly on this mechanism and now rest on nothing:** RFC-0210 (enum parameters and variant rows — its whole proposal is this mechanism extended to enums), RFC-0217 (row templates for aspects on residuals — its sole purpose is extending this mechanism to residuals), and RFC-0222 (Builder aspect — its own grant mechanism is this RFC's section 1 applied verbatim). None was on a path to landing regardless: RFC-0243 already defers enums to RFC-0210 separately; RFC-0217 already states it is not a dependency of anything shipping; RFC-0222 already named this RFC as one of several items in an unresolved "dependency pile" blocking its own acceptance. Whoever next revisits any of the three needs to design a real replacement for the header-entry/template mechanism — not assume this RFC's specific approach survives.
 
 ## Summary
 
@@ -198,4 +214,4 @@ the compiler's native derivation until a variant-wise form exists (a separate RF
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** Superseded by RFC-0243 and RFC-0250 (see Reconciliation above).

@@ -195,11 +195,12 @@ therefore enforced where such a bound is discharged, which is at a call:
    literal label or by a label parameter instantiated to one, that field must be visible from the module
    containing the call. Every field of an anonymous record or a `record` is public (RFC-0120). A field of a
    nominal type has the visibility it was declared with (RFC-0032).
-2. **A grant entitles the template, not its callers.** `derives A` makes a type's row visible to `A`'s row
-   template (RFC-0209), so the template may read and build every field of the row it was granted, and calls
-   made inside the template are entitled to it. Code that calls the template's methods with a label, such as
-   `set(.secret, v)` on a builder (RFC-0222), is a caller: rule 1 applies to that call, and naming a private
-   field is an error.
+2. **A grant entitles the template, not its callers.** Whatever mechanism eventually grants a template
+   authority over private fields — RFC-0209's proposed header-entry grant is superseded, and the question is
+   presently unowned (RFC-0250's reconciliation note) — must follow this shape: the template may read and
+   build every field of the row it was granted, and calls made inside the template are entitled to it. Code
+   that calls the template's methods with a label, such as `set(.secret, v)` on a builder (RFC-0222), is a
+   caller: rule 1 applies to that call, and naming a private field is an error.
 3. **No provenance.** A `Label` is a plain atom and carries no module. A wrapper that forwards a label to
    another generic function states the bound in its own signature (RFC-0173), so the check happens at the
    wrapper's call.
