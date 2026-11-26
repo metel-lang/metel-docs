@@ -88,8 +88,17 @@ reconciliation; no constructor-overload rule is introduced here.
 Privileged representation construction of a variant is available only in that variant's
 own canonical constructor or explicitly unchecked counterpart (language owner,
 2026-11-26). A constructor for another variant cannot use the privileged form to bypass
-it; ordinary code invokes the target variant's construction interface. RFC-0114 owns the
-unchecked boundary and the precise minting rules.
+it; ordinary code invokes the target variant's construction interface. This is not a
+separate mechanism from RFC-0100 section 3's privileged struct-level construction: it is
+RFC-0114 section 9's draft extension of that same mechanism one level down, proposing
+the brace form `Self::Variant { field = value }` and bare `Self::Unit`, minted inside
+the enum impl's own `construct`/`construct_unchecked` (own type only, no recursion
+through the call form). RFC-0100 section 3 explicitly scopes its own privileged form to
+struct/enum-whole-type construction and defers per-variant privilege to RFC-0114
+section 9 pending that section's acceptance; this RFC does not independently define
+variant-level privileged construction syntax, and should not be read as a third
+mechanism alongside those two. RFC-0114 owns the unchecked boundary and the precise
+minting rules.
 
 A shared reference to a variant may widen to a shared reference to its enclosing enum
 (language owner, 2026-11-26), preserving origin and lifetime. Unrestricted widening
