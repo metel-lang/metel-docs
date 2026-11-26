@@ -7,9 +7,8 @@ updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 ---
 
-> **Status — under review (consolidated 2026-11-11).** Review tracked by metel-core#807.
-> Revised after the language-owner discussion: explicit `new T(...)` and inferred
-> `.(...)` replace the earlier constructor-binding proposal. Prototype evidence
+> **Status — under review.** Review tracked by metel-core#807. The current proposal uses
+> plain `T(...)` construction with a unified type/value namespace. Prototype evidence
 > and interaction review remain required before acceptance.
 
 > **Revised (2026-11-26, language owner).** `new`/`.(...)` are withdrawn. Construction returns to plain
@@ -83,7 +82,7 @@ let row := .{ .x = 1, .y = 2 };     // always an anonymous record, never nominal
 namespaces are unified (section 1), that lookup can never land on "a type or a function,
 whichever the arguments suggest" — at most one declaration named `Struct` can exist in
 scope at all, so the call unambiguously means whichever one it is. If it is a struct or
-enum, the call constructs it; if it is a function, the call invokes it; nothing about the
+an enum variant constructor, the call constructs it; if it is a function, the call invokes it; nothing about the
 call's own syntax changes between the two cases, and nothing needs to.
 
 Whole-row construction stays explicit: `Point(..row)` supplies a record binding, and
@@ -135,9 +134,11 @@ for readability on its own merits is a fair question, taken up in Alternatives.
 ## 1. Unified type and value namespace
 
 **A module's nominal type declarations (`struct`, `enum`) and its ordinary value
-declarations (`fun`, `let`/`var` at module scope) share one namespace.** Declaring two
-of these under the same name in the same scope — two structs, two functions, a struct and
-a function, an enum and a `let` — is an ordinary redeclaration error.
+declarations (`fun`, `let`/`var` at module scope) share one namespace.** A name denotes
+one type declaration, one non-function value, or a function overload set. Existing
+function overloading remains available under its current rules (language owner,
+2026-11-26). A type and function, a type and `let`, or two types of the same name in
+the same scope conflict. Unification does not remove function overload sets.
 
 **This is a narrower, more surgical change than it might sound, checked directly against the
 current implementation history (metel-core#1560, #1571, both closed and merged 2026-10-23/24) —
@@ -157,7 +158,7 @@ new parallel structure, a merged map, or a new resolver pass — the namespace d
 already a clean, first-class part of the key; this narrows it to a single value (or, equivalently,
 makes the existing duplicate check look up a name under *either* namespace instead of only its
 own). The bare-name resolver's "value, then type" fallback becomes moot for a name's own
-declaration-site check, since at most one declaration can exist per name once unified; whatever
+declaration-site check, since a name resolves to one declaration or one function overload set; whatever
 is left of that fallback order for other purposes is a question for whoever implements this, not
 settled here.
 
@@ -174,6 +175,12 @@ fun Ticket(input: i64) -> i64 { input + 100 }   // error: `Ticket` is already de
   same scope must collide the same way the local case does; since both already go through the
   one namespace-aware import path `#1571` built, this is the same narrowing as the local
   case, not a second thing to design.
+- **Import precedence across declaration categories.** Apply the existing explicit-versus-
+  glob precedence and glob ambiguity rules in the unified namespace (language owner,
+  2026-11-26). Explicit imports of a type and a function under the same local name conflict;
+  an explicit import wins over a glob binding of that name regardless of category; competing
+  glob bindings remain ambiguous when used. Function overload sets retain their existing
+  rules; this decision does not define new merging of functions from separate imports.
 - **Scope, not program-wide, governs the collision.** Two different modules may each have
   their own `Ticket` — one a struct, one a function — exactly as two modules may each
   declare their own function named `f` today; the namespace is unified per scope, not
@@ -204,7 +211,8 @@ uses the existing turbofish spelling, `Pair::<i64>(1, 2)`. Aliases and module
 qualification work: `TicketAlias(value = 1)` and `model::Ticket(value = 1)`. Inside an
 impl, `Self(...)` identifies its own type.
 
-Construction targets structs and named records. It specifies neither heap allocation
+Construction targets structs, named records, and enum variants as discussed in section 6.
+It specifies neither heap allocation
 nor a fresh runtime identity; storage and ownership keep their rules. It does not mean
 raw field initialisation: it invokes the canonical construction operation, including
 validation when RFC-0114 supplies it.
@@ -218,6 +226,59 @@ A type alias exposes a construction target, not a new constructor value binding.
 `new` keyword is reserved by this revision.
 
 ## 3. Deferred: an inferred, expected-type compact form
+
+### Privileged representation syntax and patterns
+
+The language owner selected constructor-body privilege on 2026-11-26: an explicit
+representation-construction form is available only in the target's own canonical
+constructor or explicitly unchecked constructor body, not generally throughout the
+declaring module. It creates the final value without recursively invoking that same
+constructor. The privileged form may target only that constructor's own type, using
+`Self` or its explicit type name; constructing another type uses its ordinary
+construction interface (language owner, 2026-11-26). RFC-0114 owns the privilege,
+validation, and unchecked-operation rules.
+An explicit field-list representation construction initializes every field exactly
+once; a missing, duplicate, or extra field is an error (language owner, 2026-11-26).
+A whole-row form such as `Self .{ ..fields }` consumes a complete anonymous record
+whose row has exactly the target's fields with matching types and performs the same
+privileged final construction (language owner, 2026-11-26). It remains subject to
+ordinary ownership and visibility rules. Its exact grammar needs review against row
+spread and residual projection syntax.
+Working syntax uses `Point .{ x = 1, y = 2 }` for the privileged operation and
+`Point .{ x, y }` for a representation pattern. Ordinary construction remains
+`Point(x = 1, y = 2)`. These forms' detailed grammar and pattern semantics require
+review; in particular whitespace must not be the sole disambiguator from existing
+`Point.{ .x }` residual type and value projection syntax, and empty forms must be
+unambiguous. Enum variant construction and matching need the equivalent analysis.
+
+The constructor's public parameter interface need not mirror stored fields. Patterns
+describe representation and remain subject to field privacy and ownership rules.
+Outside the declaring module, a pattern cannot name a private field and may omit it
+with `..`; inside the module it may name it (language owner, 2026-11-26). Omitted
+fields remain subject to the existing ownership, discard and destruction rules.
+No acceptance of the pattern spelling or of an enum canonical-construction model is
+implied by the privilege decision.
+
+The representation-pattern spelling replaces the current nominal brace pattern
+`Point { x, y }` (language owner, 2026-11-26). Migrate struct and enum variant patterns
+to `Point .{ x, y }` and `Message::Text .{ body }`, respectively, while preserving
+their existing binding, exhaustiveness, visibility and ownership rules unless separately
+changed. Parser ambiguities, unit variants, unqualified variant patterns and all existing
+pattern positions require explicit integration and prototype coverage.
+Nominal representation fields also support renaming and nested subpatterns, analogous
+to anonymous-record patterns: `Point .{ x: 0, y: vertical }` matches the first field
+against a literal and binds the second under another name (language owner, 2026-11-26).
+A refutable field makes the enclosing pattern refutable; `let` patterns must remain
+irrefutable. Exhaustiveness must account for nested patterns. Naming a private field
+is forbidden outside its declaring module even when its subpattern is `_`.
+Nominal struct patterns retain bare `..` for omitted fields; binding a remainder as an
+anonymous record with `..rest` is deferred (language owner, 2026-11-26). Its design must
+address brand removal, private fields, `Drop`, and ownership before it is admitted.
+Zero-field structs and unit enum variants use the empty representation pattern
+`Empty .{}` and `Message::Empty .{}` (language owner, 2026-11-26). Existing bare
+unit-variant patterns remain available as shorthand (language owner, 2026-11-26), with
+their current qualified and expected-type-directed lookup rules. This does not introduce
+a bare zero-field struct construction or pattern shorthand.
 
 The earlier `.(...)` proposal — construct the single nominal type an expected type
 supplies, without naming it — is withdrawn from this RFC, not rejected. It was motivated
@@ -236,6 +297,14 @@ Construction retains RFC-0223's argument rules: positional arguments bind in fie
 declaration order and precede keyword arguments; keywords bind by name; every parameter
 is supplied once. Arguments evaluate left to right as written. No new defaults, partial
 application or constructor overloading is added.
+
+These field parameters are the synthesized construction interface. Until custom
+constructors are specified and implemented, they are the complete interface. A future
+custom constructor may replace that interface with its explicitly declared parameters;
+calls bind to those parameters, and its implementation supplies the complete row for the
+canonical operation (language owner, 2026-11-26). There is one construction interface per
+type; constructor overloading remains outside this proposal. RFC-0114 owns the custom
+interface's declaration, checking, mapping and fallibility.
 
 ```metel
 let a := Point(10, 20);
@@ -282,13 +351,13 @@ private fields. A qualified call, an alias, an inferred generic argument, or a
 whole-row argument cannot change the access check.
 
 RFC-0114's custom `Construct` and its fallibility are not implemented by this RFC.
-Whether a future custom constructor may expose a **different public parameter
-interface** that supplies or derives private fields, and how that interface is declared
-and checked, is an RFC-0114 design question. This RFC does not make a private field a
-public parameter merely because the canonical operation can validate it. If a future
-custom constructor provides such an interface, the visibility check applies to that
-declared interface and its contract must specify how its inputs reach the canonical
-construction operation.
+A future custom constructor may explicitly expose a **different public parameter
+interface** and supply or derive private fields itself (language owner, 2026-11-26).
+The constructor's declaration and implementation must define how its inputs reach the
+canonical construction operation; syntax, checking, and fallibility remain RFC-0114's
+work. A private field is not a public parameter merely because the canonical operation
+can validate it. Until such an interface is specified and implemented, the field-parameter
+visibility rule above applies.
 
 ## 5. Whole-row construction: `..r` and `..{ ... }`
 
@@ -356,9 +425,49 @@ the call visually distinct to resolve the unclarity; this revision removes the t
 was unclear (whether `Empty` could mean two different declarations) at the point where
 `Empty` is declared, not at the point where it is called.
 
-Enum variants retain their existing qualified/unqualified bare and call forms,
-unaffected by this proposal (section 1's unification is module-level type/value
-declarations, not variant namespacing).
+### Enum variant construction
+
+Enum variant construction is in this RFC's scope (language owner, 2026-11-26). The
+working direction extends plain call construction to variant targets; the exact handling
+of unit variants, expected-type shorthand and canonical enum validation is open. An enum
+type alone does not identify a variant. A qualified path does:
+
+```metel
+enum Message { Text { body: String }, Number { value: i64 }, Empty }
+let a := Message::Text(body = "hello");  // proposed
+let b := Message::Number(42);            // proposed positional payload
+let c := Message::Empty();               // unit-variant construction call
+let d := Message::Empty;                 // retained unit-variant shorthand
+// Message(...) does not choose a variant from its arguments.
+```
+
+For a payload variant, the candidate uses the same positional and keyword argument
+binding, exact-row, evaluation-order and field-visibility principles as struct
+construction, applied to that variant's payload. A whole-row operand such as
+`Message::Text(..fields)` is the sole argument, is evaluated once, and must match the
+complete payload row exactly with matching field types and applicable visibility checks
+(language owner, 2026-11-26). Variant-field visibility must be checked against the enum
+and privacy specifications. Enum variant names remain in their
+existing variant namespace. RFC-0111's expected-type-directed unqualified forms and their
+precedence against lexical bindings extend to payload-variant calls (language owner,
+2026-11-26): an expected enum type may resolve `Text(body = "hello")`, while an
+in-scope binding named `Text` takes precedence. Without a suitable expected enum type,
+the caller must qualify the variant; resolution does not search all enums. Argument
+binding must not be used to select between a lexical callable and a variant.
+
+Qualified bare unit-variant expressions remain valid alongside `Message::Empty()`
+(language owner, 2026-11-26). Existing expected-type-directed unqualified unit-variant
+expressions remain subject to RFC-0111's lookup rules; this does not restore bare
+zero-field struct construction. Both unit-variant spellings must follow the same
+construction and validation contract once RFC-0114's enum interaction is settled.
+
+Enum variants are intended to use one enum-wide canonical operation, synthesized as an
+identity unless customized (language owner, 2026-11-26). RFC-0114 owns the operation's
+raw representation, result, failure and unchecked rules; whether it may return a
+different variant from the one requested remains open. A prototype must cover qualified and unqualified variants,
+zero-field and fieldful variants, payload binding and privacy, generic enums, and
+collisions with lexical names. Existing match and destructuring patterns are not changed
+by this construction proposal; their spelling is a separate design question.
 
 Construction uses the same result handling regardless of how it is spelled: no
 implicit unwrap, no caught failure, no bypassed validation. RFC-0114's
@@ -372,7 +481,8 @@ call syntax, reached through section 1's namespace unification rather than the o
 reverted design's unguarded one. It retains RFC-0100's argument collection and exact-row
 contract (sections 4-5), unchanged from the prior revision except for dropping `new`. It
 retires RFC-0106's bare shorthand for zero-field structs/named records, now subsumed by
-section 6. RFC-0111's enum-variant rules remain. RFC-0225 owns anonymous record syntax;
+section 6. RFC-0111's enum-variant resolution must be reconciled with section 6.
+RFC-0225 owns anonymous record syntax;
 its literals stay structural. RFC-0114 owns canonical validation, fallibility and
 privileged minting.
 
@@ -429,6 +539,12 @@ which assumed coexistence would remain a permanent invariant; exact-row, visibil
 single-evaluation fixtures carried over from the prior revision. These are evidence
 requirements, not completed checks.
 
+The prototype's interaction cases must include private fields supplied by positional,
+keyword and whole-row arguments, both directly and through a transparent imported alias.
+Check that the declaring module can construct while an external caller receives the
+visibility error, including when the source row itself is visible. Check a local function
+overload set and explicit/glob imports across type and value categories against section 1.
+
 ## Open questions
 
 1. **Resolved — checked against the actual current implementation history
@@ -457,17 +573,10 @@ requirements, not completed checks.
    outer bindings under the language's ordinary lexical-scoping rules, the same way a
    function parameter already can; that is pre-existing shadowing, not module-level
    redeclaration, and unification does not change it.
-3. **Genuinely open, and independent of `#1560`'s own reasoning.** `#1560`'s decision to
-   allow coexistence was a symbol-identity policy call, not a readability judgment — it
-   says nothing about whether plain call-syntax construction reads well, so this question
-   cannot be answered by appeal to that history either way. If reviewers still want a
-   visual construction marker on readability grounds alone, independent of the soundness
-   issue this revision fixes, that is an argument for revisiting position (3) instead of
-   this one — a style preference, not a defect in this revision. Plain call syntax for
-   construction is also unremarkable in mainstream languages outside the Rust/Haskell
-   lineage (Python, Kotlin, Scala's `apply` convention, Swift's call-syntax initializers all
-   construct with no dedicated marker), which is relevant context for whoever judges this,
-   not a verdict in itself.
+3. **Resolved (language owner, 2026-11-26):** nominal construction uses plain call
+   syntax, `Point(...)`, without a dedicated visual marker. The unified namespace resolves
+   the target independently of its arguments. Prototype evidence and interaction review
+   remain required before acceptance.
 4. **Resolved — audited directly against the real metel-core checkout, not left
    hypothetical.** A scan of all 2,385 `.mtl` files under `metel-core/` for a top-level
    `struct`/`enum` name also used as a top-level `fun`/`let`/`var` name in the same file

@@ -134,6 +134,17 @@ validation logic, or forgets to.
 
 ## 1. The `Construct` aspect
 
+The language owner decided on 2026-11-26 that a custom constructor may explicitly expose
+a public parameter interface different from the type's fields and supply or derive its
+private fields. This interface must be declared and checked, and construction through it
+must reach the canonical operation. Its syntax, access rules, mapping to the complete row,
+fallibility and coherence remain to be specified here. RFC-0100's field-parameter call
+does not make private fields public merely because canonical validation exists.
+Until this interface exists, RFC-0100 uses the synthesized field-parameter interface.
+The agreed direction is that a custom interface replaces it for call binding, supplies the
+complete canonical row, and is the type's one construction interface; constructor
+overloading is outside RFC-0100's scope.
+
 ```metel
 aspect Construct {
     type Error;
@@ -177,6 +188,21 @@ should cost exactly what a bare field-literal costs now. That is a *commitment*,
 representation generally — not a new promise, the same one recurring here.
 
 ### 1.1 What `construct`'s own body may build — the one privileged site
+
+The language owner affirmed constructor-body-only privilege on 2026-11-26. The working
+representation-construction spelling is `Point .{ x = 1, y = 2 }`; it is restricted to
+the target's canonical constructor or explicitly unchecked constructor body. Other code
+in the declaring module uses the ordinary construction interface. RFC-0100 tracks the
+related pattern spelling, parsing against residual projections, empty forms, and enum
+interaction. The exact grammar and unchecked-operation safety rules remain open.
+The privileged form may target only the constructor's own type, spelled as `Self` or
+its explicit type name; construction of another type uses that type's ordinary interface
+(language owner, 2026-11-26).
+An explicit field-list representation construction initializes each field exactly once;
+missing, duplicate and extra fields are errors. A whole-row form such as `Self .{ ..fields }`
+consumes a complete anonymous record with exactly the target's fields and matching types,
+and performs the same final construction, subject to ownership and visibility rules
+(language owner, 2026-11-26). Its grammar needs reconciliation with row spread.
 
 > **Syntax (2026-11-08).** RFC-0100 §7 defines the minting step as a form, the brace literal `Self { field = value }` (`Self .{ ..row }` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. It is legal only for the impl's own type, in `construct` and `construct_unchecked`; RFC-0114 adds its grammar production. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
 
@@ -460,11 +486,29 @@ extend Interval: Construct {
 4. **Nothing fires implicitly,** as for structs (§3): only explicit calls reach `construct`.
 5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and
    `ConstructUnchecked` (§6) are as for structs, so every existing `Enum::Variant(...)` call keeps compiling.
-6. **The gap.** Variant fields have no visibility, and a `match` on `&var` can write a payload field from anywhere. So an enum
-   `Construct` guarantees *checked construction* and nothing after it, unless variant fields gain visibility (not proposed here).
-   A struct invariant leans on private fields for the rest.
+6. **Visibility and later mutation.** Named variant fields already have `pub`/private
+   visibility (RFC-0032, `spec.modules.visibility.legality-6`), and external patterns
+   cannot name private fields. Private payload fields can protect an invariant from
+   external direct field access; public payload fields and code in the defining module
+   still require the usual mutation analysis. Canonical construction guarantees checking
+   at construction, not preservation after arbitrary permitted mutation.
 7. **Scope.** None of this is in v0.16.0, where only the synthesized default exists, and RFC-0100 keeps the brace minting form struct-only
    until this section is accepted.
+
+**Direction (language owner, 2026-11-26).** Use one enum-wide canonical construction
+operation, synthesized as an identity for ordinary enums and customizable by the author.
+Every ordinary variant construction reaches it; the privileged final construction form
+is restricted to the enum's own canonical or explicitly unchecked constructor body.
+The raw-variant representation, public constructor interfaces, failure and unchecked
+rules need specification and review. Whether a request for one variant may return a
+different variant remains open. This direction is not implementation or acceptance.
+
+**Further exploration (2026-11-26):** the language owner wants variant-preserving
+construction and leans toward first-class variant types. RFC-0210 is scheduled to
+investigate them. The enum-wide operation above is consequently under reconsideration:
+its unrestricted enum result cannot enforce preservation by itself. Per-variant
+constructors returning variant types, their widening and fallibility are candidates,
+not yet settled. Ordinary functions may separately choose among variants.
 
 ---
 

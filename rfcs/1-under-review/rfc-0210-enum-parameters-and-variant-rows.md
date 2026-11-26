@@ -17,6 +17,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1791'
 
 ## Summary
 
+**Review direction (2026-11-26):** the language owner leans toward first-class variant
+types as a way to express variant-preserving construction. This RFC is scheduled with
+the row-visibility settlement to investigate variant identity, generic arguments,
+visibility, widening to the enclosing enum, pattern narrowing, representation and
+constructor results. That direction is not yet a decision or a complete design. The
+older `..E` variant-row proposal below must also be reconciled with RFC-0254's agreed
+initial rule that ordinary row extraction from an enum yields an empty row.
+
 RFC-0209 lets a nominal type's row be visible to an aspect's row template, but a template is
 written over `.{ ..R }`, and an enum has no anonymous counterpart: it is a sum of variants, each
 a row of named fields. This RFC adds the missing pieces for enums:
