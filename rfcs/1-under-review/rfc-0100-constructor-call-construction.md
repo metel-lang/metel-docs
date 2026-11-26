@@ -539,11 +539,12 @@ because it is caught at the two declarations, before any call is ever written.
 
 Position (2)'s readability objection — construction looks exactly like a call — applies
 here too, by construction (so to speak): `Struct(args)` and `f(args)` remain visually
-identical. **Whether that is still a problem is a genuinely open question under this
-revision**, since the reason it mattered for (2) — a reader (and the compiler) needing
-to tell two coexisting meanings apart — no longer holds. Readers who want a syntactic
-construction marker get it, if wanted, from a future RFC addressing section 4's deferred
-compact form, not as a precondition for soundness.
+identical. **Resolved (language owner, 2026-11-26, open question 3): plain call syntax
+stands without a dedicated visual marker.** The reason the objection mattered for (2) —
+a reader (and the compiler) needing to tell two coexisting meanings apart — no longer
+holds once section 1 removes the coexistence itself. Readers who still want a syntactic
+construction marker on readability grounds alone get it, if wanted, from a future RFC
+addressing section 4's deferred compact form, not as a precondition for soundness.
 
 For record operands, implicit row unpacking based on argument shape is rejected:
 it would give a normal record-valued positional argument two possible meanings.
