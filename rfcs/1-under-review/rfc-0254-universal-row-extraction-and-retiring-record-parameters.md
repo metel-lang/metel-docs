@@ -22,10 +22,11 @@ fun read_id<T: .{ .id: i32, .. }>(value: &T) -> i32 { value.id }
 fun use_row<..R>(value: &.{ R }) where R: Display { … }
 ```
 
-The language owner agreed to the direction on 2026-11-25; the type classification (section 1) and its interaction
-with overload resolution, inference, coherence, orphan rules and vacuous bounds (section 2a) are now resolved,
-2026-11-26. This RFC remains under review: migration mechanics and the remaining grammar question still need
-work, and no implementation is authorized until integration.
+The language owner agreed to the direction on 2026-11-25; every open question — the type classification, its
+interaction with overload resolution, inference, coherence and orphan rules, vacuous bounds, migration (there is
+none, by design: Metel has no active users yet), opacity and aliasing, and the remaining grammar question — is
+resolved as of 2026-11-26. This RFC remains `under-review`, not `accepted`: it has not yet had the adversarial
+pass PROCESS.md requires before a transition, and no implementation is authorized until integration regardless.
 
 ## Motivation
 
@@ -121,7 +122,18 @@ parameter's ordinary well-formedness and kind rules still apply. No implicit der
 owned conversion, field move, reference creation, or automatic nominal aspect grant is
 introduced by type-level extraction.
 
-## 2a. Overload resolution, inference, coherence and orphan rules
+**Resolved (language owner, 2026-11-26), the remaining half of open question 5: the four forms never actually
+compete for one grammatical slot, so no new disambiguation rule is needed beyond position and one-token
+lookahead.** `<..R>` only ever appears inside a generic parameter list, at a binder-*declaration* site — never
+inside an ordinary type or bound, so it cannot be confused with the other three. Variadic spread (a value-level
+`..pack`, e.g. `new T(..fields)`) only ever appears in expression/argument position, never in type position, so
+it cannot be confused with any of the three type-level forms either. That leaves exactly one real decision, within
+type/bound position alone, between `..T` (extraction, naming an existing type) and `..{ .name: i64 }` (a row
+literal, introducing a field list): a single token of lookahead after `..` settles it — `{` means a literal,
+anything else means extraction of the identifier that follows. RFC-0208's own open question 5 ("tuple packs")
+already resolved the one case that could have reopened this: numeric-row packs (RFC-0151) use the same row kind
+as everything else, not a separate pack-spread form in type position, so there is no fifth form left to
+disambiguate against.
 
 **Resolved (language owner, 2026-11-26).** Most of this collapses to one fact: `..T` is a *derived, one-way
 projection* of an already-determined `T`, computed after the fact from the classification table (section 1) — it
@@ -169,9 +181,52 @@ fun count<record T>(value: &T) -> i64 { … }
 fun count<T>(value: &T) -> i64 { … }
 ```
 
-An exact compatibility predicate, transition period, diagnostics and tooling remain
-open. Migration must also cover existing standard-library and documentation uses and
-RFC-0192's explicit record-parameter arguments. No deprecated spelling is specified yet.
+**Resolved (language owner, 2026-11-26): no staged migration and no compatibility predicate.** Metel has no
+active external users yet, so there is no existing API surface this RFC must keep accepting under the old
+binder. `<record T>` retires outright: every use in std and the test suite is rewritten directly, as above, and
+`<record T>` left in source after integration is a parse/compile error naming the replacement spelling (`<T>`
+where `T` is used as a type, `<..R>` where it is used only as a row) — a clean cutover, not a deprecation window.
+No deprecated spelling, no transition period, no tooling beyond the mechanical rewrite itself. This also answers
+open question 2 directly: there is no "old eligibility" to preserve for any API, because there is no API this
+RFC is obligated to keep compiling.
+
+**Resolved (language owner, 2026-11-26): open question 7, split in two.** Its two clauses belong to different
+RFCs. This RFC's own fixture need, now that there is no staged migration, is small: ordinary fixtures for the
+new syntax exercising section 1's classification and section 2a's findings, plus one negative fixture confirming
+`<record T>` is a compile error naming its replacement. "The deliberate loss of automatic nominal row
+implementations after record retirement" is RFC-0243's concern, not this RFC's — RFC-0243 retires the `record`
+*declaration* kind (a different thing from this RFC's `record T` *parameter* kind) and already has its own
+migration story and bridge mechanism (RFC-0202 section 6, RFC-0250 section 0); this RFC does not need to fixture
+that loss itself.
+
+## 3a. Opacity, aliases, separate compilation and private representation
+
+**Resolved (language owner, 2026-11-26).** Each of the four named interactions turns out to need no new rule,
+because extraction's two defining properties — public-only, and module-independent (section 1) — already supply
+the answer:
+
+- **Generic aliases.** A plain, transparent alias (RFC-0160) is nominally and structurally the same type it
+  names, so `..Alias<T>` extracts exactly what `..T` does — nothing alias-specific to add. For an alias to a
+  *residual* that retains a private field in its own row (RFC-0253's subject), extraction still only ever sees
+  public fields, by section 1's own rule, regardless of what the alias's definition happens to name — the alias
+  being legal to declare with a private field in it (RFC-0253's finding: declaration and access are different
+  operations) has no bearing here, because extraction was already excluding private fields before any alias
+  entered the picture. There is no way to "leak" a field through an alias that extraction wasn't already going
+  to exclude.
+- **Separate compilation.** Extraction is defined as module-independent (section 1): its result depends only on
+  a type's own declaration, never on which module or crate is doing the extracting. A downstream crate computing
+  `..T` for an upstream type gets the same answer the upstream crate itself would. This introduces no new
+  separate-compilation hazard beyond the ordinary one that already exists for public-field visibility generally
+  (adding or removing a `pub` field is already a breaking API change, with or without this RFC).
+- **Private representation changes.** A type's author can freely add, remove, rename or retype *private* fields
+  without breaking any external `..T`-based generic code, precisely because extraction never includes private
+  fields in the first place. This is the property public/private visibility is supposed to guarantee, and
+  extraction's public-only design upholds it by construction rather than needing a separate rule to protect it.
+- **Row remainder inference** (open row tails, `.{ .id: i32, R }`) is not this RFC's own mechanism — it is
+  RFC-0208's row algebra (itself not fully settled: RFC-0208 open question 2, row equations). This RFC only
+  supplies `..T` as one possible *source* of a row value fed into that algebra; it adds no remainder-inference
+  rule of its own, and does not need to, since extraction never participates in row algebra as anything but an
+  input (section 2a).
 
 ## 4. Interactions
 
@@ -194,10 +249,10 @@ RFC-0192's explicit record-parameter arguments. No deprecated spelling is specif
 - **RFC-0232** (same release, "Function types" stage): represents a callable's parameter row as part of `dyn
   Callable<ROW, R>`. Extraction deliberately never reaches it (section 1) — the two row concepts, a type's own
   fields and a callable's call signature, stay disjoint through this operation.
-- **RFC-0253:** generic nominal residual projections retain their instantiated brand and
-  may include row-kind arguments; privacy and substitution need cross-module checks — RFC-0253's own adversarial
-  pass (declaring a `pub` alias that retains a private field is legal; accessing that field through it is what's
-  rejected) is a directly reusable precedent for stating this RFC's own privacy rule precisely.
+- **RFC-0253:** generic nominal residual projections retain their instantiated brand and may include row-kind
+  arguments. Privacy and substitution are settled (section 3a) by reusing RFC-0253's own adversarial-pass
+  finding directly: declaring an alias that retains a private field is legal wherever that field is visible;
+  accessing it — through extraction or otherwise — is what ordinary visibility rejects.
 - **References and ownership:** `..&T` is empty, not `..T`; this does not alter borrowing,
   `Drop`, linearity, or the destruction of private fields. A type-level row is not an
   owned or borrowed record value.
@@ -210,26 +265,32 @@ RFC-0192's explicit record-parameter arguments. No deprecated spelling is specif
    type's stated bound, nothing more — the same parametricity discipline RFC-0146's lower-bounded row receiver
    already uses. The function-type case surfaced a real, same-release collision risk with RFC-0232, now named
    explicitly (section 1, section 4) rather than left to be discovered later.
-2. What exact constraint and diagnostic preserves old `<record T>` eligibility where an
-   API requires it, and should the old binder have a staged migration?
+2. **Resolved (language owner, 2026-11-26), section 3.** No staged migration, no compatibility predicate:
+   Metel has no active users yet, so there is no existing API this RFC must keep accepting under the old
+   binder. `<record T>` retires outright; left-over uses are a compile error naming the replacement.
 3. **Resolved (language owner, 2026-11-26), section 2a.** `..T` is a derived, one-way projection and never a
    source for inference, impl matching or coherence; those stay governed entirely by their own existing rules
    (RFC-0121, RFC-0060, RFC-0123, RFC-0243). The one real consequence is overload resolution at existing call
    sites gaining newly-eligible candidates after migration — already named in section 3, caught loudly by
    existing ambiguity detection, not a silent risk needing a new rule.
-4. How do public-row opacity and exactness interact with generic aliases, separate
-   compilation, private representation changes and row remainder inference?
-5. **Partially resolved.** The explicit-argument half is settled: a `<..R>` parameter's turbofish argument
-   composes with RFC-0192 exactly as `record R`'s already does (RFC-0208 open question 1) — no change to
-   RFC-0192's own rule was needed. Still open: the grammar that distinguishes a row extraction (`..T`), a row
-   literal (`..{ ... }`), a row binder (`<..R>`), and variadic spread syntax from each other at a glance.
+4. **Resolved (language owner, 2026-11-26), section 3a.** Each of the four interactions resolves from
+   extraction's own two defining properties (public-only, module-independent) rather than needing a new rule:
+   aliases can't leak what extraction already excludes; separate compilation sees the same answer everywhere by
+   construction; private-representation changes can't break external code that never saw those fields; row
+   remainder inference is RFC-0208's own algebra, fed by extraction but not extended by it.
+5. **Resolved (language owner, 2026-11-26), sections 2 and 2a.** The explicit-argument half was already settled
+   (a `<..R>` turbofish argument composes with RFC-0192 exactly as `record R`'s does, RFC-0208 open question 1).
+   The grammar half resolves the same way: the four forms occupy four different grammatical positions (a
+   binder-declaration site, an expression/argument site, and within type position, one token of lookahead after
+   `..` — `{` or not — separates the remaining two), so none of them actually compete for one slot.
 6. **Resolved (language owner, 2026-11-26), section 2.** Yes, uniformly, at the language level — no special
    case for ownership or auto aspects. The real risk is implementation-level and narrower: `auto`'s own
    (still-deferred, RFC-0096) structural grant must use a type's full field set, never `..T`'s public-only row,
    or the grant itself becomes unsound. `Copy`/`Clone`/`Linear` don't share this risk, since their checks already
    happen at the declaration with full field access.
-7. What migration fixtures demonstrate both the old restriction's removal and the
-   deliberate loss of automatic nominal row implementations after record retirement?
+7. **Resolved (language owner, 2026-11-26), section 3, split in two.** This RFC's own need is small: ordinary
+   fixtures for the new syntax, plus one negative fixture for `<record T>`'s retirement. "The deliberate loss of
+   automatic nominal row implementations" is RFC-0243's concern (a different declaration kind), not this RFC's.
 
 ## Decision
 
