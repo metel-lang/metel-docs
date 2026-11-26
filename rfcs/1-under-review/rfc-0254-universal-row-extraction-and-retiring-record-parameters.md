@@ -71,6 +71,25 @@ type's own data fields" under one operation, exactly the accidental-conformance 
 (RFC-0243 E4) has been working to keep out. Extraction stays out of it on purpose: a function's parameter row is
 reached, if at all, through whatever RFC-0232's own `Callable` aspect exposes, never through `..F`.
 
+**Adversarial check: "module-independent" means always public-only, including from inside the declaring
+module.** A natural but wrong intuition is that extraction might see *more* fields when the generic code using
+it happens to be written inside the type's own module, where private fields are otherwise freely accessible. It
+does not — there is exactly one extracted row per type, computed the same way everywhere:
+
+```metel
+struct Account { pub id: i64, secret_key: [u8; 32] }
+
+// written and called from WITHIN Account's own module
+fun log_fields<T>(x: &T) where ..T: Display { … }
+log_fields(&some_account);   // ..Account is { .id: i64 } here too, never { .id, .secret_key }
+```
+
+Ordinary field access (`self.secret_key`) stays fully available inside the module, unaffected — that is a
+different operation from extraction. Extraction is the one view that never varies by caller module, by design,
+precisely so that generic code built on `..T` means the same thing wherever it is written or called; a
+module-dependent extraction would make a generic function's own meaning depend on who happened to call it, the
+opposite of what a module-independent, structural operation is supposed to guarantee.
+
 **What a generic body knows about an abstract type's row** is the bound's row and nothing more — the same
 parametricity discipline RFC-0146's lower-bounded row receiver already establishes for a residual (a method
 checked against `Self.R` where `R: { fd, .. }` may use only `.fd`, never assuming a specific caller's residual
