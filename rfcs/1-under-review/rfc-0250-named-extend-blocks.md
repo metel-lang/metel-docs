@@ -13,12 +13,14 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2196'
 
 A reusable row-conditional aspect implementation may have a name. A nominal type's author
 can explicitly select it, so the behavior is identifiable at the grant and does not arise
-merely because the type has matching public fields. For discussion, this RFC uses
-`named extend` and `using`; both spellings are illustrative.
+merely because the type has matching public fields. For discussion, this RFC spells the
+declaration `extend Name<..R> .{ R } for Aspect { body }` — reusing RFC-0109's `Name for
+Target` idiom from named views rather than inventing a second naming preposition — and the
+selection `using`; both spellings are illustrative.
 
 ```metel
 // Library
-pub named extend IdentifiedById<..R> .{ .id: i32, R }: Identified {
+pub extend IdentifiedById<..R> .{ .id: i32, R } for Identified {
     fun describe(&self) -> String { … }
 }
 
@@ -80,11 +82,13 @@ which does need disambiguation beyond naming alone.
 
 ## 1. Proposed model
 
-1. A named extend declares one reusable implementation of a specified aspect identity,
-   a row target and its bounds, together with the implementation items. Its name has
-   ordinary module visibility and must be visible at a selection. The declaration is
-   checked against its symbolic fields and stated bounds; using it does not waive method
-   completeness, well-formedness or access checks.
+1. `extend Name<..R> .{ R } for Aspect { body }` declares one reusable implementation of a
+   specified aspect identity, a row target and its bounds, together with the
+   implementation items — the same shape an ordinary anonymous `extend<..R> .{ R }: Aspect
+   { body }` already has, with a name inserted and `for Aspect` in place of `: Aspect`.
+   Its name has ordinary module visibility and must be visible at a selection. The
+   declaration is checked against its symbolic fields and stated bounds; using it does not
+   waive method completeness, well-formedness or access checks.
 2. A selection names the provider and a nominal target. The aspect identity in the grant
    must equal the provider's instantiated identity, including aspect type arguments
    (RFC-0228). The target's eligible row must satisfy its required shape and bounds.
@@ -149,7 +153,7 @@ For a generic provider, the selection must establish its condition:
 
 ```metel
 // Illustrative bounds and provider
-pub named extend ShowValue<T, ..R> .{ .value: T, R }: Display where T: Display { … }
+pub extend ShowValue<T, ..R> .{ .value: T, R } for Display where T: Display { … }
 struct Box<T> { pub value: T }
 extend<T: Display> Box<T>: Display using ShowValue;
 ```
@@ -197,8 +201,11 @@ label-polymorphism and checking rules and are not assumed here.
 1. Is a named block an active blanket impl, an inactive provider, or can it be either? **Orthogonal to section 0's
    slice**: naming an *existing* blanket impl there changes nothing about its own activation, whichever this is decided
    to be; it only matters for a provider declared named from the start.
-2. What syntax names the provider, selects it and supplies explicit generic arguments?
-   Are names public API and can they be imported or re-exported?
+2. **Illustrative spelling updated (2026-11-26):** `extend Name<..R> .{ R } for Aspect { body }` to declare, reusing
+   RFC-0109's `Name for Target` idiom rather than a second naming preposition, and `using Name` to select — still
+   illustrative, not decided, since the rest of this RFC's selection semantics (several providers, generic
+   arguments) is what the spelling would actually need to carry. Are names public API and can they be imported
+   or re-exported?
 3. Which orphan rules govern declaring the provider and selecting it? Can an aspect owner
    publish one for a structural target without claiming all matching nominal types?
 4. How do overlap checks handle conditional generic selections, negative impls, auto

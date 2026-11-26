@@ -299,7 +299,7 @@ session := Session::from_record(r);  // needs every field visible; bypasses cons
 **E9. Explicit nominal granting (O3), now specified: RFC-0250 section 0, for an aspect with a body.**
 
 ```metel
-pub named extend IdentifiedById<..R> .{ .id: i64, R }: Identified { fun describe(&self) -> String { … } }
+pub extend IdentifiedById<..R> .{ .id: i64, R } for Identified { fun describe(&self) -> String { … } }
 
 struct Invoice { pub id: i64, pub total: f64 }
 invoice.describe();                          // error: Invoice does not implement Identified
