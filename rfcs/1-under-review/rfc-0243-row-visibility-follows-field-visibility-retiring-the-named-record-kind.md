@@ -299,6 +299,9 @@ session := Session::from_record(r);  // needs every field visible; bypasses cons
 **E9. Explicit nominal granting (O3), now specified: RFC-0250 section 0, for an aspect with a body.**
 
 ```metel
+// two live declaration spellings, neither ruled out (RFC-0250 section 6):
+pub named extend IdentifiedById<..R> .{ .id: i64, R }: Identified { fun describe(&self) -> String { … } }
+// or:
 pub extend IdentifiedById<..R> .{ .id: i64, R } for Identified { fun describe(&self) -> String { … } }
 
 struct Invoice { pub id: i64, pub total: f64 }

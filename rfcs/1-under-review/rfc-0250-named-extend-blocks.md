@@ -13,18 +13,22 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2196'
 
 A reusable row-conditional aspect implementation may have a name. A nominal type's author
 can explicitly select it, so the behavior is identifiable at the grant and does not arise
-merely because the type has matching public fields. For discussion, this RFC spells the
-declaration `extend Name<..R> .{ R } for Aspect { body }` — reusing RFC-0109's `Name for
-Target` idiom from named views rather than inventing a second naming preposition — and the
-selection `using`; both spellings are illustrative.
+merely because the type has matching public fields. Two declaration spellings are live and
+neither is ruled out: `named extend Name<..R> .{ R }: Aspect { body }`, and
+`extend Name<..R> .{ R } for Aspect { body }`, reusing RFC-0109's `Name for Target` idiom
+from named views. Selection is `using`. All three spellings are illustrative.
 
 ```metel
-// Library
+// Library -- two live candidates for the same declaration:
+pub named extend IdentifiedById<..R> .{ .id: i32, R }: Identified {
+    fun describe(&self) -> String { … }
+}
+// or, reusing the named-view idiom:
 pub extend IdentifiedById<..R> .{ .id: i32, R } for Identified {
     fun describe(&self) -> String { … }
 }
 
-// Type's module
+// Type's module (unaffected by which declaration spelling is chosen)
 struct Invoice { pub id: i32, pub total: i32 }
 extend Invoice: Identified using IdentifiedById;
 ```
@@ -82,10 +86,13 @@ which does need disambiguation beyond naming alone.
 
 ## 1. Proposed model
 
-1. `extend Name<..R> .{ R } for Aspect { body }` declares one reusable implementation of a
+1. A named declaration — `named extend Name<..R> .{ R }: Aspect { body }`, or equivalently
+   `extend Name<..R> .{ R } for Aspect { body }` (reusing RFC-0109's `Name for Target`
+   idiom; neither spelling is ruled out) — declares one reusable implementation of a
    specified aspect identity, a row target and its bounds, together with the
-   implementation items — the same shape an ordinary anonymous `extend<..R> .{ R }: Aspect
-   { body }` already has, with a name inserted and `for Aspect` in place of `: Aspect`.
+   implementation items. Both read as the same shape an ordinary anonymous
+   `extend<..R> .{ R }: Aspect { body }` already has, with a name inserted and either a
+   leading `named` modifier or a trailing `for Aspect` in place of `: Aspect`.
    Its name has ordinary module visibility and must be visible at a selection. The
    declaration is checked against its symbolic fields and stated bounds; using it does not
    waive method completeness, well-formedness or access checks.
@@ -152,8 +159,11 @@ extend PrivateId: Identified using IdentifiedById; // error under public-row can
 For a generic provider, the selection must establish its condition:
 
 ```metel
-// Illustrative bounds and provider
+// Illustrative bounds and provider -- either declaration spelling:
+pub named extend ShowValue<T, ..R> .{ .value: T, R }: Display where T: Display { … }
+// or:
 pub extend ShowValue<T, ..R> .{ .value: T, R } for Display where T: Display { … }
+
 struct Box<T> { pub value: T }
 extend<T: Display> Box<T>: Display using ShowValue;
 ```
@@ -196,14 +206,39 @@ selectable impls, at the cost of repeating aspect methods. Label arguments or ma
 could make a provider reusable for differently named fields, but require their own
 label-polymorphism and checking rules and are not assumed here.
 
+## 6. Declaration spelling: two live candidates, checked against existing keywords
+
+Neither `named extend Name<..R> .{ R }: Aspect { body }` nor `extend Name<..R> .{ R } for Aspect { body }` is
+ruled out (2026-11-26). The second reuses RFC-0109's `Name for Target` idiom, already established for named
+views (`view Value<T> for Box<T> { value }`), so the two naming constructs would share one preposition and one
+mental model instead of each inventing its own. The first keeps the name immediately after `extend`, with no new
+connector at all, at the cost of a leading modifier a reader has to notice.
+
+Other candidates for the connector were checked against the existing keyword set and set aside, not because the
+idea is wrong but because the word is already spoken for:
+
+- **`via`** is already a real, implemented keyword with an unrelated meaning — a flow-parameter list on a
+  `derives` clause (RFC-0224: `derives Copy via A + B`). Reusing it here for provider selection would give one
+  word two unrelated jobs depending on where it appears, which is exactly the kind of ambiguity this cluster has
+  spent effort removing elsewhere (the colon list's `satisfying` split, `extend`'s predicate-vs-behavior split).
+- **`as`** already carries two jobs (import renaming, explicit runtime conversion). Metel does have precedent for
+  one contextual keyword serving unrelated jobs by position (`copy`, RFC-0219), so this is not disqualifying on
+  principle, but a third job on an already-double-loaded word is a real cost, not a free one.
+- **`using`**, for the *selection* half, checks out clean. RFC-0160 once considered it for type aliases
+  (`### A distinct keyword (using / typedef / alias)`) and dropped it — but only because `type … := …` already
+  existed for that job; the reason is specific to aliases and does not apply here.
+
+This section records the comparison so it is not re-derived from scratch later; it does not pick a winner.
+
 ## Open questions
 
 1. Is a named block an active blanket impl, an inactive provider, or can it be either? **Orthogonal to section 0's
    slice**: naming an *existing* blanket impl there changes nothing about its own activation, whichever this is decided
    to be; it only matters for a provider declared named from the start.
-2. **Illustrative spelling updated (2026-11-26):** `extend Name<..R> .{ R } for Aspect { body }` to declare, reusing
-   RFC-0109's `Name for Target` idiom rather than a second naming preposition, and `using Name` to select — still
-   illustrative, not decided, since the rest of this RFC's selection semantics (several providers, generic
+2. **Two live declaration candidates (2026-11-26), neither ruled out:** `named extend Name<..R> .{ R }: Aspect
+   { body }`, and `extend Name<..R> .{ R } for Aspect { body }` (reusing RFC-0109's `Name for Target` idiom rather
+   than a second naming preposition — see section 6 for the comparison). Selection is `using Name` either way. All
+   still illustrative, not decided, since the rest of this RFC's selection semantics (several providers, generic
    arguments) is what the spelling would actually need to carry. Are names public API and can they be imported
    or re-exported?
 3. Which orphan rules govern declaring the provider and selecting it? Can an aspect owner
