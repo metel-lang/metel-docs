@@ -97,11 +97,12 @@ never ambiguous (section 7).
 `new` is not reserved.
 
 This revision's scope grew beyond construction-call syntax: section 3 also specifies a
-privileged representation-construction/pattern form, `Point .{ ... }`, and proposes
-migrating existing nominal patterns off `Point { x, y }` to that spelling. This is a
-substantive, separate design area, not a detail of ordinary call-syntax construction —
-see section 3 and open question 6 for its unresolved syntax collision with existing
-residual-projection syntax.
+privileged representation-construction form, `Point .{ ... }`, used only inside a
+type's own canonical or unchecked constructor body. Representation patterns keep their
+existing spelling, `Point { x, y }`, unmigrated. This is a substantive, separate design
+area, not a detail of ordinary call-syntax construction — see section 3 and open
+question 6 for the privileged construction spelling's unresolved syntax collision with
+existing residual-projection syntax.
 
 This RFC remains under review. Release assignment lives in
 metel-core#807's milestone. The normative spec and interpreter remain unchanged until
@@ -252,29 +253,34 @@ whose row has exactly the target's fields with matching types and performs the s
 privileged final construction (language owner, 2026-11-26). It remains subject to
 ordinary ownership and visibility rules. Its exact grammar needs review against row
 spread and residual projection syntax.
-Candidate syntax uses `Point .{ x = 1, y = 2 }` for the privileged operation and
-`Point .{ x, y }` for a representation pattern. Ordinary construction remains
-`Point(x = 1, y = 2)`. This collides with existing `Point.{ .x }` residual type and
-value projection syntax (RFC-0137/RFC-0146), differing only by the whitespace before
-`.{`; open question 6 covers this unresolved disambiguation. Enum variant construction
-and matching need the equivalent analysis, and empty forms must be unambiguous.
+Candidate syntax uses `Point .{ x = 1, y = 2 }` for the privileged construction
+operation. Ordinary construction remains `Point(x = 1, y = 2)`. The privileged form
+collides with existing `Point.{ .x }` residual type and value projection syntax
+(RFC-0137/RFC-0146), differing only by the whitespace before `.{`; open question 6
+covers this unresolved disambiguation. It is a construction-only collision: the
+representation-pattern spelling below keeps its current syntax rather than adopting
+`.{ }`, so it does not collide with residual projection at all. Enum variant
+construction needs the equivalent analysis, and empty forms must be unambiguous.
 
 The constructor's public parameter interface need not mirror stored fields. Patterns
 describe representation and remain subject to field privacy and ownership rules.
 Outside the declaring module, a pattern cannot name a private field and may omit it
 with `..`; inside the module it may name it (language owner, 2026-11-26). Omitted
 fields remain subject to the existing ownership, discard and destruction rules.
-No acceptance of the pattern spelling or of an enum canonical-construction model is
-implied by the privilege decision.
+No acceptance of an enum canonical-construction model is implied by the privilege
+decision.
 
-The representation-pattern spelling replaces the current nominal brace pattern
-`Point { x, y }` (language owner, 2026-11-26). Migrate struct and enum variant patterns
-to `Point .{ x, y }` and `Message::Text .{ body }`, respectively, while preserving
-their existing binding, exhaustiveness, visibility and ownership rules unless separately
-changed. Parser ambiguities, unit variants, unqualified variant patterns and all existing
-pattern positions require explicit integration and prototype coverage.
-Nominal representation fields also support renaming and nested subpatterns, analogous
-to anonymous-record patterns: `Point .{ x: 0, y: vertical }` matches the first field
+**Representation patterns keep their current spelling, the existing nominal brace
+pattern `Point { x, y }` (language owner, 2026-11-26) — no migration to `.{ }` or any
+other new syntax.** This was reconsidered after the dotted form turned out to revive
+exactly the ambiguity nominal brace *literals* (construction) were originally retired
+for — a brace expression read as a block in positions like an `if` condition — and
+narrowing it to patterns only does not remove that risk from the construction side
+either, so the pattern side is left alone rather than carrying the same risk for no
+benefit. Patterns remain `Point { x, y }`, unchanged, with their existing binding,
+exhaustiveness, visibility and ownership rules.
+Nominal representation fields support renaming and nested subpatterns, analogous
+to anonymous-record patterns: `Point { x: 0, y: vertical }` matches the first field
 against a literal and binds the second under another name (language owner, 2026-11-26).
 A refutable field makes the enclosing pattern refutable; `let` patterns must remain
 irrefutable. Exhaustiveness must account for nested patterns. Naming a private field
@@ -282,11 +288,10 @@ is forbidden outside its declaring module even when its subpattern is `_`.
 Nominal struct patterns retain bare `..` for omitted fields; binding a remainder as an
 anonymous record with `..rest` is deferred (language owner, 2026-11-26). Its design must
 address brand removal, private fields, `Drop`, and ownership before it is admitted.
-Zero-field structs and unit enum variants use the empty representation pattern
-`Empty .{}` and `Message::Empty .{}` (language owner, 2026-11-26). Existing bare
-unit-variant patterns remain available as shorthand (language owner, 2026-11-26), with
-their current qualified and expected-type-directed lookup rules. This does not introduce
-a bare zero-field struct construction or pattern shorthand.
+Zero-field structs and unit enum variants use the existing empty pattern `Empty {}` and
+the existing bare unit-variant shorthand (language owner, 2026-11-26), with their
+current qualified and expected-type-directed lookup rules. This does not introduce a
+bare zero-field struct construction shorthand.
 
 ## 4. Deferred: an inferred, expected-type compact form
 
@@ -606,16 +611,24 @@ overload set and explicit/glob imports across type and value categories against 
    syntax the way a type or function name is, so unification does not interact with
    aspect-object dispatch at all. This was an overcautious question with nothing concrete
    behind it; PROCESS.md's "prune harder" rule applies.
-6. **Open — syntax collision between privileged representation construction/patterns
-   and existing residual projection syntax.** Section 3's `Point .{ x = 1, y = 2 }` and
-   `Point .{ x, y }` differ from the existing `Point.{ .x }` residual type and value
-   projection syntax (RFC-0137/RFC-0146) only by the whitespace before `.{`. A
-   whitespace-only distinction between two semantically different forms is fragile —
-   accidental or reformatted whitespace would silently change meaning — and no
-   alternative spelling has been proposed. This must be resolved, with either a
-   non-whitespace-dependent distinguishing token or a demonstration that the parser can
-   disambiguate soundly in every position both forms can appear, before section 3 can be
-   considered more than a direction.
+6. **Open — syntax collision between privileged representation construction and
+   existing residual projection syntax.** Narrowed to construction only: the
+   representation-pattern spelling keeps its current syntax (section 3) and no longer
+   collides with anything. Section 3's `Point .{ x = 1, y = 2 }` still differs from the
+   existing `Point.{ .x }` residual type and value projection syntax (RFC-0137/RFC-0146)
+   only by the whitespace before `.{`. A whitespace-only distinction between two
+   semantically different forms is fragile — accidental or reformatted whitespace would
+   silently change meaning. Two alternatives were considered and ruled out: a double-dot
+   marker (`Point..{ ... }`) sits in the same bare-postfix-after-a-term position
+   existing range expressions already occupy, an unverified and likely-colliding
+   position nothing else in the grammar risks; and bare braces for construction
+   (`Point { x = 1, y = 2 }`) would revive exactly the struct-literal-vs-block ambiguity
+   nominal brace literals were originally retired for (section Design history), with no
+   narrowing benefit from being constructor-body-scoped only. This must still be
+   resolved, with either a non-whitespace-dependent, non-colliding token or a
+   demonstration that the parser can disambiguate soundly in every position the
+   privileged construction form can appear, before section 3's construction spelling
+   can be considered more than a direction.
 
 **Lifecycle outcome:** Under review, tracked by metel-core#807. No acceptance, spec
 integration or implementation transition is claimed.
