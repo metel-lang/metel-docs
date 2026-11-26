@@ -97,12 +97,12 @@ never ambiguous (section 7).
 `new` is not reserved.
 
 This revision's scope grew beyond construction-call syntax: section 3 also specifies a
-privileged representation-construction form, `Point .{ ... }`, used only inside a
-type's own canonical or unchecked constructor body. Representation patterns keep their
-existing spelling, `Point { x, y }`, unmigrated. This is a substantive, separate design
-area, not a detail of ordinary call-syntax construction — see section 3 and open
-question 6 for the privileged construction spelling's unresolved syntax collision with
-existing residual-projection syntax.
+privileged representation-construction form, `Point { ... }` — the existing nominal
+brace literal, revived narrowly for use only inside a type's own canonical or unchecked
+constructor body — and a condition-position restriction needed to keep it unambiguous
+with a block. Representation patterns keep their existing spelling, `Point { x, y }`,
+unmigrated. This is a substantive, separate design area, not a detail of ordinary
+call-syntax construction — see section 3 and open question 6.
 
 This RFC remains under review. Release assignment lives in
 metel-core#807's milestone. The normative spec and interpreter remain unchanged until
@@ -248,18 +248,28 @@ construction interface (language owner, 2026-11-26). RFC-0114 owns the privilege
 validation, and unchecked-operation rules.
 An explicit field-list representation construction initializes every field exactly
 once; a missing, duplicate, or extra field is an error (language owner, 2026-11-26).
-A whole-row form such as `Self .{ ..fields }` consumes a complete anonymous record
+A whole-row form such as `Self { ..fields }` consumes a complete anonymous record
 whose row has exactly the target's fields with matching types and performs the same
 privileged final construction (language owner, 2026-11-26). It remains subject to
 ordinary ownership and visibility rules. Its exact grammar needs review against row
-spread and residual projection syntax.
-Candidate syntax uses `Point .{ x = 1, y = 2 }` for the privileged construction
-operation. Ordinary construction remains `Point(x = 1, y = 2)`. The privileged form
-collides with existing `Point.{ .x }` residual type and value projection syntax
-(RFC-0137/RFC-0146), differing only by the whitespace before `.{`; open question 6
-covers this unresolved disambiguation. It is a construction-only collision: the
-representation-pattern spelling below keeps its current syntax rather than adopting
-`.{ }`, so it does not collide with residual projection at all. Enum variant
+spread syntax.
+Candidate syntax uses `Point { x = 1, y = 2 }` for the privileged construction
+operation — the existing nominal brace literal, which construction-call syntax
+otherwise retired, revived narrowly for this constructor-body-only use. Ordinary
+construction remains `Point(x = 1, y = 2)`.
+
+This revives the struct-literal-vs-block ambiguity nominal brace literals were
+originally retired for: a bare `T { ... }` directly in `if`/`while`/`match` condition
+position is ambiguous between a construction expression and the start of that
+construct's own body block. Resolved the same way other call-syntax languages with this
+problem resolve it: **a bare privileged-construction expression is rejected directly in
+condition position; parenthesize it there, `if (Point { x = 1 }).active { ... }`**
+(language owner, 2026-11-26). This does not affect `Point(x = 1, y = 2)` ordinary
+construction, which stays unambiguous in condition position because it opens with `(`
+rather than `{`; nor does it affect representation patterns, which never appear in
+condition position in the first place. Exact production-level placement of the
+restriction needs grammar review; this fixes the specific ambiguity, not every
+positional interaction a prototype may still surface. Enum variant
 construction needs the equivalent analysis, and empty forms must be unambiguous.
 
 The constructor's public parameter interface need not mirror stored fields. Patterns
@@ -271,14 +281,12 @@ No acceptance of an enum canonical-construction model is implied by the privileg
 decision.
 
 **Representation patterns keep their current spelling, the existing nominal brace
-pattern `Point { x, y }` (language owner, 2026-11-26) — no migration to `.{ }` or any
-other new syntax.** This was reconsidered after the dotted form turned out to revive
-exactly the ambiguity nominal brace *literals* (construction) were originally retired
-for — a brace expression read as a block in positions like an `if` condition — and
-narrowing it to patterns only does not remove that risk from the construction side
-either, so the pattern side is left alone rather than carrying the same risk for no
-benefit. Patterns remain `Point { x, y }`, unchanged, with their existing binding,
-exhaustiveness, visibility and ownership rules.
+pattern `Point { x, y }` (language owner, 2026-11-26) — no migration to any new
+syntax.** Patterns were never part of what needed resolving above: they don't appear in
+condition position, don't collide with residual projection or anything else, and
+nothing about the privileged construction spelling requires changing them. Patterns
+remain `Point { x, y }`, unchanged, with their existing binding, exhaustiveness,
+visibility and ownership rules.
 Nominal representation fields support renaming and nested subpatterns, analogous
 to anonymous-record patterns: `Point { x: 0, y: vertical }` matches the first field
 against a literal and binds the second under another name (language owner, 2026-11-26).
@@ -611,24 +619,23 @@ overload set and explicit/glob imports across type and value categories against 
    syntax the way a type or function name is, so unification does not interact with
    aspect-object dispatch at all. This was an overcautious question with nothing concrete
    behind it; PROCESS.md's "prune harder" rule applies.
-6. **Open — syntax collision between privileged representation construction and
-   existing residual projection syntax.** Narrowed to construction only: the
-   representation-pattern spelling keeps its current syntax (section 3) and no longer
-   collides with anything. Section 3's `Point .{ x = 1, y = 2 }` still differs from the
-   existing `Point.{ .x }` residual type and value projection syntax (RFC-0137/RFC-0146)
-   only by the whitespace before `.{`. A whitespace-only distinction between two
-   semantically different forms is fragile — accidental or reformatted whitespace would
-   silently change meaning. Two alternatives were considered and ruled out: a double-dot
-   marker (`Point..{ ... }`) sits in the same bare-postfix-after-a-term position
+6. **Resolved (language owner, 2026-11-26) — privileged construction uses the existing
+   nominal brace literal, `Point { x = 1, y = 2 }`, with a condition-position
+   restriction.** Two earlier candidates were considered and ruled out first: a dotted
+   form, `Point .{ x = 1, y = 2 }`, collided with existing `Point.{ .x }` residual
+   projection syntax (RFC-0137/RFC-0146) by whitespace alone, which is fragile —
+   accidental or reformatted whitespace would silently change meaning; a double-dot
+   marker, `Point..{ ... }`, sits in the same bare-postfix-after-a-term position
    existing range expressions already occupy, an unverified and likely-colliding
-   position nothing else in the grammar risks; and bare braces for construction
-   (`Point { x = 1, y = 2 }`) would revive exactly the struct-literal-vs-block ambiguity
-   nominal brace literals were originally retired for (section Design history), with no
-   narrowing benefit from being constructor-body-scoped only. This must still be
-   resolved, with either a non-whitespace-dependent, non-colliding token or a
-   demonstration that the parser can disambiguate soundly in every position the
-   privileged construction form can appear, before section 3's construction spelling
-   can be considered more than a direction.
+   position nothing else in the grammar risks. Reviving the nominal brace literal
+   (section Design history) instead reopens a different, known problem — struct-literal-
+   vs-block ambiguity in condition position — which is settled directly: a bare
+   privileged-construction expression is rejected in `if`/`while`/`match` condition
+   position, requiring parentheses there (section 3). Representation patterns were
+   never part of this collision and keep their current, unmigrated spelling regardless.
+   Exact production-level grammar for the condition-position restriction still needs
+   review; this resolves the design question, not every parser detail a prototype may
+   surface.
 
 **Lifecycle outcome:** Under review, tracked by metel-core#807. No acceptance, spec
 integration or implementation transition is claimed.
