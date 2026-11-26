@@ -2,7 +2,7 @@
 id: rfc-0100
 title: "Nominal Construction Through a Unified Type and Value Namespace"
 date: '2026-11-11'
-status: under-review
+status: accepted
 updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 ---
@@ -18,6 +18,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 > is never ambiguous because there is only ever one thing `Struct` can mean. The inferred, expected-type
 > compact form (previously `.(...)`) is withdrawn from this proposal and deferred to its own future RFC —
 > it is an independent question once the namespace collision is gone structurally rather than syntactically.
+
+> **Status — accepted (2026-11-26).** Open questions resolved (section 1 unification grounded in #1560/#1571, enum/alias/generics scope settled, readability and privileged-construction syntax settled); language owner judges the design settled without further prototype gating
 
 ## Design history
 
@@ -556,13 +558,19 @@ type/value namespace making that syntax sound, ordinary positional/keyword rules
 explicit whole-row operands with `..{ ... }` literal notation, no implicit construction
 from bare names, and the inferred compact form deferred to its own future RFC.
 
-**Remaining acceptance work:** a prototype narrowing the `(module, namespace, name)` key's
-namespace dimension to one value (section 1, open question 1); updating or retiring the
-fixtures `metel-core#1560`/`#1571` added to pin coexistence as legal (open question 4, a
-real audit already run); revisiting those two closed issues' own acceptance criteria,
-which assumed coexistence would remain a permanent invariant; exact-row, visibility and
-single-evaluation fixtures carried over from the prior revision. These are evidence
-requirements, not completed checks.
+**Accepted without a prototype (2026-11-26, language owner):** all open questions were
+resolved by review rather than by implementation evidence; the design is settled on
+paper, not yet checked against a running compiler. The following is integration work
+this acceptance carries forward, not a precondition that was waived silently: a
+prototype narrowing the `(module, namespace, name)` key's namespace dimension to one
+value (section 1, open question 1); updating or retiring the fixtures
+`metel-core#1560`/`#1571` added to pin coexistence as legal (open question 4, a real
+audit already run, not yet acted on); revisiting those two closed issues' own
+acceptance criteria, which assumed coexistence would remain a permanent invariant;
+exact-row, visibility and single-evaluation fixtures carried over from the prior
+revision. `3-integrated` does not proceed until these exist and pass, per PROCESS.md's
+own `2-accepted`/`3-integrated` distinction — accepted means the design is agreed, not
+that it has been built.
 
 The prototype's interaction cases must include private fields supplied by positional,
 keyword and whole-row arguments, both directly and through a transparent imported alias.
@@ -638,5 +646,8 @@ overload set and explicit/glob imports across type and value categories against 
    review; this resolves the design question, not every parser detail a prototype may
    surface.
 
-**Lifecycle outcome:** Under review, tracked by metel-core#807. No acceptance, spec
-integration or implementation transition is claimed.
+**Lifecycle outcome:** Accepted (2026-11-26), tracked by metel-core#807. The design is
+settled; no spec integration or implementation transition is claimed. `3-integrated`
+requires the prototype and fixture work recorded above, a linked implementation-tracking
+issue, and merging this RFC's content into `reference/spec/` with worked examples
+checked against the rest of the integrated spec.

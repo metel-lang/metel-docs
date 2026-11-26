@@ -15,9 +15,9 @@ updated: '2026-11-11'
 > question 10) without proposing this fix; RFC-0096 owns the *auto-impl* pattern
 > (`Send`/`Sync`/`Linear`, a closed, compiler-intrinsic list) which this RFC's default
 > derivation resembles in spirit but does not reuse directly (§7); none of the others
-> touch construction at all. Depends on RFC-0100 (reopened under review, 2026-11-11) for
-> removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
-> deferred) as the foundation for §6's escape hatch.
+> touch construction at all. Depends on RFC-0100 (accepted, 2026-11-26) for
+> removing bare struct literals from general construction, and names RFC-0026 (`unsafe`
+> blocks, `0-draft`, deferred) as the foundation for §6's escape hatch.
 
 > **Revised (2026-11-08, language owner).** Construction no longer fires automatically when a narrowed row is completed (§3 is rewritten): widening on reassignment stays as RFC-0137 and the spec define it, and the guarantee this RFC gives is about values *produced by a construction expression*. The enum extension of §9 and the brace minting form of RFC-0100 §7 are drafted in the same pass.
 >
@@ -65,17 +65,19 @@ updated: '2026-11-11'
 > resolved by dissolving its premise, and this RFC now has no blocking dependency on any
 > under-review RFC.
 
-> **Surface proposal — RFC-0100 (under review, consolidated 2026-11-12).** Explicit
-> `new T(...)` and expected-target `.(...)` would collect positional/keyword
-> arguments into the same canonical row used here. A whole-row argument is
-> explicitly `..r` or `..{ .field = value }`, never an ordinary record argument
-> implicitly reinterpreted by shape. For example, proposed
-> `new Point(..{ .x = 1, .y = 2 })` supplies one complete construction row;
-> `new Wrapper(.{ .x = 1, .y = 2 })` supplies a record as one field value.
-> Both routes must use the same validation and result policy. Inferred targets
-> for fallible construction require reconciliation before that extension;
-> compact syntax must introduce no implicit unwrap. RFC-0100's dedicated literal
-> spelling does not itself accept arbitrary expressions after `..`.
+> **Surface proposal — RFC-0100 (accepted, 2026-11-26).** Superseded by that RFC's own
+> later revision: plain call syntax, `Point(args)`, collects positional/keyword
+> arguments into the same canonical row used here, with no `new` keyword and no
+> expected-target `.(...)` form (withdrawn, deferred to a future RFC). A whole-row
+> argument is explicitly `..r` or `..{ .field = value }`, never an ordinary record
+> argument implicitly reinterpreted by shape. For example, accepted
+> `Point(..{ .x = 1, .y = 2 })` supplies one complete construction row;
+> `Wrapper(.{ .x = 1, .y = 2 })` supplies a record as one field value.
+> Both routes must use the same validation and result policy. RFC-0100's dedicated
+> literal spelling does not itself accept arbitrary expressions after `..`. This RFC's
+> own reconciliation with RFC-0100's accepted design, including its section 3 privileged
+> representation-construction form, is not yet done — a gap for whoever next picks up
+> RFC-0114, not fixed here.
 
 ## Summary
 
@@ -645,7 +647,7 @@ not yet settled. Ordinary functions may separately choose among variants.
 - `public/rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
-- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — call-shaped
+- `public/rfcs/2-accepted/rfc-0100-constructor-call-construction.md` — call-shaped
   construction and general keyword arguments. **No longer a dependency of this RFC** (§2,
   open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
   brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was

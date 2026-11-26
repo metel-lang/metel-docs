@@ -194,8 +194,9 @@ whether the existing parser-error machinery can provide the targeted suggestion.
 
 ## Interactions and prior decisions
 
-- **RFC-0100 (under review):** proposed inferred nominal construction uses
-  `.(...)`, so `.{ ... }` remains structural regardless of expected type.
+- **RFC-0100 (accepted):** nominal construction is plain call syntax, `Point(args)`;
+  its earlier inferred `.(...)` form is withdrawn and deferred to a future RFC. Either
+  way, `.{ ... }` remains structural regardless of expected type.
   Whole-row literal constructor arguments use `..{ .x = 1 }`, retaining the
   dedicated `..{` introducer rather than composing `..` with `.{`. This is value
   argument syntax, distinct by context from the existing `..{ .x: i64 }` type
