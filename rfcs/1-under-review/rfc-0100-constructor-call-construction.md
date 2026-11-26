@@ -91,10 +91,19 @@ record-valued argument as the whole parameter row.
 
 Bare zero-field struct/named-record construction is retired as its own special case —
 `Empty()` is simply a call to whatever `Empty` is, and under namespace unification that is
-never ambiguous (section 6).
+never ambiguous (section 7).
 
 **The inferred, expected-type compact form is deferred, not part of this proposal.**
-`new` is not reserved. This RFC remains under review. Release assignment lives in
+`new` is not reserved.
+
+This revision's scope grew beyond construction-call syntax: section 3 also specifies a
+privileged representation-construction/pattern form, `Point .{ ... }`, and proposes
+migrating existing nominal patterns off `Point { x, y }` to that spelling. This is a
+substantive, separate design area, not a detail of ordinary call-syntax construction —
+see section 3 and open question 6 for its unresolved syntax collision with existing
+residual-projection syntax.
+
+This RFC remains under review. Release assignment lives in
 metel-core#807's milestone. The normative spec and interpreter remain unchanged until
 integration and implementation through the project lifecycle.
 
@@ -175,9 +184,9 @@ fun Ticket(input: i64) -> i64 { input + 100 }   // error: `Ticket` is already de
   same scope must collide the same way the local case does; since both already go through the
   one namespace-aware import path `#1571` built, this is the same narrowing as the local
   case, not a second thing to design.
-- **Import precedence across declaration categories.** Apply the existing explicit-versus-
-  glob precedence and glob ambiguity rules in the unified namespace (language owner,
-  2026-11-26). Explicit imports of a type and a function under the same local name conflict;
+- **Import precedence across declaration categories.** Apply RFC-0030 section 7's existing
+  explicit-versus-glob precedence and glob ambiguity rules in the unified namespace
+  (language owner, 2026-11-26). Explicit imports of a type and a function under the same local name conflict;
   an explicit import wins over a glob binding of that name regardless of category; competing
   glob bindings remain ambiguous when used. Function overload sets retain their existing
   rules; this decision does not define new merging of functions from separate imports.
@@ -211,7 +220,8 @@ uses the existing turbofish spelling, `Pair::<i64>(1, 2)`. Aliases and module
 qualification work: `TicketAlias(value = 1)` and `model::Ticket(value = 1)`. Inside an
 impl, `Self(...)` identifies its own type.
 
-Construction targets structs, named records, and enum variants as discussed in section 6.
+Construction targets structs, named records, and enum variants as discussed in section 7.
+Privileged representation construction is a separate operation, covered in section 3.
 It specifies neither heap allocation
 nor a fresh runtime identity; storage and ownership keep their rules. It does not mean
 raw field initialisation: it invokes the canonical construction operation, including
@@ -225,9 +235,7 @@ let a := Ticket(value = 1);   // construction: `Ticket` names a struct
 A type alias exposes a construction target, not a new constructor value binding. No
 `new` keyword is reserved by this revision.
 
-## 3. Deferred: an inferred, expected-type compact form
-
-### Privileged representation syntax and patterns
+## 3. Privileged representation construction and patterns
 
 The language owner selected constructor-body privilege on 2026-11-26: an explicit
 representation-construction form is available only in the target's own canonical
@@ -244,12 +252,12 @@ whose row has exactly the target's fields with matching types and performs the s
 privileged final construction (language owner, 2026-11-26). It remains subject to
 ordinary ownership and visibility rules. Its exact grammar needs review against row
 spread and residual projection syntax.
-Working syntax uses `Point .{ x = 1, y = 2 }` for the privileged operation and
+Candidate syntax uses `Point .{ x = 1, y = 2 }` for the privileged operation and
 `Point .{ x, y }` for a representation pattern. Ordinary construction remains
-`Point(x = 1, y = 2)`. These forms' detailed grammar and pattern semantics require
-review; in particular whitespace must not be the sole disambiguator from existing
-`Point.{ .x }` residual type and value projection syntax, and empty forms must be
-unambiguous. Enum variant construction and matching need the equivalent analysis.
+`Point(x = 1, y = 2)`. This collides with existing `Point.{ .x }` residual type and
+value projection syntax (RFC-0137/RFC-0146), differing only by the whitespace before
+`.{`; open question 6 covers this unresolved disambiguation. Enum variant construction
+and matching need the equivalent analysis, and empty forms must be unambiguous.
 
 The constructor's public parameter interface need not mirror stored fields. Patterns
 describe representation and remain subject to field privacy and ownership rules.
@@ -280,6 +288,8 @@ unit-variant patterns remain available as shorthand (language owner, 2026-11-26)
 their current qualified and expected-type-directed lookup rules. This does not introduce
 a bare zero-field struct construction or pattern shorthand.
 
+## 4. Deferred: an inferred, expected-type compact form
+
 The earlier `.(...)` proposal — construct the single nominal type an expected type
 supplies, without naming it — is withdrawn from this RFC, not rejected. It was motivated
 by two different things at once: giving construction a compact spelling, and giving it a
@@ -291,7 +301,7 @@ collision concern — is a real, separate question, left for its own future RFC 
 one settles. Nothing here assumes an answer either way; `.(...)`'s syntax is not reserved
 by this proposal.
 
-## 4. Positional, keyword and record-valued arguments
+## 5. Positional, keyword and record-valued arguments
 
 Construction retains RFC-0223's argument rules: positional arguments bind in field
 declaration order and precede keyword arguments; keywords bind by name; every parameter
@@ -359,7 +369,7 @@ work. A private field is not a public parameter merely because the canonical ope
 can validate it. Until such an interface is specified and implemented, the field-parameter
 visibility rule above applies.
 
-## 5. Whole-row construction: `..r` and `..{ ... }`
+## 6. Whole-row construction: `..r` and `..{ ... }`
 
 A whole-row operand supplies exactly the construction parameter row, with the
 same labels and corresponding field types under ordinary checking and generic
@@ -406,7 +416,7 @@ Arbitrary expression operands after `..` (for example `..make_fields()`) are a
 future extension, not included here. A dedicated literal is included in this
 proposal; it deliberately extends plain-binding-only operands.
 
-## 6. Empty types, variants and failure
+## 7. Empty types, variants and failure
 
 Zero-field structs and named records require an explicit construction call, which is
 simply an ordinary call now that no bare-shorthand special case exists:
@@ -463,8 +473,9 @@ construction and validation contract once RFC-0114's enum interaction is settled
 
 Enum variants are intended to use one enum-wide canonical operation, synthesized as an
 identity unless customized (language owner, 2026-11-26). RFC-0114 owns the operation's
-raw representation, result, failure and unchecked rules; whether it may return a
-different variant from the one requested remains open. A prototype must cover qualified and unqualified variants,
+raw representation, result, failure and unchecked rules, subject to RFC-0210's variant-
+preservation contract: a successful per-variant constructor returns the requested
+variant type or an error, never a different variant. A prototype must cover qualified and unqualified variants,
 zero-field and fieldful variants, payload binding and privacy, generic enums, and
 collisions with lexical names. Existing match and destructuring patterns are not changed
 by this construction proposal; their spelling is a separate design question.
@@ -479,9 +490,9 @@ infallible scope is not evidence of implemented custom constructor support.
 This revision replaces RFC-0100's `new`/`.(...)` consolidation with a return to plain
 call syntax, reached through section 1's namespace unification rather than the original,
 reverted design's unguarded one. It retains RFC-0100's argument collection and exact-row
-contract (sections 4-5), unchanged from the prior revision except for dropping `new`. It
+contract (sections 5-6), unchanged from the prior revision except for dropping `new`. It
 retires RFC-0106's bare shorthand for zero-field structs/named records, now subsumed by
-section 6. RFC-0111's enum-variant resolution must be reconciled with section 6.
+section 7. RFC-0111's enum-variant resolution must be reconciled with section 7.
 RFC-0225 owns anonymous record syntax;
 its literals stay structural. RFC-0114 owns canonical validation, fallibility and
 privileged minting.
@@ -518,7 +529,7 @@ here too, by construction (so to speak): `Struct(args)` and `f(args)` remain vis
 identical. **Whether that is still a problem is a genuinely open question under this
 revision**, since the reason it mattered for (2) — a reader (and the compiler) needing
 to tell two coexisting meanings apart — no longer holds. Readers who want a syntactic
-construction marker get it, if wanted, from a future RFC addressing section 3's deferred
+construction marker get it, if wanted, from a future RFC addressing section 4's deferred
 compact form, not as a precondition for soundness.
 
 For record operands, implicit row unpacking based on argument shape is rejected:
@@ -595,6 +606,16 @@ overload set and explicit/glob imports across type and value categories against 
    syntax the way a type or function name is, so unification does not interact with
    aspect-object dispatch at all. This was an overcautious question with nothing concrete
    behind it; PROCESS.md's "prune harder" rule applies.
+6. **Open — syntax collision between privileged representation construction/patterns
+   and existing residual projection syntax.** Section 3's `Point .{ x = 1, y = 2 }` and
+   `Point .{ x, y }` differ from the existing `Point.{ .x }` residual type and value
+   projection syntax (RFC-0137/RFC-0146) only by the whitespace before `.{`. A
+   whitespace-only distinction between two semantically different forms is fragile —
+   accidental or reformatted whitespace would silently change meaning — and no
+   alternative spelling has been proposed. This must be resolved, with either a
+   non-whitespace-dependent distinguishing token or a demonstration that the parser can
+   disambiguate soundly in every position both forms can appear, before section 3 can be
+   considered more than a direction.
 
 **Lifecycle outcome:** Under review, tracked by metel-core#807. No acceptance, spec
 integration or implementation transition is claimed.
