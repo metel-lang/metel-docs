@@ -191,17 +191,23 @@ representation generally — not a new promise, the same one recurring here.
 
 ### 1.1 What `construct`'s own body may build — the one privileged site
 
-The language owner affirmed constructor-body-only privilege on 2026-11-26. The working
-representation-construction spelling is `Point .{ x = 1, y = 2 }`; it is restricted to
-the target's canonical constructor or explicitly unchecked constructor body. Other code
-in the declaring module uses the ordinary construction interface. RFC-0100 tracks the
-related pattern spelling, parsing against residual projections, empty forms, and enum
-interaction. The exact grammar and unchecked-operation safety rules remain open.
+The language owner affirmed constructor-body-only privilege on 2026-11-26. **Synced to
+RFC-0100 §3's current revision (2026-11-26, after this subsection was first drafted):**
+the working representation-construction spelling is `Point { x = 1, y = 2 }` — the
+existing nominal brace literal, not a dotted form — restricted to the target's
+canonical constructor or explicitly unchecked constructor body. A bare privileged
+construction expression is rejected directly in `if`/`while`/`match` condition
+position (struct-literal-vs-block ambiguity); parenthesize it there. Other code in the
+declaring module uses the ordinary construction interface. RFC-0100 §3 owns this
+syntax and the related pattern spelling (patterns keep their current, unmigrated
+`Point { x, y }` form), parsing against the condition-position restriction, empty
+forms, and enum interaction; this subsection and that section describe one mechanism,
+not two. The exact grammar and unchecked-operation safety rules remain open.
 The privileged form may target only the constructor's own type, spelled as `Self` or
 its explicit type name; construction of another type uses that type's ordinary interface
 (language owner, 2026-11-26).
 An explicit field-list representation construction initializes each field exactly once;
-missing, duplicate and extra fields are errors. A whole-row form such as `Self .{ ..fields }`
+missing, duplicate and extra fields are errors. A whole-row form such as `Self { ..fields }`
 consumes a complete anonymous record with exactly the target's fields and matching types,
 and performs the same final construction, subject to ownership and visibility rules
 (language owner, 2026-11-26). Its grammar needs reconciliation with row spread.
@@ -480,10 +486,11 @@ extend Interval: Construct {
 1. **`Self::Raw`.** A compiler-provided closed enum with the same variants and payload rows as `Self`, unbranded. There is one per
    enum, so exhaustiveness stays ordinary closed-world checking: RFC-0090 §6's objection to "variant rows" was to a general
    structural mechanism, and this is neither general nor open.
-2. **Collection.** `Enum::Variant(args)` collects the variant's row exactly as RFC-0100 §7 items 1 and 6 do for a struct, wraps it
+2. **Collection.** `Enum::Variant(args)` collects the variant's row exactly as RFC-0100's
+   argument-binding rules (§5) do for a struct, wraps it
    as `Self::Raw::Variant`, and calls `construct`. A unit variant, written bare, is `Self::Raw::Unit`.
 3. **Minting.** Inside `construct` and `construct_unchecked` of the enum's own impl, the brace form `Self::Variant { field = value }`
-   and the bare `Self::Unit` mint a `Self`, under RFC-0100 §7's minting rules (own type only, keyword fields, no recursion through
+   and the bare `Self::Unit` mint a `Self`, under RFC-0100 §3's minting rules (own type only, keyword fields, no recursion through
    the call form).
 4. **Nothing fires implicitly,** as for structs (§3): only explicit calls reach `construct`.
 5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and

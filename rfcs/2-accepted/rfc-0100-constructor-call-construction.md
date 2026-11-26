@@ -260,6 +260,24 @@ operation — the existing nominal brace literal, which construction-call syntax
 otherwise retired, revived narrowly for this constructor-body-only use. Ordinary
 construction remains `Point(x = 1, y = 2)`.
 
+**This is RFC-0114 §1.1's mechanism, not a second one invented alongside it** — "a
+value of `Self`'s complete row type is admitted where `Self` is expected, inside the
+body of `Construct::construct` and `ConstructUnchecked::construct_unchecked`, and
+nowhere else." RFC-0100 supplies this operation's surface syntax; RFC-0114 supplies
+which constructor bodies may use it, its relationship to fallibility, and the
+validation it bypasses. Neither RFC independently defines a privileged-construction
+channel; there is one mechanism, described from two complementary sides, and RFC-0114
+§1.1 must be kept in sync with whichever surface syntax this section currently states
+(as of this revision, bare braces with the condition-position restriction below, not
+the dotted `Point .{ x = 1, y = 2 }` form an earlier pass of both RFCs shared).
+**This section is struct/enum-whole-type scoped only; per-variant privileged
+construction is RFC-0114 §9's extension, not this RFC's or RFC-0210's to define.**
+RFC-0114 §9 proposes `Self::Variant { field = value }` and bare `Self::Unit` for
+minting a specific variant inside the enum impl's own `construct`/`construct_unchecked`
+— the same mechanism as this section, scoped one level down, pending RFC-0114's own
+acceptance. RFC-0210's "privileged representation construction of a variant" refers to
+that proposal, not an independent one.
+
 This revives the struct-literal-vs-block ambiguity nominal brace literals were
 originally retired for: a bare `T { ... }` directly in `if`/`while`/`match` condition
 position is ambiguous between a construction expression and the start of that
