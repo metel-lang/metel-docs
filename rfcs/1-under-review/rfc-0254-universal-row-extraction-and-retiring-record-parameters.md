@@ -3,7 +3,7 @@ id: rfc-0254
 title: "Universal Row Extraction and Retiring Record Parameters"
 date: '2026-11-25'
 status: under-review
-updated: '2026-11-25'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2195'
 ---
 
@@ -22,9 +22,9 @@ fun read_id<T: .{ .id: i32, .. }>(value: &T) -> i32 { value.id }
 fun use_row<..R>(value: &.{ R }) where R: Display { … }
 ```
 
-The language owner agreed to the direction and the initial categories below on
-2026-11-25. This RFC remains under review: interactions, migration, soundness and
-syntax need review and no implementation is authorized until integration.
+The language owner agreed to the direction on 2026-11-25; the type classification (section 1) is now complete,
+resolved 2026-11-26. This RFC remains under review: migration, soundness and syntax still need review, and no
+implementation is authorized until integration.
 
 ## Motivation
 
@@ -47,12 +47,40 @@ For ordinary structural matching and extraction, the row is module-independent:
 | Primitive | Empty |
 | Enum | Empty; variant rows are separate work (RFC-0210) |
 | Reference | Empty; extraction does not implicitly dereference the target |
+| Array `[T; N]` or slice `[T]` | Empty; elements are indexed, not labeled fields |
+| Function type (`\|A, B\| -> R`, `dyn Callable<..>`) | Empty; never the parameter row (see below) |
+| `Never` | Empty, vacuously: no value exists to have fields |
+| Aspect object (`dyn A`) | Empty; the underlying type is erased, nothing to read statically |
+| Unconstrained type parameter or associated type | Empty unless narrowed by a structural bound, in which case exactly the bound's stated fields and no more |
 
-These initial categories are agreed direction; other current and future types need an
-exhaustive classification before integration. Empty means the row contains no fields,
-not that the type is the empty record. `..T` forgets the nominal brand, while `T` retains
-its identity. Extraction at a privileged derivation boundary may require a different
-full-field operation; that deferred design is not specified here.
+**The classification is total, by one governing principle (language owner, 2026-11-26), not a list of unrelated
+special cases:** a type's extracted row is the maximal set of (label, type) pairs *statically* known, at the point
+of extraction, to be present in every value of that type — never inferred through indirection (a reference),
+erasure (a `dyn` object), homogeneous indexing (an array or slice), a call signature (a function type), or an
+as-yet-undetermined instantiation (an unconstrained type parameter or associated type) beyond what an explicit
+structural bound states. Every row above, including the categories already agreed, is this one rule applied. No
+category is excluded from universal extraction — every type has *an* answer, even where that answer is uniformly
+Empty.
+
+**A named risk, not an omission: function types and RFC-0232.** RFC-0232 (same release, "Function types" stage)
+represents a function's call signature as `dyn Callable<ROW, R>` — a row already sits inside a function type's own
+representation. If `..F` extracted *that* row, it would conflate "this function's call signature" with "this
+type's own data fields" under one operation, exactly the accidental-conformance risk the row-visibility cluster
+(RFC-0243 E4) has been working to keep out. Extraction stays out of it on purpose: a function's parameter row is
+reached, if at all, through whatever RFC-0232's own `Callable` aspect exposes, never through `..F`.
+
+**What a generic body knows about an abstract type's row** is the bound's row and nothing more — the same
+parametricity discipline RFC-0146's lower-bounded row receiver already establishes for a residual (a method
+checked against `Self.R` where `R: { fd, .. }` may use only `.fd`, never assuming a specific caller's residual
+happens to have more). An unconstrained type parameter and an associated type with no stated bound are the same
+case under this rule, not two different ones: both are "a type not yet concretely known at this point," so both
+default to Empty until a bound says otherwise.
+
+These categories, now exhaustive, replace the earlier "initial categories are agreed direction; other current and
+future types need classification" framing — this is that classification. Empty means the row contains no fields,
+not that the type is the empty record. `..T` forgets the nominal brand, while `T` retains its identity. Extraction
+at a privileged derivation boundary may require a different full-field operation; that deferred design is not
+specified here.
 
 `T: .{}` is an exact empty **public** row bound. It can hold for a primitive or a struct
 with no public fields, including a struct with private fields. It makes no claim about
@@ -111,27 +139,38 @@ RFC-0192's explicit record-parameter arguments. No deprecated spelling is specif
   row-conditional impl domains, coherence, orphan rules and dispatch. Existing active
   anonymous-row blankets must not silently grant aspects to nominal types under the
   deferred nominal-implementation design. Check primitive, reference and enum domains.
-- **RFC-0209 / RFC-0214 / RFC-0217:** nominal row implementations and residual aspect
-  behavior are deferred; extraction and a vacuous field-wise bound do not settle them.
+- **RFC-0214 / RFC-0217:** nominal row implementations and residual aspect behavior stay open (RFC-0209, their
+  own basis, is superseded with no successor yet); extraction and a vacuous field-wise bound do not settle them
+  either way.
+- **RFC-0232** (same release, "Function types" stage): represents a callable's parameter row as part of `dyn
+  Callable<ROW, R>`. Extraction deliberately never reaches it (section 1) — the two row concepts, a type's own
+  fields and a callable's call signature, stay disjoint through this operation.
 - **RFC-0253:** generic nominal residual projections retain their instantiated brand and
-  may include row-kind arguments; privacy and substitution need cross-module checks.
+  may include row-kind arguments; privacy and substitution need cross-module checks — RFC-0253's own adversarial
+  pass (declaring a `pub` alias that retains a private field is legal; accessing that field through it is what's
+  rejected) is a directly reusable precedent for stating this RFC's own privacy rule precisely.
 - **References and ownership:** `..&T` is empty, not `..T`; this does not alter borrowing,
   `Drop`, linearity, or the destruction of private fields. A type-level row is not an
   owned or borrowed record value.
 
 ## Open questions
 
-1. Classify every current type, including arrays, slices, function types, `Never`, aspect
-   objects and abstract or associated types. Are any intentionally excluded from universal
-   extraction, and what does a generic body know about an abstract type's row?
+1. **Resolved (language owner, 2026-11-26), section 1.** Every type now has a classification, by one governing
+   principle rather than a list of special cases; none is excluded from universal extraction (every category
+   gets an answer, some uniformly Empty). A generic body knows exactly its type parameter's or associated
+   type's stated bound, nothing more — the same parametricity discipline RFC-0146's lower-bounded row receiver
+   already uses. The function-type case surfaced a real, same-release collision risk with RFC-0232, now named
+   explicitly (section 1, section 4) rather than left to be discovered later.
 2. What exact constraint and diagnostic preserves old `<record T>` eligibility where an
    API requires it, and should the old binder have a staged migration?
 3. How do universal extraction and empty exact rows affect overload selection, type
    inference, coherence, orphan rules, negative bounds and field-wise aspect constraints?
 4. How do public-row opacity and exactness interact with generic aliases, separate
    compilation, private representation changes and row remainder inference?
-5. Which grammar distinguishes a row extraction, row literal, row binder, and variadic
-   syntax, and how do explicit type/row arguments and equations compose with RFC-0192?
+5. **Partially resolved.** The explicit-argument half is settled: a `<..R>` parameter's turbofish argument
+   composes with RFC-0192 exactly as `record R`'s already does (RFC-0208 open question 1) — no change to
+   RFC-0192's own rule was needed. Still open: the grammar that distinguishes a row extraction (`..T`), a row
+   literal (`..{ ... }`), a row binder (`<..R>`), and variadic spread syntax from each other at a glance.
 6. Are empty-row field-wise bounds vacuous for all aspects, including ownership and
    auto aspects, without accidentally granting an aspect to the enclosing type?
 7. What migration fixtures demonstrate both the old restriction's removal and the
