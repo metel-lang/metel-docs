@@ -58,6 +58,38 @@ extend DocTitle: Display {                      // the residual: needs only `tit
 4. **Some impls are naturally partial.** A `Display` for a view, or an equality that compares only the
    key fields, reads a few fields and should apply to every wider residual.
 
+## Behavior gained after a partial move
+
+The proposed static-type rule can give a residual an aspect its whole type does not
+have. This is a design concern, not yet a decision:
+
+```metel
+struct Handle { fd: File, name: String }
+view Fd for Handle { fd }
+extend Fd: Display { fun fmt(&self) -> String { … } }
+
+// Handle has no Display impl.
+let name := handle.name;  // handle now has residual type Handle.{ .fd }
+handle.fmt();             // accepted by the exact-shape proposal above
+```
+
+The move changes the value's static type, so method lookup and satisfaction of a generic
+`T: Display` bound can change even though the remaining field was not modified. This can
+be useful for state-specific behavior, but may surprise a reader and makes capabilities
+depend on which fields remain. A named transparent view is an alias for the residual in
+RFC-0109: under that model, using the alias and reaching the residual by a partial move
+cannot have different impls merely because of their spelling. A full-width projection
+normalizes to the whole type, so a rule for partial widths must also handle that boundary.
+
+Candidates include permitting gained aspects with static dispatch and overlap checking;
+requiring an explicit view operation carrying a distinct identity or capability before
+view-specific behavior is available; restricting residuals to aspects already available
+on the whole type; or allowing narrowed receivers for methods while deferring independent
+residual aspect impls. An explicit-only rule needs more than a transparent alias, and
+whole-type availability needs a precise meaning for conditional generic impls. Each
+candidate must be checked against exact-shape and row-bounded overlap, super-aspects,
+generic bounds and full-width normalization. No candidate is selected here.
+
 ## 1. Three forms of residual impl
 
 **Row-bounded impl.** The impl's required field set is the union of the residual rows its method
@@ -213,6 +245,12 @@ extend Row: PartialEq {
 - `dyn Aspect` over a residual: a `dyn` value erases the shape (RFC-0146).
 
 ## Unresolved Questions
+
+**Behavior gained by narrowing.** May a partial move make an aspect available when the
+whole type did not satisfy it? Should an explicit view operation be required, and if so
+what identity distinguishes it from the residual reached by a move? How do conditional
+impls and full-width normalization affect any restriction? See the worked counterexample
+and candidates above. This question blocks settling the proposed static-type rule.
 
 1. **How is a residual value built?** An exact-shape or row-generic `clone` returns `Self`, a residual,
    and a residual is produced today only by projection or partial move. RFC-0216 (draft) proposes a

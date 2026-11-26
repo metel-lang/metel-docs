@@ -95,6 +95,9 @@ additional fields.
 
 ## Alternatives
 
+RFC-0252 explores opaque types with separately checked borrowable projections as a
+related alternative. The two drafts need reconciliation before either is accepted.
+
 - Export automatically all disjoint pairs computed from the private implementation.
   This is convenient but makes a hidden representation change silently remove a public
   borrowing capability.

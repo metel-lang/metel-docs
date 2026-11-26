@@ -19,6 +19,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1790'
 
 ## Summary
 
+**Scope decision (language owner, 2026-11-25):** row-based implementations for nominal
+types are deferred from the current settlement, including provider selection and template
+application. The explicit-opt-in principle remains a constraint on future work. Existing
+compiler-provided derives remain governed by the current specification. This RFC's
+remaining lifecycle and implementation tracking need reconciliation with the milestone.
+
 The language owner decided on 2026-11-25 that nominal types explicitly opt in to
 row-based aspect implementations, and that a selected derivation may inspect private
 fields of its target. Anonymous records continue to match applicable row impls. How a

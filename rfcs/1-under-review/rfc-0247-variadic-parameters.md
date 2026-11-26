@@ -11,12 +11,12 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/2173'
 
 ## Summary
 
-A parameter list may end in a **rest parameter**, `..rest: .{ ..R }`, that receives the extra positional arguments of a call as one
+A parameter list may end in a **rest parameter**, `..rest: .{ R }`, that receives the extra positional arguments of a call as one
 row. Metel has no variadic function today (RFC-0125 says so in its Motivation), and a call's argument list is already a row
 (RFC-0151, RFC-0223), so a rest parameter is that row's tail given a name:
 
 ```metel
-fun log<..R>(level: String, ..rest: .{ ..R }) where ..R: Display { /* rest is a tuple */ }
+fun log<..R>(level: String, ..rest: .{ R }) where R: Display { /* rest is a tuple */ }
 
 log("info");                      // R = .{}            rest = ()
 log("info", 1, "two", 3.5);       // R = .{ .0: i64, .1: String, .2: f64 }   rest = (1, "two", 3.5)
@@ -45,7 +45,7 @@ variadic function *type*: a variadic function used as a value is instantiated at
    removes.
 
 Note what a rest parameter does *not* give. Everything here is already expressible with an explicit row-typed parameter,
-`fun log<..R>(level: String, rest: .{ ..R })`, called as `log("info", (x, y))`. The feature is the call-site spelling and the
+`fun log<..R>(level: String, rest: .{ R })`, called as `log("info", (x, y))`. The feature is the call-site spelling and the
 instantiation of `R` per call. That is a smaller claim than "variadics", and the Alternatives table weighs it against doing nothing.
 
 ---
@@ -56,14 +56,14 @@ instantiation of `R` per call. That is a smaller claim than "variadics", and the
 
 ```
 param_list   = { positional_param* ~ rest_param? ~ keyword_only_param* }
-rest_param   = { ".." ~ ident ~ ":" ~ row_type }       // row_type is `.{ ..R }` or a closed row
+rest_param   = { ".." ~ ident ~ ":" ~ row_type }       // row_type is `.{ R }` or a closed row
 ```
 
 - At most one rest parameter, after every positional parameter. Parameters after it are **keyword-only**: they bind by name
   (RFC-0223), because a positional argument after a variable number of extras has no place to land.
-- The rest parameter's type is an open row `.{ ..R }` with `R` bound by a row binder `<..R>` (RFC-0208), or a closed row `.{ .0: i64, .1: i64 }`.
+- The rest parameter's type is an open row `.{ R }` with `R` bound by a row binder `<..R>` (RFC-0208), or a closed row `.{ .0: i64, .1: i64 }`.
   A closed row makes it a fixed-arity group and not variadic, which is legal and means the same as the parameters written out.
-- A bound on the row is the existing field-wise bound: `where ..R: Display` means every extra argument is `Display`.
+- A field-wise bound `where R: Display` means every extra argument is `Display` under RFC-0208's proposed syntax.
 
 ### 2. Calls
 
@@ -110,7 +110,7 @@ selects the fixed one. Two variadic candidates that both match are an ambiguous 
 | Alternative | Why not |
 |---|---|
 | Do nothing: pass an explicit tuple, `log("info", (x, y))` | It works today. It is the baseline, and the Motivation says what a rest parameter removes. Reasonable to choose if nothing else needs the feature. |
-| Homogeneous rest, `..xs: i64` collecting into a sequence of `i64` | Needs a collection with an unknown length, which a row of fixed arity does not. A bound on the row (`where ..R: Is<i64>`-style) covers the common case without one. Left to a later RFC. |
+| Homogeneous rest, `..xs: i64` collecting into a sequence of `i64` | Needs a collection with an unknown length, which a row of fixed arity does not. A bound on the row (`where R: Is<i64>`-style) covers the common case without one. Left to a later RFC. |
 | `*args` or `...args` spelling | `..` already means "the rest" in row tails, spreads and patterns, and the RFC-0208 binder is `..R`. |
 | A keyword rest (`**kwargs`) | A named label that binds no parameter is an error today (`T0039`) and keeping it so catches misspelled keywords. |
 | Variadic function types, `|A, ..R| -> Ret` | A function's arity is a call fact, and `Callable<Args, Ret>` already has a row for it. A variadic type adds a third thing that is neither a row nor an aspect. |
@@ -149,9 +149,7 @@ selects the fixed one. Two variadic candidates that both match are an ambiguous 
 
 ## Open questions
 
-1. **Surface spelling of the type.** `..rest: .{ ..R }` is exact and long. `..rest: ..R` is shorter and matches RFC-0208's rule that a row
-   parameter is written `..R` at every use, but reads as if `rest` had the row's type directly. Recommendation: the long form until
-   RFC-0208 is settled.
+1. **Surface spelling of the type.** `..rest: .{ R }` forms a record type from a row parameter. Whether a shorter form is desirable remains open; RFC-0208 treats bare `R` as a row, not a value type.
 2. **Homogeneous rest.** Is `..xs: T` ("any number of `T`") wanted, and is it a row bound or a collection? Recommendation: neither now.
 3. **Call-site spread.** The dual of a rest parameter is `f(a, ..t)`, passing a tuple's elements as separate arguments, which `apply`
    needs. Recommendation: a separate RFC, since the rest parameter is useful without it.

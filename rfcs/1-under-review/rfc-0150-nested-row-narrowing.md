@@ -47,6 +47,13 @@ requires.
 
 ## What this RFC must define
 
+Chained residual projection type syntax, such as `S.{ .a, .b }.{ .a }`, is also
+deferred to this RFC (language owner, 2026-11-25). It is distinct from narrowing a
+nested field's type and from re-projecting a residual value, and is currently rejected
+by the projection specification. Decide its grammar, narrowing and normalization rules,
+including generic bases under RFC-0253 and rejection of fields absent from the first
+projection.
+
 These are the concrete gaps the RFC-0117 review surfaced. Each is a design question
 this RFC has to answer before it can be accepted.
 

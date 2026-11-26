@@ -95,8 +95,16 @@ the treatment of residual aspects remain open. These decisions refine the option
 For a residual or named view, structural matching sees the intersection of the fields
 present in the residual and the public fields of its brand. The named `record`
 declaration kind is retired (language owner, 2026-11-25).
-Migration must preserve existing plain-aspect behavior with explicit grants where
-needed. The exact grant mechanism remains open.
+Migrated named records may lose plain-aspect implementations previously obtained through
+row-based blanket matching; that breaking change is accepted (language owner,
+2026-11-25). A future explicit grant mechanism remains open.
+
+**Scope decision (language owner, 2026-11-25):** row-based implementations for nominal
+types and their explicit selection mechanism are deferred from this settlement. The
+explicit-opt-in decision remains a constraint on a future design, not a feature being
+integrated now. RFC-0250 explores one possible mechanism. Existing compiler-provided
+derivations remain governed by the current specification. Migration must document the
+accepted loss of named records' automatically matched plain-aspect behavior.
 
 Five questions, answered independently by the options below.
 
@@ -258,7 +266,8 @@ argument for keeping an opt-in.
 **E5. Adding a public field (O2).** A library adds `pub port: i64` to `Config { pub host: String }`. If two other libraries'
 blanket impls over `{ host }` and `{ port }` provide the same method name for *different* aspects, `cfg.describe()` becomes
 ambiguous in downstream code that did not change. For the *same* aspect the overlap should be rejected at the impls' definition,
-whatever structs exist (RFC-0121 and RFC-0060 are not verified to do this for row-conditional impls). The remaining hazard is a
+whatever structs exist: the implemented row-conditional coherence rule rejects conditions that are not provably disjoint
+(RFC-0121 and `spec.types.generics.row-conditional-impls.legality-3`). The remaining hazard is a
 call-site ambiguity across aspects, resolved by a qualified call. Adding a *private* field is invisible outside the module.
 
 **E6. Why matching uses the public row (rejected site-visible row).** With `struct Session { pub token: Token, user: String }` and
@@ -375,11 +384,20 @@ and O4 they do not.
 4. A selected derivation may inspect private fields as decided above. How that authority is represented and constrained remains open.
 5. A narrowed residual's public row is its present fields intersected with the brand's
    public fields. RFC-0137 section 3's worked example needs amendment at integration.
-6. Enums: a variant-wise form is out of scope (RFC-0209 section 3). Does anything here apply to them?
-7. Generic types: `derives Exposed` or the entry on a generic `pub` type, and which type parameters it depends on (the field-wise
-   derive rule in the spec).
+6. **Enums:** variant rows remain with RFC-0210 (language owner, 2026-11-25). A
+   struct-style row bound does not match an enum merely because one variant has the
+   required fields. This settlement does not define a variant-wise matching mechanism.
+7. **Generic nominal grants:** a grant may be conditional on generic arguments. Its
+   declared condition is part of the applicable aspect interface and must be sufficient
+   for the selected implementation's requirements (language owner, 2026-11-25). Exact
+   grant syntax, provider selection and overlap checking are explored in RFC-0250;
+   derived field-wise flows remain governed by their own rules.
 8. Opaque views are deferred to RFC-0251, including disjointness and composition.
-9. Whether row-conditional impl coherence (RFC-0121, RFC-0060) already rejects overlapping blanket impls of the same aspect.
+9. **Row coherence:** the current spec rejects same-aspect row-conditional impls unless
+   their conditions are provably disjoint; the frontend implements overlap checking and
+   has a `T0015` fixture for `{ a, .. }` versus `{ b, .. }`. Current brand-specific impls
+   take priority over matching row-conditional impls. How explicit selection interacts
+   with that priority remains an RFC-0250 question.
 10. Spelling and scope of the lint, and whether the aspect-in-scope rule exists.
 11. Label namespacing: module-owned names or generative label values, and how `.[L]` label variables interact.
 12. The `#derive(ToRecord, FromRecord)` spelling in RFC-0119 may predate the `derives` clause (RFC-0207); not checked.

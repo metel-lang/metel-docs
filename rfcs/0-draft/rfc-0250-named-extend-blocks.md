@@ -53,7 +53,9 @@ receive a plain aspect through a blanket implementation.
    orphan, overlap and super-aspect requirements. A second selection, handwritten impl,
    derived impl or applicable auto impl for the same aspect identity and target is an
    overlap, subject to that aspect's existing rules. Names do not create a second aspect
-   identity or a method-selection priority.
+   identity or a method-selection priority. Current Metel separately gives a brand-specific
+   impl priority over a matching row-conditional impl; whether and how a selection changes
+   that relationship is open and must be reconciled with this candidate.
 4. The type's author must explicitly select the provider. Selection uses public fields
    in this initial candidate. Whether an explicit grant can authorize a provider to use
    private fields, and how it names that authority, is open. It does not grant access to
@@ -78,6 +80,15 @@ and requires a precise installation rule. Neither alternative is selected here.
 A provider name selects behavior; it must not cause the same anonymous record to satisfy
 an aspect through multiple overlapping active impls. Selection order, import order and
 provider declaration order do not resolve overlaps.
+
+The current specification rejects same-aspect row-conditional impls unless their row
+conditions are provably disjoint (`spec.types.generics.row-conditional-impls.legality-3`).
+The frontend implements this check and a fixture rejects overlapping `{ a, .. }` and
+`{ b, .. }` conditions with `T0015`. For a brand-specific impl alongside a matching row
+impl, current dispatch instead checks the brand first and does not report that pair as
+overlapping (`legality-2`). An active named blanket must account for both rules; an
+inactive provider has no active blanket effect until installed. These are existing rules,
+not a decision to preserve them unchanged for the new selection mechanism.
 
 ## 3. Examples
 
@@ -159,6 +170,9 @@ label-polymorphism and checking rules and are not assumed here.
     deferred with the derived `Clone` / field-wise `Clone` interaction.
 12. What migration preserves named-record blanket behavior without guessing a provider
     when several candidates exist?
+13. Does a selected nominal implementation behave as a brand-specific impl under the
+    current brand-priority rule, and how does it interact with the provider's own active
+    blanket impl and with other matching row impls?
 
 ## Decision
 
