@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**253 RFCs total.** 37 draft, 69 under review, 10 accepted, 2 integrated (118 live), 100 implemented, 19 superseded, 16 refused (135 settled).
+**253 RFCs total.** 37 draft, 68 under review, 10 accepted, 2 integrated (117 live), 100 implemented, 20 superseded, 16 refused (136 settled).
 
 ## Draft (37)
 
@@ -55,7 +55,7 @@ the curated thematic map.
 - **RFC-0251** — Opaque Views for Private State (`0-draft` ; rfcs/0-draft/rfc-0251-opaque-views-for-private-state.md ; date 2026-11-25)
 - **RFC-0252** — Opaque Types and Borrowable Projections (`0-draft` ; rfcs/0-draft/rfc-0252-opaque-types-and-borrowable-projections.md ; date 2026-11-25)
 
-## Under Review (69)
+## Under Review (68)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -108,7 +108,6 @@ the curated thematic map.
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`1-under-review` ; rfcs/1-under-review/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01 ; updated 2026-11-22)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-26)
-- **RFC-0209** — Per-Aspect Row Visibility (`1-under-review` ; rfcs/1-under-review/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-25)
 - **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
 - **RFC-0214** — Aspect Impls for Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04 ; updated 2026-11-13)
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
@@ -248,7 +247,7 @@ the curated thematic map.
 - **RFC-0239** — Arguments on the copy Class Keyword (`4-implemented` ; rfcs/4-implemented/rfc-0239-arguments-on-the-copy-class-keyword.md ; date 2026-11-16 ; updated 2026-11-16 ; impl implemented ; tracking 2072)
 - **RFC-0244** — Unconditional derivation and the conditional marker (`4-implemented` ; rfcs/4-implemented/rfc-0244-unconditional-derivation-and-the-conditional-marker.md ; date 2026-11-22 ; updated 2026-11-23 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2153)
 
-## Superseded (19)
+## Superseded (20)
 
 - **RFC-0001** — Pointer Syntax and Semantics (`5-superseded` ; rfcs/5-superseded/rfc-0001-pointer-syntax.md ; date 2026-05-19)
 - **RFC-0002** — Aspect Bound Syntax (`5-superseded` ; rfcs/5-superseded/rfc-0002-aspect-bound-syntax.md ; date 2026-05-19)
@@ -268,6 +267,7 @@ the curated thematic map.
 - **RFC-0105** — Struct-Embedded Aspect Lists (`5-superseded` ; rfcs/5-superseded/rfc-0105-struct-embedded-aspect-lists.md ; date 2026-07-14 ; updated 2026-11-16)
 - **RFC-0112** — Auto-Deref Scope and Expected-Type Provenance (`5-superseded` ; rfcs/5-superseded/rfc-0112-auto-deref-scope-and-expected-type-provenance.md ; date 2026-07-21 ; updated 2026-10-26)
 - **RFC-0162** — Copy and Clone Model — Regular-Value Design Space (`5-superseded` ; rfcs/5-superseded/rfc-0162-copy-and-clone-model-regular-value-design-space.md ; date 2026-09-01 ; updated 2026-11-16)
+- **RFC-0209** — Per-Aspect Row Visibility (`5-superseded` ; rfcs/5-superseded/rfc-0209-per-aspect-row-visibility.md ; date 2026-11-02 ; updated 2026-11-26)
 - **RFC-0226** — Explicit and inferred nominal construction (`5-superseded` ; rfcs/5-superseded/rfc-0226-constructors-in-the-value-namespace.md ; date 2026-11-11 ; updated 2026-11-11)
 
 ## Refused (16)
