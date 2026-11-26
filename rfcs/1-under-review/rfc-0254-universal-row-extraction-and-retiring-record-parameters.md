@@ -47,7 +47,8 @@ For ordinary structural matching and extraction, the row is module-independent:
 | Branded residual | Its present public fields |
 | Anonymous record or tuple | Its present fields; tuples use numeric labels |
 | Primitive | Empty |
-| Enum | Empty; variant rows are separate work (RFC-0210) |
+| Enclosing enum | Empty ordinary field row; variant inventories and variant types are under review (RFC-0210) |
+| Variant type (proposed RFC-0210) | Its present public payload fields |
 | Reference | Empty; extraction does not implicitly dereference the target |
 | Array `[T; N]` or slice `[T]` | Empty; elements are indexed, not labeled fields |
 | Function type (`\|A, B\| -> R`, `dyn Callable<..>`) | Empty; never the parameter row (see below) |
@@ -257,7 +258,9 @@ the answer:
   fields through remainders, reflection, diagnostics or inferred public interfaces.
 - **RFC-0151 / RFC-0125 / RFC-0247:** tuples are numeric rows; positional operations and
   variadic calls retain their own rules. Universal extraction adds no pack kind.
-- **RFC-0210:** enums initially extract the empty row; variant-wise access remains separate.
+- **RFC-0210:** enclosing enums initially extract an empty ordinary field row; variant
+inventories require a separately defined operation. Proposed variant types expose their
+  present public payload fields; construction details remain under review.
 - **RFC-0121 / RFC-0060 / RFC-0228:** broader structural eligibility affects generic and
   row-conditional impl domains, coherence, orphan rules and dispatch. Existing active
   anonymous-row blankets must not silently grant aspects to nominal types under the
@@ -275,6 +278,25 @@ the answer:
 - **References and ownership:** `..&T` is empty, not `..T`; this does not alter borrowing,
   `Drop`, linearity, or the destruction of private fields. A type-level row is not an
   owned or borrowed record value.
+
+## Cluster reconciliation: enum variants and abstract rows
+
+RFC-0210 is now in the same settlement and explores first-class variant types. The
+enclosing enum's agreed empty ordinary field row differs from a variant type's public
+payload row (language owner, 2026-11-26). The representation of an inventory of variants
+remains open in RFC-0210; a generic bound over `..T` must not accidentally be interpreted as a bound over
+every variant payload. RFC-0208 supplies field-row binders, not yet a variant-inventory
+binder.
+
+The classification above says an unconstrained abstract type's row is empty. That claim
+needs adversarial reconciliation before acceptance: "no fields are statically known" is
+not necessarily proof that the eventual concrete row is exactly empty. For example, an
+unconstrained generic `T` instantiated with a struct having `.id` must not use an
+assumed `..T = ..{}` to satisfy an exact-empty bound or resolve an overload differently
+from the concrete instantiation. A symbolic unknown row with no guaranteed fields is a
+candidate; its equality, field-wise constraints, substitution and separate-compilation
+rules remain to be settled. The enum and primitive cases are concrete empty rows, not
+proof that every abstract type has a concrete empty row.
 
 ## Open questions
 

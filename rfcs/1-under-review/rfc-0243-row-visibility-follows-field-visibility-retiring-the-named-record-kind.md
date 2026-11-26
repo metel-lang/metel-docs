@@ -423,7 +423,7 @@ and O4 they do not.
    remains open — tracked with RFC-0250, since it only arises for the general (not the narrow, by-reference-only) case.
 5. A narrowed residual's public row is its present fields intersected with the brand's
    public fields. RFC-0137 section 3's worked example needs amendment at integration.
-6. **Enums:** variant rows remain with RFC-0210 (language owner, 2026-11-25). A
+6. **Enums:** variant rows and first-class variant types are under review in RFC-0210. A
    struct-style row bound does not match an enum merely because one variant has the
    required fields. This settlement does not define a variant-wise matching mechanism.
 7. **Generic nominal grants:** a grant may be conditional on generic arguments. Its

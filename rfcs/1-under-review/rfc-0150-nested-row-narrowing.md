@@ -47,6 +47,13 @@ requires.
 
 ## What this RFC must define
 
+**Variant residuals (language owner, 2026-11-26).** This RFC owns the deferred design for
+partial moves from first-class enum variant types and their residuals, in coordination
+with RFC-0210. It must specify variant and enum identity, payload field types and privacy,
+construction and widening, `Drop`, linearity, mutation, borrow validity and control-flow
+joins. This is separate from narrowing an enum value to its active variant in a match.
+No variant partial-move behavior is introduced until these rules are integrated.
+
 Chained residual projection type syntax, such as `S.{ .a, .b }.{ .a }`, is also
 deferred to this RFC (language owner, 2026-11-25). It is distinct from narrowing a
 nested field's type and from re-projecting a residual value, and is currently rejected

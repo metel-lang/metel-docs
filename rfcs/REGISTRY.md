@@ -108,7 +108,7 @@ the curated thematic map.
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`1-under-review` ; rfcs/1-under-review/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01 ; updated 2026-11-22)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-26)
-- **RFC-0210** — Enum Parameters and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-04)
+- **RFC-0210** — Enum Variant Types and Variant Rows (`1-under-review` ; rfcs/1-under-review/rfc-0210-enum-parameters-and-variant-rows.md ; date 2026-11-02 ; updated 2026-11-26)
 - **RFC-0214** — Aspect Impls for Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0214-aspect-impls-for-residuals.md ; date 2026-11-04 ; updated 2026-11-13)
 - **RFC-0215** — Partial Consumption of Mixed-Multiplicity Structs (`1-under-review` ; rfcs/1-under-review/rfc-0215-partial-consumption-of-mixed-multiplicity-structs.md ; date 2026-11-05 ; updated 2026-11-05)
 - **RFC-0217** — Row Templates for Aspects on Residuals (`1-under-review` ; rfcs/1-under-review/rfc-0217-row-templates-for-aspects-on-residuals.md ; date 2026-11-06 ; updated 2026-11-06)

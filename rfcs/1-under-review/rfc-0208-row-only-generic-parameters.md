@@ -58,6 +58,16 @@ RFC-0254 proposes retiring `record T` and making `..T` available for every type.
 Until that proposal is integrated, references here to existing `record T` describe the
 current language, not the intended end state.
 
+## Enum interaction
+
+RFC-0210 is under review alongside this RFC. `<..R>` here binds one ordinary field-row
+kind; it does not automatically bind an enum's variant inventory. RFC-0254's current
+direction gives an enclosing enum an empty ordinary extracted row. How variant types,
+variant inventories and their binders or extraction are expressed remains open in
+RFC-0210. In particular, `..E` cannot simultaneously extract the empty field row and
+an inventory of variants. A future generalization must specify member kinds and bounds
+and reconcile this syntax; no such generalization is adopted here.
+
 ## 2. Numeric rows and variadics
 
 `<..R>` binds one row kind, including rows with numeric labels. RFC-0151 is implemented:
@@ -90,8 +100,9 @@ the declaration of the parameter to suggest the correct spelling.
   tail appears.
 - **RFC-0192** — turbofish for record parameters; its argument rule for a row parameter is an
   open question below.
-- **RFC-0209** — per-aspect row visibility (RFC-0207 is now only the colon list and `derives`); its derivation template is written with row-only
-  parameters, which is the motivating use.
+- **RFC-0210 / RFC-0254** — enum variant inventories are distinct from the ordinary
+  field row in the current direction; enum extraction and variant types need joint review.
+- **RFC-0209** — superseded; nominal row-template derivation is deferred.
 
 ## Open questions
 

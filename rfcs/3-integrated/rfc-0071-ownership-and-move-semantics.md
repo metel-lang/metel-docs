@@ -578,6 +578,18 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
 
 ## 9. Unresolved questions
 
+**First-class variant types (RFC-0210, deferred 2026-11-26).** Decide destructor
+dispatch for a value statically typed as an enum variant, including whether and how an
+enclosing enum's `Drop` applies before and after widening. Reconcile variant-specific
+implementations, partial moves and residuals (RFC-0150), narrowed destructors
+(RFC-0147 / RFC-0148), linearity, failure and control-flow exits. This records an open
+design dependency and does not change this RFC's integrated ownership rules.
+
+**Variant Copy and Clone (RFC-0210, deferred 2026-11-26).** Decide whether a variant
+type may have `Copy` or `Clone` independently of its enclosing enum, and how grants,
+derivations, widening, partial moves and destructor obligations interact. Coordinate
+with RFC-0206; this question does not amend the integrated Copy/Clone rules.
+
 1. **`Copy` declaration syntax — resolved, then superseded.** `Copy` was declared via
    `extend T: Copy;`, with a derive-like shorthand left for when the derived aspects system was designed.
    **Superseded (2026-11-10, RFC-0206 and RFC-0207):** `Copy` is granted in the declaration, `copy struct P` or
