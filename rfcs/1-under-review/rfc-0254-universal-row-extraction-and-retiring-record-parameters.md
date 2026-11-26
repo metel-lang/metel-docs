@@ -22,9 +22,10 @@ fun read_id<T: .{ .id: i32, .. }>(value: &T) -> i32 { value.id }
 fun use_row<..R>(value: &.{ R }) where R: Display { … }
 ```
 
-The language owner agreed to the direction on 2026-11-25; the type classification (section 1) is now complete,
-resolved 2026-11-26. This RFC remains under review: migration, soundness and syntax still need review, and no
-implementation is authorized until integration.
+The language owner agreed to the direction on 2026-11-25; the type classification (section 1) and its interaction
+with overload resolution, inference, coherence, orphan rules and vacuous bounds (section 2a) are now resolved,
+2026-11-26. This RFC remains under review: migration mechanics and the remaining grammar question still need
+work, and no implementation is authorized until integration.
 
 ## Motivation
 
@@ -95,13 +96,61 @@ An ordinary `T` can occur as a type and `..T` denotes its extracted row. A row-o
 parameter `R` declared by `<..R>` denotes fields directly and is used as `R` in row
 positions, as proposed by RFC-0208. Field-wise bounds over an empty row hold vacuously;
 therefore `where ..T: A` alone does not assert `T: A`. A function using only such a bound
-must not invoke an `A` method on `T` itself without a separate `T: A` bound.
+must not invoke an `A` method on `T` itself without a separate `T: A` bound. A negative
+field-wise bound (`where ..T: !A`) is vacuously true over an empty row by the same logic.
+
+**Resolved (language owner, 2026-11-26): this vacuous-truth rule is uniform across every aspect, including
+ownership and auto aspects — with one named implementation risk, not a language-level special case.** The rule
+above already rules out the general danger (a field-wise bound can never assert the whole-type bound) for Send,
+Sync, Copy and Linear alike; none of them can be satisfied merely because `where ..T: A` holds vacuously. The real
+risk is narrower and belongs to whoever eventually specifies `auto`'s deferred structural rule (RFC-0096, RFC-0212
+section 2): an **auto** aspect's grant must be computed from a type's *full* field set, public and private alike,
+inspected at the type's own definition — the same way `Copy`'s and `Linear`'s structural checks already work
+(RFC-0206 rule 3, RFC-0212 sections 1-2) — never by reusing `..T`'s public-only extracted row. Reusing it would
+make the auto-grant itself unsound: a type with a non-`Send` private field could vacuously satisfy a
+`Send`-shaped check restricted to its (possibly empty) public row, and be silently granted `Send` it does not
+actually have. `Copy`, `Clone` and `Linear` do not share this risk, because their structural checks already
+happen at the type's own declaration with full field access by construction; the risk is specific to `auto`'s
+no-entry, module-independent grant mechanism, exactly where a public/private mismatch could silently creep in if
+implemented by reusing universal extraction instead of a dedicated full-field check. This is a constraint for
+`auto`'s still-deferred structural rule to honor, not a bug in anything currently specified.
 
 A bound and a row literal use the syntax of RFC-0208. The `record T` binder is removed
 as a distinct generic kind; the declaration kind's retirement is RFC-0243. A plain type
 parameter's ordinary well-formedness and kind rules still apply. No implicit dereference,
 owned conversion, field move, reference creation, or automatic nominal aspect grant is
 introduced by type-level extraction.
+
+## 2a. Overload resolution, inference, coherence and orphan rules
+
+**Resolved (language owner, 2026-11-26).** Most of this collapses to one fact: `..T` is a *derived, one-way
+projection* of an already-determined `T`, computed after the fact from the classification table (section 1) — it
+never participates in type inference, impl matching or coherence as a *source*, only as a *consumer* of existing,
+unchanged machinery.
+
+- **Type inference is unaffected.** `T` is always inferred by the usual means (arguments, return-type context,
+  explicit turbofish); `..T` is computed from `T` only once `T` is already known. There is nothing new to infer:
+  many different types can share the same extracted row (most share Empty), so inference could never run
+  backward from a row to a type, and this RFC does not attempt to.
+- **Coherence and the orphan rule are untouched.** Row-conditional impl matching (RFC-0121) and who may write
+  such an impl (RFC-0060) are governed entirely by those RFCs and by RFC-0243's decided opt-in rule, neither of
+  which this RFC changes. Extraction supplies a row *value* for a bound to check against an aspect
+  (`where ..T: A`); it is never itself the thing an impl is matched against. A primitive's or `Never`'s empty
+  extracted row does not make it eligible for row-conditional impl matching — that eligibility was never keyed
+  on the extracted row to begin with; only a record, or a nominal type that has explicitly opted in (RFC-0202
+  section 6, RFC-0250 section 0), is ever a candidate.
+- **Negative bounds** (`T: !A`) are about `T` itself, unaffected by extraction directly; the field-wise case is
+  covered above.
+- **Field-wise aspect constraints** (`where ..R: A`, RFC-0123) keep their existing, already-implemented rule;
+  this RFC only widens which types may supply `R` via `..T` — from `record T` only to every `T`.
+- **The one real consequence is overload resolution at existing call sites, already named in section 3's
+  migration text below, not a new rule to invent.** Because `..T` now type-checks for every `T` rather than being
+  a kind error for a non-`record` type, a call site that used to have exactly one eligible overload can gain a
+  second one after migration (one candidate's `..T`-involving bound now also type-checks for an argument it
+  previously didn't). This needs no new disambiguation rule: existing overload resolution already picks the most
+  specific match or reports ambiguity, and a newly-ambiguous call site surfaces as a loud compile error, not a
+  silent behavior change — consistent with migration being "not necessarily behavior-preserving," below, rather
+  than silently unsound.
 
 ## 3. Migration
 
@@ -163,16 +212,22 @@ RFC-0192's explicit record-parameter arguments. No deprecated spelling is specif
    explicitly (section 1, section 4) rather than left to be discovered later.
 2. What exact constraint and diagnostic preserves old `<record T>` eligibility where an
    API requires it, and should the old binder have a staged migration?
-3. How do universal extraction and empty exact rows affect overload selection, type
-   inference, coherence, orphan rules, negative bounds and field-wise aspect constraints?
+3. **Resolved (language owner, 2026-11-26), section 2a.** `..T` is a derived, one-way projection and never a
+   source for inference, impl matching or coherence; those stay governed entirely by their own existing rules
+   (RFC-0121, RFC-0060, RFC-0123, RFC-0243). The one real consequence is overload resolution at existing call
+   sites gaining newly-eligible candidates after migration — already named in section 3, caught loudly by
+   existing ambiguity detection, not a silent risk needing a new rule.
 4. How do public-row opacity and exactness interact with generic aliases, separate
    compilation, private representation changes and row remainder inference?
 5. **Partially resolved.** The explicit-argument half is settled: a `<..R>` parameter's turbofish argument
    composes with RFC-0192 exactly as `record R`'s already does (RFC-0208 open question 1) — no change to
    RFC-0192's own rule was needed. Still open: the grammar that distinguishes a row extraction (`..T`), a row
    literal (`..{ ... }`), a row binder (`<..R>`), and variadic spread syntax from each other at a glance.
-6. Are empty-row field-wise bounds vacuous for all aspects, including ownership and
-   auto aspects, without accidentally granting an aspect to the enclosing type?
+6. **Resolved (language owner, 2026-11-26), section 2.** Yes, uniformly, at the language level — no special
+   case for ownership or auto aspects. The real risk is implementation-level and narrower: `auto`'s own
+   (still-deferred, RFC-0096) structural grant must use a type's full field set, never `..T`'s public-only row,
+   or the grant itself becomes unsound. `Copy`/`Clone`/`Linear` don't share this risk, since their checks already
+   happen at the declaration with full field access.
 7. What migration fixtures demonstrate both the old restriction's removal and the
    deliberate loss of automatic nominal row implementations after record retirement?
 
