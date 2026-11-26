@@ -253,6 +253,43 @@ let a := Sample(.{ .x = 10, .y = 20 }, 5);
 The record initialises `position`; it is not unpacked into the parameter list.
 There is no fallback that retries ordinary positional binding as whole-row binding.
 
+### Field visibility and construction access
+
+The proposed field-parameter construction preserves the current field-visibility
+boundary. A call that supplies a private field is legal in the field's declaring
+module and is rejected outside it, even when the type itself is public. This check is
+based on the field to which an argument binds, not on whether the argument was written
+by name or position. It is applied after resolving the target and binding the complete
+argument list; positional arguments cannot be used to bypass a private keyword.
+
+```metel
+// account module
+pub struct Account { pub name: String, balance: i64 }
+pub fun make(name: String) -> Account { Account(name = name, balance = 0) } // allowed
+
+// another module, after importing Account and make
+let a := make("Ada");                    // allowed through the module's public API
+let b := Account(name = "Ada", balance = 41); // error: balance is private
+let c := Account("Ada", 41);            // error: positional argument binds balance
+```
+
+The current proposal requires every construction parameter exactly once and has no
+field defaults. Consequently an external call to the synthesized field-parameter
+constructor is unavailable if any required field is private. A module can expose a
+public function that chooses or validates private values and constructs locally.
+Access to a public type or a transparent alias of it does not grant access to its
+private fields. A qualified call, an alias, an inferred generic argument, or a
+whole-row argument cannot change the access check.
+
+RFC-0114's custom `Construct` and its fallibility are not implemented by this RFC.
+Whether a future custom constructor may expose a **different public parameter
+interface** that supplies or derives private fields, and how that interface is declared
+and checked, is an RFC-0114 design question. This RFC does not make a private field a
+public parameter merely because the canonical operation can validate it. If a future
+custom constructor provides such an interface, the visibility check applies to that
+declared interface and its contract must specify how its inputs reach the canonical
+construction operation.
+
 ## 5. Whole-row construction: `..r` and `..{ ... }`
 
 A whole-row operand supplies exactly the construction parameter row, with the
