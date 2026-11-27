@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**253 RFCs total.** 37 draft, 67 under review, 10 accepted, 3 integrated (117 live), 100 implemented, 20 superseded, 16 refused (136 settled).
+**254 RFCs total.** 38 draft, 67 under review, 10 accepted, 3 integrated (118 live), 100 implemented, 20 superseded, 16 refused (136 settled).
 
-## Draft (37)
+## Draft (38)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -54,6 +54,7 @@ the curated thematic map.
 - **RFC-0249** — Lang items replace aspect declaration properties (`0-draft` ; rfcs/0-draft/rfc-0249-lang-items-replace-aspect-declaration-properties.md ; date 2026-11-23)
 - **RFC-0251** — Opaque Views for Private State (`0-draft` ; rfcs/0-draft/rfc-0251-opaque-views-for-private-state.md ; date 2026-11-25)
 - **RFC-0252** — Opaque Types and Borrowable Projections (`0-draft` ; rfcs/0-draft/rfc-0252-opaque-types-and-borrowable-projections.md ; date 2026-11-25)
+- **RFC-0255** — Row Sections: Shared Extraction and Contextual Field Assembly (`0-draft` ; rfcs/0-draft/rfc-0255-row-sections-shared-extraction-and-contextual-field-assembly.md ; date 2026-11-27)
 
 ## Under Review (67)
 
