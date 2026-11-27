@@ -122,6 +122,16 @@ witness, evidence, dispatch and opening rules; this RFC does not settle those ru
 The existential-binder research report is an input, not a normative RFC or evidence of
 an implemented syntax.
 
+**Interaction with RFC-0089.** An owning existential package may be `Discard` only if
+its contract proves that every admitted payload is discardable. For example, a
+discardable `Dynamic<Display>` would package `exists T: Display + Discard. Owned<T>`.
+A borrowed package such as `exists T: Display. &T` needs no `T: Discard` bound because
+the borrow leaves ownership with the original owner. An owning package that admits
+possibly-linear payloads must preserve the consumption obligation through moves,
+openings, and conversions. A future linear package could retain a consuming bound
+such as `Finish`, then move out the payload on opening and invoke `finish(self)` using
+the retained evidence.
+
 ## 5. Worked boundaries
 
 ```metel
