@@ -183,14 +183,21 @@ of that block.
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-5}
 
-A module's top-level names live in two namespaces. The *type* namespace holds structs, enums,
-aspects and type aliases; the *value* namespace holds functions, `let` and `var`. A name
-declared twice in one namespace of one module is rejected with
-[`T0037`](../../../error-codes.md#t0037--duplicate-top-level-declaration). Two functions of one
+A module's top-level names live in two namespaces, for lookup: the *type* namespace holds
+structs, enums, aspects and type aliases; the *value* namespace holds functions, `let` and
+`var`. A name declared twice in one module, in either namespace, is rejected with
+[`T0037`](../../../error-codes.md#t0037--duplicate-top-level-declaration) — a type and a value
+of one name conflict exactly as two types or two values of one name do. Two functions of one
 name are an overload set instead (identical parameter types are rejected as `T0011`), and
 `let _ := ...` binds no name, so it may be repeated.
 
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2198" reason="A type and a same-named value still coexist today; the duplicate-declaration check (name_resolver::check_duplicate_declarations) still runs within one namespace only, not across both." -->
+
 <!-- rfc.py:last_reviewed 40ca983f4a7eea614d14e11988cd4636f1705804 -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2198: A type and a same-named value still coexist today; the duplicate-declaration check (name_resolver::check_duplicate_declarations) still runs within one namespace only, not across both._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">
@@ -206,17 +213,16 @@ name are an overload set instead (identical parameter types are rejected as `T00
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-6}
 
-A type and a value of one name may coexist in a module (`struct Foo` beside `fun Foo`), and
-each use finds the one its position asks for. A type position resolves in the type namespace:
-a type annotation, an `extend` or aspect target, the head of a struct, record or enum
-literal, and the head of a pattern.
+A type and a value of one name may not coexist in a module (`struct Foo` beside `fun Foo`
+is a duplicate declaration, [legality-5](#spec.declarations.variables.scoping-and-shadowing.legality-5)).
+A type position always resolves in the type namespace: a type annotation, an `extend` or
+aspect target, the head of a struct, record or enum literal, and the head of a pattern.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2198" reason="A type and a same-named function still coexist today, so this rule's premise -- that a type position never needs to choose between competing declarations -- does not yet hold generally; it holds today only because the compiler does not yet forbid the coexistence legality-5 now also covers." -->
 
-<!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6ImFfdHlwZV9hbmRfYV9mdW5jdGlvbl9tYXlfc2hhcmVfYV9uYW1lLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMTU2MDogdHlwZXMgYW5kIHZhbHVlcyBhcmUgc2VwYXJhdGUgbmFtZXNwYWNlcywgc28gYSBzdHJ1Y3QgYW5kIGEgZnVuY3Rpb24gb2Ygb25lIG5hbWVcbi8vIGNvZXhpc3QsIGFuZCBlYWNoIHVzZSBmaW5kcyBpdHMgb3duLlxuc3RydWN0IEZvbyB7IHg6IGk2NCB9XG5mdW4gRm9vKCkgLT4gaTY0IHsgNSB9XG5cbmVudW0gQmFyIHsgQSB9XG5sZXQgQmFyIDo9IDc7XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBhIDo9IEZvbyB7IHggPSAxIH07XG4gICAgYXNzZXJ0KGEueCA9PSAxKTtcbiAgICBhc3NlcnQoRm9vKCkgPT0gNSk7XG4gICAgbGV0IGIgOj0gQmFyOjpBO1xuICAgIGFzc2VydChCYXIgPT0gNyk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzL2FfdHlwZV9hbmRfYV9mdW5jdGlvbl9tYXlfc2hhcmVfYV9uYW1lLm10bCIsIm5hbWUiOiJhX3R5cGVfYW5kX2FfZnVuY3Rpb25fbWF5X3NoYXJlX2FfbmFtZS5tdGwifQ=="></details>
-<!-- rfc.py:fixtures:end -->
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2198: A type and a same-named function still coexist today, so this rule's premise -- that a type position never needs to choose between competing declarations -- does not yet hold generally; it holds today only because the compiler does not yet forbid the coexistence legality-5 now also covers._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.declarations.variables.scoping-and-shadowing.legality-7}
 
