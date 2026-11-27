@@ -561,12 +561,79 @@ With a struct `Foo` in module `a` and a function `Foo` in module `b`, `import a:
 provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
 [legality-4](#spec.modules.import-conflicts.legality-4).
 
+This rule's worked example — a struct `Foo` and a function `Foo` coexisting across an
+import — is exactly the cross-namespace coexistence
+[reversed below](#spec.modules.unified-type-and-value-namespace.legality-1): once that
+rule is implemented, the source declarations this example imports from are themselves a
+redeclaration error, so this legal-import scenario can no longer arise.
+
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNTc3OiBgYWAgcHJvdmlkZXMgYSB0eXBlIGBGb29gIGFuZCBgYmAgYSB2YWx1ZSBgRm9vYDsgYm90aCBpbXBvcnRzIGJpbmQgdGhlIHNhbWUgbG9jYWxcbi8vIG5hbWUsIGluIGRpZmZlcmVudCBuYW1lc3BhY2VzLCBzbyB0aGV5IGRvIG5vdCBjb25mbGljdC5cbmltcG9ydCBhOjpGb287XG5pbXBvcnQgYjo6Rm9vO1xuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgdiA6PSBGb28geyB4ID0gMSB9O1xuICAgIGFzc2VydCh2LnggPT0gMSk7XG4gICAgYXNzZXJ0KEZvbygpID09IDUpO1xufVxuIn0seyJuYW1lIjoiYS5tdGwiLCJzb3VyY2UiOiJwdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cbiJ9LHsibmFtZSI6ImIubXRsIiwic291cmNlIjoicHViIGZ1biBGb28oKSAtPiBpNjQge1xuICAgIDVcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3N0cnVjdHMvaW1wb3J0c19vZl9vbmVfbmFtZV9pbl9kaWZmZXJlbnRfbmFtZXNwYWNlc19kb19ub3RfY29uZmxpY3QiLCJuYW1lIjoiaW1wb3J0c19vZl9vbmVfbmFtZV9pbl9kaWZmZXJlbnRfbmFtZXNwYWNlc19kb19ub3RfY29uZmxpY3QifQ=="></details>
 <!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Unified Type and Value Namespace
+
+A module's nominal type declarations (`struct`, `enum`, `aspect`, type alias) and its
+ordinary value declarations (`fun`, `let`/`var` at module scope) share one namespace. A
+name denotes one type declaration, one non-function value, or a function overload set;
+existing function overloading is unaffected.
+
+Declaring a type and a value, or two types, under the same name in the same scope is
+[an ordinary redeclaration error](#spec.modules.unified-type-and-value-namespace.legality-1)
+— the same check that already runs within one namespace, narrowed to cover both. The
+collision is per scope, not program-wide: two different modules may each declare their
+own `Foo`, one a struct and one a function, exactly as two modules may each declare
+their own function named `f` today.
+
+```metel
+struct Ticket { value: i64 }
+fun Ticket(input: i64) -> i64 { input + 100 }   // accepted design: a redeclaration error
+```
+
+Imports inherit the same narrowing: an import or re-export bringing a name into a
+scope where the unified namespace already has a declaration of that name — in either
+category — conflicts the same way a local redeclaration does, since both go through
+the same namespace-aware path.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.modules.unified-type-and-value-namespace.legality-1}
+
+A module's `struct`, `enum`, `aspect`, and type-alias declarations share one namespace
+with its `fun`, `let`, and `var` declarations at module scope. Declaring a type and a
+value, or two types, under the same name in the same scope is a redeclaration error.
+Function overload sets are unaffected: a repeated function name is governed by the
+existing overloading rules, not this rule. The collision is scoped per module, not
+program-wide.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="A struct and a same-named function still coexist today; the symbol table's (module, namespace, name) key still treats type and value as separate namespace values, so this redeclaration error does not fire." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: A struct and a same-named function still coexist today; the symbol table's (module, namespace, name) key still treats type and value as separate namespace values, so this redeclaration error does not fire._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.modules.unified-type-and-value-namespace.legality-2}
+
+An import or re-export bringing a name into scope conflicts with an existing
+declaration or import of that name in either namespace category, following the same
+explicit-versus-glob precedence and glob ambiguity rules as same-namespace import
+conflicts ([Import Conflicts](#import-conflicts)).
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Same root gap as unified-type-and-value-namespace.legality-1: cross-namespace import collision cannot fire while the underlying declaration-site collision does not fire either (see import-conflicts.legality-5, superseded pending this)." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Same root gap as unified-type-and-value-namespace.legality-1: cross-namespace import collision cannot fire while the underlying declaration-site collision does not fire either (see import-conflicts.legality-5, superseded pending this)._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
 

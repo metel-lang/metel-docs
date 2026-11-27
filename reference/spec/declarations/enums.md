@@ -28,6 +28,9 @@ fun main() -> i64 {
 }
 ```
 
+[Call-syntax variant construction](#spec.declarations.enums.variant-construction.legality-1)
+is available alongside the existing forms shown above.
+
 Variants may be unit (no data) or struct-like (named fields). A struct-like variant's
 named fields follow the [same `pub`/private visibility rules as an ordinary
 struct's](../modules.md#spec.modules.visibility.legality-6).
@@ -154,5 +157,60 @@ fun main() -> i64 {
     return s.area() as i64;
 }
 ```
+
+## Call-syntax variant construction
+
+A qualified variant path followed by a call
+[constructs that variant](#spec.declarations.enums.variant-construction.legality-1):
+`Message::Text(body = "hello")` for a payload variant, `Message::Empty()` for a unit
+variant, using the same positional/keyword/exact-row rules as struct construction. An
+enum type alone, with no variant qualification, does not identify a variant —
+`Message(...)` does not choose a variant from its arguments. The existing
+bare/qualified unit-variant forms above remain valid alongside the call form.
+
+```metel
+enum Message { Text { body: String }, Number { value: i64 }, Empty }
+
+fun main() {
+    let a := Message::Text(body = "hello");
+    let b := Message::Number(42);
+    let c := Message::Empty();
+    let d := Message::Empty;
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.enums.variant-construction.legality-1}
+
+A call `Enum::Variant(args)`, where the qualified path names a variant, constructs that
+variant using the same positional/keyword argument binding, exact-row, and
+field-visibility rules as struct construction applied to the variant's payload. An
+unqualified enum type name does not identify a variant; `Enum(args)` is not a variant
+construction.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Qualified call-syntax variant construction is not implemented: struct-style construction is still the only way to build a payload variant (verified against this page's own legality-1/instantiation.legality-1 fixtures), and call syntax on a variant path is ordinary call resolution, not construction." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Qualified call-syntax variant construction is not implemented: struct-style construction is still the only way to build a payload variant (verified against this page's own legality-1/instantiation.legality-1 fixtures), and call syntax on a variant path is ordinary call resolution, not construction._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics {#spec.declarations.enums.variant-construction.dynamics-1}
+
+`Enum::Variant(args)` and the existing struct-style brace construction of the same
+variant with the same arguments produce the same variant value.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Same root gap as variant-construction.legality-1: there is no call-syntax construction to compare against the existing brace form." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Same root gap as variant-construction.legality-1: there is no call-syntax construction to compare against the existing brace form._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
 
 ---

@@ -262,52 +262,69 @@ existing policy of not re-litigating the pre-existing accepted backlog (below) a
 once. It started applying in full the same day, once RFC-0067a/0072/0078/0081/0082/0083
 became the first RFCs to actually reach `3-integrated` under this definition.
 
-**Additional exit criterion, added 2026-09-28 — a bare "Planned for" callout undersells
-what a formal, rule-bearing integration actually needs; use ADR-0057's `LIMIT-*` record
-instead whenever the RFC's content becomes a real Legality Rule or Dynamic Semantics
-block.** The "Inline markers... required, not optional" guidance above, written
-2026-07-10, predates ADR-0057 (2026-09-20) and describes only the lighter of two real
-cases — found while integrating RFC-0171 (array type syntax), the first RFC to reach
-this stage after ADR-0057 landed, with no accepted-but-unimplemented precedent to copy
-except RFC-0071's destructor work, which had solved this already without anyone writing
-down that it was the general answer.
+**Additional exit criterion, added 2026-09-28, corrected 2026-11-27 — a bare "Planned
+for" callout undersells what a formal, rule-bearing integration needs, but a `LIMIT-*`
+record is not the default fix for that either.** The "Inline markers... required, not
+optional" guidance above, written 2026-07-10, describes only the lightest of three real
+cases. The 2026-09-28 addition reached for ADR-0057's `LIMIT-*` record as the answer for
+*every* RFC entering `3-integrated` with a real Legality Rule or Dynamic Semantics
+block — overreaching, caught 2026-11-27 while integrating RFC-0100: it misread
+ADR-0050 §6's own bare `rfc.py:exemption` mechanism (2026-08-19, a month *before*
+ADR-0057) as needing a `LIMIT-*` record to back it, when ADR-0050 §6 is explicitly
+self-contained — no separate record of any kind — and its own worked example
+(`spec.functions.turbofish.legality-2`, `metel-core#775`) never had one.
 
-**The two cases, and which marker each one takes:**
+**The three cases, and which marker each one takes:**
 
 - **No formal rule exists yet for the touched behavior** (a wholly new section, nothing
   to attach a fixture exemption to). The one-line `> **Planned for vX.Y.Z (RFC-NNNN).**
   ...` callout above is still correct and sufficient — there is no rigor block for
   `rfc.py index --write-spec-origins` or `check_architecture.py` to validate against, so
   a heavier record has nothing to attach to.
-- **A Legality Rule or Dynamic Semantics block states the accepted design** (this is the
-  normal case for integrating any RFC with formal rules, not an edge case). **State the
-  design as current fact in the rule text itself — never hedge it to match what the
-  interpreter does today** (`STYLEGUIDE.md`'s "state the design, not the bug", the same
-  principle a typed exemption already applies to a rule blocked on a dependency). Pair it
-  with:
+- **An RFC's own Legality Rule or Dynamic Semantics block states its accepted design,
+  reaching `3-integrated` with nothing implemented yet** (the ordinary case: a design
+  just agreed, a compiler not yet caught up — not a discovery, since "new design,
+  nothing built yet" is true by construction of every RFC between `3-integrated` and
+  `4-implemented`). **State the design as current fact in the rule text itself — never
+  hedge it to match what the interpreter does today** (`STYLEGUIDE.md`'s "state the
+  design, not the bug"). Pair it with exactly one marker, ADR-0050 §6's self-contained
+  `rfc.py:exemption`:
   - A hand-authored `<!-- rfc.py:exemption kind="blocked" ref="metel-core#NNN"
     reason="..." -->` trigger line directly under the rule, `ref` pointing at this RFC's
     own `impl_tracking` issue. Never hand-write the rendered span underneath it —
     `rfc.py index --write-spec-origins` generates that, same as an origins backlink.
-  - A `LIMIT-<AREA>-<NNN>` record (`architecture/limitations/`, ADR-0057 §4's shared
-    shape with `GAP-*`) with `disposition: planned`, `tracked_by` the tracking issue,
-    `rfc:` this RFC's id, and `## Resolution` naming the same tracking issue.
-    Use `LIMIT-*`, never `GAP-*`, for this case — ADR-0057 §2's sorting test is exactly
-    "the spec promises (or an accepted RFC will promise) something the implementation
-    does not yet deliver," which is what every RFC between `3-integrated` and
-    `4-implemented` is, by definition. `GAP-*` is for the different case where the spec
-    itself, correctly implemented in full, still wouldn't cover something — no accepted
-    RFC closes a `GAP-*` merely by existing; the gap closes only once its record's
-    `resolution` names the RFC and the spec text actually changes.
-  - A section-level `> **Limitation** LIMIT-<AREA>-<NNN>` callout, rendering the record's
-    summary at the point a reader would otherwise expect the old-style "Planned for"
-    line. Both markers may appear in the same section — the rule-level exemption and the
-    section-level callout answer different questions ("why no fixture" versus "what's
-    the whole-feature status").
+  - Nothing else. No `LIMIT-*`/`GAP-*` record and no section-level callout — the
+    exemption's own `ref` and the RFC's own `impl_tracking` field already answer "why
+    no fixture" and "what's tracking this," and a record whose entire content is "this
+    RFC was just accepted and nothing is built yet" has no independent fact to catalog.
 
-  The worked model already in the corpus, found rather than invented: RFC-0071's drop
-  order (`spec.ownership.drop-order.dynamics-1`/`-2`, `LIMIT-EVALUATION-005`,
-  `metel-core#261`). Copy its shape exactly rather than improvising a new one per RFC.
+  The worked model already in the corpus, found rather than invented: `spec.functions.
+  turbofish.legality-2` (`metel-core#775`). Copy its shape exactly — rule text states
+  the design, one exemption comment underneath, done — rather than improvising or
+  reaching for the heavier mechanism below.
+- **A limitation is discovered independently of any one RFC's transition** — by a
+  systematic audit (the per-stage limitation analysis, `metel-core#1209`-`#1218`, is
+  where this mechanism actually originates), a bug report, or review of already-shipped
+  code — and is a durable fact about the *existing* implementation worth cataloging in
+  its own right: who owns it, how it was found, whether and how it's tracked, independent
+  of which RFC's rule it happens to fall under. This is what actually warrants a
+  `LIMIT-<AREA>-<NNN>` record (`architecture/limitations/`, ADR-0055 §4's shape, shared
+  with `GAP-*` per ADR-0057 §4) with `disposition: planned`, `tracked_by` the tracking
+  issue, `rfc:` the relevant RFC's id if any, and `## Resolution` naming the same
+  tracking issue — paired with the *same* rule-level `rfc.py:exemption`, plus a
+  section-level `> **Limitation** LIMIT-<AREA>-<NNN>` callout rendering the record's
+  summary. Use `LIMIT-*`, never `GAP-*`, when the gap is an implementation shortfall
+  against an already-settled spec (ADR-0057 §2's sorting test); `GAP-*` is for the
+  different case where the spec itself, correctly implemented in full, still wouldn't
+  cover something.
+
+  The worked model already in the corpus: RFC-0071's drop order
+  (`spec.ownership.drop-order.dynamics-1`/`-2`, `LIMIT-EVALUATION-005`,
+  `metel-core#261`) — not a case of RFC-0071 *itself* reaching `3-integrated` (it had
+  already integrated earlier, with no such record), but a gap the later, independent
+  per-stage audit found in code already presumed to implement it. **Do not copy this
+  shape for an RFC's own 3-integrated transition** — that was the exact mistake this
+  correction fixes.
 
 **A syntax-changing RFC integrates its rule text, not its examples — those stay on the
 old spelling.** The 2026-07-31 criterion above governs sweeping prose examples to a new
