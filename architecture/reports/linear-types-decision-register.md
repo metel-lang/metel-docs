@@ -64,17 +64,18 @@ What you may do with a generic value is whatever its bounds say, and nothing mor
 |---|---|---|
 | `T: Copy` | copy a `T` implicitly | written |
 | `T: Clone` | call `.clone()` | written |
-| `T: Discard` | let a `T` go out of scope | written bound, but the capability is computed by the compiler |
+| `T: Discard` | let a `T` go out of scope | written on public functions, inferred for eligible private functions, capability computed by the compiler |
 
 A bare `T` is **possibly linear**: it assumes no capabilities, so generic code may not drop it. That is the
-conservative reading and it is why writing `T: Discard` is needed in generic code that drops values. The first
-linear release defers negative `T: !Discard` bounds. `print` and `println` take `&T` for `T: Display`, so formatting
+rule for public generic functions that drop values. Eligible private free functions infer positive
+`Discard` requirements at definition time, including requirements from directly called helpers. Recursive
+groups use written bounds. The first linear release defers negative `T: !Discard` bounds. `print` and `println` take `&T` for `T: Display`, so formatting
 a borrowed value preserves the caller's ownership.
 
 ```metel
 fun keep<T>(x: T) -> T { x }                      // fine: moves x on
-fun lose<T>(x: T) { }                             // error once linear ships: x is dropped, T is not Discard
-fun lose_ok<T: Discard>(x: T) { }                 // fine
+fun lose<T>(x: T) { }                             // private: infers T: Discard
+pub fun lose_ok<T: Discard>(x: T) { }             // public: states T: Discard
 ```
 
 **Staging.** In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true. Nothing breaks and
@@ -172,7 +173,7 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D1 | Affine is the default class. Keywords are `copy` and `linear`. There is no `affine` keyword. | Accepted | An `affine` keyword; Rust-style implicit `Copy` | High | Moderate | none |
 | D2 | A non-generic named type's class is **declared** and checked against its fields. A type holding a linear field must be declared `linear`, with a fix-it. | Accepted | Infer the class from the fields (Rust auto traits) | High | Moderate | D1 |
 | D3 | `Copy` is sealed (representation copy). `Clone` is provided and unwritable for `Copy` types. Grants appear only in the declaration. | Accepted | Rust's open `Copy`/`Clone` | High | Hard | none |
-| D4 | Capabilities are written bounds: `T: Copy`, `T: Clone`, `T: Discard`. A bare `T` is possibly linear. | Accepted | Infer `Discard` for bodies; a closed default where `T` is discardable and `?Discard` opts in (Swift style); declare universes (Austral style) | Medium-High | Cheap in v0.16.0 (the bound is vacuous), moderate later | D1 |
+| D4 | A bare `T` is possibly linear. Public functions state their capability bounds. Eligible private free functions may infer positive `Discard` requirements at definition time. | Private inference amendment in RFC-0089 | Infer `Discard` for public bodies; a closed default where `T` is discardable and `?Discard` opts in (Swift style); declare universes (Austral style) | Medium-High | Cheap in v0.16.0 (the bound is vacuous), moderate later | D1 |
 | D5 | `Discard` is computed by the compiler. It cannot be implemented or negated by users. `Copy` implies `Discard`, and a `Drop` type is `Discard`. | Accepted | A user-written `Discard` impl | High | Cheap | D4 |
 | D6 | In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true. The check activates at the `linear` release. | Accepted | Ship the check early | High | Cheap | D4, D5 |
 | D7 | The class of a generic instance is **computed** from its owned fields. Generic types are open by default. | **Accepted (2026-11-07)** | Declared class with explicit conditional (Austral `Type` universe, Swift `~Copyable`); closed by default | **Medium: the keystone** | Hard once std is written | D4 |
@@ -280,7 +281,8 @@ In order of how much I would want more time on:
 4. **D19, stated `Discard` for public generic types (now accepted).** It answers the public-API instability of D7, but it adds a
    declaration-site statement for a capability otherwise computed, and the conservative default can over-restrict
    public types that do not own their parameter.
-5. **D4, the written `T: Discard` bound.** The cost (about 30 to 40 percent of by-value generic functions) is large,
-   though it is the same kind of cost as `Copy` bounds and Metel has no users to migrate.
+5. **D4, `Discard` requirements at the visibility boundary.** The earlier census found that 30 to 40 percent
+   of sampled by-value generic functions discard on some path. It predates private inference. The remaining
+   annotation cost depends on how many of the functions need written signatures under RFC-0089 section 2.2.
 
 Decisions D1 to D6 and D18 are the part of the design that does not depend on linear types being right.
