@@ -25,6 +25,11 @@ coverage:
 > / `Empty {}` interchangeably for zero-field structs, and `Type::Variant {}` for
 > zero-field enum variants alongside the already-supported bare-path form.
 
+> **Narrowed 2026-11-27 (language owner).** The empty-brace form (`Empty {}`,
+> `Flag::On {}`) is a brace literal, and RFC-0100 section 3 makes every brace literal
+> legal only inside its own type's `extend` blocks (metel-core#2200). The bare form stays
+> legal anywhere, beside the call form `Empty()` / `Flag::On()`.
+
 ## Summary
 
 Permit both bracketed and bracketless construction syntax when a constructor's field

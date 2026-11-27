@@ -274,10 +274,10 @@ type name; constructing another type, even from inside an impl, uses that type's
 ordinary call form (language owner, 2026-11-26). Everywhere else, in the declaring
 module and every other module, construction is the call form, `Point(x = 1, y = 2)` or
 `Shape::Circle(radius = 1.0)` (section 7). Bare unit-variant and empty-struct forms that
-are not brace literals (`Direction::North`) are unaffected, and so is a brace literal that
-initializes no field (`Empty {}`, `Flag::On {}`): it is the same value as the bare form
-RFC-0106 already allows anywhere, so it builds nothing the restriction protects
-(clarified at implementation, metel-core#2200).
+are not brace literals (`Direction::North`, `Empty`) are unaffected. A brace literal that
+initializes no field (`Empty {}`, `Flag::On {}`) is a brace literal like any other and is
+restricted the same way; outside the type's `extend` blocks it is written bare or by call,
+`Empty()` (language owner, 2026-11-27, narrowing RFC-0106's empty-brace form).
 
 The brace literal builds the value directly from its fields. It invokes no constructor
 and implies no validation; a method that needs to check something checks it itself, as
