@@ -3,7 +3,7 @@ id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
 status: accepted
-updated: '2026-11-05'
+updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
@@ -17,16 +17,15 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > section 6). The elimination rules are accepted in design and take effect with the `linear` release: a partial move
 > out of a nominal aggregate needs the aggregate known `Discard` (D11); destructuring patterns consume their scrutinee,
 > which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
-> variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
-> open, tracked in #1828); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
-> syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
+> variant kept as a fallback if needed); a `Drop` type is dismantled only by an inherent method marked `dismantle self` (D13);
+> a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
 > is `Discard` (D14, RFC-0194). **Deferred (2026-11-07):** binding-level qualifiers (D15, RFC-0220), parked as a draft; the
 > wrapper-type and bracket patterns of the decision register give must-use for an affine type meanwhile. The reasoning and the alternatives are in the decision register
 > (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
 > (`architecture/reports/generic-class-computed-vs-explicit.md`) and its effects-library test
 > (`architecture/reports/effects-generic-functions-computed-vs-explicit.md`).
 
-> **Amendment (2026-11-06, language owner): a named type's class is declared and checked against its fields.** (Generic instantiations and structural types, such as tuples, arrays and anonymous records, compute their class from their components; generic code names the capabilities it needs in bounds, so a bare `T` is possibly linear and dropping it requires `T: Discard`, section 2.2.) `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
+> **Amendment (2026-11-06, language owner): a named type's class is declared and checked against its fields.** (Generic instantiations and structural types, such as tuples, arrays and anonymous records, compute their class from their components; generic code names the capabilities it needs in bounds, so a bare `T` is possibly linear and dropping it requires an effective `T: Discard` bound, section 2.2.) `Linear` is a `declared` aspect (RFC-0212), granted only by the `linear` keyword in a declaration (struct, enum or named record) or in a closure's prefix or function type. A struct, record, enum or closure that holds a linear value must itself be declared `linear`, otherwise it is an error whose fix-it adds the keyword; the compiler checks the declared class against the fields (it must be at least as restrictive as every field). This supersedes the structural `auto` derivation of `Linear`, the `!Linear` opt-out, and the `affine` keyword: affine is the default and is never written. The amendment text is in sections 1, 2 and 2.1; the rest of this note is history.
 
 > **New RFC, split out 2026-07-09** from `reports/substructural-types/linear-types.md`
 > (a living design report) as part of decomposing an oversized RFC-0012 into smaller,
@@ -195,30 +194,44 @@ not depend on how the class was determined.
 - Reading a `Copy` field and borrowing a field (`&r.t`, `&var r.t`) change no ownership state and stay legal.
 - **A destructuring pattern consumes its scrutinee** (decided 2026-11-07). Bound fields move; a field skipped by `..` or
   `_` is inaccessible afterwards and, where the aggregate is not known `Discard`, must itself be `Discard`. A pattern
-  never leaves a partially moved residual: partial moves come only from explicit field moves. This holds for struct,
-  tuple and enum-payload patterns, as it already does for a record rest binding (`{ x, ..rest }`). Skipped fields drop
-  at the scrutinee's scope end; whether they should drop at the pattern is open (metel-core#1843). These rules
-  describe **owning** patterns: matching through a reference keeps the reference-matching rules and consumes nothing.
-  Ownership moves to the selected arm only, and a guard sees its bindings without moving them until it succeeds. A
-  whole-value `_` destructures nothing and consumes nothing (a linear scrutinee under `_ =>` stays unconsumed and is an
+  never leaves a partially moved residual: partial moves come only from explicit field moves. A field captured
+  by a record rest binding moves into that binding. These rules describe **owning** patterns: matching through
+  a reference keeps the reference-matching rules and consumes nothing.
+- **Skipped fields drop when an owning pattern commits.** The pattern moves the bound fields and drops the
+  skipped fields in the aggregate's normal field-drop order, which is declaration order for structs. Cleanup
+  runs before the next statement or selected arm body. A guard sees its bindings before ownership moves.
+  A pattern or guard that fails moves and drops no scrutinee fields. A whole-value `_` destructures and consumes nothing (a linear scrutinee under `_ =>` stays unconsumed and is an
   error); the skip check applies to `_` and `..` inside a destructuring pattern. A pattern on a value that an explicit
   field move already narrowed is rejected, as is any whole use of it. A refutable form added later must keep ownership
   on the non-matching path.
+  For example, after `let Wrapper { value, .. } := wrapper`, the skipped fields' destructors have run before
+  a subsequent `use_value(value)`. Bind a field explicitly to retain its ownership for later use or cleanup.
 - Assigning to a linear field would drop its old value, so it is an error; replace by destructuring and rebuilding.
 - Record spread (`.{ ..r, .n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
-- **A type with a `Drop` impl, conditional or not, is dismantled only by a marked method** (D13, decided 2026-11-07).
-  A *dismantling method* is an inherent method in the type's defining module whose receiver is an owned `self` carrying
-  the dismantling marker (the spelling is open, tracked in metel-core#1828, and settles with the surface renames of v0.16.0; it is written `consume self`
-  below as a placeholder). Its body destructures `self` totally: every field is bound or skipped (skipped fields
-  `Discard`), and each bound field is moved on or dropped. The outer destructor is **suppressed**; nested field
-  destructors still run when a field is skipped or dropped, and binding a field does not license dropping a bare `T`.
-  The marker is not allowed on `&self` or `&var self`, in an aspect default body, on an aspect impl method, or outside
-  the defining module. Without the marker such a type is never destructured, partially moved or used in a record
-  spread, even in its own module. Callers see an ordinary consuming method. This is how a wrapper such as `Logged<T>`
-  is unwrapped (`into_inner`), including for a linear `T`, where no destructor applies.
+- **A type with a `Drop` impl is dismantled through `dismantle self`** (D13). This receiver form
+  takes ownership of `self` and permits a total destructuring of the receiver in an inherent method in
+  the type's defining module. Every field is bound or skipped. Skipped fields must be `Discard`, and
+  each bound field must be moved on or legally dropped. Total destructuring of the marked receiver
+  suppresses its outer destructor. Nested field destructors still run for fields that are dropped.
+  An intact receiver passed to an ordinary consuming function retains its usual destructor behavior.
+  The marker is illegal on borrowed receivers, aspect default and impl methods, and methods outside
+  the defining module. A type with a `Drop` impl cannot be destructured, partially moved, or used in a
+  record spread outside a dismantling method. This restriction also applies to a type with a conditional
+  `Drop` impl. An instance for which the impl does not apply has no outer destructor to suppress.
+  Callers use ordinary method syntax. For example, let `Logged<T>` have one field `value: T` and
+  implement `Drop` only when `T: Discard`. Its `into_inner` is available for either class of `T`.
+
+  ```metel
+  extend<T> Logged<T> {
+      pub fun into_inner(dismantle self) -> T {
+          let Logged { value } := self;
+          value
+      }
+  }
+  ```
 - This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly).
 **Structural types are the exception.** An anonymous record or a tuple has no declaration: its class is computed from
 its components (as `Copy` is for a tuple), so a field move narrows it and the leftover's class is recomputed, with the
@@ -273,13 +286,12 @@ aspect Affine = !Copy + !Linear
 
 **The problem.** A generic body can do two things to a value of parameter type `T` without writing a call: copy it
 and drop it. A copy happens at a visible use site (a second use of `x` is a use-after-move unless `T: Copy`), so the
-author is told. A **drop** is implicit: scope end, an early `return` or `?`, an overwritten assignment, an unused
+author is told. A **drop** is implicit: scope end (including leaving a block by `break` or `continue`), an early `return` or `?`, an overwritten assignment, an unused
 argument, a discarded expression statement, the unmoved rest of a partial move. If a bare `T` were affine, a linear
 type could never instantiate it and generic code could not be used with linear types at all.
 
-**The decision (language owner, 2026-11-07).** A bare `T` is **possibly linear** and assumes no capabilities (Rust is not
-an exact precedent: its type parameters carry an implicit `Sized` bound). Each
-operation that needs one names it in a bound, as `Copy` already does:
+A bare `T` is **possibly linear** and assumes no capabilities. An operation that needs a capability must have
+the corresponding bound in the function's effective signature:
 
 | Operation | Bound | Bare `T` |
 |---|---|---|
@@ -287,24 +299,28 @@ operation that needs one names it in a bound, as `Copy` already does:
 | duplicate explicitly | `T: Clone` | not allowed |
 | drop | `T: Discard` | not allowed |
 
-Nothing is inferred. Generic bodies are checked once, at the definition, against their declared bounds (RFC-0173,
-unchanged).
+A public function states its requirements. An eligible private free function may infer positive `Discard`
+bounds under the rules below. Generic bodies are still checked at the definition. The private inference rule
+is a limited amendment to RFC-0173 D2.
 
-**The capability.** `Discard` says a value may be dropped. It is positive, so generic code never needs the absence
+**The capability.** The capability is named `Discard`. It says a value may be dropped, running any applicable destructor. It is positive, so generic code never needs the absence
 reasoning that RFC-0213 section 3 keeps out of v0.16.0.
 1. For a concrete type, `Discard` holds exactly when the type's class (declared, or computed for a generic
    instantiation or a structural type) is not linear. `Drop` types are `Discard`: their drop runs. `T: Copy` entails
    `T: Discard`. **No user writes or negates a `Discard` impl.**
-2. For a type parameter, `Discard` holds only if a bound says so.
+2. For a type parameter, `Discard` holds only if its effective bounds entail it.
 3. The generic `drop` is `drop<T: Discard>`, replacing the `T: !Linear` of section 2.
+4. The first linear release supports positive `Discard` bounds. A bare `T` admits linear arguments and its
+   body must handle the possibility that the value cannot be dropped. An API that needs a particular consuming
+   operation can bound that operation with a positive aspect. A bound requiring proof of non-discardability
+   (`T: !Discard`) is deferred until a use case needs it and its proof rules are specified.
 
 **Rules.**
-- **Bodies.** A generic body may consume a `T` (move it, return it, pass it, store it). It may not drop or copy it
-  unless a bound entails `Discard` or `Copy`. Each implicit drop site (the list under "The problem") and each explicit
-  `drop(x)` of a value whose `Discard` depends on a parameter is an error at that site, and the diagnostic suggests the
-  bound (`add T: Discard`), as omitting `once` on a closure that consumes a capture does (RFC-0134).
-- **Calls.** A callee's `T: Discard` bound must be entailed by the caller's bounds, by the ordinary bound rule. A
-  function that only forwards a `T` to a function that drops it needs the bound too.
+- **Bodies.** A generic body may consume a `T` (move it, return it, pass it, store it). Dropping or copying it
+  requires effective bounds that entail `Discard` or `Copy`. Report an unmet requirement at the drop or call site
+  in the definition. Where a written bound would suffice, the diagnostic identifies it.
+- **Calls.** The caller's effective bounds must entail the callee's effective bounds after substituting the
+  call's type arguments. A function forwarding a `T` to a helper that drops it needs the same permission.
 - **Generic types.** A generic type's parameters are **open by default** (they admit linear arguments), and its class
   is computed per instantiation from its owned fields, as a tuple's is. `linear` on a generic type is unconditional
   (every instantiation is linear). `copy` states a capability (`Copy` exactly when the fields are). A field that
@@ -327,23 +343,67 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   function type that is not `linear` therefore guarantees `Discard`, and `Option::map` may drop its callback. A
   `linear` function type is not `Discard`. A closure that captures a value of bare type `T` captures a possibly-linear
   value, so it must be declared `linear`, or the function must bound `T: Discard`.
-- **Trait objects.** Coercing a possibly-linear value into `dyn Aspect` erases its class. Before `linear` ships this must
-  be rejected, or the `dyn` type must retain the obligation (the existential-erasure gate, metel-core#1828).
+- **Aspect objects.** Coercion to an owned `dyn Aspect` requires the source type to satisfy both
+  `Aspect` and `Discard` in the current context. Reject the coercion when either requirement is unmet. For
+  example, a generic conversion to owned `dyn Display` needs `T: Display + Discard`, or bounds that
+  entail both. Borrowed coercions to `&dyn Aspect` and `&var dyn Aspect` use the ordinary aspect and
+  borrow rules. They leave the referent's ownership with its owner. If a linear `Tx` implements
+  `Display`, `let view: &dyn Display := &tx` is legal and `let object: dyn Display := tx` is rejected.
+  A form of owned aspect object that retains a linear obligation and exposes a way to discharge it
+  is deferred.
 
-**The cost, stated plainly.** `T: Discard` is needed whenever generic code drops a by-value `T`: `unwrap_or`, `ok`, an
-ignored argument, `print<T: Display>(x: T)`. A scan of std and the integration programs (2026-11-05) found that 30 to
-40 % of the functions taking a bare `T` by value drop it on some path, a floor that ignores locals and early returns.
-That is a larger annotation cost than `Copy` bounds carry, and it is accepted for the same reason: the signature says
-what the function may do with your value. Taking a reference where the function only reads (`print` and `println`
-over `&T`) removes many of them. Metel has no users yet (language owner, 2026-11-07), so there is no lint or
-migration-tool stage: the std audit below is done by hand.
+#### Private function inference
+
+1. A module-private, non-native free function outside a recursive group may infer `Discard` bounds. If its
+   signature already states a `Discard` bound, the written bounds fix its contract and inference adds none.
+   Public functions, methods, and native declarations use their written bounds. Aspect implementations
+   continue to satisfy the declared aspect contract.
+2. Infer only positive `Discard` requirements on the function's own type parameters. An implicit drop on any
+   path, or a `Discard` obligation from an already resolved call (including `drop(x)`), can contribute a
+   requirement. A call with a unique target can contribute its bound even when that bound has yet to be
+   discharged. Use the ordinary rules for concrete types and for the visible `Discard` conditions of
+   compound types. If the obligation reduces to a conjunction of `Discard` bounds on the function's own
+   parameters, add the conjuncts its written bounds do not already entail. Other obligations must be proved
+   by the written signature or rejected. Inference cannot invent a bound to select an overload or an impl.
+3. The effective signature combines the written and inferred bounds and is fixed at definition time.
+   Private callers can infer from a private callee's effective signature, so the requirements propagate
+   through a chain of direct calls. A recursive or mutually recursive group uses written bounds for all
+   its members. The same effective signature governs uses of a function as a value. Call sites do not
+   specialize the inferred requirements.
+4. Public functions are checked against their written signature even inside their defining module. A private
+   helper with an inferred bound may be called from public code only when that public signature entails the
+   bound. Changing a private helper can therefore trigger a definition error in public code, with its
+   published contract intact. Exported and re-exported function signatures carry only written requirements.
+
+```metel
+fun discard_unused<T>(x: T) { }  // infers T: Discard
+
+fun finish_batch<T>(x: T) {
+    discard_unused(x);           // infers T: Discard through the call
+}
+
+pub fun finish<T: Discard>(x: T) {
+    finish_batch(x);
+}
+```
+
+Omitting `T: Discard` from `finish` makes the call in its body an error. If `finish` is intended to
+accept linear arguments, its body must transfer or explicitly consume `x` through an operation its
+signature supports. For a compound example, a private helper that drops `Pair<T>` with two owned `T`
+fields infers `T: Discard` when the visible condition of `Pair<T>` is `Discard(T)`.
+
+**Annotation cost.** A scan of std and the integration programs (2026-11-05) found that 30 to 40 % of the
+functions taking a bare `T` by value drop it on some path, a floor that ignores locals and early returns.
+That scan predates private inference and does not measure how many written bounds this rule removes.
+APIs that only read a value can borrow it. Public APIs that drop a generic value state the required
+capability.
 
 **Staging.** In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true, every bare `T` behaves
 as the affine default does today, and no program changes. The check becomes an error at the `linear` release. What
 v0.16.0 must do so that nothing is foreclosed:
 1. The generic-body analysis (ADR-0063) records the drop sites of values whose type depends on a parameter, so the
    definition check can run when `linear` lands (metel-core#1827).
-2. The aspect name `Discard` and the rule that a bare `T` is possibly linear are reserved here.
+2. The capability name `Discard` and the rule that a bare `T` is possibly linear are reserved here.
 3. No std API documents a bare `T` as "droppable" as a guarantee.
 
 **Demonstration (paper derivations, required before acceptance of sections 1 to 2.1).** Using `linear struct Tx
@@ -362,8 +422,9 @@ v0.16.0 must do so that nothing is foreclosed:
    aspect: `aspect Finish { fun finish(self); }`, `extend Tx: Finish { fun finish(self) { commit(self) } }` and
    `fun run<T: Finish>(x: T) { x.finish() }`. `x` is moved into the call, so `run` needs no `Discard`, and
    `run(tx)` is accepted. **Follows.**
-5. Helper and wrapper: `fun sink<T: Discard>(x: T) { }` writes the bound; `fun api<T: Discard>(x: T) { sink(x) }` must
-   write it too, by the ordinary rule (without it, `sink(x)` is an error that suggests it). **Follows.**
+5. Helper and wrapper: a private `fun sink<T>(x: T) { }` infers `T: Discard`. A private non-recursive
+   wrapper can infer the same bound from its call to `sink`. A public wrapper must state the bound, and
+   omitting it is an error at the call to `sink`. **Follows.**
 6. `List<T>` holding linear values. **Classification needs a named temporary rule.** `List<T>` declares `inner: [T]`,
    and RFC-0206 section 2 makes a view `[T]` `Copy` (hence `Discard`) for every `T`, so field composition alone gives
    `List<Tx>` no linear obligation and `fun abandon(xs: List<Tx>) { }` would be accepted. Until the std List is
@@ -384,27 +445,84 @@ v0.16.0 must do so that nothing is foreclosed:
      #1828.
    **Follows, given the named rule, the std change, the native contract and the closure rule.**
 
-**Std audit list** (the functions that drop and so write a bound, per parameter): `Option::unwrap_or` needs `T: Discard`
+**Std audit list** (the drop requirements to check, per parameter): `Option::unwrap_or` needs `T: Discard`
 (the unused fallback); `Option::ok_or` needs `E: Discard` (the unused error), not `T`; `Result::ok` needs `E: Discard`;
 `Result::unwrap_or` needs both `T: Discard` and `E: Discard`; `Result::unwrap_or_else` needs `E: Discard`;
-`map` and `and_then` need no bound (their callbacks are `Discard`); `print` and `println` (or take `&T`);
-`__eq_array_item`; and for lists: the conditional destructor, `clear`, and the native `consume_each`, which must **not**
-require element `Discard` since it is the linear teardown (item 6). Borrowing `Eq` and `Hash` need no discard capability;
-a helper taking compared values by value does.
+`map` and `and_then` need no bound (their callbacks are `Discard`); `__eq_array_item`; and for lists, the
+conditional destructor, `clear`, and the native `consume_each`. The native teardown admits linear elements
+(item 6). Borrowing `Eq` and `Hash` need no discard capability. A helper that drops compared values taken by
+value does.
+
+**Printing.** In the first linear release, `print<T: Display>(x: &T)` and `println<T: Display>(x: &T)` borrow
+their arguments. `Display::to_string` already uses a shared receiver, so the caller retains ownership and
+the functions require no `Discard` bound. This changes calls such as `println(value)` to `println(&value)`.
+A call that already supplies a shared reference of the expected type can pass it directly. For a linear
+transaction implementing `Display`, the caller can write `println(&tx);` and then `commit(tx);`.
 
 **Alternatives considered.** (a) *A written `T: ?Linear` opt-in on an affine default*: linear types are locked out of
 every generic function until its author opts in (Swift needed several releases, SE-0427). (b) *A `T: Discard` required
 on a closed default for types and an explicit admission marker per parameter* (the Austral shape, `T: ?Discard`):
-generic code would have to opt in to admit linear values, which defeats the goal. (c) *Silent elaboration of `Discard`*
-from bodies, with use-site diagnostics, optional pins, a strict mode and an API-diff tool: no annotation cost, but it
-needs transitive inference machinery (callees, recursive groups, well-formedness) and a named exception to RFC-0173,
-and a public change can silently stop accepting linear arguments. Considered and set aside on 2026-11-07 in favour of
-explicit bounds. (d) *Check drop sites at each instantiation* (C++-template style): no bounds to write, but a body change
+generic code would have to opt in to admit linear values, which defeats the goal. (c) *Infer `Discard` for every
+function*: a public body change could silently stop accepting linear arguments, and inference across recursive
+groups would need a separate contract rule. The proposal limits inference to eligible private functions and
+requires explicit contracts for public functions and recursive groups. (d) *Check drop sites at each instantiation*
+(C++-template style): no bounds to write, but a body change
 breaks callers and it contradicts RFC-0173. (e) *Let a generic drop of a linear value run a type-supplied cleanup*:
 the value is then affine with a destructor, not linear.
 
-**Open (exit tracking: metel-core#1828, the linear-release gate).** The spelling of the dismantling-method marker of decision D13 (candidates `consume self`, `deinit self`, a `dismantle` keyword; it must not collide with `pub`, RFC-0218); the spelling `Discard`; whether an explicit
-`where T: !Discard` ("this parameter must be linear") is ever needed (probably not); the rule that moving every field out consumes a struct (RFC-0215); whether `print` and `println` take `&T`.
+**Related work.** RFC-0215 owns any rule that would make a series of field moves consume a struct.
+Consuming patterns and their cleanup are tracked in metel-core#1843. The first linear release's
+integration and implementation work is tracked in metel-core#1828, including enforcement of the owned
+aspect-object restriction and the standard library audit.
+
+### 2.3 Early exits and paths
+
+On each normal control-flow edge, every still-owned value that the edge would implicitly drop must be known to
+satisfy `Discard`. This includes values of a bare type parameter. A move into the result of the edge transfers
+the obligation to the destination. The check uses the ownership state on the path that reaches the edge.
+
+- A block end, `break`, and `continue` check the values left behind in the scopes they exit. `break h` transfers
+  `h` to the loop result. A `continue` must discharge a handle acquired in the current iteration if the jump
+  would otherwise drop it. A handle owned by a scope outside the loop can remain owned there.
+- `return h` transfers `h` to the caller and checks the values the return would drop. The failure branch of
+  `?` has the same scope-exit check as an explicit return from the enclosing function or closure. This applies
+  to both the `Err` branch for `Result` and the `None` branch for `Option`. The success branch continues with
+  the unwrapped payload and the remaining ownership state after evaluating the operand.
+- A hard panic terminates the process without a normal scope exit (RFC-0153 section 1a,
+  `spec.runtime.panics.dynamics-1`).
+- RFC-0140 section 9 owns the proposed check for effect sites. A handler can abandon the captured continuation
+  while the program keeps running, so that proposal must account for obligations captured by the continuation.
+
+For example, after acquiring a linear transaction, `step(&tx)?` would abandon `tx` on failure even if
+`RunError: From<StepError>`. Code can commit on success and roll back on failure by matching on the result.
+Here `begin()` returns `Result<Tx, RunError>` and
+`step(&tx)` returns `Result<(), StepError>`. The consuming functions `commit(tx)` and `rollback(tx)` return
+`Result<(), RunError>` and `Result<(), RollbackError>`, respectively, and discharge the transaction on every
+normal return. The error builders `step_failed` and `step_and_rollback_failed` take ownership of their arguments
+and preserve them in the returned `RunError`.
+
+```metel
+fun run() -> Result<(), RunError> {
+    let tx := begin()?;
+    match (step(&tx)) {
+        Ok { value } => commit(tx),
+        Err { error } => {
+            let step_error := error;
+            match (rollback(tx)) {
+                Ok { value } => Err { error = step_failed(step_error) },
+                Err { error } => Err { error = step_and_rollback_failed(step_error, error) },
+            }
+        },
+    }
+}
+```
+
+If rollback succeeds, the function reports the original step error. If rollback also fails, the function reports
+both errors. An API whose failed rollback returns a still-owned transaction would have to handle or return that
+transaction as well.
+
+The first release with linear types uses explicit handling for paths that must discharge an obligation. Scope-exit
+shorthand, such as a deferred consuming action or a propagation operator with a named cleanup, is a follow-up design.
 
 ---
 
@@ -416,7 +534,7 @@ the value is then affine with a destructor, not linear.
 
 ---
 
-## Open Questions
+## Design Resolutions
 
 1. Ship the four-point lattice (§1) as the documented model: **resolved 2026-11-05**, yes; the settlement of
    RFC-0206 is written against it.
@@ -425,14 +543,23 @@ the value is then affine with a destructor, not linear.
    declared and checked against the fields, not inferred. In v0.16.0 `copy` is implemented and `linear` is reserved
    ("Planned for"). Applies to structs, enums and named records, not the anonymous record type.
 3. *(Moved to RFC-0215.)* `NonLinear<T>`'s surface syntax.
-4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) — noted as a real, later
-   extension; not attempted here.
+4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) is deferred.
 5. **The default for an unbounded type parameter with respect to `Linear`**: **decided 2026-11-05, revised 2026-11-07**, section 2.2. A bare `T`
-   is possibly linear and assumes no capabilities; dropping it requires a written `T: Discard`, as copying requires
-   `T: Copy`. Nothing is inferred. In v0.16.0 every type is `Discard`, so nothing changes for existing programs. The
-   demonstration required there remains a gate for accepting sections 1 to 2.1.
+   is possibly linear and assumes no capabilities. Dropping it requires an effective `T: Discard` bound.
+   Public functions state the bound, and eligible private functions can infer it under section 2.2.
+   In v0.16.0 every type is `Discard`, so nothing changes for existing programs.
+   The derivations in section 2.2 are checked against the implemented rules at the linear release gate.
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
-7. **Binding-level strengthening** (a `linear` binding, parameter, return or field on an ordinary type, never looser than the type): designed as an extension on 2026-11-06 and drafted as RFC-0220. It is local discipline and does not change the declared-class model of sections 1 to 2.1.
+7. **Binding-level strengthening** is deferred to RFC-0220.
+8. **Discharging a linear value on an early exit** (section 2.3). Code handles the consuming action explicitly
+   on each affected exit path. Scope-exit shorthand is deferred.
+9. **Dismantling receiver** (section 2). An inherent method in the defining module uses `dismantle self`.
+10. **Discard capability** (section 2.2). The spelling is `Discard`. Eligible private functions infer
+    positive bounds and public functions state them. Support for `T: !Discard` is deferred.
+11. **Printing** (section 2.2). `print` and `println` take `&T` in the first linear release.
+12. **Skipped-field cleanup** (section 2). Skipped fields drop when the owning pattern commits.
+13. **Aspect-object erasure** (section 2.2). Coercion to an owned object requires `Discard`. Borrowed
+    coercion preserves the owner's obligation.
 
 ---
 
@@ -445,10 +572,12 @@ the value is then affine with a destructor, not linear.
 - RFC-0096 (Auto-Impl Aspects, under review) — formalizes that pattern once, generically,
   rather than each auto-impl aspect (`Send`/`Sync`/`Linear`) restating it
 - RFC-0081 (Negative Impls) — negative impls; `Linear` is no longer opted out of (it is declared, not inferred)
+- RFC-0173 (Generic Bodies Are Checked Against Their Declared Bounds) — private `Discard` inference is
+  a limited exception to D2, with definition-time checking preserved (§2.2)
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
 - RFC-0039 (`aspect` Alias Syntax, `1-under-review`) — vehicle for the `Affine` alias (§2.1)
 - RFC-0049 (Linear Function Type System, superseded by RFC-0194) — documents the generic-`drop`-discharges-
-  linearity hazard this RFC's `drop<T: !Linear>` avoids
+  linearity hazard this RFC's `drop<T: Discard>` avoids
 - RFC-0063 (Allocator Handles, accepted) — §9 item 5's deadline this RFC's §3
   satisfies, together with RFC-0090
 - RFC-0090 (Structural Records — Rows and Tiers) — the `{ … }` type-former and tier 2
@@ -475,8 +604,7 @@ the value is then affine with a destructor, not linear.
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** unspecified; the partial-consumption floor (now RFC-0215 §3) is required before RFC-0071/RFC-0067 Phase 3 begins
-per RFC-0063 §9 item 5.
+**Outcome:** Accepted on 2026-11-05. The language owner settled the generic-class and elimination rules
+on 2026-11-07. The per-path exit rule and the remaining first-release surface decisions are in sections 2–2.3.
 
-*(Decision rationale goes here when the RFC is evaluated.)*
+**Release gate:** metel-core#1828 tracks integration and implementation of the linear design.

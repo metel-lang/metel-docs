@@ -64,15 +64,18 @@ What you may do with a generic value is whatever its bounds say, and nothing mor
 |---|---|---|
 | `T: Copy` | copy a `T` implicitly | written |
 | `T: Clone` | call `.clone()` | written |
-| `T: Discard` | let a `T` go out of scope | written bound, but the capability is computed by the compiler |
+| `T: Discard` | let a `T` go out of scope | written on public functions, inferred for eligible private functions, capability computed by the compiler |
 
 A bare `T` is **possibly linear**: it assumes no capabilities, so generic code may not drop it. That is the
-conservative reading and it is why writing `T: Discard` is needed in generic code that drops values.
+rule for public generic functions that drop values. Eligible private free functions infer positive
+`Discard` requirements at definition time, including requirements from directly called helpers. Recursive
+groups use written bounds. The first linear release defers negative `T: !Discard` bounds. `print` and `println` take `&T` for `T: Display`, so formatting
+a borrowed value preserves the caller's ownership.
 
 ```metel
 fun keep<T>(x: T) -> T { x }                      // fine: moves x on
-fun lose<T>(x: T) { }                             // error once linear ships: x is dropped, T is not Discard
-fun lose_ok<T: Discard>(x: T) { }                 // fine
+fun lose<T>(x: T) { }                             // private: infers T: Discard
+pub fun lose_ok<T: Discard>(x: T) { }             // public: states T: Discard
 ```
 
 **Staging.** In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true. Nothing breaks and
@@ -108,14 +111,14 @@ because the rest might be linear too. So:
   out leaves a smaller structural type whose class is recomputed.
 - A pattern **consumes** the value it destructures. It does not leave a half-moved remainder behind.
 - A type with a destructor (`Drop`) is dismantled only by an explicitly marked method in its defining module, and doing so
-  skips the destructor (the marker's spelling is open; `consume self` is a placeholder):
+  skips the outer destructor at the point of destructuring. The receiver is written `dismantle self`:
 
 ```metel
 struct Logged<T> { value: T }
 extend<T: Discard> Logged<T>: Drop { fun drop(&var self) { log("gone"); } }
 
 extend<T> Logged<T> {
-    fun into_inner(consume self) -> T {    // marker, defining module only
+    fun into_inner(dismantle self) -> T {    // marker, defining module only
         let Logged { value } := self;      // allowed: destructor skipped
         value
     }
@@ -170,7 +173,7 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D1 | Affine is the default class. Keywords are `copy` and `linear`. There is no `affine` keyword. | Accepted | An `affine` keyword; Rust-style implicit `Copy` | High | Moderate | none |
 | D2 | A non-generic named type's class is **declared** and checked against its fields. A type holding a linear field must be declared `linear`, with a fix-it. | Accepted | Infer the class from the fields (Rust auto traits) | High | Moderate | D1 |
 | D3 | `Copy` is sealed (representation copy). `Clone` is provided and unwritable for `Copy` types. Grants appear only in the declaration. | Accepted | Rust's open `Copy`/`Clone` | High | Hard | none |
-| D4 | Capabilities are written bounds: `T: Copy`, `T: Clone`, `T: Discard`. A bare `T` is possibly linear. | Accepted | Infer `Discard` for bodies; a closed default where `T` is discardable and `?Discard` opts in (Swift style); declare universes (Austral style) | Medium-High | Cheap in v0.16.0 (the bound is vacuous), moderate later | D1 |
+| D4 | A bare `T` is possibly linear. Public functions state their capability bounds. Eligible private free functions may infer positive `Discard` requirements at definition time. | Private inference amendment in RFC-0089 | Infer `Discard` for public bodies; a closed default where `T` is discardable and `?Discard` opts in (Swift style); declare universes (Austral style) | Medium-High | Cheap in v0.16.0 (the bound is vacuous), moderate later | D1 |
 | D5 | `Discard` is computed by the compiler. It cannot be implemented or negated by users. `Copy` implies `Discard`, and a `Drop` type is `Discard`. | Accepted | A user-written `Discard` impl | High | Cheap | D4 |
 | D6 | In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true. The check activates at the `linear` release. | Accepted | Ship the check early | High | Cheap | D4, D5 |
 | D7 | The class of a generic instance is **computed** from its owned fields. Generic types are open by default. | **Accepted (2026-11-07)** | Declared class with explicit conditional (Austral `Type` universe, Swift `~Copyable`); closed by default | **Medium: the keystone** | Hard once std is written | D4 |
@@ -178,12 +181,12 @@ Reversibility: **cheap** means a text and checker change with no user-visible br
 | D9 | `T: Discard` on a type parameter forbids linear arguments, and every use of the type repeats the bound. | **Accepted (2026-11-07)** | Bound only at the declaration; a separate marker | Medium | Moderate | D4, D7 |
 | D10 | A field whose type mentions no type parameter and is linear forces `linear` on a generic type (syntactic rule, error at the field with a fix-it). A field such as `Ticket<T>`, linear for every `T`, is not caught; for a public type the checked `Discard` condition (D19) catches it, for a private type it surfaces at the drop sites. | **Accepted (2026-11-07)** | A symbolic test with every parameter assumed discardable (more precise, needs a solver, limits flagged in review 11); no rule (D7 and D19 only) | Medium-High | Cheap | D7, D19 |
 | D11 | A partial move out of a nominal aggregate is legal only when it is known `Discard`. Structural types still narrow. | **Accepted in design (2026-11-07); effective with the `linear` release** | Rust-style residuals; ban partial moves outright; per-field classes | Medium | Moderate | D2, D7 |
-| D12 | Destructuring patterns consume the scrutinee. Skipped fields must be `Discard`. Matching through a reference consumes nothing; a whole-value `_` consumes nothing. | **Accepted in design (2026-11-07); effective with the `linear` release** | Rust's `..` leaves a residual | Medium | Moderate (it overrides implemented RFC-0137 pattern narrowing) | D11 |
-| D13 | `Drop` impls must prove the target `Discard`. A type with a `Drop` impl is dismantled only by an **explicitly marked** inherent method in its defining module taking an owned `self`, by total destructuring that suppresses only the outer destructor. The marker is illegal on borrowed receivers, aspect defaults, aspect impl methods and outside the defining module. Spelling is tracked in metel-core#1828 and RFC-0089's open items; it must not collide with `pub` (RFC-0218). | **Accepted in design (2026-11-07); takes effect with D11 and D12** | Implicit own-method authority; Rust-style ban; no conditional `Drop` (a `Drop` type must be `Discard` for every instantiation) | Medium | Moderate | D11, D12 |
+| D12 | Destructuring patterns consume the scrutinee. Skipped fields must be `Discard` and drop when the owning pattern commits. Matching through a reference consumes nothing; a whole-value `_` consumes nothing. | **Accepted in design (2026-11-07); effective with the `linear` release** | Rust's `..` leaves a residual | Medium | Moderate (it overrides implemented RFC-0137 pattern narrowing) | D11 |
+| D13 | `Drop` impls must prove the target `Discard`. A type with a `Drop` impl is dismantled only by an **explicitly marked** inherent method in its defining module taking an owned `self`, by total destructuring that suppresses only the outer destructor. The marker is illegal on borrowed receivers, aspect defaults, aspect impl methods and outside the defining module. The receiver is written `dismantle self`. Passing it intact to an ordinary consuming function preserves its usual destructor behavior. | **Accepted in design (2026-11-07); takes effect with D11 and D12** | Implicit own-method authority; Rust-style ban; no conditional `Drop` (a `Drop` type must be `Discard` for every instantiation) | Medium | Moderate | D11, D12 |
 | D14 | A closure capturing a linear value must be declared `linear`. A non-`linear` function type is `Discard`. | **Accepted in design (2026-11-07); RFC-0194 awaits formal acceptance** | Infer linearity of closures; allow droppable linear closures | Medium-High | Moderate | D7 |
 | D15 | Binding-level qualifiers: `linear let`, `linear` parameters, returns and fields (RFC-0220). | **Deferred (2026-11-07)**: RFC-0220 parked as a draft; wrapper and bracket patterns (section 1.8) cover the strong case | Not adding them; type-level only | Low | Cheap (draft) | D7, D11 |
-| D16 | The `dyn` erasure gate, native owning storage (`List<Tx>`), and `consume_each`'s contract. | Open (release gates) | Forbid at first | n/a | n/a | D7 |
-| D17 | Do destructors run at panic? When do skipped fields drop (at the pattern, or at scope end)? | Open (#1835, #1843) | n/a | n/a | n/a | D12 |
+| D16 | An owned `dyn Aspect` coercion needs known `Discard`. Borrowed coercion preserves the original ownership obligation. Native owning storage (`List<Tx>`) and `consume_each` are separate release work. | Erasure rule decided in RFC-0089 | An owned aspect object that carries and can discharge a linear obligation | n/a | n/a | D7 |
+| D17 | Skipped fields drop when the owning pattern commits (#1843). Panic cleanup is tracked separately (#1835). | Pattern timing decided in RFC-0089 | Drop skipped fields at scope end | n/a | n/a | D12 |
 | D18 | Public generic types state their `Copy`/`Clone` conditions (the interface). `Discard` is computed from fields and, until D19, is not part of the stated interface. | Accepted (RFC-0206 section 6) | State `Discard` too (D19) | Medium | Moderate | D7 |
 | D19 | Public generic types also have a stated `Discard` condition. Without a statement, outside code sees the conservative default (`Discard` exactly when every parameter is `Discard`); the effective condition, stated or default, is checked against the fields and a stronger one is a declaration error. Inside the defining module the exact computed class applies. A publish-time interface comparison (M2) is a possible later addition. | **Accepted (2026-11-07)** | Required statement on every public generic type; tooling only; policy only | Medium-High | Moderate | D7, D18 |
 
@@ -269,7 +272,7 @@ In order of how much I would want more time on:
 
 1. **D7, computed generic classes (now accepted).** It is the only decision that touches every generic type, and it is the hardest
    to reverse once std is written. The comparison report puts the two models side by side.
-2. **D13, `Drop` dismantling (accepted in design, marker spelling open).** The most speculative: no prior art handles
+2. **D13, `Drop` dismantling (`dismantle self`).** The most speculative: no prior art handles
    `Drop` plus conditional capability this way, and it needed three review rounds to reach a coherent form; the explicit
    marker replaced the vaguer "own methods" boundary.
 3. **D12, patterns consume.** It is a deliberate divergence from Rust and it overrides an implemented v0.13.0
@@ -278,7 +281,8 @@ In order of how much I would want more time on:
 4. **D19, stated `Discard` for public generic types (now accepted).** It answers the public-API instability of D7, but it adds a
    declaration-site statement for a capability otherwise computed, and the conservative default can over-restrict
    public types that do not own their parameter.
-5. **D4, the written `T: Discard` bound.** The cost (about 30 to 40 percent of by-value generic functions) is large,
-   though it is the same kind of cost as `Copy` bounds and Metel has no users to migrate.
+5. **D4, `Discard` requirements at the visibility boundary.** The earlier census found that 30 to 40 percent
+   of sampled by-value generic functions discard on some path. It predates private inference. The remaining
+   annotation cost depends on how many of the functions need written signatures under RFC-0089 section 2.2.
 
 Decisions D1 to D6 and D18 are the part of the design that does not depend on linear types being right.
