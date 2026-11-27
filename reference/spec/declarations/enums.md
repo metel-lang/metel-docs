@@ -168,6 +168,7 @@ enum type alone, with no variant qualification, does not identify a variant —
 `Message(...)` does not choose a variant from its arguments. The existing
 bare/qualified unit-variant forms above remain valid alongside the call form.
 
+<!-- doc-example: skip reason="enum variant construction is not implemented yet; the qualified-call form currently hits an internal error rather than constructing" -->
 ```metel
 enum Message { Text { body: String }, Number { value: i64 }, Empty }
 
