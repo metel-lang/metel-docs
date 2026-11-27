@@ -110,7 +110,7 @@ comprehension, matching the behaviour of `?` inside any block. Collecting `Resul
   targets; the ranges `1..=10` are already iterables.
 - **RFC-0190 (`Try`):** a `Try`-generic `collect` is the obvious way to get fallible
   comprehensions.
-- **RFC-0204 (pipelines and composition):** `[f(x) for (x in xs)]` and `xs |> map(f)` overlap;
+- **RFC-0204 (pipelines):** `[f(x) for (x in xs)]` and `xs |> map(f)` overlap;
   both are sugar over the same adapters.
 - **RFC-0199 (`Lazy<T>`):** a comprehension over a `Stream` terminates only if the source is
   bounded by a `take`; unbounded sources need the lazy form.

@@ -76,6 +76,11 @@ disambiguate. RFC-0125's remaining positional row operations, including renumber
 and RFC-0247's variadic call parameters are separate questions. A tuple-shaped use of
 the row binder does not by itself specify a positional splice or renumbering operation.
 
+The Function types stage owns the shared binder prerequisite for RFC-0247. The first
+slice covers binding and inferring a row, forming `.{ R }` from it, and checking
+field-wise bounds such as `where R: Display`. Effect rows and markers uses the same
+binder. Neither stage needs general inference across row equations for this slice.
+
 ## 3. Alternatives considered
 
 Earlier drafts required `..R` at every row use. That made extracting a row from a
@@ -116,8 +121,9 @@ the declaration of the parameter to suggest the correct spelling.
    current text only names `record R`.
 2. **Row equations**: the left operand is the bound row `R` and a literal row on the right
    is written `..{ .token: Token }`. An open literal may use a provably disjoint row tail,
-   `..{ .token: Token, Rest }` (language owner, 2026-11-25). Equation solving and inference
-   across generic boundaries need review.
+   `..{ .token: Token, Rest }` (language owner, 2026-11-25). New equation solving and
+   inference across generic boundaries are outside the shared binder slice and need
+   separate review.
 3. *(Pruned, PROCESS.md's "prune harder" rule, 2026-11-26.)* A lint or rewrite for
    `record R` parameters used only as `..R` is a tooling convenience, not a design
    question blocking acceptance.

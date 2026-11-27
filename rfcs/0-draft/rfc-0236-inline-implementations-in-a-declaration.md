@@ -127,8 +127,8 @@ itself, is an error, so a name is never both.
 - **RFC-0207** (implemented): the colon list and `derives` are unchanged; this is the later stage it names.
 - **RFC-0105** (draft) and **RFC-0104** (draft): superseded by this RFC.
 - **RFC-0102, RFC-0103** (implemented): bodyless `extend` and bodyless aspect declarations are unchanged.
-- **RFC-0228** (under review): its open question 3 (a qualified call syntax) would give blocks and calls one notation,
-  `Aspect<Args>::method`.
+- **RFC-0259** (draft): owns qualified call syntax. Its path-form candidate could inform the
+  notation for inline implementation blocks.
 - **RFC-0227, RFC-0234** (under review): a derived aspect is not written in a block; `derives` and a block for one aspect is `T0015`.
 - **RFC-0235** (draft): the aspect form needs the colon free.
 - **RFC-0060** (coherence): an impl in a block is an ordinary impl for the overlap and orphan checks.

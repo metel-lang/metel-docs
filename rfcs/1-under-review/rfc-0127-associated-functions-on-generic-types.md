@@ -142,8 +142,8 @@ already what makes `Counter::new()` work, and it needs no `static` keyword. RFC-
 settled the three receiver forms; this is the fourth case it did not name — their absence.
 
 A method **with** a receiver stays unreachable through the path form. `Tok::get(t)`
-(UFCS-style explicit-receiver calls) is a separate feature with its own ambiguity
-questions, and is out of scope.
+(an explicit-receiver call) is outside this RFC. RFC-0259 owns the related syntax for
+calls that explicitly name an instantiated aspect.
 
 ### 2.2 Aspect-declared associated functions
 
