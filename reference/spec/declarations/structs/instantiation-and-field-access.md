@@ -230,14 +230,10 @@ name). It initializes every field exactly once; a missing, duplicate, or extra f
 an error. Elsewhere in the declaring module, and in every other module, construction
 uses the call syntax above.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="General, unrestricted brace-literal construction is still the only construction mechanism; the constructor-body-only restriction this rule states does not exist to be checked." -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
-<!-- rfc.py:origins:end -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Blocked on a still-draft, not-yet-accepted design this rule depends on, not just implementation: the constructor-body-only restriction this rule states is meaningless until the canonical/unchecked constructor aspects it refers to exist and reach acceptance -- there is no constructor body to restrict it to yet. General, unrestricted brace-literal construction remains the only construction mechanism in the meantime." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: General, unrestricted brace-literal construction is still the only construction mechanism; the constructor-body-only restriction this rule states does not exist to be checked._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Blocked on a still-draft, not-yet-accepted design this rule depends on, not just implementation: the constructor-body-only restriction this rule states is meaningless until the canonical/unchecked constructor aspects it refers to exist and reach acceptance -- there is no constructor body to restrict it to yet. General, unrestricted brace-literal construction remains the only construction mechanism in the meantime._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-2}
@@ -246,10 +242,10 @@ A bare privileged-construction expression is rejected directly in `if`, `while`,
 `match` condition position; parenthesizing it resolves the ambiguity with that
 construct's own body block.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="This restriction exists only to keep privileged construction unambiguous with a block once that form is restricted to constructor bodies; neither the restricted form nor this specific check exists yet." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Same root gap as legality-1: this restriction only matters once the form it disambiguates is restricted to constructor bodies, which depends on that still-draft design reaching acceptance rather than on implementation effort alone." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: This restriction exists only to keep privileged construction unambiguous with a block once that form is restricted to constructor bodies; neither the restricted form nor this specific check exists yet._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Same root gap as legality-1: this restriction only matters once the form it disambiguates is restricted to constructor bodies, which depends on that still-draft design reaching acceptance rather than on implementation effort alone._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
