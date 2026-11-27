@@ -27,8 +27,13 @@ coverage:
 
 > **Narrowed 2026-11-27 (language owner).** The empty-brace form (`Empty {}`,
 > `Flag::On {}`) is a brace literal, and RFC-0100 section 3 makes every brace literal
-> legal only inside its own type's `extend` blocks (metel-core#2200). The bare form stays
-> legal anywhere, beside the call form `Empty()` / `Flag::On()`.
+> legal only inside its own type's `extend` blocks (metel-core#2200). The bare form of a
+> zero-field variant (`Flag::On`) stays legal anywhere, beside the call form `Flag::On()`.
+
+> **Retired 2026-11-27 (language owner): bare zero-field struct construction.** RFC-0100
+> section 7 builds a zero-field struct or named record by call, `Empty()`; its bare name
+> `Empty` is no longer a value (metel-core#2220). This RFC's struct half survives only as the
+> empty-brace literal inside the type's own `extend` blocks.
 
 ## Summary
 

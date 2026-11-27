@@ -101,6 +101,10 @@ plain bindings) and the unqualified-variant section. The spec's Struct patterns 
   their implementation (metel-core#2035).
 - **RFC-0221** (implemented): the rule that a name is dotted when it is a row label and bare when it is a member a nominal type
   declares settles the spelling.
+- **RFC-0100** (section 3, "Representation patterns"): the language owner approved this RFC's spelling there on 2026-11-26
+  (`Point { x: 0, y: vertical }`, a refutable field making the pattern refutable, a private field not nameable outside its
+  module even with `_`). On 2026-11-27 that part was split out of RFC-0100 to this RFC, so RFC-0100 could be implemented
+  without it.
 
 ---
 
