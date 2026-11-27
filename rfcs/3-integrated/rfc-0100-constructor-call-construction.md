@@ -10,7 +10,7 @@ impl_status: not-started
 coverage:
   "1": { spec: "spec.modules.unified-type-and-value-namespace.legality-1" }
   "2": { spec: "spec.declarations.structs.call-syntax-construction.legality-1" }
-  "3": { kind: untestable, reason: "Split to RFC-0114 (2026-11-27) for the privileged-construction mechanism -- depends on RFC-0114's own Construct/ConstructUnchecked aspects rather than this RFC's. The representation-patterns discussion retained in this section states no new testable claim." }
+  "3": { spec: "spec.declarations.structs.privileged-representation-construction.legality-1" }
   "4": { kind: untestable, reason: "Deferred, not part of this proposal -- the inferred, expected-type compact form is withdrawn and left to a future RFC. There is no design here to test." }
   "5": { spec: "spec.declarations.structs.call-syntax-construction.legality-1" }
   "6": { kind: untestable, reason: "Split to RFC-0257 (2026-11-27) -- depends on RFC-0255's shared section grammar rather than this RFC's own. No design is stated here to test." }
@@ -31,7 +31,9 @@ coverage:
 
 > **Status — accepted (2026-11-26).** Open questions resolved (section 1 unification grounded in #1560/#1571, enum/alias/generics scope settled, readability and privileged-construction syntax settled); language owner judges the design settled without further prototype gating
 
-> **Status — integrated (2026-11-27).** Section 1 (namespace unification), section 2/5 (call-syntax construction), and section 7 (enum variant construction) integrated into the Language Spec, stated as accepted fact ahead of the (not yet started) implementation, each rule paired with a bare `rfc.py:exemption` (ADR-0050 section 6) rather than an architecture limitation record. Sections 2/5 and 7 are now implemented (metel-core#2199, metel-core#2201). Section 4 (deferred compact form) is out of scope by design. Section 6 (whole-row construction) is split to RFC-0257 (2026-11-27) to depend on RFC-0255's shared section grammar instead of its own. Section 3 (privileged representation construction) is split to RFC-0114 (2026-11-27), which keeps its surface syntax and RFC-0100's own RFC-0114-dependent half in sync from one place instead of two.
+> **Status — integrated (2026-11-27).** Section 1 (namespace unification), section 2/5 (call-syntax construction), section 3 (privileged representation construction), and section 7 (enum variant construction) integrated into the Language Spec, stated as accepted fact ahead of the (not yet started) implementation, each rule paired with a bare `rfc.py:exemption` (ADR-0050 section 6) rather than an architecture limitation record. Sections 2/5 and 7 are now implemented (metel-core#2199, metel-core#2201). Section 4 (deferred compact form) is out of scope by design. Section 6 (whole-row construction) is split to RFC-0257 (2026-11-27) to depend on RFC-0255's shared section grammar instead of its own. Section 3 (privileged representation construction) is integrated too, revised the same day to impl scope (see below).
+
+> **Revised (2026-11-27, language owner).** Privileged representation construction (section 3) is an ergonomics feature, not an invariant boundary: the nominal brace literal is legal anywhere inside an `extend` block of its own type, not only in a canonical or unchecked constructor body. The single-function guarantee RFC-0114 §1.1 built on is dropped; invariants are left to refinement types (RFC-0202). Section 3 therefore no longer depends on RFC-0114's `Construct`/`ConstructUnchecked` aspects, and is implementable now.
 
 ## Design history
 
@@ -110,14 +112,13 @@ never ambiguous (section 7).
 **The inferred, expected-type compact form is deferred, not part of this proposal.**
 `new` is not reserved.
 
-This revision's scope grew beyond construction-call syntax: a privileged
-representation-construction form, `Point { ... }` — the existing nominal brace literal,
-revived narrowly for use only inside a type's own canonical or unchecked constructor
-body, with a condition-position restriction needed to keep it unambiguous with a block
-— was drafted jointly with RFC-0114 and is now split there (section 3), since it
-depends on RFC-0114's own `Construct`/`ConstructUnchecked` aspects rather than this
-RFC's. Representation patterns keep their existing spelling, `Point { x, y }`,
-unmigrated, and are unaffected by that split — see section 3 and open question 6.
+This revision's scope grew beyond construction-call syntax: section 3 also specifies a
+privileged representation-construction form, `Point { ... }` — the existing nominal
+brace literal, kept for use inside the type's own `extend` blocks — and a
+condition-position restriction needed to keep it unambiguous with a block.
+Representation patterns keep their existing spelling, `Point { x, y }`, unmigrated.
+This is a substantive, separate design area, not a detail of ordinary call-syntax
+construction — see section 3 and open question 6.
 
 This RFC remains under review. Release assignment lives in
 metel-core#807's milestone. The normative spec and interpreter remain unchanged until
@@ -251,17 +252,54 @@ let a := Ticket(value = 1);   // construction: `Ticket` names a struct
 A type alias exposes a construction target, not a new constructor value binding. No
 `new` keyword is reserved by this revision.
 
-## 3. Privileged representation construction: split to RFC-0114
+## 3. Privileged representation construction and patterns
 
-> **Split to RFC-0114 (language owner, 2026-11-27).** This RFC is `3-integrated`; the
-> privileged-construction mechanism it was describing jointly with RFC-0114 §1.1 —
-> surface syntax, the condition-position ambiguity fix, the enum-variant scoping note —
-> depends on RFC-0114's still-open `Construct`/`ConstructUnchecked` aspects, so an
-> integrated RFC describing half of a mechanism the other half of which is not yet
-> accepted was a tangle, not a division of labor. RFC-0114 §1.1 now owns that content
-> outright. This section keeps only the representation-patterns discussion below,
-> which was never entangled with RFC-0114 — it states that patterns keep their
-> existing, already-covered syntax, unaffected by any of this.
+> **Revised (2026-11-27, language owner).** Privilege is impl-scoped, not
+> constructor-body-scoped. The 2026-11-26 revision confined the brace literal to a
+> type's canonical or unchecked constructor body, which tied this section to RFC-0114's
+> `Construct`/`ConstructUnchecked` aspects — still `0-draft`, with no constructor body
+> to restrict anything to until they exist. Privileged construction is an ergonomics
+> feature: what it guarantees is that code outside the type's own impls constructs
+> through the call form. Invariants are left to refinement types (RFC-0202), not to a
+> single minting function, so this section no longer depends on RFC-0114.
+
+The nominal brace literal, `Point { x = 1, y = 2 }`, is legal anywhere inside the body of
+an `extend` block whose target is that type — an inherent `extend Point { ... }` block or
+an aspect impl `extend Point: Add { ... }` — and nowhere else (language owner,
+2026-11-27). It may target only that block's own type, spelled `Self` or its explicit
+type name; constructing another type, even from inside an impl, uses that type's
+ordinary call form (language owner, 2026-11-26). Everywhere else, in the declaring
+module and every other module, construction is the call form, `Point(x = 1, y = 2)`.
+
+The brace literal builds the value directly from its fields. It invokes no constructor
+and implies no validation; a method that needs to check something checks it itself, as
+an ordinary function would.
+An explicit field-list representation construction initializes every field exactly
+once; a missing, duplicate, or extra field is an error (language owner, 2026-11-26).
+A whole-row form such as `Self { ..fields }` consumes a complete anonymous record
+whose row has exactly the target's fields with matching types and builds the value the
+same way (language owner, 2026-11-26). It remains subject to ordinary ownership and
+visibility rules. Its exact grammar needs review against row spread syntax (RFC-0255).
+
+RFC-0114, if accepted, layers its `Construct` aspect on top of this: what the call form
+invokes and how construction can fail. It does not narrow where the brace literal is
+legal. **Per-variant privileged construction is not settled here.** RFC-0114 §9 and
+RFC-0210 propose variant-level forms (`Self::Variant { field = value }`) under a
+constructor-only privilege rule written before this revision; whether enum variant brace
+literals follow this section's impl-scoped rule instead is open (open question 7).
+
+This revives the struct-literal-vs-block ambiguity nominal brace literals were
+originally retired for: a bare `T { ... }` directly in `if`/`while`/`match` condition
+position is ambiguous between a construction expression and the start of that
+construct's own body block. Resolved the same way other call-syntax languages with this
+problem resolve it: **a bare privileged-construction expression is rejected directly in
+condition position; parenthesize it there, `if (Point { x = 1 }).active { ... }`**
+(language owner, 2026-11-26). This does not affect `Point(x = 1, y = 2)` ordinary
+construction, which stays unambiguous in condition position because it opens with `(`
+rather than `{`; nor does it affect representation patterns, which never appear in
+condition position in the first place. Exact production-level placement of the
+restriction needs grammar review; this fixes the specific ambiguity, not every
+positional interaction a prototype may still surface.
 
 ### Representation patterns
 
@@ -605,12 +643,22 @@ overload set and explicit/glob imports across type and value categories against 
    (section Design history) instead reopens a different, known problem — struct-literal-
    vs-block ambiguity in condition position — which is settled directly: a bare
    privileged-construction expression is rejected in `if`/`while`/`match` condition
-   position, requiring parentheses there (RFC-0114 §1.1, split from this RFC's section
-   3). Representation patterns were
+   position, requiring parentheses there (section 3). Representation patterns were
    never part of this collision and keep their current, unmigrated spelling regardless.
    Exact production-level grammar for the condition-position restriction still needs
    review; this resolves the design question, not every parser detail a prototype may
    surface.
+7. **Open (raised 2026-11-27) — do enum variant brace literals follow section 3's
+   impl-scoped rule?** Section 3 now admits `T { ... }` anywhere in `T`'s own `extend`
+   blocks. For an enum, the brace form is necessarily per-variant
+   (`Message::Text { body = ... }`), and RFC-0114 §9 and RFC-0210 propose per-variant
+   privilege confined to that variant's own canonical or unchecked constructor — a rule
+   written under the constructor-body model section 3 has since dropped. Either enum
+   variant brace literals become legal anywhere in the enum's own `extend` blocks,
+   matching structs, or per-variant privilege keeps its own narrower rule and RFC-0210
+   says why. Until settled, the impl-scoped restriction is specified and implemented for
+   struct brace literals only; enum variant brace literals keep their current,
+   unrestricted legality alongside the call form (section 7).
 
 **Lifecycle outcome:** Accepted (2026-11-26), tracked by metel-core#807. The design is
 settled; no spec integration or implementation transition is claimed. `3-integrated`

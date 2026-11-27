@@ -18,8 +18,8 @@ fun main() -> i64 {
 ```
 
 [Call-syntax construction](#spec.declarations.structs.call-syntax-construction.legality-1)
-replaces this example's construction, and the brace form above narrows to a privileged,
-constructor-body-only use, [covered below](#spec.declarations.structs.privileged-representation-construction.legality-1).
+replaces this example's construction, and the brace form above narrows to a privileged
+use inside the type's own `extend` blocks, [covered below](#spec.declarations.structs.privileged-representation-construction.legality-1).
 
 When a local variable has the same name as a field, the `= value` part can be omitted
 ([**shorthand field init**](#spec.declarations.structs.instantiation-and-field-access.legality-1)):
@@ -210,9 +210,9 @@ neither heap allocation nor a fresh runtime identity.
 
 The nominal brace literal above this page's shorthand-field-init rule is
 [restricted to a single privileged use](#spec.declarations.structs.privileged-representation-construction.legality-1)
-once call-syntax construction exists: inside the target's own canonical or explicitly
-unchecked constructor body, `Point { x = 1, y = 2 }` creates the final value directly,
-without recursively invoking that same constructor. Elsewhere, a struct or enum is
+once call-syntax construction exists: anywhere inside an `extend` block of its own type,
+inherent or aspect impl, `Point { x = 1, y = 2 }` builds the value directly from its
+fields, invoking no constructor and implying no validation. Elsewhere, a struct is
 constructed only through call syntax. A bare privileged-construction expression is
 [rejected directly in `if`/`while`/`match` condition position](#spec.declarations.structs.privileged-representation-construction.legality-2)
 — it would otherwise be ambiguous with the start of that construct's own body block;
@@ -223,17 +223,20 @@ parenthesize it there.
 
 ##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-1}
 
-An explicit field-list or whole-row (`Self { ..fields }`) brace construction is legal
-only inside the body of its own type's canonical constructor or explicitly unchecked
-constructor, targeting only that constructor's own type (`Self` or its explicit type
-name). It initializes every field exactly once; a missing, duplicate, or extra field is
-an error. Elsewhere in the declaring module, and in every other module, construction
+An explicit field-list or whole-row (`Self { ..fields }`) struct brace construction is
+legal only inside the body of an `extend` block whose target is that struct type, and
+targets only that type (`Self` or its explicit type name). It initializes every field
+exactly once; a missing, duplicate, or extra field is an error. Elsewhere in the declaring module, and in every other module, construction
 uses the call syntax above.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Blocked on a still-draft, not-yet-accepted design this rule depends on, not just implementation: the constructor-body-only restriction this rule states is meaningless until the canonical/unchecked constructor aspects it refers to exist and reach acceptance -- there is no constructor body to restrict it to yet. General, unrestricted brace-literal construction remains the only construction mechanism in the meantime." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2200" reason="Not implemented yet: a struct brace literal is still legal anywhere, so the restriction to the type's own extend blocks this rule states is not checked." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Blocked on a still-draft, not-yet-accepted design this rule depends on, not just implementation: the constructor-body-only restriction this rule states is meaningless until the canonical/unchecked constructor aspects it refers to exist and reach acceptance -- there is no constructor body to restrict it to yet. General, unrestricted brace-literal construction remains the only construction mechanism in the meantime._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2200: Not implemented yet: a struct brace literal is still legal anywhere, so the restriction to the type's own extend blocks this rule states is not checked._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-2}
@@ -242,10 +245,10 @@ A bare privileged-construction expression is rejected directly in `if`, `while`,
 `match` condition position; parenthesizing it resolves the ambiguity with that
 construct's own body block.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Same root gap as legality-1: this restriction only matters once the form it disambiguates is restricted to constructor bodies, which depends on that still-draft design reaching acceptance rather than on implementation effort alone." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2200" reason="Same root gap as legality-1: this restriction comes with the impl-scoped brace literal, which is not implemented yet." -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Same root gap as legality-1: this restriction only matters once the form it disambiguates is restricted to constructor bodies, which depends on that still-draft design reaching acceptance rather than on implementation effort alone._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2200: Same root gap as legality-1: this restriction comes with the impl-scoped brace literal, which is not implemented yet._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>

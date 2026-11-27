@@ -565,12 +565,10 @@ part of the same records/views substrate review):
   case. Open question remaining: whether `Construct`'s default-impl derivation fits
   RFC-0096's auto-impl pattern, RFC-0093's comptime derive, or needs its own mechanism —
   RFC-0082 explicitly declined general default associated types, for reasons that may or
-  may not transfer to this narrower, whole-impl case. **§1.1 folds in RFC-0100 §3
-  (2026-11-27):** RFC-0100 is `3-integrated` and cannot depend on this RFC's still-open
-  `Construct` mechanism, so this subsection is now the sole owner of the
-  privileged-construction mechanism's surface syntax, condition-position fix, and
-  enum-variant scoping note — RFC-0100 §3 keeps only its own, unaffected
-  representation-patterns discussion.
+  may not transfer to this narrower, whole-impl case. **§1.1's single-minting-site rule superseded
+  (2026-11-27):** RFC-0100 §3 makes privileged construction impl-scoped and leaves
+  invariants to refinement types (RFC-0202); §1.1, §2 and open question 5 have yet to
+  absorb that.
 - **RFC-0146** *(under review, opened 2026-08-28)* — Row-Polymorphic Self-Views — a method may
   bind its receiver to a lower-bounded row parameter (`fun m<row R>(&self: Self.R) where
   R: { fd, .. }`), so one body type-checks once against the lower bound and is callable
@@ -1642,7 +1640,7 @@ implementation).
   grammar, reserved path roots (`root::`/`std::`/`self::`/`super::` → `.`-spelled), and
   RFC-0023's turbofish syntax. Reopened after acceptance to compare the full-dot design
   against a narrower context-limited dotted-path alternative before any integration.
-- **RFC-0100** *(integrated 2026-11-27, #807; implementation #2197)* — Nominal construction through a unified type and value namespace. Plain call-syntax construction, `Struct(args)`, sound because a module's type and value declarations share one namespace — a struct and a function can never carry the same name, so the call is never ambiguous, fixing the original argument-dependent lookup bug at its source rather than with dedicated syntax. The earlier `new T(...)`/expected-target `.(...)` consolidation (RFC-0226) is withdrawn; the compact inferred form is deferred to its own future RFC. Whole-row construction arguments are split to RFC-0257, to depend on RFC-0255's shared section grammar instead of this RFC's own. Privileged representation construction (section 3) is split to RFC-0114, which cannot be described from two integration-locked and still-open RFCs at once. Rollback of the prior constructor-call implementation is complete (#1945). Keyword arguments remain independently implemented under RFC-0223. Integrated into the Language Spec ahead of implementation, each rule exempted per ADR-0050 section 6; namespace unification, call-syntax construction, and enum variant construction are now implemented (metel-core#2198, #2199, #2201) — only the two split-out sections and patterns remain untouched.
+- **RFC-0100** *(integrated 2026-11-27, #807; implementation #2197)* — Nominal construction through a unified type and value namespace. Plain call-syntax construction, `Struct(args)`, sound because a module's type and value declarations share one namespace — a struct and a function can never carry the same name, so the call is never ambiguous, fixing the original argument-dependent lookup bug at its source rather than with dedicated syntax. The earlier `new T(...)`/expected-target `.(...)` consolidation (RFC-0226) is withdrawn; the compact inferred form is deferred to its own future RFC. Whole-row construction arguments are split to RFC-0257, to depend on RFC-0255's shared section grammar instead of this RFC's own. Section 3 keeps the existing nominal brace literal for privileged construction anywhere inside the type's own `extend` blocks (revised 2026-11-27 from constructor-body-only: an ergonomics feature, invariants left to refinement types, RFC-0202), with a condition-position restriction against the struct-literal-vs-block ambiguity; no dependency on RFC-0114. Rollback of the prior constructor-call implementation is complete (#1945). Keyword arguments remain independently implemented under RFC-0223. Integrated into the Language Spec ahead of implementation, each rule exempted per ADR-0050 section 6; namespace unification, call-syntax construction, and enum variant construction are now implemented (metel-core#2198, #2199, #2201) — section 3's impl-scoped brace literal (#2200) is next; section 6 is split to RFC-0257.
 - **RFC-0115** *(implemented 2026-07-24 in `develop`, ships v0.12.0, #575)* — Field Initializer Separator — `field_init` changes from
   `ident ":" expr` to `ident "=" expr`, so `Point { x = 1.0, y = 2.0 }`. **Split out of
   RFC-0100 on 2026-07-24**, which had bundled this with call-shaped construction; that

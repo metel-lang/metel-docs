@@ -89,17 +89,18 @@ Privileged representation construction of a variant is available only in that va
 own canonical constructor or explicitly unchecked counterpart (language owner,
 2026-11-26). A constructor for another variant cannot use the privileged form to bypass
 it; ordinary code invokes the target variant's construction interface. This is not a
-separate mechanism from RFC-0114 §1.1's privileged struct-level construction (split
-there from RFC-0100 section 3, 2026-11-27, since it depends on RFC-0114's own
-`Construct`/`ConstructUnchecked` aspects): it is RFC-0114 section 9's draft extension of
-that same mechanism one level down, proposing the brace form
-`Self::Variant { field = value }` and bare `Self::Unit`, minted inside the enum impl's
-own `construct`/`construct_unchecked` (own type only, no recursion through the call
-form). RFC-0114 §1.1 explicitly scopes its own privileged form to struct/enum-whole-type
-construction and defers per-variant privilege to its own section 9 pending that
-section's acceptance; this RFC does not independently define variant-level privileged
+separate mechanism from RFC-0100 section 3's privileged struct-level construction: it is
+RFC-0114 section 9's draft extension of that same mechanism one level down, proposing
+the brace form `Self::Variant { field = value }` and bare `Self::Unit`, minted inside
+the enum impl's own `construct`/`construct_unchecked` (own type only, no recursion
+through the call form). This RFC does not independently define variant-level privileged
 construction syntax, and should not be read as a third mechanism alongside those two.
-RFC-0114 owns the unchecked boundary and the precise minting rules.
+**Out of step since 2026-11-27:** RFC-0100 section 3 is now impl-scoped — struct brace
+literals are legal anywhere in the type's own `extend` blocks, as an ergonomics feature,
+with invariants left to refinement types (RFC-0202) — while the per-variant rule above
+still confines privilege to the variant's own constructor. Which of the two variant
+brace literals follow is RFC-0100's open question 7; this paragraph should be revised
+to match whichever is chosen.
 
 A shared reference to a variant may widen to a shared reference to its enclosing enum
 (language owner, 2026-11-26), preserving origin and lifetime. Unrestricted widening

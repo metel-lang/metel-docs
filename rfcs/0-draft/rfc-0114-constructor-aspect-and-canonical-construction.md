@@ -19,14 +19,16 @@ updated: '2026-11-27'
 > removing bare struct literals from general construction, and names RFC-0026 (`unsafe`
 > blocks, `0-draft`, deferred) as the foundation for §6's escape hatch.
 
-> **Revised 2026-11-27, language owner.** §1.1 folds in RFC-0100 §3's
-> privileged-construction-mechanism content (surface syntax, the condition-position
-> ambiguity fix, the enum-variant scoping note) rather than continuing to describe one
-> mechanism from two RFCs. RFC-0100, `3-integrated`, cannot depend on this RFC's
-> still-open `Construct` mechanism, so the split removes that tangle: this subsection
-> is now the sole owner, and RFC-0100 §3 keeps only its own, unaffected
-> representation-patterns discussion. Untangles the dependency #2200 (RFC-0100 §3's
-> implementation tracking) was blocked on.
+> **Revised 2026-11-27, language owner — §1.1's privilege rule is superseded.**
+> RFC-0100 §3 makes privileged construction impl-scoped: the nominal brace literal is
+> legal anywhere inside an `extend` block of its own type, not only inside `construct`
+> and `construct_unchecked`. It is an ergonomics feature; the invariant guarantee this
+> RFC built on a single minting function is dropped, and invariants are left to
+> refinement types (RFC-0202). Knock-on effects this RFC has not yet absorbed: §1.1's
+> "nowhere else in the language" rule, §2's claim that every `Self` passes through
+> `construct`, open question 5's resolution (which rested on §1.1), and the
+> single-path framing of the Summary and Motivation. What remains this RFC's to decide
+> is what the call form invokes and how construction can fail.
 
 > **Revised (2026-11-08, language owner).** Construction no longer fires automatically when a narrowed row is completed (§3 is rewritten): widening on reassignment stays as RFC-0137 and the spec define it, and the guarantee this RFC gives is about values *produced by a construction expression*. The enum extension of §9 and the brace minting form of RFC-0100 §7 are drafted in the same pass.
 >
@@ -202,53 +204,15 @@ representation generally — not a new promise, the same one recurring here.
 
 The language owner affirmed constructor-body-only privilege on 2026-11-26.
 
-> **Folded in RFC-0100 §3 (language owner, 2026-11-27).** RFC-0100 is
-> `3-integrated` and cannot itself depend on this RFC's still-open `Construct`
-> mechanism, so describing one mechanism from two sides — RFC-0100 §3 supplying
-> surface syntax, this subsection supplying which constructor bodies may use it — was
-> a tangle, not a division of labor. This subsection now owns the construction side
-> of the mechanism outright: surface syntax, the condition-position ambiguity fix,
-> and the enum-variant scoping note, all folded in below. RFC-0100 §3 is split to
-> here; it keeps only its own, independent representation-patterns discussion,
-> unaffected by any of this.
+> **Superseded (language owner, 2026-11-27).** Where privileged construction is
+> legal now belongs to RFC-0100 §3, and is impl-scoped: `Point { x = 1, y = 2 }` and
+> `Self { ..fields }` are legal anywhere inside an `extend` block of their own type,
+> including but not limited to `construct`'s body. The rule below — row-to-`Self`
+> admitted inside `construct` and `construct_unchecked` and nowhere else — no longer
+> holds as a language rule; it is kept for the reasoning it records. Invariants are
+> left to refinement types (RFC-0202), not to this subsection's single minting site.
 
-The working representation-construction spelling is `Point { x = 1, y = 2 }` — the
-existing nominal brace literal, not a dotted form — restricted to the target's
-canonical constructor or explicitly unchecked constructor body. Other code in the
-declaring module uses the ordinary construction interface. The privileged form may
-target only the constructor's own type, spelled as `Self` or its explicit type name;
-construction of another type uses that type's ordinary interface (language owner,
-2026-11-26).
-An explicit field-list representation construction initializes each field exactly once;
-missing, duplicate and extra fields are errors. A whole-row form such as `Self { ..fields }`
-consumes a complete anonymous record with exactly the target's fields and matching types,
-and performs the same final construction, subject to ownership and visibility rules
-(language owner, 2026-11-26). Its grammar needs reconciliation with row spread.
-
-This revives the struct-literal-vs-block ambiguity nominal brace literals were
-originally retired for (RFC-0100 §2): a bare `T { ... }` directly in `if`/`while`/`match`
-condition position is ambiguous between a construction expression and the start of that
-construct's own body block. Resolved the same way other call-syntax languages with this
-problem resolve it: a bare privileged-construction expression is rejected directly in
-condition position; parenthesize it there, `if (Point { x = 1 }).active { ... }`
-(language owner, 2026-11-26). This does not affect `Point(x = 1, y = 2)` ordinary
-construction, which stays unambiguous in condition position because it opens with `(`
-rather than `{`; nor does it affect representation patterns, which never appear in
-condition position in the first place. Exact production-level placement of the
-restriction needs grammar review; this fixes the specific ambiguity, not every
-positional interaction a prototype may still surface. §9 extends this one level down to
-enum variants; empty forms must be unambiguous there too.
-
-**This section is struct/enum-whole-type scoped only; per-variant privileged
-construction is §9's extension.** §9 proposes `Self::Variant { field = value }` and bare
-`Self::Unit` for minting a specific variant inside the enum impl's own
-`construct`/`construct_unchecked` — the same mechanism as this subsection, scoped one
-level down, pending this RFC's own acceptance. RFC-0210's "privileged representation
-construction of a variant" refers to that proposal, not an independent one.
-
-The exact grammar and unchecked-operation safety rules remain open.
-
-Correcting the syntax above exposed a hole the first draft's examples had papered over:
+Correcting the first draft's syntax exposed a hole the first draft's examples had papered over:
 its `construct` body wrote `SortedPair { small: …, big: … }`, **a bare struct literal that
 §2 abolishes.** The general problem is not cosmetic — every route to a `Self` value now
 goes through `construct`, including the route out of `construct` itself, which is circular.
