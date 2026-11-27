@@ -426,7 +426,7 @@ visibility rule above applies.
 
 ## 6. Whole-row construction: split to RFC-0257
 
-> **Split to [RFC-0257](../0-draft/rfc-0257-whole-row-construction-arguments.md) (language owner, 2026-11-27).** The whole-row
+> **Split to RFC-0257 (`0-draft`, language owner, 2026-11-27).** The whole-row
 > construction operand, `Point(..r)` / `Point(..{ ... })`, now depends on
 > RFC-0255's shared `..value`/`..{ entries }` section grammar and extraction
 > contract rather than this RFC's own, narrower plain-binding-only version.
