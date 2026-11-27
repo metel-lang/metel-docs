@@ -119,7 +119,7 @@ empty braces; the empty-brace form is a brace literal and is legal only where
 allows one.
 
 
-<!-- rfc.py:last_reviewed a9c665a15017ff12bdddbe52b1540f324093315c -->
+<!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -136,7 +136,7 @@ For a zero-field struct, the bare, call and empty-brace constructor forms evalua
 same struct value.
 
 
-<!-- rfc.py:last_reviewed a9c665a15017ff12bdddbe52b1540f324093315c -->
+<!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -271,7 +271,7 @@ error. Elsewhere in the declaring module, and in every other module, constructio
 the call syntax. A literal that initializes no field (`Empty {}`, `Flag::On {}`) is
 restricted the same way.
 
-<!-- rfc.py:last_reviewed a9c665a15017ff12bdddbe52b1540f324093315c -->
+<!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>

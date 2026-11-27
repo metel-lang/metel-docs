@@ -63,7 +63,7 @@ only where
 [privileged representation construction](structs/instantiation-and-field-access.md#spec.declarations.structs.privileged-representation-construction.legality-1)
 allows one.
 
-<!-- rfc.py:last_reviewed a9c665a15017ff12bdddbe52b1540f324093315c -->
+<!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
