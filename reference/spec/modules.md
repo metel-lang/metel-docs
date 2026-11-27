@@ -339,19 +339,18 @@ handle into the importing module's scope.
 
 ##### Legality Rule {#spec.modules.imports.legality-5}
 
-`import m::name` binds `name` in every namespace in which module `m` provides it, whether
-`m` declares it or re-exports it, and `export m::name` re-exports it in the same way; an alias
-renames the name in each. A name that `m` provides as both a type and a value is therefore
-imported as both. A module handle (`import m`) binds in the type namespace.
+`import m::name` binds `name` to whichever single declaration `m` provides under it — a
+type or a value, never both, since a module's type and value declarations now share one
+namespace ([legality-1](#spec.modules.unified-type-and-value-namespace.legality-1)) —
+whether `m` declares it or re-exports it; `export m::name` re-exports it the same way,
+and an alias renames it. A module handle (`import m`) binds in a separate namespace from
+both.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 3fd12f80f344d3a3ca61ee6476015cd52e1dba40 -->
 
 <!-- rfc.py:fixtures:start -->
-<details class="rigor-fixtures-toggle" open>
-<summary>Tested by (2)</summary>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGxpYjo6Rm9vO1xuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYSA6PSBGb28geyB4ID0gMSB9O1xuICAgIGFzc2VydChhLnggPT0gMSk7XG59XG4ifSx7Im5hbWUiOiJsaWIubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNTcxOiBgRm9vYCBpcyBwdWJsaWMgYXMgYSB0eXBlIGFuZCBwcml2YXRlIGFzIGEgZnVuY3Rpb24uIEltcG9ydGluZyBgRm9vYCBicmluZ3Ncbi8vIGluIHRoZSB0eXBlOyB0aGUgcHJpdmF0ZSBmdW5jdGlvbiBpcyBub3QgaW1wb3J0YWJsZSBidXQgZG9lcyBub3QgbWFrZSB0aGUgaW1wb3J0IGZhaWwuXG5wdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cblxuZnVuIEZvbygpIC0+IGk2NCB7XG4gICAgNVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy9hX3ByaXZhdGVfZnVuY3Rpb25fZG9lc19ub3RfaGlkZV9hX3B1YmxpY190eXBlX29mX2l0c19uYW1lIiwibmFtZSI6ImFfcHJpdmF0ZV9mdW5jdGlvbl9kb2VzX25vdF9oaWRlX2FfcHVibGljX3R5cGVfb2ZfaXRzX25hbWUifQ=="></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGxpYjo6Rm9vO1xuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYSA6PSBGb28geyB4ID0gMSB9O1xuICAgIGFzc2VydChhLnggPT0gMSk7XG4gICAgYXNzZXJ0KEZvbygpID09IDUpO1xufVxuIn0seyJuYW1lIjoibGliLm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMTU3MTogYSBtb2R1bGUgZXhwb3J0aW5nIGEgc3RydWN0IGFuZCBhIGZ1bmN0aW9uIG9mIG9uZSBuYW1lLiBFYWNoIGhhcyBpdHMgb3duXG4vLyBTeW1ib2xJZCwgc28gYSBzaW5nbGUgYGltcG9ydCBsaWI6OkZvbztgIGJyaW5ncyBib3RoIGludG8gc2NvcGUgYW5kIGVhY2ggdXNlIGZpbmRzIGl0cyBvd24uXG5wdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cblxucHViIGZ1biBGb28oKSAtPiBpNjQge1xuICAgIDVcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3N0cnVjdHMvYV90eXBlX2FuZF9hX2Z1bmN0aW9uX21heV9iZV9pbXBvcnRlZF90b2dldGhlciIsIm5hbWUiOiJhX3R5cGVfYW5kX2FfZnVuY3Rpb25fbWF5X2JlX2ltcG9ydGVkX3RvZ2V0aGVyIn0="></details>
-</details>
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGxpYjo6UG9pbnQ7XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBwIDo9IFBvaW50IHsgeCA9IDEgfTtcbiAgICBhc3NlcnQocC54ID09IDEpO1xufVxuIn0seyJuYW1lIjoibGliLm10bCIsInNvdXJjZSI6InB1YiBzdHJ1Y3QgUG9pbnQge1xuICAgIHB1YiB4OiBpNjQsXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL21vZHVsZV9zZW1hbnRpY3MvZXhwbGljaXRfbmFtZWRfaW1wb3J0X29mX2FfdHlwZSIsIm5hbWUiOiJleHBsaWNpdF9uYW1lZF9pbXBvcnRfb2ZfYV90eXBlIn0="></details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -555,23 +554,22 @@ glob-provided name.
 
 ##### Legality Rule {#spec.modules.import-conflicts.legality-5}
 
-Two explicit imports of one local name conflict only when they bind it in the same namespace.
-With a struct `Foo` in module `a` and a function `Foo` in module `b`, `import a::Foo;` and
-`import b::Foo;` together are legal, and each use finds the one it needs. Two imports that both
-provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
+Two explicit imports of one local name conflict regardless of namespace category: a
+module's type and value declarations now share one namespace
+([legality-1](#spec.modules.unified-type-and-value-namespace.legality-1)), so a struct
+`Foo` in module `a` and a function `Foo` in module `b` can no longer both be imported
+under that name — `import a::Foo;` and `import b::Foo;` together are the cross-namespace
+import conflict of
+[unified-type-and-value-namespace legality-2](#spec.modules.unified-type-and-value-namespace.legality-2),
+not a legal pairing. Two imports that both provide a *type* `Foo`, or both a *value*
+`Foo`, remain the same-namespace conflict of
 [legality-4](#spec.modules.import-conflicts.legality-4).
 
-This rule's worked example — a struct `Foo` and a function `Foo` coexisting across an
-import — is exactly the cross-namespace coexistence
-[reversed below](#spec.modules.unified-type-and-value-namespace.legality-1): once that
-rule is implemented, the source declarations this example imports from are themselves a
-redeclaration error, so this legal-import scenario can no longer arise.
-
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+<!-- rfc.py:last_reviewed 3fd12f80f344d3a3ca61ee6476015cd52e1dba40 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNTc3OiBgYWAgcHJvdmlkZXMgYSB0eXBlIGBGb29gIGFuZCBgYmAgYSB2YWx1ZSBgRm9vYDsgYm90aCBpbXBvcnRzIGJpbmQgdGhlIHNhbWUgbG9jYWxcbi8vIG5hbWUsIGluIGRpZmZlcmVudCBuYW1lc3BhY2VzLCBzbyB0aGV5IGRvIG5vdCBjb25mbGljdC5cbmltcG9ydCBhOjpGb287XG5pbXBvcnQgYjo6Rm9vO1xuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgdiA6PSBGb28geyB4ID0gMSB9O1xuICAgIGFzc2VydCh2LnggPT0gMSk7XG4gICAgYXNzZXJ0KEZvbygpID09IDUpO1xufVxuIn0seyJuYW1lIjoiYS5tdGwiLCJzb3VyY2UiOiJwdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cbiJ9LHsibmFtZSI6ImIubXRsIiwic291cmNlIjoicHViIGZ1biBGb28oKSAtPiBpNjQge1xuICAgIDVcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3N0cnVjdHMvaW1wb3J0c19vZl9vbmVfbmFtZV9pbl9kaWZmZXJlbnRfbmFtZXNwYWNlc19kb19ub3RfY29uZmxpY3QiLCJuYW1lIjoiaW1wb3J0c19vZl9vbmVfbmFtZV9pbl9kaWZmZXJlbnRfbmFtZXNwYWNlc19kb19ub3RfY29uZmxpY3QifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDExIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzIxOTggKFJGQy0wMTAwKTogYGFgIHByb3ZpZGVzIGEgdHlwZSBgRm9vYCBhbmQgYGJgIGEgdmFsdWUgYEZvb2AuIEJvdGggaW1wb3J0c1xuLy8gYmluZCB0aGUgc2FtZSBsb2NhbCBuYW1lOyBzaW5jZSBhIHR5cGUgYW5kIGEgdmFsdWUgbWF5IG5vIGxvbmdlciBjb2V4aXN0IHVuZGVyIG9uZSBuYW1lLFxuLy8gdGhpcyBjb25mbGljdHMgZXhhY3RseSBhcyB0d28gaW1wb3J0cyBvZiB0aGUgc2FtZSBuYW1lc3BhY2UgYWxyZWFkeSBkaWQgKG1ldGVsLWNvcmUjMTU3NydzXG4vLyBwcmlvciBiZWhhdmlvciwgcmV2ZXJzZWQpLlxuaW1wb3J0IGE6OkZvbztcbmltcG9ydCBiOjpGb287XG5cbmZ1biBtYWluKCkge31cbiJ9LHsibmFtZSI6ImEubXRsIiwic291cmNlIjoicHViIHN0cnVjdCBGb28ge1xuICAgIHB1YiB4OiBpNjQsXG59XG4ifSx7Im5hbWUiOiJiLm10bCIsInNvdXJjZSI6InB1YiBmdW4gRm9vKCkgLT4gaTY0IHtcbiAgICA1XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzL2ltcG9ydHNfb2Zfb25lX25hbWVfaW5fZGlmZmVyZW50X25hbWVzcGFjZXNfY29uZmxpY3QiLCJuYW1lIjoiaW1wb3J0c19vZl9vbmVfbmFtZV9pbl9kaWZmZXJlbnRfbmFtZXNwYWNlc19jb25mbGljdCJ9"></details>
 <!-- rfc.py:fixtures:end -->
 
 </details>
@@ -593,7 +591,7 @@ their own function named `f` today.
 <!-- doc-example: expect-fail reason="illustrates the redeclaration error itself, now implemented" -->
 ```metel
 struct Ticket { value: i64 }
-fun Ticket(input: i64) -> i64 { input + 100 }   // accepted design: a redeclaration error
+fun Ticket(input: i64) -> i64 { input + 100 }   // a redeclaration error
 ```
 
 Imports inherit the same narrowing: an import or re-export bringing a name into a
@@ -619,6 +617,14 @@ program-wide.
 <span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
 <!-- rfc.py:origins:end -->
 
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDM3IiwiY29sIjpudWxsLCJjb250YWlucyI6ImR1cGxpY2F0ZSBkZWNsYXJhdGlvbiBvZiB2YWx1ZSBgQmFyYCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ19lbnVtX2FuZF9sZXRfb2Zfb25lX25hbWVfaXNfdDAwMzcubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMyMTk4IChSRkMtMDEwMCk6IGEgdHlwZSBhbmQgYSB2YWx1ZSBtYXkgbm8gbG9uZ2VyIHNoYXJlIGEgbmFtZSwgaW4gYW55IHBhaXJpbmdcbi8vIG9mIGRlY2xhcmF0aW9uIGtpbmRzIC0tIGFuIGVudW0gYW5kIGEgYGxldGAgY29sbGlkZSBleGFjdGx5IGFzIGEgc3RydWN0IGFuZCBhIGZ1bmN0aW9uIGRvLlxuZW51bSBCYXIgeyBBIH1cbmxldCBCYXIgOj0gNztcblxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmVnX2VudW1fYW5kX2xldF9vZl9vbmVfbmFtZV9pc190MDAzNy5tdGwiLCJuYW1lIjoibmVnX2VudW1fYW5kX2xldF9vZl9vbmVfbmFtZV9pc190MDAzNy5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDM3IiwiY29sIjpudWxsLCJjb250YWlucyI6ImR1cGxpY2F0ZSBkZWNsYXJhdGlvbiBvZiB2YWx1ZSBgRm9vYCIsImxpbmUiOm51bGwsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ19zdHJ1Y3RfYW5kX2Z1bmN0aW9uX29mX29uZV9uYW1lX2lzX3QwMDM3Lm10bCIsInNvdXJjZSI6Ii8vIG1ldGVsLWNvcmUjMjE5OCAoUkZDLTAxMDApOiBhIHR5cGUgYW5kIGEgdmFsdWUgbWF5IG5vIGxvbmdlciBzaGFyZSBhIG5hbWUsIHJldmVyc2luZ1xuLy8gbWV0ZWwtY29yZSMxNTYwJ3MgcHJpb3IgcG9saWN5IChwaW5uZWQgYnkgdGhpcyBmaXh0dXJlJ3Mgb3duIGZvcm1lciBjb250ZW50KS5cbnN0cnVjdCBGb28geyB4OiBpNjQgfVxuZnVuIEZvbygpIC0+IGk2NCB7IDUgfVxuXG5mdW4gbWFpbigpIHt9XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy90eXBlcy9uZWdfc3RydWN0X2FuZF9mdW5jdGlvbl9vZl9vbmVfbmFtZV9pc190MDAzNy5tdGwiLCJuYW1lIjoibmVnX3N0cnVjdF9hbmRfZnVuY3Rpb25fb2Zfb25lX25hbWVfaXNfdDAwMzcubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
 ##### Legality Rule {#spec.modules.unified-type-and-value-namespace.legality-2}
 
 An import or re-export bringing a name into scope conflicts with an existing
@@ -627,6 +633,11 @@ explicit-versus-glob precedence and glob ambiguity rules as same-namespace impor
 conflicts ([Import Conflicts](#import-conflicts)).
 
 <!-- rfc.py:last_reviewed 8c1ea1466ae0621184adba0d01ce4dfde1ae1604 -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDExIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzIxOTggKFJGQy0wMTAwKTogYGFgIHByb3ZpZGVzIGEgdHlwZSBgRm9vYCBhbmQgYGJgIGEgdmFsdWUgYEZvb2AuIEJvdGggaW1wb3J0c1xuLy8gYmluZCB0aGUgc2FtZSBsb2NhbCBuYW1lOyBzaW5jZSBhIHR5cGUgYW5kIGEgdmFsdWUgbWF5IG5vIGxvbmdlciBjb2V4aXN0IHVuZGVyIG9uZSBuYW1lLFxuLy8gdGhpcyBjb25mbGljdHMgZXhhY3RseSBhcyB0d28gaW1wb3J0cyBvZiB0aGUgc2FtZSBuYW1lc3BhY2UgYWxyZWFkeSBkaWQgKG1ldGVsLWNvcmUjMTU3NydzXG4vLyBwcmlvciBiZWhhdmlvciwgcmV2ZXJzZWQpLlxuaW1wb3J0IGE6OkZvbztcbmltcG9ydCBiOjpGb287XG5cbmZ1biBtYWluKCkge31cbiJ9LHsibmFtZSI6ImEubXRsIiwic291cmNlIjoicHViIHN0cnVjdCBGb28ge1xuICAgIHB1YiB4OiBpNjQsXG59XG4ifSx7Im5hbWUiOiJiLm10bCIsInNvdXJjZSI6InB1YiBmdW4gRm9vKCkgLT4gaTY0IHtcbiAgICA1XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9zdHJ1Y3RzL2ltcG9ydHNfb2Zfb25lX25hbWVfaW5fZGlmZmVyZW50X25hbWVzcGFjZXNfY29uZmxpY3QiLCJuYW1lIjoiaW1wb3J0c19vZl9vbmVfbmFtZV9pbl9kaWZmZXJlbnRfbmFtZXNwYWNlc19jb25mbGljdCJ9"></details>
+<!-- rfc.py:fixtures:end -->
 
 </details>
 
@@ -874,22 +885,20 @@ already rejected by [legality-3](#spec.modules.visibility.legality-3).
 
 ##### Legality Rule {#spec.modules.visibility.legality-9}
 
-A name that a module provides as a public type and a private function can be imported: the
-import is accepted and brings in the type. Using the name as a value is then rejected with
-`T0009`, reported at the use rather than at the import, and a local binding of that name
-shadows it. A name the module provides publicly in no namespace is rejected at the import:
-`T0009` when it is private there, `T0003` when it does not exist.
+A module provides at most one declaration under a given name now that its type and value
+declarations share one namespace
+([unified-type-and-value-namespace legality-1](#spec.modules.unified-type-and-value-namespace.legality-1)),
+so importing that name is a single pass/fail check: `import m::name` is rejected with
+`T0009` when `m`'s declaration of `name` is private, and with `T0003` when `m` has no
+declaration of `name` at all.
 
-<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
-
-<!-- spec-lint: allow limit-in-prose reason="the import error is for a name that does not exist, not a limit of the implementation" -->
+<!-- rfc.py:last_reviewed 3fd12f80f344d3a3ca61ee6476015cd52e1dba40 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle" open>
-<summary>Tested by (3)</summary>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGxpYjo6Rm9vO1xuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgRm9vIDo9IDc7XG4gICAgYXNzZXJ0KEZvbyA9PSA3KTtcbn1cbiJ9LHsibmFtZSI6ImxpYi5tdGwiLCJzb3VyY2UiOiIvLyBtZXRlbC1jb3JlIzE1NzU6IHRoZSBwcml2YXRlIGZ1bmN0aW9uIGBGb29gIGlzIG5vdCBpbXBvcnRhYmxlLCBzbyBhIGxvY2FsIG9mIHRoYXQgbmFtZSBpcyB0aGUgb25seVxuLy8gYEZvb2AgaW4gc2NvcGUgYW5kIHRoZSBtaXNzaW5nLWZ1bmN0aW9uIGVycm9yIG11c3Qgbm90IGZpcmUuXG5wdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cblxuZnVuIEZvbygpIC0+IGk2NCB7XG4gICAgNVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy9hX2xvY2FsX3NoYWRvd3NfYW5faW1wb3J0ZWRfbmFtZV93aG9zZV9mdW5jdGlvbl9pc19wcml2YXRlIiwibmFtZSI6ImFfbG9jYWxfc2hhZG93c19hbl9pbXBvcnRlZF9uYW1lX3dob3NlX2Z1bmN0aW9uX2lzX3ByaXZhdGUifQ=="></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im1haW4ubXRsIiwic291cmNlIjoiaW1wb3J0IGxpYjo6Rm9vO1xuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgYSA6PSBGb28geyB4ID0gMSB9O1xuICAgIGFzc2VydChhLnggPT0gMSk7XG59XG4ifSx7Im5hbWUiOiJsaWIubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNTcxOiBgRm9vYCBpcyBwdWJsaWMgYXMgYSB0eXBlIGFuZCBwcml2YXRlIGFzIGEgZnVuY3Rpb24uIEltcG9ydGluZyBgRm9vYCBicmluZ3Ncbi8vIGluIHRoZSB0eXBlOyB0aGUgcHJpdmF0ZSBmdW5jdGlvbiBpcyBub3QgaW1wb3J0YWJsZSBidXQgZG9lcyBub3QgbWFrZSB0aGUgaW1wb3J0IGZhaWwuXG5wdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cblxuZnVuIEZvbygpIC0+IGk2NCB7XG4gICAgNVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy9hX3ByaXZhdGVfZnVuY3Rpb25fZG9lc19ub3RfaGlkZV9hX3B1YmxpY190eXBlX29mX2l0c19uYW1lIiwibmFtZSI6ImFfcHJpdmF0ZV9mdW5jdGlvbl9kb2VzX25vdF9oaWRlX2FfcHVibGljX3R5cGVfb2ZfaXRzX25hbWUifQ=="></details>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA5IiwiY29sIjpudWxsLCJjb250YWlucyI6ImBGb29gIGlzIG5vdCBwdWJsaWMgaW4gbW9kdWxlIGBsaWJgIiwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiIvLyBUaGUgaW1wb3J0IGlzIGZpbmUgKHRoZSB0eXBlIGlzIHB1YmxpYyksIGJ1dCBjYWxsaW5nIGBGb29gIG5lZWRzIHRoZSBwcml2YXRlIGZ1bmN0aW9uOiB0aGF0IGlzIGFcbi8vIHZpc2liaWxpdHkgZXJyb3IsIG5vdCBhbiB1bmRlZmluZWQgbmFtZS5cbmltcG9ydCBsaWI6OkZvbztcblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGEgOj0gRm9vKCk7XG59XG4ifSx7Im5hbWUiOiJsaWIubXRsIiwic291cmNlIjoiLy8gbWV0ZWwtY29yZSMxNTc1OiBgRm9vYCBpcyBhIHB1YmxpYyB0eXBlIGFuZCBhIHByaXZhdGUgZnVuY3Rpb24uXG5wdWIgc3RydWN0IEZvbyB7XG4gICAgcHViIHg6IGk2NCxcbn1cblxuZnVuIEZvbygpIC0+IGk2NCB7XG4gICAgNVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmVnX3ByaXZhdGVfZnVuY3Rpb25fYmVzaWRlX2FuX2ltcG9ydGVkX3B1YmxpY190eXBlX2lzX3QwMDA5IiwibmFtZSI6Im5lZ19wcml2YXRlX2Z1bmN0aW9uX2Jlc2lkZV9hbl9pbXBvcnRlZF9wdWJsaWNfdHlwZV9pc190MDAwOSJ9"></details>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiJpbXBvcnQgaGVscGVyOjpub25leGlzdGVudDtcbmZ1biBtYWluKCkgLT4gaTY0IHsgcmV0dXJuIG5vbmV4aXN0ZW50KCk7IH1cbiJ9LHsibmFtZSI6ImhlbHBlci5tdGwiLCJzb3VyY2UiOiJwdWIgZnVuIGFuc3dlcigpIC0+IGk2NCB7IHJldHVybiA0MjsgfVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9tb2R1bGVfc2VtYW50aWNzL2ltcG9ydGluZ19ub25leGlzdGVudF9uYW1lX2lzX3QwMDAzIiwibmFtZSI6ImltcG9ydGluZ19ub25leGlzdGVudF9uYW1lX2lzX3QwMDAzIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDA5IiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibWFpbi5tdGwiLCJzb3VyY2UiOiJpbXBvcnQgaGVscGVyOjpzZWNyZXQ7XG5mdW4gbWFpbigpIC0+IGk2NCB7IHJldHVybiBzZWNyZXQoKTsgfVxuIn0seyJuYW1lIjoiaGVscGVyLm10bCIsInNvdXJjZSI6ImZ1biBzZWNyZXQoKSAtPiBpNjQgeyByZXR1cm4gNDI7IH1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvbW9kdWxlX3NlbWFudGljcy9pbXBvcnRpbmdfcHJpdmF0ZV9pdGVtX2lzX3QwMDA5IiwibmFtZSI6ImltcG9ydGluZ19wcml2YXRlX2l0ZW1faXNfdDAwMDkifQ=="></details>
 </details>
 <!-- rfc.py:fixtures:end -->
 
