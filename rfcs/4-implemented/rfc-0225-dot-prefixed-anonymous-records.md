@@ -194,7 +194,7 @@ whether the existing parser-error machinery can provide the targeted suggestion.
 
 ## Interactions and prior decisions
 
-- **RFC-0100 (integrated):** nominal construction is plain call syntax, `Point(args)`;
+- **RFC-0100 (implemented):** nominal construction is plain call syntax, `Point(args)`;
   its earlier inferred `.(...)` form is withdrawn and deferred to a future RFC. Either
   way, `.{ ... }` remains structural regardless of expected type.
   Whole-row literal constructor arguments use `..{ .x = 1 }`, retaining the

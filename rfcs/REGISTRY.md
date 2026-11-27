@@ -13,7 +13,7 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**256 RFCs total.** 38 draft, 69 under review, 10 accepted, 3 integrated (120 live), 100 implemented, 20 superseded, 16 refused (136 settled).
+**256 RFCs total.** 38 draft, 69 under review, 10 accepted, 2 integrated (119 live), 101 implemented, 20 superseded, 16 refused (137 settled).
 
 ## Draft (38)
 
@@ -141,13 +141,12 @@ the curated thematic map.
 - **RFC-0141** — Aspect Objects: Explicit Allocator Placement (`2-accepted` ; rfcs/2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md ; date 2026-08-25)
 - **RFC-0163** — Function-Type Use-Multiplicity Surface (`2-accepted` ; rfcs/2-accepted/rfc-0163-function-type-use-multiplicity-surface.md ; date 2026-09-02 ; updated 2026-09-03)
 
-## Integrated (3)
+## Integrated (2)
 
 - **RFC-0071** — Ownership and Move Semantics (`3-integrated` ; rfcs/3-integrated/rfc-0071-ownership-and-move-semantics.md ; date 2026-06-28 ; updated 2026-11-02 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/795)
-- **RFC-0100** — Nominal Construction Through a Unified Type and Value Namespace (`3-integrated` ; rfcs/3-integrated/rfc-0100-constructor-call-construction.md ; date 2026-11-11 ; updated 2026-11-27 ; impl not-started ; tracking https://github.com/metel-lang/metel-core/issues/2197)
 - **RFC-0137** — Nominal Types as Branded Rows (`3-integrated` ; rfcs/3-integrated/rfc-0137-nominal-types-as-branded-rows.md ; date 2026-08-24 ; updated 2026-08-27 ; impl in-progress ; tracking https://github.com/metel-lang/metel-core/issues/949)
 
-## Implemented (100)
+## Implemented (101)
 
 - **RFC-0006** — Closure Capture Semantics and Cross-Closure Reference Sharing (`4-implemented` ; rfcs/4-implemented/rfc-0006-closure-capture-semantics.md ; date 2026-05-21)
 - **RFC-0007** — Compiler-Compatible Primitive Type System (`4-implemented` ; rfcs/4-implemented/rfc-0007-uint-type.md ; date 2026-05-21)
@@ -186,6 +185,7 @@ the curated thematic map.
 - **RFC-0082** — Associated Types (`4-implemented` ; rfcs/4-implemented/rfc-0082-associated-types.md ; date 2026-07-01 ; updated 2026-07-13 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/546)
 - **RFC-0097** — Orphan Rule for Bare-Parameter Blanket Impls (`4-implemented` ; rfcs/4-implemented/rfc-0097-orphan-rule-for-bare-parameter-blanket-impls.md ; date 2026-07-11 ; updated 2026-07-14 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/555)
 - **RFC-0098** — Surface Keyword Renames (`4-implemented` ; rfcs/4-implemented/rfc-0098-surface-keyword-renames.md ; date 2026-07-13 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
+- **RFC-0100** — Nominal Construction Through a Unified Type and Value Namespace (`4-implemented` ; rfcs/4-implemented/rfc-0100-constructor-call-construction.md ; date 2026-11-11 ; updated 2026-11-27 ; impl implemented ; tracking https://github.com/metel-lang/metel-core/issues/2197)
 - **RFC-0102** — Bodyless Extend Blocks for Marker Aspects and Negative Impls (`4-implemented` ; rfcs/4-implemented/rfc-0102-bodyless-extend-blocks-for-marker-aspects-and-negative-impls.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
 - **RFC-0103** — Bodyless Aspect Declarations (`4-implemented` ; rfcs/4-implemented/rfc-0103-bodyless-aspect-declarations.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented ; tracking archived Codeberg PR #273 (no GitHub counterpart per the 2026-08-04 migration policy; see internal/archive/codeberg-tracker/metel-core/comments/273.json))
 - **RFC-0106** — Optional Braces for Empty Constructors (`4-implemented` ; rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md ; date 2026-07-14 ; updated 2026-07-14 ; impl implemented)

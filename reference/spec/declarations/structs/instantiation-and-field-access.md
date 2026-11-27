@@ -51,9 +51,9 @@ fun main() -> i64 {
 
 Shorthand and explicit fields may be mixed freely within one literal.
 
-Zero-field structs [may omit braces entirely](#spec.declarations.structs.instantiation-and-field-access.legality-2).
-The bare form, the call form and, inside the type's own `extend` blocks, the empty brace
-literal are [equivalent](#spec.declarations.structs.instantiation-and-field-access.dynamics-2):
+A zero-field struct [is built by call, like any other](#spec.declarations.structs.instantiation-and-field-access.legality-2);
+its bare name constructs nothing. Inside the type's own `extend` blocks the empty brace
+literal builds the [same value](#spec.declarations.structs.instantiation-and-field-access.dynamics-2):
 
 ```metel
 struct Empty {}
@@ -62,7 +62,6 @@ extend Empty {
     fun by_brace() -> Empty { Empty {} }
 }
 
-let a := Empty;
 let b := Empty();
 let c := Empty::by_brace();
 ```
@@ -113,30 +112,35 @@ scope at the literal.
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-2}
 
-A zero-field struct may be constructed as its bare type name, by call (`Empty()`), or with
-empty braces; the empty-brace form is a brace literal and is legal only where
+A zero-field struct or named record is constructed by call (`Empty()`), or with empty
+braces where
 [privileged representation construction](#spec.declarations.structs.privileged-representation-construction.legality-1)
-allows one.
+allows a brace literal. Its bare type name is not a value: written where a value is
+expected, it is an error (`T0003`).
 
 
-<!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
+<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
-<p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Ijg5X2VtcHR5X2NvbnN0cnVjdG9yX2Zvcm1zLm10bCIsInNvdXJjZSI6Ii8vIEEgemVyby1maWVsZCBzdHJ1Y3Qgb3IgdmFyaWFudCBpcyB0aGUgc2FtZSB2YWx1ZSB3aGV0aGVyIHdyaXR0ZW4gYmFyZSwgYnkgY2FsbCwgb3IgKGluc2lkZSBpdHNcbi8vIG93biB0eXBlJ3MgYGV4dGVuZGAgYmxvY2ssIFJGQy0wMTAwIHNlY3Rpb24gMykgYXMgYSBmaWVsZC1sZXNzIGJyYWNlIGxpdGVyYWwuXG5zdHJ1Y3QgRW1wdHkge31cblxuZW51bSBGbGFnIHtcbiAgICBPbiB7fSxcbn1cblxuZXh0ZW5kIEVtcHR5IHtcbiAgICBmdW4gYnlfYnJhY2UoKSAtPiBFbXB0eSB7IEVtcHR5IHt9IH1cbn1cblxuZXh0ZW5kIEZsYWcge1xuICAgIGZ1biBieV9icmFjZSgpIC0+IEZsYWcgeyBGbGFnOjpPbiB7fSB9XG59XG5cbmZ1biB1c2VfZW1wdHkoeDogRW1wdHkpIC0+IGk2NCB7XG4gICAgMVxufVxuXG5mdW4gdXNlX2ZsYWcoZjogRmxhZykgLT4gaTY0IHtcbiAgICBtYXRjaCAoZikge1xuICAgICAgICBGbGFnOjpPbiA9PiA3LFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGEgOj0gRW1wdHk7XG4gICAgbGV0IGIgOj0gRW1wdHkoKTtcbiAgICBsZXQgYyA6PSBFbXB0eTo6YnlfYnJhY2UoKTtcbiAgICBsZXQgeCA6PSBGbGFnOjpPbjtcbiAgICBsZXQgeSA6PSBGbGFnOjpPbigpO1xuICAgIGxldCB6IDo9IEZsYWc6OmJ5X2JyYWNlKCk7XG5cbiAgICBhc3NlcnQodXNlX2VtcHR5KGEpID09IDEpO1xuICAgIGFzc2VydCh1c2VfZW1wdHkoYikgPT0gMSk7XG4gICAgYXNzZXJ0KHVzZV9lbXB0eShjKSA9PSAxKTtcbiAgICBhc3NlcnQodXNlX2ZsYWcoeCkgPT0gNyk7XG4gICAgYXNzZXJ0KHVzZV9mbGFnKHkpID09IDcpO1xuICAgIGFzc2VydCh1c2VfZmxhZyh6KSA9PSA3KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3N0cnVjdHMvODlfZW1wdHlfY29uc3RydWN0b3JfZm9ybXMubXRsIiwibmFtZSI6Ijg5X2VtcHR5X2NvbnN0cnVjdG9yX2Zvcm1zLm10bCJ9"></details>
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Ijg5X2VtcHR5X2NvbnN0cnVjdG9yX2Zvcm1zLm10bCIsInNvdXJjZSI6Ii8vIEEgemVyby1maWVsZCBzdHJ1Y3QgaXMgdGhlIHNhbWUgdmFsdWUgYnkgY2FsbCBvciAoaW5zaWRlIGl0cyBvd24gYGV4dGVuZGAgYmxvY2ssIFJGQy0wMTAwXG4vLyBzZWN0aW9uIDMpIGFzIGEgZmllbGQtbGVzcyBicmFjZSBsaXRlcmFsOyBhIHplcm8tZmllbGQgdmFyaWFudCBhbHNvIGJhcmUgKGBGbGFnOjpPbmApLlxuc3RydWN0IEVtcHR5IHt9XG5cbmVudW0gRmxhZyB7XG4gICAgT24ge30sXG59XG5cbmV4dGVuZCBFbXB0eSB7XG4gICAgZnVuIGJ5X2JyYWNlKCkgLT4gRW1wdHkgeyBFbXB0eSB7fSB9XG59XG5cbmV4dGVuZCBGbGFnIHtcbiAgICBmdW4gYnlfYnJhY2UoKSAtPiBGbGFnIHsgRmxhZzo6T24ge30gfVxufVxuXG5mdW4gdXNlX2VtcHR5KHg6IEVtcHR5KSAtPiBpNjQge1xuICAgIDFcbn1cblxuZnVuIHVzZV9mbGFnKGY6IEZsYWcpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKGYpIHtcbiAgICAgICAgRmxhZzo6T24gPT4gNyxcbiAgICB9XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBiIDo9IEVtcHR5KCk7XG4gICAgbGV0IGMgOj0gRW1wdHk6OmJ5X2JyYWNlKCk7XG4gICAgbGV0IHggOj0gRmxhZzo6T247XG4gICAgbGV0IHkgOj0gRmxhZzo6T24oKTtcbiAgICBsZXQgeiA6PSBGbGFnOjpieV9icmFjZSgpO1xuXG4gICAgYXNzZXJ0KHVzZV9lbXB0eShiKSA9PSAxKTtcbiAgICBhc3NlcnQodXNlX2VtcHR5KGMpID09IDEpO1xuICAgIGFzc2VydCh1c2VfZmxhZyh4KSA9PSA3KTtcbiAgICBhc3NlcnQodXNlX2ZsYWcoeSkgPT0gNyk7XG4gICAgYXNzZXJ0KHVzZV9mbGFnKHopID09IDcpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy84OV9lbXB0eV9jb25zdHJ1Y3Rvcl9mb3Jtcy5tdGwiLCJuYW1lIjoiODlfZW1wdHlfY29uc3RydWN0b3JfZm9ybXMubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6ImBFbXB0eWAgbmFtZXMgYSBzdHJ1Y3QsIG5vdCBhIHZhbHVlOyBjb25zdHJ1Y3QgaXQgYnkgY2FsbCwgYEVtcHR5KClgIiwibGluZSI6IjkiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZWdfYV9iYXJlX3plcm9fZmllbGRfcmVjb3JkX25hbWVfaXNfbm90X2FfdmFsdWVfaXNfdDAwMDMubXRsIiwic291cmNlIjoiLy8gUkZDLTAxMDAgc2VjdGlvbiA3OiBhIHplcm8tZmllbGQgbmFtZWQgcmVjb3JkIGlzIGJ1aWx0IGJ5IGNhbGwsIGBFbXB0eSgpYCwgbGlrZSBhIHplcm8tZmllbGRcbi8vIHN0cnVjdDsgaXRzIGJhcmUgbmFtZSBjb25zdHJ1Y3RzIG5vdGhpbmcuXG5yZWNvcmQgRW1wdHkge31cblxuZnVuIHRha2UoZTogRW1wdHkpIC0+IGk2NCB7IDEgfVxuXG5mdW4gbWFpbigpIHtcbiAgICBhc3NlcnQodGFrZShFbXB0eSgpKSA9PSAxKTtcbiAgICBhc3NlcnQodGFrZShFbXB0eSkgPT0gMSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9zdHJ1Y3RzL25lZ19hX2JhcmVfemVyb19maWVsZF9yZWNvcmRfbmFtZV9pc19ub3RfYV92YWx1ZV9pc190MDAwMy5tdGwiLCJuYW1lIjoibmVnX2FfYmFyZV96ZXJvX2ZpZWxkX3JlY29yZF9uYW1lX2lzX25vdF9hX3ZhbHVlX2lzX3QwMDAzLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDAzIiwiY29sIjpudWxsLCJjb250YWlucyI6ImBVbml0YCBuYW1lcyBhIHN0cnVjdCwgbm90IGEgdmFsdWU7IGNvbnN0cnVjdCBpdCBieSBjYWxsLCBgVW5pdCgpYCIsImxpbmUiOiIxMSIsInN0YXR1cyI6InR5cGVjaGVja19lcnJvciJ9LCJmaWxlcyI6W3sibmFtZSI6Im5lZ19hX2JhcmVfemVyb19maWVsZF9zdHJ1Y3RfbmFtZV9pc19ub3RfYV92YWx1ZV9pc190MDAwMy5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDEwMCBzZWN0aW9uIDc6IGEgemVyby1maWVsZCBzdHJ1Y3QgaXMgYnVpbHQgYnkgY2FsbCwgYFVuaXQoKWAsIGxpa2UgYW55IG90aGVyLiBJdHMgYmFyZSBuYW1lXG4vLyBjb25zdHJ1Y3RzIG5vdGhpbmc7IHRoZSBiYXJlLW5hbWUgY29uc3RydWN0aW9uIFJGQy0wMTA2IGFsbG93ZWQgaXMgcmV0aXJlZC5cbi8vXG4vLyBtZXRlbC1jb3JlIzE1NzcgaGFkIGEgYmFyZSBuYW1lIGZhbGwgYmFjayBmcm9tIHRoZSB2YWx1ZSBuYW1lc3BhY2UgdG8gdGhlIHplcm8tZmllbGQgc3RydWN0IG9mXG4vLyBpdHMgbmFtZTsgbWV0ZWwtY29yZSMyMTk4IChSRkMtMDEwMCkgbW92ZWQgYSBzdHJ1Y3QtYW5kLWZ1bmN0aW9uLW9mLW9uZS1uYW1lIGV4YW1wbGUgdG9cbi8vIG5lZ19zdHJ1Y3RfYW5kX2Z1bmN0aW9uX29mX29uZV9uYW1lX2lzX3QwMDM3Lm10bC5cbnN0cnVjdCBVbml0IHt9XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCB2IDo9IFVuaXQoKTtcbiAgICBsZXQgdSA6PSBVbml0O1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvc3RydWN0cy9uZWdfYV9iYXJlX3plcm9fZmllbGRfc3RydWN0X25hbWVfaXNfbm90X2FfdmFsdWVfaXNfdDAwMDMubXRsIiwibmFtZSI6Im5lZ19hX2JhcmVfemVyb19maWVsZF9zdHJ1Y3RfbmFtZV9pc19ub3RfYV92YWx1ZV9pc190MDAwMy5tdGwifQ=="></details>
+</details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Dynamic Semantics {#spec.declarations.structs.instantiation-and-field-access.dynamics-2}
 
-For a zero-field struct, the bare, call and empty-brace constructor forms evaluate to the
-same struct value.
+For a zero-field struct, the call and empty-brace constructor forms evaluate to the same
+struct value.
 
 
-<!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
+<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -144,15 +148,15 @@ same struct value.
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
-<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Ijg5X2VtcHR5X2NvbnN0cnVjdG9yX2Zvcm1zLm10bCIsInNvdXJjZSI6Ii8vIEEgemVyby1maWVsZCBzdHJ1Y3Qgb3IgdmFyaWFudCBpcyB0aGUgc2FtZSB2YWx1ZSB3aGV0aGVyIHdyaXR0ZW4gYmFyZSwgYnkgY2FsbCwgb3IgKGluc2lkZSBpdHNcbi8vIG93biB0eXBlJ3MgYGV4dGVuZGAgYmxvY2ssIFJGQy0wMTAwIHNlY3Rpb24gMykgYXMgYSBmaWVsZC1sZXNzIGJyYWNlIGxpdGVyYWwuXG5zdHJ1Y3QgRW1wdHkge31cblxuZW51bSBGbGFnIHtcbiAgICBPbiB7fSxcbn1cblxuZXh0ZW5kIEVtcHR5IHtcbiAgICBmdW4gYnlfYnJhY2UoKSAtPiBFbXB0eSB7IEVtcHR5IHt9IH1cbn1cblxuZXh0ZW5kIEZsYWcge1xuICAgIGZ1biBieV9icmFjZSgpIC0+IEZsYWcgeyBGbGFnOjpPbiB7fSB9XG59XG5cbmZ1biB1c2VfZW1wdHkoeDogRW1wdHkpIC0+IGk2NCB7XG4gICAgMVxufVxuXG5mdW4gdXNlX2ZsYWcoZjogRmxhZykgLT4gaTY0IHtcbiAgICBtYXRjaCAoZikge1xuICAgICAgICBGbGFnOjpPbiA9PiA3LFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgbGV0IGEgOj0gRW1wdHk7XG4gICAgbGV0IGIgOj0gRW1wdHkoKTtcbiAgICBsZXQgYyA6PSBFbXB0eTo6YnlfYnJhY2UoKTtcbiAgICBsZXQgeCA6PSBGbGFnOjpPbjtcbiAgICBsZXQgeSA6PSBGbGFnOjpPbigpO1xuICAgIGxldCB6IDo9IEZsYWc6OmJ5X2JyYWNlKCk7XG5cbiAgICBhc3NlcnQodXNlX2VtcHR5KGEpID09IDEpO1xuICAgIGFzc2VydCh1c2VfZW1wdHkoYikgPT0gMSk7XG4gICAgYXNzZXJ0KHVzZV9lbXB0eShjKSA9PSAxKTtcbiAgICBhc3NlcnQodXNlX2ZsYWcoeCkgPT0gNyk7XG4gICAgYXNzZXJ0KHVzZV9mbGFnKHkpID09IDcpO1xuICAgIGFzc2VydCh1c2VfZmxhZyh6KSA9PSA3KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL3N0cnVjdHMvODlfZW1wdHlfY29uc3RydWN0b3JfZm9ybXMubXRsIiwibmFtZSI6Ijg5X2VtcHR5X2NvbnN0cnVjdG9yX2Zvcm1zLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Ijg5X2VtcHR5X2NvbnN0cnVjdG9yX2Zvcm1zLm10bCIsInNvdXJjZSI6Ii8vIEEgemVyby1maWVsZCBzdHJ1Y3QgaXMgdGhlIHNhbWUgdmFsdWUgYnkgY2FsbCBvciAoaW5zaWRlIGl0cyBvd24gYGV4dGVuZGAgYmxvY2ssIFJGQy0wMTAwXG4vLyBzZWN0aW9uIDMpIGFzIGEgZmllbGQtbGVzcyBicmFjZSBsaXRlcmFsOyBhIHplcm8tZmllbGQgdmFyaWFudCBhbHNvIGJhcmUgKGBGbGFnOjpPbmApLlxuc3RydWN0IEVtcHR5IHt9XG5cbmVudW0gRmxhZyB7XG4gICAgT24ge30sXG59XG5cbmV4dGVuZCBFbXB0eSB7XG4gICAgZnVuIGJ5X2JyYWNlKCkgLT4gRW1wdHkgeyBFbXB0eSB7fSB9XG59XG5cbmV4dGVuZCBGbGFnIHtcbiAgICBmdW4gYnlfYnJhY2UoKSAtPiBGbGFnIHsgRmxhZzo6T24ge30gfVxufVxuXG5mdW4gdXNlX2VtcHR5KHg6IEVtcHR5KSAtPiBpNjQge1xuICAgIDFcbn1cblxuZnVuIHVzZV9mbGFnKGY6IEZsYWcpIC0+IGk2NCB7XG4gICAgbWF0Y2ggKGYpIHtcbiAgICAgICAgRmxhZzo6T24gPT4gNyxcbiAgICB9XG59XG5cbmZ1biBtYWluKCkge1xuICAgIGxldCBiIDo9IEVtcHR5KCk7XG4gICAgbGV0IGMgOj0gRW1wdHk6OmJ5X2JyYWNlKCk7XG4gICAgbGV0IHggOj0gRmxhZzo6T247XG4gICAgbGV0IHkgOj0gRmxhZzo6T24oKTtcbiAgICBsZXQgeiA6PSBGbGFnOjpieV9icmFjZSgpO1xuXG4gICAgYXNzZXJ0KHVzZV9lbXB0eShiKSA9PSAxKTtcbiAgICBhc3NlcnQodXNlX2VtcHR5KGMpID09IDEpO1xuICAgIGFzc2VydCh1c2VfZmxhZyh4KSA9PSA3KTtcbiAgICBhc3NlcnQodXNlX2ZsYWcoeSkgPT0gNyk7XG4gICAgYXNzZXJ0KHVzZV9mbGFnKHopID09IDcpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3Ivc3RydWN0cy84OV9lbXB0eV9jb25zdHJ1Y3Rvcl9mb3Jtcy5tdGwiLCJuYW1lIjoiODlfZW1wdHlfY29uc3RydWN0b3JfZm9ybXMubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
 
 ##### Legality Rule {#spec.declarations.structs.instantiation-and-field-access.legality-3}
 
-A struct with fields cannot omit its constructor fields; its bare type name is resolved as a
-name rather than as a constructor expression.
+A struct with fields cannot omit its constructor fields; its bare type name, like a
+zero-field struct's, is not a value.
 
-<!-- rfc.py:last_reviewed e7d2c1d4 -->
+<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -201,7 +205,7 @@ and a function call.
 <!-- rfc.py:last_reviewed ccec8913745b4209ac504134cce36cef0780ad27 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->
@@ -274,7 +278,7 @@ restricted the same way.
 <!-- rfc.py:last_reviewed 9bb187e16530b2ba42c35db4377c71025e38b9bf -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

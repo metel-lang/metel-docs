@@ -2,11 +2,11 @@
 id: rfc-0100
 title: "Nominal Construction Through a Unified Type and Value Namespace"
 date: '2026-11-11'
-status: integrated
+status: implemented
 updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 impl_tracking: 'https://github.com/metel-lang/metel-core/issues/2197'
-impl_status: not-started
+impl_status: implemented
 coverage:
   "1": { spec: "spec.modules.unified-type-and-value-namespace.legality-1" }
   "2": { spec: "spec.declarations.structs.call-syntax-construction.legality-1" }
@@ -34,6 +34,8 @@ coverage:
 > **Status — integrated (2026-11-27).** Section 1 (namespace unification), section 2/5 (call-syntax construction), section 3 (privileged representation construction), and section 7 (enum variant construction) integrated into the Language Spec, stated as accepted fact ahead of the (not yet started) implementation, each rule paired with a bare `rfc.py:exemption` (ADR-0050 section 6) rather than an architecture limitation record. Sections 2/5 and 7 are now implemented (metel-core#2199, metel-core#2201). Section 4 (deferred compact form) is out of scope by design. Section 6 (whole-row construction) is split to RFC-0257 (2026-11-27) to depend on RFC-0255's shared section grammar instead of its own. Section 3 (privileged representation construction) is integrated too, revised the same day to impl scope (see below).
 
 > **Revised (2026-11-27, language owner).** Privileged representation construction (section 3) is an ergonomics feature, not an invariant boundary: the nominal brace literal is legal anywhere inside an `extend` block of its own type, not only in a canonical or unchecked constructor body. The single-function guarantee RFC-0114 §1.1 built on is dropped; invariants are left to refinement types (RFC-0202). Section 3 therefore no longer depends on RFC-0114's `Construct`/`ConstructUnchecked` aspects, and is implementable now.
+
+> **Status — implemented (2026-11-27).** All sections implemented: 1 (#2198), 2/5 (#2199), 3 (#2200), 7 (#2201, #2220); 4 deferred, 6 split to RFC-0257, field sub-patterns split to RFC-0233
 
 ## Design history
 
@@ -320,12 +322,12 @@ condition position, don't collide with residual projection or anything else, and
 nothing about the privileged construction spelling requires changing them. Patterns
 remain `Point { x, y }`, unchanged, with their existing binding, exhaustiveness,
 visibility and ownership rules.
-Nominal representation fields support renaming and nested subpatterns, analogous
-to anonymous-record patterns: `Point { x: 0, y: vertical }` matches the first field
-against a literal and binds the second under another name (language owner, 2026-11-26).
-A refutable field makes the enclosing pattern refutable; `let` patterns must remain
-irrefutable. Exhaustiveness must account for nested patterns. Naming a private field
-is forbidden outside its declaring module even when its subpattern is `_`.
+**Split to RFC-0233 (2026-11-27, language owner).** Field renaming and nested
+subpatterns in a nominal pattern, `Point { x: 0, y: vertical }`, which the language
+owner approved here on 2026-11-26, are RFC-0233's design (Field Sub-Patterns in Struct
+and Variant Patterns, metel-core#2055), not this RFC's. That design includes refutability,
+exhaustiveness, and naming a private field outside its module, even with `_`. RFC-0100
+changes no pattern, so its implementation does not wait on RFC-0233's.
 Nominal struct patterns retain bare `..` for omitted fields; binding a remainder as an
 anonymous record with `..rest` is deferred (language owner, 2026-11-26). Its design must
 address brand removal, private fields, `Drop`, and ownership before it is admitted.
@@ -438,7 +440,9 @@ visibility rule above applies.
 ## 7. Empty types, variants and failure
 
 Zero-field structs and named records require an explicit construction call, which is
-simply an ordinary call now that no bare-shorthand special case exists:
+simply an ordinary call now that no bare-shorthand special case exists. RFC-0106's bare
+`Empty` construction is retired: the bare name is not a value (language owner, 2026-11-27;
+metel-core#2220). Bare unit variants stay (see below):
 
 ```metel
 struct Empty {}

@@ -323,7 +323,7 @@ makes, link the prose words into the block's id — a normal part of writing or 
 section, not a special case reserved for a few sections judged to need it:
 
 ```markdown
-Zero-field structs [may omit braces entirely](#spec.declarations.structs.instantiation-and-field-access.legality-2).
+A zero-field struct [is built by call, like any other](#spec.declarations.structs.instantiation-and-field-access.legality-2).
 ```
 
 Plain markdown, no new anchor type. Skip it only when a rule genuinely has no matching

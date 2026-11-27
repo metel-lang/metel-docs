@@ -614,7 +614,7 @@ program-wide.
 <!-- rfc.py:last_reviewed 8c1ea1466ae0621184adba0d01ce4dfde1ae1604 -->
 
 <!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/4-implemented/rfc-0100-constructor-call-construction.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:fixtures:start -->

@@ -29,7 +29,7 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
    shares a key.
 
    **Superseded 2026-11-26: "that pair is legal" is no longer this project's
-   accepted design.** RFC-0100 (integrated) reverses this specific policy
+   accepted design.** RFC-0100 (implemented) reverses this specific policy
    conclusion — not the bug fix itself, which stands unchanged — once a concrete,
    costly consequence of allowing the pair (RFC-0100's own reverted
    construction-call implementation, metel-core#1945/#1946) was in hand that this
