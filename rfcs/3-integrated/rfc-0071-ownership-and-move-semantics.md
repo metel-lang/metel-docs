@@ -79,6 +79,10 @@ coverage:
 > field-wise constraints. Recorded in RFC-0116 and RFC-0123 as well; **not** a blocker for
 > this RFC, which is correct as written — `Copy` being declared rather than derived is
 > deliberate.
+>
+> **Resolved (2026-11-15, metel-core#1783).** RFC-0123's field-wise constraints are implemented, so an
+> anonymous record is `Copy` when its fields are, through the row impl in `std::core`; a tuple is such a row
+> (RFC-0151). The gap above no longer exists. Section 2 below states what is true now.
 
 > **Status — integrated 2026-07-24, targeting v0.12.0.** §1–§7 are merged into
 > `public/reference/spec/` as a **new page**, `spec/ownership.md` — the spec had no home for
@@ -194,54 +198,54 @@ satisfaction ask it. A second answer anywhere (a special case in either consumer
 | Type | `Copy` when | Source |
 |---|---|---|
 | Primitive numeric types, `boolean`, `Char`, `()` | always | declared in `stdlib/` |
-| `struct`, `enum`, named `record` | declared with `extend T: Copy;`; for a named `record`, when every field is `Copy` | declared; fields checked |
-| Tuple, fixed-size array `[T; N]`, anonymous record | every element or field is `Copy` | structural |
+| `struct`, `enum`, named `record` | granted in the declaration (`copy struct P`, `struct P derives Copy`, `copy record P`), and every field or payload is `Copy`; `extend T: Copy;` is an error | declared; fields checked |
+| Tuple, anonymous record | every element or field is `Copy`: a tuple is a row, and the row impl in `std::core` grants it (RFC-0151, RFC-0123) | structural |
+| Fixed-size array `[T; N]` | every element is `Copy` | structural |
 | `&T` | always | structural |
 | `&var T` | never: an exclusive reference stays unique | structural |
 | `[T]` (borrowed view, RFC-0126) | always | structural |
 | Function type, closure | its use multiplicity is `many` (RFC-0134): no moved-in capture and not a written `once`; a *written* function type is move-only (RFC-0166) | structural |
-| `Option<T>`, `Result<T, E>` and every other std enum | only if std declares it | declared |
+| `Option<T>`, `Result<T, E>` | when their arguments are `Copy`: std declares `derives Copy via T`, and `via T + E` (metel-core#2009) | declared |
+| every other std enum | only if std declares it | declared |
 
 The structural kinds are listed because they cannot be declared: a tuple, an array and an
 anonymous record have no declaration to carry `extend`. Where each lives in the implementation
-is not part of this contract; today the structural rows are answered by the aspect resolver and
-the primitives by `stdlib/`, and relocating the structural rows into std is the Copy migration
-theme (#263, #893, #894), which waits on variadic generics and comptime.
+is not part of this contract; today the row impl answers tuples and anonymous records, the aspect
+resolver answers arrays and references, and the primitives are in `stdlib/`. Relocating the remaining
+structural rows into std is the Copy migration theme (arrays: #1811; function types: #893, #894), which
+waits on comptime.
 
-> **Amended 2026-11-02 (metel-core#1780, #1781); proposed, pending the language owner's
-> decision.** The table above replaces a list written when only primitives, arrays and tuples
-> were `Copy` by default. It records what the implementation does today, measured with
-> `--move-check` and with a `T: Copy` bound, and states the two rules that were implicit:
-> **one predicate**, and **declared for named types, structural for the built-in structural
-> kinds**. Two points differ from the earlier text. Anonymous records are `Copy` when their
-> fields are (RFC-0123's field-wise constraints are implemented; the earlier text, and #741,
-> called them permanently affine). And `()` is `Copy`, which the implementation answers
-> inconsistently today (a bound accepts it, move checking moves it); that is a defect against this
-> rule (metel-core#1784), not an exception to it.
-
-> **Direction, not yet in force (revised 2026-11-05).** RFC-0162, RFC-0206 and RFC-0207 propose that `Copy`
-> keep its name and its sealed meaning (a representation copy that runs no user code), be granted only
-> in the declaration (`copy struct Point { … }`, the one-word form of `struct Point derives Copy { … }`, and
-> `copy record P { … }`), with an exact per-instantiation condition (every field `Copy`, not `Drop`, not
-> `Linear`), and that it bring a provided `Clone` that cannot be written. If accepted, the "declared" rows
-> of the table change their spelling, a named `record` moves from structural to declared, and
-> `extend X: Copy;` is deprecated for one minor release; the one-predicate rule above is unchanged, and
-> the classes are the lattice of RFC-0089.
+> **In force (2026-11-10; reconciled 2026-11-15, metel-core#1783).** The table above and its two rules, **one
+> predicate** ("is this type `Copy`", asked by move checking and by `T: Copy` bound satisfaction alike) and
+> **declared for named types, structural for the built-in structural kinds**, were proposed on 2026-11-02
+> (#1780, #1781) and are now the contract. `Copy` keeps its name and its sealed meaning (a representation copy
+> that runs no user code); it is granted only in the declaration, with the exact per-instantiation condition
+> (every field `Copy`, not `Drop`, not `Linear`), and it brings a provided `Clone` that cannot be written for a
+> `Copy` type: RFC-0206 (accepted 2026-11-05, integrated 2026-11-10), RFC-0207, RFC-0212 and RFC-0213
+> (implemented), RFC-0211 (implemented). The classes are the lattice of RFC-0089. The spec's `Copy` section
+> (`ownership.md`) is the normative text.
+>
+> Differences from the text this section replaced: anonymous records and tuples are `Copy` when their parts are;
+> `()` is `Copy` in a bound and under move checking (#1784, fixed); a named `record` is declared like a
+> `struct`, not structural; `extend X: Copy;` is an error (T0045) with a fix-it into the declaration, not a
+> deprecated form. The one-predicate rule is true in the implementation: move checking's `is_copy` no longer
+> answers function types and closures directly, and both consumers ask the aspect resolver (metel-core#739,
+> 2026-11-15).
 
 - **Do not write `extend<T: Copy> [T]: Copy;`.** The borrowed view is `Copy` structurally; a
   second declaration would be a second answer.
 
-Structs and enums are not `Copy` unless explicitly declared. A type may implement `Copy`
+Structs and enums are not `Copy` unless explicitly declared. A type may be declared `Copy`
 only if all its fields (for structs) or all payload types (for enum variants) are `Copy`;
 the compiler enforces this structurally:
 
 ```metel
-struct Point { x: f64, y: f64 }
-extend Point: Copy;   // valid — f64 is Copy
+copy struct Point { x: f64, y: f64 }          // valid — f64 is Copy
 
-struct Node { val: i64, next: @a Node }
-extend Node: Copy;    // compile error — @a Node is not Copy
+copy struct Node { val: i64, next: @a Node }  // compile error — @a Node is not Copy
 ```
+
+*(Examples rewritten 2026-11-15. They were written `extend Point: Copy;`, which is an error since RFC-0206.)*
 
 ---
 
@@ -277,7 +281,8 @@ type could be duplicated freely, the destructor would run once per copy, potenti
 releasing the same resource multiple times.
 
 ```metel
-extend Handle: Copy;   // compile error — Handle implements Drop
+copy struct Handle { fd: u64 }                // compile error (T0015) once Handle also implements Drop
+extend Handle: Drop { fun drop(&var self) { close_fd(self.fd); } }
 ```
 
 The negative bound `T: !Drop` (RFC-0066) is satisfied by any type with no `Drop` impl.
@@ -561,7 +566,7 @@ question 4.
 > **Items 2, 3 and 4 read "Proposed" until 2026-07-26, and that was stale rather than
 > undecided.** All three were adopted normatively when this RFC was integrated — they are the
 > `array elements` / `tuple elements` / `enum payloads` rows of the partial-move table in
-> `public/reference/spec/ownership.md`, written in the same commit that moved this RFC to
+> `public/reference/spec/ownership/index.md`, written in the same commit that moved this RFC to
 > `3-integrated`. The audit text was simply never updated to match the spec it fed. Marked
 > resolved here so the two documents agree; no decision changed, and per PROCESS.md the spec
 > was already the normative statement of all three.
@@ -573,10 +578,22 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
 
 ## 9. Unresolved questions
 
-1. **`Copy` declaration syntax — resolved.** `Copy` is declared via `extend T: Copy;`.
-   This is consistent with how other aspects are implemented in Metel. A derive-like
-   shorthand (e.g. `derive(Copy)`) will be considered when the derived aspects system
-   (RFC-0012) is designed; until then, the explicit impl is the only supported form.
+**First-class variant types (RFC-0210, deferred 2026-11-26).** Decide destructor
+dispatch for a value statically typed as an enum variant, including whether and how an
+enclosing enum's `Drop` applies before and after widening. Reconcile variant-specific
+implementations, partial moves and residuals (RFC-0150), narrowed destructors
+(RFC-0147 / RFC-0148), linearity, failure and control-flow exits. This records an open
+design dependency and does not change this RFC's integrated ownership rules.
+
+**Variant Copy and Clone (RFC-0210, deferred 2026-11-26).** Decide whether a variant
+type may have `Copy` or `Clone` independently of its enclosing enum, and how grants,
+derivations, widening, partial moves and destructor obligations interact. Coordinate
+with RFC-0206; this question does not amend the integrated Copy/Clone rules.
+
+1. **`Copy` declaration syntax — resolved, then superseded.** `Copy` was declared via
+   `extend T: Copy;`, with a derive-like shorthand left for when the derived aspects system was designed.
+   **Superseded (2026-11-10, RFC-0206 and RFC-0207):** `Copy` is granted in the declaration, `copy struct P` or
+   `struct P derives Copy`, and `extend T: Copy;` is an error.
 
 2. **Partial moves and pattern matching — resolved.** Pattern destructuring may
    simultaneously move out of multiple fields, subject to the same rules as sequential
@@ -619,7 +636,7 @@ RFC correctly says nothing about it. Only §1's scope sentence needed widening, 
    because "exclusive references are not `Copy`" reads like a guarantee of uniqueness and is
    not one.
 4. ~~Closure capture semantics are unspecified.~~ **Resolved 2026-07-24 — the spec already
-   settled it and this RFC had not caught up.** `public/reference/spec/functions.md` states
+   settled it and this RFC had not caught up.** `public/reference/spec/functions/index.md` states
    that "closures capture variables from their enclosing scope **by value**." Under affine
    ownership, by-value capture of a non-`Copy` type is a **move**: the closure takes
    ownership and the enclosing binding is invalid afterwards. Cloning it instead is precisely

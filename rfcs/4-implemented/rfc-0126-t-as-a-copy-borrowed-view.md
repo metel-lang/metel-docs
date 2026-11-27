@@ -220,7 +220,7 @@ dependency (Open Question 2 there), not a new gap this RFC introduces.
 - The exact dependency on RFC-0067's lifetime anchors for slice validity — RFC-0124 still
   owns confirming that relationship before its own acceptance.
 - Whether `[T; N]`'s `Copy` rule needs const generics to leave the typechecker's hardcoded
-  special case (#263) — orthogonal to this RFC, since `[T; N]`'s `Copy`-when-`T`-is-`Copy`
+  special case (#1811, the array half of #263) — orthogonal to this RFC, since `[T; N]`'s `Copy`-when-`T`-is-`Copy`
   rule is unchanged by anything here.
 - `Value::Array`'s evaluator representation (`Rc<RefCell<Vec>>` today) — an implementation
   choice, not a type-system one.

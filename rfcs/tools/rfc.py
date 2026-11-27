@@ -97,7 +97,44 @@ import urllib.request
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import spec_lint  # noqa: E402  (a sibling module; the public-spec style lint)
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+import specindex  # noqa: E402  (finds spec pages and anchors whatever the directory layout)
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def repo_markdown_files():
+    """The repo's markdown corpus: files git knows about (tracked, or untracked and not ignored).
+
+    Asking git instead of walking the filesystem keeps a nested checkout out of the corpus. A
+    `.claude/worktrees/<name>` worktree is somebody's working copy of this same repo: walking
+    the tree read its stale RFC-status citations and dangling paths as ours and failed the
+    pre-push check of the host checkout. git lists a nested repository as one `dir/` entry,
+    which is dropped here. Outside a git work tree (a bare export, a temp directory in a test)
+    it falls back to a walk that skips dot-directories.
+    """
+    try:
+        out = subprocess.run(
+            ["git", "-C", str(REPO_ROOT), "ls-files", "--cached", "--others", "--exclude-standard", "-z", "--", "*.md"],
+            capture_output=True, text=True, timeout=60,
+        )
+        listed = out.stdout.split("\0") if out.returncode == 0 else None
+    except (OSError, subprocess.TimeoutExpired):
+        listed = None
+    if listed is not None:
+        for name in sorted(set(listed)):
+            path = REPO_ROOT / name
+            if name.endswith(".md") and path.is_file():
+                yield path
+        return
+    for f in sorted(REPO_ROOT.rglob("*.md")):
+        if any(part.startswith(".") for part in f.relative_to(REPO_ROOT).parts[:-1]):
+            continue
+        yield f
+
+
 RFCS_DIR = REPO_ROOT / "rfcs"
 INDEX_PATH = RFCS_DIR / "INDEX.md"
 REGISTRY_PATH = RFCS_DIR / "REGISTRY.md"
@@ -134,13 +171,8 @@ STAGE_LABELS = {
     "refused": "Status — refused",
 }
 
-STOPWORDS = {
-    "the", "a", "an", "and", "or", "of", "to", "in", "for", "on", "is", "are",
-    "this", "that", "with", "as", "by", "be", "at", "it", "its", "from", "not",
-    "into", "over", "than", "then", "when", "which", "would", "could", "should",
-    "has", "have", "had", "was", "were", "will", "can", "may", "if", "but",
-    "rfc", "rfcs", "one", "two", "also", "these", "those", "any", "all",
-}
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "tools"))
+from textsim import STOPWORDS, tokenize, build_tfidf, cosine_sim  # noqa: E402,F401  (shared with record.py)
 
 
 # --------------------------------------------------------------------------
@@ -276,39 +308,8 @@ def error(msg):
 
 
 # --------------------------------------------------------------------------
-# TF-IDF / cosine similarity — pure Python, no dependencies
+# RFC similarity corpus (the TF-IDF code is in docs/tools/textsim.py)
 # --------------------------------------------------------------------------
-
-def tokenize(text):
-    words = re.findall(r"[a-zA-Z][a-zA-Z0-9_]*", text.lower())
-    return [w for w in words if w not in STOPWORDS and len(w) > 2]
-
-
-def build_tfidf(docs):
-    """docs: dict[doc_id] -> list of tokens. Returns dict[doc_id] -> {term: weight}."""
-    df = Counter()
-    for tokens in docs.values():
-        for term in set(tokens):
-            df[term] += 1
-    n = len(docs)
-    idf = {term: math.log((n + 1) / (freq + 1)) + 1 for term, freq in df.items()}
-    vectors = {}
-    for doc_id, tokens in docs.items():
-        tf = Counter(tokens)
-        length = len(tokens) or 1
-        vectors[doc_id] = {term: (count / length) * idf.get(term, 0) for term, count in tf.items()}
-    return vectors
-
-
-def cosine_sim(v1, v2):
-    common = set(v1) & set(v2)
-    dot = sum(v1[t] * v2[t] for t in common)
-    n1 = math.sqrt(sum(x * x for x in v1.values()))
-    n2 = math.sqrt(sum(x * x for x in v2.values()))
-    if n1 == 0 or n2 == 0:
-        return 0.0
-    return dot / (n1 * n2)
-
 
 def rfc_corpus(char_cap=3000):
     """dict[rfc_id] -> (title, tokens) for every existing RFC."""
@@ -434,7 +435,7 @@ def fix_referrers(old_rel, new_rel):
     old_str = str(old_rel)
     new_str = str(new_rel)
     changed = []
-    for f in REPO_ROOT.rglob("*.md"):
+    for f in repo_markdown_files():
         # Same historical-record exemption as status_citation_problems, and for the
         # same reason (found 2026-08-23 rewriting reports/strategy/cycles/2026-08-01/
         # cycle.md's own citation of RFC-0127's path *at that date* to match today's
@@ -666,7 +667,7 @@ SPEC_LAST_REVIEWED_RE = re.compile(
 # versioned document, and `/cut-release` bumps this constant and re-runs
 # `--write-spec-origins` so the pinned ref and the snapshot move together, once
 # per release. Between releases the committed spec carries the previous tag.
-SPEC_FIXTURE_REF = "v0.15.0"
+SPEC_FIXTURE_REF = "v0.16.0"
 METEL_CORE_GITHUB_BLOB = f"https://github.com/metel-lang/metel-core/blob/{SPEC_FIXTURE_REF}"
 
 # A rigor block's fixture-coverage exemption (ADR-0050 §6, extended to the
@@ -722,7 +723,7 @@ def all_spec_block_ids():
     anything pointing at it at all". A block an RFC never claims (a real,
     valid state -- not every rule needs one) still has to have a fixture."""
     ids = set()
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         for line in spec_path.read_text().split("\n"):
             m = SPEC_BLOCK_HEADING_RE.match(line)
             if m:
@@ -739,7 +740,7 @@ def spec_block_bodies():
     part, but callers only ever regex-search this for that one specific
     marker, so no further split is needed here."""
     blocks = {}
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         lines = spec_path.read_text().split("\n")
         i, n = 0, len(lines)
         while i < n:
@@ -827,7 +828,7 @@ def scan_spec_exemptions():
     A block with no trigger has no entry here -- the normal, common case
     (most rules have a real fixture), not a gap needing a placeholder."""
     exemptions = {}
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         lines = spec_path.read_text().split("\n")
         for idx, line in enumerate(lines):
             m = SPEC_BLOCK_HEADING_RE.match(line)
@@ -964,7 +965,7 @@ def planned_marker_problems():
     dev = current_dev_version()
     dev_v = _semver(dev) if dev else None
 
-    spec_files = [p for p in sorted(SPEC_DIR.glob("*.md")) if p.name != "STYLEGUIDE.md"]
+    spec_files = specindex.pages_under(SPEC_DIR, include_styleguide=False)
 
     # --- version check: applies to every Planned-for marker, spec + error codes.
     if dev_v:
@@ -1212,7 +1213,8 @@ def _spec_fixture_marker(toml_path, core_root, include_spec_links=False):
         links = []
         for spec_id in _sidecar_spec_ids(toml_text):
             label, file = _spec_id_label(spec_id)
-            links.append({"id": spec_id, "label": label, "href": f"spec/{file}.md#{spec_id}"})
+            page = specindex.page_for(REPO_ROOT, spec_id) or f"{file}.md"
+            links.append({"id": spec_id, "label": label, "href": f"spec/{page}#{spec_id}"})
         if links:
             payload["specLinks"] = links
     raw = base64.b64encode(
@@ -1374,7 +1376,7 @@ def write_spec_origins():
     fixtures_by_id = scan_spec_citations(tests_dir) if tests_dir is not None else None
     core_root = tests_dir.parent.parent if tests_dir is not None else None
     changed = []
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         text = spec_path.read_text()
         new_text = regenerate_backlinks_in_text(
             text, spec_path, origins_by_id, fixtures_by_id, core_root
@@ -1398,7 +1400,7 @@ def spec_origins_drift_problems():
     fixtures_by_id = scan_spec_citations(tests_dir) if tests_dir is not None else None
     core_root = tests_dir.parent.parent if tests_dir is not None else None
     problems = []
-    for spec_path in sorted(SPEC_DIR.glob("*.md")):
+    for spec_path in specindex.pages_under(SPEC_DIR):
         text = spec_path.read_text()
         if (
             regenerate_backlinks_in_text(text, spec_path, origins_by_id, fixtures_by_id, core_root)
@@ -1673,7 +1675,7 @@ def retired_host_references():
                 f"{rel}: impl_tracking references a retired host ({tracking}) — "
                 f"canonical host is {CANONICAL_ISSUE_HOST}"
             )
-    for f in sorted(REPO_ROOT.rglob("*.md")):
+    for f in sorted(repo_markdown_files()):
         rel = str(f.relative_to(REPO_ROOT))
         try:
             _, body = parse_file(f)
@@ -1968,7 +1970,7 @@ STATUS_CITATION_RE = re.compile(r"RFC-(\d+[a-z]?)\s*\(([^)]{0,200})\)")
 
 def status_citation_problems(id_to_stage):
     problems = []
-    for f in REPO_ROOT.rglob("*.md"):
+    for f in repo_markdown_files():
         # "archive" dirs (reports/**/archive/) hold dated, superseded snapshots —
         # citing an RFC's then-current status there is historically correct, not
         # stale, and must not be "fixed" to match the present. RFCs sitting in
@@ -3096,7 +3098,7 @@ def cmd_check(args=None):
     problems.extend(status_citation_problems(id_to_stage))
     problems.extend(retired_host_references())
 
-    for f in REPO_ROOT.rglob("*.md"):
+    for f in repo_markdown_files():
         # Same historical-record exemption as status_citation_problems/fix_referrers,
         # same day, same root cause: a dated snapshot citing an RFC's path as it was
         # when written is correct, not dangling, even after that RFC moves stage.
@@ -3138,6 +3140,11 @@ def cmd_check(args=None):
     # metel-core#985: the version half needs no corpus; the proof halves self-gate
     # on metel_core_tests_dir() reachability the same way.
     problems.extend(planned_marker_problems())
+
+    # The public spec's style rules (rfcs/tools/spec_lint.py), ratcheted by reference/spec/SPEC-LINT-BASELINE.json.
+    lint_problems, lint_warnings = spec_lint.check_problems(REPO_ROOT)
+    problems.extend(lint_problems)
+    warnings.extend(lint_warnings)
 
     coverage_problems, coverage_info = coverage_check_problems(warnings)
     problems.extend(coverage_problems)
@@ -3195,8 +3202,8 @@ def cmd_index(args):
             print("index drift found:")
             for p in problems:
                 print(f"  - {p}")
-        else:
-            print("RFC registry/index look current.")
+            sys.exit(1)
+        print("RFC registry/index look current.")
         return
 
     if args.suggest_placement:

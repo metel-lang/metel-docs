@@ -1,0 +1,273 @@
+---
+sidebar_position: 19
+---
+
+# `!` as a return type
+
+[A function annotated `-> !` promises never to return; every control-flow path must end in a diverging expression](#spec.types.never-type.legality-11), checked by the compiler:
+
+```metel
+fun abort(msg: String) -> ! {
+    panic(msg);
+}
+```
+
+[A `-> !` function containing a reachable `return` is a type error](#spec.types.never-type.legality-11).
+
+## The type `!`
+
+[`!` is uninhabited, so no terminating expression constructs a value of it](#spec.types.never-type.legality-1); it is a subtype of every type.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.never-type.legality-1}
+
+`!` is uninhabited: no terminating expression can construct a value of that type.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAxX3VuaW5oYWJpdGVkX3ZhcmlhbnRfZXhoYXVzdGl2ZS5tdGwiLCJzb3VyY2UiOiIvLyBQb3NpdGl2ZTogUkZDLTAwNzggXHUwMGE3My4yIC0tIGFuIGVudW0gdmFyaWFudCB3aG9zZSBwYXlsb2FkIGlzIGAhYCBpc1xuLy8gdW5pbmhhYml0ZWQsIHNvIGEgbWF0Y2ggbWF5IG9taXQgaXRzIGFybSBhbmQgc3RpbGwgYmUgZXhoYXVzdGl2ZS5cblxuZW51bSBGb28ge1xuICAgIEEgeyB4OiBpNjQgfSxcbiAgICBCIHsgeTogISB9LFxufVxuXG5mdW4gaGFuZGxlKGY6IEZvbykgLT4gaTY0IHtcbiAgICBtYXRjaCAoZikge1xuICAgICAgICBGb286OkEgeyB4IH0gPT4geCxcbiAgICAgICAgLy8gRm9vOjpCIG9taXR0ZWQgLS0gZXhoYXVzdGl2ZTsgQiBpcyB1bmluaGFiaXRlZC5cbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBoYW5kbGUoRm9vOjpBIHsgeCA9IDUgfSlcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3R5cGVzL25ldmVyXzAxX3VuaW5oYWJpdGVkX3ZhcmlhbnRfZXhoYXVzdGl2ZS5tdGwiLCJuYW1lIjoibmV2ZXJfMDFfdW5pbmhhYml0ZWRfdmFyaWFudF9leGhhdXN0aXZlLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-2}
+
+`!` is a subtype of every type, and an expression of type `!` implicitly coerces to any
+expected type.
+
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA0X3BhbmljX2NvZXJjZXMubXRsIiwic291cmNlIjoiLy8gUG9zaXRpdmU6IFJGQy0wMDc4IFx1MDBhNzEuMS9cdTAwYTcyIC0tIGBwYW5pYyhtc2cpYCBoYXMgdHlwZSBgIWAsIHdoaWNoIGNvZXJjZXNcbi8vIGltcGxpY2l0bHkgdG8gYW55IHR5cGUgd2hlcmV2ZXIgdGhlIHN1cnJvdW5kaW5nIGNvbnRleHQgaXMgb3RoZXJ3aXNlXG4vLyB1bmNvbnN0cmFpbmVkLlxuXG5mdW4gcGljayhjb25kOiBib29sZWFuKSAtPiBpNjQge1xuICAgIGlmIChjb25kKSB7XG4gICAgICAgIHBhbmljKFwibm9wZVwiKVxuICAgIH0gZWxzZSB7XG4gICAgICAgIDVcbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBwaWNrKGZhbHNlKVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwiLCJuYW1lIjoibmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-3}
+
+Code made unreachable by a diverging expression remains typechecked in its surrounding
+type context.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAzX3VucmVhY2hhYmxlX2FybV9hbGxvd2VkLm10bCIsInNvdXJjZSI6Ii8vIFBvc2l0aXZlOiBSRkMtMDA3OCBcdTAwYTczLjIvXHUwMGE3NC4xIC0tIHdyaXRpbmcgdGhlIGFybSBmb3IgYW4gdW5pbmhhYml0ZWQgdmFyaWFudCBpc1xuLy8gYWxsb3dlZCAobWVyZWx5IHVucmVhY2hhYmxlLCBub3QgcmVqZWN0ZWQpOyB0aGUgY29tcGlsZXIgbWF5IHdhcm4gYnV0IG11c3Rcbi8vIG5vdCBlcnJvci5cblxuZnVuIHVzZV9yZXN1bHQocjogUmVzdWx0PGk2NCwgIT4pIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHIpIHtcbiAgICAgICAgUmVzdWx0OjpPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIFJlc3VsdDo6RXJyIHsgZXJyb3IgfSA9PiBwYW5pYyhcInVucmVhY2hhYmxlXCIpLFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSAtPiBpNjQge1xuICAgIHVzZV9yZXN1bHQoUmVzdWx0OjpPayB7IHZhbHVlID0gMyB9KVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDNfdW5yZWFjaGFibGVfYXJtX2FsbG93ZWQubXRsIiwibmFtZSI6Im5ldmVyXzAzX3VucmVhY2hhYmxlX2FybV9hbGxvd2VkLm10bCJ9"></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.never-type.dynamics-1}
+
+`return`, `panic`, a non-breaking `loop`, and value-position `break` or `continue`
+diverge and have type `!`; an enclosing expression cannot produce a value after such a
+subexpression diverges.
+
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlIwMDE0IiwiY29sIjpudWxsLCJjb250YWlucyI6ImJvb20iLCJsaW5lIjpudWxsLCJzdGF0dXMiOiJydW50aW1lX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoibmVnX3BhbmljLm10bCIsInNvdXJjZSI6Ii8vIFJVTlRJTUVfRVJST1JbYm9vbV1cbi8vIFJGQy0wMDc4OiBwYW5pYyhtc2cpIGFsd2F5cyBwYW5pY3MgKFIwMDE0KSB3aXRoIHRoZSBnaXZlbiBtZXNzYWdlLlxuZnVuIG1haW4oKSB7XG4gICAgcGFuaWMoXCJib29tXCIpO1xufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy9ldmFsdWF0b3IvbmV2ZXIvbmVnX3BhbmljLm10bCIsIm5hbWUiOiJuZWdfcGFuaWMubXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA0X3BhbmljX2NvZXJjZXMubXRsIiwic291cmNlIjoiLy8gUG9zaXRpdmU6IFJGQy0wMDc4IFx1MDBhNzEuMS9cdTAwYTcyIC0tIGBwYW5pYyhtc2cpYCBoYXMgdHlwZSBgIWAsIHdoaWNoIGNvZXJjZXNcbi8vIGltcGxpY2l0bHkgdG8gYW55IHR5cGUgd2hlcmV2ZXIgdGhlIHN1cnJvdW5kaW5nIGNvbnRleHQgaXMgb3RoZXJ3aXNlXG4vLyB1bmNvbnN0cmFpbmVkLlxuXG5mdW4gcGljayhjb25kOiBib29sZWFuKSAtPiBpNjQge1xuICAgIGlmIChjb25kKSB7XG4gICAgICAgIHBhbmljKFwibm9wZVwiKVxuICAgIH0gZWxzZSB7XG4gICAgICAgIDVcbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBwaWNrKGZhbHNlKVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwiLCJuYW1lIjoibmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Matching on an uninhabited type
+
+[Match exhaustiveness excludes impossible scrutinee values and uninhabited variants](#spec.types.never-type.legality-4).
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.never-type.legality-4}
+
+Match exhaustiveness excludes impossible scrutinee values and uninhabited variants.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAxX3VuaW5oYWJpdGVkX3ZhcmlhbnRfZXhoYXVzdGl2ZS5tdGwiLCJzb3VyY2UiOiIvLyBQb3NpdGl2ZTogUkZDLTAwNzggXHUwMGE3My4yIC0tIGFuIGVudW0gdmFyaWFudCB3aG9zZSBwYXlsb2FkIGlzIGAhYCBpc1xuLy8gdW5pbmhhYml0ZWQsIHNvIGEgbWF0Y2ggbWF5IG9taXQgaXRzIGFybSBhbmQgc3RpbGwgYmUgZXhoYXVzdGl2ZS5cblxuZW51bSBGb28ge1xuICAgIEEgeyB4OiBpNjQgfSxcbiAgICBCIHsgeTogISB9LFxufVxuXG5mdW4gaGFuZGxlKGY6IEZvbykgLT4gaTY0IHtcbiAgICBtYXRjaCAoZikge1xuICAgICAgICBGb286OkEgeyB4IH0gPT4geCxcbiAgICAgICAgLy8gRm9vOjpCIG9taXR0ZWQgLS0gZXhoYXVzdGl2ZTsgQiBpcyB1bmluaGFiaXRlZC5cbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBoYW5kbGUoRm9vOjpBIHsgeCA9IDUgfSlcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3R5cGVzL25ldmVyXzAxX3VuaW5oYWJpdGVkX3ZhcmlhbnRfZXhoYXVzdGl2ZS5tdGwiLCJuYW1lIjoibmV2ZXJfMDFfdW5pbmhhYml0ZWRfdmFyaWFudF9leGhhdXN0aXZlLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InVuaW5oYWJpdGVkX21hdGNoLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMDc4IFx1MDBhNzMuMjogbWF0Y2hpbmcgb25seSB0aGUgaW5oYWJpdGVkIHZhcmlhbnQgb2YgYW4gZW51bSB3aXRoIGFcbi8vIGAhYC1wYXlsb2FkIHZhcmlhbnQsIGV4ZXJjaXNlZCBlbmQtdG8tZW5kIHRvIGNvbmZpcm0gZGlzcGF0Y2ggYW5kIHZhbHVlXG4vLyBleHRyYWN0aW9uIHdvcmsgY29ycmVjdGx5IGF0IHJ1bnRpbWUsIG5vdCBqdXN0IGF0IHR5cGVjaGVjayB0aW1lLlxuXG5lbnVtIEZvbyB7XG4gICAgQSB7IHg6IGk2NCB9LFxuICAgIEIgeyB5OiAhIH0sXG59XG5cbmZ1biBoYW5kbGUoZjogRm9vKSAtPiBpNjQge1xuICAgIG1hdGNoIChmKSB7XG4gICAgICAgIEZvbzo6QSB7IHggfSA9PiB4LFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGhhbmRsZShGb286OkEgeyB4ID0gNSB9KSA9PSA1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL25ldmVyL3VuaW5oYWJpdGVkX21hdGNoLm10bCIsIm5hbWUiOiJ1bmluaGFiaXRlZF9tYXRjaC5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-5}
+
+A match whose scrutinee has type `!` is exhaustive with no arms.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InVuaW5oYWJpdGVkX21hdGNoLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMDc4IFx1MDBhNzMuMjogbWF0Y2hpbmcgb25seSB0aGUgaW5oYWJpdGVkIHZhcmlhbnQgb2YgYW4gZW51bSB3aXRoIGFcbi8vIGAhYC1wYXlsb2FkIHZhcmlhbnQsIGV4ZXJjaXNlZCBlbmQtdG8tZW5kIHRvIGNvbmZpcm0gZGlzcGF0Y2ggYW5kIHZhbHVlXG4vLyBleHRyYWN0aW9uIHdvcmsgY29ycmVjdGx5IGF0IHJ1bnRpbWUsIG5vdCBqdXN0IGF0IHR5cGVjaGVjayB0aW1lLlxuXG5lbnVtIEZvbyB7XG4gICAgQSB7IHg6IGk2NCB9LFxuICAgIEIgeyB5OiAhIH0sXG59XG5cbmZ1biBoYW5kbGUoZjogRm9vKSAtPiBpNjQge1xuICAgIG1hdGNoIChmKSB7XG4gICAgICAgIEZvbzo6QSB7IHggfSA9PiB4LFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGhhbmRsZShGb286OkEgeyB4ID0gNSB9KSA9PSA1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL25ldmVyL3VuaW5oYWJpdGVkX21hdGNoLm10bCIsIm5hbWUiOiJ1bmluaGFiaXRlZF9tYXRjaC5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-6}
+
+An enum variant containing a `!` payload is uninhabited; its match arm may be omitted or,
+if written, is unreachable but not rejected.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAxX3VuaW5oYWJpdGVkX3ZhcmlhbnRfZXhoYXVzdGl2ZS5tdGwiLCJzb3VyY2UiOiIvLyBQb3NpdGl2ZTogUkZDLTAwNzggXHUwMGE3My4yIC0tIGFuIGVudW0gdmFyaWFudCB3aG9zZSBwYXlsb2FkIGlzIGAhYCBpc1xuLy8gdW5pbmhhYml0ZWQsIHNvIGEgbWF0Y2ggbWF5IG9taXQgaXRzIGFybSBhbmQgc3RpbGwgYmUgZXhoYXVzdGl2ZS5cblxuZW51bSBGb28ge1xuICAgIEEgeyB4OiBpNjQgfSxcbiAgICBCIHsgeTogISB9LFxufVxuXG5mdW4gaGFuZGxlKGY6IEZvbykgLT4gaTY0IHtcbiAgICBtYXRjaCAoZikge1xuICAgICAgICBGb286OkEgeyB4IH0gPT4geCxcbiAgICAgICAgLy8gRm9vOjpCIG9taXR0ZWQgLS0gZXhoYXVzdGl2ZTsgQiBpcyB1bmluaGFiaXRlZC5cbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBoYW5kbGUoRm9vOjpBIHsgeCA9IDUgfSlcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3R5cGVzL25ldmVyXzAxX3VuaW5oYWJpdGVkX3ZhcmlhbnRfZXhoYXVzdGl2ZS5tdGwiLCJuYW1lIjoibmV2ZXJfMDFfdW5pbmhhYml0ZWRfdmFyaWFudF9leGhhdXN0aXZlLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAzX3VucmVhY2hhYmxlX2FybV9hbGxvd2VkLm10bCIsInNvdXJjZSI6Ii8vIFBvc2l0aXZlOiBSRkMtMDA3OCBcdTAwYTczLjIvXHUwMGE3NC4xIC0tIHdyaXRpbmcgdGhlIGFybSBmb3IgYW4gdW5pbmhhYml0ZWQgdmFyaWFudCBpc1xuLy8gYWxsb3dlZCAobWVyZWx5IHVucmVhY2hhYmxlLCBub3QgcmVqZWN0ZWQpOyB0aGUgY29tcGlsZXIgbWF5IHdhcm4gYnV0IG11c3Rcbi8vIG5vdCBlcnJvci5cblxuZnVuIHVzZV9yZXN1bHQocjogUmVzdWx0PGk2NCwgIT4pIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHIpIHtcbiAgICAgICAgUmVzdWx0OjpPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIFJlc3VsdDo6RXJyIHsgZXJyb3IgfSA9PiBwYW5pYyhcInVucmVhY2hhYmxlXCIpLFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSAtPiBpNjQge1xuICAgIHVzZV9yZXN1bHQoUmVzdWx0OjpPayB7IHZhbHVlID0gMyB9KVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDNfdW5yZWFjaGFibGVfYXJtX2FsbG93ZWQubXRsIiwibmFtZSI6Im5ldmVyXzAzX3VucmVhY2hhYmxlX2FybV9hbGxvd2VkLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InVuaW5oYWJpdGVkX21hdGNoLm10bCIsInNvdXJjZSI6Ii8vIFJGQy0wMDc4IFx1MDBhNzMuMjogbWF0Y2hpbmcgb25seSB0aGUgaW5oYWJpdGVkIHZhcmlhbnQgb2YgYW4gZW51bSB3aXRoIGFcbi8vIGAhYC1wYXlsb2FkIHZhcmlhbnQsIGV4ZXJjaXNlZCBlbmQtdG8tZW5kIHRvIGNvbmZpcm0gZGlzcGF0Y2ggYW5kIHZhbHVlXG4vLyBleHRyYWN0aW9uIHdvcmsgY29ycmVjdGx5IGF0IHJ1bnRpbWUsIG5vdCBqdXN0IGF0IHR5cGVjaGVjayB0aW1lLlxuXG5lbnVtIEZvbyB7XG4gICAgQSB7IHg6IGk2NCB9LFxuICAgIEIgeyB5OiAhIH0sXG59XG5cbmZ1biBoYW5kbGUoZjogRm9vKSAtPiBpNjQge1xuICAgIG1hdGNoIChmKSB7XG4gICAgICAgIEZvbzo6QSB7IHggfSA9PiB4LFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSB7XG4gICAgYXNzZXJ0KGhhbmRsZShGb286OkEgeyB4ID0gNSB9KSA9PSA1KTtcbn1cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvZXZhbHVhdG9yL25ldmVyL3VuaW5oYWJpdGVkX21hdGNoLm10bCIsIm5hbWUiOiJ1bmluaGFiaXRlZF9tYXRjaC5tdGwifQ=="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-7}
+
+An enum with exactly one inhabited, single-field variant implicitly coerces to that
+field's type; zero-field or multi-field inhabited variants do not receive this coercion.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InNpbmdsZXRvbl9jb2VyY2lvbi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDA3OCBcdTAwYTczLjM6IGluaGFiaXRlZC1zaW5nbGV0b24gY29lcmNpb24sIGV4ZXJjaXNlZCBlbmQtdG8tZW5kIChub3QganVzdFxuLy8gdHlwZWNoZWNrKSB0byBjb25maXJtIHRoZSBjb2VyY2VkIHJ1bnRpbWUgdmFsdWUgaXMgYWN0dWFsbHkgY29ycmVjdC5cblxuZW51bSBXcmFwcGVyPFQ+IHtcbiAgICBQcmVzZW50IHsgdmFsdWU6IFQgfSxcbiAgICBBYnNlbnQgIHsgcGxhY2Vob2xkZXI6ICEgfSxcbn1cblxuZnVuIGluZmFsbGlibGUoKSAtPiBXcmFwcGVyPGk2ND4ge1xuICAgIFdyYXBwZXI6OlByZXNlbnQgeyB2YWx1ZSA9IDQyIH1cbn1cblxuZnVuIGluZmFsbGlibGVfcmVzdWx0KCkgLT4gUmVzdWx0PGk2NCwgIT4ge1xuICAgIFJlc3VsdDo6T2sgeyB2YWx1ZSA9IDcgfVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgeDogaTY0IDo9IGluZmFsbGlibGUoKTtcbiAgICBsZXQgeTogaTY0IDo9IGluZmFsbGlibGVfcmVzdWx0KCk7XG4gICAgYXNzZXJ0KHggPT0gNDIpO1xuICAgIGFzc2VydCh5ID09IDcpO1xuICAgIGFzc2VydCh4ICsgeSA9PSA0OSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9uZXZlci9zaW5nbGV0b25fY29lcmNpb24ubXRsIiwibmFtZSI6InNpbmdsZXRvbl9jb2VyY2lvbi5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Dynamic Semantics {#spec.types.never-type.dynamics-2}
+
+When every arm of a match diverges, the match expression has type `!`.
+
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA0X3BhbmljX2NvZXJjZXMubXRsIiwic291cmNlIjoiLy8gUG9zaXRpdmU6IFJGQy0wMDc4IFx1MDBhNzEuMS9cdTAwYTcyIC0tIGBwYW5pYyhtc2cpYCBoYXMgdHlwZSBgIWAsIHdoaWNoIGNvZXJjZXNcbi8vIGltcGxpY2l0bHkgdG8gYW55IHR5cGUgd2hlcmV2ZXIgdGhlIHN1cnJvdW5kaW5nIGNvbnRleHQgaXMgb3RoZXJ3aXNlXG4vLyB1bmNvbnN0cmFpbmVkLlxuXG5mdW4gcGljayhjb25kOiBib29sZWFuKSAtPiBpNjQge1xuICAgIGlmIChjb25kKSB7XG4gICAgICAgIHBhbmljKFwibm9wZVwiKVxuICAgIH0gZWxzZSB7XG4gICAgICAgIDVcbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICBwaWNrKGZhbHNlKVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwiLCJuYW1lIjoibmV2ZXJfMDRfcGFuaWNfY29lcmNlcy5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## `Result` and `Option` with `!`
+
+[`Result<T, !>` has only an `Ok` value](#spec.types.never-type.legality-8), and `Option<!>` only `None`.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.never-type.legality-8}
+
+`Result<T, !>` has an uninhabited `Err` variant and therefore only an `Ok` value can be
+constructed.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6InNpbmdsZXRvbl9jb2VyY2lvbi5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDA3OCBcdTAwYTczLjM6IGluaGFiaXRlZC1zaW5nbGV0b24gY29lcmNpb24sIGV4ZXJjaXNlZCBlbmQtdG8tZW5kIChub3QganVzdFxuLy8gdHlwZWNoZWNrKSB0byBjb25maXJtIHRoZSBjb2VyY2VkIHJ1bnRpbWUgdmFsdWUgaXMgYWN0dWFsbHkgY29ycmVjdC5cblxuZW51bSBXcmFwcGVyPFQ+IHtcbiAgICBQcmVzZW50IHsgdmFsdWU6IFQgfSxcbiAgICBBYnNlbnQgIHsgcGxhY2Vob2xkZXI6ICEgfSxcbn1cblxuZnVuIGluZmFsbGlibGUoKSAtPiBXcmFwcGVyPGk2ND4ge1xuICAgIFdyYXBwZXI6OlByZXNlbnQgeyB2YWx1ZSA9IDQyIH1cbn1cblxuZnVuIGluZmFsbGlibGVfcmVzdWx0KCkgLT4gUmVzdWx0PGk2NCwgIT4ge1xuICAgIFJlc3VsdDo6T2sgeyB2YWx1ZSA9IDcgfVxufVxuXG5mdW4gbWFpbigpIHtcbiAgICBsZXQgeDogaTY0IDo9IGluZmFsbGlibGUoKTtcbiAgICBsZXQgeTogaTY0IDo9IGluZmFsbGlibGVfcmVzdWx0KCk7XG4gICAgYXNzZXJ0KHggPT0gNDIpO1xuICAgIGFzc2VydCh5ID09IDcpO1xuICAgIGFzc2VydCh4ICsgeSA9PSA0OSk7XG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL2V2YWx1YXRvci9uZXZlci9zaW5nbGV0b25fY29lcmNpb24ubXRsIiwibmFtZSI6InNpbmdsZXRvbl9jb2VyY2lvbi5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-9}
+
+`Result<T, !>` satisfies the inhabited-singleton coercion rule and a match omitting `Err`
+is exhaustive.
+
+<!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (2)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAyX3Jlc3VsdF9uZXZlcl9lcnJfZXhoYXVzdGl2ZS5tdGwiLCJzb3VyY2UiOiIvLyBQb3NpdGl2ZTogUkZDLTAwNzggXHUwMGE3NC4xIC0tIFJlc3VsdDxULCAhPiBzYXRpc2ZpZXMgdGhlIHVuaW5oYWJpdGVkLXZhcmlhbnQgcnVsZVxuLy8gYXMgYSBzcGVjaWFsIGNhc2Ugb2YgdGhlIGdlbmVyYWwgcnVsZSAoXHUwMGE3My4yKTsgYSBtYXRjaCBvbWl0dGluZyBgRXJyYCBpc1xuLy8gZXhoYXVzdGl2ZS5cblxuZnVuIHVzZV9yZXN1bHQocjogUmVzdWx0PGk2NCwgIT4pIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHIpIHtcbiAgICAgICAgUmVzdWx0OjpPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIC8vIFJlc3VsdDo6RXJyIG9taXR0ZWQgLS0gZXhoYXVzdGl2ZTsgRXJyIGlzIHVuaW5oYWJpdGVkIHdoZW4gRSA9ICEuXG4gICAgfVxufVxuXG5mdW4gbWFpbigpIC0+IGk2NCB7XG4gICAgdXNlX3Jlc3VsdChSZXN1bHQ6Ok9rIHsgdmFsdWUgPSAzIH0pXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy90eXBlcy9uZXZlcl8wMl9yZXN1bHRfbmV2ZXJfZXJyX2V4aGF1c3RpdmUubXRsIiwibmFtZSI6Im5ldmVyXzAyX3Jlc3VsdF9uZXZlcl9lcnJfZXhoYXVzdGl2ZS5tdGwifQ=="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzAzX3VucmVhY2hhYmxlX2FybV9hbGxvd2VkLm10bCIsInNvdXJjZSI6Ii8vIFBvc2l0aXZlOiBSRkMtMDA3OCBcdTAwYTczLjIvXHUwMGE3NC4xIC0tIHdyaXRpbmcgdGhlIGFybSBmb3IgYW4gdW5pbmhhYml0ZWQgdmFyaWFudCBpc1xuLy8gYWxsb3dlZCAobWVyZWx5IHVucmVhY2hhYmxlLCBub3QgcmVqZWN0ZWQpOyB0aGUgY29tcGlsZXIgbWF5IHdhcm4gYnV0IG11c3Rcbi8vIG5vdCBlcnJvci5cblxuZnVuIHVzZV9yZXN1bHQocjogUmVzdWx0PGk2NCwgIT4pIC0+IGk2NCB7XG4gICAgbWF0Y2ggKHIpIHtcbiAgICAgICAgUmVzdWx0OjpPayB7IHZhbHVlIH0gPT4gdmFsdWUsXG4gICAgICAgIFJlc3VsdDo6RXJyIHsgZXJyb3IgfSA9PiBwYW5pYyhcInVucmVhY2hhYmxlXCIpLFxuICAgIH1cbn1cblxuZnVuIG1haW4oKSAtPiBpNjQge1xuICAgIHVzZV9yZXN1bHQoUmVzdWx0OjpPayB7IHZhbHVlID0gMyB9KVxufVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDNfdW5yZWFjaGFibGVfYXJtX2FsbG93ZWQubXRsIiwibmFtZSI6Im5ldmVyXzAzX3VucmVhY2hhYmxlX2FybV9hbGxvd2VkLm10bCJ9"></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+##### Legality Rule {#spec.types.never-type.legality-10}
+
+`Option<!>` has only its zero-field `None` variant inhabited; it does not coerce to a
+field type.
+
+<!-- rfc.py:last_reviewed 052e8604c616372659749277ef96efec80d79fe6 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<p class="rigor-backlink"><em>Tested by</em></p>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA4X3BlcmhhcHNfbmV2ZXJfZXhoYXVzdGl2ZS5tdGwiLCJzb3VyY2UiOiIvLyBSRkMtMDA3OCBcdTAwYTc1OiBPcHRpb248IT4gaGFzIG9ubHkgb25lIGluaGFiaXRlZCB2YXJpYW50IC0tIE5vbmUuIFRoZSBTb21lXG4vLyB2YXJpYW50IHdvdWxkIHJlcXVpcmUgYSB2YWx1ZSBvZiB0eXBlICEsIHdoaWNoIGNhbm5vdCBiZSBjb25zdHJ1Y3RlZCwgc29cbi8vIGEgbWF0Y2ggb21pdHRpbmcgU29tZSBpcyBleGhhdXN0aXZlLlxuZnVuIHVzZV9wZXJoYXBzKHA6IE9wdGlvbjwhPikgLT4gaTY0IHtcbiAgICBtYXRjaCAocCkge1xuICAgICAgICBPcHRpb246Ok5vbmUgPT4gMCxcbiAgICAgICAgLy8gU29tZSBvbWl0dGVkIC0tIGV4aGF1c3RpdmU7IFNvbWUgaXMgdW5pbmhhYml0ZWQgd2hlbiBUID0gIS5cbiAgICB9XG59XG5cbmZ1biBtYWluKCkgLT4gaTY0IHtcbiAgICB1c2VfcGVyaGFwcyhPcHRpb246Ok5vbmUpXG59XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy90eXBlcy9uZXZlcl8wOF9wZXJoYXBzX25ldmVyX2V4aGF1c3RpdmUubXRsIiwibmFtZSI6Im5ldmVyXzA4X3BlcmhhcHNfbmV2ZXJfZXhoYXVzdGl2ZS5tdGwifQ=="></details>
+<!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Functions returning `!`
+
+[A function declared `-> !` is legal only when every reachable control-flow path diverges](#spec.types.never-type.legality-11).
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.types.never-type.legality-11}
+
+A function declared `-> !` is legal only when every reachable control-flow path diverges;
+a reachable ordinary return is a type error.
+
+<!-- rfc.py:last_reviewed e7d2c1d4 -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0078](../../../../rfcs/4-implemented/rfc-0078-bottom-type.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:fixtures:start -->
+<details class="rigor-fixtures-toggle" open>
+<summary>Tested by (3)</summary>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA1X3JldF9uZXZlcl9kaXZlcmdlc19vay5tdGwiLCJzb3VyY2UiOiIvLyBQb3NpdGl2ZTogUkZDLTAwNzggXHUwMGE3NiAtLSBhIGZ1bmN0aW9uIGRlY2xhcmVkIGAtPiAhYCB0eXBlY2hlY2tzIHdoZW4gZXZlcnlcbi8vIHBhdGggZ2VudWluZWx5IGRpdmVyZ2VzIChhIGBwYW5pY2AgdGFpbCBleHByZXNzaW9uLCBvciBhIGBsb29wYCB3aXRoIG5vXG4vLyByZWFjaGFibGUgYGJyZWFrYCkuXG5cbmZ1biBhYm9ydChtc2c6IFN0cmluZykgLT4gISB7XG4gICAgcGFuaWMobXNnKVxufVxuXG5mdW4gbG9vcF9mb3JldmVyKCkgLT4gISB7XG4gICAgbG9vcCB7IH1cbn1cblxuZnVuIGFib3J0X3ZpYV9yZXR1cm4obXNnOiBTdHJpbmcpIC0+ICEge1xuICAgIC8vIEFsc28gZmluZTogdGhlIGByZXR1cm5gZWQgZXhwcmVzc2lvbiBpdHNlbGYgbmV2ZXIgcHJvZHVjZXMgYSB2YWx1ZS5cbiAgICByZXR1cm4gcGFuaWMobXNnKTtcbn1cblxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfMDVfcmV0X25ldmVyX2RpdmVyZ2VzX29rLm10bCIsIm5hbWUiOiJuZXZlcl8wNV9yZXRfbmV2ZXJfZGl2ZXJnZXNfb2subXRsIn0="></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoic3VjY2VzcyJ9LCJmaWxlcyI6W3sibmFtZSI6Im5ldmVyXzA3X3BhbmljX3NlbWljb2xvbl9kaXZlcmdlcy5tdGwiLCJzb3VyY2UiOiIvLyBJc3N1ZSAjMjI5L1JGQy0wMDc4IFx1MDBhNzY6IGEgYmFyZSBgcGFuaWMobXNnKTtgICh0cmFpbGluZyBgO2AsIG5vdCB0YWlsXG4vLyBwb3NpdGlvbikgYXMgYSBmdW5jdGlvbidzIGxhc3Qgc3RhdGVtZW50IG11c3Qgc3RpbGwgYmUgcmVjb2duaXplZCBhc1xuLy8gZGl2ZXJnZW50LiBQcmV2aW91c2x5IGBmdW5fYm9keV9kaXZlcmdlc2Agb25seSBzcGVjaWFsLWNhc2VkIHRoZSByZW1vdmVkXG4vLyBgVHlwZWRTdG10OjpSZXR1cm5gL2BCcmVha2AvYENvbnRpbnVlYCB2YXJpYW50cyBkaXJlY3RseSBhbmQgb3RoZXJ3aXNlXG4vLyBhbHdheXMgcmV0dXJuZWQgYGZhbHNlYCBmb3IgYW55IG90aGVyIGxhc3Qtc3RhdGVtZW50IHNoYXBlIC0tIGEgbGF0ZW50IGdhcFxuLy8gdGhhdCBtYWRlIHRoaXMgZXhhY3QgY2FzZSAoYSBzZW1pY29sb24tdGVybWluYXRlZCBkaXZlcmdpbmcgY2FsbCwgbm90IGFcbi8vIHRhaWwgZXhwcmVzc2lvbikgaW5jb3JyZWN0bHkgcmVqZWN0ZWQgdW5kZXIgYC0+ICFgLlxuZnVuIGFib3J0X3N0bXQobXNnOiBTdHJpbmcpIC0+ICEge1xuICAgIHBhbmljKG1zZyk7XG59XG5cbmZ1biBtYWluKCkge31cbiJ9XSwiaHJlZiI6Imh0dHBzOi8vZ2l0aHViLmNvbS9tZXRlbC1sYW5nL21ldGVsLWNvcmUvYmxvYi92MC4xNi4wL21ldGVsLWludGVycHJldGVyL3Rlc3RzL2ludGVncmF0aW9uL3NvdXJjZXMvdHlwZWNoZWNraW5nL3R5cGVzL25ldmVyXzA3X3BhbmljX3NlbWljb2xvbl9kaXZlcmdlcy5tdGwiLCJuYW1lIjoibmV2ZXJfMDdfcGFuaWNfc2VtaWNvbG9uX2RpdmVyZ2VzLm10bCJ9"></details>
+<details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6IlQwMDE2IiwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6IjUiLCJzdGF0dXMiOiJ0eXBlY2hlY2tfZXJyb3IifSwiZmlsZXMiOlt7Im5hbWUiOiJuZXZlcl9uZWdfMDFfcmV0X25ldmVyX3JlYWNoYWJsZV9yZXR1cm4ubXRsIiwic291cmNlIjoiLy8gTmVnYXRpdmU6IFJGQy0wMDc4IFx1MDBhNzYgLS0gYSBmdW5jdGlvbiBkZWNsYXJlZCBgLT4gIWAgY29udGFpbmluZyBhIHJlYWNoYWJsZSxcbi8vIG9yZGluYXJ5IGByZXR1cm5gIChvbmUgd2hvc2UgdmFsdWUgaXMgTk9UIGl0c2VsZiBgIWAtdHlwZWQpIGlzIGEgdHlwZSBlcnJvcjpcbi8vIHRoZSBmdW5jdGlvbiBhY3R1YWxseSByZXR1cm5zLCB3aGljaCBgLT4gIWAgZm9yYmlkcy5cblxuZnVuIGJhZCgpIC0+ICEgeyAvLyBFUlJPUltUMDAxNl1cbiAgICByZXR1cm4gNTtcbn1cblxuZnVuIG1haW4oKSB7fVxuIn1dLCJocmVmIjoiaHR0cHM6Ly9naXRodWIuY29tL21ldGVsLWxhbmcvbWV0ZWwtY29yZS9ibG9iL3YwLjE2LjAvbWV0ZWwtaW50ZXJwcmV0ZXIvdGVzdHMvaW50ZWdyYXRpb24vc291cmNlcy90eXBlY2hlY2tpbmcvdHlwZXMvbmV2ZXJfbmVnXzAxX3JldF9uZXZlcl9yZWFjaGFibGVfcmV0dXJuLm10bCIsIm5hbWUiOiJuZXZlcl9uZWdfMDFfcmV0X25ldmVyX3JlYWNoYWJsZV9yZXR1cm4ubXRsIn0="></details>
+</details>
+<!-- rfc.py:fixtures:end -->
+
+</details>

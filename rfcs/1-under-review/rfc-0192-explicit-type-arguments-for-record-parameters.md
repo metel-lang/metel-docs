@@ -3,7 +3,7 @@ id: rfc-0192
 title: "Explicit Type Arguments for Record Parameters"
 date: '2026-10-29'
 status: under-review
-updated: '2026-10-29'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1664'
 ---
 
@@ -119,6 +119,10 @@ not declared generics, so they are neither counted nor pinnable.
 
 - **RFC-0186.** This is its open question 5 (explicit instantiation), answered by the fact that
   `record R` is an ordinary type parameter.
+- **RFC-0208** (language owner, 2026-11-26). This rule extends to a `<..R>` row-only parameter
+  (RFC-0208), not just `record R`: the argument is a row literal (`..{ ... }`) in place of a
+  record literal, checked by the same rule stated here — declaration-order pinning, the row
+  bound, the field-wise bound, disjointness — since nothing above assumed a record brand.
 - **RFC-0138 (generic functions as first-class values).** Turbofish stays fused to the call
   (`spec.functions.turbofish.legality-3`); instantiation without a call remains out of scope.
 - **RFC-0099 (`::<` becomes `.<`).** Examples use `::<`; the rule does not depend on spelling.
@@ -157,7 +161,7 @@ costly the placeholder RFC moves ahead of this one; the rule above does not chan
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md` *Turbofish*:
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md` *Turbofish*:
 `legality-1` states that arguments pin the declared generics in declaration order and that the
 argument for a `record` parameter is the record (new Legality Rule for the argument's checks
 and for the count); the `> Gap GAP-FUNCTIONS-005` marker is removed on implementation. The

@@ -18,7 +18,7 @@ impl_status: implemented
 
 > **Status — accepted (2026-11-12).** Accepted by the language owner after parser-prototype evidence (21 fixtures, migrated corpus passes, RFC-0221's objection answered) and an adversarial review whose findings were fixed
 
-> **Status — integrated (2026-11-12).** Integrated into reference/spec/types.md (record-labels legality-2, 4 to 7); the docs sweep ships with it; implementation tracked in metel-core#1949
+> **Status — integrated (2026-11-12).** Integrated into reference/spec/types/index.md (record-labels legality-2, 4 to 7); the docs sweep ships with it; implementation tracked in metel-core#1949
 
 > **Status — implemented (2026-11-12).** Implemented: metel-core#1949 (PR #1950), docs integrated in #612, pin bumped in #1951
 
@@ -194,8 +194,9 @@ whether the existing parser-error machinery can provide the targeted suggestion.
 
 ## Interactions and prior decisions
 
-- **RFC-0100 (under review):** proposed inferred nominal construction uses
-  `.(...)`, so `.{ ... }` remains structural regardless of expected type.
+- **RFC-0100 (integrated):** nominal construction is plain call syntax, `Point(args)`;
+  its earlier inferred `.(...)` form is withdrawn and deferred to a future RFC. Either
+  way, `.{ ... }` remains structural regardless of expected type.
   Whole-row literal constructor arguments use `..{ .x = 1 }`, retaining the
   dedicated `..{` introducer rather than composing `..` with `.{`. This is value
   argument syntax, distinct by context from the existing `..{ .x: i64 }` type

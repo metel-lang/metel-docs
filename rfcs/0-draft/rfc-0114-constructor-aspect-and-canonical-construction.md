@@ -15,9 +15,9 @@ updated: '2026-11-11'
 > question 10) without proposing this fix; RFC-0096 owns the *auto-impl* pattern
 > (`Send`/`Sync`/`Linear`, a closed, compiler-intrinsic list) which this RFC's default
 > derivation resembles in spirit but does not reuse directly (§7); none of the others
-> touch construction at all. Depends on RFC-0100 (reopened under review, 2026-11-11) for
-> removing bare struct literals, and names RFC-0026 (`unsafe` blocks, `0-draft`,
-> deferred) as the foundation for §6's escape hatch.
+> touch construction at all. Depends on RFC-0100 (integrated, 2026-11-27) for
+> removing bare struct literals from general construction, and names RFC-0026 (`unsafe`
+> blocks, `0-draft`, deferred) as the foundation for §6's escape hatch.
 
 > **Revised (2026-11-08, language owner).** Construction no longer fires automatically when a narrowed row is completed (§3 is rewritten): widening on reassignment stays as RFC-0137 and the spec define it, and the guarantee this RFC gives is about values *produced by a construction expression*. The enum extension of §9 and the brace minting form of RFC-0100 §7 are drafted in the same pass.
 >
@@ -65,17 +65,19 @@ updated: '2026-11-11'
 > resolved by dissolving its premise, and this RFC now has no blocking dependency on any
 > under-review RFC.
 
-> **Surface proposal — RFC-0100 (under review, consolidated 2026-11-12).** Explicit
-> `new T(...)` and expected-target `.(...)` would collect positional/keyword
-> arguments into the same canonical row used here. A whole-row argument is
-> explicitly `..r` or `..{ .field = value }`, never an ordinary record argument
-> implicitly reinterpreted by shape. For example, proposed
-> `new Point(..{ .x = 1, .y = 2 })` supplies one complete construction row;
-> `new Wrapper(.{ .x = 1, .y = 2 })` supplies a record as one field value.
-> Both routes must use the same validation and result policy. Inferred targets
-> for fallible construction require reconciliation before that extension;
-> compact syntax must introduce no implicit unwrap. RFC-0100's dedicated literal
-> spelling does not itself accept arbitrary expressions after `..`.
+> **Surface proposal — RFC-0100 (integrated, 2026-11-27).** Superseded by that RFC's own
+> later revision: plain call syntax, `Point(args)`, collects positional/keyword
+> arguments into the same canonical row used here, with no `new` keyword and no
+> expected-target `.(...)` form (withdrawn, deferred to a future RFC). A whole-row
+> argument is explicitly `..r` or `..{ .field = value }`, never an ordinary record
+> argument implicitly reinterpreted by shape. For example, accepted
+> `Point(..{ .x = 1, .y = 2 })` supplies one complete construction row;
+> `Wrapper(.{ .x = 1, .y = 2 })` supplies a record as one field value.
+> Both routes must use the same validation and result policy. RFC-0100's dedicated
+> literal spelling does not itself accept arbitrary expressions after `..`. This RFC's
+> own reconciliation with RFC-0100's accepted design, including its section 3 privileged
+> representation-construction form, is not yet done — a gap for whoever next picks up
+> RFC-0114, not fixed here.
 
 ## Summary
 
@@ -134,6 +136,17 @@ validation logic, or forgets to.
 
 ## 1. The `Construct` aspect
 
+The language owner decided on 2026-11-26 that a custom constructor may explicitly expose
+a public parameter interface different from the type's fields and supply or derive its
+private fields. This interface must be declared and checked, and construction through it
+must reach the canonical operation. Its syntax, access rules, mapping to the complete row,
+fallibility and coherence remain to be specified here. RFC-0100's field-parameter call
+does not make private fields public merely because canonical validation exists.
+Until this interface exists, RFC-0100 uses the synthesized field-parameter interface.
+The agreed direction is that a custom interface replaces it for call binding, supplies the
+complete canonical row, and is the type's one construction interface; constructor
+overloading is outside RFC-0100's scope.
+
 ```metel
 aspect Construct {
     type Error;
@@ -177,6 +190,27 @@ should cost exactly what a bare field-literal costs now. That is a *commitment*,
 representation generally — not a new promise, the same one recurring here.
 
 ### 1.1 What `construct`'s own body may build — the one privileged site
+
+The language owner affirmed constructor-body-only privilege on 2026-11-26. **Synced to
+RFC-0100 §3's current revision (2026-11-26, after this subsection was first drafted):**
+the working representation-construction spelling is `Point { x = 1, y = 2 }` — the
+existing nominal brace literal, not a dotted form — restricted to the target's
+canonical constructor or explicitly unchecked constructor body. A bare privileged
+construction expression is rejected directly in `if`/`while`/`match` condition
+position (struct-literal-vs-block ambiguity); parenthesize it there. Other code in the
+declaring module uses the ordinary construction interface. RFC-0100 §3 owns this
+syntax and the related pattern spelling (patterns keep their current, unmigrated
+`Point { x, y }` form), parsing against the condition-position restriction, empty
+forms, and enum interaction; this subsection and that section describe one mechanism,
+not two. The exact grammar and unchecked-operation safety rules remain open.
+The privileged form may target only the constructor's own type, spelled as `Self` or
+its explicit type name; construction of another type uses that type's ordinary interface
+(language owner, 2026-11-26).
+An explicit field-list representation construction initializes each field exactly once;
+missing, duplicate and extra fields are errors. A whole-row form such as `Self { ..fields }`
+consumes a complete anonymous record with exactly the target's fields and matching types,
+and performs the same final construction, subject to ownership and visibility rules
+(language owner, 2026-11-26). Its grammar needs reconciliation with row spread.
 
 > **Syntax (2026-11-08).** RFC-0100 §7 defines the minting step as a form, the brace literal `Self { field = value }` (`Self .{ ..row }` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. It is legal only for the impl's own type, in `construct` and `construct_unchecked`; RFC-0114 adds its grammar production. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
 
@@ -452,19 +486,38 @@ extend Interval: Construct {
 1. **`Self::Raw`.** A compiler-provided closed enum with the same variants and payload rows as `Self`, unbranded. There is one per
    enum, so exhaustiveness stays ordinary closed-world checking: RFC-0090 §6's objection to "variant rows" was to a general
    structural mechanism, and this is neither general nor open.
-2. **Collection.** `Enum::Variant(args)` collects the variant's row exactly as RFC-0100 §7 items 1 and 6 do for a struct, wraps it
+2. **Collection.** `Enum::Variant(args)` collects the variant's row exactly as RFC-0100's
+   argument-binding rules (§5) do for a struct, wraps it
    as `Self::Raw::Variant`, and calls `construct`. A unit variant, written bare, is `Self::Raw::Unit`.
 3. **Minting.** Inside `construct` and `construct_unchecked` of the enum's own impl, the brace form `Self::Variant { field = value }`
-   and the bare `Self::Unit` mint a `Self`, under RFC-0100 §7's minting rules (own type only, keyword fields, no recursion through
+   and the bare `Self::Unit` mint a `Self`, under RFC-0100 §3's minting rules (own type only, keyword fields, no recursion through
    the call form).
 4. **Nothing fires implicitly,** as for structs (§3): only explicit calls reach `construct`.
 5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and
    `ConstructUnchecked` (§6) are as for structs, so every existing `Enum::Variant(...)` call keeps compiling.
-6. **The gap.** Variant fields have no visibility, and a `match` on `&var` can write a payload field from anywhere. So an enum
-   `Construct` guarantees *checked construction* and nothing after it, unless variant fields gain visibility (not proposed here).
-   A struct invariant leans on private fields for the rest.
+6. **Visibility and later mutation.** Named variant fields already have `pub`/private
+   visibility (RFC-0032, `spec.modules.visibility.legality-6`), and external patterns
+   cannot name private fields. Private payload fields can protect an invariant from
+   external direct field access; public payload fields and code in the defining module
+   still require the usual mutation analysis. Canonical construction guarantees checking
+   at construction, not preservation after arbitrary permitted mutation.
 7. **Scope.** None of this is in v0.16.0, where only the synthesized default exists, and RFC-0100 keeps the brace minting form struct-only
    until this section is accepted.
+
+**Direction (language owner, 2026-11-26).** Use one enum-wide canonical construction
+operation, synthesized as an identity for ordinary enums and customizable by the author.
+Every ordinary variant construction reaches it; the privileged final construction form
+is restricted to the enum's own canonical or explicitly unchecked constructor body.
+The raw-variant representation, public constructor interfaces, failure and unchecked
+rules need specification and review. Whether a request for one variant may return a
+different variant remains open. This direction is not implementation or acceptance.
+
+**Further exploration (2026-11-26):** the language owner wants variant-preserving
+construction and leans toward first-class variant types. RFC-0210 is scheduled to
+investigate them. The enum-wide operation above is consequently under reconsideration:
+its unrestricted enum result cannot enforce preservation by itself. Per-variant
+constructors returning variant types, their widening and fallibility are candidates,
+not yet settled. Ordinary functions may separately choose among variants.
 
 ---
 
@@ -601,7 +654,7 @@ extend Interval: Construct {
 - `public/rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
-- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — call-shaped
+- `public/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` — call-shaped
   construction and general keyword arguments. **No longer a dependency of this RFC** (§2,
   open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
   brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was

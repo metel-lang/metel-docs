@@ -13,13 +13,17 @@ review: null
 
 Inference resolves a field access, method call or tuple-index access by
 calling `ctx.solve()` eagerly to learn the receiver's struct name. If the
-receiver is an unannotated parameter, no constraint has been emitted yet, so
-its type is still a type variable and the access is rejected. Reproduced
-against current `develop`:
+receiver is an unannotated closure parameter, no constraint has been emitted yet,
+so its type is still a type variable and the access is rejected. A named
+function must write its parameter types (RFC-0193, `T0010`), so the closure
+parameter is now the only place this shows. Reproduced against current
+`develop`:
 
-```metel
+```metel repro=T0002
 struct Point { x: i64, y: i64 }
-fun get_x(p) { p.x }
+fun main() {
+    let get_x := |p| { p.x };
+}
 ```
 
 ```
@@ -28,9 +32,9 @@ fun get_x(p) { p.x }
 
 ## Impact
 
-Visible to Metel programmers: an unannotated parameter used with `.field` is
-rejected, although the Language Spec says annotations are optional for all
-bindings, including function parameters. Adding `p: Point` works around it.
+Visible to Metel programmers: an unannotated closure parameter used with `.field`
+is rejected, although the Language Spec says closure parameter annotations are
+optional. Adding `p: Point` works around it.
 The cause is the eager solve, an implementation choice; a constraint-based
 field access (deferred until the receiver resolves) would remove the
 restriction.

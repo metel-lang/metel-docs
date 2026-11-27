@@ -27,7 +27,7 @@ coverage:
 > **Status — accepted (2026-07-24).** OQ1/OQ2 resolved by prototype (wildcard_type + row_bound built, 755 tests green, reverted). OQ3 resolved: bounds match the public projection of a row, making satisfaction module-relative -- acceptable because a bound grants no capability. OQ4 deferred to RFC-0121, which is not in this release and is the only thing that could make it reachable. OQ5 is an implementation-location question, not a design one.
 
 > **Status — integrated 2026-07-24, targeting v0.12.0.** A "Row bounds" subsection is
-> merged into `public/reference/spec/types.md` under Generics, covering open and closed
+> merged into `public/reference/spec/types/index.md` under Generics, covering open and closed
 > bounds, the trailing `..`, negation with the type wildcard, why implicit structural
 > satisfaction is safe, and the public-projection rule. Three one-line availability markers.
 >
@@ -80,7 +80,7 @@ coverage:
 > into implementation. It surfaced late and by challenge rather than by my own cross-check,
 > which is worth recording as the more useful fact.
 
-> **Status — integrated (2026-07-24).** Row bounds merged into public/reference/spec/types.md under Generics; three availability markers. Cross-checked against RFC-0116/0115/0071 and RFC-0121 (which inherits the impl-coherence and module-relative questions). Grammar verified by prototype.
+> **Status — integrated (2026-07-24).** Row bounds merged into public/reference/spec/types/index.md under Generics; three availability markers. Cross-checked against RFC-0116/0115/0071 and RFC-0121 (which inherits the impl-coherence and module-relative questions). Grammar verified by prototype.
 
 > **Amended 2026-07-25, while assessing implementation readiness (#577).** Three changes,
 > all to §1/§2 and the grammar delta; the semantics of what satisfies a bound (§3) are

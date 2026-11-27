@@ -220,7 +220,7 @@ Exit check: no contradiction with the integrated spec (row bounds, open rows, co
 
 ## Changes on Acceptance
 
-- `reference/spec/types.md`, *Row bounds*: the entry table, the openness rule, and the
+- `reference/spec/types/index.md`, *Row bounds*: the entry table, the openness rule, and the
   repeated-label rule, with rigor blocks and fixtures.
 - Grammar: `row_entry` takes an optional `!`; `row_field` is renamed accordingly.
 - Diagnostics: `T0043` (closed row with a negative entry; contradictory entries for one label;

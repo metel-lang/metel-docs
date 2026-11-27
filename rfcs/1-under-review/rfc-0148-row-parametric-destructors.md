@@ -24,7 +24,7 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/888'
 > - **RFC-0146 (Row-Polymorphic Self-Views, `1-under-review`, `metel-core#886`)** — the
 >   `<row R>` receiver mechanism this RFC specializes to `drop`. **Hard dependency**;
 >   transitively **RFC-0121 (Open Rows, `metel-core#792`)** for the `row` kind.
-> - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership.md` — the dispatch rule
+> - **RFC-0137 (`3-integrated`) §5** / `reference/spec/ownership/index.md` — the dispatch rule
 >   (amended 2026-08-28); unchanged by this RFC.
 > - **RFC-0109** — not a dependency of this RFC (it is RFC-0147's).
 
@@ -156,7 +156,7 @@ is inherited unresolved, exactly as in RFC-0147 §3.
   through RFC-0146
 - RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — §5 dispatch rule (amended
   2026-08-28), §7 generic structs, Open Question 6
-- `reference/spec/ownership.md` — "Drop dispatch against a narrowed residual"
+- `reference/spec/ownership/index.md` — "Drop dispatch against a narrowed residual"
   (`…legality-1` / `…legality-3` / `…legality-4` / `…dynamics-1` / `…legality-2`)
 - RFC-0118 (Row Bounds, implemented) — the `{ …, .. }` open-bound spelling the `where`
   clause reuses

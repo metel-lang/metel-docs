@@ -3,7 +3,7 @@ id: rfc-0208
 title: "Row-Only Generic Parameters"
 date: '2026-11-02'
 status: under-review
-updated: '2026-11-03'
+updated: '2026-11-26'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1789'
 ---
 
@@ -11,160 +11,130 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/1789'
 
 ## Summary
 
-A generic parameter that stands only for a row, never for a type, is declared with a **row
-binder**, `<..R>`. `record R` is kept for parameters that are used as types.
+A structural bound can be written directly on a type parameter. A parameter declared with
+`<..R>` instead binds a row. Use its bare name wherever a row is expected.
 
 ```metel
-extend<record R> .{ ..R }: Display where ..R: Display    // today: R is never used as a type
-extend<..R> .{ ..R }: Display where ..R: Display         // proposed: the binder says "a row"
-
-fun get_x<..R>(p: .{ .x: i64, ..R }) -> i64 { p.x }
-fun sum<record T>(p: T) -> T { p }                      // unchanged: T is used as a type
+fun read_id<T: .{ .id: i32 }>(v: &T) -> i32 { v.id }
+fun read_tail<..R>(v: .{ .id: i32, R }) -> i32 { v.id }
+extend<..R> .{ R }: Display where R: Display { … }
 ```
 
-A row parameter is written `..R` at every use, as today: in a record type's tail
-(`.{ .x: f64, ..R }`), in a nominal type's argument list (`Packet<..R>`), in a struct's residual
-tail (`Handle.{ .fd, ..R }`) and in a field-wise bound (`where ..R: A`). A bare `R` is not a type,
-and naming it is an error. The change adds a binder and removes nothing: `record R` keeps its
-current meaning, and `row` does not return as a keyword.
+## 1. Type bounds, row binders and extraction
 
-This is an additive amendment to RFC-0186 (implemented), which merged the `row` kind into
-`record R`. It does not reverse that RFC. It splits `record R` by what the parameter is used as,
-not by a second reserved word.
+1. In bound position, `T: .{ .id: i32 }` requires exactly the named field. Write
+   `T: .{ .id: i32, .. }` to permit other fields. A value parameter typed `.{ .id: i32 }` names an exact anonymous
+   record type. The bound preserves the argument type and its brand. RFC-0243 governs
+   which fields of a nominal type are eligible.
+2. A parameter bound by `<..R>` denotes labelled fields. Use `R` as a record tail
+   (`.{ .id: i32, R }`), as the entire row of an anonymous record (`.{ R }`), as a row
+   argument (`Packet<R>`), or as a residual tail (`Handle.{ .fd, R }`). The enclosing
+   residual supplies the brand. `Handle.{ .fd, R }` matches only residuals of `Handle`;
+   `R` supplies their remaining fields and must exclude `.fd`. A same-shaped residual of
+   another brand does not match. The empty remainder is `Handle.{ .fd }`, which a named
+   view may name (RFC-0109). A value annotation `v: R` requires a type and is an error.
+3. In an operand position, `..T` extracts the row of a type whose row is available.
+   `where T: Clone` constrains the type itself. `where ..T: Clone` constrains every
+   field in its available row. For an already-bound row, write `where R: Clone`.
+   Applying extraction to a row is a kind error with the suggested replacement `R`.
+4. Extraction observes the same visibility as the operation that made the row available.
+   Under RFC-0243's public-row option, matching a public bound against a residual exposes
+   only its present public fields. Binding a remainder cannot reveal private fields.
+5. RFC-0186's existing `<record T>` can still bind a record type and extract its row with
+   `..T`. No conversion of existing declarations is required. Row parameters are erased.
+6. A row parameter may carry a structural bound at its binder or in a `where` clause.
+   `<..R: .{ .id: i32, .. }>` and `<..R> ... where R: .{ .id: i32, .. }` impose
+   the same requirement. A closed bound is exact and `..` allows additional fields.
+7. `..{ .id: i32, .name: String }` is a row literal, usable where a row is expected,
+   including as an explicit row argument, `f::<..{ .id: i32 }>(value)`. A row literal
+   without a tail denotes exactly its listed fields. An open row literal may include a
+   bound row, as in `..{ .id: i32, R }`, when `.id` is provably absent from `R`; duplicate
+   or not-provably-disjoint labels are rejected. `.{ .id: i32 }` names an anonymous record
+   type. `..T` extracts the available row of a type, while `R` uses an already-bound row.
+   Explicit type-argument application spelling follows RFC-0192; this example is
+   illustrative until its interaction with row arguments is integrated.
 
----
+RFC-0254 proposes retiring `record T` and making `..T` available for every type.
+Until that proposal is integrated, references here to existing `record T` describe the
+current language, not the intended end state.
 
-## Motivation
+## Enum interaction
 
-RFC-0186 removed the `row` kind because it was "two kinds for one idea": `record R` and `row R`
-both stand for a set of fields. That argument holds when the parameter is a record. It does not
-hold when the parameter is only ever the *row* of something, and `record R` then says more than
-the code means:
+RFC-0210 is under review alongside this RFC. `<..R>` here binds one ordinary field-row
+kind; it does not automatically bind an enum's variant inventory. RFC-0254's current
+direction gives an enclosing enum an empty ordinary extracted row. How variant types,
+variant inventories and their binders or extraction are expressed remains open in
+RFC-0210. In particular, `..E` cannot simultaneously extract the empty field row and
+an inventory of variants. A future generalization must specify member kinds and bounds
+and reconcile this syntax; no such generalization is adopted here.
 
-- **It misleads at the binder.** In `extend<record R> .{ ..R }: Display where ..R: Display`,
-  `R` is never a type. It appears only as `..R`. A reader of `<record R>` expects a record
-  type they can name.
-- **It names a brand the code never uses.** RFC-0186 §Open Question 5 records that a
-  `record R` instantiated by a branded record keeps the brand, and `..R` forgets it. A
-  parameter that is only ever spliced can never observe a brand, so the keyword promises a
-  distinction the code cannot use.
-- **A struct's residual tail is not a record.** `Handle.{ .fd, ..R }` splices the remaining
-  fields of a struct. `R` there is the tail of a branded row, and declaring it `record R`
-  suggests a standalone record. Impls that are generic over a struct's row (the Copy/Clone
-  derivation in RFC-0209) are written entirely in these tails.
-- **It turns on a real distinction in turbofish.** RFC-0192 makes the argument for a
-  `record R` parameter "the record `R`, the remainder that the signature splices as `..R`".
-  A row-only parameter makes that explicit: its argument is a row, with no type to bind.
+## 2. Numeric rows and variadics
 
-Two alternatives were weighed and declined (see Alternatives): restoring the `row` keyword, and
-inferring the kind from a `..` use.
-
----
-
-## 1. The row binder
-
-`..R` in a generic parameter list declares **R** as a row parameter: zero or more labelled
-fields. It matches the pack binder `<..Ts>` of RFC-0125 and every use of `..R` in the corpus.
-
-| | `record R` | `..R` |
-|---|---|---|
-| R is | a record type | a set of labelled fields, no brand |
-| usable as a type | yes (`p: R`) | no |
-| usable as `..R` | yes | yes |
-| instantiated with a branded record | keeps the brand | forgets it (there is none to keep) |
-| turbofish argument (RFC-0192) | the record | the row, written as a record type |
-
-**Legality.**
-1. A row parameter may be used only under `..`: as a record type tail, a nominal argument,
-   a residual tail, or the operand of a field-wise bound. Any other use of the bare name is
-   `T0012`, with a fix-it suggesting `record R` if the code needs the type.
-2. `where ..R: A` bounds every member of the row, exactly as RFC-0186 specifies. `where R: A`
-   is not valid for a row parameter, because a row implements no aspect.
-3. A row parameter has no bounds in the binder; a lower bound on its fields is written in the
-   `where` clause, as for `record R`.
-4. A parameter declared `..R` may be instantiated with any row: an anonymous record's, a
-   struct's or `record` declaration's declared row, or a residual's row. The brand is never
-   part of the instantiation.
-
-**Dynamic semantics.** None. A row parameter is erased exactly as a `record R` parameter is.
-
----
-
-## 2. Relationship to packs
-
-RFC-0125 declares a type-parameter pack with the same binder token, `<..Ts>`. The two differ in
-what they stand for and where they may be spliced:
-
-- a pack is an ordered list of types, spliced into a tuple type `(..Ts)` or a bound `..Ts: A`;
-- a row is an unordered set of labelled fields, spliced into a record tail, a nominal argument
-  or a residual tail.
-
-The binder alone does not say which kind a parameter is, and a bound `where ..X: A` reads the
-same for both. The checker takes the kind from where the parameter is spliced in the signature
-and rejects a parameter spliced in both a tuple position and a record position. If RFC-0151
-(tuples as numeric-label rows) is accepted, a tuple is a row, a pack is a row with numeric
-labels, and the two binders merge into one kind. This RFC does not depend on that.
-
----
+`<..R>` binds one row kind, including rows with numeric labels. RFC-0151 is implemented:
+tuples are numeric-label anonymous records. There is no separate tuple-pack kind to
+disambiguate. RFC-0125's remaining positional row operations, including renumbering,
+and RFC-0247's variadic call parameters are separate questions. A tuple-shaped use of
+the row binder does not by itself specify a positional splice or renumbering operation.
 
 ## 3. Alternatives considered
 
-1. **Restore the `row` kind** (`<row R>`). Declined: it reverses RFC-0186, which rewrote 192
-   fixtures and the standard library, and it leaves `<row R>` beside the pack binder `<..Ts>`.
-   Its one unique benefit, a bound without dots (`where R: Clone`), was considered and is not
-   wanted: the dots already say "the members of", and a row bound that differs from a pack
-   bound would be an inconsistency.
-2. **Infer the kind from a `..` use**, so a bare `<R>` becomes a row if it is spliced.
-   Declined: a bare `..R` in a bound is ambiguous between a row and a pack; the kind becomes
-   implicit and depends on other parts of the signature; hover text, documentation and
-   diagnostics must show an inferred kind; and a declaration `<R>` becomes indistinguishable
-   from a plain type parameter. It would be safe only where the parameter is used under `..`
-   exclusively, which is when the brand cannot matter.
-3. **Keep `record R` and document it.** No churn. The misleading name stays, and the residual
-   tail `Handle.{ .fd, ..R }` is still declared as a record.
-
----
+Earlier drafts required `..R` at every row use. That made extracting a row from a
+type and referring to fields already bound as a row look identical. Restoring the
+`row` keyword would also duplicate the proposed binder.
 
 ## 4. Costs
 
-- **A new binder form** in the parser, the registry's kinds on type parameters, projection
-  checking and diagnostics. It adds a kind check to every use of a bare parameter name.
-- **Migration is optional.** `record R` parameters used only as `..R` keep working. Whether to
-  lint them, or rewrite the standard library and the corpus (RFC-0186 counted 192 fixtures and
-  6 standard-library sites binding a row), is an open question.
-- **Two parameters that look alike.** `<record R>` and `<..R>` differ in a single token, and a
-  reader must know the rule above. The error and fix-it in Legality 1 are the mitigation.
-
----
+Parsing and kind checking must recognize bare tails and distinguish a bare row in
+`where R: A` from a type parameter constrained by the same aspect. Diagnostics need
+the declaration of the parameter to suggest the correct spelling.
 
 ## Relationship to existing RFCs
 
 - **RFC-0186** — amended additively. It stays implemented; `record R` is unchanged.
 - **RFC-0121 / RFC-0123** — open rows and field-wise constraints, the origin of `..R` and
   `where ..R: A`.
-- **RFC-0125** — variadic generics; shares the binder token. A conflict in kind is rejected, as
-  in section 2.
-- **RFC-0151** — tuples as numeric-label rows; would merge packs and rows.
+- **RFC-0125** — positional operations over numeric rows.
+- **RFC-0151** — implemented tuples as numeric-label rows; no separate tuple-pack kind.
+- **RFC-0247** — proposed variadic call parameters collect arguments into a row.
 - **RFC-0137 / RFC-0146** — branded rows and row-polymorphic self-views, the places a residual
   tail appears.
 - **RFC-0192** — turbofish for record parameters; its argument rule for a row parameter is an
   open question below.
-- **RFC-0209** — per-aspect row visibility (RFC-0207 is now only the colon list and `derives`); its derivation template is written with row-only
-  parameters, which is the motivating use.
+- **RFC-0210 / RFC-0254** — enum variant inventories are distinct from the ordinary
+  field row in the current direction; enum extraction and variant types need joint review.
+- **RFC-0209** — superseded; nominal row-template derivation is deferred.
 
 ## Open questions
 
-1. **Turbofish for a row parameter** (RFC-0192): is the argument written as a record type
-   (`.{ .name: i64 }`), or with the dots (`..{ name: i64 }`)? The first matches RFC-0192 as it
-   stands.
-2. **Row equations** (`where R = .{ .token: Token, ..Rest }`, RFC-0121): how the left side is
-   written when `R` is declared `..R`. Presumably `..R = { … }`.
-3. **A lint or rewrite** for `record R` parameters used only as `..R`.
-4. **Whether a row parameter may carry a lower bound in the binder**, as `record R` does with
-   `record R: .{ .x: f64, .. }`.
-5. **Merging with packs** if RFC-0151 is accepted: one `..X` kind with a shared binder.
-6. **Residual tails**: whether `Handle.{ .fd, ..R }` with `R` declared `..R` needs a rule about
-   the brand being the struct's, and how it interacts with RFC-0146's `Self.R`.
+1. **Resolved (language owner, 2026-11-26).** The row-literal spelling is `..{ .name: i64 }`.
+   A `<..R>` parameter's turbofish argument is that row literal, checked by exactly
+   RFC-0192's existing rule (declaration-order pinning, the row bound, the field-wise
+   bound, disjointness) — applied to a row argument where RFC-0192 applies it to a
+   `record R` argument, since RFC-0192's rule was already stated generically over "the
+   type each argument denotes" and never assumed a record brand. No new rule is needed;
+   RFC-0192 itself should gain a line extending its scope to `<..R>` explicitly, since its
+   current text only names `record R`.
+2. **Row equations**: the left operand is the bound row `R` and a literal row on the right
+   is written `..{ .token: Token }`. An open literal may use a provably disjoint row tail,
+   `..{ .token: Token, Rest }` (language owner, 2026-11-25). Equation solving and inference
+   across generic boundaries need review.
+3. *(Pruned, PROCESS.md's "prune harder" rule, 2026-11-26.)* A lint or rewrite for
+   `record R` parameters used only as `..R` is a tooling convenience, not a design
+   question blocking acceptance.
+4. **Row bounds at the binder or in `where`:** both are allowed with the same meaning
+   (language owner, 2026-11-25).
+5. **Tuple packs:** resolved. RFC-0151's numeric rows use the same row kind (language
+   owner, 2026-11-25); positional operations remain with RFC-0125.
+6. **Residual tails:** `Handle.{ .fd, R }` preserves `Handle`'s brand and requires a
+   disjoint remainder (language owner, 2026-11-25). **Not blocking:** RFC-0146 (the other
+   half of this question, `Self.R` in receiver position) is committed to the v0.18.1
+   milestone (issue #886), a release after this one — a dated dependency that isn't
+   landing alongside this RFC either way. Worth a note for whoever picks up RFC-0146
+   then, not a question this RFC needs to answer now: RFC-0146's `where R: { fd, .. }`
+   lower bound on a receiver-only `<row R>` looks like it may already be expressible as
+   this RFC's general `Self.{ .fd, R }` splice, which would make RFC-0146's separate
+   `<row R>`/`Self.R`/`where` apparatus redundant rather than a second spelling to
+   reconcile — but that's RFC-0146's call to make against its own v0.18.1 timeline.
 
 ---
 

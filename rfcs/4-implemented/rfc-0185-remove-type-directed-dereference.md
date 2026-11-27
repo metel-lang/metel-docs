@@ -274,8 +274,8 @@ Worked against the integrated spec and the implemented RFCs it touches:
 - RFC-0108 — Reference-transparent match scrutinees (unchanged).
 - RFC-0066 — Allocated Value Extraction (§3a, the parallel mechanism; Open Question 1).
 - RFC-0136, RFC-0098 — pre-1.0 syntax migrations without edition gating.
-- `reference/spec/types.md` — "Reading a value out of a reference";
-  `reference/spec/expressions.md` — "Auto-deref covers selectors only".
+- `reference/spec/types/index.md` — "Reading a value out of a reference";
+  `reference/spec/expressions/index.md` — "Auto-deref covers selectors only".
 
 ---
 

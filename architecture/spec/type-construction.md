@@ -79,7 +79,7 @@ The typechecker treats `[T]` as `Copy` unconditionally, as a deliberate `InferTy
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/type_engine/mod.rs::infer_type_satisfies_aspect`](https://github.com/metel-lang/metel-core/blob/8ed18533e08f605e0df6c188f1d30797fb72171f/metel-frontend/src/pipeline/type_checking/type_engine/mod.rs#L4852) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/types/dynamic_array_is_copy_unconditionally.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0046, RFC-0126 |
 
 ##### Requirement {#arch.type-construction.requirement-5}
@@ -107,7 +107,7 @@ Type ascriptions constrain inference and construction but are erased from typed 
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/expressions.rs::construct_expr`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/construction/expressions.rs#L393) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::typed_ir_has_no_ascription_node`](https://github.com/metel-lang/metel-core/blob/26ffffc1aabe3e17d10726af0d719a8ab79a7869/metel-frontend/src/pipeline/type_checking/tests.rs#L17); [`metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/typechecking/builtins/stage8_neg_02_ascribe_type_mismatch.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0009 |
 
 ##### Requirement {#arch.type-construction.requirement-7}
@@ -149,12 +149,12 @@ Aspect default methods are materialized as typed methods before evaluation: infe
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/inference/declarations.rs::infer_decl`](https://github.com/metel-lang/metel-core/blob/7d9561f1a69703f07996bd88451dd814bf43e5d6/metel-frontend/src/pipeline/type_checking/inference/declarations.rs#L22) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml`](https://github.com/metel-lang/metel-core/blob/8717cc6088e4dcf55f6f5580e60ad936d9bf69cf/metel-interpreter/tests/integration/sources/typechecking/aspects/stage12_01_default_methods.toml#L1) |
-| `last_reviewed` | 91cd3a168e82ef3c9b318f55b2e56a7dd0f88714 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0034 |
 
 ##### Requirement {#arch.type-construction.requirement-10}
 
-Free-function overload selection is exact-match, and construction stamps the selected callable's `SymbolId` on the typed call, an id derived from the program and so identical on every compilation; the runtime dispatches it through its symbol-value registry, and overload sets stay module-local.
+Free-function overload selection is exact-match on the argument types, after any keyword names in the call have narrowed the candidates to those whose own parameters they name, and construction stamps the selected callable's `SymbolId` on the typed call, an id derived from the program and so identical on every compilation; the runtime dispatches it through its symbol-value registry, and overload sets stay module-local.
 
 | Field | Value |
 |---|---|
@@ -163,7 +163,7 @@ Free-function overload selection is exact-match, and construction stamps the sel
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/overload/mod.rs::id_for`](https://github.com/metel-lang/metel-core/blob/7605f111964ad23992af57dfc3f639852f73e451/metel-frontend/src/pipeline/type_checking/overload/mod.rs#L48) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::overload_ids_do_not_depend_on_what_was_compiled_earlier_in_the_process`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/tests.rs#L155); [`metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/functions/toplevel_let_mut_bound_function_dispatch.toml#L1) |
-| `last_reviewed` | cf5f79ec5df599d1a56643c1d1ce895f76d76544 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0038, `arch.evaluation.requirement-2`, `LIMIT-TYPE-CONSTRUCTION-002` |
 
 ##### Requirement {#arch.type-construction.requirement-11}
@@ -191,7 +191,7 @@ Generic runtime reconstruction recovers a struct or enum's type arguments from i
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::infer_named_type_args`](https://github.com/metel-lang/metel-core/blob/41b0f74be0c6e648506cce4821b4d76b2f41e6f8/metel-frontend/src/pipeline/type_checking/mod.rs#L1312) |
 | `verified by` | [`metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml`](https://github.com/metel-lang/metel-core/blob/8b844c9117d5c6a730882aeaf521184c3055eb2f/metel-interpreter/tests/integration/sources/evaluator/generics/51_generic_nested_types.toml#L1) |
-| `last_reviewed` | 41b0f74be0c6e648506cce4821b4d76b2f41e6f8 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0043 |
 
 ##### Requirement {#arch.type-construction.requirement-13}
@@ -205,7 +205,7 @@ Construction resolves a value by identity: locals and move state are keyed by th
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::resolve_local`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L465) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::a_local_is_resolved_by_its_binding_not_its_spelling`](https://github.com/metel-lang/metel-core/blob/bba4e6f0278b1b3685205e684f4a33884465b742/metel-frontend/src/pipeline/type_checking/tests.rs#L269) |
-| `last_reviewed` | 58657b2d6f228d493fb7e0d6a3ece3f5aff22213 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1570`, `#1604` |
 
 ##### Requirement {#arch.type-construction.requirement-14}
@@ -219,7 +219,7 @@ The frozen identity tables (the member table and the span → `BindingId` bridge
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/mod.rs::check_graph_with_report`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/mod.rs#L411) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::block_local_types_in_two_modules_keep_distinct_ids_through_check_graph`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/tests.rs#L88) |
-| `last_reviewed` | 5c96fccefb930800580084a8f4d2ea8dea05f97c |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1570` |
 
 ##### Requirement {#arch.type-construction.requirement-15}
@@ -233,7 +233,7 @@ A written type name becomes a declaration id in one place, `ConstructCtx::writte
 | `specified by` | `#type-construction` |
 | `implements` | [`metel-frontend/src/pipeline/type_checking/construction/mod.rs::written_type_id`](https://github.com/metel-lang/metel-core/blob/674701fb1f16ecdb40424bac7b7a5169867d92c3/metel-frontend/src/pipeline/type_checking/construction/mod.rs#L346) |
 | `verified by` | [`metel-frontend/src/pipeline/type_checking/tests.rs::block_local_types_in_two_modules_keep_distinct_ids_through_check_graph`](https://github.com/metel-lang/metel-core/blob/12a724ee350125c4e9d4581dd81bb009a80eede0/metel-frontend/src/pipeline/type_checking/tests.rs#L89) |
-| `last_reviewed` | 58657b2d6f228d493fb7e0d6a3ece3f5aff22213 |
+| `last_reviewed` | 1c891f6d20f329b56274dc40ab6c27c879cc5e04 |
 | `related` | ADR-0054, `#1568`, `#1570` |
 
 </details>

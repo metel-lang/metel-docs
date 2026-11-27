@@ -7,7 +7,7 @@ updated: '2026-11-06'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1834'
 ---
 
-> **Status — draft (2026-11-06).** Split from RFC-0211 on 2026-11-06. RFC-0211 (accepted) keeps the rules that
+> **Status — draft (2026-11-06).** Split from RFC-0211 on 2026-11-06. RFC-0211 (implemented) keeps the rules that
 > apply in v0.16.0; this RFC is the end state. Nothing here is decided.
 
 > **Not a dependency.** The Copy/Clone settlement (RFC-0206, RFC-0207, RFC-0211, RFC-0212, RFC-0213) does not
@@ -120,11 +120,18 @@ well defined at every width.
    before or after narrowing.
 3. **`Send`, `Sync`** (RFC-0096, auto aspects): they follow the present fields, but the rule has not been
    checked against RFC-0096's text. `Linear` is declared and has no residuals (RFC-0211 rule 6).
-4. **Empty residuals** (`Handle.{}`): whether every template is satisfied vacuously, and whether a derived `Clone` of
-   an empty residual is useful or a hazard.
+4. **Empty residuals** (`Handle.{}`): whether every template is satisfied vacuously. *Resolved (2026-11-16):* yes, a
+   template's `where` bound over no present fields is vacuously satisfied (RFC-0211: an empty residual of a
+   `Copy`-granting brand is `Copy`), and a derived `Clone` of one is an ordinary value. For a `Drop` brand the empty
+   residual satisfies the empty required set, so its destructor fires like any other residual's (question 6).
 5. **Named views** (RFC-0109): whether a view declares its own header entries.
-6. **A residual of a `Drop` type**: whether a derived `Clone` on it needs a warning about duplicating the resource
-   whose destructor the residual keeps (RFC-0137 section 5).
+6. **A residual of a `Drop` type.** *Resolved (2026-11-16):* no residual-specific rule or warning. A derived `Clone` on a
+   residual is accepted exactly when it is accepted on the base type. The clone keeps the base type's destructor
+   under RFC-0137 section 5 (it fires against any residual of the brand whose row covers the declared receiver
+   fields), so cloning a residual duplicates the obligation as cloning the whole value does. A hazard such as a
+   field-wise `Clone` double-closing a raw handle belongs to `derives Clone` on a `Drop` type in general, which is
+   an explicit declaration by the author; whether it deserves a diagnostic is a question for the Copy/Clone
+   settlement (metel-core#1832), not for residuals.
 
 ---
 

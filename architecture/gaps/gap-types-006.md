@@ -2,7 +2,7 @@
 id: GAP-TYPES-006
 title: "A generic body cannot construct or consume a row remainder"
 summary: "A `where` equation can type the remainder of a row, but no form lets a body take an abstract row apart or build one, so typestate over a row cannot be implemented generically."
-scope: "reference/spec/types.md#open-rows"
+scope: "reference/spec/types/generics/open-rows.md#open-rows"
 owner: language
 discovered_by: "metel-core#1397 documentation work on records and rows; filed as metel-core#1399"
 disposition: resolved
@@ -21,8 +21,8 @@ The implemented forms support that transition by matching the owned record with
 `{ token, ..rest }` and spreading `rest` into the result record.
 
 The syntax and behavior are specified in
-`reference/spec/expressions.md#record-rest-patterns` and
-`reference/spec/types.md#spec.types.generics.open-rows.legality-4`.
+`reference/spec/expressions/patterns/struct-and-record-patterns.md#record-rest-patterns` and
+`reference/spec/types/generics/open-rows.md#spec.types.generics.open-rows.legality-4`.
 
 ## Impact
 
@@ -39,5 +39,5 @@ metel-core#1399.
 ## Resolution
 
 Resolved by RFC-0178's specification and implementation in
-`reference/spec/expressions.md#record-rest-patterns`,
-`reference/spec/types.md#open-rows`, and metel-core#1399.
+`reference/spec/expressions/patterns/struct-and-record-patterns.md#record-rest-patterns`,
+`reference/spec/types/generics/open-rows.md#open-rows`, and metel-core#1399.

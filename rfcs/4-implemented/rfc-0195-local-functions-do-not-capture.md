@@ -65,7 +65,7 @@ Measured on `develop` (87b7c06a and later):
 | a type parameter of the enclosing function | `T0001: expected T, found type parameter T`, which does not say the name is out of scope |
 | a sibling local `fun`, or a local `record` | accepted; these are items |
 
-`reference/spec/functions.md` has no rule. The closure rules (legality 6 to 25) make every capture visible at
+`reference/spec/functions/index.md` has no rule. The closure rules (legality 6 to 25) make every capture visible at
 the creation site; a non-generic local `fun` bypasses all of them.
 
 ### What uses it
@@ -195,7 +195,7 @@ cut, as the project has no warning channel (RFC-0187).
 
 ## Specification impact
 
-Spec text lands only at `3-integrated`. `reference/spec/functions.md`: a legality rule for local functions (the
+Spec text lands only at `3-integrated`. `reference/spec/functions/index.md`: a legality rule for local functions (the
 visible names above, `T0003` for the rest) and a dynamics note that they are hoisted. RFC-0173 D1's paragraph on
 nested generic functions is amended. No new error code is proposed.
 
@@ -237,7 +237,7 @@ No contradiction with the integrated spec or the sibling RFCs was found.
 - RFC-0050, RFC-0153, RFC-0157 (closure capture), RFC-0173 (rigid parameters), RFC-0193, RFC-0194, RFC-0196,
   RFC-0197, RFC-0198.
 - GAP-FUNCTIONS-006, GAP-FUNCTIONS-007.
-- `reference/spec/functions.md`: Closures, legality 6 to 25.
+- `reference/spec/functions/index.md`: Closures, legality 6 to 25.
 
 ---
 

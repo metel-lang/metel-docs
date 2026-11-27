@@ -35,7 +35,7 @@ Declaration              → FunDeclaration
 TypeAliasDeclaration     → "pub"? "type" IDENTIFIER GenericParams? ":=" Type ";"
 LetDeclaration           → "let" !"var" IDENTIFIER ( ":" Type )? ":=" Expression ";"
 VarDeclaration           → ( "let" "var" | "var" ) IDENTIFIER ( ":" Type )? ":=" Expression ";"
-RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) RecordPattern ":=" Expression ";"
+RecordPatternDeclaration → ( "let" "var" | "let" | "var" ) ( RecordPattern | TuplePattern | UnitPattern ) ":=" Expression ";"
 FunDeclaration           → NativeBinding? "pub"? "fun" IDENTIFIER GenericParams? "(" FunDeclParamList? ")" ( "->" Type )? WhereClause? ( Block | ";" )
 NativeBinding            → "native" "(" "@" NATIVE_PATH ")"
 StructDeclaration        → "pub"? ClassKeyword? "struct" IDENTIFIER GenericParams? ColonList? DerivesClause? WhereClause? "{" StructFields "}"
@@ -52,15 +52,20 @@ AspectProperty           → "declared"
                          | "derivable"
                          | "implicit"
                          | "auto"
-ClassKeyword             → "copy"
+ClassKeyword             → "copy" ( DeriveQuery | DeriveArgs )?
                          | "linear"
 ColonList                → ":" ClauseEntry ( "," ClauseEntry )*
-DerivesClause            → "derives" ClauseEntry ViaClause? ( "," ClauseEntry ViaClause? )*
+DerivesClause            → "derives" ClauseEntry ( DeriveQuery | DeriveArgs | ViaClause )? ( "," ClauseEntry ( DeriveQuery | DeriveArgs | ViaClause )? )*
 ViaClause                → "via" IDENTIFIER ( "+" IDENTIFIER )*
+DeriveArgs               → "(" ( DeriveRest | ( IDENTIFIER ( "," IDENTIFIER )* ","? )? ) ")"
+DeriveRest               → ".."
+DeriveQuery              → "?"
 ClauseEntry              → "!"? TypePath
-SuperAspects             → ":" SuperAspect ( "," SuperAspect )*
-SuperAspect              → "!"? "deriving"? TypePath
-AspectDeclaration        → "pub"? AspectProperty* "aspect" IDENTIFIER GenericParams? SuperAspects? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
+SuperAspects             → "requires" SuperAspect ( "," SuperAspect )*
+SuperAspect              → "!"? "derived"? TypePath
+LegacySuperAspects       → ":" LegacySuperAspect ( "," LegacySuperAspect )*
+LegacySuperAspect        → "!"? ( "derived" | "deriving" )? TypePath
+AspectDeclaration        → "pub"? AspectProperty* "aspect" IDENTIFIER GenericParams? ( SuperAspects | LegacySuperAspects )? ( ";" | "{" ( AssocTypeDecl | AspectMethod )* "}" )
 AspectMethod             → "fun" IDENTIFIER GenericParams? "(" Params? ")" ( "->" Type )? ( Block | ";" )
 AssocTypeDecl            → "type" IDENTIFIER ( ":" BoundList )? ";"
 
@@ -163,14 +168,16 @@ ReturnExpression     → "return" Expression?
 BreakExpression      → "break" Expression?
 ContinueExpression   → "continue"
 TupleOrParen         → "(" Expression ( "," Expression )+ ")"
+                     | "(" Expression OneElementTupleComma ")"
                      | "(" Expression ")"
+OneElementTupleComma → ","
 RepeatArray          → "[" Expression ";" INT "]"
 ArrayLiteral         → "[" ( Expression ( "," Expression )* ","? )? "]"
 MatchExpression      → "match" ( "()" | TupleOrParen ) "{" ( MatchArm ( "," MatchArm )* ","? )? "}"
 MatchArm             → Pattern ( "if" Expression )? "=>" ( Block | StatementExpression )
 IfExpression         → "if" "(" Expression ")" ( Block | Expression ) ( "else" ( IfExpression | Block | Expression ) )?
 LoopExpression       → "loop" Block
-ClosureExpression    → CaptureList? "once"? "var"? "|" Params? "|" ( "->" Type )? Block
+ClosureExpression    → CaptureList? "copy"? "once"? "var"? "|" Params? "|" ( "->" Type )? Block
 CaptureList          → "[" ( CaptureItem ( "," CaptureItem )* ","? )? "]"
 CaptureItem          → "&" "var" IDENTIFIER
                      | "&" IDENTIFIER
@@ -190,17 +197,22 @@ StructFieldInit      → IDENTIFIER ( "=" Expression )?
 Pattern                → "_"
                        | ArrayPattern
                        | TuplePattern
+                       | UnitPattern
                        | RecordPattern
                        | EnumPattern
                        | LiteralPattern
                        | IDENTIFIER
-TuplePattern           → "(" Pattern ( "," Pattern )* ")"
+TuplePattern           → "(" Pattern ( "," Pattern )+ ")"
+                       | "(" Pattern OneElementTupleComma ")"
+                       | "(" Pattern ")"
+UnitPattern            → "(" ")"
 ArrayPattern           → "[" ArrayPatternBody "]"
 ArrayPatternBody       → ( Pattern ( "," Pattern )* ( "," RestPattern )? | RestPattern )?
 RestPattern            → ".." IDENTIFIER
 RecordRest             → ".."
 RecordRestBinding      → ".." IDENTIFIER
-RecordFieldPattern     → Label ( ":" "_" )?
+RecordFieldDiscard     → "_"
+RecordFieldPattern     → Label ( ":" ( RecordFieldDiscard | Pattern ) )?
 RecordFieldPatternList → RecordFieldPattern ( "," RecordFieldPattern )* ( "," ( RecordRestBinding | RecordRest ) )? ","?
                        | RecordRestBinding
                        | RecordRest
@@ -224,6 +236,7 @@ Type                     → FunType
                          | BracketArrayType
                          | "()"
                          | TupleType
+                         | GroupedType
                          | OpenRecordProjectionType
                          | RecordProjectionType
                          | OpenRecordType
@@ -234,7 +247,9 @@ Type                     → FunType
                          | NamedType
 ExtendsType              → "extends" NamedType
 DynType                  → "dyn" NamedType
+GroupedType              → "(" Type ")"
 TupleType                → "(" Type ( "," Type )+ ")"
+                         | "(" Type OneElementTupleComma ")"
 RecordType               → ".{" ( RecordTypeField ( "," RecordTypeField )* ","? )? "}"
 RecordTypeField          → Label ":" Type
 OpenRecordType           → ".{" RecordTypeField ( "," RecordTypeField )* "," RowTail ","? "}"
@@ -247,6 +262,7 @@ OpenRecordProjectionType → TypePath ".{" Label ( "," Label )* "," RowTail ","?
 FunType                  → FunTypeQualifier* "|" TypeList? "|" "->" Type
 FunTypeQualifier         → "once"
                          | "var"
+                         | "copy"
 ReferenceType            → "&" Type
 MutReferenceType         → "&" "var" Type
 BracketArrayType         → "[" Type ( ";" INT )? "]"

@@ -2,11 +2,12 @@
 id: GAP-FUNCTIONS-005
 title: "Explicit type arguments are not supported on a function with a row parameter"
 summary: "`name::<…>(…)` on a function that takes an open-record (row) parameter is rejected with a targeted error; the row is inferred from the arguments."
-scope: "reference/spec/functions.md#spec.functions.turbofish.legality-1"
+scope: "reference/spec/functions/calls.md#spec.functions.turbofish.legality-1"
 owner: language
 discovered_by: "metel-core#1646; found while checking explicit instantiation for RFC-0186's open question 5"
-disposition: known
-rfc: RFC-0186
+disposition: planned
+tracked_by: metel-core#1664
+rfc: RFC-0186, RFC-0192
 review: null
 ---
 
@@ -27,4 +28,4 @@ The row of an open-record parameter is always inferred from the arguments; it ca
 
 ## Resolution
 
-Not scheduled. The design questions are in metel-core#1647: what a type argument for a row parameter denotes (the remainder record), carrying the declared generic order on the scheme, binding the synthetic variable from the row bound, and whether `_` may stand for an inferred argument.
+Planned, tracked as metel-core#1664 (RFC-0192, `1-under-review`, explicit type arguments for record parameters). The design questions are what a type argument for a row parameter denotes (the remainder record), carrying the declared generic order on the scheme, binding the synthetic variable from the row bound, and whether `_` may stand for an inferred argument. The earlier issue, metel-core#1647, was closed in favour of that RFC.

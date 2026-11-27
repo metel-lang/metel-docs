@@ -1,0 +1,415 @@
+---
+id: rfc-0151
+title: "Tuples as Numeric-Label Rows"
+date: '2026-08-29'
+status: implemented
+updated: '2026-11-15'
+tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
+coverage:
+  "1": { spec: "spec.types.tuples.legality-4" }
+  "2": { spec: "spec.types.tuples.legality-6" }
+  "3": { kind: elsewhere, reason: "Eq, Ord and Hash for rows, and with them tuple equality and ordering, are RFC-0011's responsibility (owner decision 2026-11-15); they arrive with operator dispatch through aspects.", ref: "rfc-0011" }
+  "4": { spec: "spec.types.tuples.legality-4" }
+  "4a": { spec: "spec.ownership.partial-moves.which-constructs-support-partial-moves.legality-3" }
+  "5": { spec: "spec.types.tuples.legality-7" }
+  "5a": { spec: "spec.types.tuples.legality-7" }
+  "6": { spec: "spec.types.tuples.legality-2" }
+  "7": { kind: untestable, reason: "Section 7 fixes a direction and leaves the declaration and pattern spelling of a tuple struct to RFC-0100 and RFC-0114; it adds no rule of its own." }
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/1956'
+impl_status: implemented
+---
+
+> **Consolidation RFC.** Anonymous record types (RFC-0116) landed a general
+> structural product former with a closed row. This RFC observes that a tuple is
+> that former with numeric labels, and proposes making `(A, B)` *sugar* for the
+> row `.{ .0: A, .1: B }` rather than a parallel type with its own representation,
+> its own narrowing story, its own branding question, and its own variadic
+> spine. The surface syntax stays; the second type-former goes away.
+
+> **Status — under review (2026-11-12).** Language owner moved it to review for v0.16.0 (Copy migration stage); design settlement tracked in metel-core#1956, decision in #1848
+
+> **Corrected 2026-11-14.** The spellings below were written before dotted labels (RFC-0221) and `.{` (RFC-0225), and some
+> claims about the surface did not match the compiler. Spellings now follow RFC-0221 and RFC-0225; claims about today's
+> grammar are measured on the metel-core checkout of 2026-11-14 and marked as such.
+
+> **Status — accepted (2026-11-14).** Adopted 2026-11-14: all open questions resolved (mixed labels allowed, cross-shape bounds structural, record patterns gain .label: pattern, one-element tuples and let tuple patterns added, section 6 extracted as RFC-0231); implemented in full.
+
+> **Status — integrated (2026-11-14).** Integrated 2026-11-14: spec types.tuples legality-4 to legality-7, record-rest-patterns legality-2, record-pattern-bindings legality-2 and partial-moves legality-3 (each blocked-exempt on its implementation issue: #2029, #2023, #2030, #2022, #2032); worked examples recorded; GAP-TYPES-009 narrowed.
+
+> **Status — implemented (2026-11-15).**
+
+## Summary
+
+`(A, B, C)` desugars to the closed anonymous record type `.{ .0: A, .1: B, .2: C }` —
+a row whose labels are the integers `0 .. N-1`. The value `(a, b, c)` desugars to
+`.{ .0 = a, .1 = b, .2 = c }`, and `t.0` is field access on the label `.0`. Tuple
+patterns elaborate to patterns over the same labels. The compiler still *prints* `(i64, String)`,
+and the surface forms `(a, b)` / `(A, B)` / `let (x, y) := t` remain — they are
+notation for a numeric-label row, the way `[T]` is notation for an array.
+
+There is one structural product former (the row), one narrowing rule, one row
+type-identity, one branding story. Tuple-specific machinery — a distinct
+`Type::Tuple`, a distinct `Copy` derivation, a distinct residual form (which
+RFC-0150 currently has to invent) — is deleted or folded in.
+
+## Motivation
+
+After RFC-0116, a tuple brings nothing a numeric-label anonymous record could not
+express, and each downstream feature has had to answer the tuple question
+separately:
+
+- **Row narrowing (RFC-0117)** is defined for records and structs. Moving `t.1`
+  out of `(A, B)` is a partial move (RFC-0071 §9a tracks tuple elements like
+  struct fields) but has no residual type.
+- **Nested row narrowing (RFC-0150)** has an entire open question (§3) whose
+  whole content is "define a residual form for tuple-typed fields, or ban nested
+  narrowing through them." With this RFC that question is answered for free: a
+  tuple residual is a row residual.
+- **Variadic generics (RFC-0125)** needed a type pack to fold into a positional
+  heterogeneous sequence. If that sequence is a row, the impls that motivated the
+  pack (`Copy`, `Send`, `Sync`, `Linear`, `Display`, `Clone` for every arity) are
+  the existing row impls, and RFC-0125 is re-scoped to positional recursion over
+  numeric rows (cons, tail, append, zip).
+- **`Callable<Args, Ret>` (RFC-0061 §7.1, metel-core#893; deferred in full to
+  RFC-0161)** encodes a function's argument list as a tuple. As a numeric-label
+  row it is one more anonymous record, and a call's argument list is a row with
+  integer labels for positional arguments and identifier labels for keyword
+  arguments (section 2).
+- **Row bounds (RFC-0118)**, **branded rows (RFC-0137)**, and the `Copy` / `Ord`
+  derivations all already work on rows. A tuple inherits them by being one.
+
+The cost of *not* consolidating is a permanent second column in every one of
+these designs.
+
+## Proposal
+
+### 1. The desugaring
+
+| Surface | Desugars to |
+|---|---|
+| `(A, B, C)` *(type)* | `.{ .0: A, .1: B, .2: C }` |
+| `(a, b, c)` *(value)* | `.{ .0 = a, .1 = b, .2 = c }` |
+| `(T,)` *(type)* | `.{ .0: T }` *(new syntax: metel-core#2023)* |
+| `(x,)` *(value)* | `.{ .0 = x }` *(new syntax: metel-core#2023)* |
+| `t.0`, `t.1`, … | field access on labels `.0`, `.1`, … |
+| `let (x, y) := t` | a pattern over labels `.0`, `.1` that binds them to `x`, `y` *(accepted in `match` today, not in `let`: metel-core#2022)* |
+| `match (t) { (0, y) => … }` | the same pattern with a literal at `.0` |
+| `(T)` *(type)*, `(e)` *(value)* | grouping only — **not** a 1-tuple (unchanged) |
+| `()` | the empty row `.{}` (section 6) |
+
+Desugaring happens after parsing and before type-checking; nothing downstream of
+that point sees a distinct tuple node.
+
+**Measured 2026-11-14.** The one-element forms `(x,)` and `(T,)` do not parse today, and neither does `let (x, y) := t`
+(a `let` accepts a record pattern, `mut` or a name); both are filed (metel-core#2023, #2022) and are part of what this RFC
+assumes. A **record** pattern today is `.{ .label, .label: _, ..rest }`: a field is punned or discarded, and there is no
+form that binds a label to a *different* name (`.0: x`), so the desugaring of a tuple pattern cannot be written as a
+surface record pattern yet. This RFC adds `.label: pattern` to record patterns (open question 7), so a tuple pattern is the
+record pattern it desugars to.
+
+### 2. Numeric labels and row order
+
+A row's labels become **integers or identifiers** (written `.0`, `.name`). Label order for iteration,
+canonical form, and derived `Ord` is:
+
+1. integer labels first, in **numeric** order (`0, 1, 2, … 9, 10, 11`);
+2. then identifier labels, lexicographic.
+
+The numeric ordering is the point — a tuple `(a₀ … a₁₀)` must keep `0 < … < 10`,
+not the lexicographic `0 < 1 < 10 < 2` that string labels would give.
+
+A row may mix the two (`.{ .0: A, .name: B }`), and that is **decided, not merely tolerated** (language owner,
+2026-11-14). The reason is the argument list of a call: positional arguments are the integer labels and keyword
+arguments (RFC-0223) are identifier labels, so `f(1, x = 2)` is the row `.{ .0 = 1, .x = 2 }`. With one label type, a
+function's parameters, `Callable<Args, Ret>` (RFC-0061 section 7.1) and an argument list are all one row, and arity
+polymorphism over functions is row polymorphism. Constructing a mixed row takes the `.{ … }` form; the `(…)` sugar only
+produces integer labels `.0 .. .N-1` with no gaps.
+
+### 3. Copy, Drop, Ord — derived from the row, not the former
+
+- **`Copy`**: a numeric-label row is `Copy` when every field is `Copy` — the
+  existing anonymous-record impl, `extend<record R> .{ ..R }: Copy where ..R: Copy;` in
+  `core.mtl` (RFC-0123), with no tuple special case. Measured 2026-11-14: a
+  numeric-label record satisfies a `Copy` bound today. A residual of an anonymous
+  record has no brand to grant `Copy`, so it follows its fields (RFC-0211).
+- **`Drop`**: RFC-0116 §3 forbids a custom `Drop` on an anonymous record; that
+  now covers tuples too (they could never carry one anyway). Field-wise teardown
+  is unchanged.
+- **`Ord` / `PartialOrd` / `Eq` / `Hash`**: the row impls of these are **RFC-0011's responsibility** (owner
+  decision 2026-11-15), not this RFC's. The intended behaviour stays what it was: fields compared in canonical
+  label order, positional for an integer-labelled row, so `(1, 2) < (1, 3)` falls out. **Measured 2026-11-15:**
+  tuple comparison is not a built-in either: `==` and `<` accept only primitive operands
+  (`LIMIT-TYPE-CONSTRUCTION-003`), so `(1, 2) == (1, 2)` and `(1, 2) < (1, 3)` are rejected today, and
+  `core.mtl` declares only `Eq` (one impl, `[T]: Eq`). Operators dispatch through aspects only with the
+  language-wide change RFC-0011 describes, and the row impls land with it (metel-core#2031, #2044). There is no
+  tuple comparison to replace, so none of this gates retiring `Type::Tuple`.
+
+### 4. Narrowing, row bounds, branding — apply unchanged
+
+- **Narrowing (RFC-0117)**: moving the last element, `t.1` out of `(A, B)`, narrows `t` to
+  `.{ .0: A }` = `(A,)`. Moving any other element leaves a gap and a row that is not a tuple
+  (§4a). The `2^N` subset-lattice bound, the "residual is an ordinary value" property, and
+  path-sensitivity all apply with no addition.
+- **Nested narrowing (RFC-0150)**: a tuple-typed field's residual is a
+  numeric-label row residual. RFC-0150 §3 (define tuple residuals or ban them)
+  is **resolved** by this RFC — delete the open question, keep the recursion.
+- **Row bounds (RFC-0118)**: `<record R: .{ .0: i64, .. }>` matches any row with an
+  `i64` at label `.0`, tuple or hand-written. Whether that cross-match is
+  desirable is Open Question 3. **Measured 2026-11-14:** a numeric label in a bound
+  is not wired yet: `r.0` on such a bound fails with "cannot infer tuple type for
+  index access", because field access with a numeric label is routed to tuple
+  access. This is staging step 0.
+- **Branded rows (RFC-0137)**: a tuple is an *anonymous* row — no brand, never
+  satisfies a nominal projection bound — exactly as an anonymous record does not.
+
+### 4a. A partial move out of a tuple leaves a row, and nothing compacts it
+
+*Added 2026-11-14.* Today move checking tracks tuple elements (RFC-0071 section 9a, `spec.ownership.partial-moves`):
+moving `t.0` and then `t.1` is accepted, moving `t.0` twice and using `t` whole after `t.0` moved are rejected. What a
+tuple lacks is a **type** for what is left: a struct narrows to `S.{ .b }` and passes to a function that names it, while a
+tuple's remainder has no spelling, and a projection `t.{ .1 }` is rejected. Measured 2026-11-14 on the metel-core checkout.
+This RFC gives the remainder the type RFC-0117 already gives every other row.
+
+**The rule is RFC-0117's, with no tuple case.** The residual of `t` after a move is the row with the same labels minus the
+moved ones, at the same types. The remaining elements keep their labels:
+
+```metel
+let t := (a, b, c);          // .{ .0: A, .1: B, .2: C }
+let x := t.1;                // t : .{ .0: A, .2: C }   (a gap at .1)
+```
+
+The residual is a tuple, under section 5, only when the labels that remain are exactly `.0 .. .N-1`, which is when the moved
+elements were a suffix: `(A, B)` after `t.1` is `(A,)`. Any other residual is a sparse row and prints in brace form,
+`.{ .0: A, .2: C }`.
+
+**Nothing compacts the remainder, and no rule says it should.** Renumbering `.2` to `.1` would be a rule for tuples alone,
+and it would be unsound for the program that wrote the move:
+
+- *Names would stop being stable.* Moves, projections and bounds name elements by label. If the remainder were renumbered
+  after `t.1` moved, `t.2` would stop existing and `t.1` would mean what `t.2` meant a statement before, so one expression
+  changes meaning with the statements around it. A live `&t.2` would be left pointing at a renamed element.
+- *It would hide a cost.* A compacted value moves the remaining elements down, O(n), as a side effect of a move.
+- *The general rule says otherwise.* Every other row keeps its labels. A rule that keeps them except when they are numeric is
+  a special case, and the only way to avoid it is to make numeric labels ordinal (derived from position rather than named),
+  which makes a tuple a different kind of type than a row and gives up what this RFC is for.
+
+**Getting a tuple back is explicit.** Two ways, neither a tuple rule:
+
+- *Destructure.* A pattern that names the elements to keep builds a new tuple from them, by position, so it is already the
+  compaction when it is wanted.
+- *Relabel.* A general row operation that renames labels in a projection (`.2` as `.1`) turns the sparse remainder into a
+  dense row, with its cost visible and its effect on the type stated. It applies to any row, so it is not part of this RFC. If
+  it is wanted, it is a small follow-on RFC beside RFC-0191 (one-field record update).
+
+A function that takes `(A, C)` takes a dense tuple. The sparse remainder is passed to one that takes a row bound
+(`.{ .0: A, ..R }`), or relabelled first.
+
+### 5. Type display
+
+The printer renders a row whose labels are exactly `.0 .. .N-1` with no gaps as
+`(T₀, …, Tₙ)`, and any other row as `.{ … }`. Round-trips: `(i64, String)` prints
+as `(i64, String)`, `.{ .0: i64, .1: String }` written by hand prints the same, and
+`.{ .0: i64, .2: String }` (a gap) prints as `.{ .0: i64, .2: String }`. A one-element
+row prints as `(T,)` once the one-element form exists (metel-core#2023), and the empty row as `()`.
+
+### 5a. The `Tuple` property: dense numeric labels
+
+*Added 2026-11-14 (language owner decision).* Section 5's printing rule, and the layout a compiler may choose, depend on one
+property of a closed row, and this RFC states it once and names it:
+
+> A closed row is a **`Tuple`** when its labels are exactly the integers `0 .. N-1`.
+
+`Tuple` is a **derived property of the row**, not a declaration, not a type former and not a new kind. A closed row has it
+or not by inspection of its label set, so it is decidable and needs no proof; `()` (the empty row) has it, `.{ .0: A, .1: B }`
+has it, `.{ .0: A, .2: C }` and `.{ .0: A, .name: B }` do not. It is used for:
+
+- **Printing** (section 5): a `Tuple` row prints as `(T₀, …, Tₙ)`, every other row in brace form.
+- **Layout.** A `Tuple` row may be stored densely, as an array of its fields, and any other row as a general record. The type
+  decides, so no runtime tag is needed. Nothing in the language depends on it; it permits the optimisation.
+- **The sugar.** The `(…)` surface forms construct, match and write exactly the rows that have it.
+
+It adds no rule for ownership, narrowing or aspects: `Copy`, `Clone`, `Display`, `Ord` and the partial-move residual of
+section 4a come from the row, as sections 3 and 4 say. A residual that stops being a `Tuple` (a gap) simply loses the printing
+and layout, which is the same fact section 4a states.
+
+The point of naming it is that every consumer above asks one question. If a later RFC makes it visible (a bound `R: Tuple` for
+arity-generic code, or a refinement of the plain row by the predicate "labels are dense"), that is a name for this property and
+changes none of the rules here. Whether it is surfaced as a bound is not decided by this RFC.
+
+### 6. `()` and the unit type
+
+**`()` is the empty closed row `.{}`.** The tuple sugar has arity 0 as well: no elements give `.{}`. Unifying the primitive unit
+type with the empty row is a change of its own, measured at about 32 `Type::Unit` and 44 `Value::Unit` sites, and it is
+**extracted into RFC-0231 (Unit as the Empty Row)** so that this RFC does not carry it. RFC-0231 is implemented **first**: this
+RFC's implementation depends on it, so the zero-arity tuple is the empty row with no conversion.
+
+### 7. Tuple structs
+
+*Added 2026-11-14 (language owner decision: in scope).* A nominal type whose fields are numbered is a struct whose row has
+integer labels, branded as every struct is (RFC-0137). There is no separate tuple-struct feature:
+
+```metel
+struct Point(i64, i64);          // brand Point over .{ .0: i64, .1: i64 }
+let p := Point(1, 2);            // the construction call of RFC-0100, positional arguments
+p.0                              // field access on the label .0
+let Point(x, y) := p;            // a pattern over the same row
+```
+
+The brand is what a tuple lacks: `Point` is not structurally interchangeable with `(i64, i64)`, which is the point of
+declaring it (RFC-0137's `Self.{ .0 }` projection and the residual `Point.{ .1 }` after `p.0` moved apply unchanged, as do
+`copy struct`, `derives` and the rules of RFC-0211). A struct may also mix labels (`struct Pair(i64, name: String)`) because
+the row may (section 2). Rust's tuple structs, rejected in the alternatives below for *tuples*, are the right model for a
+nominal type that wants positional fields.
+
+Left open, because they belong to the declaration and construction RFCs rather than to this one: the declaration spelling
+(`struct P(A, B)` against `struct P { .0: A, .1: B }`), the pattern spelling, and the interaction with RFC-0100's `new T(...)`
+and the call-form construction of RFC-0114. This section fixes the direction: a tuple struct is a numbered-label struct and
+adds no machinery.
+
+## Worked examples (integration)
+
+Each combines this RFC with an integrated feature or a sibling RFC still in flight, looking for a contradiction. None was
+found; the two places where the combination has a visible edge are marked.
+
+| Example | Result |
+|---|---|
+| `(1, "a").0`, `let (x, y) := t`, `match (t) { (0, y) => … }` | field access and patterns on the labels `.0`, `.1`; nothing downstream sees a tuple node |
+| nested narrowing (RFC-0150): move `o.pair.0` out of `Outer { pair: (A, B), tag: T }` | `o : Outer.{ .pair: .{ .1: B }, .tag }`: a tuple field's residual is a row residual, which resolves RFC-0150 section 3 with no new form |
+| a rest pattern (RFC-0178) `let (a, ..rest) := t` for `t: (A, B, C)` | `rest : .{ .1: B, .2: C }`: the remainder keeps its labels, as a partial move does (section 4a); GAP-TYPES-009's question is answered |
+| a call's argument list (RFC-0223): `f(1, x = 2)` | the row `.{ .0 = 1, .x = 2 }`; the integer labels are dense, the identifier labels free (RFC-0202's `Dense` predicate, not `Tuple`) |
+| a tuple struct (section 7) passed to `fun cons<record R: Tuple>` | rejected: a struct never satisfies a row bound (RFC-0137); the struct's row is reached by projection, or the struct opts in by the checked impl form RFC-0202 defers. **A visible edge, not a contradiction** |
+| width subtyping (RFC-0121): a 3-tuple passed to a bound `.{ .0: A, .1: B, ..R }` | accepted, as a record with extra fields is; a closed `(A, B)` parameter does not accept it |
+| the residual of an anonymous tuple (RFC-0211) | no brand to grant `Copy`, so it follows its fields; `extend` of a custom `Drop` on a tuple is rejected as for any anonymous record (RFC-0116 section 3) |
+| the zero-arity tuple `()` (RFC-0231) | the empty row, which is a `Tuple` and prints `()`; one type, no conversion |
+| the `Tuple` property (section 5a) and RFC-0202's `Tuple`/`Dense` aspects | one property: the aspect is the compiler's grant of what section 5a names; a closed row decides it by inspection |
+| an overload set (RFC-0100) with `f((i64, i64))` beside `f(.{ .0: i64, .1: i64 })` | the two parameter types are one type, so the set is a duplicate. **A visible edge**: no such set exists in the standard library or the fixtures |
+| `extend (A, B): Aspect` beside `extend .{ .0: A, .1: B }: Aspect` | one impl target, so the pair is a `T0015` overlap, as for `()` and `.{}` (RFC-0231) |
+
+---
+
+## Implementation tracking
+
+Implemented in full, after RFC-0231 (unit as the empty row, implemented). The steps, each tracked by an issue (umbrella
+metel-core#1956):
+
+1. #2029: numeric labels in the record machinery (field access, row bounds, ordering, the `Tuple` property).
+2. #2030: record patterns bind a label to a pattern, `.label: pattern`.
+3. #2022 and #2023: `let` tuple patterns and the one-element tuple.
+4. Moved to RFC-0011 (owner decision 2026-11-15): `Eq`, `Ord` and `Hash` for every row, tracked by #2031 and #2044, land with operator dispatch through aspects. Not a step of this RFC.
+5. #2032: retire `Type::Tuple` and the distinct tuple node; the tuple `Copy` rule of #263 goes with it. Done (2026-11-15): `(A, B)`, `(a, b)`, `(p, q)` and `t.0` are lowered to the numeric-label row forms by the parser, and the tuple variants, the tuple runtime value and the tuple-specific Copy rule are gone.
+
+## What this RFC does not cover
+
+- **Homogeneous sequences.** `[T]` / arrays stay their own thing — a row is
+  heterogeneous and fixed-arity by construction.
+- **Abstracting over arity.** `(...Ts)` folding a type pack is RFC-0125; this RFC
+  gives it a row to fold *into*, nothing more.
+- **Labelled tuples / named-positional hybrids.** A row already does this
+  (`.{ .0: A, .name: B }`); no new surface syntax for it here.
+- **Removing the `(…)` surface syntax.** It stays as sugar indefinitely.
+
+## Representation and migration
+
+The end state is that `Type::Tuple` / `InferType::Tuple` no longer exist —
+everything is `Type::Record` / `InferType::Record` with integer-or-identifier
+labels. Possible staging:
+
+0. **Numeric labels in the record machinery.** Measured 2026-11-14: field access
+   with a numeric label is routed to tuple access, so `r.0` on a record or a row
+   bound fails ("cannot infer tuple type for index access"). Fix that, and the
+   comparison impls of section 3, before anything depends on a tuple being a row.
+1. Extend the row label type to `int | ident` and teach the record machinery
+   (construction, projection, patterns, `Copy`, display, unification) the numeric
+   ordering.
+2. Lower tuple syntax to record nodes in a desugaring pass; keep `Type::Tuple`
+   internally as a thin alias that is *definitionally equal* to the matching
+   numeric-label row (weak form — reduces churn, but two representations coexist).
+3. Delete `Type::Tuple` and rewrite its call sites to the row form (strong form —
+   the actual goal).
+
+Move checking already treats tuple elements as struct-like fields (RFC-0071 §9a),
+so `move_check` is close to free. The parser keeps the tuple productions; they
+just emit record AST.
+
+**Size (measured 2026-11-14).** About 86 `Type::Tuple`, `InferType::Tuple` or
+`AbstractType::Tuple` sites in 24 files, 11 `Value::Tuple`, and about 127 tuple
+expression and pattern sites; retiring `Unit` (RFC-0231) adds about 32
+`Type::Unit` and 44 `Value::Unit` sites.
+
+## Alternatives considered
+
+### Keep tuples fully distinct (status quo)
+
+Every structural-type feature carries a second column forever: RFC-0117 a second
+narrowing case, RFC-0150 the tuple-residual open question, RFC-0125 a separate
+pack-into-tuple calculus, RFC-0118 a separate bound target. Rejected — the
+duplication compounds.
+
+### Remove tuple syntax; write `.{ .0 = a, .1 = b }`
+
+Consolidates by deletion. Rejected — `(a, b)` for a pair or triple is a real
+ergonomic win and its removal buys nothing the sugar-only approach does not.
+
+### Tuples as structs with a synthetic brand (Rust's tuple structs)
+
+Gives `(A, B)` a nominal identity. Rejected — a brand would stop `(A, B)` being
+structurally interchangeable, which is the whole reason tuples are used for
+ad-hoc returns and argument lists.
+
+## Open Questions
+
+All resolved as of 2026-11-14.
+
+1. ~~**`()` vs `Unit`** (§6).~~ **Resolved:** unify. `()` is the empty row `.{}` and `Unit` is retired as a separate type. The
+   change is extracted into RFC-0231 (Unit as the Empty Row).
+2. ~~**Mixed-label rows.**~~ **Resolved (2026-11-14):** allowed. A call's argument list is a mixed row (section 2), and
+   an exclusivity rule would be a second concept. A row prints as a tuple only when it is a `Tuple` (section 5a), and otherwise
+   in brace form.
+3. ~~**Cross-shape row bounds.**~~ **Resolved (2026-11-14):** accepted structurally. A bound `<record R: .{ .0: i64, .. }>`
+   accepts any row with an `i64` at `.0`, tuple or hand-written, as structural identity implies. A bound written for named data
+   uses identifier labels, so a tuple can only meet a bound that names numeric labels; the cross-match is harmless.
+4. ~~**Staging** (§Representation).~~ **Resolved (2026-11-14):** the RFC is implemented in full, ending at the strong form: no
+   `Type::Tuple`, no `InferType::Tuple`, no distinct tuple node, and no shipped state in which both representations coexist. The
+   steps in the section above are an implementation order, and a weak alias on the way is an implementation choice, not a release
+   stage. When it ships is a matter for the milestone, not this text.
+5. ~~**Grammar.**~~ **Resolved (2026-11-14):** the existing tuple productions stay, so the disambiguation of `(A, B)` against a
+   parenthesised grouping survives. Function types are `|A| -> B`, so `(A) -> B` does not arise. The one-element forms `(x,)` and
+   `(T,)` (metel-core#2023) and `let` tuple patterns (metel-core#2022) are added, and are part of this RFC's implementation.
+6. ~~**Compacting the remainder of a partial move** (§4a).~~ **Resolved:** the remainder keeps its labels and is a
+   sparse row unless the moved elements were a suffix; getting a tuple back is a destructuring pattern or an explicit relabel,
+   and no rule renumbers automatically.
+7. ~~**Binding a label to a different name in a record pattern.**~~ **Resolved (2026-11-14):** record patterns gain
+   `.label: pattern`, with nested patterns. It is useful on its own (a record pattern today can only pun or discard a field), and
+   it lets a tuple pattern be written as the record pattern it desugars to, so `let (x, y) := t` is `let .{ .0: x, .1: y } := t`.
+   The record-pattern grammar change is part of this RFC's implementation.
+8. ~~**Is section 6 (`()` as the empty row) its own RFC?**~~ **Resolved (2026-11-14):** yes, RFC-0231. This RFC states only that
+   the zero-arity tuple is the empty row.
+
+## References
+
+- RFC-0116 (Anonymous Record Types, `4-implemented`) — the row former tuples
+  become an instance of
+- RFC-0117 (Row Narrowing, `4-implemented`) — the narrowing rule tuples inherit
+- RFC-0150 (Nested Row Narrowing) — its §3 tuple-residual open question is
+  resolved by this RFC
+- RFC-0118 (Row Bounds, `4-implemented`) — bound targets; Open Question 3
+- RFC-0137 (Nominal Types as Branded Rows, `3-integrated`) — tuples stay
+  brandless, like anonymous records
+- RFC-0071 (Ownership and Move Semantics, `3-integrated`) — §9a already tracks
+  tuple elements as struct-like fields; `Copy` derivation
+- RFC-0080 (Standard Aspects) — the `Ord` / `Eq` derivation §3 depends on
+- RFC-0125 (Variadic Generics, v0.14.0) — folds a type pack into the row this
+  RFC provides
+- RFC-0061 §7.1 / metel-core#893 — `Callable<Args, Ret>` with `Args` a
+  numeric-label row
+
+---
+
+## Decision
+
+**Outcome:** *(pending — draft, opened 2026-08-29. The core desugaring is
+straightforward; the open questions are whether
+mixed-label rows are allowed, and the migration staging. Sequence before
+RFC-0125, which depends on it.)*
+**Target:** *(set when accepted; naturally lands with or just before v0.14.0's
+variadic/row work.)*

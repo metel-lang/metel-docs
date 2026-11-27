@@ -3,7 +3,7 @@ id: rfc-0109
 title: "Self-View Narrowing"
 date: '2026-07-18'
 status: under-review
-updated: '2026-08-27'
+updated: '2026-11-25'
 tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 ---
 
@@ -135,7 +135,18 @@ fun example(h: &var Ticketing) {
 }
 ```
 
-**A view's `for` target must name a concrete struct in scope**, and (§2 below) a
+**A view's `for` target must name a struct in scope**, including an instantiated
+generic struct. A generic view binds the parameters needed by its target:
+
+```metel
+struct Box<T> { value: T, label: String }
+view Value<T> for Box<T> { value }
+// Value<String> names Box<String>.{ .value }.
+```
+
+Each instantiation names the corresponding residual and keeps its target's brand and
+arguments. The example's parameter spelling is proposed; parameter kinds and bounds
+must be checked consistently with the target declaration. (§2 below) a
 method may only declare `self` as a view whose `for` target is that method's own
 enclosing `impl` type — a view can't be used to make one function generic across two
 unrelated structs that happen to share a field name. Nothing new here either: RFC-
@@ -187,6 +198,12 @@ rule every residual type already has.
 
 ## 3. Composition and disjointness
 
+With RFC-0208, `Handle.{ .fd, R }` under `<..R>` ranges over residuals of
+`Handle` retaining `fd`. The fixed view `view Fd for Handle { fd }` names the
+empty-tail case. A function bound `T: .{ .fd: i32 }` instead asks for a field of
+the given type. Under RFC-0243's public-row option, any eligible brand can meet
+that bound, while a receiver typed as `Fd` retains the `Handle` brand.
+
 Two views of the same struct are two named points in RFC-0137 §2's subset lattice,
 so both properties that matter are inherited, not separately defined:
 
@@ -230,6 +247,21 @@ it names. §6's tuple-of-views is the intended escape hatch for the mixed-mode c
 
 `self` may be declared as a **tuple of views**, each with its own independent
 `&`/`&var` mode, checked pairwise-disjoint via §3:
+
+Nested receiver tuples and tuples mixing named views with explicitly identified field
+references are also in scope (language owner, 2026-11-25). Their syntax, field identity,
+and origin propagation remain to be specified before acceptance. For borrowing, the
+checker considers every leaf projection regardless of tuple nesting. A pair of overlapping
+leaves is rejected if either is exclusive; shared overlaps are permitted. Tuple nesting
+determines how the method receives and destructures the receiver, not loan compatibility.
+At a method call, the receiver place is automatically borrowed at each declared leaf
+projection and assembled into the declared tuple shape (language owner, 2026-11-25).
+The call is legal only when all resulting loans are valid together and with other live
+loans. Each leaf retains its own origin and access mode.
+For a one-field receiver, the working form is a reference to a branded residual,
+`&Self.{ .label }` or `&var Self.{ .label }`. It identifies the field without requiring
+a named view. RFC-0229 separately proposes the shorter `&Self.label` spelling; it is
+not assumed accepted here.
 
 ```metel
 view BarsView for Ticketing { bars }
@@ -420,14 +452,15 @@ should also be composable per-field as Niko proposes, is open for this RFC.
 1. ~~Named, reusable views~~ — **resolved**: `view X for Struct { fields }`, now
    understood as a name for an RFC-0137 residual type rather than separate
    machinery.
-2. **Multiple, separately-declared narrowed method calls with overlapping
-   lifetimes** — distinct from §6's resolved case (one method, mixed modes, split at
-   call entry). Here two *different* methods, each narrowed to disjoint views,
-   called with genuinely overlapping (not just sequential) lifetimes. §3's
-   disjointness check covers the shape in principle; whether the checker's
-   call-lifetime reasoning composes correctly for overlapping calls needs the same
-   reasoning §2 already assumes from RFC-0071 — asserted to fall out for free, not
-   independently verified here.
+2. **Multiple narrowed method calls with overlapping lifetimes** — intended behavior
+   (language owner, 2026-11-25): allow them when the checker proves their receiver
+   projections disjoint and tracks each returned reference's origin and access footprint
+   to its respective projection. Known transparent field sets can establish disjointness;
+   a future row-disjointness constraint could provide it for generic rows, and an opaque
+   view requires an exported checked guarantee (RFC-0251). Reject overlapping exclusive
+   loans when the necessary proof is unavailable. The syntax of a generic constraint and
+   the origin and borrow-checking implementation remain with their respective proposals;
+   this is a target rule, not a claim about the current checker.
 3. ~~Where a `view X for Struct` declaration is allowed to live, and its interaction
    with cross-module field visibility~~ — **substantially addressed by §8.** What
    §8 leaves genuinely open — and now attributed to RFC-0137, not this RFC — is
@@ -445,12 +478,16 @@ should also be composable per-field as Niko proposes, is open for this RFC.
    `Pattern::Record` were already implemented by the time this reconciliation
    happened (RFC-0032/RFC-0034/RFC-0107), and the reference-destructuring mechanism
    that motivated §2 moved to RFC-0144, which needed no by-value prerequisite either.
-6. **Whether a view's `for` target may itself be generic** (`view X for Container<T>
-   { field }`) — not addressed; out of scope for this draft.
-7. **Whether tuple-of-views self-declarations (§6) should be allowed to nest, or mix
-   a named view with a raw field reference** (e.g. `self: (&var BarsView, &Token)`
-   naming a field directly instead of via a one-field view) — not addressed; §6's
-   worked examples only show named views in every slot.
+6. **Generic view targets** — included (language owner, 2026-11-25). Each view
+   instantiation names the corresponding instantiated residual; exact syntax and
+   bound checking need integration review. RFC-0253 owns generic residual projection
+   types and their use in transparent aliases.
+7. **Nested and mixed receivers** are in scope (§6). The working single-field form is
+   `&Self.{ .label }`, a reference to a branded one-field residual (language owner,
+   2026-11-25). Loan compatibility is checked pairwise over all leaves, independent of
+   nesting, and method calls automatically assemble the declared tuple from leaf borrows
+   (language owner, 2026-11-25). Returned-origin tracking needs integration review.
+   A bare `&Token` does not itself identify a field.
 
 ---
 

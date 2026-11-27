@@ -6,6 +6,7 @@ scope: "architecture/spec/resolution.md#resolution"
 owner: metel-frontend
 discovered_by: "metel-core#1216 limitation analysis; `type_engine/mod.rs` `resolve_type_key_broad`"
 disposition: known
+tracked_by: metel-core#2093
 review: null
 ---
 
@@ -41,5 +42,4 @@ fallback lives in the inference-time registry, before that freeze.
 
 ## Resolution
 
-None yet. Removing the fallback means carrying the declaration id on the typed
-IR's type spellings; the user-visible bug is `metel-core#1222`.
+None yet; tracked as metel-core#2093: carry the declaration id on the typed IR's type spellings and remove `resolve_type_key_broad`, which is still used at 28 sites. The user-visible symptom, same-named structs in two modules confusing field access (metel-core#1222), was fixed by metel-core#1258.

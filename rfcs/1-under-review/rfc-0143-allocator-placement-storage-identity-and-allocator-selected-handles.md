@@ -1,1106 +1,779 @@
 ---
 id: rfc-0143
-title: "Allocator Placement, Storage Identity, and Allocator-Selected Handles"
+title: "Allocator Storage Resources and Custody-Aware Typed Allocation"
 date: '2026-08-26'
+updated: '2026-11-18'
 status: under-review
 tracking: 'https://github.com/metel-lang/metel-core/issues/850'
-updated: '2026-08-27'
 ---
 
-> **Deliberate overlap, 2026-08-26.** This RFC was opened after checking the curated
-> allocator cluster, the exact registry, and the RFC corpus directly. It is a proposed
-> consolidation of accepted RFCs that are intentionally not implemented, not an
-> undiscovered competing design. None of them changes status merely because this RFC is
-> now under review.
+> **Proposed replacement, 2026-11-18.** This text replaces the previous design of RFC-0143 under the **same RFC number**. The replacement is a proposal for review, not a claim that the existing accepted allocator RFCs have already been superseded or that any new syntax has been implemented. In particular, the change from allocator-selected `T@a` handles to storage-resource allocation is deliberate, not a mechanical rewrite.
 >
-> **Working syntax premise.** RFC-0093 and RFC-0095 currently spell metadata with `#`;
-> they originally used `@` and changed because the accepted allocator cluster already
-> claimed it. This RFC instead gives the shared sigil directional roles: prefix `@`
-> attaches metadata to what follows, while postfix `@` attaches storage identity to the
-> type that precedes it. It does not amend RFC-0093/0095 by itself; their matching update
-> must occur before this RFC can be accepted.
+> **Compatibility with RFC-0242.** This RFC assumes the *proposed revised* RFC-0242 ownership/custody/access model: target-bound access witnesses, storage validity domains, first-class custodians, and checked revocation. The GitHub version of RFC-0242 may still contain its older exploratory text; the two replacements must be reviewed together. RFC-0241 is the proposed formal validation vehicle.
 >
-> **GC soundness boundary, 2026-08-27.** Allocator-selected handles are a general
-> abstraction; they do not prove that every proposed handle family is sound. The GC
-> rows in this RFC are provisional examples and inherit RFC-0139's promotion blockers:
-> complete roots, cross-arena edges, affine contents/finalization, and concurrency.
-> This RFC may advance with the abstract handle-family mechanism, but it must not make
-> standard-GC or subset-collection guarantees until RFC-0139 resolves those blockers.
-
-> **Status — under review (2026-08-27).** Scheduled for v0.21.0 allocator-foundation design settlement under metel-core#850
+> **Syntax convention.** Ordinary examples follow Metel 0.16.0 `develop` conventions where possible: `fun`, `struct`, `extend`, `&T`, `&var T`, `let`/`var ... :=`, and assignment with `=`. Storage parameters `@s`, brands `'b`, explicit borrow regions `&r`, `depends valid(@s)`, `revokes @s`, `unsafe aspect`, and the library APIs here are **proposed extensions**. Comments labeled *schematic* describe semantic contracts, not compiler-accepted declarations. The planned `[T]` unsized payload and `&[T]` / `&var [T]` views are likewise proposed changes to current collection semantics.
 
 ## Summary
 
-Replaces the accepted-but-deliberately-unimplemented allocator cluster with one
-coherent proposal written against the language that exists now. It preserves the
-cluster's central result: a concrete allocator *instance*, not merely its type, has a
-static identity that can appear in types and prove scope, disjointness, and
-sendability properties. It no longer assumes that every allocator produces one
-affine owning-pointer shape. It moves allocation out of the prefix-`@` channel, under
-the working premise that the comptime/metadata proposal will restore that spelling.
+An **allocator** provides *storage*, not an initialized value and not a universal kind of owning or shared pointer. This RFC replaces the allocator-selected-handle foundation with three composable layers:
 
-The proposed common surface is:
+1. **`Alloc<@s>`:** a trusted storage-acquisition interface tied to an instance-level storage identity `@s`.
+2. **`RawStorage<@s>`:** an affine, provenance-preserving resource representing a particular allocation of uninitialized storage, including the authority and protocol needed to retire or release it.
+3. **Typed ownership layers:** library-defined `Unique`, `Box`, `ArenaBox`, `OwnedBuffer`, `Rc`, and other abstractions that initialize and own or retain particular objects using the raw storage substrate where appropriate.
 
-```metel
-fun build<T, A: Alloc>(arena: A, value: T) -> T@arena {
-    place value
-}
+Storage validity, object liveness, location stability, and access permission remain **distinct** as defined by RFC-0242. A storage identity `@s` names a rigid domain and can appear in validity dependencies; it is not a borrow, a pointer, an allocator value, or exclusive access authority. Borrow regions `&r` govern access duration; brands `'b` identify generative authority domains.
 
-fun preserve<T>(value: T@_) -> T@_ {
-    value
-}
-```
+The baseline `Alloc` contract promises **non-invalidating allocation**: acquiring another block cannot invalidate an already live block or relocate a live object. An allocator that cannot uphold this contract may expose a different, specialized interface, but must not implement `Alloc` dishonestly. An optional reallocation facility can be defined separately; it requires exclusive ownership of the affected block and preserves object/initialization obligations.
 
-The verbose forms are ambiguity controls, not the everyday baseline:
+This RFC defines the *semantic interface*, an initial proposed surface, and soundness requirements. It does **not** settle the low-level unsafe syntax, owning-existential capsules, a general dynamic-layout language, or moving-GC implementation details. It does specify enough raw runtime-sized allocation capability to address the missing buffer primitive identified by RFC-0133.
 
-| Purpose | Common form | Explicit form |
-|---|---|---|
-| Allocator parameter | `a: A` where `A: Alloc` | same |
-| Placement type | `T@a` | same |
-| Placement operation | `place expr` | `place a expr` |
-| Preserve one unknown identity | `T@_` | `<storage s>` with `T@s` |
-| Struct-owned allocator | `alloc a: A` | same |
+The key rule is:
 
-Any stable binding whose type implements `Alloc` is both an ordinary runtime
-allocator value and a static storage identity. `place expr` uses the unique allocator
-determined by its expected `T@a` type or surrounding scope; `place a expr` remains the
-explicit form when needed. `T@a` is the allocator-selected handle type produced by
-that operation, not a promise that the result is affine, uniquely owned,
-pointer-shaped, or movable-out. `T@_` preserves or infers one storage identity;
-`<storage s>` is written only when multiple positions must explicitly share an
-identity without carrying its runtime allocator capability.
-
-For `Heap`, `LocalHeap`, `BumpAlloc`, and `AutoAlloc`, `T@a` has the accepted
-cluster's unique affine semantics. A tracing allocator may instead select a copyable
-`Gc` handle, and another allocator may select another family, without changing the
-placement expression. Handle capabilities, rather than the fact of allocation alone,
-determine borrowing, extraction, drop, copying, and sendability.
-
-If this RFC is accepted, it supersedes RFC-0063, RFC-0065's allocator-specific
-sections, RFC-0066, RFC-0068, RFC-0073, RFC-0077, and RFC-0141. Those RFCs remain
-accepted and unchanged while this document is a draft. RFC-0065's lifetime-anchor
-rules remain owned by RFC-0067 and are not superseded here.
+> **Allocation grants control of storage, not ownership of an initialized `T`.** Creating `T` in that storage, moving it, destroying it, sharing it, and accessing it are separately checked operations.
 
 ---
 
 ## Motivation
 
-The accepted allocator cluster is factually frozen. It was accepted as Phase 3 work,
-has no grammar or allocator backend implementation, and was deliberately scheduled
-after ownership, borrowing, brands, and the rest of the language substrate. That was
-the right implementation order, but it means the design was written against a much
-earlier Metel than the one that will eventually implement it.
+### 1. The old allocator interface conflates responsibilities
 
-The delay has surfaced four changes that cannot be handled as a mechanical sigil
-rename.
+RFC-0063 introduced allocation-tagged `@a T` and `@a expr`. RFC-0143 revised this to `T@a` and `place a expr`, where the allocator selects the resulting handle family. This accounts for the fact that GC and ordinary unique ownership have different pointer semantics, but still makes a single allocation operation responsible for allocator choice, storage identity, object construction, and ownership policy.
 
-First, RFC-0095 and RFC-0093 originally gave `@` a strong metadata/comptime role and
-changed it to `#` specifically because the allocator cluster already occupied `@`.
-The allocator cluster uses it in types, expressions, parameter declarations, generic
-declarations, closure parameters, call arguments, and elided forms. The grammars can
-be disambiguated, but two unrelated sublanguages would compete for the language's
-most visually prominent marker. Removing it here dissolves the stated reason for that
-change. Postfix placement dissolves the specific prefix collision: a companion
-revision may restore metadata/comptime `@` while the direction of the sigil identifies
-which attachment is meant.
+In the revised RFC-0242 model, these responsibilities can be separated. The same heap storage facility can support a unique `Box<T>` or a reference-counted `Rc<T>`. An arena can return an affine per-allocation owner even though the arena—not the owner—eventually reclaims its backing chunks. A GC heap can provide traced handles without pretending they are ordinary affine storage blocks.
 
-Second, RFC-0076's brand work and RFC-0137's branded-row model make static identity a
-general language concern. An allocator instance still needs an identity, but it no
-longer follows that allocator identity needs a wholly separate theory or that a
-pointer sigil must introduce it.
+### 2. A raw pointer is too weak an allocation result
 
-Third, RFC-0139 exposes a semantic assumption in `@a T`: the accepted cluster makes
-every allocation produce the same affine owned handle, while a tracing allocator
-exists precisely to produce freely copyable, runtime-traced references. Treating GC
-as an allocator is useful only if the allocator may select its result family.
+A traditional `allocate(layout) -> RawPtr` API leaves independently important facts outside the type system: which allocator created the block, who may free it, whether it is already initialized, whether two returned blocks overlap, and whether a later allocation could relocate it.
 
-Fourth, RFC-0133 checks the cluster against implementing `List<T>` in Metel and finds
-that `Alloc` has no specified method contract and no runtime-sized buffer operation.
-The cluster specifies single-value surface placement while leaving the substrate that
-would implement it undefined. A consolidated replacement must name that gap rather
-than accepting another surface above it.
+RFC-0242 already provides machinery for representing such authority. The allocation result should be a **resource**, not an unrestricted integer address or freely forged pointer. Unsafe implementations establish its invariants; safe code may transfer the resource into higher-level ownership types.
 
-The goal is therefore not to preserve `@a T` under a different glyph. It is to
-preserve the old design's useful guarantees while separating four concepts it wrote
-as one:
+### 3. An allocator may outlive individual objects
 
-1. an allocator is a runtime capability;
-2. a particular allocator binding has a static storage identity;
-3. placement asks that capability to store a value;
-4. the allocator chooses the handle family returned by placement.
+An arena can own backing memory while an `ArenaBox<T, @s>` owns one initialized object inside that memory. Destruction of the object need not return bytes to the arena immediately. Conversely, reclamation of arena memory must not run before live dependent objects and direct references are safely discharged.
+
+A single shared storage dependency must not act like an exclusive loan of the whole arena: new allocations and simultaneous exclusive borrows of distinct objects must remain possible.
+
+### 4. Runtime-sized buffers are a foundational need
+
+RFC-0133 documents that neither `[T; N]` (compile-time fixed size) nor the existing borrowed `[T]` view can provide the storage for a Metel-authored growable `List<T>`. An allocator must support allocating a checked runtime size and alignment. The higher-level buffer tracks how many elements are actually initialized.
 
 ---
 
-## 1. Scope and supersession
+## 1. Scope, decisions, and non-goals
 
-This RFC is deliberately overlapping. The overlap check performed when it was opened
-found RFC-0068, RFC-0077, RFC-0073, RFC-0141, and RFC-0076; the curated allocator
-cluster additionally identifies RFC-0063, RFC-0065, RFC-0066, RFC-0133, and RFC-0139.
-They are the inputs to this document, not accidental duplicates.
+This RFC proposes the following decisions:
 
-### 1.1 Normative disposition of the accepted cluster
+- An allocation interface operates on **raw blocks** identified by storage domain `@s`.
+- Its result is an **affine, provenance-preserving `RawStorage` resource**, never an ordinary `T` and never a freely copyable raw pointer.
+- New allocations are non-invalidating for all live blocks and objects reachable from them.
+- A block carries a usable **reclamation/retirement capability**, even when physical release is deferred.
+- Safe typed construction and initialization are built above the raw interface.
+- Object destruction and storage release are distinct obligations.
+- Resizing is an optional capability, not an obligation of `Alloc`.
+- An allocator does not select a universal owning-pointer family; high-level allocating APIs may select handles independently.
+- `@s` denotes storage identity in generics and validity contracts; **`T@a` is not the foundational allocation type**.
 
-| Existing rule | Disposition here |
-|---|---|
-| Allocators are ordinary runtime values implementing `Alloc` | Preserved (§3) |
-| Each allocator instance has a distinct static identity | Preserved (§2) |
-| `@a T` is one universal affine owning-pointer type | Replaced by allocator-selected `T@a` (§4) |
-| `@a expr` selects explicit placement | Replaced by `place a expr` (§5) |
-| `(@a: A)` binds capability and tag together | Replaced by ordinary `a: A` where `A: Alloc`; `T@a` makes dependent use explicit (§2.2) |
-| `<@a>` relays a tag without a runtime handle | Replaced by `T@_` in the common case and `<storage a>` for explicit relationships (§2.3, §8.3) |
-| Allocator names may be elided only when resolution is unique | Preserved (§8) |
-| Allocator arguments may be omitted at uniquely resolved calls | Delegated to general context parameters (§8.4) |
-| Borrowing through an allocated handle is transparent | Preserved for handles providing borrow access (§6) |
-| Heap move-out works for every `T` | Preserved for `Heap`'s unique handle (§7.2) |
-| Bulk arenas restrict move-out of `T: Drop` | Preserved (§7.3) |
-| Plain-parameter calls never trigger hidden extraction | Preserved (§7.5) |
-| Type-directed placement/extraction occurs at bindings only | Preserved (§5.3, §7.4) |
-| Structs may own an allocator | Preserved with new spelling (§9) |
-| A struct initially owns at most one allocator | Reopened; model permits more, initial grammar remains OQ4 (§9.3, §15.2) |
-| `AutoAlloc` may choose an unobservable strategy | Preserved and narrowed to compatible handle semantics (§10) |
-| Generic well-formedness is checked from storage scopes | Preserved (§11) |
-| Allocated unique handles are covariant in storage scope and `T` | Preserved; no longer generalized to every handle family (§11.3) |
-| Owned `dyn Aspect` values may select an allocator explicitly | Preserved (§12) |
+Non-goals for this replacement include: a mandatory `place` keyword; complete generic associated-type machinery for arbitrary typed placement; a composable dynamic-layout definition language; general user-defined unsized types; a particular GC tracing/root-discovery algorithm; full ABI or calling-convention guarantees; and automatic support for self-referential owning structs without an appropriate custody-capsule mechanism.
 
-### 1.2 Dependencies retained rather than absorbed
-
-- RFC-0067a owns `&T`/`&var T`, address-of, and base auto-deref.
-- RFC-0067 owns named lifetime anchors and their elision.
-- RFC-0071 owns affine moves and drop order.
-- RFC-0072 owns negative bounds such as `T: !Drop`.
-- RFC-0076 owns general generative brands. This RFC requires allocator storage
-  identities to obey the same rigidity and non-forgeability rules, but does not settle
-  the surface syntax of unrelated brands.
-- RFC-0080 owns `Clone`, `Deref`, `Send`, and `Sync` as general aspects.
-- RFC-0082 owns ordinary associated types. Generic associated handle families are an
-  extension identified here, not retroactively attributed to RFC-0082.
-- RFC-0113 owns general context-parameter declaration, provision, and resolution.
-- RFC-0122 owns the borrow checker that enforces exclusivity and outlives constraints.
-
-### 1.3 Adjacent drafts
-
-RFC-0139 remains the GC-specific design: collection timing, root discovery,
-finalization, and cyclic structures. This RFC absorbs only its finding that allocators
-must select handle families. RFC-0133 remains the question of whether `List<T>` should
-be implementable in Metel; §3.3 supplies the missing buffer-capable allocator contract
-that RFC-0133 identified, but does not decide the rest of `List`'s prerequisites.
+The proposed base interface is intentionally about **stable allocated storage**. A moving collector or another manager with different guarantees need not implement it for its movable objects.
 
 ---
 
-## 2. Storage identities
+## 2. Storage identities, lifetimes, and brands
 
-### 2.1 Identity belongs to the binding, not only the allocator type
+### 2.1 Three different roles
 
-Every binding established as an allocator capability has a rigid static storage
-identity. Two different `BumpAlloc` instances therefore remain distinct:
+| Notation | Meaning | Primary rule |
+| --- | --- | --- |
+| `@s` | Rigid storage/resource identity | Storage-dependent values require `valid(@s)` |
+| `&r` | Borrow duration / access relationship | Loans may be shortened and must not conflict |
+| `'b` | Rigid generative authority brand | Brand equality does not itself establish access or liveness |
 
-```metel
-let a = BumpAlloc::new();
-let b = BumpAlloc::new();
+A storage identity names the *resource domain*, not an individual object within it. Two blocks allocated in `@s` may be disjoint, but the fact that they share `@s` alone does not prove disjointness; the allocation contract does.
 
-let x: Node@a = place a Node { value = 1 };
-let y: Node@b = place b Node { value = 2 };
+This proposal uses `@s` in generic positions (e.g. `BumpArena<@s>`, `ArenaBox<T, @s>`), without the older `<storage s>` spelling. Brand parameters are consistently `<'b>` / `Token<'b>`, never `<brand 'b>`.
+
+### 2.2 Introduction and generativity
+
+A new independent arena may introduce a fresh storage identity. An inferred identity is not just the allocator's *type*: two instances of `BumpArena` can have distinct `@s` values despite identical runtime types.
+
+```text
+// Proposed generative API; storage binders are inferred.
+BumpArena::scoped(|arena| {
+    var arena := arena;
+    let a := arena.alloc_box(10)?;
+    use_value(&a);
+});
 ```
 
-`Node@a` and `Node@b` are not equal merely because both allocators have type
-`BumpAlloc`. The identities are generative, cannot be forged from text, and cannot be
-compared or converted at runtime. They are erased when no selected handle
-representation needs them at runtime.
+The scoped constructor introduces a fresh identity whose dependent values cannot escape unless a sound owning existential/custody package transfers the underlying storage resource with them. A storage identity is erased at runtime when its representation is not otherwise required.
 
-Static allocators such as `Heap` and `LocalHeap` have stable global identities named
-by those bindings. They do not create fresh identities at each use.
+### 2.3 Storage validity is not an access loan
 
-### 2.2 Ordinary allocator bindings carry identity
-
-Any stable local, parameter, static, or closure binding whose type implements `Alloc`
-may be named after postfix `@`. No parameter modifier is required:
-
-```metel
-fun build<T, A: Alloc>(a: A, value: T) -> T@a {
-    place value
+```text
+struct ArenaBox<T, @s>
+    depends valid(@s)
+{
+    allocation: OwnedAllocation<T, @s>,
 }
 ```
 
-Within the body, `a` may be used as an ordinary value and through `Alloc` methods. In
-`T@a`, the same spelling denotes its static identity. The caller passes an ordinary
-allocator value; the callee's identity is substituted with the identity of that
-argument, rather than freshly generated on every call.
+`depends valid(@s)` means that a live `ArenaBox<T, @s>` requires the backing storage domain to remain valid. It does not establish that the allocation contains an initialized `T`, does not assert that the address is stable by itself, and does not borrow the arena exclusively. Those other facts follow from the `OwnedAllocation` contract and the access operations.
 
-This does not make adding an `Alloc` implementation silently change an existing public
-signature: dependent use is introduced only when source explicitly writes `T@a`, and
-bare `place` must still resolve uniquely. Local construction works the same way:
+The compiler may infer propagated dependencies from fields; explicit declarations on public/opaque types must be verified, not treated as declarations that fabricate the validity of `@s`.
 
-```metel
-let arena = BumpAlloc::new();
-let node: Node@arena = place Node { value = 1 };
+---
+
+## 3. `Alloc`: the base storage interface
+
+### 3.1 Proposed declaration
+
+```text
+// Proposed language surface; not valid in v0.16.0.
+unsafe aspect Alloc<@s> {
+    type Error;
+    type Block: RawStorage<@s>;
+
+    fun allocate(
+        &var self,
+        layout: Layout
+    ) -> Result<Self::Block, Self::Error>;
+}
 ```
 
-The `alloc` keyword is therefore not an ordinary parameter marker. It is retained only
-in a struct primary constructor, where it means the struct creates and owns that
-allocator (§9.3)—additional semantics an ordinary parameter or field does not carry.
+An `unsafe aspect` is a proposed way to mark a contract whose implementations must uphold invariants the compiler cannot infer solely from ordinary method bodies. **Calls to a sound implementation can be safe**, even if the implementation requires trusted or unsafe operations. The precise `unsafe` syntax remains a dependency on RFC-0026; this proposal does not claim it is implemented.
 
-### 2.3 Identity without capability: `<storage s>`
+The `@s` parameter is the storage identity bound to a real allocator/custodian instance, not permission to allocate by naming a region. The compiler must reject an implementation or call that purports to manufacture a block in an unrelated `@s` without the required establishment authority.
 
-Code that preserves a single placement normally uses identity elision and does not
-need the runtime allocator:
+`Layout` represents a **checked** byte size and alignment for a block. It is distinct from the deferred *composable dynamic-layout definition* facility: runtime-sized contiguous buffers need only checked `Layout::array<T>(count)`-like computations, not a general user-defined unsized layout calculus.
 
-```metel
-fun identity<T>(value: T@_) -> T@_ {
+### 3.2 Normative allocation contract
+
+For any successful `allocate(layout)` call:
+
+1. **Fresh logical allocation:** the result denotes a new allocation identity. For nonzero usable extents, it does not overlap any independently live allocation returned under incompatible exclusive authority. Zero-sized allocations still have distinct logical identities; raw address equality alone is never an aliasing proof.
+2. **Sufficient storage:** the usable extent has the requested size and alignment, or a stronger compatible extent, with integer overflow and unsupported layouts reported as errors.
+3. **Uninitialized state:** the block does not assert that any `T` object is initialized. Safe typed reads require a separate initialization proof.
+4. **Stable extent:** while the block is valid, unrelated calls to `allocate` cannot relocate it, overwrite its live contents, revoke its validity, or silently change its usable layout.
+5. **Provenance:** the block carries allocation origin and the authority to establish access to its actual extent. It cannot be arbitrarily created, duplicated, or rebound to another block by safe code.
+6. **Custody:** the block's validity dependencies remain satisfied for as long as safe operations can use it. If it depends on `@s`, reclamation of `@s` is forbidden until those dependencies are discharged.
+7. **Reclamation:** the block carries or securely delegates a usable release/retirement protocol. Releasing the block once must never double-free; releasing it must not require reconstructing an exclusive borrow of an allocator currently inaccessible through ordinary borrowing.
+8. **Failure atomicity:** on allocation error, no ownership or destruction obligation is silently lost and no invalid block is returned. The allocator state may have changed (e.g. reserved capacity) only if its public contract permits it without invalidating other blocks.
+
+For standard heaps, the release protocol may return storage to the heap immediately. For bump arenas, release may mark a logical slot retired while physical memory is reclaimed only on epoch reset or arena destruction. Per-block retirement **need not** mean per-block reclamation.
+
+The `&var self` receiver allows allocator bookkeeping to change. It does not confer authority to invalidate other live blocks, which have independent resource guarantees. An implementation that uses movable backing buffers must use indirection or chunking sufficient to honor the non-invalidating rule.
+
+### 3.3 Why stable allocation is mandatory
+
+```text
+var a := arena.alloc_box(10)?;
+var b := arena.alloc_box(20)?;
+
+let x := a.borrow_mut();
+let y := b.borrow_mut(); // Allowed: independently owned targets.
+```
+
+If allocating `b` could move or destroy `a`, the returned handles could not be independent without additional borrowing or relocation protocols. The contract therefore rules out a `Vec`-like moving backing buffer behind a naive implementation of `Alloc`. Such a manager must either stabilize allocations or expose a different, narrower capability.
+
+---
+
+## 4. `RawStorage`: an affine block with a release protocol
+
+### 4.1 Contract, not merely a pointer
+
+A block is a first-class affine resource with an unforgeable target identity. A conceptual interface is:
+
+```text
+// Explanatory contract, not a final aspect signature.
+unsafe aspect RawStorage<@s> {
+    // Properties supplied to trusted typed-construction operations:
+    // - allocation identity, extent, alignment, provenance
+    // - domain validity dependency (where applicable)
+    // - exclusive authority over uninitialized bytes
+    // - release/retirement capability
+
+    fun layout(&self) -> Layout;
+    fun release(self);
+}
+```
+
+An ordinary safe `RawStorage` implementation cannot create these guarantees by returning a pointer. Establishing the initial block or a verified sub-block partition is a trusted operation whose preconditions are explicit in RFC-0242 and the future unsafe primitives layer.
+
+`RawStorage` may be a **sealed/proof-carrying** capability rather than an unrestricted user-implementable aspect in the first implementation. The RFC requires its semantics, not that arbitrary library code can immediately implement it safely.
+
+### 4.2 Drop and release
+
+The resource must have exactly one *logical owner* of the release authority at a time. It is affine under RFC-0071: copying or using it after a move is forbidden; it can be consumed by `release` or transferred into a typed owner. An uninitialized block can be safely retired on ordinary destruction according to its implementation's release protocol.
+
+Affine abandonment may leak physical storage if the language permits suppressing cleanup, but it may not create a dangling safe reference or cause a double release. A stronger linear obligation is appropriate only if a particular allocator needs mandatory discharge; this RFC does not impose linearity on every raw block. RFC-0089 remains the owner of the general linear-type mechanism.
+
+The **release ticket** can be represented by the block itself, a stable allocator control object, a retained allocator reference with its own valid custody protocol, or another implementation-specific resource. The public type need not expose which. What is required is that safe `Unique`/`OwnedBuffer` destruction can finish without acquiring an invalid or conflicting `&var` borrow of a separately held allocator.
+
+### 4.3 Partition and merging
+
+A trusted operation may split a raw block into nonoverlapping sub-block capabilities; it must conserve allocation extent, exclusivity, and reclamation authority. A partition must not let each child independently free the entire parent allocation. A shared parent release ticket, join requirement, or equivalent accounting is necessary.
+
+Ordinary safe code may not manufacture a sub-block by constructing a new address and length. Range checks alone do not prove provenance or independent release authority.
+
+---
+
+## 5. Typed initialization and ownership
+
+### 5.1 Separate storage from initialized objects
+
+The transition from raw storage to `T` ownership has distinct proof obligations:
+
+```text
+RawStorage block
+    -- checked layout + move-in + initialization -->
+Initialized T at target o
+    -- ownership transfer + cleanup protocol -->
+Unique<T, Block, @s>
+```
+
+The trusted initialization primitive must prove that the block fits `T`, that alignment is valid, that the destination is available and not already initialized, and that the constructed object has unique logical ownership. It must transfer the block's release authority to the resulting owner. Safe code cannot reinterpret uninitialized bytes as a `T`.
+
+A schematic library result is:
+
+```text
+struct Unique<T, B, @s>
+    depends valid(@s)
+{
+    // Opaque: initialized T, exclusive ownership witness,
+    // backing resource B, and its release protocol.
+}
+```
+
+The type is illustrative. In particular, `Unique` cannot expose a movable `B` field while an initialized `T` still occupies it, and it must preserve any extra liveness/relocation constraints of `T`. Where the domain is self-owned or globally valid, `@s` can be hidden behind an opaque public owner rather than being exposed on every `Box<T>`.
+
+### 5.2 A generic safe allocation helper
+
+```text
+// Schematic API; generic associated type and error details are proposed.
+fun allocate_unique<T, A: Alloc<@s>, @s>(
+    allocator: &var A,
+    value: T
+) -> Result<Unique<T, A::Block, @s>, (A::Error, T)>;
+```
+
+The error returns `value` if no initialized owner could be established. This makes the failure contract explicit even for types whose value cannot simply be discarded. An implementation may expose a convenience overload that drops `value` on failure only when such destruction/discard is permitted.
+
+Typical implementation sequence:
+
+1. Compute a checked `Layout::of<T>()` and allocate a raw block.
+2. If allocation fails, return `(error, value)` without consuming its value ownership.
+3. Move `value` into the block through the restricted initialization primitive.
+4. Transfer the initialized object's ownership and block's release ticket to `Unique`.
+5. On any intermediate failure or exceptional exit, recover or correctly destroy the value and retire the block exactly once; never expose a partially constructed `T` as fully initialized.
+
+The initial API supports sized `T`. Unsized payloads such as `[T]` require a separately specified initialization builder with runtime element count, not a general dynamic-layout language.
+
+### 5.3 Borrowing and extraction
+
+```text
+extend<T, B, @s> Unique<T, B, @s> {
+    fun borrow(&self) -> &T;
+    fun borrow_mut(&var self) -> &var T;
+}
+```
+
+Borrowing derives access to the specific initialized target, not to the entire allocator. It must be prohibited when the target has been moved or destroyed and must carry the validity dependencies of its backing block.
+
+Consuming a unique owner may move out the object only if the handle can finish the backing storage's retirement and preserve `T`'s destruction/movement obligations. Extraction is explicit (consistent with RFC-0066 as amended by RFC-0185), and **not** inferred from argument or expected return types. The exact integration of dereference syntax with the generalized access API is owned jointly by RFC-0242 and a later extraction-specific revision.
+
+```text
+// Conceptual, where the unique owner supports extraction.
+let value: Node := *owner;
+```
+
+A bulk allocator without per-object tracking can still support move-out where no destructor or initialization obligation would be lost. If it cannot safely support a particular `T`, the handle simply does not provide extraction for that `T`. The **handle protocol**, not the allocator's name, determines availability.
+
+### 5.4 Destruction order and panic/failure safety
+
+For a fully initialized owner, destruction must end all incompatible live access, run the object's destructor **once if required**, mark the storage no longer containing a live `T`, and then retire/release the block. These responsibilities may be implemented via trusted capsule machinery; ordinary field drop order alone is insufficient when parts of the representation can move out independently.
+
+A destructor that fails must not lead to a second destructor invocation or to a safe reference to reclaimed memory. The precise unwind/abort policy is a language-wide decision. This RFC requires the storage/initialization state machine to be safe under whichever policy Metel adopts.
+
+---
+
+## 6. Runtime-sized buffers and optional reallocation
+
+### 6.1 `OwnedBuffer<T>` is not `[T]`
+
+A growable buffer owns a raw allocation with capacity `c` and an initialized prefix of length `n`, where `0 <= n <= c`. It must track ownership of the `n` initialized elements and of the raw capacity separately:
+
+```text
+struct OwnedBuffer<T, @s>
+    depends valid(@s)
+{
+    // Opaque: raw block, length, capacity,
+    // initialization state, and reclamation ticket.
+}
+```
+
+`OwnedBuffer` may expose an `&[T]` view over the **initialized prefix only**, or an `&var [T]` view under exclusive borrow. It must not expose uninitialized capacity as a safe `[T]`.
+
+The first implementation need only support checked runtime byte layouts such as `Layout::array<T>(capacity)`. General user-defined unsized type layouts are deferred.
+
+### 6.2 Growth works without reallocating the old block
+
+A generic `List<T>` can grow by acquiring a larger block, moving each initialized element when allowed, transferring each element's destruction obligation, retiring the old block, and replacing the buffer. It may not do this while existing references or pinning contracts forbid relocation.
+
+```text
+// Illustrative surface, with no allocator-specific compiler rule.
+var list := ArenaList::new(&var arena)?;
+list.push(10)?;
+list.push(20)?;
+let view: &[i64] := list.as_slice();
+```
+
+The borrow checker prohibits a conflicting mutating `push` while `view` remains live. A specialized stable-buffer abstraction may offer a more permissive API only if it can establish the required per-target stability contract.
+
+### 6.3 `Reallocate` is optional
+
+Not every allocator can or should resize an allocation. A distinct optional capability may offer `grow`/`shrink` without becoming part of the base `Alloc` requirement.
+
+The raw form must be restricted to an **uninitialized** block or to a verified state in which no initialized value/borrow is invalidated. A higher-level typed `OwnedBuffer` must separately preserve or move initialized elements and respect pinning; `memcpy` of arbitrary initialized `T` is not automatically valid.
+
+A fallible consuming resize must either return the original usable block on failure or specify another equally safe ownership-preserving failure result. It may not silently lose the only reclamation ticket or leave a caller holding an invalidated block.
+
+---
+
+## 7. Custody, reclamation, and revocation
+
+### 7.1 Domain validity and block custody
+
+A block backed by an externally owned arena may depend on its storage identity:
+
+```text
+struct ArenaBlock<@s>
+    depends valid(@s)
+{
+    // Opaque affine raw storage and release ticket.
+}
+```
+
+`valid(@s)` is a domain-level guarantee, not evidence that any particular slot is initialized. Allocation establishes a fresh block target and distinct exclusive authority to that block; typed initialization establishes the object target's liveness.
+
+The associated custodian must ensure that `@s` is valid for as long as any safe dependent handle or reference can be used. This can be statically enforced through RFC-0242's dependencies and checked revocation, or through a trusted runtime custody protocol with equivalent strength.
+
+### 7.2 Revocation is a checked operation
+
+```text
+// Schematic effect signature.
+fun dispose<@s>(arena: BumpArena<@s>) revokes @s;
+```
+
+The `revokes @s` clause is an effect declaration, **not** revocation authority. The compiler must verify the operation's authorization and detect outstanding dependencies across function calls, moves, generic interfaces, and implicit destructor execution.
+
+A move of the allocator custodian into a function that might destroy it is subject to the same obligations as an explicit `dispose`. Merely hiding teardown in another function must not bypass the rule.
+
+### 7.3 Resettable arenas use epochs
+
+A reset need not invalidate the arena's backing *capacity* forever; it invalidates the objects allocated during the current epoch. Model the two identities separately:
+
+```text
+// Conceptual identities, not a finalized public API.
+struct BumpArena<@s, @e> {
+    // @s: backing storage domain
+    // @e: current allocation epoch
+}
+
+struct ArenaBox<T, @s, @e>
+    depends valid(@s), valid(@e)
+{
+    // ...
+}
+```
+
+`reset` is allowed only when objects and references depending on the old epoch have been safely discharged, and creates a fresh epoch identity `@e2`. A reset that retains the same physical addresses **must not** allow stale handles to become valid again (the ABA problem). The epoch transition and generativity syntax remain to be defined; a plain `&var self` receiver is not enough to justify invalidating unrelated live handles.
+
+### 7.4 Dropping the allocator is not necessarily dropping all its objects
+
+For an externally owned arena, a live `ArenaBox` prevents destruction of the domain until the box and any dependent references are no longer usable. Destroying an `ArenaBox` normally destroys or transfers its `T` and retires its slot; it need not free the arena chunk immediately.
+
+If an arena internally owns all its objects, it may use a different library type with an `ArenaKey<T>`-like non-owning lookup handle. Such keys must not yield unchecked long-lived references that outlive a reset; access may instead require an epoch check and a scoped guard. This is a separate ownership protocol, not a different implementation of the same `ArenaBox` contract.
+
+---
+
+## 8. Concrete allocator families
+
+### 8.1 Heap allocation
+
+A global or local heap can implement `Alloc` by returning blocks with individually usable release tickets. Its `Box<T>` and `Rc<T>` facilities are higher-level abstractions over these blocks:
+
+```text
+let a := Box::new(Node { value = 10 });
+let b := Rc::new(Node { value = 20 });
+let c := b.share();
+```
+
+The `Box<T>` and `Rc<T>` examples need not expose `@s` publicly when ownership of their allocation is internally self-sustaining. For `Rc`, each strong handle retains the underlying object; arbitrary copying of an affine release ticket is not permitted. Shared ownership is implemented by a trusted accounting protocol, not by duplicating the raw block.
+
+### 8.2 Bump arena
+
+```text
+// Proposed API; error handling elided in the scoped closure for clarity.
+BumpArena::scoped(|arena| {
+    var arena := arena;
+    var a := arena.alloc_box(10)?;
+    var b := arena.alloc_box(20)?;
+
+    let x := a.borrow_mut();
+    let y := b.borrow_mut();
+
+    // x and y are compatible because the object targets differ.
+});
+```
+
+Each handle depends on the arena's storage domain, but allocation need not borrow the whole arena for the lifetime of each handle. The arena must maintain stable addresses of its live blocks.
+
+### 8.3 Pool and slab allocators
+
+A pool can implement `Alloc` if it grants an exclusive, stable block resource for each live slot and does not reuse a slot until its prior logical ownership and references have ended. Slot indices alone are not sufficient to establish provenance; generation counters, affine slot ownership, or equivalent invariants are required.
+
+### 8.4 Automatic allocation policy
+
+`AutoAlloc` may remain a useful high-level library/compiler policy, but it must not erase observable guarantees: it cannot move allocations while direct references remain valid, weaken the storage dependency model, or violate `Send`/`Sync` constraints. It need not be a magical subtype of every allocator. Whether it implements `Alloc` as an ordinary allocator or is expressed as a separate compiler strategy is deferred.
+
+### 8.5 Tracing garbage collection
+
+A moving GC need not implement `Alloc<@s>` for ordinary movable objects, because `RawStorage` promises stable live block locations. It can implement `Alloc` for **pinned/immovable** allocations if it actually provides those guarantees, or it can use raw allocation internally and expose a higher-level `GcHeap::alloc<T>` operation returning GC-managed handles.
+
+```text
+// Proposed high-level managed API, not an Alloc method.
+let node := gc.alloc(Node { value = 42 });
+
+gc.with_ref(node, |value| {
+    println(value.value);
+});
+```
+
+GC roots maintain reachability, pin/guard protocols establish location stability for direct references, and access witnesses govern shared or exclusive access. `valid(@s)` alone does not keep an individual GC object alive. RFC-0139 retains responsibility for complete root discovery, cross-arena edges, affine contents and finalization, and concurrency guarantees.
+
+---
+
+## 9. Allocator parameters and generic APIs
+
+### 9.1 Storage polymorphism is not allocator-type polymorphism
+
+An allocator value `A: Alloc<@s>` grants an operation capability, while `@s` names the storage whose validity a handle depends upon. A function that only forwards a storage-dependent value needs `@s` but does not need to receive an allocator value:
+
+```text
+fun forward<T, @s>(value: ArenaBox<T, @s>) -> ArenaBox<T, @s> {
     value
 }
 ```
 
-The single input identity propagates to the output under §8.3. Explicit `storage s` is
-a compile-time-only identity parameter used when several positions must be related. It
-occupies no runtime argument slot, has no `Alloc` bound, and permits `s` only in type
-relationships. The body may not evaluate `place s expr`, call allocation methods
-through `s`, collect an arena, or otherwise exercise an allocator capability.
-
-This is categorically different from an ordinary `a: A` where `A: Alloc`: the latter
-carries both capability and identity; `<storage s>` carries identity only. It
-preserves RFC-0063's tag-only parameter without making it a tax on the common
-single-input case.
-
----
-
-## 3. The allocator interfaces
-
-### 3.1 Safe placement interface
-
-The surface contract is conceptually:
-
-```metel
-aspect Alloc {
-    type AllocationError;
-    type Handle<T>;
-}
-```
-
-`Handle<T>` is a generic associated type. It describes the ownership and runtime
-representation family selected by an allocator kind. The compiler additionally
-indexes each produced handle by the identity of the allocator binding used at the
-placement site; `T@a` is the surface projection of that complete type.
-
-`AllocationError = !` declares placement infallible. The compiler collapses
-`Result<T@a, !>` to `T@a`, preserving RFC-0063's rule.
-
-`place expr` and its explicit `place a expr` form are language operations governed by
-`Alloc`, not specified as simple method desugarings. A method-only desugaring cannot
-express the binding identity in the result without adding general value-dependent
-associated-type projection. An implementation may lower them to a compiler-known
-`Alloc` entry point, but that is not observable source semantics.
-
-### 3.2 Handle capabilities
-
-An `Alloc` implementation must define, for each `T`, which operations its handle
-family supports. The language does not infer the following merely from `A: Alloc`:
-
-- shared access to `T`;
-- exclusive access to `T`;
-- affine ownership;
-- copying or cloning the handle;
-- moving `T` out of the placement;
-- individually releasing the placement;
-- tracing or collecting it;
-- `Send` and `Sync`.
-
-The standard unique families support shared and exclusive borrowing, transparent
-field/method access, affine move tracking, and allocator-dependent extraction. `Gc`
-handles support shared access and copying but do not become affine merely because they
-came from `place`. Generic code requiring an operation must state the corresponding
-handle/aspect bound or operate only parametrically on `T@s`.
-
-For the standard unique families, `T@a: Send` exactly when the selected handle is
-sendable, the allocator identity may cross the boundary, and `T: Send`. `Heap` meets
-the allocator condition; `LocalHeap`, `BumpAlloc`, and `AutoAlloc` do not. A custom
-family's `Send`/`Sync` rules are structural aspect rules, not a second annotation on
-the placement expression.
-
-An allocator implementation may declare only capabilities whose safety invariants it
-can enforce. In particular, selecting a copyable handle does not excuse complete root
-tracking; distinct storage identities do not exclude cross-storage references; and a
-`Send`/`Sync` handle requires a synchronization contract for every operation reachable
-through it. Capability declarations are unsafe implementation obligations, not facts
-inferred from the shape of `Handle<T>`.
-
-### 3.3 Raw storage and runtime-sized buffers
-
-The accepted cluster leaves `Alloc.alloc` unspecified and consequently cannot support
-a from-Metel growable buffer. This RFC requires the allocator substrate to provide
-four semantic operations, whether their eventual unsafe surface is an aspect or a
-compiler intrinsic:
-
-1. allocate an uninitialized block for a checked size and alignment;
-2. grow or relocate an existing block while preserving a stated initialized prefix;
-3. shrink a block while preserving a stated initialized prefix;
-4. release a block previously produced by that allocator.
-
-The operations return `AllocationError`, never manufacture initialized `T` values,
-and require proof that layout, provenance, initialized ranges, and destruction
-obligations are respected. `place expr`/`place a expr` is the safe, initialized
-single-value layer built above them.
-
-The exact user-authorable spelling of these raw operations depends on RFC-0026's
-unsafe primitive layer. That dependency blocks custom allocator implementation, not
-the static meaning of postfix `@`/`place` or use of compiler-provided standard allocators.
-Unlike RFC-0063, this document nevertheless specifies the required capability now, so
-RFC-0133 has a concrete allocator contract to depend on rather than an unnamed gap.
-
----
-
-## 4. Placement types: `T@a`
-
-`T@a` is the type produced by placing a `T` in allocator `a`. It combines:
-
-- `a`'s rigid storage identity;
-- the allocator kind's `Handle<T>` family;
-- any static scope, sendability, and extraction properties that family declares.
-
-It is not a universal runtime wrapper. The compiler normalizes it after the allocator
-kind is known:
+A function that allocates needs an actual allocator capability:
 
 ```text
-T@Heap       -> unique heap handle carrying Heap identity
-T@arena      -> unique arena handle carrying arena identity
-T@global_gc  -> copyable traced handle carrying GlobalGc identity
-```
-
-The source projection remains useful in generic signatures because it says exactly
-what callers need: preserve the placement selected by this identity, without exposing
-or hard-coding its representation.
-
-### 4.1 Same type, different instances
-
-`T@a` and `T@b` are distinct when `a` and `b` are distinct storage identities.
-For storage families that prohibit cross-arena references, this is a static
-disjointness witness. It proves that the allocations do not alias; it does not prove
-that an object in `b` cannot contain a handle into `a`. A manual `a.collect()` may
-avoid scanning `b` only if the handle family statically rejects that edge or maintains
-an incoming-edge/remembered-set protocol satisfying RFC-0139. Otherwise `b` must be
-scanned as a possible root source. No subset-collection guarantee follows from storage
-identity alone.
-
-### 4.2 Identity permanence
-
-The storage identity remains part of the static type for as long as the handle is
-live. It is not silently erased on field storage, argument passing, or return. Explicit
-extraction or an allocator-family-specific erasure operation is required to remove it.
-
-### 4.3 Syntax category and direction
-
-Postfix `@` is accepted only after a complete type and is followed by one storage
-identity name. Prefix `@` remains available to metadata/comptime. The position makes
-the attachment target explicit:
-
-```metel
-@derive(Clone)             // metadata attaches to the following declaration
-struct Node<storage a> {
-    next: Option<Node@a>, // storage identity attaches to the preceding type
+fun build<T, A: Alloc<@s>, @s>(
+    allocator: &var A,
+    value: T
+) -> Result<Unique<T, A::Block, @s>, (A::Error, T)> {
+    allocate_unique(allocator, value)
 }
 ```
 
-Storage identities are binding names such as `a`, `Heap`, or `LocalHeap`, not arbitrary
-field-access expressions. This keeps `T@a.field` unambiguous: it parses as `(T@a).field`
-where such a type member operation is legal, never as `T@(a.field)`.
+The syntax linking `A` to `@s` needs an elaboration rule, but the **semantic distinction is normative**: an identity cannot be used as a replacement for the runtime allocator resource.
 
-Whitespace is not significant, but the formatter emits `T@a`, with no spaces, so the
-placement reads as one qualified type. Metadata remains visually prefix-shaped:
-`@derive(Clone)` rather than `@ derive(Clone)`.
+### 9.2 No universal `T@a` placement projection
 
-### 4.4 Precedence, references, and nesting
-
-Postfix placement binds to the preceding type before reference prefixes are applied:
-
-```metel
-&Node@a       == &(Node@a)
-&var Node@a   == &var (Node@a)
-(&Node)@a     // a reference value itself placed in a
-```
-
-Chained postfix placement is legal but parentheses are required because visual order
-is the reverse of the old prefix form:
-
-```metel
-(Node@inner)@outer
-```
-
-This is an outer placement containing a handle into `inner`. Bare `Node@inner@outer`
-is rejected rather than assigned an associativity readers must remember.
-
----
-
-## 5. Placement expressions: `place expr` and `place a expr`
-
-`place expr` evaluates `expr` first, then asks the uniquely determined allocator to
-place the resulting initialized value. The allocator is resolved first from an
-expected `T@a` type and otherwise by §8's unique-candidate rule. `place a expr` is the
-fully explicit form and is required when inference is ambiguous. For `expr: T`, the
-result type is:
+The common result of an allocation request is `A::Block`, not a compiler-selected `T@a` smart pointer. Typed owners are explicitly named by the library API:
 
 ```text
-Result<T@a, A::AllocationError>
+let node := arena.alloc_box(Node { value = 42 });
+let shared := Rc::new(Node { value = 42 });
 ```
 
-with the `!` collapse from §3.1. If evaluation of `expr` fails or transfers control,
-no placement occurs. If allocation fails after `expr` has been evaluated, the value is
-dropped normally before the error is returned.
+Generic allocation-constructor aspects (such as `Allocate<T>`) and an optional `place` syntax may be layered on top. They are not required to define `Alloc`, and they cannot fabricate valid ownership by choosing a convenient return type. Any associated handle must implement the RFC-0242 custody and access-establishment obligations.
 
-```metel
-fun make_node(value: i64) -> Node@Heap {
-    place Node { value, next = None }
-}
+### 9.3 Elision and context parameters
 
-let node: Node@arena = place Node { value = 1, next = None };
-let fallible = place pool Node { value = 2 }?;
-```
-
-### 5.1 Explicit allocator choice
-
-`Heap` and `LocalHeap` are always nameable:
-
-```metel
-let durable: Node@Heap = place Node { value = 1 };
-```
-
-They enter an elision candidate set only when explicitly provided as a capability in
-the current context. Merely being globally nameable does not cause a scoped `place`
-to choose the heap silently.
-
-### 5.2 Multiple allocators
-
-Multiple allocator parameters remain ordinary ordered parameters:
-
-```metel
-fun transfer<T, A: Alloc, B: Alloc>(
-    src: A,
-    dst: B,
-    value: T@src,
-) -> T@dst {
-    place dst (value: T)
-}
-```
-
-The destination must be explicit when more than one compatible allocator is in scope.
-
-### 5.3 Type-directed placement
-
-At a `let` binding only, an expected placement type may supply the operation:
-
-```metel
-let node: Node@arena = Node { value = 1 };
-```
-
-This is equivalent to `let node = place arena Node { value = 1 };`. Nested expressions
-and ordinary function arguments never allocate merely because an expected type is
-`T@a`; they require `place` or an explicit binding. This preserves the old
-cluster's storage-transparency boundary.
+Ordinary borrow elision remains the responsibility of RFC-0067 and RFC-0122 as revised for RFC-0242. Allocator-value omission, implicit placement, or type-directed context selection is a separate ergonomics question, potentially related to RFC-0113. In the initial foundation, allocator selection is explicit and never silently switches between multiple candidates.
 
 ---
 
-## 6. Borrowing and transparent access
+## 10. Struct-owned allocators and owning custody capsules
 
-For a handle family providing shared access, `&handle` borrows its `T`. For one
-providing exclusive access, `&var handle` obtains an exclusive borrow subject to
-RFC-0122. Neither consumes the handle:
+The useful motivation from RFC-0068 survives: a parser can own an arena and nodes allocated within it. The following *naive* declaration is not automatically sound merely because fields have a favorable drop order:
 
-```metel
-let ptr = place arena Node { value = 1 };
-let read: &Node = &ptr;
-let write: &var Node = &var ptr;
-```
-
-Auto-deref for field access and method dispatch follows RFC-0067a and applies only
-when the selected handle family exposes the corresponding dereference operation. This
-is unconditional for the standard unique families, but not a promise made by the bare
-bound `A: Alloc`.
-
-A borrow may never outlive either the handle value or the storage identity on which
-that handle depends. Named cross-function cases use RFC-0067 lifetime anchors; this
-RFC does not create a second lifetime notation.
-
----
-
-## 7. Extraction and destruction
-
-Extraction applies to the standard unique handle family. Other families define their
-own operations; in particular, copying a `Gc` handle is not extraction of its pointee.
-
-### 7.1 Copy extraction
-
-When `T: Copy`, ascription copies the pointee and leaves the handle and placement live:
-
-```metel
-let point := ptr: Point;
-```
-
-### 7.2 Individually released placement
-
-`Heap` and any allocator whose unique family tracks individual live allocations permit
-move-out for every `T`. Moving consumes the handle, transfers `T` to ordinary
-storage-independent ownership, and releases the slot without invoking `T::drop` there.
-The moved value is dropped normally at its new owner.
-
-### 7.3 Bulk-deallocated placement
-
-A bulk allocator that cannot mark an individual slot vacant permits move-out only
-when `T: !Drop`. Raw memory may remain unused until the arena is reclaimed, but no
-destructor is skipped or invoked twice. For `T: Drop`, move-out is a compile error.
-
-An allocator may opt into per-allocation destructor tracking and thereby support
-move-out for `T: Drop`, at the cost of bookkeeping. Caller-driven manual destruction
-does not make move-out safe and is not part of the safe surface.
-
-### 7.4 Explicit extraction
-
-Extraction is written `*ptr` and nothing else drives it (RFC-0066 §3, amended by RFC-0185):
-
-```metel
-let node: Node := *ptr;
-process(*ptr);
-```
-
-It obeys the selected handle family's extraction capability and the rules above. The
-binding-directed forms `let node: Node := ptr;` and `ptr: Node` are rejected.
-
-### 7.5 No hidden extraction across calls
-
-Given `consume(value: Node)`, `consume(ptr)` is a type error when `ptr: Node@a`.
-The caller must write `consume(ptr: Node)` or bind an extracted `Node` first. A
-function that only relays placement instead writes:
-
-```metel
-fun consume<storage s>(value: Node@s) -> Node@s { value }
-```
-
-This keeps callability from depending invisibly on the caller's allocator and drop
-strategy.
-
-### 7.6 Clone into another allocator
-
-When `T: Clone`, code may clone through a borrowed pointee and place the result in a
-chosen destination:
-
-```metel
-let copy: Config@Heap = place src.clone();
-```
-
-The source remains live. A future convenience such as `clone_into` is a standard
-library API question and is not required by this RFC.
-
----
-
-## 8. Elision and context resolution
-
-All elision obeys one invariant: it is legal only when type-directed filtering leaves
-one correct answer. Ambiguity is a compile error; lexical depth never silently chooses
-an allocator.
-
-### 8.1 Placement-name elision
-
-When exactly one compatible allocator capability is in scope:
-
-```metel
-fun build(arena: BumpAlloc, value: Node) -> Node@_ {
-    place value
+```text
+// NOT sufficient under ordinary freely movable/partially movable structs.
+struct Parser<@s> {
+    arena: BumpArena<@s>,
+    nodes: List<ArenaBox<AstNode, @s>>,
 }
 ```
 
-The return type means `Node@arena`; the body means `place arena value`. The `_` is
-required: bare trailing `Node@` is rejected as incomplete syntax, while plain `Node`
-continues to mean storage-independent ownership.
-Type-directed filtering first uses any concrete required allocator type. If the
-position is generic over `A: Alloc`, every compatible allocator remains a candidate.
+The implementation must control generativity and escape of `@s`, prevent premature movement or destruction of the custodian, and disallow partial moves that would expose dependent handles after arena teardown.
 
-### 8.2 Ambiguity and nesting
+The intended abstraction is an **opaque owned custody package**, conceptually:
 
-An outer `Heap` capability and an inner `BumpAlloc` are both candidates for a bare
-placement expression with no concrete expected allocator kind. The compiler does not
-choose the inner binding by depth:
-
-```metel
-fun process(heap: Heap) {
-    BumpAlloc::scoped((arena) -> {
-        let x = place arena Node { value = 1 }; // name required
-    });
+```text
+Parser = exists @s . {
+    arena: BumpArena<@s>,
+    nodes: List<ArenaBox<AstNode, @s>>
 }
 ```
 
-Introducing a nested allocator therefore cannot silently retarget existing placement.
+The package transfers storage and dependent values together, enforces correct teardown, and exposes safe methods without leaking the hidden identity. Ordinary callers still write `Parser::new(source)`.
 
-### 8.3 Storage-only elision
-
-When no runtime allocator capability is in scope, `T@_` introduces or propagates an
-elided `<storage s>` identity:
-
-```metel
-fun identity(value: Node@_) -> Node@_ { value }
-```
-
-A single input identity propagates to the output. Separate input positions receive
-separate identities unless an explicit `<storage s>` relates them:
-
-```metel
-fun same<storage s>(x: Node@s, y: Node@s) -> Node@s { x }
-```
-
-Elision never produces plain `T` and never performs extraction.
-
-### 8.4 Call-site capability elision
-
-RFC-0065 invented allocator-specific omission of a single allocator argument. RFC-0113
-now proposes the general mechanism for values threaded implicitly through call trees.
-This RFC does not retain a second allocator-only call rule. An allocator parameter is
-explicit by default:
-
-```metel
-wrap(arena, value)
-```
-
-If declared as a context parameter under RFC-0113, it may be omitted and is resolved
-by that RFC's type-directed, ambiguity-is-an-error rules. Multi-allocator positional
-relationships remain explicit unless their distinct required types make each context
-resolution independently unique.
+An implementation-ready mechanism for dependent owning packages is a **blocking prerequisite** for claiming that arbitrary struct-owned allocators are safe. This RFC does not pretend that synthesized field drop order alone solves self-dependency, partial moves, or pinning.
 
 ---
 
-## 9. Scoped, external, and struct-owned allocators
+## 11. Well-formedness, variance, and concurrency
 
-### 9.1 Scoped construction
+### 11.1 Dependency preservation
 
-Closure-scoped allocators expose an ordinary parameter whose known `Alloc` type gives
-it storage identity:
+If a value's type contains handles depending on `@s`, transferring, storing, or returning that value must preserve the dependency. A wrapper cannot erase it merely by omitting an explicit `depends valid(@s)` clause. A generic function must be checked against a signature that exposes the necessary dependency/effect information; it cannot rely on checking particular later instantiations to repair an unsound abstract body.
 
-```metel
-BumpAlloc::scoped((arena) -> {
-    let node = place Node { value = 1 };
-    process(&node);
+A value containing a dependent handle cannot be placed in storage whose custodian might be revoked first, unless the owning package proves that destruction/movement order and escape rules preserve validity. Storage identity equality is rigid; a handle in `@a` is not interchangeable with one in unrelated `@b` without an authorized transfer that creates a new valid allocation or custody arrangement.
+
+### 11.2 Variance
+
+Rigid storage identities should not be treated as ordinary borrow lifetimes merely because both are represented by region indices internally. Storage identity is not generally covariant by time shortening. Variance of a container in `T`, `@s`, or an authority parameter depends on the representation and operations it supports and must be justified independently.
+
+### 11.3 `Send` and `Sync`
+
+Neither `Alloc<@s>` nor `RawStorage<@s>` automatically implies `Send` or `Sync`. Crossing a thread or fiber boundary depends on the block's ownership protocol, the custodian's thread-safety, `T`'s own requirements once initialized, and the synchronization of release and shared-access operations. A local arena's storage identity cannot be smuggled across threads merely by hiding it behind an opaque block.
+
+---
+
+## 12. Metel-Core model and soundness obligations
+
+RFC-0241 should model at least:
+
+- A set of storage domains `S`, a set of allocation identities `B`, and a set of initialized object identities `O`.
+- A backing relation `backedBy(b, s)` and an optional object-occupancy relation `occupies(o, b, range)`.
+- Per-allocation extent, alignment, provenance, initialization state, and exclusive release authority.
+- `valid(s)` and (where needed) epoch validity; checked revocation effects.
+- Ownership of initialized objects separately from ownership of raw allocations.
+- Live access witnesses, loan compatibility, and location-stability obligations.
+
+The following are required invariants, not claims of proved theorems:
+
+**A. Nonoverlap and authority conservation.** Independently live allocations with nonzero usable bytes cannot confer exclusive authority to overlapping bytes. Partition and transfer operations conserve the ability to release the parent exactly once.
+
+**B. No fabrication.** Safe code cannot manufacture `RawStorage` from arbitrary bytes, forge an allocation identity, claim an initialized `T` from uninitialized storage, or grant an exclusive access witness without authorization.
+
+**C. Custody preservation.** For every live safe block or object whose usability depends on `@s`, `valid(@s)` holds. A transition revoking `@s` is rejected unless the necessary dependents have been safely discharged or transferred to an independent valid custodian.
+
+**D. Stable direct references.** If `&r T` or `&r var T` is live, the target remains initialized, its location remains stable during `r`, and access conflicts are prevented. A live borrow is not invalidated by an unrelated allocation, resize, teardown, or GC operation.
+
+**E. Destruction accounting.** A `T` destructor runs at most once for one initialized object, and every required destructor obligation is discharged or transferred before the corresponding storage is reused or released. Skipping cleanup is not permission to reaccess invalid storage.
+
+**F. Failure safety.** Any allocation, initialization, or resizing failure leaves the program in a valid state with no duplicated authority and no fabricated initialized object.
+
+**G. Generic and destructor effects.** Revocation performed through an implicit destructor, a generic wrapper, or a called function is subject to the same checks as an explicit `revokes @s` operation. Dependency and effect abstraction must be sound under separate compilation.
+
+The raw implementation of an allocator is an explicit trust boundary. The compiler can check safe derivations from legitimate block and object capabilities, but it cannot deduce the nonoverlap or allocator-implementation invariants from arbitrary unsafe machine code. The unsafe contract and its verification obligations must therefore remain visible.
+
+---
+
+## 13. Worked acceptance and rejection tests
+
+These programs describe the **intended future type-system behavior**, not behavior currently implemented in 0.16.0. For brevity, error handling is omitted where it does not affect the property under test.
+
+### 13.1 Independent arena allocations: accept
+
+```text
+var a := arena.alloc_box(10)?;
+var b := arena.alloc_box(20)?;
+let x := a.borrow_mut();
+let y := b.borrow_mut();
+*x = 11;
+*y = 21;
+```
+
+Two distinct affine allocation owners yield disjoint exclusive target permissions, even though both depend on `@s`.
+
+### 13.2 Allocate while a different object is borrowed: accept
+
+```text
+var a := arena.alloc_box(10)?;
+let x := a.borrow();
+let b := arena.alloc_box(20)?;
+println(*x);
+```
+
+The arena can allocate without invalidating `a`; the shared borrow does not borrow the arena object itself for its entire duration.
+
+### 13.3 Revoke storage with a live dependent: reject
+
+```text
+let a := arena.alloc_box(10)?;
+arena.dispose(); // Error: a depends on valid(@s).
+println(a.borrow());
+```
+
+The rejection must also occur if `dispose()` is hidden in a helper, a generic function, or a destructor.
+
+### 13.4 Two owners for one raw block: reject
+
+```text
+let raw := arena.allocate(Layout::of<i64>())?;
+let first := core::init_owned(raw, 10);
+let second := core::init_owned(raw, 20); // Error: raw moved/consumed.
+```
+
+### 13.5 Read raw storage as initialized `T`: reject
+
+```text
+let raw := arena.allocate(Layout::of<i64>())?;
+let x: &i64 := raw.borrow(); // Error: no initialized i64 exists.
+```
+
+### 13.6 Relocate while a view is live: reject
+
+```text
+var values := List::new();
+values.push(10);
+let view: &[i64] := values.as_slice();
+values.push(20); // Error while view remains live, even if spare capacity exists.
+println(view[0]);
+```
+
+### 13.7 Attempt to reset an occupied arena epoch: reject
+
+```text
+let a := arena.alloc_box(10)?;
+arena.reset(); // Error: current epoch has a live dependent.
+```
+
+### 13.8 Reallocate uninitialized block, preserving failure ownership: accept
+
+```text
+// Schematic optional operation; error returns the original block.
+let raw := arena.allocate(Layout::array<u8>(64)?)?;
+let resized := try_resize(raw, Layout::array<u8>(128)?)?;
+```
+
+An implementation must document how the original block is returned or retained if `try_resize` fails.
+
+### 13.9 Rooted GC access: accept only under guard
+
+```text
+let root := gc.root(gc.alloc(Node { value = 1 }));
+gc.with_ref(root, |node| {
+    println(node.value);
 });
+// Returning node by direct reference outside the guard is rejected.
 ```
 
-The allocator cannot be destroyed while any `T@arena` handle or derived borrow is
-live. Variable-scoped construction obeys the same rule at explicit `drop(arena)` and
-at scope exit.
-
-### 9.2 External storage parameters
-
-A type that preserves caller-owned storage declares a storage identity explicitly:
-
-```metel
-struct Parser<storage arena> {
-    input: String@arena,
-    pos: u64,
-}
-
-extend<storage arena> Parser<arena> {
-    fun new<A: Alloc>(a: A, src: String) -> Parser<a> {
-        Parser { input = place src, pos = 0 }
-    }
-}
-```
-
-The storage parameter records identity and selected family, not merely allocator kind.
-Methods that allocate again must additionally receive the corresponding runtime
-capability; preservation alone cannot recreate it.
-
-### 9.3 Struct-owned allocators
-
-In a struct primary constructor, `alloc` means the value owns the allocator:
-
-```metel
-struct Cache(alloc arena: BumpAlloc) {
-    entries: HashMap<Key, Value>@arena,
-}
-```
-
-Construction creates `arena` as part of `Cache`; destruction drops allocation-backed
-fields before the allocator. `arena` is implicitly in scope in `extend Cache` bodies
-but is not an externally nameable parameter of `Cache`'s public type.
-
-Allocation through a struct-owned allocator requires exclusive access to the owner,
-because allocation mutates allocator state:
-
-```metel
-extend Cache {
-    fun insert(&var self, value: Value) {
-        let stored: Value@arena = place value;
-        self.entries.insert(stored);
-    }
-}
-```
-
-A shared `&self` method may inspect existing placements but may not allocate unless the
-allocator explicitly provides synchronized/interior-mutability semantics through a
-different handle API.
-
-Multiple owned allocators and allocator-type-polymorphic owned structs are permitted
-by the model; a concrete use should settle whether the initial grammar admits both.
-
-The initial conservative rule remains at most one owned allocator until §15.2 OQ4 is
-resolved. This records RFC-0068's accepted restriction rather than silently widening
-it while the replacement is still a draft.
-
-### 9.4 The owner's lifetime and a method borrow are distinct
-
-A method sees both the lifetime of the containing value/storage and the duration of
-the particular borrow used to call the method. A reference anchored to `self` in a
-return type denotes the containing binding's lifetime under RFC-0067, not permission
-to retain the exclusive call borrow indefinitely:
-
-```metel
-extend Cache {
-    fun root(&self) -> &self Value {
-        &self.entries.first
-    }
-}
-```
-
-The call's shared borrow may end while the returned reference remains valid, but the
-reference cannot outlive the `Cache` binding or its owned allocator. RFC-0067 and
-RFC-0122 own the precise anchor and NLL rules; this RFC preserves the two-lifetime
-requirement that their rules must express.
-
-### 9.5 Generic `extend` blocks and aspect methods
-
-External storage identities are repeated in generic `extend` headers; struct-owned
-identities are implicit:
-
-```metel
-extend<storage s, T> ArenaSet<s, T> {
-    fun first(&self) -> &T { &self.data.first }
-}
-
-extend Cache {
-    // the owned `arena` binding is in scope here
-}
-```
-
-Multiple external identities are declared independently. Ordinary allocator type
-parameters retain ordinary aspect bounds:
-
-```metel
-fun copy_into<T: Clone, A: Alloc>(dst: A, value: &T) -> T@dst {
-    place value.clone()
-}
-```
-
-Aspects themselves do not acquire allocator parameters merely because one method
-allocates. The method declares them:
-
-```metel
-aspect Serialize {
-    fun serialize<A: Alloc>(dst: A, self: &Self) -> Bytes@dst;
-}
-
-extend Record: Serialize {
-    fun serialize<A: Alloc>(dst: A, self: &Self) -> Bytes@dst {
-        place Bytes::encode(self)
-    }
-}
-```
+These cases should become small Metel-Core preservation and rejection obligations before implementation decisions are treated as settled.
 
 ---
 
-## 10. Standard allocators and `AutoAlloc`
+## 14. Interaction with existing RFCs and supersession
 
-| Allocator | Selected handle | Scope | Sendability | Individual move-out |
-|---|---|---|---|---|
-| `Heap` | unique affine | process | when `T: Send` | all `T` |
-| `LocalHeap` | unique affine | thread | not `Send` | all `T` |
-| `BumpAlloc` | unique affine | binding | not `Send` by default | `T: Copy` or `T: !Drop` |
-| `AutoAlloc` | unique affine | binding | not `Send` by default | all `T` |
-| `GlobalGc` | traced copyable | process | not established; RFC-0139 blocker | no pointee move-out |
-| `LocalGc` | traced copyable | thread | not `Send` | no pointee move-out |
-| `GcRegion` | traced copyable | binding | not `Send` by default | no pointee move-out |
+The *proposed* disposition below becomes normative only if this replacement is accepted and the dependent RFCs are reconciled. It must not be read as having silently changed already accepted or implemented RFCs.
 
-GC rows are provisional interface examples only, not standard-library commitments.
-Their root discovery, cross-arena-edge, finalization/admissibility, movement/pinning,
-and concurrency semantics remain RFC-0139. In particular, this RFC does not establish
-that `GlobalGc` is `Send` or `Sync`, that arbitrary `T` may be placed in a traced
-family, or that a traced arena can be collected independently.
+| RFC | Relationship to this replacement |
+| --- | --- |
+| **RFC-0063 — Allocator Handles** (`2-accepted`) | **Proposed supersession.** Retains first-class allocators and instance-level identity; replaces `@a T` / `@a expr` as a universal pointer/placement foundation with `Alloc<@s>` returning affine raw blocks. |
+| **RFC-0065 — Allocator and Lifetime Ergonomics** (`2-accepted`) | **Partial proposed supersession.** Drops automatic `@`-allocation/tag elision; retains ordinary borrow/lifetime-elision questions for RFC-0067/0122 and defers optional allocator-context inference. |
+| **RFC-0066 — Allocated Value Extraction** (`2-accepted`) | **Revised and narrowed.** Preserves explicit extraction and double-drop constraints but makes move-out conditional on a handle's ownership/reclamation protocol, not on a universal allocator pointer category. Aligns with RFC-0185. |
+| **RFC-0068 — Struct-Owned Allocators** (`2-accepted`) | **Proposed supersession of special `struct Foo(@a: ...)` surface.** Retains the use case, but makes safe owning-custody packages an explicit prerequisite; ordinary drop order alone is not a sufficient proof. |
+| **RFC-0073 — AutoAlloc** (`2-accepted`) | **Recast as an optional allocation policy.** Compiler selection must not weaken stability, validity, extraction, or concurrency guarantees. |
+| **RFC-0077 — Allocator Generics** (`2-accepted`) | **Proposed supersession of tag/form-specific rules.** Separates `A: Alloc<@s>` (runtime capability and policy) from bare `@s` (storage identity), and requires independently justified variance/dependency well-formedness. |
+| **RFC-0141 — Aspect Objects: Explicit Allocator Placement** (`2-accepted`) | **Proposed supersession of `@[r] dyn Aspect` placement syntax.** Explicit allocation is preserved through an owning library handle and existing object metadata/vtable requirements from RFC-0008. |
+| **RFC-0143 — previous text** (`1-under-review`) | **Direct replacement.** Removes `T@a`, `place a expr`, allocator-selected `Handle<T>` as foundational features; retains and strengthens the raw runtime-buffer substrate identified there. |
+| **RFC-0242 — Library-Defined References and Generalized Place Access** (`0-draft`) | **Foundational prerequisite.** Supplies storage validity dependencies, checked revocation, target-bound ownership/access witnesses, and custodian contracts. The *revised* RFC-0242 is intended; reconcile if its repository version differs. |
+| **RFC-0241 — Metel-Core** (`0-draft`) | **Validation companion.** Formalizes preservation, access, custody, and release invariants before implementation. |
+| **RFC-0159 — Abstract Regions and a Dedicated Identity Channel** (`1-under-review`) | **Compatible intended substrate, new syntax decision.** Storage identities use `@s`, borrow regions use `&r`, brands use `'b`; they may share an internal region-index representation, but not semantics. |
+| **RFC-0076 — Brand Types** (`1-under-review`) | **Orthogonal.** Keeps generative brands `'b` for authority/gating; brands do not prove storage liveness or allocation disjointness by themselves. |
+| **RFC-0067 — Lifetime Anchors** and **RFC-0122 — Borrow Checking** (`1-under-review`) | **Generalized by RFC-0242.** Preserve sound reference lifetime/exclusivity goals; dependent storage validity is not an exclusive borrow of an allocator, and returned access keeps the relevant loan/custody requirements. |
+| **RFC-0071 — Ownership and Move Semantics** (`3-integrated`) and **RFC-0089 — Linear Types** (`2-accepted`) | **Foundational.** Raw blocks are affine by default; mandatory release/discharge is an optional stronger obligation governed by linearity. Initialization and partial moves must preserve object/drop state. |
+| **RFC-0026 — Unsafe Blocks** (`0-draft`) | **Implementation prerequisite.** Defines or coordinates the trusted `unsafe` vocabulary and how allocators may establish raw block resources. |
+| **RFC-0133 — From-Metel List: Runtime-Sized Buffer Gap** (`0-draft`) | **Directly addressed at the design level.** Adds checked runtime-sized raw allocation and initialization-state requirements; does not claim that the evaluator implements them yet. |
+| **RFC-0053 — Fixed-Size Arrays**, **RFC-0054 — List**, **RFC-0124 — Sequence Types**, **RFC-0126 — Borrowed View**, **RFC-0171 — Prefix Array Syntax**, and **RFC-0172 — Sized/Unsized Kinds** | **Collection integration.** Fixed-size `[T; N]` remains owned. The revised RFC-0242 proposes `[T]` as an unsized payload and explicit `&[T]` / `&var [T]` borrowing, a substantive revision to the currently implemented bare `[T]` view semantics. `OwnedBuffer` supplies raw dynamic backing for `List`. |
+| **RFC-0139 — Garbage-Collected Allocators** (`1-under-review`) | **Reframed, not resolved.** GC can use raw allocation internally but is not forced to expose `Alloc` for movable objects. Root completeness, finalization of affine contents, cross-arena edges, and concurrency remain independent blockers. |
+| **RFC-0008 — Aspect Objects** and **RFC-0185 — Remove Type-Directed Dereference** | **Preserved behavior.** Vtable/object-safety semantics remain separate from storage policy; implicit extraction is not reintroduced. |
+| **RFC-0113 — Context Parameters**, **RFC-0082 — Associated Types**, **RFC-0093/0095 — Metadata/Comptime Syntax** | **Adjacent design dependencies.** This RFC does not commit to context-driven allocator omission, unrestricted generic associated handle families, or restoring prefix `@` metadata at the expense of `@s` storage identities. |
 
-`AutoAlloc` guarantees validity for its declared scope, complete destruction of live
-`Drop` values, reverse-declaration drop order where observable, safe move-out for its
-unique handles, and observational equivalence to using `Heap` except for performance,
-addresses, and allocation failure behavior already made visible by the type.
-
-The compiler may choose stack, bump, or heap backing per placement and may combine
-allocations. It may inline a placement into containing storage or elide it entirely
-when doing so preserves observable behavior. It may not choose a tracing or shared
-handle family for `AutoAlloc`, because that would change copyability, destruction, and
-aliasing rather than only strategy. A correct implementation that initially uses heap
-backing everywhere still satisfies the language semantics; minimum optimization,
-debug/release strategy stability, and unsafe address observability are implementation
-policy rather than type-system guarantees.
+Existing RFCs **retain their actual statuses** while this replacement is reviewed. After acceptance, affected documents, reference spec, registry/indices, and tracking issues must be updated through the RFC process; this file alone is not a silent status transition.
 
 ---
 
-## 11. Well-formedness, scope, and variance
+## 15. Alternatives considered
 
-### 11.1 Nested placements
-
-`T@a` is well-formed only if every storage identity contained by `T` lives at least
-as long as the placement in `a`. Equivalently, for each `b` occurring in `T`, `b`'s
-scope must enclose the live range of the `a` placement.
-
-```metel
-BumpAlloc::scoped((outer) -> {
-    BumpAlloc::scoped((inner) -> {
-        let x: Node@inner = place Node { value = 1 };
-        let bad: (Node@inner)@outer = place x;
-        // error: inner may end before the outer placement
-    });
-});
-```
-
-The same-identity case is trivially well-formed. A `Heap` placement stored inside a
-shorter arena is well-formed because `Heap` outlives it. The reverse is rejected.
-
-### 11.2 Generic checking
-
-When `T` is generic, nested-storage well-formedness is checked at instantiation, where
-the identities contained by the concrete `T` are known. An explicit `WellFormed<s>`
-bound is not required initially; it may be added later if instantiation diagnostics
-prove insufficient.
-
-### 11.3 Variance
-
-The standard unique `T@a` family is covariant in a storage scope and in `T`: a
-longer-lived identity may satisfy a shorter guarantee, and structurally longer-lived
-identities inside `T` strengthen the guarantee. `&r var T` remains invariant in `T`
-under RFC-0067.
-
-Allocator-selected families must declare and justify their own variance. This RFC does
-not incorrectly transfer unique-pointer covariance to a mutable shared or traced
-family. User-defined generic types derive variance from fields once the general
-variance rules are specified.
+1. **`Alloc` returns `RawPtr`.** Small interface, but raw pointers erase provenance, unique release authority, and typed initialization guarantees that higher-level safe abstractions would otherwise have to rebuild manually. Rejected as the safe foundation; raw pointers may still exist within unsafe implementations.
+2. **`Alloc` selects `Handle<T>`.** Closest to the previous RFC-0143 and RFC-0139. Convenient for `place`, but makes ownership and GC policies part of the low-level allocator contract. Rejected as the foundation; a typed high-level layer can still expose associated handle types where useful.
+3. **Make `allocate<T>` mandatory.** Couples storage acquisition to object initialization and excludes raw runtime-sized buffers; a poor fit for `List` and custom containers. Rejected.
+4. **Make `Reallocate` mandatory.** Forces a capability some arenas/pools cannot provide and complicates stabilization and pinning. Rejected; resizing is optional.
+5. **Treat every allocation as a long-lived mutable borrow of its allocator.** Prevents bulk teardown but also blocks independent allocations and can conflate distinct object targets. Rejected in favor of validity dependencies plus allocation-local access authority.
+6. **Let GC weaken `RawStorage` stability.** Would make arbitrary direct references unsound unless every client understood collector relocation. Rejected; moving GC uses a different managed-object protocol or pinned blocks.
+7. **Require an arbitrary user-defined layout language now.** Not necessary for checked contiguous buffers. Rejected for this RFC; composable dynamic layouts remain a future extension.
 
 ---
 
-## 12. Aspect objects and heterogeneous collections
+## 16. Risks and open questions
 
-An explicitly placed owned aspect object uses the same projection and operation:
+The architectural boundary is proposed as settled **within this replacement**, but these questions require answers before implementation or acceptance that claims a complete safe library protocol:
 
-```metel
-let shape: (dyn Shape)@arena =
-    place Circle { radius = 5.0 };
-```
+1. **Trusted block-establishment vocabulary.** Exactly which unsafe/compiler primitives establish a `RawStorage` implementation, provenance, disjointness, and release authority? Should `RawStorage` be sealed initially?
+2. **Release-ticket representation.** How is an independent block's reclamation capability encoded, especially when the allocator requires internal synchronized mutation? Is ordinary `Drop` sufficient or is an explicit linear retirement token necessary for certain allocators?
+3. **Generativity and owning packages.** How do allocator constructors create a fresh `@s` and how do opaque owners package their own arena with values depending on that identity? Which moves and field projections must be forbidden?
+4. **Generic checking and effects.** How are `revokes @s`, implicit destructors, field-wise dependencies, and abstract generic functions represented so that separate compilation cannot hide invalidation?
+5. **Initialization under failure and partial construction.** What is the minimal typed builder protocol, including cleanup for linear or non-discardable elements and behavior under panics/effects?
+6. **API surface and ergonomics.** Is `unsafe aspect` the right surface for `Alloc`? Should `RawStorage` be a sealed marker plus intrinsics? Is optional `place` justified by real generic APIs once typed constructors are usable?
+7. **Zero-sized and over-aligned allocations.** Define address/provenance equality, allocation identity, and rejected/unsupported layouts precisely.
+8. **Reallocation and pinning.** Which optional resize contracts preserve or return the old block on failure, and what generic movability constraints are needed for typed buffer growth?
+9. **Concurrency and GC.** Precisely which block and custodian protocols permit `Send`/`Sync`, and how do collectors establish root/guard stability independently of the raw allocator foundation?
 
-The expected `dyn Shape` type causes object coercion and allocation of the concrete
-value in `arena`. The result has RFC-0008's data pointer and vtable pointer; only the
-data placement and selected ownership family differ. Borrowed `&dyn Shape` and `&var
-dyn Shape` are unchanged.
-
-```metel
-let shapes: List<(dyn Shape)@arena> = List::new();
-shapes.push(place Circle { radius = 5.0 });
-shapes.push(place Rectangle { width = 3.0, height = 4.0 });
-```
-
-For a unique family, drop invokes the concrete destructor through the vtable and then
-releases or records the placement according to the allocator. A tracing family follows
-its own finalization rules. Object safety and dispatch remain RFC-0008's concern.
+These are not an excuse to reopen the architectural split. They are the concrete obligations needed to make that split safe and implementable.
 
 ---
 
-## 13. Diagnostics
+## 17. Suggested implementation and verification sequence
 
-Diagnostics name source bindings and capabilities rather than exposing compiler-only
-brand identifiers:
+1. **Formal model:** add storage blocks, allocation identities, initialization state, release authority, validity domains, and revocation to RFC-0241's Metel-Core stages.
+2. **Minimal trusted primitives:** specify and validate block acquisition/retirement and one-element initialization, first with a built-in heap implementation.
+3. **Safe unique ownership:** build and test `Unique<T, B, @s>` (or an equivalent opaque owner) with independent borrowing and correct destruction/extraction.
+4. **Arena instance identity:** introduce generative `@s`, `depends valid(@s)`, and checked revocation; verify that independent arena blocks can be allocated and borrowed simultaneously.
+5. **Runtime-sized buffer:** add checked array layout arithmetic, initialized-prefix tracking, and `OwnedBuffer<T>` with basic allocate-and-move growth.
+6. **Optional capabilities:** prototype `Reallocate`, pool allocation, and higher-level typed-allocating aspects without changing the base `Alloc` contract.
+7. **Owning capsules and GC integration:** address externally dependent structures and moving collectors only after their respective safety protocols are explicit.
+8. **Reconcile the RFC corpus:** update affected accepted RFCs, reference specifications, and examples only after substantive review and proof/prototype gates pass.
 
-```text
-error: value of type `Node@arena` outlives allocator `arena`
-  | `arena` is dropped here while `node` is still live
-```
-
-Ambiguous elision lists every candidate and suggests the explicit form:
-
-```text
-error: `place Node { ... }` has two compatible allocator contexts: `heap`, `arena`
-  | write `place heap ...` or `place arena ...`
-```
-
-Unsupported extraction identifies the selected handle policy:
-
-```text
-error: cannot move `Config: Drop` out of bulk allocator `arena`
-  | borrow it, clone into another allocator, or use an individually tracked allocator
-```
-
----
-
-## 14. Alternatives considered
-
-### 14.1 Keep allocation in the prefix-sigil channel
-
-`^a T`, `~a T`, `$a T`, or the original `@a T` could preserve the accepted grammar
-mechanically. This is the smallest textual change, but metadata and placement either
-compete in the same prefix channel or the language spends another scarce punctuation
-mark. Postfix `T@a` retains the compact sigil while separating the grammatical roles.
-
-### 14.2 `alloc a T` for both type and expression
-
-Using one keyword in type, expression, and ordinary parameter positions most closely
-mirrors `@a T`/`@a expr`. It makes every allocator-aware function pay for information
-already present in `A: Alloc` and `T@a`, and it becomes difficult to distinguish the
-capability, operation, and resulting type in dense generic code. The primary proposal
-uses ordinary parameters, `place` for the operation, postfix `@` for the type
-relationship, and reserves `alloc` for the distinct struct-ownership operation.
-
-### 14.3 Postfix placement expressions
-
-Perfect type/expression symmetry would spell placement itself as `expr@a`:
-
-```metel
-let node: Node@arena = Node { value = 1 }@arena;
-```
-
-This makes `expr@a: T@a` compact, but hides an effectful, fallible operation at the end
-of an arbitrarily large expression and creates a second precedence surface around
-field access and `?`. The primary proposal therefore uses postfix `@` only in types
-and keeps the effect conspicuous as `place a expr`. This is a deliberate loss of the
-old type/expression glyph symmetry, not an omission.
-
-### 14.4 Explicit pointer families only
-
-The language could expose `ArenaBox<T, 'a>`, `HeapBox<T>`, and `Gc<T, 'g>` directly and
-use ordinary `.alloc` calls. This cleanly separates ownership families but loses the
-accepted design's representation-independent statement "preserve exactly the caller's
-storage." Generic code would need higher-kinded type parameters or repeated bounds for
-every family. `T@s` retains that abstraction as a projection while allowing the
-normalized family to differ.
-
-### 14.5 Path-dependent types
-
-`a::Pointer<T>` is a compact alternative to `T@a` and naturally suggests instance
-identity. It requires general path-dependent associated types, makes an allocator value
-look like a namespace, and leaves the identity-only `<storage s>` case without a
-runtime path. This RFC chooses a narrow placement projection instead of committing the
-whole language to path-dependent members.
-
-### 14.6 Brands written explicitly everywhere
-
-An explicit form such as `A::Pointer<T, 'a>` is semantically adequate. It forces users
-to thread allocator type `A`, value `a`, and brand `'a` as three names for one ordinary
-case. An ordinary `a: A` plus explicit use in `T@a` binds capability and identity
-together; the identity may lower to the general brand mechanism without exposing that
-duplication.
-
-### 14.7 Ordinary method calls only
-
-`a.alloc(value)` cannot on its own express expected-type-directed aspect-object
-coercion, type-directed placement at bindings, or the identity-indexed result without
-a more general dependent method type. It may remain an implementation entry point,
-but `place` is the language-visible operation.
-
----
-
-## 15. Acceptance dependencies and open questions
-
-This RFC is intentionally unsettled despite being under review. Its primary proposal
-is concrete; the following items must be closed before acceptance can claim the
-replacement is complete.
-
-### 15.1 Acceptance dependencies
-
-1. RFC-0026 must provide enough unsafe vocabulary to spell or deliberately seal the
-   raw block operations in §3.3. Standard allocators can be implemented first, but an
-   accepted claim that `Alloc` is user-implementable cannot remain aspirational.
-2. RFC-0076 must settle the rigidity and generativity rules reused by storage
-   identities. This RFC does not require its chosen surface sigil.
-3. RFC-0113 must decide context-parameter syntax before allocator call-site omission
-   can be specified by reference rather than by analogy.
-4. RFC-0122 must provide the borrow/outlives enforcement on which scoped allocator
-   safety depends.
-5. Generic associated handle families must either extend RFC-0082 or be specified in
-   a focused prerequisite RFC.
-6. Any standard GC allocator rows retained in §10 require RFC-0139 to resolve its four
-   promotion-blocking soundness questions. This dependency does not block accepting
-   allocator-selected handle families in the abstract if all GC rows and guarantees
-   remain deferred.
-
-These dependencies are named rather than restated as heterogeneous open questions;
-they close when the corresponding RFCs settle.
-
-### 15.2 Settleable design questions
-
-1. **Surface spelling.** Confirm ordinary allocator parameters, `T@a`, inferred
-   `place expr`, explicit `place a expr`, `T@_`, ownership-only `alloc a: A`, and
-   relational `<storage a>`, or select one of §14's spellings before promotion to
-   under-review.
-2. **Projection normalization.** Decide whether compiler diagnostics normally retain
-   `T@a` or display the allocator's normalized handle family when known.
-3. **Stable identity paths.** §2.2 admits locals, parameters, statics, and closure
-   parameters. Confirm whether a final immutable field path may ever be stable enough
-   to appear after `@`, or keep identities restricted to direct binding names.
-4. **Multiple struct-owned allocators.** The model permits them; decide whether the
-   first grammar does too or deliberately restricts the feature pending a use case.
-5. **Allocator-polymorphic owned structs.** Decide whether
-   `struct Cache<A: Alloc>(alloc arena: A)` belongs in the initial surface.
-6. **Standard GC rows.** Decide whether §10 should list the GC allocators now or merely
-   state the interface they would satisfy after RFC-0139 settles.
-
----
-
-## 16. Worked acceptance tests
-
-Before this RFC may reach `2-accepted`, worked examples must cover at least:
-
-- two instances of the same allocator type, proving identities do not unify;
-- a nested handle whose inner storage dies too early;
-- `T: Drop` moved from `Heap`, an individually tracked arena, and a bulk arena;
-- a generic preserving function with no allocator capability;
-- a generic allocating function with a capability and fallible result;
-- ambiguity between outer and inner allocators, with no depth-based shadowing;
-- a struct owning its allocator and rejecting allocation through shared `&self`;
-- `AutoAlloc` selecting two different backing strategies without changing behavior;
-- a `Gc` handle proving `T@a` does not imply affine ownership;
-- a copied traced handle surviving in an optimized local, aggregate, global, and
-  suspended continuation across a safepoint;
-- a cross-arena edge demonstrating either static rejection, remembered-set rooting, or
-  required scanning during subset collection;
-- attempted traced placement of a value containing an affine `Drop` resource,
-  demonstrating the RFC-0139 admissibility or finalization rule;
-- cross-thread `GlobalGc` publication, mutation, derived borrowing, and collection if
-  `GlobalGc` is ever declared `Send` or `Sync`;
-- a runtime-sized buffer growing across relocation while initialized elements remain
-  owned and dropped exactly once;
-- a heterogeneous `List<(dyn Aspect)@a>`;
-- interaction with context-parameter omission after RFC-0113 settles.
-
-This list is part of the proposal because the previous cluster was internally
-consistent yet still accumulated contradictions between sibling RFCs. Acceptance must
-exercise the combined model rather than ratify each section independently.
+Each stage should include rejecting tests from section 13, not just success-path examples. A successful tree-walking evaluator run does not substitute for static ownership and lifetime enforcement.
 
 ---
 
 ## References
 
-- RFC-0008 — Aspect Objects.
-- RFC-0026 — Unsafe Blocks.
-- RFC-0063 — Allocator Handles; proposed superseded core.
-- RFC-0065 — Allocator and Lifetime Ergonomics; allocator portions proposed
-  superseded, lifetime-anchor portions retained under RFC-0067.
-- RFC-0066 — Allocated Value Extraction; proposed superseded.
-- RFC-0067 / RFC-0067a — Lifetime Anchors and Reference Types.
-- RFC-0068 — Struct-Owned Allocators; proposed superseded.
-- RFC-0071 — Ownership and Move Semantics.
-- RFC-0072 — Negative Bounds.
-- RFC-0073 — AutoAlloc; proposed superseded.
-- RFC-0076 — Brand Types.
-- RFC-0077 — Allocator Generics; proposed superseded.
-- RFC-0080 — Standard Library Aspects.
-- RFC-0082 — Associated Types.
-- RFC-0093 / RFC-0095 — Derive Registration and Attributes/Metadata; the proposed
-  restoration of their original `@` spelling motivates the syntax reopening.
-- RFC-0113 — Context Parameters.
-- RFC-0122 — Borrow Checking.
-- RFC-0133 — From-Metel List: the Runtime-Sized Buffer Gap.
-- RFC-0139 — Garbage-Collected Allocators and Allocator-Determined Pointer Types.
-- RFC-0141 — Aspect Objects: Explicit Allocator Placement; proposed superseded.
+- [RFC-0242 — Library-Defined References and Generalized Place Access](../0-draft/rfc-0242-library-defined-references-and-generalized-place-access.md) — proposed revised custody/validity/access model.
+- [RFC-0241 — Metel-Core](../0-draft/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md) — formal semantic foundation.
+- [RFC-0063 — Allocator Handles](../2-accepted/rfc-0063-allocator-handles.md).
+- [RFC-0065 — Allocator and Lifetime Ergonomics](../2-accepted/rfc-0065-allocator-ergonomics.md).
+- [RFC-0066 — Allocated Value Extraction](../2-accepted/rfc-0066-allocated-value-extraction.md).
+- [RFC-0068 — Struct-Owned Allocators](../2-accepted/rfc-0068-struct-owned-allocators.md).
+- [RFC-0073 — AutoAlloc](../2-accepted/rfc-0073-auto-alloc.md).
+- [RFC-0077 — Allocator Generics](../2-accepted/rfc-0077-allocator-generics.md).
+- [RFC-0141 — Aspect Objects: Explicit Allocator Placement](../2-accepted/rfc-0141-aspect-objects-explicit-allocator-placement.md).
+- [RFC-0139 — Garbage-Collected Allocators](rfc-0139-garbage-collected-allocators-and-allocator-determined-pointer-types.md).
+- [RFC-0159 — Abstract Regions and a Dedicated Identity Channel](rfc-0159-abstract-regions-and-a-dedicated-identity-channel.md).
+- [RFC-0133 — From-Metel List: the Runtime-Sized Buffer Gap](../0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md).
+- [RFC-0172 — Sized and Unsized Kinds](../0-draft/rfc-0172-sized-and-unsized-kinds-and-a-generalized-unsizing-coercion.md).
+- [RFC-0124 — Sequence Types](rfc-0124-sequence-types-fixed-arrays-slices-and-the-growable-list.md).
+- [RFC-0122 — Borrow Checking](rfc-0122-borrow-checking.md).
+- [RFC-0067 — Lifetime Anchors](rfc-0067-lifetime-anchors.md).
+- [RFC-0076 — Brand Types](rfc-0076-rc-brands.md).
+- [RFC-0026 — Unsafe Blocks](../0-draft/rfc-0026-unsafe-blocks.md).
+- [RFC-0071 — Ownership and Move Semantics](../3-integrated/rfc-0071-ownership-and-move-semantics.md).
+- [RFC-0089 — Linear Types](../2-accepted/rfc-0089-linear-types.md).
+- [RFC-0185 — Remove Type-Directed Dereference](../4-implemented/rfc-0185-remove-type-directed-dereference.md).
 
 ---
 
 ## Decision
 
 **Outcome:** *(pending)*
-**Target:** *(set when accepted)*
+
+**Target:** *(to be set through the RFC process)*
+
+**Acceptance preconditions:** Explicit agreement with the revised RFC-0242 semantics; a sound trusted `RawStorage` establishment/release contract; a checked story for `@s` generativity and revocation (including generic destructors); proof/prototype results for independent arena allocations and runtime-sized initialization; and a reviewed migration/supersession plan for the accepted allocator cluster.

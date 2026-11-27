@@ -100,7 +100,7 @@ Fallback when the workflow itself is unavailable: the same steps by hand, with t
 
 ### PROC-DEPLOY-007 — Changes to the site's own code are checked on every pull request {#proc-deploy-007}
 
-The showcase snippets are checked by the same checker the documentation uses. The plugin tests use Node's built-in runner over `src/remark` and `scripts`.
+The showcase snippets are checked by the same checker the documentation uses. The plugin tests use Node's built-in runner over `src/remark`, `src/prism` and `scripts`. `prism-drift.yml` (also daily) checks the Metel syntax highlighter against the parser's keyword rule in metel-core `develop` and against every `metel` fence in the specification, so a keyword or record form added to the language and not to the highlighter fails a check.
 
 | Field | Value |
 |---|---|

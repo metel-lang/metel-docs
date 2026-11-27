@@ -4,12 +4,13 @@ title: "Metel Language Changelog"
 
 # Changelog
 
-## v0.16.0 (unreleased)
+## v0.16.0
 
-The surface stage "Call and record syntax" (`metel-core#1869`). Seven RFCs change how declarations are
-spelled, how values are assigned, how types are built and how rows are written; most of them are breaking
-spelling changes with a mechanical migration, and the repository's own sources, fixtures and documentation
-were migrated with parser-driven tools.
+**Released 2026-11-20.** The surface stage "Call and record syntax" (`metel-core#1869`), the settlement of `Copy` and `Clone`, and
+the move of tuples and the unit type onto rows. The release changes how a declaration is spelled, how a value is assigned, how a call
+passes its arguments, how a record, a tuple and a row are written and matched, and how `Copy` is granted and `Clone` is derived. Most
+of the language-visible changes are breaking spelling changes with a mechanical migration, and the repository's own sources,
+fixtures and documentation were migrated with parser-driven tools.
 
 **Breaking changes:**
 
@@ -20,12 +21,16 @@ were migrated with parser-driven tools.
   not being declared is a parse error; `:=` only introduces a name (`let`, `var`, record-pattern declarations,
   `type`). An assignment is written as a block statement ending in `;`, as a match-arm body or in a `for`
   header's init and update clauses; it is not an operand, argument, initializer, condition, closure body or block
-  tail, so a block ending in an assignment needs its `;`, `{ x = 1 }` is a record and a closure that assigns is
+  tail, so a block ending in an assignment needs its `;` and a closure that assigns is
   `|v| { total = v; }`. Migrate with `metel-frontend/examples/assign_migrate`, run under the old grammar.
 
 - A label of a row is written `.name` (RFC-0221, `metel-core#1863`): in an anonymous record literal, pattern,
-  type and row bound and in a projection list, `{ .x = 1, .y }`, `{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
+  type and row bound and in a projection list, `.{ .x = 1, .y }`, `.{ .x: i64, ..R }`, `Handle.{ .fd, ..R }`. A bare
   field there is a parse error, and a pun of a numeric label is an error. Migrate with `label_migrate`.
+- An anonymous record starts with `.{` (RFC-0225, `metel-core#1943`, `#1949`): the value `.{ .x = 0 }`, the type
+  `.{ .x: i64 }`, a record pattern, an open record type, a row bound and a row equation all open with the dot, and the
+  closing delimiter stays `}`, so a record is never mistaken for a block. A plain `{ .x = 0 }` in those positions is a parse error
+  that says to insert the `.`. The repository's own sources, fixtures and documentation were migrated with a parser-driven tool.
 - `aspect`, `extends` and `public` are now reserved words (`metel-core#1876`): the keyword rule matched a keyword
   that is a prefix of another first, so they had parsed as identifiers.
 - The `From::from` parameter of the aspect and its impls is named `value` (`metel-core#1859`), so impls repeat the
@@ -39,10 +44,35 @@ were migrated with parser-driven tools.
   arguments evaluate in the order written. New codes: T0039 (keyword binds no free parameter), T0040 (positional
   after keyword), T0041 (keyword in a call through a function value), T0042 (impl parameter name differs from the
   aspect's).
-- Row-bound entries may be negative (RFC-0189, `metel-core#1866`): `{ .path: String, !.token, !.session: u64, .. }`.
+- Row-bound entries may be negative (RFC-0189, `metel-core#1866`): `.{ .path: String, !.token, !.session: u64, .. }`.
   The whole-row `!{ .. }` is sugar for the entry form. New code T0043 (invalid row-bound entry).
 - A record literal that spreads a record may replace a field the spread's row proves present (RFC-0191,
-  `metel-core#1867`): `{ ..s, .a = 10 }`.
+  `metel-core#1867`): `.{ ..s, .a = 10 }`.
+
+**Tuples, records and patterns (RFC-0151, RFC-0231, RFC-0219):**
+
+- A tuple is a row of integer labels (RFC-0151, `metel-core#2029`, `#2030`, `#2032`): `(A, B)`, `(a, b)`, `(p, q)` and `t.0` are
+  notation for the closed row `.{ .0: A, .1: B }`, its value, its pattern and field access on the label `.0`. The separate tuple
+  type is gone, with its own `Copy` and `Clone` rules: a tuple is `Display`, `Clone` and `Copy` through the row impls. A closed row
+  whose labels are exactly `0 .. N-1` prints as a tuple. `r.0` is field access on a record, a residual, a row extension and a
+  row-bounded type parameter, and a row may mix integer and identifier labels. Fields are ordered by label, integer labels first
+  in numeric order, so `.2` comes before `.10`.
+- Tuple forms (`metel-core#2022`, `#2023`, `#2038`): a trailing comma makes a one-element tuple in an expression, a type and a pattern
+  (`(a,)`, `(A,)`), and without it the parentheses group (`(T)` is `T`). The empty tuple pattern `()` is accepted in declarations and
+  match arms, and a tuple pattern is accepted in `let`, `var` and `let var`, so `var (a, b) := t;` binds mutable names.
+- A record pattern entry may bind a row label to a different name: `.label: name`, beside the pun `.label` and the discard
+  `.label: _` (RFC-0151, `metel-core#2030`). Any pattern may follow the colon (`metel-core#2035`), and a struct or bare variant
+  there is resolved against the field's type (`metel-core#2053`, `#2054`). A record pattern is irrefutable when its sub-patterns are,
+  so a declaration rejects a refutable one (T0008), and a `match` over a record, a tuple included, is checked as a pattern matrix:
+  arms with refutable sub-patterns cover a type together (`metel-core#2040`, `#2041`, `#2042`).
+- `()` is the empty closed row `.{}` (RFC-0231, `metel-core#2024`, `#2026`): one type and one value, with no separate unit type.
+  `extend (): A` is accepted as a spelling of `extend .{}: A`, and writing both is T0015. An anonymous record prints as its source form.
+- The `copy` function-type qualifier (RFC-0219, `metel-core#2049`, `#2050`): `copy |T| -> U` is a written function type whose
+  values are copyable, and it combines with `once` and `var` in any order. A slot of that type, whether a call argument, an annotated
+  binding, a return, a block or branch tail, a struct field or an array element, takes only a function value proved copyable. A
+  move-only value there is T0001, and the message says what makes a function value copyable. `copy` before a closure literal is
+  a parse error (P0001): whether a closure is copyable is derived from its captures, and the qualifier is how a function type
+  asks for it.
 
 **Copy and Clone (RFC-0206, RFC-0207, RFC-0212, RFC-0213):**
 
@@ -52,20 +82,77 @@ were migrated with parser-driven tools.
   written; `copy struct W<T>` is `Copy` when `T` is.
 - Declaration clauses and class keywords (RFC-0207): a struct, enum or record may carry a colon list of `declared`
   marker aspects (`struct Ticket: Validated`) and a `derives` clause (`struct Doc derives Clone`); `copy` before the
-  keyword is `derives Copy`, `linear` is reserved. New codes: T0046 (invalid clause entry); an unknown aspect is T0003.
+  keyword is `derives Clone, Copy`, and may state the flow of both, `copy(T) struct W<T>` (RFC-0239, `metel-core#2072`);
+  `linear` is reserved. New codes: T0046 (invalid clause entry); an unknown aspect is T0003.
+- **Breaking:** a `derives` entry may carry arguments, the flow of a field-wise derivation: `derives Clone(T), Copy(T)`,
+  `derives Clone()` for none (RFC-0227, `metel-core#2067`). It replaces the `via` clause, which is a parse error naming
+  the new form. A `pub` generic type states its flow for `Clone` as well as `Copy`; std's `Option` and `Result` are
+  `derives Clone(T), Copy(T)`.
 - Aspect declaration properties (RFC-0212): `declared`, `derivable`, `implicit` (std only) and `auto` (reserved),
   written before `aspect`. T0045 is a misused property.
-- Super-aspects (RFC-0213): `aspect Ord: Eq`, exclusions `aspect Copy: !Drop`, and `deriving` on a std super. A
-  bound proves its supers; an impl needs a coherent impl of each; T0044 is an invalid super-aspect list. `Copy` and
-  `Drop` can no longer be granted to one type (T0015, was T0001).
-- `Clone` is derivable and provided: `derives Clone` clones each field in declaration order (enum payloads by
-  variant, anonymous records by label); `Copy` brings the `Clone` the compiler provides, so `T: Copy` proves
-  `T: Clone`. Built-in kinds: the unit type, tuples of `Clone` parts, `Copy` closures and shared references are
+- Super-aspects (RFC-0213, RFC-0235): `aspect Ord requires Eq`, exclusions `aspect Copy requires !Drop`, and the mark
+  `derived` on a std super. A bound proves its supers; an impl needs a coherent impl of each; T0044 is an invalid
+  super-aspect list. `Copy` and `Drop` can no longer be granted to one type (T0015, was T0001).
+- **Breaking:** super-aspects follow `requires`, and the mark is `derived` (RFC-0235, `metel-core#2068`). The colon
+  after an aspect's name and the mark `deriving` are parse errors naming the new spelling; `requires` and `derived`
+  are reserved words.
+- `Clone` is derivable: `derives Clone` clones each field in declaration order (enum payloads by
+  variant, anonymous records by label). `Copy` requires a derived `Clone` (RFC-0234, `metel-core#2066`): `derives Copy`
+  without `Clone` is T0046, `copy struct` declares both, and `T: Copy` proves `T: Clone`. Nothing is generated from
+  the `Copy` entry any more, so each aspect has its own flow and `W<String>` can be `Clone` where it is not `Copy`. Built-in kinds: the unit type, tuples of `Clone` parts, `Copy` closures and shared references are
   `Clone`; `Option`, `Result` and `List` are `Clone` in std (`metel-core#270`).
 - The unit type is `Copy` under `--move-check` as in a bound (`metel-core#1784`). `[e; N]` with `N > 1` needs a `Copy`
   element (T0012).
 - `--move-check` no longer fails with the internal error I0011 when a generic body's ownership is undecided: it is
   T0047, naming the type (`metel-core#1814`).
+
+- Aspects on a residual (RFC-0211, `metel-core#1830`): a residual of a nominal brand is `Copy` only when the brand's declaration
+  grants `Copy` and every present field is `Copy`. A written or derived impl of the whole type does not apply to it. Every other
+  bound or method call that fails on a residual is T0012, with a note naming the cause.
+- Computed flows (RFC-0224, `metel-core#1818`, `#1819`, `#1938`, `#1941`, `#1964`): the `Copy` flow of a declaration with no argument
+  list is computed exactly. A flow argument is `Copy` by the rule of its own type form, a derived `Clone` gets its own exact flow,
+  and declarations in function bodies are solved with the other declarations of their block. A `Copy` grant written in a block
+  body is honoured for the block-local type (`metel-core#1908`). A `pub` generic type must state a non-empty flow
+  (`metel-core#1820`). `Option<i64>` is copied and `Option<String>` still moves (`metel-core#1752`, `#2009`).
+- A use-after-move of a non-`Copy` nominal says why it is not `Copy`: that `Wrapper<T>` is `Copy` only when `T` is and `T` has no
+  `Copy` bound, or that the argument is itself not `Copy` (`metel-core#1959`). When the stored facts cannot name the reason, the
+  message says it is a checker limitation and not a finding about the program.
+- `x.clone()` with `x: &&U` clones the `&U` it points at, since a shared reference is `Clone` for every referent (`metel-core#1929`).
+- A record spread does not move the field it replaces under `--move-check`, including through an abstract row (RFC-0191,
+  `metel-core#1887`).
+
+**Fixes:**
+
+- A struct or fieldful-variant literal written with a module prefix resolves without a glob import: after
+  `import lib::double;`, `lib::Counter { n = 2 }` and `lib::Kind::B { n = 1 }` construct the types their prefix
+  names, as a unit variant or a static method does. The type must be `pub` unless the prefix names the current
+  module (`metel-core#1772`).
+- A record pattern over a named record in a generic function is analysed by `--move-check` instead of failing with
+  the internal error I0011 (`metel-core#2056`).
+- An explicit `derives Copy(T)` or `derives Clone(T)` beside the `copy` keyword replaces the keyword's own entry, so
+  its flow counts; it used to be dropped, which made `H<String>` copyable in `copy struct H<T> derives Copy(T)`
+  (`metel-core#2070`).
+
+- A bound that names an aspect type argument (`X: Conv<i64>`) was satisfied by an impl with a different argument, so a `String`
+  came back typed as `i64`. It is now T0012, naming what the type implements, for a local function and for one imported from another
+  module (`metel-core#1984`, `#1988`). A negative impl overrides a blanket positive one (`metel-core#1985`).
+- A call through a bound runs the impl for the bound's aspect type arguments, and a call through two bounds of one aspect that both
+  provide the method is T0013, where it was a misleading T0001 (`metel-core#1987`).
+- A bare-parameter blanket impl (`extend<T> T: Marker`) overlaps an explicit impl of the same aspect and is T0015, with or without
+  aspect type arguments (`metel-core#1992`). Impls written in a block body are checked for coherence, orphan and negative-impl rules
+  like module-level ones, where they were never checked (`metel-core#1993`, `#1997`).
+- Block-local types and impls: an impl records its aspect type arguments, associated types and negative impls, hand-written methods
+  are recorded and run, an impl of a type declared in a generic function's body is built once and analysed, and a generic body that
+  declares local types is analysed with their impls (`metel-core#1969`, `#1970`, `#1973`, `#1974`, `#1979`).
+- `--move-check` keeps a closure's ownership contract in a generic body when the closure is held in an array, a shared type argument or
+  a nested aggregate, passed through a generic call or returned through a generic method, and a function item joins the contracts
+  (`metel-core#1960`, `#1982`, `#2000`, `#2010`, `#2011`, `#2012`, `#2013`, `#2014`). A method of an impl of an aspect with type
+  arguments is analysed (`metel-core#1994`), record sub-patterns are retained in generic bodies (`metel-core#2035`), and a closure
+  call result in a generic body and a `Copy` struct with a literal type argument no longer give false errors (`metel-core#2085`,
+  `#2079`).
+- In a generic body the `Copy` of a record that takes no type arguments is decided as a concrete body decides it, which removes a
+  false T0019 (`metel-core#2009`). A generic impl's associated function is callable through its type path
+  (`metel-core#1888`).
 
 **Development note:** RFC-0100's constructor-call experiment is withdrawn (`metel-core#1945`): structs,
   named records and fieldful enum variants again use nominal braces such as
@@ -75,6 +162,33 @@ were migrated with parser-driven tools.
 
 **Known limits:** `.[expr]` label variables are not part of v0.16.0; the minting form and
 `Construct` belong to RFC-0114 and are not implemented.
+
+**Feature-interaction coverage:**
+
+<!-- feature-matrix:start -->
+**Feature-interaction coverage for v0.16.0** (24 new features, a registry of 101). A pair has evidence when a fixture cites a rule of each feature.
+
+*New features against each other*
+
+| Tier | Pairs | With evidence | Covered | Partial | Open | Mean rule coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| A (same subsystem) | 84 | 84 (100%) | 1 | 83 | 0 | 46.9% |
+| B (adjacent) | 49 | 49 (100%) | 0 | 49 | 0 | 34.0% |
+| C (other) | 143 | 76 (53%) | 4 | 72 | 67 | 23.1% |
+| **All** | 276 | 209 (76%) | 5 | 204 | 67 | 32.3% |
+
+*New features against older ones*
+
+| Tier | Pairs | With evidence | Covered | Partial | Open | Mean rule coverage |
+|---|---:|---:|---:|---:|---:|---:|
+| A (same subsystem) | 181 | 99 (55%) | 4 | 95 | 82 | 20.4% |
+| B (adjacent) | 299 | 47 (16%) | 1 | 46 | 252 | 5.5% |
+| C (other) | 1368 | 161 (12%) | 1 | 160 | 1207 | 3.7% |
+| **All** | 1848 | 307 (17%) | 6 | 301 | 1541 | 5.6% |
+
+Rules owned by the new features: 147, cited by at least one fixture: 145 (99%).
+Release gate: **PASS**. Open Tier A cells: 0, partial: 178, bulk-deferred: 82. No gate violations.
+<!-- feature-matrix:end -->
 
 ## v0.15.0
 
@@ -1865,7 +1979,7 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Structs: literals, field access, methods (`impl`), `var self`, associated functions
 - Enums: unit and struct-like variants, `impl` blocks
 - Built-in generic types: `Perhaps<T>`, `Result<T, E>`, `Array<T>` / `T[]` (as special cases; user-defined generics are v0.3.0)
-- Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions.md#pattern-kinds))
+- Exhaustive pattern matching: all pattern kinds (see [Pattern Kinds](../reference/spec/expressions/patterns/index.md#pattern-kinds))
 - Control flow: `if`/`else`, `while`, `for`, `for-in` (arrays and ranges only), `loop`, `break`/`continue`, `return`
 - Type casting: `as` for `i64 ↔ f64`
 - Never type (`!`)
@@ -1873,7 +1987,7 @@ Initial language version. Implemented by the tree-walk interpreter.
 - Built-in functions (see [Built-in Functions](../reference/spec/runtime.md#built-in-functions))
 
 **Not included (v0.3.0+):**
-- User-defined generic functions and types (see [Generics](../reference/spec/types.md#generics))
-- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations.md#aspects))
-- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions.md#the--operator))
-- User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions.md#for-in))
+- User-defined generic functions and types (see [Generics](../reference/spec/types/generics/index.md))
+- User-defined aspects and `extend Type: Aspect` (see [Aspects](../reference/spec/declarations/aspects/index.md))
+- `From`-based `?` coercion across different error types (see [The ? Operator](../reference/spec/functions/error-propagation.md))
+- User-defined `Iterable<T>` implementations (see [For-In](../reference/spec/expressions/control-flow/for-loops.md#for-in))

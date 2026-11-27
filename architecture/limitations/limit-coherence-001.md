@@ -5,7 +5,7 @@ summary: "A blanket aspect impl bounded by a row (`extend<record T: .{ .x: f64, 
 scope: "architecture/spec/coherence.md#coherence"
 owner: metel-frontend
 discovered_by: "metel-core#1241"
-disposition: known
+disposition: resolved
 review: null
 ---
 
@@ -47,6 +47,4 @@ the real cause.
 
 ## Resolution
 
-None yet; tracked as `metel-core#1241`. Either the impl is made to apply, or
-(matching `metel-core#239`'s precedent) the `extend` is rejected at the
-declaration site with a message naming the real cause.
+Resolved by metel-core#1343 (`26c7a330`): `extend<record T: .{ .. }> T: A` is rejected at the declaration with `T0001`, which names the spelling that applies, `extend<row R: { x: f64, .. }> { ..R }: A` (record-target impls, metel-core#1336). Evidence: `typechecking/aspects/extend_record_kinded_type_parameter_is_t0001` and `typechecking/aspects/extend_row_target_replaces_record_kinded_parameter`. The reproduction above now fails with `T0001` at the `extend`, as the second option under Resolution proposed.

@@ -412,7 +412,7 @@ future RFC does not treat the separator as an open choice.
 - `reports/syntax/colon-classifies-equals-labels-walrus-binds.md` — the classify/define
   invariant this RFC extends, the full fourteen-site audit (original and extended), and
   the design discussion that produced the kept/not-kept axis
-- `public/rfcs/1-under-review/rfc-0100-constructor-call-construction.md` — proposes the
+- `public/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` — proposes the
   `keyword_arg` site this RFC's audit covers; unaffected by this proposal (stays `=`), and
   this RFC's resolution of the `f(x = 1)` collision (see Proposal) simplifies RFC-0100's
   own `call_arg` ordering concern
