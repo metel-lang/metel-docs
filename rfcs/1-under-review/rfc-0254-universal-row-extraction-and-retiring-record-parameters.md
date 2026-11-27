@@ -3,7 +3,7 @@ id: rfc-0254
 title: "Universal Row Extraction and Retiring Record Parameters"
 date: '2026-11-25'
 status: under-review
-updated: '2026-11-26'
+updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2195'
 ---
 
@@ -22,11 +22,9 @@ fun read_id<T: .{ .id: i32, .. }>(value: &T) -> i32 { value.id }
 fun use_row<..R>(value: &.{ R }) where R: Display { … }
 ```
 
-The language owner agreed to the direction on 2026-11-25; every open question — the type classification, its
-interaction with overload resolution, inference, coherence and orphan rules, vacuous bounds, migration (there is
-none, by design: Metel has no active users yet), opacity and aliasing, and the remaining grammar question — is
-resolved as of 2026-11-26. This RFC remains `under-review`, not `accepted`: it has not yet had the adversarial
-pass PROCESS.md requires before a transition, and no implementation is authorized until integration regardless.
+The language owner agreed to universal extraction and retiring record parameters.
+References expose their referents’ public rows. The abstract-row reconciliation
+below remains open before acceptance.
 
 ## Motivation
 
@@ -49,7 +47,7 @@ For ordinary structural matching and extraction, the row is module-independent:
 | Primitive | Empty |
 | Enclosing enum | Empty ordinary field row; variant inventories and variant types are under review (RFC-0210) |
 | Variant type (proposed RFC-0210) | Its present public payload fields |
-| Reference | Empty; extraction does not implicitly dereference the target |
+| Reference (`&T` or `&var T`) | The referent’s public structural row, through all reference layers |
 | Array `[T; N]` or slice `[T]` | Empty; elements are indexed, not labeled fields |
 | Function type (`\|A, B\| -> R`, `dyn Callable<..>`) | Empty; never the parameter row (see below) |
 | `Never` | Empty, vacuously: no value exists to have fields |
@@ -58,12 +56,23 @@ For ordinary structural matching and extraction, the row is module-independent:
 
 **The classification is total, by one governing principle (language owner, 2026-11-26), not a list of unrelated
 special cases:** a type's extracted row is the maximal set of (label, type) pairs *statically* known, at the point
-of extraction, to be present in every value of that type — never inferred through indirection (a reference),
-erasure (a `dyn` object), homogeneous indexing (an array or slice), a call signature (a function type), or an
+of extraction, to be selectable through a value by ordinary field access, including reference
+auto-dereference. Extraction does not look through erasure (a `dyn` object),
+homogeneous indexing (an array or slice), a call signature (a function type), or an
 as-yet-undetermined instantiation (an unconstrained type parameter or associated type) beyond what an explicit
 structural bound states. Every row above, including the categories already agreed, is this one rule applied. No
 category is excluded from universal extraction — every type has *an* answer, even where that answer is uniformly
 Empty.
+
+Field-row extraction and structural shape bounds follow the same rule for shared and
+exclusive references (language owner, 2026-11-27). For every `T`, `..&T` and
+`..&var T` denote the same row as `..T`, including while that row is symbolic.
+This applies recursively to nested references and preserves the referent’s field
+types and visibility. An exact `.{ .x: i32, .y: i32 }` bound accepts both a
+`Point` with exactly those public fields and `&Point`, while `T: .{}`
+accepts `&i32` and rejects `&Point`. A bound preserves the actual type
+argument, its reference layers, and its access restrictions. Value-level spread
+through those layers follows [RFC-0255](rfc-0255-row-sections-shared-extraction-and-contextual-field-assembly.md).
 
 **A named risk, not an omission: function types and RFC-0232.** RFC-0232 (same release, "Function types" stage)
 represents a function's call signature as `dyn Callable<ROW, R>` — a row already sits inside a function type's own
@@ -138,9 +147,9 @@ implemented by reusing universal extraction instead of a dedicated full-field ch
 
 A bound and a row literal use the syntax of RFC-0208. The `record T` binder is removed
 as a distinct generic kind; the declaration kind's retirement is RFC-0243. A plain type
-parameter's ordinary well-formedness and kind rules still apply. No implicit dereference,
-owned conversion, field move, reference creation, or automatic nominal aspect grant is
-introduced by type-level extraction.
+parameter's ordinary well-formedness and kind rules still apply. Type-level extraction
+computes a row without evaluating a dereference, moving fields, creating references,
+converting ownership, or granting a nominal aspect.
 
 **Resolved (language owner, 2026-11-26), the remaining half of open question 5: the four forms never actually
 compete for one grammatical slot, so no new disambiguation rule is needed beyond position and one-token
@@ -275,9 +284,9 @@ inventories require a separately defined operation. Proposed variant types expos
   arguments. Privacy and substitution are settled (section 3a) by reusing RFC-0253's own adversarial-pass
   finding directly: declaring an alias that retains a private field is legal wherever that field is visible;
   accessing it — through extraction or otherwise — is what ordinary visibility rejects.
-- **References and ownership:** `..&T` is empty, not `..T`; this does not alter borrowing,
-  `Drop`, linearity, or the destruction of private fields. A type-level row is not an
-  owned or borrowed record value.
+- **References and ownership:** shape bounds and `..T` follow ordinary field
+  auto-dereference. Field-wise obligations apply to the selected fields’ types.
+  Borrowing, Drop, linearity and whole-type aspect lookup follow their own rules.
 
 ## Cluster reconciliation: enum variants and abstract rows
 

@@ -2,8 +2,12 @@
 id: rfc-0255
 title: "Row Sections: Shared Extraction and Contextual Field Assembly"
 date: '2026-11-27'
-status: draft
+status: under-review
+updated: '2026-11-27'
+tracking: 'https://github.com/metel-lang/metel-core/issues/2206'
 ---
+
+> **Status — under review (2026-11-27).** Acceptance review: reconcile generic eligibility, nominal ownership, and symbolic rows
 
 ## Summary
 
@@ -15,7 +19,6 @@ There is no first-class runtime `RowSection<R>` type.
 ```metel
 let fields := .{ ..point };
 let next := Point(..{ ..fields, .x = 10 });
-consume(..arguments);
 ```
 
 This is the primary proposal from the 2026-11-27 design discussion, recorded at the
@@ -23,16 +26,16 @@ language owner's request. Its choices are proposals, not accepted resolutions.
 The RFC has no milestone assignment or implementation authorization.
 
 Extraction is shared; consumer policies remain explicit. Record assembly can
-replace fields, constructors require their exact parameter row, and positional
-calls require dense numeric rows. Explicit dereferencing for borrowed extraction
-and symbolic rather than empty abstract rows are deliberate proposed changes that
-need reconciliation with existing text before acceptance.
+replace fields, and constructors require their exact parameter row. Ordinary call
+expansion belongs to RFC-0256. Borrowed extraction follows
+ordinary field auto-dereference. The proposed symbolic rule for abstract rows
+still needs reconciliation with RFC-0254 before acceptance.
 
 ## Motivation and existing behavior
 
 Metel already has type-row extraction, record spread/update, owned remainder
-patterns, numeric-label tuples and structural bounds. RFC-0100 proposes whole-row
-construction, RFC-0208 separates row binders from types, and RFC-0247 proposes
+patterns, numeric-label tuples and structural bounds. RFC-0100 integrates whole-row
+construction into the specification (implementation remains pending), RFC-0208 separates row binders from types, and RFC-0247 proposes
 collecting positional arguments into tuples. Their common machinery should be
 stated once without making their binding and ownership policies identical.
 
@@ -43,7 +46,7 @@ only carried fields must be Copy. A replaced non-Copy field is not copied.
 // Proposed spelling; token is non-Copy, id is Copy.
 let source := .{ .id = 1, .token = make_token() };
 let reference := &source;
-let result := .{ ..(*reference), .token = make_token() };
+let result := .{ ..reference, .token = make_token() };
 ```
 
 A materialized standalone section would need to copy the old token. A deferred
@@ -72,7 +75,7 @@ record materialization still has its usual representation and storage costs.
 
 ## 2. Syntax and materialization
 
-Value sections are admitted in record assembly, whole-row calls and RFC-0100's
+Value sections are admitted in record assembly, whole-row constructor calls and RFC-0100's
 privileged representation construction. A section is `..expr` or a dedicated
 literal `..{ entries }`. Arbitrary expression operands are allowed:
 
@@ -136,17 +139,21 @@ supply present public fields. A statically known variant supplies public payload
 fields, subject to ownership restrictions. Ordinary extraction is public-only,
 even inside the declaring module.
 
-References are not implicitly dereferenced:
+Shared and exclusive references expose the referent’s public row through every
+reference layer, following field access and the same structural row as RFC-0254.
 
 ```metel
 let reference := &fields;
-let copied := .{ ..(*reference) };
+let nested := &reference;
+let copied := .{ ..nested };
 ```
 
-Reference values, primitives, enclosing enums, arrays, functions and other
-non-field-bearing values are rejected as value-section sources. Their empty
-type-level rows do not authorize value dismantling. Empty records and zero-field
-structs are eligible, with all nominal ownership obligations preserved.
+Each carried field must be Copy. Explicit dereference is also valid when the
+operand denotes a borrowed place. The source category after auto-dereference
+determines eligibility. Under this draft’s current rule, primitives, enclosing
+enums, arrays, functions and other non-field-bearing values are ineligible,
+including through a reference. Empty records and zero-field structs are eligible
+with their ordinary ownership obligations.
 
 Generic value extraction requires an anonymous-record type or an explicit
 structural bound supporting the requested field operation, plus the necessary
@@ -207,6 +214,12 @@ provably present, and an error otherwise. Duplicate explicit labels are errors.
 There is no last-write-wins or implicit type-changing update. Field selection is
 independent of entry order; evaluation remains in source order.
 
+Selection is local to an assembly operation. A nested literal, ordinary record
+expression or function call establishes its own field obligations; an outer update
+cannot remove an inner Copy or Discard obligation. Optimizations must preserve
+this boundary. In particular, section extraction is not a lazy expression language
+that permits deleting an initializer because a later consumer replaces its label.
+
 ```metel
 fun attach_id<..R>(fields: .{ R }, id: i32) -> .{ .id: i32, R }
 where R: !{ .id }
@@ -236,53 +249,30 @@ Point(..{ ..fields, .x = 5 });  // update first, then bind
 The row is the constructor's interface, not necessarily its stored representation.
 A constructor accepting `id` and `password` may store `id` and a private hash.
 Sections cannot supply inaccessible representation fields or bypass validation.
-Per-variant constructors retain their RFC-0210 variant result.
+Section expansion does not change a constructor's result type. Variant-preserving
+results remain RFC-0210's proposal, not a guarantee of integrated RFC-0100 or a
+prerequisite for ordinary section construction.
 
-`Self .{ ..fields }` retains RFC-0100's constructor-body privilege and complete
-representation-row check. Sections transport values, never minting authority.
+`Self { ..fields }` retains RFC-0100's constructor-body privilege and complete
+representation-row check. The nominal brace form, including its restriction in
+unparenthesized condition positions, follows RFC-0100 section 3. Dotted braces
+remain anonymous-record/projection syntax, not privileged nominal construction. Sections transport values, never minting authority.
 A tuple row does not become a constructor's named row by matching arity.
-Fallibility and unchecked boundaries remain with RFC-0100/0114.
+Fallibility and unchecked boundaries remain with RFC-0100/0114. Per-variant
+privileged minting is owned by RFC-0114 section 9; this RFC introduces no independent
+per-variant privilege.
 
-## 8. Ordinary whole-row calls
+## 8. Ordinary calls are a separate consumer
 
-Add a sole-section argument to ordinary function, associated-function and method
-calls. For methods, the receiver is outside the supplied argument row.
+> **Split to [RFC-0256](rfc-0256-whole-row-argument-expansion-at-ordinary-calls.md) (language owner, 2026-11-27).** Ordinary argument expansion,
+> dense numeric row evidence and generic callable compatibility are owned by
+> RFC-0256. It depends on this RFC's extraction contract; this RFC's acceptance
+> does not wait for that call feature.
 
-- Dense numeric rows `.0` through `.n-1` supply positional arguments in numeric
-  order. Sparse rows are rejected rather than renumbered.
-- Named rows supply keyword arguments in direct calls that support them. Unknown
-  names and duplicate bindings remain errors.
-- Mixed numeric/named rows are rejected initially. An empty row supplies zero
-  arguments, with no ambiguity between modes.
-- Calls through function values accept numeric sections only.
-- The section is the sole written argument. Missing arguments remain errors;
-  sections neither imply defaults nor silently omit fields.
-
-```metel
-let args := (1, "hello");
-consume(..args);
-configure(..{ .host = "localhost", .port = 8080 });
-consume(prefix, ..args); // deferred concatenation
-configure(..args, ..);  // not admitted by this RFC
-```
-
-Existing overload rules apply to the expanded row. Candidates cannot silently
-truncate it or reinterpret numeric labels as names to make themselves match.
-Constructor calls retain section 7's exact named-row contract.
-
-For RFC-0247, numeric expansion feeds its fixed/rest split. The collected rest is
-an ordinary tuple with local numbering from zero. Whole-list forwarding needs no
-concatenation:
-
-```metel
-// Fragment: target must accept R; any required bounds must be declared.
-fun forward<..R>(..args: .{ R }) {
-    target(..args);
-}
-```
-
-Mixed calls, tuple concatenation and generic renumbering remain with RFC-0125 or a
-follow-up. RFC-0248's explicit bare `..` default request remains unchanged.
+RFC-0255 specifies record assembly and RFC-0100's constructor consumer. It does not
+add `f(..args)` to ordinary functions or methods. RFC-0256 contains the sole-section
+call proposal and its examples. The extraction contract can support that consumer
+without deciding positional concatenation, defaults or generic call evidence here.
 
 ## 9. Patterns and binders
 
@@ -311,7 +301,7 @@ RFC-0248. These uses share row vocabulary without being fictitious value operato
 | RFC-0254 | Concrete extraction; reconcile symbolic abstract rows with section 3 |
 | RFC-0243 | Public/present fields; no automatic nominal row implementation |
 | RFC-0100 / RFC-0114 | Construction authority and parameter contracts; allow expression operands |
-| RFC-0247 / RFC-0125 | Sole-section forwarding here; collection and concatenation retain their owners |
+| RFC-0256 / RFC-0247 / RFC-0125 | Ordinary expansion moved to RFC-0256; rest collection and concatenation retain their owners |
 | RFC-0248 | Defaults remain explicit, never implied by incomplete sections |
 | RFC-0210 | Known-variant payload rows; variant inventories are separate |
 | RFC-0150 / RFC-0071 | Variant residuals, nested projections and ownership/Drop extensions |
@@ -338,36 +328,29 @@ observable. Revisit only for a concrete need to store deferred transfers.
 but suggests independent evaluation where selective borrowed update depends on the
 consumer. The primary proposal requires explicit record materialization.
 
-**Implicit reference dereferencing.** Avoids a break, but leaves type-level
-`..&T` describing the reference and value-level extraction describing its referent.
-Explicit `..(*reference)` is the primary proposal.
-
 **One universal merge rule.** Would change record replacement, constructor
 exactness or positional binding. Sharing extraction does not justify doing so.
 
-Costs include contextual parsing, source-place-aware elaboration, symbolic generic
-projections and call expansion. This is more than a terminology change. It retains
+Costs include contextual parsing, source-place-aware elaboration and symbolic generic
+projections. Ordinary-call expansion costs belong to RFC-0256. This is more than a terminology change. It retains
 distinct declaration, pattern and default-marker uses of `..` deliberately.
 
 ## 12. Compatibility and integration
 
 1. Preserve anonymous-record replacement typing, carried-field Copy checks and
    owned Discard checks.
-2. Replace implicit borrowed spread `..reference` with `..(*reference)`, with a
-   targeted diagnostic. Never silently reinterpret it as an empty value section.
-   Direct `..&record` can be rewritten using a named reference or explicitly
-   parenthesized dereference expression.
+2. Preserve existing borrowed spread spelling and extend extraction through
+   nested references in line with ordinary field access.
 3. Reconcile RFC-0254's abstract-row classification and RFC-0208's equations before
    implementing generic value extraction.
-4. Extend RFC-0100's binding-only operands to expressions. Add ordinary-call
-   expansion as a distinct consumer, retaining constructor exactness.
+4. Extend RFC-0100's binding-only operands to expressions, retaining constructor
+   exactness. Ordinary-call expansion is a dependent RFC-0256 feature.
 5. Reject deferred ownership cases rather than supplying a permissive fallback.
 
 Specification targets are records/open rows, calls, construction, patterns,
-grammar and ownership. Preserve the two-pass checker: inference records shape and
-binding facts; construction reads solved facts and elaborates transfers. Retain
-source order separately from canonical label order. The evaluator and move checker
-must not guess missing ownership decisions from runtime records.
+grammar and ownership. Integration must include the syntax migration across code
+and prose required by PROCESS.md, with executable examples where the integrated
+features are available.
 
 No normative specification or sibling RFC resolution is changed by this draft.
 Acceptance requires reconciliation and the project's adversarial review; integration
@@ -386,32 +369,127 @@ this proposal.
 | Struct contains private linear state | No exposure or erased obligation |
 | Unknown T instantiated with public fields | No empty-row equality or vacuous proof in generic body |
 | Constructor accepts password but stores private hash | Bind password; no representation bypass |
-| Numeric row contains `.0` and `.2` | Record legal; positional expansion rejected |
 | Source expression has observable effects | Evaluate once at its written position |
 | Earlier entry moves a field the section needs | Ordinary move error |
 | Variant extraction needs an unsupported residual | Rejected; RFC-0150 owns extension |
 | Extracted record has an aspect absent from source | Only the record can use that implementation |
 | Disjoint labels refer to overlapping places | No authorization for conflicting loans |
 | Empty section from nominal temporary with obligations | Obligations remain |
-| Named section through function-value signature | Rejected; numeric expansion available |
 
-## 14. Questions for review
+### Worked counterexamples
 
-The primary proposal chooses concrete defaults, but these are acceptance questions,
-not recorded owner resolutions:
+The following fragments attack the proposed rules, not the current interpreter.
+They expose the acceptance decisions in section 14. Types and helper functions
+such as `Token` and `make_token` are schematic; no proposed-syntax execution is
+claimed.
 
-1. Is contextual extraction sufficient, or is there a program requiring stored
-   deferred transfers rather than ordinary field values?
-2. Is explicit dereferencing worth the compatibility break? Review its diagnostics
-   together with selective borrowed replacement.
-3. Do symbolic projections compose with equations, exact bounds, overloads and
-   separate compilation without inverse type inference? Joint RFC-0208/0254 review.
-4. Are nominal place extraction and temporary cleanup fully justified by the
-   ownership rules selected for integration? Unsupported Drop, linear and variant
-   cases need explicit rejection boundaries.
-5. Should ordinary whole-row calls land with this abstraction or in a dependent
-   RFC? The primary proposal includes sole-section calls without concatenation.
+**A. Generic eligibility cannot be proved by an empty public-row bound.**
+
+```metel
+fun snapshot<T: .{}>(x: &T) -> .{} {
+    .{ ..(*x) }
+}
+// T = i32: section 4 rejects primitive value sources.
+// T = a zero-public-field struct: section 4 admits the source category.
+```
+
+RFC-0254 lets both types satisfy the exact-empty public-row bound. The generic
+body cannot use that bound as proof that T belongs to an eligible nominal source
+category. This is a contradiction between the proposed generic eligibility rule
+and its concrete rejection rule, not an ownership issue: both copies select no
+fields. Checking it differently after instantiation would break definition-site
+checking. Either value extraction becomes total for these empty cases, eligibility
+gets a separate proof, or generic value extraction is narrowed in scope.
+
+**B. Replacement does not specify the nominal source's remaining state.**
+
+```metel
+struct Source { pub token: Token, pub id: i32, hidden: i32 }
+// s is an existing Source place; Token is non-Copy but discardable.
+let updated := .{ ..s, .token = make_token() };
+// Is s.token still present here?
+```
+
+Section 5 consumes an anonymous source and discards its replaced token, but
+characterizes a nominal source as selected ordinary field accesses. Under that
+characterization the old token is never accessed and remains in s. The draft must
+choose and specify the result, including the case where Token is linear. A shape
+bound alone does not distinguish those ownership protocols in a generic body.
+Recommendation: initially support owned anonymous-record transfer and borrowed
+Copy extraction; defer owned nominal extraction until its replacement, residual
+and temporary-cleanup rules are explicit. This is a scope recommendation, not an
+adopted removal of section 5's proposed nominal feature.
+
+**C. A nested materialization cannot inherit the outer replacement mask.**
+
+```metel
+// reference points to { id: Copy, token: non-Copy }.
+let direct := .{ ..reference, .token = make_token() }; // can copy only id
+let all := .{ ..reference };                         // rejected: token not Copy
+let indirect := .{ ..all, .token = make_token() };
+```
+
+The second line must be rejected even if the third would replace token. The same
+boundary applies when the inner assembly is written as a nested literal. Section
+6 makes this explicit. A field initializer with effects cannot be eliminated by
+an outer replacement either. This clarifies the contextual design without adding
+first-class deferred transfers.
+
+**D. Unknown is not empty.**
+
+```metel
+// Schematic obligation: every field of ..T must implement Clone.
+fun inspect<T>(x: &T) {
+    // Cannot discharge that obligation merely because T has no known fields.
+}
+// Instantiate with a public-field struct containing a non-Clone Token.
+```
+
+Section 3 correctly rejects the vacuous proof. RFC-0254 still contains the earlier
+empty-abstract-row rule as well as its reconciliation warning. Acceptance requires
+one rule in that owner RFC, including unknown versus exact-empty equality and
+field-wise obligations. This RFC cannot claim that conflict resolved solely by
+stating the desired replacement locally.
+
+**E. Borrowed extraction must retain the place through dereference.**
+
+```metel
+let reference := &source;
+let copied := .{ ..reference, .token = make_token() };
+```
+
+An eager by-value read of the whole referent would incorrectly require token to
+be Copy. Extract from the borrowed place, and copy only the selected fields. The
+same rule applies if the source is a nested reference or is written explicitly as
+`..(*reference)`.
+
+## 14. Acceptance decisions
+
+The following are unresolved; recommendations are not owner resolutions. Review
+should settle these one at a time and update the governing sections, rather than
+accumulate a parallel history of decisions.
+
+1. **Value-source eligibility — owner decision, joint RFC-0254 reconciliation.**
+   Resolve case A. Recommend allowing empty value extraction for concrete empty-row
+   categories, with operand evaluation and ownership obligations preserved, rather
+   than introducing a new record-like kind or treating an empty bound as category
+   evidence. An empty projection does not consume an existing place or dispose of
+   a temporary. This would amend section 4's rejection rule and needs explicit
+   approval; universal type extraction alone has not adopted it.
+2. **Owned nominal extraction — owner decision and RFC-0071/0150 boundaries.**
+   Resolve case B and give exact ownership/cleanup rules, or defer the feature.
+   Recommend the narrower initial scope stated in case B. Borrowed Copy extraction
+   and owned anonymous records remain useful without nominal dismantling.
+3. **Abstract rows — RFC-0254/0208 settlement.** Adopt a substitution-stable symbolic
+   projection with explicit exact/open/unknown rules, and reconcile the owner RFCs.
+   Section 3 is the recommended rule, not evidence that the owner text agrees yet.
+Design settlement is tracked by metel-core#2206. Acceptance requires resolving
+these blocking questions, rerunning the counterexamples and reconciling sibling
+text. No implementation is authorized before integration.
 
 ## Decision
 
-**Outcome:** *(pending)*
+**Outcome:** Acceptance pending. The language owner approved splitting ordinary
+call expansion into RFC-0256 and making references transparent to structural
+bounds and extraction on 2026-11-27. The three acceptance questions above
+remain unresolved.

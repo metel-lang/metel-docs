@@ -13,9 +13,9 @@ the curated thematic map.
 
 **Every `implemented`/`integrated` RFC listed below is checked by CI, on every push, for regressed fixture coverage** — `rfc.py check` (metel-core's `rfc-check` job; degrades to an informational skip when run from a bare docs-internal checkout) fails if any RFC's uncovered normative sections grow past what `rfcs/COVERAGE-BASELINE.json` already grandfathers in. This is the retroactive half of the coverage mandate; the forward-looking half is `rfc.py transition --to implemented` itself refusing to run over an uncovered section.
 
-**254 RFCs total.** 38 draft, 67 under review, 10 accepted, 3 integrated (118 live), 100 implemented, 20 superseded, 16 refused (136 settled).
+**255 RFCs total.** 37 draft, 69 under review, 10 accepted, 3 integrated (119 live), 100 implemented, 20 superseded, 16 refused (136 settled).
 
-## Draft (38)
+## Draft (37)
 
 - **RFC-0004** — main() return type — should main return Result instead of ()? (`0-draft` ; rfcs/0-draft/rfc-0004-main-return-type.md ; date 2026-05-21)
 - **RFC-0005** — Warn on unreachable match arms (`0-draft` ; rfcs/0-draft/rfc-0005-warn-unreachable-patterns.md ; date 2026-05-21)
@@ -54,9 +54,8 @@ the curated thematic map.
 - **RFC-0249** — Lang items replace aspect declaration properties (`0-draft` ; rfcs/0-draft/rfc-0249-lang-items-replace-aspect-declaration-properties.md ; date 2026-11-23)
 - **RFC-0251** — Opaque Views for Private State (`0-draft` ; rfcs/0-draft/rfc-0251-opaque-views-for-private-state.md ; date 2026-11-25)
 - **RFC-0252** — Opaque Types and Borrowable Projections (`0-draft` ; rfcs/0-draft/rfc-0252-opaque-types-and-borrowable-projections.md ; date 2026-11-25)
-- **RFC-0255** — Row Sections: Shared Extraction and Contextual Field Assembly (`0-draft` ; rfcs/0-draft/rfc-0255-row-sections-shared-extraction-and-contextual-field-assembly.md ; date 2026-11-27)
 
-## Under Review (67)
+## Under Review (69)
 
 - **RFC-0003** — Concurrency Model (`1-under-review` ; rfcs/1-under-review/rfc-0003-concurrency-model.md ; date 2026-05-20 ; updated 2026-08-27)
 - **RFC-0011** — Operator Overloading Aspects (`1-under-review` ; rfcs/1-under-review/rfc-0011-operator-overloading.md ; date 2026-05-21 ; updated 2026-11-15)
@@ -124,7 +123,9 @@ the curated thematic map.
 - **RFC-0248** — Default parameter values and the rest marker (`1-under-review` ; rfcs/1-under-review/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24 ; updated 2026-11-24)
 - **RFC-0250** — Named Extend Blocks (`1-under-review` ; rfcs/1-under-review/rfc-0250-named-extend-blocks.md ; date 2026-11-25 ; updated 2026-11-26)
 - **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-26)
-- **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-26)
+- **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-27)
+- **RFC-0255** — Row Sections: Shared Extraction and Contextual Field Assembly (`1-under-review` ; rfcs/1-under-review/rfc-0255-row-sections-shared-extraction-and-contextual-field-assembly.md ; date 2026-11-27 ; updated 2026-11-27)
+- **RFC-0256** — Whole-Row Argument Expansion at Ordinary Calls (`1-under-review` ; rfcs/1-under-review/rfc-0256-whole-row-argument-expansion-at-ordinary-calls.md ; date 2026-11-27 ; updated 2026-11-27)
 
 ## Accepted (10)
 

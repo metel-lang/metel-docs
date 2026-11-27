@@ -151,8 +151,11 @@ selects the fixed one. Two variadic candidates that both match are an ambiguous 
 
 1. **Surface spelling of the type.** `..rest: .{ R }` forms a record type from a row parameter. Whether a shorter form is desirable remains open; RFC-0208 treats bare `R` as a row, not a value type.
 2. **Homogeneous rest.** Is `..xs: T` ("any number of `T`") wanted, and is it a row bound or a collection? Recommendation: neither now.
-3. **Call-site spread.** The dual of a rest parameter is `f(a, ..t)`, passing a tuple's elements as separate arguments, which `apply`
-   needs. Recommendation: a separate RFC, since the rest parameter is useful without it.
+3. **Call-site spread — owned by RFC-0256.** [RFC-0256](rfc-0256-whole-row-argument-expansion-at-ordinary-calls.md)
+   proposes sole-section ordinary calls, `f(..t)`, using RFC-0255's extraction contract.
+   Generic density evidence and callable compatibility are acceptance questions there.
+   Mixed calls such as `f(a, ..t)` remain outside that proposal; positional concatenation
+   remains with RFC-0125 or a follow-up. Rest parameters do not wait for call-site expansion.
 4. **A variadic function type.** Section 4 says there is none. Does a program need to write a type that quantifies over arity, or is the
    generic `Callable` impl enough?
 5. **Overloads.** Is "fixed-arity beats variadic" the right rule, and do two matching variadics need a tie-break instead of an error?
