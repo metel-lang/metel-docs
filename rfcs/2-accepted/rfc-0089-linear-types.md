@@ -194,15 +194,18 @@ not depend on how the class was determined.
 - Reading a `Copy` field and borrowing a field (`&r.t`, `&var r.t`) change no ownership state and stay legal.
 - **A destructuring pattern consumes its scrutinee** (decided 2026-11-07). Bound fields move; a field skipped by `..` or
   `_` is inaccessible afterwards and, where the aggregate is not known `Discard`, must itself be `Discard`. A pattern
-  never leaves a partially moved residual: partial moves come only from explicit field moves. This holds for struct,
-  tuple and enum-payload patterns, as it already does for a record rest binding (`{ x, ..rest }`). Skipped fields drop
-  at the scrutinee's scope end; whether they should drop at the pattern is open (metel-core#1843). These rules
-  describe **owning** patterns: matching through a reference keeps the reference-matching rules and consumes nothing.
-  Ownership moves to the selected arm only, and a guard sees its bindings without moving them until it succeeds. A
-  whole-value `_` destructures nothing and consumes nothing (a linear scrutinee under `_ =>` stays unconsumed and is an
+  never leaves a partially moved residual: partial moves come only from explicit field moves. A field captured
+  by a record rest binding moves into that binding. These rules describe **owning** patterns: matching through
+  a reference keeps the reference-matching rules and consumes nothing.
+- **Skipped fields drop when an owning pattern commits.** The pattern moves the bound fields and drops the
+  skipped fields in the aggregate's normal field-drop order, which is declaration order for structs. Cleanup
+  runs before the next statement or selected arm body. A guard sees its bindings before ownership moves.
+  A pattern or guard that fails moves and drops no scrutinee fields. A whole-value `_` destructures and consumes nothing (a linear scrutinee under `_ =>` stays unconsumed and is an
   error); the skip check applies to `_` and `..` inside a destructuring pattern. A pattern on a value that an explicit
   field move already narrowed is rejected, as is any whole use of it. A refutable form added later must keep ownership
   on the non-matching path.
+  For example, after `let Wrapper { value, .. } := wrapper`, the skipped fields' destructors have run before
+  a subsequent `use_value(value)`. Bind a field explicitly to retain its ownership for later use or cleanup.
 - Assigning to a linear field would drop its old value, so it is an error; replace by destructuring and rebuilding.
 - Record spread (`.{ ..r, .n = 5 }`) consumes `r` totally and is legal when the replaced fields are `Discard`.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
@@ -340,8 +343,14 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
   function type that is not `linear` therefore guarantees `Discard`, and `Option::map` may drop its callback. A
   `linear` function type is not `Discard`. A closure that captures a value of bare type `T` captures a possibly-linear
   value, so it must be declared `linear`, or the function must bound `T: Discard`.
-- **Trait objects.** Coercing a possibly-linear value into `dyn Aspect` erases its class. Before `linear` ships this must
-  be rejected, or the `dyn` type must retain the obligation (the existential-erasure gate, metel-core#1828).
+- **Aspect objects.** Coercion to an owned `dyn Aspect` requires the source type to satisfy both
+  `Aspect` and `Discard` in the current context. Reject the coercion when either requirement is unmet. For
+  example, a generic conversion to owned `dyn Display` needs `T: Display + Discard`, or bounds that
+  entail both. Borrowed coercions to `&dyn Aspect` and `&var dyn Aspect` use the ordinary aspect and
+  borrow rules. They leave the referent's ownership with its owner. If a linear `Tx` implements
+  `Display`, `let view: &dyn Display := &tx` is legal and `let object: dyn Display := tx` is rejected.
+  A form of owned aspect object that retains a linear obligation and exposes a way to discharge it
+  is deferred.
 
 #### Private function inference
 
@@ -462,9 +471,9 @@ breaks callers and it contradicts RFC-0173. (e) *Let a generic drop of a linear 
 the value is then affine with a destructor, not linear.
 
 **Related work.** RFC-0215 owns any rule that would make a series of field moves consume a struct.
-The timing of skipped fields' destructors remains tracked in metel-core#1843. The first linear release's
-remaining integration and implementation work is tracked in metel-core#1828, including existential
-erasure and the standard library audit.
+Consuming patterns and their cleanup are tracked in metel-core#1843. The first linear release's
+integration and implementation work is tracked in metel-core#1828, including enforcement of the owned
+aspect-object restriction and the standard library audit.
 
 ### 2.3 Early exits and paths
 
@@ -548,6 +557,9 @@ shorthand, such as a deferred consuming action or a propagation operator with a 
 10. **Discard capability** (section 2.2). The spelling is `Discard`. Eligible private functions infer
     positive bounds and public functions state them. Support for `T: !Discard` is deferred.
 11. **Printing** (section 2.2). `print` and `println` take `&T` in the first linear release.
+12. **Skipped-field cleanup** (section 2). Skipped fields drop when the owning pattern commits.
+13. **Aspect-object erasure** (section 2.2). Coercion to an owned object requires `Discard`. Borrowed
+    coercion preserves the owner's obligation.
 
 ---
 
