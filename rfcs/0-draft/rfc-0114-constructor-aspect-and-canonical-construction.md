@@ -3,7 +3,7 @@ id: rfc-0114
 title: "Constructor Aspect and Canonical Construction"
 date: '2026-07-23'
 status: draft
-updated: '2026-11-11'
+updated: '2026-11-27'
 ---
 
 > **New RFC, split out 2026-07-23** from `reports/substructural-types/nominal-types-as-branded-rows.md`
@@ -18,6 +18,17 @@ updated: '2026-11-11'
 > touch construction at all. Depends on RFC-0100 (integrated, 2026-11-27) for
 > removing bare struct literals from general construction, and names RFC-0026 (`unsafe`
 > blocks, `0-draft`, deferred) as the foundation for §6's escape hatch.
+
+> **Revised 2026-11-27, language owner — §1.1's privilege rule is superseded.**
+> RFC-0100 §3 makes privileged construction impl-scoped: the nominal brace literal is
+> legal anywhere inside an `extend` block of its own type, not only inside `construct`
+> and `construct_unchecked`. It is an ergonomics feature; the invariant guarantee this
+> RFC built on a single minting function is dropped, and invariants are left to
+> refinement types (RFC-0202). Knock-on effects this RFC has not yet absorbed: §1.1's
+> "nowhere else in the language" rule, §2's claim that every `Self` passes through
+> `construct`, open question 5's resolution (which rested on §1.1), and the
+> single-path framing of the Summary and Motivation. What remains this RFC's to decide
+> is what the call form invokes and how construction can fail.
 
 > **Revised (2026-11-08, language owner).** Construction no longer fires automatically when a narrowed row is completed (§3 is rewritten): widening on reassignment stays as RFC-0137 and the spec define it, and the guarantee this RFC gives is about values *produced by a construction expression*. The enum extension of §9 and the brace minting form of RFC-0100 §7 are drafted in the same pass.
 >
@@ -191,30 +202,17 @@ representation generally — not a new promise, the same one recurring here.
 
 ### 1.1 What `construct`'s own body may build — the one privileged site
 
-The language owner affirmed constructor-body-only privilege on 2026-11-26. **Synced to
-RFC-0100 §3's current revision (2026-11-26, after this subsection was first drafted):**
-the working representation-construction spelling is `Point { x = 1, y = 2 }` — the
-existing nominal brace literal, not a dotted form — restricted to the target's
-canonical constructor or explicitly unchecked constructor body. A bare privileged
-construction expression is rejected directly in `if`/`while`/`match` condition
-position (struct-literal-vs-block ambiguity); parenthesize it there. Other code in the
-declaring module uses the ordinary construction interface. RFC-0100 §3 owns this
-syntax and the related pattern spelling (patterns keep their current, unmigrated
-`Point { x, y }` form), parsing against the condition-position restriction, empty
-forms, and enum interaction; this subsection and that section describe one mechanism,
-not two. The exact grammar and unchecked-operation safety rules remain open.
-The privileged form may target only the constructor's own type, spelled as `Self` or
-its explicit type name; construction of another type uses that type's ordinary interface
-(language owner, 2026-11-26).
-An explicit field-list representation construction initializes each field exactly once;
-missing, duplicate and extra fields are errors. A whole-row form such as `Self { ..fields }`
-consumes a complete anonymous record with exactly the target's fields and matching types,
-and performs the same final construction, subject to ownership and visibility rules
-(language owner, 2026-11-26). Its grammar needs reconciliation with row spread.
+The language owner affirmed constructor-body-only privilege on 2026-11-26.
 
-> **Syntax (2026-11-08).** RFC-0100 §7 defines the minting step as a form, the brace literal `Self { field = value }` (`Self .{ ..row }` inside `construct`), replacing the implicit admission of a row value where `Self` is expected. It is legal only for the impl's own type, in `construct` and `construct_unchecked`; RFC-0114 adds its grammar production. The legality rule below (inside `construct` and `construct_unchecked`, nowhere else) is unchanged.
+> **Superseded (language owner, 2026-11-27).** Where privileged construction is
+> legal now belongs to RFC-0100 §3, and is impl-scoped: `Point { x = 1, y = 2 }` and
+> `Self { ..fields }` are legal anywhere inside an `extend` block of their own type,
+> including but not limited to `construct`'s body. The rule below — row-to-`Self`
+> admitted inside `construct` and `construct_unchecked` and nowhere else — no longer
+> holds as a language rule; it is kept for the reasoning it records. Invariants are
+> left to refinement types (RFC-0202), not to this subsection's single minting site.
 
-Correcting the syntax above exposed a hole the first draft's examples had papered over:
+Correcting the first draft's syntax exposed a hole the first draft's examples had papered over:
 its `construct` body wrote `SortedPair { small: …, big: … }`, **a bare struct literal that
 §2 abolishes.** The general problem is not cosmetic — every route to a `Self` value now
 goes through `construct`, including the route out of `construct` itself, which is circular.
@@ -491,7 +489,8 @@ extend Interval: Construct {
    as `Self::Raw::Variant`, and calls `construct`. A unit variant, written bare, is `Self::Raw::Unit`.
 3. **Minting.** Inside `construct` and `construct_unchecked` of the enum's own impl, the brace form `Self::Variant { field = value }`
    and the bare `Self::Unit` mint a `Self`, under RFC-0100 §3's minting rules (own type only, keyword fields, no recursion through
-   the call form).
+   the call form). *Widened 2026-11-27:* RFC-0100 §3 (open question 7) makes the variant brace form legal anywhere in the enum's
+   own `extend` blocks, not only inside `construct`/`construct_unchecked`; this item no longer confines it.
 4. **Nothing fires implicitly,** as for structs (§3): only explicit calls reach `construct`.
 5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and
    `ConstructUnchecked` (§6) are as for structs, so every existing `Enum::Variant(...)` call keeps compiling.

@@ -29,7 +29,7 @@ the curated thematic map.
 - **RFC-0074** — Shared Pointers — Rc and Arc (`0-draft` ; rfcs/0-draft/rfc-0074-shared-ownership.md ; date 2026-06-30)
 - **RFC-0075** — Region Inference — Local AutoRegion (`0-draft` ; rfcs/0-draft/rfc-0075-region-inference.md ; date 2026-07-01)
 - **RFC-0101** — Grammar-Enforced Naming Case Conventions (`0-draft` ; rfcs/0-draft/rfc-0101-grammar-enforced-naming-case-conventions.md ; date 2026-07-14 ; updated 2026-07-17)
-- **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-11-11)
+- **RFC-0114** — Constructor Aspect and Canonical Construction (`0-draft` ; rfcs/0-draft/rfc-0114-constructor-aspect-and-canonical-construction.md ; date 2026-07-23 ; updated 2026-11-27)
 - **RFC-0128** — Exportable overload sets and shadow-versus-extend semantics (`0-draft` ; rfcs/0-draft/rfc-0128-exportable-overload-sets-and-shadow-versus-extend-semantics.md ; date 2026-08-04)
 - **RFC-0133** — From-Metel List: the Runtime-Sized Buffer Gap (`0-draft` ; rfcs/0-draft/rfc-0133-from-metel-list-the-runtime-sized-buffer-gap.md ; date 2026-08-13)
 - **RFC-0145** — Static Storage Duration (`0-draft` ; rfcs/0-draft/rfc-0145-static-storage-duration.md ; date 2026-08-27)
