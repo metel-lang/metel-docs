@@ -17,9 +17,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 > section 6). The elimination rules are accepted in design and take effect with the `linear` release: a partial move
 > out of a nominal aggregate needs the aggregate known `Discard` (D11); destructuring patterns consume their scrutinee,
 > which removes narrowing through a pattern, while explicit field moves still narrow (D12, with the class-dependent
-> variant kept as a fallback if needed); a `Drop` type is dismantled only by an explicitly marked method (D13, spelling
-> open, tracked in #1828); a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a
-> syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
+> variant kept as a fallback if needed); a `Drop` type is dismantled only by an inherent method marked `dismantle self` (D13);
+> a field whose type mentions no type parameter and is linear forces `linear` on a generic type, a syntactic rule backed by the checked public `Discard` condition (D10, D19); a closure that captures a linear value must be declared `linear`, and a function type that is not `linear`
 > is `Discard` (D14, RFC-0194). **Deferred (2026-11-07):** binding-level qualifiers (D15, RFC-0220), parked as a draft; the
 > wrapper-type and bracket patterns of the decision register give must-use for an affine type meanwhile. The reasoning and the alternatives are in the decision register
 > (`architecture/reports/linear-types-decision-register.md`), the generic-class comparison
@@ -209,16 +208,27 @@ not depend on how the class was determined.
 - A fiat `linear record` (no linear field) is allowed: destructuring it is an explicit consumption, so it cannot be
   dropped, but with public fields it does not protect a protocol against outside code; a `linear struct` with private
   fields can.
-- **A type with a `Drop` impl, conditional or not, is dismantled only by a marked method** (D13, decided 2026-11-07).
-  A *dismantling method* is an inherent method in the type's defining module whose receiver is an owned `self` carrying
-  the dismantling marker (the spelling is open, tracked in metel-core#1828, and settles with the surface renames of v0.16.0; it is written `consume self`
-  below as a placeholder). Its body destructures `self` totally: every field is bound or skipped (skipped fields
-  `Discard`), and each bound field is moved on or dropped. The outer destructor is **suppressed**; nested field
-  destructors still run when a field is skipped or dropped, and binding a field does not license dropping a bare `T`.
-  The marker is not allowed on `&self` or `&var self`, in an aspect default body, on an aspect impl method, or outside
-  the defining module. Without the marker such a type is never destructured, partially moved or used in a record
-  spread, even in its own module. Callers see an ordinary consuming method. This is how a wrapper such as `Logged<T>`
-  is unwrapped (`into_inner`), including for a linear `T`, where no destructor applies.
+- **A type with a `Drop` impl is dismantled through `dismantle self`** (D13). This receiver form
+  takes ownership of `self` and permits a total destructuring of the receiver in an inherent method in
+  the type's defining module. Every field is bound or skipped. Skipped fields must be `Discard`, and
+  each bound field must be moved on or legally dropped. Total destructuring of the marked receiver
+  suppresses its outer destructor. Nested field destructors still run for fields that are dropped.
+  An intact receiver passed to an ordinary consuming function retains its usual destructor behavior.
+  The marker is illegal on borrowed receivers, aspect default and impl methods, and methods outside
+  the defining module. A type with a `Drop` impl cannot be destructured, partially moved, or used in a
+  record spread outside a dismantling method. This restriction also applies to a type with a conditional
+  `Drop` impl. An instance for which the impl does not apply has no outer destructor to suppress.
+  Callers use ordinary method syntax. For example, let `Logged<T>` have one field `value: T` and
+  implement `Drop` only when `T: Discard`. Its `into_inner` is available for either class of `T`.
+
+  ```metel
+  extend<T> Logged<T> {
+      pub fun into_inner(dismantle self) -> T {
+          let Logged { value } := self;
+          value
+      }
+  }
+  ```
 - This extends the existing enum rule (matching a variant and moving its payload consumes the enum wholly).
 **Structural types are the exception.** An anonymous record or a tuple has no declaration: its class is computed from
 its components (as `Copy` is for a tuple), so a field move narrows it and the leftover's class is recomputed, with the
@@ -290,13 +300,17 @@ operation that needs one names it in a bound, as `Copy` already does:
 Nothing is inferred. Generic bodies are checked once, at the definition, against their declared bounds (RFC-0173,
 unchanged).
 
-**The capability.** `Discard` says a value may be dropped. It is positive, so generic code never needs the absence
+**The capability.** The capability is named `Discard`. It says a value may be dropped, running any applicable destructor. It is positive, so generic code never needs the absence
 reasoning that RFC-0213 section 3 keeps out of v0.16.0.
 1. For a concrete type, `Discard` holds exactly when the type's class (declared, or computed for a generic
    instantiation or a structural type) is not linear. `Drop` types are `Discard`: their drop runs. `T: Copy` entails
    `T: Discard`. **No user writes or negates a `Discard` impl.**
 2. For a type parameter, `Discard` holds only if a bound says so.
 3. The generic `drop` is `drop<T: Discard>`, replacing the `T: !Linear` of section 2.
+4. The first linear release supports positive `Discard` bounds. A bare `T` admits linear arguments and its
+   body must handle the possibility that the value cannot be dropped. An API that needs a particular consuming
+   operation can bound that operation with a positive aspect. A bound requiring proof of non-discardability
+   (`T: !Discard`) is deferred until a use case needs it and its proof rules are specified.
 
 **Rules.**
 - **Bodies.** A generic body may consume a `T` (move it, return it, pass it, store it). It may not drop or copy it
@@ -330,20 +344,18 @@ reasoning that RFC-0213 section 3 keeps out of v0.16.0.
 - **Trait objects.** Coercing a possibly-linear value into `dyn Aspect` erases its class. Before `linear` ships this must
   be rejected, or the `dyn` type must retain the obligation (the existential-erasure gate, metel-core#1828).
 
-**The cost, stated plainly.** `T: Discard` is needed whenever generic code drops a by-value `T`: `unwrap_or`, `ok`, an
-ignored argument, `print<T: Display>(x: T)`. A scan of std and the integration programs (2026-11-05) found that 30 to
-40 % of the functions taking a bare `T` by value drop it on some path, a floor that ignores locals and early returns.
-That is a larger annotation cost than `Copy` bounds carry, and it is accepted for the same reason: the signature says
-what the function may do with your value. Taking a reference where the function only reads (`print` and `println`
-over `&T`) removes many of them. Metel has no users yet (language owner, 2026-11-07), so there is no lint or
-migration-tool stage: the std audit below is done by hand.
+**The cost, stated plainly.** `T: Discard` is needed whenever generic code drops a by-value `T`, as with an
+unused fallback in `unwrap_or` or an unused argument. A scan of std and the integration programs (2026-11-05)
+found that 30 to 40 % of the functions taking a bare `T` by value drop it on some path, a floor that ignores
+locals and early returns. The signature states what the function may do with the value. APIs that only need to
+read a value can borrow it. The std audit below is done by hand.
 
 **Staging.** In v0.16.0 every type is `Discard`, so `T: Discard` is accepted and always true, every bare `T` behaves
 as the affine default does today, and no program changes. The check becomes an error at the `linear` release. What
 v0.16.0 must do so that nothing is foreclosed:
 1. The generic-body analysis (ADR-0063) records the drop sites of values whose type depends on a parameter, so the
    definition check can run when `linear` lands (metel-core#1827).
-2. The aspect name `Discard` and the rule that a bare `T` is possibly linear are reserved here.
+2. The capability name `Discard` and the rule that a bare `T` is possibly linear are reserved here.
 3. No std API documents a bare `T` as "droppable" as a guarantee.
 
 **Demonstration (paper derivations, required before acceptance of sections 1 to 2.1).** Using `linear struct Tx
@@ -387,10 +399,16 @@ v0.16.0 must do so that nothing is foreclosed:
 **Std audit list** (the functions that drop and so write a bound, per parameter): `Option::unwrap_or` needs `T: Discard`
 (the unused fallback); `Option::ok_or` needs `E: Discard` (the unused error), not `T`; `Result::ok` needs `E: Discard`;
 `Result::unwrap_or` needs both `T: Discard` and `E: Discard`; `Result::unwrap_or_else` needs `E: Discard`;
-`map` and `and_then` need no bound (their callbacks are `Discard`); `print` and `println` (or take `&T`);
-`__eq_array_item`; and for lists: the conditional destructor, `clear`, and the native `consume_each`, which must **not**
-require element `Discard` since it is the linear teardown (item 6). Borrowing `Eq` and `Hash` need no discard capability;
-a helper taking compared values by value does.
+`map` and `and_then` need no bound (their callbacks are `Discard`); `__eq_array_item`; and for lists, the
+conditional destructor, `clear`, and the native `consume_each`. The native teardown admits linear elements
+(item 6). Borrowing `Eq` and `Hash` need no discard capability. A helper that drops compared values taken by
+value does.
+
+**Printing.** In the first linear release, `print<T: Display>(x: &T)` and `println<T: Display>(x: &T)` borrow
+their arguments. `Display::to_string` already uses a shared receiver, so the caller retains ownership and
+the functions require no `Discard` bound. This changes calls such as `println(value)` to `println(&value)`.
+A call that already supplies a shared reference of the expected type can pass it directly. For a linear
+transaction implementing `Display`, the caller can write `println(&tx);` and then `commit(tx);`.
 
 **Alternatives considered.** (a) *A written `T: ?Linear` opt-in on an affine default*: linear types are locked out of
 every generic function until its author opts in (Swift needed several releases, SE-0427). (b) *A `T: Discard` required
@@ -403,8 +421,10 @@ explicit bounds. (d) *Check drop sites at each instantiation* (C++-template styl
 breaks callers and it contradicts RFC-0173. (e) *Let a generic drop of a linear value run a type-supplied cleanup*:
 the value is then affine with a destructor, not linear.
 
-**Open (exit tracking: metel-core#1828, the linear-release gate).** The spelling of the dismantling-method marker of decision D13 (candidates `consume self`, `deinit self`, a `dismantle` keyword; it must not collide with `pub`, RFC-0218); the spelling `Discard`; whether an explicit
-`where T: !Discard` ("this parameter must be linear") is ever needed (probably not); the rule that moving every field out consumes a struct (RFC-0215); whether `print` and `println` take `&T`.
+**Related work.** RFC-0215 owns any rule that would make a series of field moves consume a struct.
+The timing of skipped fields' destructors remains tracked in metel-core#1843. The first linear release's
+remaining integration and implementation work is tracked in metel-core#1828, including existential
+erasure and the standard library audit.
 
 ### 2.3 Early exits and paths
 
@@ -465,7 +485,7 @@ shorthand, such as a deferred consuming action or a propagation operator with a 
 
 ---
 
-## Open Questions
+## Design Resolutions
 
 1. Ship the four-point lattice (§1) as the documented model: **resolved 2026-11-05**, yes; the settlement of
    RFC-0206 is written against it.
@@ -474,17 +494,18 @@ shorthand, such as a deferred consuming action or a propagation operator with a 
    declared and checked against the fields, not inferred. In v0.16.0 `copy` is implemented and `linear` is reserved
    ("Planned for"). Applies to structs, enums and named records, not the anonymous record type.
 3. *(Moved to RFC-0215.)* `NonLinear<T>`'s surface syntax.
-4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) — noted as a real, later
-   extension; not attempted here.
+4. Multiplicity polymorphism (`Guarded<T, Cap>` generic over a field's multiplicity) is deferred.
 5. **The default for an unbounded type parameter with respect to `Linear`**: **decided 2026-11-05, revised 2026-11-07**, section 2.2. A bare `T`
    is possibly linear and assumes no capabilities; dropping it requires a written `T: Discard`, as copying requires
-   `T: Copy`. Nothing is inferred. In v0.16.0 every type is `Discard`, so nothing changes for existing programs. The
-   demonstration required there remains a gate for accepting sections 1 to 2.1.
+   `T: Copy`. Nothing is inferred. In v0.16.0 every type is `Discard`, so nothing changes for existing programs.
+   The derivations in section 2.2 are checked against the implemented rules at the linear release gate.
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
-7. **Binding-level strengthening** (a `linear` binding, parameter, return or field on an ordinary type, never looser than the type): designed as an extension on 2026-11-06 and drafted as RFC-0220. It is local discipline and does not change the declared-class model of sections 1 to 2.1.
-
-8. **Discharging a linear value on an early exit** (section 2.3). Resolved for the first linear release.
-   Code handles the consuming action explicitly on each affected exit path. Scope-exit shorthand is deferred.
+7. **Binding-level strengthening** is deferred to RFC-0220.
+8. **Discharging a linear value on an early exit** (section 2.3). Code handles the consuming action explicitly
+   on each affected exit path. Scope-exit shorthand is deferred.
+9. **Dismantling receiver** (section 2). An inherent method in the defining module uses `dismantle self`.
+10. **Discard capability** (section 2.2). The spelling is `Discard`. Support for `T: !Discard` is deferred.
+11. **Printing** (section 2.2). `print` and `println` take `&T` in the first linear release.
 
 ---
 
@@ -500,7 +521,7 @@ shorthand, such as a deferred consuming action or a propagation operator with a 
 - RFC-0072 (Negative Bounds) — `T: !Copy + !Linear` compound bound form (§2.1)
 - RFC-0039 (`aspect` Alias Syntax, `1-under-review`) — vehicle for the `Affine` alias (§2.1)
 - RFC-0049 (Linear Function Type System, superseded by RFC-0194) — documents the generic-`drop`-discharges-
-  linearity hazard this RFC's `drop<T: !Linear>` avoids
+  linearity hazard this RFC's `drop<T: Discard>` avoids
 - RFC-0063 (Allocator Handles, accepted) — §9 item 5's deadline this RFC's §3
   satisfies, together with RFC-0090
 - RFC-0090 (Structural Records — Rows and Tiers) — the `{ … }` type-former and tier 2
@@ -527,8 +548,7 @@ shorthand, such as a deferred consuming action or a propagation operator with a 
 
 ## Decision
 
-**Outcome:** *(pending)*
-**Target:** unspecified; the partial-consumption floor (now RFC-0215 §3) is required before RFC-0071/RFC-0067 Phase 3 begins
-per RFC-0063 §9 item 5.
+**Outcome:** Accepted on 2026-11-05. The language owner settled the generic-class and elimination rules
+on 2026-11-07. The per-path exit rule and the remaining first-release surface decisions are in sections 2–2.3.
 
-*(Decision rationale goes here when the RFC is evaluated.)*
+**Release gate:** metel-core#1828 tracks integration and implementation of the linear design.
