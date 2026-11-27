@@ -612,15 +612,11 @@ Function overload sets are unaffected: a repeated function name is governed by t
 existing overloading rules, not this rule. The collision is scoped per module, not
 program-wide.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="A struct and a same-named function still coexist today; the symbol table's (module, namespace, name) key still treats type and value as separate namespace values, so this redeclaration error does not fire." -->
+<!-- rfc.py:last_reviewed 8c1ea1466ae0621184adba0d01ce4dfde1ae1604 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0100](../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
 <!-- rfc.py:origins:end -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: A struct and a same-named function still coexist today; the symbol table's (module, namespace, name) key still treats type and value as separate namespace values, so this redeclaration error does not fire._</span>
-<!-- rfc.py:exemption:rendered:end -->
 
 ##### Legality Rule {#spec.modules.unified-type-and-value-namespace.legality-2}
 
@@ -629,11 +625,7 @@ declaration or import of that name in either namespace category, following the s
 explicit-versus-glob precedence and glob ambiguity rules as same-namespace import
 conflicts ([Import Conflicts](#import-conflicts)).
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Same root gap as unified-type-and-value-namespace.legality-1: cross-namespace import collision cannot fire while the underlying declaration-site collision does not fire either (see import-conflicts.legality-5, superseded pending this)." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Same root gap as unified-type-and-value-namespace.legality-1: cross-namespace import collision cannot fire while the underlying declaration-site collision does not fire either (see import-conflicts.legality-5, superseded pending this)._</span>
-<!-- rfc.py:exemption:rendered:end -->
+<!-- rfc.py:last_reviewed 8c1ea1466ae0621184adba0d01ce4dfde1ae1604 -->
 
 </details>
 
