@@ -56,7 +56,7 @@ enum Wrapper<T> {
     Absent  { _: ! },
 }
 
-fun infallible() -> Wrapper<i64> { Wrapper::Present { value = 42 } }
+fun infallible() -> Wrapper<i64> { Wrapper::Present(value = 42) }
 
 fun main() -> i64 {
     let x: i64 := infallible();  // implicit coercion via the inhabited-singleton rule

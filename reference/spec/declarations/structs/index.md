@@ -11,7 +11,7 @@ struct Point {
 }
 
 fun main() -> i64 {
-    let p := Point { x = 1.0, y = 2.0 };
+    let p := Point(x = 1.0, y = 2.0);
     return p.y as i64;
 }
 ```
@@ -33,8 +33,8 @@ extend Point {
 }
 
 fun main() -> i64 {
-    let p := Point { x = 1.0, y = 2.0 };
-    let q := Point { x = 4.0, y = 6.0 };
+    let p := Point(x = 1.0, y = 2.0);
+    let q := Point(x = 4.0, y = 6.0);
     let d := p.distance(q);
     return d as i64;
 }
@@ -51,7 +51,7 @@ struct Pair<A, B> {
 }
 
 fun main() -> i64 {
-    let p := Pair { first = 1, second = true };
+    let p := Pair(first = 1, second = true);
     return p.first;
 }
 ```
