@@ -61,8 +61,8 @@ fun main() {
     assert(user_of(.{ .user = 7, .kind = 1 }) == 7);
     assert(keep(.{ .user = 1, .extra = 2 }).extra == 2);
 
-    let anon: Session<.{ .user: i64 }> := Session { id = 2, data = .{ .user = 1 } };
-    let authed: Session<.{ .token: String }> := Session { id = 1, data = .{ .token = "t" } };
+    let anon: Session<.{ .user: i64 }> := Session(id = 2, data = .{ .user = 1 });
+    let authed: Session<.{ .token: String }> := Session(id = 1, data = .{ .token = "t" });
     assert(anon.login() == 2);
     assert(authed.send() == 10);
 }
