@@ -213,42 +213,45 @@ The nominal brace literal above this page's shorthand-field-init rule is
 once call-syntax construction exists: anywhere inside an `extend` block of its own type,
 inherent or aspect impl, `Point { x = 1, y = 2 }` builds the value directly from its
 fields, invoking no constructor and implying no validation. Elsewhere, a struct is
-constructed only through call syntax. A bare privileged-construction expression is
-[rejected directly in `if`/`while`/`match` condition position](#spec.declarations.structs.privileged-representation-construction.legality-2)
-— it would otherwise be ambiguous with the start of that construct's own body block;
-parenthesize it there.
+constructed only through call syntax. An enum variant's brace literal,
+`Shape::Circle { radius = 1.0 }`, is restricted the same way, to the enum's own `extend`
+blocks.
+
+```metel
+struct Point { x: i64, y: i64 }
+
+extend Point {
+    fun origin() -> Point { Point { x = 0, y = 0 } }
+    fun shifted(self, dx: i64) -> Point { Point { x = self.x + dx, y = self.y } }
+}
+
+fun main() {
+    let p := Point::origin().shifted(3);
+    let q := Point(x = 1, y = 2);   // outside Point's own extend blocks: call form
+    assert(p.x + q.y == 5);
+}
+```
 
 <details>
 <summary>Formal rules</summary>
 
 ##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-1}
 
-An explicit field-list or whole-row (`Self { ..fields }`) struct brace construction is
-legal only inside the body of an `extend` block whose target is that struct type, and
-targets only that type (`Self` or its explicit type name). It initializes every field
-exactly once; a missing, duplicate, or extra field is an error. Elsewhere in the declaring module, and in every other module, construction
-uses the call syntax above.
+An explicit field-list or whole-row (`Self { ..fields }`) brace construction of a struct,
+or of an enum variant, is legal only inside the body of an `extend` block whose target is
+that struct or that enum, and targets only that type (`Self` or its explicit type name).
+It initializes every field exactly once; a missing, duplicate, or extra field is an
+error. Elsewhere in the declaring module, and in every other module, construction uses
+the call syntax.
 
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2200" reason="Not implemented yet: a struct brace literal is still legal anywhere, so the restriction to the type's own extend blocks this rule states is not checked." -->
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2200" reason="Not implemented yet: a brace literal is still legal anywhere, so the restriction to the type's own extend blocks this rule states is not checked." -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
 <!-- rfc.py:origins:end -->
 
 <!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2200: Not implemented yet: a struct brace literal is still legal anywhere, so the restriction to the type's own extend blocks this rule states is not checked._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
-##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-2}
-
-A bare privileged-construction expression is rejected directly in `if`, `while`, or
-`match` condition position; parenthesizing it resolves the ambiguity with that
-construct's own body block.
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2200" reason="Same root gap as legality-1: this restriction comes with the impl-scoped brace literal, which is not implemented yet." -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2200: Same root gap as legality-1: this restriction comes with the impl-scoped brace literal, which is not implemented yet._</span>
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2200: Not implemented yet: a brace literal is still legal anywhere, so the restriction to the type's own extend blocks this rule states is not checked._</span>
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>

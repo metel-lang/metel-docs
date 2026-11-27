@@ -166,7 +166,11 @@ A qualified variant path followed by a call
 variant, using the same positional/keyword/exact-row rules as struct construction. An
 enum type alone, with no variant qualification, does not identify a variant —
 `Message(...)` does not choose a variant from its arguments. The existing
-bare/qualified unit-variant forms above remain valid alongside the call form.
+bare/qualified unit-variant forms above remain valid alongside the call form. The brace
+form, `Message::Text { body = "hello" }`, is
+[restricted to the enum's own `extend` blocks](structs/instantiation-and-field-access.md#spec.declarations.structs.privileged-representation-construction.legality-1),
+exactly as a struct's brace literal is; everywhere else a variant is built with the call
+form.
 
 ```metel
 enum Message { Text { body: String }, Number { value: i64 }, Empty }

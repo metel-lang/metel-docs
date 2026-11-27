@@ -95,12 +95,14 @@ the brace form `Self::Variant { field = value }` and bare `Self::Unit`, minted i
 the enum impl's own `construct`/`construct_unchecked` (own type only, no recursion
 through the call form). This RFC does not independently define variant-level privileged
 construction syntax, and should not be read as a third mechanism alongside those two.
-**Out of step since 2026-11-27:** RFC-0100 section 3 is now impl-scoped — struct brace
-literals are legal anywhere in the type's own `extend` blocks, as an ergonomics feature,
-with invariants left to refinement types (RFC-0202) — while the per-variant rule above
-still confines privilege to the variant's own constructor. Which of the two variant
-brace literals follow is RFC-0100's open question 7; this paragraph should be revised
-to match whichever is chosen.
+**Widened 2026-11-27 (language owner, RFC-0100 open question 7):** RFC-0100 section 3
+is now impl-scoped for structs and variants alike — a variant's brace literal is legal
+anywhere in its enum's own `extend` blocks, as an ergonomics feature, with invariants
+left to refinement types (RFC-0202). The constructor-only confinement stated at the start
+of this paragraph, including the claim that another variant's constructor cannot use the
+privileged form, no longer holds: any method in the enum's own impls may build any of its
+variants directly. What the rule still promises is that code outside those impls goes
+through each variant's call-form construction interface.
 
 A shared reference to a variant may widen to a shared reference to its enclosing enum
 (language owner, 2026-11-26), preserving origin and lifetime. Unrestricted widening

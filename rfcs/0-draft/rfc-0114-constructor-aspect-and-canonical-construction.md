@@ -489,7 +489,8 @@ extend Interval: Construct {
    as `Self::Raw::Variant`, and calls `construct`. A unit variant, written bare, is `Self::Raw::Unit`.
 3. **Minting.** Inside `construct` and `construct_unchecked` of the enum's own impl, the brace form `Self::Variant { field = value }`
    and the bare `Self::Unit` mint a `Self`, under RFC-0100 §3's minting rules (own type only, keyword fields, no recursion through
-   the call form).
+   the call form). *Widened 2026-11-27:* RFC-0100 §3 (open question 7) makes the variant brace form legal anywhere in the enum's
+   own `extend` blocks, not only inside `construct`/`construct_unchecked`; this item no longer confines it.
 4. **Nothing fires implicitly,** as for structs (§3): only explicit calls reach `construct`.
 5. **Unchanged.** The synthesized default (`match raw` returning each variant, compiled away), result handling (§5) and
    `ConstructUnchecked` (§6) are as for structs, so every existing `Enum::Variant(...)` call keeps compiling.

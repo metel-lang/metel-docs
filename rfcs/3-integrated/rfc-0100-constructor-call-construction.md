@@ -114,8 +114,7 @@ never ambiguous (section 7).
 
 This revision's scope grew beyond construction-call syntax: section 3 also specifies a
 privileged representation-construction form, `Point { ... }` — the existing nominal
-brace literal, kept for use inside the type's own `extend` blocks — and a
-condition-position restriction needed to keep it unambiguous with a block.
+brace literal, kept for use inside the type's own `extend` blocks.
 Representation patterns keep their existing spelling, `Point { x, y }`, unmigrated.
 This is a substantive, separate design area, not a detail of ordinary call-syntax
 construction — see section 3 and open question 6.
@@ -261,15 +260,21 @@ A type alias exposes a construction target, not a new constructor value binding.
 > to restrict anything to until they exist. Privileged construction is an ergonomics
 > feature: what it guarantees is that code outside the type's own impls constructs
 > through the call form. Invariants are left to refinement types (RFC-0202), not to a
-> single minting function, so this section no longer depends on RFC-0114.
+> single minting function, so this section no longer depends on RFC-0114. Settled the
+> same day: enum variant brace literals follow the same rule (open question 7), and the
+> condition-position restriction is dropped — Metel's `if`, `while` and `match` already
+> parenthesize their condition, so the ambiguity it guarded against cannot arise.
 
-The nominal brace literal, `Point { x = 1, y = 2 }`, is legal anywhere inside the body of
-an `extend` block whose target is that type — an inherent `extend Point { ... }` block or
-an aspect impl `extend Point: Add { ... }` — and nowhere else (language owner,
-2026-11-27). It may target only that block's own type, spelled `Self` or its explicit
+The nominal brace literal — `Point { x = 1, y = 2 }` for a struct,
+`Shape::Circle { radius = 1.0 }` for an enum variant — is legal anywhere inside the body
+of an `extend` block whose target is that struct or enum — an inherent
+`extend Point { ... }` block or an aspect impl `extend Point: Add { ... }` — and nowhere
+else (language owner, 2026-11-27). It may target only that block's own type, spelled `Self` or its explicit
 type name; constructing another type, even from inside an impl, uses that type's
 ordinary call form (language owner, 2026-11-26). Everywhere else, in the declaring
-module and every other module, construction is the call form, `Point(x = 1, y = 2)`.
+module and every other module, construction is the call form, `Point(x = 1, y = 2)` or
+`Shape::Circle(radius = 1.0)` (section 7). Bare unit-variant and empty-struct forms that
+are not brace literals (`Direction::North`) are unaffected.
 
 The brace literal builds the value directly from its fields. It invokes no constructor
 and implies no validation; a method that needs to check something checks it itself, as
@@ -283,23 +288,17 @@ visibility rules. Its exact grammar needs review against row spread syntax (RFC-
 
 RFC-0114, if accepted, layers its `Construct` aspect on top of this: what the call form
 invokes and how construction can fail. It does not narrow where the brace literal is
-legal. **Per-variant privileged construction is not settled here.** RFC-0114 §9 and
-RFC-0210 propose variant-level forms (`Self::Variant { field = value }`) under a
-constructor-only privilege rule written before this revision; whether enum variant brace
-literals follow this section's impl-scoped rule instead is open (open question 7).
+legal. Per-variant constructors proposed by RFC-0114 §9 and RFC-0210 likewise build on
+this rule rather than replacing it: a variant's brace literal is legal throughout its
+enum's own `extend` blocks, not only inside that variant's constructor.
 
-This revives the struct-literal-vs-block ambiguity nominal brace literals were
-originally retired for: a bare `T { ... }` directly in `if`/`while`/`match` condition
-position is ambiguous between a construction expression and the start of that
-construct's own body block. Resolved the same way other call-syntax languages with this
-problem resolve it: **a bare privileged-construction expression is rejected directly in
-condition position; parenthesize it there, `if (Point { x = 1 }).active { ... }`**
-(language owner, 2026-11-26). This does not affect `Point(x = 1, y = 2)` ordinary
-construction, which stays unambiguous in condition position because it opens with `(`
-rather than `{`; nor does it affect representation patterns, which never appear in
-condition position in the first place. Exact production-level placement of the
-restriction needs grammar review; this fixes the specific ambiguity, not every
-positional interaction a prototype may still surface.
+**No condition-position restriction is needed.** Languages that retired the nominal
+brace literal over struct-literal-vs-block ambiguity have unparenthesized conditions,
+where `if Point { ... }` cannot tell a literal from the start of the body block. Metel's
+`if (...)`, `while (...)` and `match (...)` always parenthesize their condition, so a
+brace literal there is already delimited and the ambiguity cannot arise. An earlier
+revision of this section restricted it anyway (language owner, 2026-11-26); that rule is
+dropped (language owner, 2026-11-27).
 
 ### Representation patterns
 
@@ -631,34 +630,26 @@ overload set and explicit/glob imports across type and value categories against 
    syntax the way a type or function name is, so unification does not interact with
    aspect-object dispatch at all. This was an overcautious question with nothing concrete
    behind it; PROCESS.md's "prune harder" rule applies.
-6. **Resolved (language owner, 2026-11-26) — privileged construction uses the existing
-   nominal brace literal, `Point { x = 1, y = 2 }`, with a condition-position
-   restriction.** Two earlier candidates were considered and ruled out first: a dotted
+6. **Resolved (language owner, 2026-11-26; restriction dropped 2026-11-27) — privileged
+   construction uses the existing nominal brace literal, `Point { x = 1, y = 2 }`.** Two earlier candidates were considered and ruled out first: a dotted
    form, `Point .{ x = 1, y = 2 }`, collided with existing `Point.{ .x }` residual
    projection syntax (RFC-0137/RFC-0146) by whitespace alone, which is fragile —
    accidental or reformatted whitespace would silently change meaning; a double-dot
    marker, `Point..{ ... }`, sits in the same bare-postfix-after-a-term position
    existing range expressions already occupy, an unverified and likely-colliding
    position nothing else in the grammar risks. Reviving the nominal brace literal
-   (section Design history) instead reopens a different, known problem — struct-literal-
-   vs-block ambiguity in condition position — which is settled directly: a bare
-   privileged-construction expression is rejected in `if`/`while`/`match` condition
-   position, requiring parentheses there (section 3). Representation patterns were
-   never part of this collision and keep their current, unmigrated spelling regardless.
-   Exact production-level grammar for the condition-position restriction still needs
-   review; this resolves the design question, not every parser detail a prototype may
-   surface.
-7. **Open (raised 2026-11-27) — do enum variant brace literals follow section 3's
-   impl-scoped rule?** Section 3 now admits `T { ... }` anywhere in `T`'s own `extend`
-   blocks. For an enum, the brace form is necessarily per-variant
-   (`Message::Text { body = ... }`), and RFC-0114 §9 and RFC-0210 propose per-variant
-   privilege confined to that variant's own canonical or unchecked constructor — a rule
-   written under the constructor-body model section 3 has since dropped. Either enum
-   variant brace literals become legal anywhere in the enum's own `extend` blocks,
-   matching structs, or per-variant privilege keeps its own narrower rule and RFC-0210
-   says why. Until settled, the impl-scoped restriction is specified and implemented for
-   struct brace literals only; enum variant brace literals keep their current,
-   unrestricted legality alongside the call form (section 7).
+   (section Design history) instead appeared to reopen a different, known problem —
+   struct-literal-vs-block ambiguity in condition position. A restriction against it
+   was adopted on 2026-11-26, then dropped on 2026-11-27: Metel's `if`, `while` and
+   `match` already parenthesize their condition, so the ambiguity cannot arise
+   (section 3). Representation patterns were never part of this collision and keep
+   their current, unmigrated spelling regardless.
+7. **Resolved (language owner, 2026-11-27) — enum variant brace literals follow
+   section 3's impl-scoped rule.** `Shape::Circle { radius = 1.0 }` is legal anywhere
+   inside the enum's own `extend` blocks and nowhere else; elsewhere, variants are built
+   with the call form (section 7). One rule for structs and variants. RFC-0114 §9's and
+   RFC-0210's per-variant privilege, written under the constructor-body model, is
+   restated to build on this rule rather than narrow it.
 
 **Lifecycle outcome:** Accepted (2026-11-26), tracked by metel-core#807. The design is
 settled; no spec integration or implementation transition is claimed. `3-integrated`
