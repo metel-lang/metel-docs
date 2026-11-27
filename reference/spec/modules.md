@@ -561,14 +561,11 @@ With a struct `Foo` in module `a` and a function `Foo` in module `b`, `import a:
 provide a *type* `Foo`, or both a *value* `Foo`, are the conflict of
 [legality-4](#spec.modules.import-conflicts.legality-4).
 
-> **Limitation** LIMIT-NAME-RESOLUTION-006
-> Superseded pending implementation. This rule's worked example — a struct `Foo` and a
-> function `Foo` coexisting across an import — is exactly the cross-namespace
-> coexistence the accepted design reverses: once implemented, the source declarations
-> this example imports from are themselves a redeclaration error, so this legal-import
-> scenario can no longer arise.
-
-See [Unified type and value namespace](#unified-type-and-value-namespace) below.
+This rule's worked example — a struct `Foo` and a function `Foo` coexisting across an
+import — is exactly the cross-namespace coexistence
+[reversed below](#spec.modules.unified-type-and-value-namespace.legality-1): once that
+rule is implemented, the source declarations this example imports from are themselves a
+redeclaration error, so this legal-import scenario can no longer arise.
 
 <!-- rfc.py:last_reviewed 8156f9b70d40f62450255e0a8c9ce9c1af2d21b4 -->
 
@@ -580,9 +577,6 @@ See [Unified type and value namespace](#unified-type-and-value-namespace) below.
 </details>
 
 ## Unified Type and Value Namespace
-
-> **Limitation** LIMIT-NAME-RESOLUTION-006
-> Not yet implemented; the accepted design below is ahead of the current compiler.
 
 A module's nominal type declarations (`struct`, `enum`, `aspect`, type alias) and its
 ordinary value declarations (`fun`, `let`/`var` at module scope) share one namespace. A

@@ -28,14 +28,15 @@ gets the same `SymbolId`, and `intern_all_symbols` does not check for a clash:
    now `T0037` (`metel-core#1560`), so only the legal cross-namespace pair still
    shares a key.
 
-   **Superseded 2026-11-26 by `LIMIT-NAME-RESOLUTION-006`: "that pair is legal" is
-   no longer this project's accepted design.** RFC-0100 reverses this specific
-   policy conclusion — not the bug fix itself, which stands unchanged — once a
-   concrete, costly consequence of allowing the pair (RFC-0100's own reverted
+   **Superseded 2026-11-26: "that pair is legal" is no longer this project's
+   accepted design.** RFC-0100 (integrated) reverses this specific policy
+   conclusion — not the bug fix itself, which stands unchanged — once a concrete,
+   costly consequence of allowing the pair (RFC-0100's own reverted
    construction-call implementation, metel-core#1945/#1946) was in hand that this
    record had no way to anticipate when it was written. See
-   `LIMIT-NAME-RESOLUTION-006` for the reversal; it is not yet implemented, so the
-   pair remains legal in practice today.
+   `spec.modules.unified-type-and-value-namespace.legality-1` for the reversal; it
+   is not yet implemented (`metel-core#2197`), so the pair remains legal in
+   practice today.
 2. **A method's key drops its impl's type arguments.** *(Fixed by `metel-core#1571`.)*
    `method_symbol_name` used to be fed the target's *base name*, so
    `extend W<i64>: Tag { fun t … }` and `extend W<String>: Tag { fun t … }` both produced
@@ -72,7 +73,7 @@ a string key, not the declaration.
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::impl_method_symbol_name`
 - `metel-frontend/src/pipeline/name_resolution/name_resolver/mod.rs::check_duplicate_declarations`
 - `metel-frontend/src/identity/allocate.rs` (method-symbol lookup)
-- `LIMIT-NAME-RESOLUTION-006` (case 1's "that pair is legal" conclusion, superseded)
+- `spec.modules.unified-type-and-value-namespace.legality-1` (case 1's "that pair is legal" conclusion, superseded by RFC-0100)
 
 ## Resolution
 

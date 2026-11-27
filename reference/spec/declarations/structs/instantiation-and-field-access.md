@@ -17,14 +17,9 @@ fun main() -> i64 {
 }
 ```
 
-> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
-> The accepted design replaces this example's construction with plain call syntax and
-> restricts the brace form above to a narrow, constructor-body-only privileged use; not
-> yet implemented, so the example above still reflects current, actual behavior and
-> remains the only way to construct a struct today.
-
-The accepted design's privileged, constructor-body-only brace form is covered
-[below](#spec.declarations.structs.privileged-representation-construction.legality-1).
+[Call-syntax construction](#spec.declarations.structs.call-syntax-construction.legality-1)
+replaces this example's construction, and the brace form above narrows to a privileged,
+constructor-body-only use, [covered below](#spec.declarations.structs.privileged-representation-construction.legality-1).
 
 When a local variable has the same name as a field, the `= value` part can be omitted
 ([**shorthand field init**](#spec.declarations.structs.instantiation-and-field-access.legality-1)):
@@ -158,9 +153,6 @@ name rather than as a constructor expression.
 
 ## Call-syntax construction
 
-> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
-> Not yet implemented; the accepted design below is ahead of the current compiler.
-
 Ordinary construction is [a plain call](#spec.declarations.structs.call-syntax-construction.legality-1):
 `Point(x = 1.0, y = 2.0)`, keyword or positional, resolved by ordinary name lookup. A
 module's type and value declarations share one namespace, so this call can never be
@@ -218,9 +210,6 @@ neither heap allocation nor a fresh runtime identity.
 
 ## Privileged representation construction
 
-> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
-> Not yet implemented; the accepted design below is ahead of the current compiler.
-
 The nominal brace literal above this page's shorthand-field-init rule is
 [restricted to a single privileged use](#spec.declarations.structs.privileged-representation-construction.legality-1)
 once call-syntax construction exists: inside the target's own canonical or explicitly
@@ -268,9 +257,6 @@ construct's own body block.
 </details>
 
 ## Whole-row construction
-
-> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
-> Not yet implemented; the accepted design below is ahead of the current compiler.
 
 [A whole-row construction operand](#spec.declarations.structs.whole-row-construction.legality-1),
 `Point(..row)` or `Point(..{ .x = 1.0, .y = 2.0 })`, supplies exactly the construction

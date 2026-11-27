@@ -28,10 +28,8 @@ fun main() -> i64 {
 }
 ```
 
-> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
-> The accepted design adds qualified call-syntax construction for variants, alongside
-> the existing forms shown above; not yet implemented, so the examples on this page
-> still reflect current, actual behavior.
+[Call-syntax variant construction](#spec.declarations.enums.variant-construction.legality-1)
+is available alongside the existing forms shown above.
 
 Variants may be unit (no data) or struct-like (named fields). A struct-like variant's
 named fields follow the [same `pub`/private visibility rules as an ordinary
@@ -161,9 +159,6 @@ fun main() -> i64 {
 ```
 
 ## Call-syntax variant construction
-
-> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
-> Not yet implemented; the accepted design below is ahead of the current compiler.
 
 A qualified variant path followed by a call
 [constructs that variant](#spec.declarations.enums.variant-construction.legality-1):
