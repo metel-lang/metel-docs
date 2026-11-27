@@ -13,7 +13,7 @@ coverage:
   "3": { spec: "spec.declarations.structs.privileged-representation-construction.legality-1" }
   "4": { kind: untestable, reason: "Deferred, not part of this proposal -- the inferred, expected-type compact form is withdrawn and left to a future RFC. There is no design here to test." }
   "5": { spec: "spec.declarations.structs.call-syntax-construction.legality-1" }
-  "6": { spec: "spec.declarations.structs.whole-row-construction.legality-1" }
+  "6": { kind: untestable, reason: "Split to RFC-0257 (2026-11-27) -- depends on RFC-0255's shared section grammar rather than this RFC's own. No design is stated here to test." }
   "7": { spec: "spec.declarations.enums.variant-construction.legality-1" }
 ---
 
@@ -31,7 +31,7 @@ coverage:
 
 > **Status — accepted (2026-11-26).** Open questions resolved (section 1 unification grounded in #1560/#1571, enum/alias/generics scope settled, readability and privileged-construction syntax settled); language owner judges the design settled without further prototype gating
 
-> **Status — integrated (2026-11-27).** Section 1 (namespace unification), section 2/5 (call-syntax construction), section 3 (privileged representation construction), section 6 (whole-row construction), and section 7 (enum variant construction) integrated into the Language Spec, stated as accepted fact ahead of the (not yet started) implementation, per LIMIT-TYPE-CONSTRUCTION-005 and LIMIT-NAME-RESOLUTION-006. Section 4 (deferred compact form) is out of scope by design.
+> **Status — integrated (2026-11-27).** Section 1 (namespace unification), section 2/5 (call-syntax construction), section 3 (privileged representation construction), and section 7 (enum variant construction) integrated into the Language Spec, stated as accepted fact ahead of the (not yet started) implementation, each rule paired with a bare `rfc.py:exemption` (ADR-0050 section 6) rather than an architecture limitation record. Section 4 (deferred compact form) is out of scope by design. Section 6 (whole-row construction) is split to RFC-0257 (2026-11-27) to depend on RFC-0255's shared section grammar instead of its own.
 
 ## Design history
 
@@ -424,52 +424,15 @@ work. A private field is not a public parameter merely because the canonical ope
 can validate it. Until such an interface is specified and implemented, the field-parameter
 visibility rule above applies.
 
-## 6. Whole-row construction: `..r` and `..{ ... }`
+## 6. Whole-row construction: split to RFC-0257
 
-A whole-row operand supplies exactly the construction parameter row, with the
-same labels and corresponding field types under ordinary checking and generic
-inference. It supplies every field, no extra fields, and satisfies the same
-visibility requirements as explicit field arguments. Anonymous record field order
-does not determine the binding: row labels do.
-
-```metel
-let fields := .{ .x = 10, .y = 20 };
-let a := Point(..fields);
-let c := Point(..{ .x = 10, .y = 20 });
-```
-
-`..r` accepts a plain record binding, as in RFC-0100's existing construction-spread
-rule. `..{ ... }` is a dedicated whole-row literal argument with the same value
-entries as an anonymous record literal (dotted labels, `=`, puns and existing
-record-spread/update rules). It is not `..` followed by the `.{` opener.
-The contiguous `..{` notation is used instead of `.. .{ ... }`; the latter is not
-an alternative spelling. In generic type-argument position `..{ .x: i64 }` keeps
-RFC-0180's literal-row meaning; constructor argument position uses value entries.
-
-A whole-row operand must be the sole argument. Reject multiple whole-row operands
-and mixtures such as `Point(..fields, x = 5)`. To replace a field, explicitly
-build an updated record using the existing record-update rules first, or use a
-whole-row literal containing the update:
-
-```metel
-let p := Point(..{ ..fields, .x = 5 });
-```
-
-The literal's own spread/update semantics are RFC-0191's, not a new constructor
-argument-merging mechanism. Evaluate the binding operand or literal once, then
-perform the same canonical construction as positional/keyword arguments. No
-record-to-nominal coercion is added outside these explicitly marked expressions.
-
-```metel
-struct Wrapper { position: .{ .x: i64, .y: i64 } }
-Wrapper(fields)                 // position receives one record value
-Wrapper(..fields)               // error: the whole row needs .position
-Wrapper(..{ .position = fields }) // accepted
-```
-
-Arbitrary expression operands after `..` (for example `..make_fields()`) are a
-future extension, not included here. A dedicated literal is included in this
-proposal; it deliberately extends plain-binding-only operands.
+> **Split to [RFC-0257](../0-draft/rfc-0257-whole-row-construction-arguments.md) (language owner, 2026-11-27).** The whole-row
+> construction operand, `Point(..r)` / `Point(..{ ... })`, now depends on
+> RFC-0255's shared `..value`/`..{ entries }` section grammar and extraction
+> contract rather than this RFC's own, narrower plain-binding-only version.
+> RFC-0257 owns the exact-label binding rule RFC-0255 section 7 preserves for
+> this consumer; this RFC's other sections do not depend on RFC-0255 and are
+> unaffected. No whole-row construction operand is specified by this RFC.
 
 ## 7. Empty types, variants and failure
 
@@ -545,7 +508,8 @@ infallible scope is not evidence of implemented custom constructor support.
 This revision replaces RFC-0100's `new`/`.(...)` consolidation with a return to plain
 call syntax, reached through section 1's namespace unification rather than the original,
 reverted design's unguarded one. It retains RFC-0100's argument collection and exact-row
-contract (sections 5-6), unchanged from the prior revision except for dropping `new`. It
+contract (section 5), unchanged from the prior revision except for dropping `new`; the
+whole-row operand section 5 builds on is split to RFC-0257. It
 retires RFC-0106's bare shorthand for zero-field structs/named records, now subsumed by
 section 7. RFC-0111's enum-variant resolution must be reconciled with section 7.
 RFC-0225 owns anonymous record syntax;

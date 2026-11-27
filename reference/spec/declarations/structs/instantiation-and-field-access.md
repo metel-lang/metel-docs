@@ -253,33 +253,3 @@ construct's own body block.
 <!-- rfc.py:exemption:rendered:end -->
 
 </details>
-
-## Whole-row construction
-
-[A whole-row construction operand](#spec.declarations.structs.whole-row-construction.legality-1),
-`Point(..row)` or `Point(..{ .x = 1.0, .y = 2.0 })`, supplies exactly the construction
-parameter row — the same labels and corresponding field types, every field, no extras —
-and must be the sole argument.
-
-<details>
-<summary>Formal rules</summary>
-
-##### Legality Rule {#spec.declarations.structs.whole-row-construction.legality-1}
-
-A whole-row construction operand (a plain record binding via `..r`, or a dedicated
-whole-row literal via `..{ ... }`) must be the sole argument to a call-syntax
-construction. It is evaluated once and must supply exactly the construction parameter
-row: the same labels, matching field types, every field, no extra fields. Mixing a
-whole-row operand with other arguments, or supplying more than one, is an error.
-
-<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Depends on call-syntax construction, which does not exist yet for a whole-row operand to be an argument to." -->
-
-<!-- rfc.py:origins:start -->
-<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
-<!-- rfc.py:origins:end -->
-
-<!-- rfc.py:exemption:rendered:start -->
-<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Depends on call-syntax construction, which does not exist yet for a whole-row operand to be an argument to._</span>
-<!-- rfc.py:exemption:rendered:end -->
-
-</details>
