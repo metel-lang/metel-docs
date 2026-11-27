@@ -15,7 +15,7 @@ updated: '2026-11-11'
 > question 10) without proposing this fix; RFC-0096 owns the *auto-impl* pattern
 > (`Send`/`Sync`/`Linear`, a closed, compiler-intrinsic list) which this RFC's default
 > derivation resembles in spirit but does not reuse directly (§7); none of the others
-> touch construction at all. Depends on RFC-0100 (accepted, 2026-11-26) for
+> touch construction at all. Depends on RFC-0100 (integrated, 2026-11-27) for
 > removing bare struct literals from general construction, and names RFC-0026 (`unsafe`
 > blocks, `0-draft`, deferred) as the foundation for §6's escape hatch.
 
@@ -65,7 +65,7 @@ updated: '2026-11-11'
 > resolved by dissolving its premise, and this RFC now has no blocking dependency on any
 > under-review RFC.
 
-> **Surface proposal — RFC-0100 (accepted, 2026-11-26).** Superseded by that RFC's own
+> **Surface proposal — RFC-0100 (integrated, 2026-11-27).** Superseded by that RFC's own
 > later revision: plain call syntax, `Point(args)`, collects positional/keyword
 > arguments into the same canonical row used here, with no `new` keyword and no
 > expected-target `.(...)` form (withdrawn, deferred to a future RFC). A whole-row
@@ -654,7 +654,7 @@ not yet settled. Ordinary functions may separately choose among variants.
 - `public/rfcs/1-under-review/rfc-0096-auto-impl-aspects-compiler-recognized-structural-aspects.md`
   — the auto-impl pattern `Construct`'s default derivation resembles but does not reuse
   directly (§1, §3)
-- `public/rfcs/2-accepted/rfc-0100-constructor-call-construction.md` — call-shaped
+- `public/rfcs/3-integrated/rfc-0100-constructor-call-construction.md` — call-shaped
   construction and general keyword arguments. **No longer a dependency of this RFC** (§2,
   open question 2): if it lands, `Type(args)` desugars to `construct`; if it does not, a
   brace literal does. Its reopening reason, tracked by `OBJECTIVES.md` Trigger 14, was

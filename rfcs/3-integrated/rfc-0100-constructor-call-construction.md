@@ -2,9 +2,19 @@
 id: rfc-0100
 title: "Nominal Construction Through a Unified Type and Value Namespace"
 date: '2026-11-11'
-status: accepted
-updated: '2026-11-26'
+status: integrated
+updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/807'
+impl_tracking: 'https://github.com/metel-lang/metel-core/issues/2197'
+impl_status: not-started
+coverage:
+  "1": { spec: "spec.modules.unified-type-and-value-namespace.legality-1" }
+  "2": { spec: "spec.declarations.structs.call-syntax-construction.legality-1" }
+  "3": { spec: "spec.declarations.structs.privileged-representation-construction.legality-1" }
+  "4": { kind: untestable, reason: "Deferred, not part of this proposal -- the inferred, expected-type compact form is withdrawn and left to a future RFC. There is no design here to test." }
+  "5": { spec: "spec.declarations.structs.call-syntax-construction.legality-1" }
+  "6": { spec: "spec.declarations.structs.whole-row-construction.legality-1" }
+  "7": { spec: "spec.declarations.enums.variant-construction.legality-1" }
 ---
 
 > **Status — under review.** Review tracked by metel-core#807. The current proposal uses
@@ -20,6 +30,8 @@ tracking: 'https://github.com/metel-lang/metel-core/issues/807'
 > it is an independent question once the namespace collision is gone structurally rather than syntactically.
 
 > **Status — accepted (2026-11-26).** Open questions resolved (section 1 unification grounded in #1560/#1571, enum/alias/generics scope settled, readability and privileged-construction syntax settled); language owner judges the design settled without further prototype gating
+
+> **Status — integrated (2026-11-27).** Section 1 (namespace unification), section 2/5 (call-syntax construction), section 3 (privileged representation construction), section 6 (whole-row construction), and section 7 (enum variant construction) integrated into the Language Spec, stated as accepted fact ahead of the (not yet started) implementation, per LIMIT-TYPE-CONSTRUCTION-005 and LIMIT-NAME-RESOLUTION-006. Section 4 (deferred compact form) is out of scope by design.
 
 ## Design history
 
@@ -340,6 +352,16 @@ Construction retains RFC-0223's argument rules: positional arguments bind in fie
 declaration order and precede keyword arguments; keywords bind by name; every parameter
 is supplied once. Arguments evaluate left to right as written. No new defaults, partial
 application or constructor overloading is added.
+
+**Call-style construction has no punning/shorthand form (language owner, 2026-11-26,
+settled at integration review).** `Point(10, 20)` and `Point(y = 20, x = 10)` are the
+only argument forms; there is no `Point(x, y)` spelling that binds each argument to a
+same-named local, the way the retired brace literal's shorthand field init did. The
+retired rule's punning behavior survives only where section 3's representation pattern
+`Point { x, y }` already provides it — unchanged, since that pattern spelling was never
+migrated or touched by this RFC. Call-style construction (this section) and the
+representation pattern (section 3) are different grammatical positions with different
+argument/binding rules; this RFC does not carry punning from one into the other.
 
 These field parameters are the synthesized construction interface. Until custom
 constructors are specified and implemented, they are the complete interface. A future

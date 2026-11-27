@@ -17,6 +17,15 @@ fun main() -> i64 {
 }
 ```
 
+> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
+> The accepted design replaces this example's construction with plain call syntax and
+> restricts the brace form above to a narrow, constructor-body-only privileged use; not
+> yet implemented, so the example above still reflects current, actual behavior and
+> remains the only way to construct a struct today.
+
+The accepted design's privileged, constructor-body-only brace form is covered
+[below](#spec.declarations.structs.privileged-representation-construction.legality-1).
+
 When a local variable has the same name as a field, the `= value` part can be omitted
 ([**shorthand field init**](#spec.declarations.structs.instantiation-and-field-access.legality-1)):
 
@@ -144,5 +153,149 @@ name rather than as a constructor expression.
 <p class="rigor-backlink"><em>Tested by</em></p>
 <details class="spec-fixture" data-fixture="eyJleHBlY3QiOnsiY29kZSI6bnVsbCwiY29sIjpudWxsLCJjb250YWlucyI6bnVsbCwibGluZSI6bnVsbCwic3RhdHVzIjoidHlwZWNoZWNrX2Vycm9yIn0sImZpbGVzIjpbeyJuYW1lIjoic3RhZ2U1X25lZ180Ml9ub25fZW1wdHlfc3RydWN0X3JlcXVpcmVzX2ZpZWxkcy5tdGwiLCJzb3VyY2UiOiIvLyBBIG5vbi1lbXB0eSBzdHJ1Y3QncyBiYXJlIG5hbWUgcmVtYWlucyBhIG5hbWUsIG5vdCBhIGNvbnN0cnVjdG9yIGV4cHJlc3Npb24uXG5cbnN0cnVjdCBQYWlyIHtcbiAgICBsZWZ0OiBpNjQsXG59XG5cbmxldCBwYWlyOiBQYWlyIDo9IFBhaXI7XG4ifV0sImhyZWYiOiJodHRwczovL2dpdGh1Yi5jb20vbWV0ZWwtbGFuZy9tZXRlbC1jb3JlL2Jsb2IvdjAuMTYuMC9tZXRlbC1pbnRlcnByZXRlci90ZXN0cy9pbnRlZ3JhdGlvbi9zb3VyY2VzL3R5cGVjaGVja2luZy9zdHJ1Y3RzL3N0YWdlNV9uZWdfNDJfbm9uX2VtcHR5X3N0cnVjdF9yZXF1aXJlc19maWVsZHMubXRsIiwibmFtZSI6InN0YWdlNV9uZWdfNDJfbm9uX2VtcHR5X3N0cnVjdF9yZXF1aXJlc19maWVsZHMubXRsIn0="></details>
 <!-- rfc.py:fixtures:end -->
+
+</details>
+
+## Call-syntax construction
+
+> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
+> Not yet implemented; the accepted design below is ahead of the current compiler.
+
+Ordinary construction is [a plain call](#spec.declarations.structs.call-syntax-construction.legality-1):
+`Point(x = 1.0, y = 2.0)`, keyword or positional, resolved by ordinary name lookup. A
+module's type and value declarations share one namespace, so this call can never be
+ambiguous between constructing `Point` and invoking a same-named function — at most one
+declaration named `Point` can exist in scope, so the call means whichever one it is.
+
+```metel
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+fun main() -> i64 {
+    let p := Point(x = 1.0, y = 2.0);
+    return p.x as i64;
+}
+```
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.structs.call-syntax-construction.legality-1}
+
+A call `T(args)` where `T` names a struct or enum (not a function) is a construction
+expression, resolved by the same positional/keyword argument rules as a function call.
+Every field is supplied exactly once; there is no field-init shorthand/punning in call
+position. A module's `struct`/`enum` declarations and its `fun`/`let`/`var` declarations
+share one namespace: declaring a type and a value under the same name in the same scope
+is an ordinary redeclaration error, so `T(args)` is never ambiguous between construction
+and a function call.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Call-syntax construction is not implemented: T(args) is ordinary call resolution today, dispatching to a same-named function rather than constructing, when both exist (verified directly against rfc0100_rollback_braces_and_function_calls_are_distinct.mtl). The unified namespace is also not implemented -- a struct and a function may still share a name." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Call-syntax construction is not implemented: T(args) is ordinary call resolution today, dispatching to a same-named function rather than constructing, when both exist (verified directly against rfc0100_rollback_braces_and_function_calls_are_distinct.mtl). The unified namespace is also not implemented -- a struct and a function may still share a name._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Dynamic Semantics {#spec.declarations.structs.call-syntax-construction.dynamics-1}
+
+Construction arguments evaluate left to right as written, then the canonical
+construction operation runs on the complete, ordered field row. Construction specifies
+neither heap allocation nor a fresh runtime identity.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Same root gap as call-syntax-construction.legality-1: call-syntax construction does not exist to evaluate arguments for." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Same root gap as call-syntax-construction.legality-1: call-syntax construction does not exist to evaluate arguments for._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
+## Privileged representation construction
+
+> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
+> Not yet implemented; the accepted design below is ahead of the current compiler.
+
+The nominal brace literal above this page's shorthand-field-init rule is
+[restricted to a single privileged use](#spec.declarations.structs.privileged-representation-construction.legality-1)
+once call-syntax construction exists: inside the target's own canonical or explicitly
+unchecked constructor body, `Point { x = 1, y = 2 }` creates the final value directly,
+without recursively invoking that same constructor. Elsewhere, a struct or enum is
+constructed only through call syntax. A bare privileged-construction expression is
+[rejected directly in `if`/`while`/`match` condition position](#spec.declarations.structs.privileged-representation-construction.legality-2)
+— it would otherwise be ambiguous with the start of that construct's own body block;
+parenthesize it there.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-1}
+
+An explicit field-list or whole-row (`Self { ..fields }`) brace construction is legal
+only inside the body of its own type's canonical constructor or explicitly unchecked
+constructor, targeting only that constructor's own type (`Self` or its explicit type
+name). It initializes every field exactly once; a missing, duplicate, or extra field is
+an error. Elsewhere in the declaring module, and in every other module, construction
+uses the call syntax above.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="General, unrestricted brace-literal construction is still the only construction mechanism; the constructor-body-only restriction this rule states does not exist to be checked." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: General, unrestricted brace-literal construction is still the only construction mechanism; the constructor-body-only restriction this rule states does not exist to be checked._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+##### Legality Rule {#spec.declarations.structs.privileged-representation-construction.legality-2}
+
+A bare privileged-construction expression is rejected directly in `if`, `while`, or
+`match` condition position; parenthesizing it resolves the ambiguity with that
+construct's own body block.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="This restriction exists only to keep privileged construction unambiguous with a block once that form is restricted to constructor bodies; neither the restricted form nor this specific check exists yet." -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: This restriction exists only to keep privileged construction unambiguous with a block once that form is restricted to constructor bodies; neither the restricted form nor this specific check exists yet._</span>
+<!-- rfc.py:exemption:rendered:end -->
+
+</details>
+
+## Whole-row construction
+
+> **Limitation** LIMIT-TYPE-CONSTRUCTION-005
+> Not yet implemented; the accepted design below is ahead of the current compiler.
+
+[A whole-row construction operand](#spec.declarations.structs.whole-row-construction.legality-1),
+`Point(..row)` or `Point(..{ .x = 1.0, .y = 2.0 })`, supplies exactly the construction
+parameter row — the same labels and corresponding field types, every field, no extras —
+and must be the sole argument.
+
+<details>
+<summary>Formal rules</summary>
+
+##### Legality Rule {#spec.declarations.structs.whole-row-construction.legality-1}
+
+A whole-row construction operand (a plain record binding via `..r`, or a dedicated
+whole-row literal via `..{ ... }`) must be the sole argument to a call-syntax
+construction. It is evaluated once and must supply exactly the construction parameter
+row: the same labels, matching field types, every field, no extra fields. Mixing a
+whole-row operand with other arguments, or supplying more than one, is an error.
+
+<!-- rfc.py:exemption kind="blocked" ref="metel-core#2197" reason="Depends on call-syntax construction, which does not exist yet for a whole-row operand to be an argument to." -->
+
+<!-- rfc.py:origins:start -->
+<span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
+<!-- rfc.py:origins:end -->
+
+<!-- rfc.py:exemption:rendered:start -->
+<span class="rigor-backlink">_Exempt from fixture coverage — blocked on metel-core#2197: Depends on call-syntax construction, which does not exist yet for a whole-row operand to be an argument to._</span>
+<!-- rfc.py:exemption:rendered:end -->
 
 </details>
