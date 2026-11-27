@@ -212,7 +212,7 @@ is a duplicate declaration, [legality-5](#spec.declarations.variables.scoping-an
 A type position always resolves in the type namespace: a type annotation, an `extend` or
 aspect target, the head of a struct, record or enum literal, and the head of a pattern.
 
-<!-- rfc.py:last_reviewed 6c832a96ed8c7ce5a00fab4757d0eb71b846a178 -->
+<!-- rfc.py:last_reviewed 835a4303a97094cc5995363f542d90fd5ffe9fa8 -->
 
 <!-- rfc.py:fixtures:start -->
 <p class="rigor-backlink"><em>Tested by</em></p>
@@ -226,7 +226,7 @@ a value there, a zero-field struct's included: a struct is built by call (`Empty
 binding of the same name shadows a module-level value: the name then refers to the local for
 the rest of its scope, and a call through it calls the local.
 
-<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
+<!-- rfc.py:last_reviewed 835a4303a97094cc5995363f542d90fd5ffe9fa8 -->
 
 <!-- rfc.py:fixtures:start -->
 <details class="rigor-fixtures-toggle">

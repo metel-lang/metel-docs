@@ -119,7 +119,7 @@ allows a brace literal. Its bare type name is not a value: written where a value
 expected, it is an error (`T0003`).
 
 
-<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
+<!-- rfc.py:last_reviewed 835a4303a97094cc5995363f542d90fd5ffe9fa8 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -140,7 +140,7 @@ For a zero-field struct, the call and empty-brace constructor forms evaluate to 
 struct value.
 
 
-<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
+<!-- rfc.py:last_reviewed 835a4303a97094cc5995363f542d90fd5ffe9fa8 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
@@ -156,7 +156,7 @@ struct value.
 A struct with fields cannot omit its constructor fields; its bare type name, like a
 zero-field struct's, is not a value.
 
-<!-- rfc.py:last_reviewed c2a30b4e13d2e28e9e31a138eba9279979aa7475 -->
+<!-- rfc.py:last_reviewed 835a4303a97094cc5995363f542d90fd5ffe9fa8 -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0106](../../../../rfcs/4-implemented/rfc-0106-optional-braces-for-empty-constructors.md)_</span>
