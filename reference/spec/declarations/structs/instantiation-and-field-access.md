@@ -262,7 +262,7 @@ error. Elsewhere in the declaring module, and in every other module, constructio
 the call syntax. A literal that initializes no field (`Empty {}`, `Flag::On {}`) is the
 same value as the bare form and is not restricted.
 
-<!-- rfc.py:last_reviewed 2b3db95d54d816767b596518b031b3ddb333c4e0 -->
+<!-- rfc.py:last_reviewed 81a36f9f1f83c4117d0094493efb9a6c9d259fdf -->
 
 <!-- rfc.py:origins:start -->
 <span class="rigor-backlink">_Referenced by: [rfc-0100](../../../../rfcs/3-integrated/rfc-0100-constructor-call-construction.md)_</span>
