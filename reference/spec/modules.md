@@ -590,6 +590,7 @@ collision is per scope, not program-wide: two different modules may each declare
 own `Foo`, one a struct and one a function, exactly as two modules may each declare
 their own function named `f` today.
 
+<!-- doc-example: expect-fail reason="illustrates the redeclaration error itself, now implemented" -->
 ```metel
 struct Ticket { value: i64 }
 fun Ticket(input: i64) -> i64 { input + 100 }   // accepted design: a redeclaration error
