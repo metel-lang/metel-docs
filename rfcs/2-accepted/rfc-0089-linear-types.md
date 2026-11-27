@@ -3,7 +3,7 @@ id: rfc-0089
 title: "Linear Types"
 date: '2026-07-09'
 status: accepted
-updated: '2026-11-12'
+updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/953'
 ---
 
@@ -408,37 +408,52 @@ the value is then affine with a destructor, not linear.
 
 ### 2.3 Early exits and paths
 
-The linearity rule is **per path**. Every place a value can stop being reachable without being moved is an implicit
-drop (the list in section 2.2), and for a value that is not known `Discard` each one is an error at that site. A
-branch, a loop exit and an early return are each a path with their own drop sites, so a linear value must be
-consumed on every path that leaves its scope.
+On each normal control-flow edge, every still-owned value that the edge would implicitly drop must be known to
+satisfy `Discard`. This includes values of a bare type parameter. A move into the result of the edge transfers
+the obligation to the destination. The check uses the ownership state on the path that reaches the edge.
 
-1. **`break` and `continue`** leave a scope as a block end does. A linear value declared in a scope that a `break`
-   or `continue` leaves must have been consumed on the path that reaches the jump.
-2. **`return` and `?`.** An early `return`, and the early-exit path of a `?`, are drop sites for every linear value
-   still in scope. The success path of a `?` is unaffected.
-3. **A panic is not a path.** A panic is a hard, uncatchable, process-terminating error (RFC-0153 section 1a,
-   `spec.runtime.panics.dynamics-1`), so no program point follows it at which a linear obligation could be observed
-   unmet. This RFC adds no rule for panics.
-4. **Effect sites.** RFC-0140 section 9 requires that at an effect-performance site no unconsumed linear value remain
-   in scope unless it is passed through the effect, because a handler that aborts never resumes the continuation.
-   That check belongs to RFC-0140. This RFC's drop-site list does not include effect sites, and RFC-0140's check
-   would add one.
+- A block end, `break`, and `continue` check the values left behind in the scopes they exit. `break h` transfers
+  `h` to the loop result. A `continue` must discharge a handle acquired in the current iteration if the jump
+  would otherwise drop it. A handle owned by a scope outside the loop can remain owned there.
+- `return h` transfers `h` to the caller and checks the values the return would drop. The failure branch of
+  `?` has the same scope-exit check as an explicit return from the enclosing function or closure. This applies
+  to both the `Err` branch for `Result` and the `None` branch for `Option`. The success branch continues with
+  the unwrapped payload and the remaining ownership state after evaluating the operand.
+- A hard panic terminates the process without a normal scope exit (RFC-0153 section 1a,
+  `spec.runtime.panics.dynamics-1`).
+- RFC-0140 section 9 owns the proposed check for effect sites. A handler can abandon the captured continuation
+  while the program keeps running, so that proposal must account for obligations captured by the continuation.
 
-The rule has a visible cost. A fallible call between acquiring a linear value and consuming it is an error at the `?`:
+For example, after acquiring a linear transaction, `step(&tx)?` would abandon `tx` on failure even if
+`RunError: From<StepError>`. Code can commit on success and roll back on failure by matching on the result.
+Here `begin()` returns `Result<Tx, RunError>` and
+`step(&tx)` returns `Result<(), StepError>`. The consuming functions `commit(tx)` and `rollback(tx)` return
+`Result<(), RunError>` and `Result<(), RollbackError>`, respectively, and discharge the transaction on every
+normal return. The error builders `step_failed` and `step_and_rollback_failed` take ownership of their arguments
+and preserve them in the returned `RunError`.
 
 ```metel
-fun run() -> Result<(), Err> {
-    let h := open()?;      // h is a linear handle
-    step()?;               // if step() fails, `?` returns early with h still in scope: error at this `?`
-    h.close()
+fun run() -> Result<(), RunError> {
+    let tx := begin()?;
+    match (step(&tx)) {
+        Ok { value } => commit(tx),
+        Err { error } => {
+            let step_error := error;
+            match (rollback(tx)) {
+                Ok { value } => Err { error = step_failed(step_error) },
+                Err { error } => Err { error = step_and_rollback_failed(step_error, error) },
+            }
+        },
+    }
 }
 ```
 
-The author consumes the value on the error path first, by matching on the result of `step()` and closing `h` in
-both arms. This is the intended strictness: a linear value is never discharged by accident. It makes a fallible call
-between acquisition and release awkward, and no mechanism for discharging a linear value on an early exit is
-specified (Open Question 8).
+If rollback succeeds, the function reports the original step error. If rollback also fails, the function reports
+both errors. An API whose failed rollback returns a still-owned transaction would have to handle or return that
+transaction as well.
+
+The first release with linear types uses explicit handling for paths that must discharge an obligation. Scope-exit
+shorthand, such as a deferred consuming action or a propagation operator with a named cleanup, is a follow-up design.
 
 ---
 
@@ -468,10 +483,8 @@ specified (Open Question 8).
 6. *(Moved to RFC-0215.)* The brand-carrying `ToRecord` for fiat-linear structs.
 7. **Binding-level strengthening** (a `linear` binding, parameter, return or field on an ordinary type, never looser than the type): designed as an extension on 2026-11-06 and drafted as RFC-0220. It is local discipline and does not change the declared-class model of sections 1 to 2.1.
 
-8. **Discharging a linear value on an early exit** (section 2.3). A fallible call between acquiring a linear value
-   and consuming it forces an explicit `match` that consumes it on the error path. Whether the language should
-   offer a scope-exit discharge (a `defer`-style construct, or a `?` that runs a named consuming method) is open.
-   No RFC currently proposes one. Not blocking: the strict form is sound and needs no new feature.
+8. **Discharging a linear value on an early exit** (section 2.3). Resolved for the first linear release.
+   Code handles the consuming action explicitly on each affected exit path. Scope-exit shorthand is deferred.
 
 ---
 
