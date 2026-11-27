@@ -19,7 +19,7 @@ Two small conveniences for writing short function values without a full closure:
    `ops::mul`, `ops::lt`, ...), so an operator can be passed where a function is expected.
 
 Both lower to ordinary closures and calls before type checking; no new type-system concept
-is introduced. This RFC is independent of RFC-0204 (pipelines and composition); the two read
+is introduced. This RFC is independent of RFC-0204 (pipelines); the two read
 well together but neither requires the other.
 
 ---
@@ -109,7 +109,7 @@ let total := List::from([1, 2, 3, 4])
   section 2 depends on that RFC (or on a hardcoded set of primitive operators until it lands).
   Section 1 does not.
 - **RFC-0197 (generic closures):** a section is monomorphic; generic use needs that RFC.
-- **RFC-0204 (pipelines and composition):** sections are the natural arguments to `|>` stages and to `.then()`.
+- **RFC-0204 (pipelines):** sections can be passed as arguments to `|>` stages. RFC-0258 owns `.then()`.
 - **RFC-0203 (comprehensions):** overlaps on `map`/`filter` for simple expressions.
 - **RFC-0201 (pattern synonyms):** `_` already appears as a wildcard in patterns; position
   distinguishes the two uses.

@@ -3,56 +3,26 @@ id: rfc-0246
 title: "Derivation arguments: the flow parameter, mixed arguments and the computed rest"
 date: '2026-11-23'
 status: under-review
-updated: '2026-11-23'
+updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2172'
 ---
 
-> **Status — under review (2026-11-23).** Taken to review as part of the metel-core v0.17.0 plan (#2172)
+> **Status — under review (2026-11-23).** Tracked by metel-core#2172.
 
 ## Summary
 
-`derives A(args)` is a call: its arguments bind to the `Args` of `A`'s `Derivable` impl (RFC-0238 section 2). This RFC states how, for the
-case RFC-0238 leaves open: a derivation that takes a flow **and** other arguments. Three points:
-
-1. A flow entry is a **type parameter of the declaration**, a comptime value of kind `type` that names one of `Target`'s own generic
-   parameters. The type of a flow is a row of them.
-2. `Flow` is a **trailing positional parameter**. Leading positional arguments bind to the leading numeric labels of `Args`, the
-   flow collects the positionals after them, and named labels are keyword arguments, as in RFC-0223.
-3. **`..` is the computed flow**, a value like any other flow: `derives Clone(..)`. RFC-0244 spells the computed flow this
-   way, and this RFC states what it is in the call: a value, not a mark on the entry. The class keyword has no computed form:
-   a conditional type writes `derives Clone(..), Copy(..)`.
-
-```metel
-extend Serialize: Derivable {
-    type Args = .{ .0: String, .rename_all: String, ..Flow };
-    comptime fun derive(Target: type, args: Self::Args) -> Decl { /* .. */ }
-}
-
-struct Pair<A, B> derives Serialize("pair", A, B, rename_all = "none")  { a: A, b: B }  // .0 = "pair", flow = (A, B)
-struct Item<T>    derives Serialize("item", T, rename_all = "camel")    { v: T }        // flow, then the keyword
-struct Slot<T>    derives Clone(..)                                     { v: T }        // computed flow
-struct Tag<T>     derives Serialize("tag", rename_all = "none")         { n: i64 }      // no flow given: the empty flow
-```
-
-This is a design draft. It refines RFC-0238 sections 1 to 3 and extends the argument list of RFC-0227. RFC-0244 already spells the
-computed flow `(..)`.
-
----
+A derivation may accept leading positional arguments, a variadic flow of type parameters
+of the target, and keyword arguments. The proposed lowering uses RFC-0247's rest binding
+and RFC-0248's final default marker. This RFC owns the flow's type and any comptime
+elaboration it needs. It also owns the proposed visibility rule for public computed flows.
 
 ## Motivation
 
-1. **A postfix mark on an entry is not a call.** RFC-0238 makes `derives A(args)` a call to a comptime function whose arguments are
-   checked against a parameter row. A postfix `?` would be a second mechanism beside the arguments: RFC-0238 section 2 would have to
-   special-case it, and it has no answer for a derivation with two `Flow` parameters or none. Because "computed" is a value, the
-   call needs no special case, which is why RFC-0244 spells it `(..)`.
-2. **RFC-0238 does not say how a flow shares `Args` with other arguments.** Positional arguments are numeric labels (`.0`, `.1`), and
-   `Flow` is "a row of positional type parameters of any width", so it claims every numeric label. `.{ .0: String, ..Flow }` has two
-   `.0`s, and `derives A(T, "x")` has nowhere to put `"x"`. Std needs nothing more than a bare `Flow` (`Clone`, `Copy`), so the gap
-   has not mattered. The first user aspect that takes a flow and a name will hit it.
-3. **The element type of a flow is not named.** RFC-0238 calls the elements "type parameters of `Target`". A deriver must be able to
-   read them (`typeinfo(Target)`), and the checker must reject `derives Clone(i64)`, which names no parameter. That needs a type.
-
----
+RFC-0238 makes derivation clauses calls into comptime derivers. A parameter list with a rest
+can separate leading arguments from the flow without a numeric row splice that renumbers its
+labels. The flow also needs a way to identify entries as type parameters of the particular
+target rather than arbitrary types. A declaration-side default would let `derives A(..)` use
+the ordinary call mechanism once that flow contract is expressible.
 
 ## Proposal
 
@@ -66,135 +36,125 @@ In `struct S<T, U> derives A(T)`, the argument `T` is resolved in the declaratio
 - A parameter of row or record kind is not accepted (RFC-0224 rule 7), as today.
 - A deriver reads an entry through `typeinfo(Target)`, whose list of generic parameters the entries are drawn from.
 
-`Flow` is the type of a row `.{ .0 = P, .1 = Q, .. }` of such values, of any width. Its meaning is fixed: the parameters the emitted impl
+`Flow` denotes a sequence represented as a dense numeric row `.{ .0 = P, .1 = Q, .. }` of such values, of any width. Its meaning is fixed: the parameters the emitted impl
 is **conditional on**, that is, the parameters `P` for which the impl carries the bound `P: A`.
 
 ### 2. Binding
 
-`<A as Derivable>::Args` is a row. Numeric labels are positional parameters, named labels are keyword parameters, and every label must be
-bound: there are no default values (RFC-0223 rule 3; metel-core#2181). This RFC adds one form of row tail:
+The proposed `derive` signature is a parameter list, with the flow receiving the remaining
+positional arguments after any fixed positionals. Parameters after the rest bind by keyword.
+The signature below is schematic. `Flow<Target>` denotes the variable-width flow contract
+this RFC must define. RFC-0247 currently accepts a row-bound tuple or a closed tuple as a
+rest type.
 
-> `..Flow` at the end of a row type contributes the flow. Its entries are the positional labels that **follow** the numeric labels
-> declared before it: in `.{ .0: String, ..Flow }` the first flow entry is `.1`.
-
-At most one `..Flow` may appear in an `Args`, and it is the last of the positional labels by construction. Named labels may appear
-anywhere, as in any row. A call binds as RFC-0223 says:
-
-1. Positional arguments bind to the declared numeric labels in order, then the rest are the flow entries.
-2. Keyword arguments bind named labels; a keyword that binds no label is an error (as `T0039`), and a positional after a keyword is an
-   error (as `T0040`).
-3. Every declared label must be bound. The flow is the one exception: an omitted flow is the **empty** flow (RFC-0244), which is a rule
-   of `Flow` and not a default value.
-
-So, for `Args = .{ .0: String, .rename_all: String, ..Flow }`:
+```metel
+extend Serialize: Derivable {
+    comptime fun derive(Target: type, name: String, ..flow: Flow<Target>,
+                        rename_all: String) -> Decl { /* ... */ }
+}
+```
 
 | Clause | Binds |
 |---|---|
-| `derives A("x", T, U, rename_all = "none")` | `.0 = "x"`, flow `(T, U)`, `.rename_all = "none"` |
-| `derives A("x", T, rename_all = "camel")` | `.0 = "x"`, flow `(T)`, `.rename_all = "camel"` |
-| `derives A("x", rename_all = "none")` | `.0 = "x"`, empty flow, `.rename_all = "none"` |
-| `derives A("x", rename_all = "camel", T)` | error: a positional argument after a keyword (as `T0040`). The flow is positional, so it comes before the keywords. |
-| `derives A(T, "x", rename_all = "none")` | error: `T` is not a `String`, and `"x"` is not a type parameter. The message says the leading positional arguments come before the flow. |
-| `derives A` | error: `.0` and `.rename_all` are not bound ("`A` requires arguments") |
+| `derives Serialize("x", T, U, rename_all = "none")` | name `"x"`, flow `(T, U)`, rename rule `"none"` |
+| `derives Serialize("x", rename_all = "none")` | name `"x"`, empty flow, rename rule `"none"` |
+| `derives Serialize("x", rename_all = "camel", T)` | error: positional argument after a keyword |
+| `derives Serialize(T, "x", rename_all = "none")` | error: the leading positional needs a string |
 
-A flow always comes after the leading positionals. That is the cost of one rule instead of a type-directed one (see Alternatives).
+### 3. Computed flows as defaults
 
-### 3. `..` is the computed flow
+Where a deriver declares a default for its flow, a final bare `..` selects it only
+when no explicit flow entry was supplied. A nonempty explicit flow takes precedence
+as one complete rest. For example:
 
-`..` as the **last entry of the flow** (and, in this RFC, the only entry; question 1) is the flow the compiler computes: the smallest
-set of parameters such that every field's `A` holds under the impl's bounds (RFC-0227's dependence analysis, applied to the aspect
-being derived). It is a value of type `Flow`, resolved by the compiler **before** `derive` runs, so a deriver always receives a
-concrete row and never sees `..`.
+```metel
+extend Clone: Derivable {
+    comptime fun derive(Target: type,
+                        ..flow: Flow<Target> = std::derive::needed_flow(Target, Clone)) -> Decl {
+        field_wise(Clone, Target, flow)
+    }
+}
+```
 
-- `derives Clone(..)` and `derives Copy(..)` are the computed forms of RFC-0227 and RFC-0244. A bare `derives Clone` is the empty flow, as in
-  RFC-0244.
-- `..` is accepted only in a `Flow` position, and an `Args` with no `Flow` rejects it ("`A` takes no flow"). This is RFC-0244's
-  error for `(..)` on a derivation with no `Flow` parameter, stated for every derivation.
-- The `pub` rule of RFC-0227 applies to `..` as it applied to `?`: a `pub` generic type may use it only when the computed set is
-  empty, and otherwise states the flow.
+- A bare `derives Clone` passes the empty flow. `derives Clone(T)` passes the flow `(T)`.
+- `derives Clone(..)` requests the declared default. In this example, `needed_flow` uses
+  RFC-0227's field dependence analysis to compute the smallest sufficient flow.
+- `derives Clone(T, ..)` passes the explicit flow `(T)`. It never appends computed entries.
+- A user deriver can declare a different default, provided it satisfies the flow contract.
+  Ordinary RFC-0248 binding handles its other defaults.
+
+The variable-width comptime result and its target-dependent entry types need a checked
+interface before this lowering can replace the built-in RFC-0244 behavior.
 
 ### 4. The class keyword
 
-`copy` is `derives Clone, Copy` with no condition on the type parameters, and it has no computed form (decided 2026-11-23, question 6).
+`copy` is `derives Clone, Copy` with no condition on the type parameters, and it has no computed form (RFC-0244).
 A type that is `Copy` only for some arguments writes the entries: `derives Clone(..), Copy(..)` to compute the condition, or
-`derives Clone(T), Copy(T)` to state it. The keyword then means one thing, and the only spelling of "computed" is `(..)`, a value in
-the call. An explicit `derives` entry beside `copy` still replaces the keyword's entry for that aspect, as in RFC-0244 section 3.
+`derives Clone(T), Copy(T)` to state it. The keyword then means one thing, and the only spelling of "computed" is `(..)`, a default request at the call site. An explicit `derives` entry beside `copy` still replaces the keyword's entry for that aspect, as in RFC-0244 section 3.
 
-### 5. What changes in the implemented specification
+### 5. Visibility of public computed flows
 
-- RFC-0244 sections 1 and 2 already spell the computed flow `(..)`, and the grammar's `derive_args` accepts a lone `..` (metel-core#2153).
-  Nothing changes there.
-- RFC-0227: the argument list of a field-wise derivation may be the single entry `..`.
-- RFC-0238 section 2: the clause on marks goes. Section 1 gains the `..Flow` row tail, and section 3 names `Flow` as the trailing
-  positional parameter.
+The `pub` rule of RFC-0227 section 3 (in RFC-0244's form: a `pub` generic type may use a computed flow only when it is empty) is
+replaced by a widening of an existing visibility rule. Today `modules.md` legality-8 says a private field's name cannot appear in a
+public signature, so that it never becomes part of the module's API. For a computed derivation flow, apply the corresponding visibility rule:
 
----
+> A private field cannot determine a public derivation's computed condition.
 
+The derived impls of a `pub` type, with their conditions, are part of its interface. So `(..)` on a `pub` type is an error exactly when
+a private field contributes a parameter to the computed flow:
+
+```metel
+pub struct Pair<A, B> derives Clone(..), Copy(..) { pub a: A, pub b: B }     // ok: the flow comes from public fields
+pub struct Token<T>   derives Clone(..), Copy(..) { pub kind: T, span: i64 } // ok: the private `span` contributes nothing
+pub struct Handle<T>  derives Clone(..), Copy(..) { id: u64, tag: T }        // error: the private `tag` decides the flow;
+                                                                             // state `Clone(T), Copy(T)`, or make `tag` pub
+```
+
+- **Why.** A computed condition decided by a private field is an interface its author can change without seeing it: a private field
+  edit that adds a parameter tightens the condition and breaks downstream code, while the author's own build stays green. A public
+  field's type is already part of the API, so a flow computed from public fields changes only when the API visibly does.
+- **The empty case falls out.** An empty computed flow has no contributing field, so no private one; RFC-0244's "only when empty"
+  exception needs no statement.
+- **Checking is not deciding.** A stated flow, and the strict check of a bare entry, read private fields freely: they only produce
+  errors for the author, and the interface is what is written.
+- **It is more permissive than the rule it replaces.** A `pub` type whose contributing fields are public may use `(..)`, which is the
+  common case for plain data types.
+- **Mechanism.** `needed_flow` reports, with each parameter of the flow, the fields that contributed it (RFC-0227's dependence analysis
+  already has this), and the check is made when the `derives` clause of a `pub` declaration is evaluated. The diagnostic names the
+  private field.
 ## Alternatives considered
 
-| Alternative | Why not |
-|---|---|
-| A postfix `?` on the entry (`derives A?`) | A postfix mark outside the call. It cannot say which `Flow` parameter it applies to when there are two, and RFC-0238 section 2 has to special-case it. |
-| The flow is a keyword parameter only: `derives A(flow = (T, U), name = "x")` | Unambiguous, but it makes the common case, `derives Clone(T)`, longer, and needs a sugar rule to get the short form back. |
-| Gather every positional argument that is a type parameter into the flow | Type-directed: which parameter an argument binds to depends on what it is. A derivation that wants a `type` argument for another purpose is ambiguous with a flow entry. |
-| The flow first, other arguments after | The width of the flow is unbounded, so the boundary between flow and the leading positionals cannot be found without types. A trailing flow has a fixed start. |
-| A value `computed` in place of `..`: `Clone(flow = computed)` | A new keyword and a keyword argument for the one thing every field-wise derivation does. `..` already means "the rest" in rows and patterns. |
-| `derives A[T]` for the flow | `[]` is held by RFC-0050. |
-| A computed form on the keyword | `copy?` (the `?` already means error propagation in expressions), `copy(..)` (brings back the argument list RFC-0244 removed from the keyword), `infer copy` and `auto copy` (a word, and `auto` already names an aspect property). Each adds a second spelling of `(..)`; the keyword stays unconditional (question 6). |
-
----
+- Keep the RFC-0238 `Args` row and a renumbering `..Flow` splice. This requires
+  positional row concatenation from RFC-0125.
+- Use a keyword tuple such as `flow = (T, U)`. It adds syntax to the common
+  `derives Clone(T)` case.
+- Collect arguments by their type. This makes a `type` argument for another
+  purpose ambiguous with a flow entry.
+- Add a separate postfix computed marker or a computed `copy` form. RFC-0244
+  already supplies the explicit `(..)` spelling.
 
 ## Interaction with other work
 
-- **RFC-0227** (implemented): defines the argument list and the flow. This RFC adds `..` to the list and names the entry type.
-- **RFC-0244** (implemented): spells the computed flow `(..)` on an entry. Its default (empty flow), the `pub` rule and the error for a
-  bare entry whose field needs a parameter stay, with the fix-it naming `derives A(..)`. Its `copy?` is removed: the keyword has no
-  computed form (question 6).
-- **RFC-0238** (under review): this RFC supplies the binding rule it lacks. It should adopt sections 1 to 3 here, or be amended with
-  them when accepted. Std's `Clone` and `Copy` take a bare `Flow` and are unaffected.
-- **RFC-0223** (implemented): the binding rules are its rules. A derivation clause is the one call whose parameter list is a row.
-- **RFC-0125, RFC-0151** (row types): the `..Flow` tail renumbers positional labels after the declared ones, which RFC-0125 says is not
-  built and not yet decided (question 3).
-- **RFC-0247** (draft): variadic parameters. A rest parameter would give a flow after leading positionals without renumbering a row.
-- **RFC-0237, RFC-0092, RFC-0132** (comptime, aspects as values): `TypeParam<Target>` and `typeinfo(Target)` live there.
-
----
-
-## Costs
-
-- **A row tail with renumbering.** `..Flow` after declared positionals numbers its entries from the next label. RFC-0125 records that
-  positional renumbering of a row is not built and that how to write it is undecided (its designs A, B and C), so this is not a small
-  extension. A `Flow` that is the **only** positional entry (`Args = Flow`, which is all std's `Clone` and `Copy` need) renumbers
-  nothing and is unaffected. A flow after leading positionals needs RFC-0125's answer, or a rest parameter (RFC-0247).
-- **A flow must come last among the positionals.** `derives A(T, "x")` is an error, and the message has to say why.
-- **A conditional type is longer to write.** Without a keyword form, a type that is `Copy` only for some arguments writes
-  `derives Clone(..), Copy(..)` where `copy?` was one word. A `pub` type already wrote the stated entries, so private and public
-  types now read alike.
-
----
+- **RFC-0227 and RFC-0244:** keep the existing built-in flow behavior until this
+  RFC is integrated. This RFC owns any later changes to computed-flow visibility.
+- **RFC-0238:** reconcile `derive`'s parameter-list contract with the registration
+  proposal's `Args` row before either design relies on it.
+- **RFC-0247 and RFC-0248:** supply ordinary rest binding and defaults. Neither
+  RFC depends on this derivation-specific lowering.
+- **RFC-0092, RFC-0132 and RFC-0237:** supply the relevant comptime, reflection
+  and aspect-value machinery.
 
 ## Open questions
 
-1. **Is `(A, ..)` accepted?** It would mean "at least `A`, plus whatever the fields need". It follows from `..` being the last entry of a
-   flow, but it is a new capability with its own `pub` rule: such a type could grow its flow silently unless the computed part is a
-   subset of the stated one. Recommendation: accept only a lone `(..)` now, and leave `(A, ..)` for a later RFC. This text then says
-   `..` is the whole flow.
-2. **The name and definition of the entry type.** `TypeParam<Target>` is a placeholder. It needs RFC-0092's `typeinfo` to say how a
-   deriver lists and compares the generic parameters of `Target`.
-3. **Renumbering row tail, or a rest parameter?** RFC-0125 says renumbering a row is unbuilt and undecided, so the row tail of section 2
-   depends on its answer. A rest parameter (RFC-0247) keeps rows unchanged and adds one notion to parameter lists. Recommendation: land
-   the form without leading positionals now (`Args = Flow`, which needs no renumbering), and let the mixed form wait for RFC-0125 or
-   RFC-0247, whichever is accepted first.
-4. **Two flows.** May an `Args` have more than one `Flow`, for a derivation conditional on two groups of parameters? The positional
-   split is then undefined. Recommendation: at most one, and a second group is a keyword parameter of `Flow` type.
-5. **What does `..` mean for a derivation that is not field-wise?** The computed flow is defined by the field dependence of the aspect
-   being derived. A user derivation that takes a `Flow` for another purpose has no such definition. Recommendation: `..` is legal only
-   for a `Flow` that is the flow of the emitted impl, which section 1 already states as the meaning of the type.
-6. **A computed form on the `copy` keyword?** Decided 2026-11-23: none. `copy` means unconditional only, and a conditional type writes
-   `derives Clone(..), Copy(..)`. That is one rule and one spelling of "computed", at the cost of length for a common case. The
-   spellings considered and dropped are listed under Alternatives.
-
----
+1. How does the flow contract express target-dependent type-parameter values and
+   arbitrary width? Decide whether a row binder suffices or a separate comptime
+   sequence type is required.
+2. How does a computed default establish a concrete row and satisfy that contract
+   before `derive` runs? Specify how the compiler checks its shape and element types.
+3. Can a deriver take another flow-like group as a fixed keyword argument? The
+   positional call consumes at most one rest.
+4. How should the registration contract expose the checked parameter list and its
+   defaults? Reconcile this with RFC-0238.
 
 ## Decision
 

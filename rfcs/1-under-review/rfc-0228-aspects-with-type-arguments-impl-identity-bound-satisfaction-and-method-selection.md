@@ -7,14 +7,14 @@ updated: '2026-11-13'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2001'
 ---
 
-> **Status — under review (2026-11-13).** Settlement committed to v0.16.0 (milestone [v0.16.0] Declarations and derivation); five open questions block acceptance.
+> **Status — under review.** Design settlement is in Function types (metel-core#2001).
+> Instantiated aspect identities are part of the callable contract, and aspect-object dispatch is tracked by metel-core#2062.
 
 > **Brought in line with the compiler (2026-11-16).** Most of this RFC is implemented (impl identity and its coherence,
 > bound satisfaction by argument list, selection through a bound, `T0013` for every call with no unique target; spec text in
-> metel-docs#625). The text below now says what the compiler does, and marks four places where it does not yet, each
-> tracked: expected-type selection of a direct call (section 3.2, metel-core#2018), a negative impl removing one identity
-> (section 1.3, #2061), a `dyn` object choosing the impl of its own identity (section 4, #2062), and a projection resolving
-> in the impl a bound names (section 1.4, #2063). The review moved out of v0.16.0 to *Aspects and generics*, with #2018.
+> metel-docs#625). Remaining work includes deferred expected-type selection (section 3.2, metel-core#2018),
+> a negative impl removing one identity (section 1.3, #2061), a `dyn` object choosing the impl of its own
+> identity (section 4, #2062), and a projection resolving in the impl a bound names (section 1.4, #2063).
 
 ## Summary
 
@@ -43,9 +43,9 @@ fun as_text<X: Conv<String>>(x: &X) -> String { x.conv() }       // calls the Co
 
 fun main() {
     let l := L { n = 4 };
-    let a: i64 := l.conv();       // chosen by the expected type
-    let b: String := l.conv();
-    let c := l.conv();            // error: ambiguous
+    let a := as_int(&l);          // picks Conv<i64> through the bound
+    let b := as_text(&l);         // picks Conv<String> through the bound
+    let c: i64 := l.conv();       // T0013: multiple impls match the direct call
 }
 ```
 
@@ -94,9 +94,10 @@ have other arguments does not satisfy it: `T0012`, naming the arguments the type
   forwarded bound, and for a function imported from another module.
 - A type whose `A` is provided by a conditional or blanket impl, or by the compiler, satisfies the bound by that impl's
   own conditions; this section adds nothing there.
-- An argument that is still a free type parameter of the callee (`X: Conv<U>`, `U` bound by nothing else) is **not
-  inferred** from the impl: the call is `T0002`, "cannot infer type; add a type annotation", whether the type has one
-  impl of `A` or several (open question 4).
+- Determine an aspect argument such as `U` in `X: Conv<U>` through ordinary type inference or an
+  explicit type argument. Then check whether `X` satisfies `Conv<U>`. If `U` is still unresolved,
+  the call reports `T0002`, even when `X` has exactly one `Conv` implementation. Adding another
+  implementation cannot change the inference for `U`.
 
 ## 3. Method selection
 
@@ -107,17 +108,19 @@ A method call selects an implementation, never the last one registered.
    *two* bounds of the aspect (`X: Conv<i64> + Conv<String>`) is the exception: `x.conv()` names no arguments, so it is
    `T0013` ("this type parameter has more than one bound of `Conv`, and each provides `conv`; the call names no type
    arguments to choose between them").
-2. **Directly.** `l.m()` on a concrete receiver may have several candidates: impls of one aspect for different
-   arguments, or of different aspects, that each provide `m` for the receiver. **Today every such call is `T0013`**, with
-   or without an annotation: "ambiguous method call: `L` implements `Conv<i64>` and `Conv<String>` and each provides
-   `conv`; call it through a bound that names the type arguments". The intended rule, not implemented, resolves the call
-   by its **expected type**: the candidate whose signature admits the types the call is used at (the annotated binding,
-   the parameter it is passed to, the return position); exactly one admissible candidate is chosen, none admissible is
-   `T0012` naming the candidates, several admissible is `T0013`. It needs a deferred goal over an inference variable,
-   which inference does not have (open question 1; metel-core#2018).
+2. **Directly.** A direct call on a concrete receiver reports `T0013` when multiple implementations provide
+   a matching method. An expected result type does not resolve the ambiguity in v0.17.0. The diagnostic
+   identifies the competing identities and can suggest a call through a bound that names the type arguments.
+   Multiple implementations for distinct aspect identities remain legal. Expected-type selection needs
+   deferred method resolution and is follow-up work tracked by metel-core#2018.
 3. `T0013` is the error for every case in which a call has no unique static target: two different aspects defining the
    same method on one receiver, several impls of one aspect called directly, and a parameter with several bounds of one
    aspect (section 3.1).
+
+**Free-function overloads.** Existing overload sets remain available in v0.17.0. A free-function call
+selects a candidate through the ordinary argument-binding and overload rules. Expected result type
+does not select a free-function overload. The separate audit in metel-core#2112 owns future changes
+to that mechanism.
 
 ## 4. What this does not change
 
@@ -125,9 +128,8 @@ A method call selects an implementation, never the last one registered.
   that implements both:* the coercion to either object picks the last registered impl, so a call through
   `dyn Conv<i64>` can run the `Conv<String>` impl (metel-core#2062).
 - An aspect without type arguments behaves as before: its identity is its name.
-- A call syntax that names the impl explicitly is not introduced here (open question 3). The language has none: the only
-  ways to resolve an ambiguous call are a bound that names the arguments, and, once section 3.2 is implemented, an
-  annotation.
+- RFC-0259 owns the syntax for explicit aspect-qualified calls. A bound naming the instantiated
+  aspect already supplies an explicit identity for selection through a generic function.
 
 ---
 
@@ -136,9 +138,10 @@ A method call selects an implementation, never the last one registered.
 - **Forbid a second impl of one aspect for a type** (the `Deref` model, where one type has one target). Simplest, and
   right for `Deref`, but it removes `From<A>` and `From<B>` on one type, which the associated-types section names as
   the reason to give an aspect a type parameter.
-- **Select only by explicit qualification.** Always rejects an ambiguous call and needs surface syntax to select. It
-  stays available as a later addition (section 4); it does not replace selection by expected type, which the owner
-  decided for the common annotated call (2026-11-13).
+- **Select among multiple direct candidates by expected type.** This would allow an annotated call to
+  choose an implementation by its result type. It needs a deferred goal over an inference variable,
+  tracked separately in metel-core#2018.
+- **Select by explicit qualification.** RFC-0259 covers naming an impl identity directly at the call.
 - **Last impl wins** (today). Order-dependent and silently wrong; the coherence section rejects it elsewhere.
 
 ## Relationship to existing RFCs
@@ -147,52 +150,24 @@ RFC-0060 (coherence) states the rules this one applies per identity. RFC-0082 (a
 makes normative and the equality-bound syntax (`A<Item = X>`) that composes with section 2. RFC-0040 (bound
 enforcement) and RFC-0036 (conditional impls) own the call-site check and the conditional case that section 2 leaves
 alone. RFC-0072 and RFC-0081 own negative bounds and negative impls (section 1.3). RFC-0128 (exportable overload sets) and
-`spec.functions.keyword-arguments.legality-5` own function overloading, which open question 5 asks whether to keep.
+`spec.functions.keyword-arguments.legality-5` continue to govern free-function overloading.
 
-## Open questions
+## Design resolutions
 
-1. **Staging of section 3.2.** Choosing among candidates by expected type needs the call's type, which inference only
-   knows after unification, so it needs a deferred goal over an inference variable; the obligation solver of
-   metel-core#1813 is for ownership goals and is not that mechanism. **This is the state of the compiler:** a direct
-   call with several candidates is `T0013` whether or not it is annotated, and section 3.2's resolution takes effect
-   with the mechanism (metel-core#2018). Is that staging acceptable, or should the first release restrict section 1.1
-   to one impl per aspect and type? (Several impls per type and selection through a bound are already shipped, so
-   restricting now would remove working behaviour.)
-2. **Locality of arguments (1.2).** Rust counts a trait's type arguments towards locality: `impl From<MyType> for i64` is
-   legal in a crate that owns only `MyType`, which is how a crate converts its own types into foreign ones. Section 1.2
-   says arguments do not count, the stricter choice, under which `extend i64: Conv<MyType>` needs `Conv` to be local.
-   The cost is that a module cannot write a conversion from its own type into a foreign type for a foreign aspect; the
-   benefit is that coherence stays decidable from the aspect and the target alone, and no other module's impls need to
-   be consulted (the property the coherence section builds on). Should a local type argument make an impl local? If so
-   the orphan rule needs a fundamental-type story (what `&MyType` or `List<MyType>` count as), which Rust spent several
-   RFCs on. Revisit with the package system.
-3. **A qualified call form.** Rust selects an impl explicitly with `<L as Conv<i64>>::conv(&l)`, always available, so an
-   ambiguous call has an escape that needs no annotation (for example a call whose result is discarded, or a generic
-   position the expected type cannot reach). Section 4 introduces no such form, so under section 3.2 the only way to
-   resolve an ambiguous call is a type annotation. Should the RFC add a qualified form (`Conv<i64>::conv(&l)`,
-   `l.conv::<Conv<i64>>()`, or a Rust-style `<L as Conv<i64>>::conv(&l)`), or leave it to a later RFC? It needs surface
-   syntax, which interacts with RFC-0223's call rules and the path grammar, and the language has no aspect-qualified call today
-   (`Show::show(&l)` is `T0003`, unresolved path; a type-qualified `L::show(..)` parses but names no aspect), so the form
-   would be new, not an extension.
-4. **Free argument in a bound (2).** Whether `X: Conv<U>` should infer `U` from the impl. Today it is not inferred at
-   all (`T0002`), even when the type has a single impl; the choice is between inferring from a unique impl, inferring
-   from other constraints, and leaving it as an error that asks for an annotation.
+1. **Staging of section 3.2.** Resolved for v0.17.0. Keep multiple identities and bound-directed dispatch.
+   Ambiguous direct calls report `T0013` even with an annotation. Expected-type selection is deferred to
+   metel-core#2018.
+2. **Locality of arguments (1.2).** Resolved for v0.17.0. The aspect or the target's outermost type
+   constructor must be declared in the implementing module. An aspect argument contributes to impl
+   identity only. Any extension to the orphan rule can be considered with the package system.
+3. **A qualified call form.** Deferred to RFC-0259, which owns the syntax and its interaction
+   with receiver passing and path lookup. For this release, a helper with the desired aspect
+   bound selects the implementation.
+4. **Free argument in a bound (2).** Resolved for v0.17.0. Ordinary inference or explicit arguments
+   determine the aspect argument before impl lookup. An unresolved argument reports `T0002`.
 
-5. **Should function overloading continue to be accepted?** Metel accepts several free functions of one name as an
-   overload set: identical parameter types are `T0011`, a call is resolved by comparing the per-slot argument types and
-   keyword names with each candidate's parameters (`spec.functions.keyword-arguments.legality-5`), the result type takes
-   no part, and the resolution is static and non-generic (RFC-0128 makes sets exportable; `std::core` uses it for
-   `assert`). Rust has no function overloading: the same need is met by a trait with a type parameter, which is the
-   mechanism this RFC states the rules for. Keeping both gives the language two selection mechanisms with different
-   inputs: overload sets choose by *argument* types, statically, and cannot be named in a bound or reached through a
-   generic parameter; aspects with type arguments choose by identity, through a bound, or by the *expected* type
-   (section 3.2). The RFC does not decide this, but the answer shapes section 3: if overloading stays, section 3.2's
-   expected-type rule is a second, partly overlapping way to write `to_i64(x)` and `to_text(x)` as one name, and the
-   ambiguity errors (`T0011`, `T0013`) need one consistent story; if it goes, the migration is every overload set
-   becoming either differently named functions or an aspect with a type parameter, `std::core`'s `assert` pair being
-   the first case, and RFC-0128 and `spec.functions.keyword-arguments.legality-5` retire with it. Options: (a) keep
-   overload sets as they are; (b) keep them only for `std::core` intrinsics; (c) deprecate and remove them in favour of
-   aspects with type arguments (the Rust position); (d) keep them and let an overload set be named in a bound.
+5. **Free-function overloading.** Resolved for v0.17.0. Existing overload sets remain available.
+   Any change to this language mechanism goes through the separate overload audit (metel-core#2112).
 
 ---
 

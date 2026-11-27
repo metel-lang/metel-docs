@@ -3,16 +3,17 @@ id: rfc-0248
 title: "Default parameter values and the rest marker"
 date: '2026-11-24'
 status: under-review
-updated: '2026-11-24'
+updated: '2026-11-27'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2181'
 ---
 
-> **Status — under review (2026-11-24).** Design settled with the language owner: explicit `..`, defaults on any parameter, the general `(..)` for derivations, and the widened visibility rule (section 7).
+> **Status — under review.** Scheduled in Function types (metel-core#2181).
 
 ## Summary
 
-A parameter may declare a default value. A call uses defaults only by saying so: `..` at the end of an argument list binds every
-parameter that is not bound yet to its default. Leaving a parameter out without `..` is an error, as it is today.
+A parameter may declare a default value. A final bare `..` binds remaining fixed parameters
+to their defaults and can select a whole-rest default. A fixed parameter left out without `..`
+is an error.
 
 ```metel
 fun connect(host: String, port: i64 = 5432, tls: boolean = true) -> Conn { /* .. */ }
@@ -23,18 +24,8 @@ connect("db", 6000, false)       // no defaults used
 connect("db")                    // error: `port` and `tls` are not bound; write `..` to use their defaults
 ```
 
-The same rule gives the computed flow of a derivation a meaning that is not a special case. `derive` takes its flow as a rest
-parameter whose default is the flow the fields need, so `derives Copy` passes no flow (empty), `derives Copy(T)` states one, and
-`derives Copy(..)` takes the default:
-
-```metel
-struct Id<T>    derives Clone, Copy           { n: i64 }    // no flow: the empty flow
-struct Boxed<T> derives Clone(T), Copy(T)     { v: T }      // a stated flow
-struct Pair<A, B> derives Clone(..), Copy(..) { a: A, b: B } // the flow's default: what the fields need, (A, B)
-```
-
-`..` means the same thing in every call. On a `pub` type, the old `pub` rule for computed flows becomes an instance of an existing
-visibility rule, widened: a public interface is not decided by a private field (section 7). This is a design draft, tracked by metel-core#2181. Nothing here is accepted.
+RFC-0246 owns the application of these rules to derivation clauses and the visibility
+of computed flows. Existing `derives A(..)` remains governed by RFC-0244.
 
 ---
 
@@ -43,11 +34,7 @@ visibility rule, widened: a public interface is not decided by a private field (
 1. **Metel has no default values.** RFC-0223 rule 3 says a call binds every parameter, and lists default values as out of scope;
    RFC-0136 leaves declaration-side defaults to a future RFC. A function with an option that is almost always the same value makes
    every caller write it.
-2. **Derivations need one.** A derivation's flow has a natural default, the flow its fields need, and the language has spelled
-   "use it" three ways in two days: a postfix `?`, the bare entry before RFC-0244, and `(..)`. Each was a special case in what
-   RFC-0238 makes an ordinary call. RFC-0238 and RFC-0246 had also started to write defaults into row types
-   (`.{ .rename_all: String = "none" }`), which put a value in a type; that was taken out (#2181).
-3. **`..` already means "the rest".** A row tail (`.{ .x: i64, ..R }`), a pattern (`let .{ .x, .. } := p`) and a record spread
+2. **`..` already means "the rest".** A row tail (`.{ .x: i64, ..R }`), a pattern (`let .{ .x, .. } := p`) and a record spread
    (`.{ ..s, .a = 10 }`) all read `..` as "the rest". In an argument list it can read the same way: the rest of the parameters, from
    their defaults.
 
@@ -68,25 +55,61 @@ fun pad(s: String, width: i64 = 8, fill: String = " ") -> String { /* .. */ }
 - `self` has no default.
 - A default belongs to the declaration, not to a type. A row type has no defaults; a written function type has none either.
 
+For an aspect method, the aspect declaration supplies the defaults. An implementation declares the full
+parameter list without default expressions. Calls resolved to that aspect method use the same defaults
+through a concrete receiver, an aspect bound, or an aspect object where the method is object-safe. The
+implementation receives the completed argument list.
+
+```metel
+aspect Scale {
+    fun scale(self, by: i64 = 2) -> i64;
+}
+
+extend i64: Scale {
+    fun scale(self, by: i64) -> i64 { self * by }
+}
+```
+
 ### 2. Using defaults: `..`
 
 `..` as the **last** argument of a call binds every parameter not bound by an earlier argument to its default (decided 2026-11-24:
 defaults are used only explicitly).
 
+A bare `..` followed by another argument is an error. For example, rewrite
+`connect("db", .., tls = false)` as `connect("db", tls = false, ..)`.
+
 1. Positional and keyword arguments bind first, by RFC-0223's rules.
-2. `..` then binds each remaining parameter to its default. A remaining parameter with no default makes `..` an error that names it.
-3. Without `..`, every parameter must be bound, as today: a defaulted parameter left out is an error whose fix-it adds `..`.
+2. `..` then binds each remaining fixed parameter to its default and can select a rest default under section 5.
+   A remaining fixed parameter with no default makes `..` an error that names it.
+3. Without `..`, every fixed parameter must be bound. A diagnostic lists the unbound parameters and suggests
+   adding `..` only if every missing parameter has a default.
 4. `..` binds only what is unbound. `f(1, ..)` and `f(1, 2, ..)` are both fine; `..` after every parameter is bound is accepted and
    does nothing.
 
 So a call shows when it relies on a default. A reader of `connect("db", ..)` knows that something was left to the declaration; a
 reader of `connect("db")` knows nothing was.
 
+In a free-function pipeline stage (RFC-0204), insert the input before applying the default marker.
+`xs |> pad(4, ..)` binds as `pad(xs, 4, ..)`. A bare hole does not receive the piped input.
+Use an explicit hole section under RFC-0205 to choose a position, as in `(pad(_, ..))(xs)`.
+
 ### 3. Evaluation
 
-A default expression is evaluated at each call that uses it, after the explicit arguments, left to right in parameter order. It may
-refer to the parameters before it (`fun slice(xs: &[T], from: u64 = 0, to: u64 = xs.len())`), and not to later ones. A default of a
-`comptime` function is evaluated at comptime. A default's effects (RFC-0245) are the effects of the call that uses it.
+A default is an ordinary expression checked at the declaration against the parameter's declared type. It can
+refer to earlier parameters and uses the ordinary type, ownership, borrowing, and effect rules. It may read
+or borrow an earlier parameter, provided the parameter remains available for the function body. For example,
+`fun run(tx: Tx, audit: Audit = make_audit(&tx))` may inspect `tx` to compute `audit`. A default expression
+that passes `tx` to a consuming helper and leaves it moved is an error at the declaration.
+
+An argument default does not introduce a function or closure body. A `return` or `?` in a
+default needs an ordinary enclosing function or closure body inside that expression, such as
+a nested closure. It cannot return from either the caller or the declaration whose parameter
+has the default.
+
+At each call that uses defaults, evaluate the explicit arguments first, then the requested defaults in
+parameter order. A default of a `comptime` function is evaluated at comptime. The call accounts for the
+effects of the defaults it evaluates (RFC-0245). Providing the argument explicitly skips the default and
+its effects.
 
 ### 4. Function values and types
 
@@ -97,80 +120,33 @@ positional and binds every parameter. The type of a function with defaults is it
 
 ### 5. Rest parameters (RFC-0247)
 
-A rest parameter with no arguments is empty; that is what a rest parameter means, not a default. A rest parameter may also declare a
-default, which `..` uses when no argument was given to it. Because defaults apply only through `..`, a defaulted positional before a
-rest parameter is not ambiguous: extra positionals go to the positionals first and then to the rest, and `..` fills what is left.
-This answers RFC-0247 question 6.
-
-### 6. Derivations
-
-`derive` is written as a parameter list (RFC-0247 question 7), with the flow as a rest parameter whose default is the flow the fields
-need:
+Explicit positional arguments fill the fixed positions first, and the extras form the rest tuple. If
+there are no explicit extras, a final bare `..` selects the rest's declared default, if it has one.
+Otherwise the rest receives the explicit tuple, which may be empty. In either case the whole tuple must
+match the rest type. Supplying any extras bypasses the rest default. Defaults do not fill individual
+positions in a partly supplied rest tuple.
 
 ```metel
-extend Clone: Derivable {
-    comptime fun derive(Target: type, ..flow: Flow = std::derive::needed_flow(Target, Clone)) -> Decl {
-        field_wise(Clone, Target, flow)
-    }
-}
+fun draw(..point: .{ .0: i64, .1: i64 } = (1, 2)) { /* ... */ }
+
+draw(..)        // point = (1, 2)
+draw(9, 8, ..) // point = (9, 8)
+draw(9, ..)    // error: the explicit rest has one element
+draw()         // error: the empty tuple does not match the closed rest type
 ```
 
-- `derives Clone` passes no flow: the rest is empty, the empty flow of RFC-0244. It is not a default.
-- `derives Clone(T)` passes the flow `(T)`.
-- `derives Clone(..)` binds the flow to its default: `needed_flow(Target, Clone)`, the smallest set of parameters every field's
-  `Clone` depends on (RFC-0227's dependence analysis). `needed_flow` is a native std function, as other std natives are, and the
-  knowledge of what a field needs lives in it, not in the syntax.
-- `derives Clone(T, ..)` is `derives Clone(T)`: the flow is bound by `T`, so `..` has nothing to fill. There is no "at least `T`"
-  form.
-- A derivation with other parameters works the same: `derive(Target: type, name: String, ..flow: Flow = needed_flow(..))` takes
-  `derives Serialize("x", T)` or `derives Serialize("x", ..)`.
+### 6. Overloads
 
-So `(..)` in a `derives` clause is the general `..` of a call, and the only thing particular to derivations is the default std
-declares for its flow.
+A call with `..` considers only the overload candidates that can bind the requested defaults under sections 2
+and 5. This is a viability check before overload selection. When RFC-0247's rest parameters participate, its
+fixed-arity preference applies among the viable candidates. Selection uses the declared signatures. Only the
+selected call evaluates its defaults, after evaluating the explicit arguments.
 
-On a `pub` type, `(..)` is limited by the visibility rule of section 7, not by a rule of its own.
+### 7. Documentation and diagnostics
 
-### 7. A public interface is not decided by a private field
-
-The `pub` rule of RFC-0227 section 3 (in RFC-0244's form: a `pub` generic type may use a computed flow only when it is empty) is
-replaced by a widening of an existing visibility rule. Today `modules.md` legality-8 says a private field's name cannot appear in a
-public signature, so that it never becomes part of the module's API. It becomes (decided 2026-11-24):
-
-> A public interface is not decided by a private field: a private field's name may not appear in it, and a private field may not
-> determine any part of it.
-
-The derived impls of a `pub` type, with their conditions, are part of its interface. So `(..)` on a `pub` type is an error exactly when
-a private field contributes a parameter to the computed flow:
-
-```metel
-pub struct Pair<A, B> derives Clone(..), Copy(..) { pub a: A, pub b: B }     // ok: the flow comes from public fields
-pub struct Token<T>   derives Clone(..), Copy(..) { pub kind: T, span: i64 } // ok: the private `span` contributes nothing
-pub struct Handle<T>  derives Clone(..), Copy(..) { id: u64, tag: T }        // error: the private `tag` decides the flow;
-                                                                             // state `Clone(T), Copy(T)`, or make `tag` pub
-```
-
-- **Why.** A computed condition decided by a private field is an interface its author can change without seeing it: a private field
-  edit that adds a parameter tightens the condition and breaks downstream code, while the author's own build stays green. A public
-  field's type is already part of the API, so a flow computed from public fields changes only when the API visibly does.
-- **The empty case falls out.** An empty computed flow has no contributing field, so no private one; RFC-0244's "only when empty"
-  exception needs no statement.
-- **Checking is not deciding.** A stated flow, and the strict check of a bare entry, read private fields freely: they only produce
-  errors for the author, and the interface is what is written.
-- **It is more permissive than the rule it replaces.** A `pub` type whose contributing fields are public may use `(..)`, which is the
-  common case for plain data types.
-- **Mechanism.** `needed_flow` reports, with each parameter of the flow, the fields that contributed it (RFC-0227's dependence analysis
-  already has this), and the check is made when the `derives` clause of a `pub` declaration is evaluated. The diagnostic names the
-  private field.
-- **Likely further instances**, not settled here: automatically derived properties such as `Send`/`Sync` (RFC-0080) and inferred
-  effects (RFC-0245) face the same question, and this rule is the answer they would take.
-
-So nothing about `pub` is particular to derivations: `(..)` is the general `..`, and what a public header may compute is a visibility
-rule.
-
-### 8. Overloads
-
-A call with `..` considers only the overload candidates that have a default for every parameter `..` would bind. Selection is
-otherwise unchanged and stays static.
+Generated API documentation prints the declared default expression in the parameter list, for example
+`port: i64 = 5432`. An unbound-parameter diagnostic names the parameters. `connect("db")` can suggest
+`connect("db", ..)`. `connect(..)` identifies the required `host` parameter.
 
 ---
 
@@ -194,14 +170,10 @@ struct literals to calls.
 
 | Alternative | Why not |
 |---|---|
-| Implicit defaults: leaving a defaulted argument out uses its default | The common choice. It makes a default invisible at the call, and in a `derives` clause it would make a bare entry mean "computed", reversing RFC-0244. Decided against 2026-11-24. |
-| Defaults on keyword parameters only | Simpler to read, but a rest parameter's default (the flow) still needs a rule, and with explicit `..` positional defaults are not ambiguous. Decided against 2026-11-24. |
-| Defaults in a row type (`.{ .x: i64 = 1 }`) | Puts a value in a type: whether `.{ .x: i64 = 1 }` is `.{ .x: i64 }`, and how a default takes part in unification, have no good answer. Removed from RFC-0238 and RFC-0246 (#2181). |
-| Call-site spread `f(a, ..t)` in this RFC | The same `..` family, but useful without defaults and the dual of a rest parameter (RFC-0247 question 3). Left to its own RFC (decided 2026-11-24). |
-| Keep `(..)` as a `derives`-only form | The special case this RFC removes. |
-| Keep RFC-0244's `pub` rule as a derivation rule | Safe, but the one place where `(..)` would not be the general `..`. Replaced by the widened visibility rule, which gives the same guarantee and more (decided 2026-11-24). |
-| Drop the `pub` rule and leave tightening to API-compatibility tooling | General, like `cargo-semver-checks` or Elm's package manager, but no tooling exists yet, and a private field deciding a public condition is a visibility question the language already answers for names. |
-| A flow is always stated | No computed flow at all; tried in metel-core#2182 and closed unmerged (2026-11-24). The ergonomic cost of writing and maintaining every flow was judged too high. |
+| Implicit defaults | A call would hide which arguments come from the declaration. |
+| Defaults on keyword parameters only | A final `..` already gives positional calls an unambiguous binding rule. |
+| Defaults in a row type | Defaults belong to callable declarations, and putting values inside a row type would affect its identity and unification. |
+| Call-site spread `f(a, ..t)` | Expansion is a separate operation owned by RFC-0256 and follow-up work. |
 
 ---
 
@@ -210,24 +182,14 @@ struct literals to calls.
 - **RFC-0223** (implemented): rule 3 ("there are no default values") is amended: a call binds every parameter, through its arguments
   or through `..`.
 - **RFC-0136** (implemented): its out-of-scope note on declaration-side defaults is answered here.
-- **RFC-0247** (under review): a rest parameter with no arguments is empty, and may declare a default; question 6 is answered (section 5)
-  and question 7 (a parameter list for `derive`) is adopted.
-- **RFC-0246** (under review): its trailing `Flow` becomes a rest parameter of `derive`, which replaces the renumbering row tail
-  `..Flow` and its dependence on RFC-0125. This answers three of its open questions. Question 3 (row tail or rest parameter): a rest
-  parameter. Question 1 (is `(A, ..)` accepted?): it is, and means `(A)`, because `..` fills only unbound parameters, so there is no
-  "at least `A`" form and no extra `pub` rule. Question 5 (`..` for a derivation that is not field-wise): `..` uses whatever default
-  that deriver declares for its flow, and is an error if it declares none, so no special legality rule is needed.
-- **RFC-0238** (under review): `derive`'s signature is a parameter list, not a `type Args` row.
-- **RFC-0244** (implemented): a bare entry stays the empty flow; `(..)` stays, now as the general `..`. Its `pub` restriction is
-  replaced by section 7.
-- **RFC-0227** (implemented): its section 3 `pub` rule is replaced by section 7.
-- **Modules spec**, visibility legality-8: widened by section 7, from a private field's name to any part of a public interface it
-  decides.
-- **RFC-0080** (Send/Sync): a likely further instance of section 7.
-- **RFC-0240** (under review): a function type has full arity; defaults are not part of it.
-- **RFC-0245** (draft): a default's effects are the call's. Inferred effects of a `pub` function would be another instance of
-  section 7.
-- **RFC-0092, RFC-0132** (comptime): defaults of `comptime` functions, and `needed_flow`.
+- **RFC-0247** (under review): a rest parameter can select a whole-tuple default as in section 5.
+- **RFC-0246** (under review): owns derivation argument lowering and public-flow visibility. RFC-0244
+  continues to govern built-in derivation clauses.
+- **RFC-0240** (under review): a function type has full arity. Defaults belong to the declaration.
+- **RFC-0245** (draft): a default contributes its effects to calls that use it.
+- **RFC-0132** (comptime): defaults of comptime functions evaluate at comptime.
+- **RFC-0256** (under review): ordinary call expansion uses a sole section such as `f(..args)`.
+  Combining expansion with the bare default marker (`f(..args, ..)`) is outside that proposal.
 
 ---
 
@@ -235,23 +197,22 @@ struct literals to calls.
 
 - **A call that uses defaults writes `..`.** That is one token more than Kotlin or Swift, and it is the point.
 - **Evaluation at the call.** A default is code that runs at each call that uses it, in the callee's parameter scope.
-- **Overloads.** `..` adds a filter to candidate selection (section 8).
-- **Contribution tracking.** `needed_flow` reports which fields contributed each parameter, so that section 7 can name the private
-  field that decides a public flow.
-- **Derivations depend on rest parameters.** Section 6 needs RFC-0247, or the trailing positional of RFC-0246, to give `derive` a rest
-  parameter.
+- **Overloads.** `..` adds a filter to candidate selection (section 6).
 
 ---
 
-## Open questions
+## Design resolutions
 
-1. **What may a default expression do?** Any expression, or a restricted set (no effects beyond the call's, no reference to mutable
-   state)?
-2. **Defaults on aspect methods.** If an aspect method declares a default, does an impl repeat it, may it differ, or is it the
-   aspect's alone (RFC-0223 requires impls to repeat parameter names, `T0042`)?
-3. **`..` before keyword arguments.** This draft puts `..` last. Is `connect("db", .., tls = false)` worth allowing?
-4. **Documentation and diagnostics.** How a signature with defaults prints in diagnostics and in generated documentation.
-5. **Pipelines (RFC-0204, RFC-0205).** How `..` interacts with hole sections and `|>`, for example `xs |> pad(_, ..)`.
+1. **Default expressions.** Resolved. Ordinary expressions may use effects and may read or borrow earlier
+   parameters, subject to the usual rules and the requirement that the parameters remain available for the
+   body. Only defaults the call uses contribute effects.
+2. **Defaults on aspect methods.** Resolved. The aspect declaration supplies defaults for calls to its
+   method. An implementation cannot repeat or override them.
+3. **Position of `..`.** Resolved. The bare default marker is final, after all positional and keyword arguments.
+4. **Documentation and diagnostics.** Resolved. API documentation shows declared defaults. Diagnostics
+   suggest adding `..` only when doing so can complete the binding.
+5. **Pipelines and holes.** Resolved. Ordinary pipeline insertion precedes default binding. Bare holes
+   in a pipeline stage are rejected. Explicit hole sections use the ordinary call and default rules.
 
 ---
 
