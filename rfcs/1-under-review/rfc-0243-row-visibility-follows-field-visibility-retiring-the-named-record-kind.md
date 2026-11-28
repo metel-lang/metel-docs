@@ -24,9 +24,10 @@ left after the decisions below. **The core questions are decided** (2026-11-25):
 declaration kind is retired, and a nominal type must explicitly opt in to a row-based aspect *implementation*. The opt-in
 mechanism is deferred, all of it, including RFC-0250 section 0's narrow named form (language owner, 2026-11-28): v0.17.0
 ships no way for a nominal type to receive a row-based implementation, and a struct migrated from a `record` loses any
-plain-aspect blanket match it had, an accepted break (see Migration). What remains open is enums, generic
-grants, opaque views, and residual matching, each tracked below against the RFC or decision that owns it; a few non-blocking
-tooling questions were pruned rather than carried forward (see Open questions).
+blanket match it had, an accepted break (see Migration). Residual matching is decided (open question 5). What remains
+open is enums (RFC-0210), grants and derivation selection (RFC-0250), opaque views (RFC-0251) and aspects on residuals
+(RFC-0214, RFC-0217); a few non-blocking tooling questions were pruned rather than carried forward (see Open
+questions). The Settled design block in Design space states what is accepted.
 
 This is a design draft, now mostly settled. Proposed row bounds and binders follow RFC-0208. Other new spellings below are illustrative.
 
@@ -63,7 +64,7 @@ wants_a_record(h)   // T0012: `Handle` is a struct, but a struct never satisfies
    by `extend` only). Neither capability is settled by RFC-0209's own mechanism anymore — (a) is this RFC's own
    Decisions block, and (b) is RFC-0250 section 0's named `using` form.
 3. **RFC-0202.** A struct never satisfies a row bound, so a tuple struct (RFC-0151 section 7) cannot satisfy `Tuple` or `Dense`
-   without the colon-list's checked `satisfying` entry (RFC-0202 section 6), now specified.
+   without the colon-list's checked `satisfying` entry (RFC-0202 section 6), now specified but not in v0.17.0.
 4. **No partial exposure.** A struct cannot expose some fields to matching, and a `record` must publish all of them. A type with a
    public `token` and a private `user` can be neither matched on `token` nor kept private on `user`.
 5. **Core and the formal model.** RFC-0241 would carry one nominal-with-row kind instead of two that differ by a flag.
@@ -97,8 +98,8 @@ asserts nothing about private fields and does not grant access to or constructio
 nominal type must explicitly opt in to a row-based aspect implementation. Anonymous
 records continue to match applicable row implementations automatically. A derive request
 authorizes its selected derivation to inspect the target's private fields, without exposing
-those fields to ordinary structural bounds. The mechanism selecting the derivation and
-the treatment of residual aspects remain open. These decisions refine the options below.
+those fields to ordinary structural bounds. The mechanism selecting the derivation
+(RFC-0250, RFC-0238) and the treatment of residual aspects (RFC-0214, RFC-0217) remain open. These decisions refine the options below.
 For a residual or named view, structural matching sees the intersection of the fields
 present in the residual and the public fields of its brand. The named `record`
 declaration kind is retired (language owner, 2026-11-25).
@@ -119,6 +120,37 @@ The scope decision above stands without exception: v0.17.0 retires the `record` 
 bounds see the public row, and no nominal type receives a row-based implementation, named or
 otherwise. Where the options and examples below cite RFC-0250 section 0 or RFC-0202 section 6
 as a grant, they describe the deferred design, not what ships.
+
+**Settled design for acceptance (language owner, 2026-11-28).** What v0.17.0 integrates and implements from this
+RFC, after an adversarial review of it and its siblings (RFC-0253, RFC-0254). This block is authoritative where the
+options, examples and lean below say otherwise.
+
+1. **Matching rule.** Bounds on type parameters and row binders, and the conditions of row-conditional impls, see a
+   type's extracted row as RFC-0254 section 1 defines it: public fields only, the same inside and outside the
+   declaring module; for a residual or named view, its present fields intersected with its brand's public fields.
+   An exact bound constrains only that public row.
+2. **`Self` residuals are exempt.** A residual anchored on `Self` (`&var self: Self.{ .fd }`, or
+   `Self.R where R: { fd, .. }`, RFC-0146 to RFC-0148 and `spec.ownership.drop-dispatch-against-a-narrowed-residual.legality-3`)
+   narrows `Self`'s full current row, private fields included. It is legal only where those fields are visible,
+   which for `Self` is the type's own module, and the public-row rule does not apply to it.
+3. **Bounds never dispose of private state.** A structural bound on `T` grants reading and borrowing, never moving a
+   field out of `T`, and a pattern against `T` always needs `..`, whose remainder keeps the brand and its `Drop` and
+   linearity obligations (RFC-0254 section 2). `spec.types.generics.row-bounds.legality-7` is amended accordingly.
+4. **The `record` declaration kind is retired.** `record X { a, b }` is rewritten by hand to `struct X { pub a, pub b }`;
+   no migration tool ships. The `record` *parameter* kind is retired by RFC-0254 in the same stage.
+5. **Row-based implementations, defined.** A row-based implementation is an impl whose target is a structural row
+   (`.{ R }`, `.{ .x: T, R }`). In v0.17.0 no nominal type matches one: only anonymous records do. An impl whose target
+   names a brand (`extend<..R> Session<R>: Describe where R: …`) is an ordinary nominal impl with a row-argument
+   condition, unaffected. The explicit opt-in for nominal types (RFC-0250, including section 0) is deferred.
+6. **The accepted break, enumerated (see Migration).** Std's record blankets for `Display`, `Clone` and `Copy`, and any
+   user blanket over `.{ ..R }`, stop applying to migrated records.
+7. **Derive authority.** Existing compiler derivations are unchanged. No new private-field authority ships; how a
+   selected derivation is chosen and what it may inspect is RFC-0250's general case together with RFC-0238.
+8. **Owners for what stays open.** Enums and variant rows: RFC-0210. Grants, provider selection and derivation
+   selection: RFC-0250. Opaque views: RFC-0251. Aspects on residuals: RFC-0214 and RFC-0217.
+9. **Spec work at integration.** Delete `spec.declarations.records`; amend the row-bounds rules (legality-1, -4, -7,
+   -10), the narrowing rules that cite record visibility, RFC-0137 section 3's worked example, and T0012's text
+   (E3).
 
 Five questions, answered independently by the options below.
 
@@ -262,8 +294,9 @@ e.add("run-1", 0.5);
 
 Under V1, `add` must take the whole `&var self`, which also borrows `label`.
 
-**E3. A better diagnostic (O2, O3).** T0012 stops saying "declare it as a record" and says that a field is private or not exposed, a
-local fix at the field.
+**E3. A better diagnostic (O2, O3).** T0012 stops saying "declare it as a record". Outside the declaring module it says the type
+has no public field `.user`, revealing nothing about private fields (RFC-0254 section 4); inside the module it may add that the
+field is private, a local fix at the field.
 
 **E4. Accidental conformance (O2).**
 
@@ -283,7 +316,8 @@ argument for keeping an opt-in.
 
 **E5. Adding a public field (O2).** A library adds `pub port: i64` to `Config { pub host: String }`. If two other libraries'
 blanket impls over `{ host }` and `{ port }` provide the same method name for *different* aspects, `cfg.describe()` becomes
-ambiguous in downstream code that did not change. For the *same* aspect the overlap should be rejected at the impls' definition,
+ambiguous in downstream code that did not change. Under an *exact* bound the effect runs the other way: a type that matched
+`T: .{ .host: String }` stops matching once `port` is public, so making a field `pub` can break callers. For the *same* aspect the overlap should be rejected at the impls' definition,
 whatever structs exist: the implemented row-conditional coherence rule rejects conditions that are not provably disjoint
 (RFC-0121 and `spec.types.generics.row-conditional-impls.legality-3`). The remaining hazard is a
 call-site ambiguity across aspects, resolved by a qualified call. Adding a *private* field is invisible outside the module.
@@ -333,7 +367,8 @@ never this form.
 record Handle { fd: i64, name: String }   →   struct Handle { pub fd: i64, pub name: String }
 ```
 
-Mechanical. Only the declaration kind goes away; `record` as a parameter kind (`<record T: …>`, RFC-0186) stays. Under O4 the exact
+Mechanical. This RFC retires the declaration kind; RFC-0254 retires `record` as a parameter kind (`<record T: …>`, RFC-0186) in
+the same stage. Under O4 the exact
 equivalent is `struct Handle { pub fd: i64, pub name: String } derives Exposed`, which changes no existing struct.
 
 ---
@@ -344,7 +379,8 @@ Stated so the discussion has a target. Points 1 and 3 are now decided (2026-11-2
 non-binding lean.
 
 1. **Bounds see the public row** (the bound half of O2). **Decided.** The caller passes the value explicitly, a bound only
-   reads fields already public, and adding a public field can only widen what satisfies a bound, so gating bounds buys little.
+   reads fields already public, so gating bounds buys little. Adding a public field widens what satisfies an open bound
+   and narrows what satisfies an exact one (E5).
 2. **Impl granting is per (type, aspect).** A predicate aspect (no methods) is granted through the colon list's checked
    `satisfying` entry, specified: RFC-0202 section 6. A by-reference-only aspect backed by an existing row-conditional
    impl is granted through `extend T: A using Name;`, always named: the narrow case is specified, RFC-0250 section 0,
@@ -354,7 +390,7 @@ non-binding lean.
 3. **Retire the `record` declaration kind.** **Decided.** A record is now a struct with public fields plus whatever grant
    mechanism applies — RFC-0202 section 6 for a predicate aspect, RFC-0250 section 0 for a behavior-bearing one, the rest
    of RFC-0250 for the general case. None of these grants ships in v0.17.0, so the retirement does not wait for them;
-   until one does, a handwritten impl is the only way back. The `record` parameter kind stays.
+   until one does, a handwritten impl is the only way back. The `record` parameter kind is retired by RFC-0254.
 4. **Opaque views (V2) with D1**, staged after reference rules and borrow checking, because they need disjointness reasoning.
 5. **`ToRecord` unchanged** (O6): convert when you want a different value, grant when you want the same one accepted.
 6. **Label namespacing later** (O7), in the label RFCs. It composes with the above: adoption only narrows what a field matches.
@@ -374,9 +410,20 @@ section is deleted.
 plain aspect's blanket row-conditional impl loses that implementation when it becomes a struct, and v0.17.0 offers no
 grant to restore it (RFC-0250 section 0 is deferred). v0.17.0 ships no migration tool (language owner, 2026-11-28):
 the rewrite is done by hand, and the loss is a documented breaking change in the release notes. The author restores
-the behavior with a handwritten `extend X: A { … }`, or leaves it lost. Anonymous records are unaffected: they keep matching blanket impls automatically. Under O4 a record becomes `struct … derives Exposed`. `Copy` is already `declared` (RFC-0212), so any type —
-record or struct — already needs a header entry (`derives Clone`/`copy struct`) for it today, independent of this RFC; a migrated
-record needing the same entry is nothing new. Existing structs start satisfying bounds under O2 and O3; under O1
+the behavior with a handwritten `extend X: A { … }`, or leaves it lost. Anonymous records are unaffected: they keep matching blanket impls automatically.
+
+Std gives every named record three aspects through blankets today (`stdlib/core.mtl`: `extend<record R> .{ ..R }: Display`,
+`: Clone` and `: Copy`, each where every field has the aspect). After retirement none applies to a migrated struct. The
+release notes list each with its remedy:
+
+| Lost blanket | Remedy on the migrated struct |
+|---|---|
+| `Display` | a handwritten `extend X: Display { … }` (no derivation exists) |
+| `Clone` | `derives Clone` |
+| `Copy` | `copy struct` (with `derives Clone`) |
+
+The blankets themselves stay for anonymous records, respelled with RFC-0208's binder (RFC-0254 section 3). Under O4 a
+record would become `struct … derives Exposed`. Existing structs start satisfying bounds under O2 and O3; under O1
 and O4 they do not.
 
 ## Interactions
@@ -384,16 +431,20 @@ and O4 they do not.
 - **RFC-0120** (implemented): superseded in part by O2, O3 or O4 (the kind goes; the capability moves).
 - **RFC-0137** (integrated): section 3's eligibility becomes a property of the public (or exposed) row instead of a brand flag. Its
   worked example (`h.{ .fd, .name }` rejected "because if it satisfied the bound, declaring `record` would buy nothing") describes the
-  outcome O2 accepts. Residuals: whether a narrowed residual's public row is the intersection with the narrowing is open.
-- **RFC-0109** section 8: V2 is its open "opacity" question. Self-view narrowing never crosses the module boundary, so it is unaffected.
+  outcome O2 accepts. Residuals: a narrowed residual's public row is its present fields intersected with the brand's public
+  fields (open question 5).
+- **RFC-0109** section 8: V2 is its open "opacity" question. Self-view narrowing never crosses the module boundary, and `Self`
+  residuals see the full row (Settled design, point 2), so it is unaffected.
 - **RFC-0209** (superseded by this RFC and RFC-0250): originally the per-aspect gate O3 was framed on; O3's actual
   mechanism no longer needs it. Its open question 4 (a template reading fields the module keeps private) lapsed with it
-  and is unowned — it would resurface if RFC-0250's general case ever needs private-field authority.
-- **RFC-0119** (accepted): unchanged under every option except O6 B.
+  and moves to RFC-0250's general case, the only design that could need private-field authority.
+- **RFC-0119** (accepted): unchanged under every option except O6 B, with one lapse: RFC-0120 section 1 gave record types
+  `to_record`/`from_record` "for free" as tier 3, which lapses with the kind (on paper only; it was never implemented).
 - **RFC-0121, RFC-0060**: row-conditional impls and their coherence; O3 narrows the first, and the same-aspect overlap check in E5
   depends on the second.
-- **RFC-0202**: tuple structs with public numeric fields satisfy `Tuple` and `Dense` directly under O2 and O3, via section
-  6's colon-list `satisfying` entry — the predicate-aspect half of O3's spelling.
+- **RFC-0202**: shape predicates (`Tuple`, `Dense`) are not granted ambiently to nominal types in v0.17.0. A tuple struct would
+  receive them only through section 6's colon-list `satisfying` entry, which is not in this release. A tuple struct with a
+  private `.2` has a public row `.0, .1` that must not read as a closed `Tuple` (RFC-0151 section 5a).
 - **RFC-0250**: section 0's `extend T: A using Name;` is O3's spelling for a by-reference-only plain aspect backed by an
   existing row-conditional impl, always named; this RFC's migration gap is its motivating example. Deferred from v0.17.0
   (2026-11-28), so the gap ships open (see Migration).
@@ -401,7 +452,8 @@ and O4 they do not.
   what RFC-0202's `satisfying` refines for the predicate-aspect case above.
 - **RFC-0221, RFC-0188, RFC-0175**: the dotted-label rule (bare members versus row labels) supports "a struct's fields are not labels
   until projected through the exposed row"; O7 lives here.
-- **RFC-0186, RFC-0192, RFC-0208**: the `record` and `..R` parameter kinds, unchanged.
+- **RFC-0186, RFC-0192, RFC-0208**: the `record` parameter kind is retired by RFC-0254, replaced by RFC-0208's `<..R>`
+  binder; both land in the same stage as this RFC.
 - **RFC-0116, RFC-0225**: anonymous records keep matching every template.
 - **RFC-0151**: tuples as rows; tuple structs.
 - **RFC-0241** section 7.3 and 7.9: one nominal-with-row kind in Core; opaque views as abstract places are the worked example for
@@ -422,7 +474,8 @@ and O4 they do not.
 ## Risks
 
 - **Accidental conformance** is the real semantic cost of dropping the opt-in for impls (E4). O3, O4, O5 and O7 each address it.
-- **Public fields become a matching contract** under O2 and O3: adding one is visible to bounds. It is bounded and explicit (E5).
+- **Public fields become a matching contract** under O2 and O3: adding one is visible to bounds, and breaks callers that use an
+  exact bound. It is bounded and explicit (E5).
 - **Two visibility axes** (access versus matching) under O4, and a per-(type, aspect) axis under O3's actual mechanism
   (RFC-0202 section 6, RFC-0250 section 0).
 - **Opaque views need a place algebra** the borrow checker does not have yet.

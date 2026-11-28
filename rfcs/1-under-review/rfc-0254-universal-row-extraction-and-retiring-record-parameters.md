@@ -52,7 +52,7 @@ For ordinary structural matching and extraction, the row is module-independent:
 | Function type (`\|A, B\| -> R`, `dyn Callable<..>`) | Empty; never the parameter row (see below) |
 | `Never` | Empty, vacuously: no value exists to have fields |
 | Aspect object (`dyn A`) | Empty; the underlying type is erased, nothing to read statically |
-| Type parameter or associated type not yet instantiated | Symbolic: an opaque row whose known fields are exactly those its structural bounds state; never equal to any concrete row, including the empty one (Cluster reconciliation below) |
+| Type parameter or associated type not yet instantiated | Symbolic, determined by its bounds: equal to the stated row under an exact bound, the stated fields plus an opaque remainder under an open bound, fully opaque with no structural bound (Cluster reconciliation below) |
 
 **The classification is total, by one governing principle (language owner, 2026-11-26), not a list of unrelated
 special cases:** a type's extracted row is the maximal set of (label, type) pairs *statically* known, at the point
@@ -126,8 +126,8 @@ other public fields. Matching a bound preserves `T` and does not convert its val
 An ordinary `T` can occur as a type and `..T` denotes its extracted row. A row-only
 parameter `R` declared by `<..R>` denotes fields directly and is used as `R` in row
 positions, as proposed by RFC-0208. Field-wise bounds over a *concrete* empty row hold
-vacuously (a primitive, an array, an enum's ordinary row); over a symbolic row nothing holds
-vacuously, and a field-wise bound must be stated. Either way `where ..T: A` alone does not assert `T: A`. A function using only such a bound
+vacuously (a primitive, an array, an enum's ordinary row); over a symbolic row only what its bounds
+state holds (Cluster reconciliation), so a field-wise bound must be stated. Either way `where ..T: A` alone does not assert `T: A`. A function using only such a bound
 must not invoke an `A` method on `T` itself without a separate `T: A` bound. A negative
 field-wise bound (`where ..T: !A`) is vacuously true over an empty row by the same logic.
 
@@ -147,6 +147,25 @@ no-entry, module-independent grant mechanism, exactly where a public/private mis
 implemented by reusing universal extraction instead of a dedicated full-field check. This is a constraint for
 `auto`'s still-deferred structural rule to honor, not a bug in anything currently specified.
 
+**What a structural bound on `T` permits (language owner, 2026-11-28).** A bound such as
+`T: .{ .name: String, .. }` grants reading and borrowing the stated fields, and by-value use only of
+fields whose types are Copy. It never moves a field out of a `T`: `T` may be a reference (`..&Point` is
+`..Point`, section 1), a type with `Drop`, or a type with private linear state, and the body is checked once
+(RFC-0173), not per instantiation. A record pattern against a value of type `T` always needs `..`, even
+under an exact bound, and the remainder keeps the brand with its `Drop` and linearity obligations: an exact
+public row says nothing about private state, so a pattern naming every *public* field is not exhaustive.
+Code that moves fields uses a row binder, `<..R>` with `.{ R }`, whose values are anonymous records.
+
+```metel
+fun take<T: .{ .name: String, .. }>(v: T) -> String { v.name }   // error: moves a field out of `T`
+fun peek<T: .{ .name: String, .. }>(v: &T) -> &String { &v.name }  // OK: borrow
+fun vanish<T: .{}>(t: T) { let .{} := t; }                       // error: a pattern against `T` needs `..`
+fun take_row<..R>(v: .{ .name: String, R }) -> String { v.name }  // OK: an anonymous record, moved whole
+```
+
+This amends `spec.types.generics.row-bounds.legality-7` (a closed bound no longer makes `..` optional when the
+matched type is a type parameter) at integration.
+
 A bound and a row literal use the syntax of RFC-0208. The `record T` binder is removed
 as a distinct generic kind; the declaration kind's retirement is RFC-0243. A plain type
 parameter's ordinary well-formedness and kind rules still apply. Type-level extraction
@@ -165,6 +184,8 @@ anything else means extraction of the identifier that follows. RFC-0208's own op
 already resolved the one case that could have reopened this: numeric-row packs (RFC-0151) use the same row kind
 as everything else, not a separate pack-spread form in type position, so there is no fifth form left to
 disambiguate against.
+
+### 2a. Inference, coherence and resolution
 
 **Resolved (language owner, 2026-11-26).** Most of this collapses to one fact: `..T` is a *derived, one-way
 projection* of an already-determined `T`, computed after the fact from the classification table (section 1) — it
@@ -187,20 +208,28 @@ unchanged machinery.
   covered above.
 - **Field-wise aspect constraints** (`where ..R: A`, RFC-0123) keep their existing, already-implemented rule;
   this RFC only widens which types may supply `R` via `..T` — from `record T` only to every `T`.
-- **The one real consequence is overload resolution at existing call sites, already named in section 3's
-  migration text below, not a new rule to invent.** Because `..T` now type-checks for every `T` rather than being
-  a kind error for a non-`record` type, a call site that used to have exactly one eligible overload can gain a
-  second one after migration (one candidate's `..T`-involving bound now also type-checks for an argument it
-  previously didn't). This needs no new disambiguation rule: existing overload resolution already picks the most
-  specific match or reports ambiguity, and a newly-ambiguous call site surfaces as a loud compile error, not a
-  silent behavior change — consistent with migration being "not necessarily behavior-preserving," below, rather
-  than silently unsound.
+- **Overloads are unaffected (corrected 2026-11-28).** Overloaded functions must be non-generic and are
+  resolved by exact match (`metel-frontend` overload resolution; the spec has no specificity rule), so no
+  candidate whose signature mentions `..T` can join an overload set, and extraction cannot change which overload
+  a call selects. Inside a generic body, selection is fixed when the body is checked (RFC-0255). The earlier
+  claim that migration could add a second eligible overload was wrong; the real migration consequences are in
+  section 3.
+- **A type parameter that occurs only under `..` is an error (2026-11-28).** Since `..T` is never an inference
+  source, a parameter used only as `..T` in an `extend` target or in every value-parameter type could never be
+  determined: `extend<T> .{ ..T }: Size` would let its methods observe which of the many types sharing that row
+  was chosen. Such a parameter is rejected, with the suggestion `<..R>` (a row binder, determined by its row).
 
 ## 3. Migration
 
-A candidate migration changes `<record T>` to `<T>` when `T` denotes a type, and its
-existing row uses to `..T`. A parameter used only as a row may instead become `<..R>`
-with bare `R` uses under RFC-0208. Existing code that depended on the old eligibility
+The default rewrite is `<record T>` to `<..R>`, with `.{ R }` for every use of the parameter as a type
+and bare `R` for its row uses (RFC-0208): this keeps what `record T` provided, an anonymous record that
+blanket row impls match and that may be moved and spread freely. `<T>` with `..T` is the rewrite only where
+the code needs the argument's brand kept (for example a function returning the same nominal type it was
+given), and then the bound rules above apply: no moves out of `T`, and no anonymous-record blanket impl
+matches a nominal `T` (RFC-0243). Two things `<record T>` gave have no `<T>` form: implicit brand-forgetting
+(`fun both<record R: …>(p: R) -> .{ ..R } { p }`) and matching anonymous-record blanket impls; both need
+`<..R>`. Std's blankets `extend<record R> .{ ..R }: Display/Clone/Copy` become
+`extend<..R> .{ R }: … where R: …`. The `where record T: …` constraint form is retired with the binder. Existing code that depended on the old eligibility
 restriction can accept more instantiations; migration is not necessarily behavior-preserving.
 Audit constraints, overloads, explicit arguments, method resolution and public generic
 interfaces before choosing a mechanical rewrite. Row-based implementations for nominal
@@ -216,8 +245,8 @@ fun count<T>(value: &T) -> i64 { … }
 **Resolved (language owner, 2026-11-26): no staged migration and no compatibility predicate.** Metel has no
 active external users yet, so there is no existing API surface this RFC must keep accepting under the old
 binder. `<record T>` retires outright: every use in std and the test suite is rewritten directly, as above, and
-`<record T>` left in source after integration is a parse/compile error naming the replacement spelling (`<T>`
-where `T` is used as a type, `<..R>` where it is used only as a row) — a clean cutover, not a deprecation window.
+`<record T>` (or `where record T: …`) left in source after integration is a compile error suggesting `<..R>`
+with `.{ R }`, and `<T>` only where the brand must be kept — a clean cutover, not a deprecation window.
 No deprecated spelling, no transition period, no tooling beyond the mechanical rewrite itself. This also answers
 open question 2 directly: there is no "old eligibility" to preserve for any API, because there is no API this
 RFC is obligated to keep compiling.
@@ -234,6 +263,9 @@ that loss itself.
 
 ## 3a. Opacity, aliases, separate compilation and private representation
 
+**Opacity.** An opaque type or opaque view (RFC-0109 V2, owned by RFC-0251) extracts only its public
+structural contract (RFC-0255), never the private fields behind it; RFC-0251 defines what that contract is.
+
 **Resolved (language owner, 2026-11-26).** Each of the four named interactions turns out to need no new rule,
 because extraction's two defining properties — public-only, and module-independent (section 1) — already supply
 the answer:
@@ -242,10 +274,9 @@ the answer:
   names, so `..Alias<T>` extracts exactly what `..T` does — nothing alias-specific to add. For an alias to a
   *residual* that retains a private field in its own row (RFC-0253's subject), extraction still only ever sees
   public fields, by section 1's own rule, regardless of what the alias's definition happens to name — the alias
-  being legal to declare with a private field in it (RFC-0253's finding: declaration and access are different
-  operations) has no bearing here, because extraction was already excluding private fields before any alias
-  entered the picture. There is no way to "leak" a field through an alias that extraction wasn't already going
-  to exclude.
+  being legal to declare with a private field in it has no bearing here: outside the field's module such an
+  alias cannot even be named (RFC-0253, visibility follows expansion), and extraction excludes private fields
+  regardless. There is no way to "leak" a field through an alias.
 - **Separate compilation.** Extraction is defined as module-independent (section 1): its result depends only on
   a type's own declaration, never on which module or crate is doing the extracting. A downstream crate computing
   `..T` for an upstream type gets the same answer the upstream crate itself would. This introduces no new
@@ -282,8 +313,9 @@ inventories require a separately defined operation. Proposed variant types expos
   anonymous-row blankets must not silently grant aspects to nominal types under the
   deferred nominal-implementation design. Checked (2026-11-28): impl matching never reads
   the extracted row (section 2a), so primitives, references and enums gain no
-  row-conditional impl from their extracted rows; only anonymous records are candidates
-  in v0.17.0 (RFC-0243).
+  row-conditional impl from their extracted rows. In v0.17.0 only anonymous records match
+  an impl whose target is a structural row (RFC-0243's definition); impls whose target
+  names a brand (`Session<R>`) are ordinary nominal impls, unaffected.
 - **RFC-0214 / RFC-0217:** nominal row implementations and residual aspect behavior stay open (RFC-0209, their
   own basis, is superseded with no successor yet); extraction and a vacuous field-wise bound do not settle them
   either way.
@@ -291,9 +323,9 @@ inventories require a separately defined operation. Proposed variant types expos
   Callable<ROW, R>`. Extraction deliberately never reaches it (section 1) — the two row concepts, a type's own
   fields and a callable's call signature, stay disjoint through this operation.
 - **RFC-0253:** generic nominal residual projections retain their instantiated brand and may include row-kind
-  arguments. Privacy and substitution are settled (section 3a) by reusing RFC-0253's own adversarial-pass
-  finding directly: declaring an alias that retains a private field is legal wherever that field is visible;
-  accessing it — through extraction or otherwise — is what ordinary visibility rejects.
+  arguments. Visibility is checked on the expanded type (RFC-0253, 2026-11-28): an alias that retains a private
+  field is legal to declare where the field is visible and cannot be named elsewhere; extraction of any residual
+  sees only its public fields (section 3a).
 - **References and ownership:** shape bounds and `..T` follow ordinary field
   auto-dereference. Field-wise obligations apply to the selected fields’ types.
   Borrowing, Drop, linearity and whole-type aspect lookup follow their own rules.
@@ -308,22 +340,35 @@ every variant payload. RFC-0208 supplies field-row binders, not yet a variant-in
 binder.
 
 **Resolved (language owner, 2026-11-28): an abstract type's extracted row is symbolic, not empty.** For a type
-parameter or an associated type `T` whose instantiation is not yet known, `..T` is an opaque row, written here
-`ρ(T)`. Its known part is exactly the fields its structural bounds state, at their stated types. No other field
-can be selected through it. It is never equal to any concrete row, the empty row included. "No fields are statically
-known" is not proof that the eventual concrete row is empty, so the earlier classification (Empty) is withdrawn.
+parameter or an associated type `T` whose instantiation is not yet known, `..T` is a symbolic row, written here
+`ρ(T)`, determined by `T`'s bounds, as RFC-0255's table already states:
 
-1. **Bounds are stated, never derived from emptiness.** An exact bound (`T: .{}`, `T: .{ .id: i32 }`) or a
-   field-wise bound (`where ..T: A`) holds for an abstract `T` only when its own bounds state it or imply it.
-   Vacuous truth applies only after substitution, to a concrete empty row.
-2. **Resolution inside a generic body.** A requirement that is not provable from `ρ(T)` is unsatisfied. An
-   overload or bound check never treats it as satisfied by an assumed empty row, so a body cannot pick a
-   candidate that its instantiation would reject.
+| `T`'s structural bounds | `ρ(T)` |
+|---|---|
+| Exact, `T: .{ .id: i32 }` | Equal to the stated row |
+| Open, `T: .{ .id: i32, .. }` | The stated fields plus an opaque remainder |
+| None | Fully opaque |
+
+Absence facts (`T: !{ .token }`) and the combination of several bounds are part of what is known, so
+`.{ .token: i64, ..T }` is well-formed when `.token` is provably absent (RFC-0208). An associated type is
+normalized before extraction (`..T::Target` under `T: Deref<Target = Point>` is `..Point`, concrete). "No
+fields are statically known" is not proof that the eventual concrete row is empty, so the earlier
+classification (Empty) is withdrawn.
+
+1. **Bounds are stated, never derived from emptiness.** An exact bound or a field-wise bound
+   (`where ..T: A`) holds for an abstract `T` only when its own bounds state it or imply it. Vacuous truth
+   applies to a concrete empty row, or to an exact bound that states the empty row.
+2. **Resolution inside a generic body.** A requirement that is not provable from `ρ(T)` is unsatisfied. A bound
+   check never treats it as satisfied by an assumed empty row, so a body cannot rely on a fact its
+   instantiation would contradict.
 3. **Substitution.** At an instantiation `T := U`, `ρ(T)` becomes `..U` as computed by section 1's table. The
-   caller discharges each stated bound against `..U` at the call site; the generic body is checked once,
-   against its declared bounds (RFC-0173), and is not rechecked per instantiation.
-4. **Equality.** Two symbolic rows are equal only when they are the same parameter's row. `ρ(T)` never unifies
-   with a concrete row or with another parameter's row.
+   caller discharges each stated bound against `..U` at the call site; a structural bound on an associated-type
+   declaration (`type Item: .{ .id: i32, .. }`) is discharged at the impl that binds it. The generic body is
+   checked once, against its declared bounds (RFC-0173), and is not rechecked per instantiation.
+4. **Equality**, following `spec.types.generics.rigid-type-parameters.legality-1`: `ρ(T)` is equal only to
+   itself or to a row that the bounds state it equals: an exact bound, a row equation
+   (`where R = .{ .label: Type, ..Rest }`) or an associated-type binding. It never unifies with a concrete row
+   or another parameter's row in any other way.
 5. **References.** `..&T` and `..&var T` are `ρ(T)` while `T` is abstract (the 2026-11-27 reference rule,
    section 1, applies unchanged).
 6. **Separate compilation.** `ρ(T)` appears only in the generic's own checked signature and body. A downstream
@@ -347,7 +392,8 @@ Under the withdrawn rule, `g` would have type-checked by assuming `..T = .{}` an
 
 1. **Resolved (language owner, 2026-11-26), section 1.** Every type now has a classification, by one governing
    principle rather than a list of special cases; none is excluded from universal extraction (every category
-   gets an answer, some uniformly Empty). A generic body knows exactly its type parameter's or associated
+   gets an answer: concrete types some uniformly Empty, abstract types a symbolic row, open question 8). A
+   generic body knows exactly its type parameter's or associated
    type's stated bound, nothing more — the same parametricity discipline RFC-0146's lower-bounded row receiver
    already uses. The function-type case surfaced a real, same-release collision risk with RFC-0232, now named
    explicitly (section 1, section 4) rather than left to be discovered later.
@@ -356,9 +402,8 @@ Under the withdrawn rule, `g` would have type-checked by assuming `..T = .{}` an
    binder. `<record T>` retires outright; left-over uses are a compile error naming the replacement.
 3. **Resolved (language owner, 2026-11-26), section 2a.** `..T` is a derived, one-way projection and never a
    source for inference, impl matching or coherence; those stay governed entirely by their own existing rules
-   (RFC-0121, RFC-0060, RFC-0123, RFC-0243). The one real consequence is overload resolution at existing call
-   sites gaining newly-eligible candidates after migration — already named in section 3, caught loudly by
-   existing ambiguity detection, not a silent risk needing a new rule.
+   (RFC-0121, RFC-0060, RFC-0123, RFC-0243). Overloads are non-generic and exact-match, so extraction cannot
+   change overload selection (corrected 2026-11-28); a type parameter that occurs only under `..` is an error.
 4. **Resolved (language owner, 2026-11-26), section 3a.** Each of the four interactions resolves from
    extraction's own two defining properties (public-only, module-independent) rather than needing a new rule:
    aliases can't leak what extraction already excludes; separate compilation sees the same answer everywhere by
@@ -379,8 +424,9 @@ Under the withdrawn rule, `g` would have type-checked by assuming `..T = .{}` an
    automatic nominal row implementations" is RFC-0243's concern (a different declaration kind), not this RFC's.
 
 8. **Resolved (language owner, 2026-11-28), Cluster reconciliation.** An abstract type's extracted row is
-   symbolic, not empty: its known part is its stated bounds, it is never equal to a concrete row, and bounds
-   over it are stated rather than derived. This was the last question blocking acceptance.
+   symbolic, not empty: it is determined by its bounds (exact, open or none, with absence facts), equal only to
+   what those bounds state, and bounds over it are stated rather than derived. A structural bound grants reading
+   and borrowing, never moves (section 2). This was the last question blocking acceptance.
 
 ## Decision
 
