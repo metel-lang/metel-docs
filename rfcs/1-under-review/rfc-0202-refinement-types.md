@@ -3,7 +3,7 @@ id: rfc-0202
 title: "Predicates and Refinement Types"
 date: '2026-11-01'
 status: under-review
-updated: '2026-11-26'
+updated: '2026-11-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2098'
 ---
 
@@ -279,7 +279,8 @@ already states; a `satisfying` aspect has no deriver to register, and this secti
 **This section does not close RFC-0243's migration gap.** A struct migrated from a `record` that automatically matched a
 plain aspect's *blanket impl* — real behavior, not a fact — needs RFC-0250's `extend T: A using Name;`, always named, never
 bare. That belongs there: this section is for facts with no body; RFC-0250's mechanism is for adopting someone else's body
-by explicit reference.
+by explicit reference. RFC-0250 section 0 is deferred from v0.17.0 (2026-11-28), so until it ships the gap is accepted,
+not closed (RFC-0243, Migration).
 
 ---
 
@@ -294,8 +295,8 @@ by explicit reference.
   predicate aspect has no impl, named or otherwise.
 - **RFC-0137 / RFC-0243:** section 6 touches RFC-0137's rule that a struct never satisfies a row bound without an explicit
   entry. RFC-0243's migration gap (named records losing an automatic plain-aspect *blanket impl* on retirement) motivated
-  this section's design but is closed by RFC-0250's `using Name`, not by section 6 — section 6 only ever grants a fact with
-  no body.
+  this section's design but would be closed by RFC-0250's `using Name` (deferred from v0.17.0, 2026-11-28), not by
+  section 6 — section 6 only ever grants a fact with no body.
 - **RFC-0212:** section 1's `declared` is the property `satisfying` refines (section 6); both keywords are required,
   explicitly, on the aspect's own declaration, and `declared`'s existing "`extend` is an error" rule is what section 6
   relies on rather than restating.

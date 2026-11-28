@@ -2,7 +2,7 @@
 id: rfc-registry
 title: "RFC Registry"
 type: registry
-generated_on: '2026-11-27'
+generated_on: '2026-11-28'
 ---
 
 # RFC Registry
@@ -104,7 +104,7 @@ the curated thematic map.
 - **RFC-0194** — Linear Closures and Captures (`1-under-review` ; rfcs/1-under-review/rfc-0194-linear-closures-and-captures.md ; date 2026-10-29 ; updated 2026-10-29)
 - **RFC-0197** — Generic Closures (`1-under-review` ; rfcs/1-under-review/rfc-0197-generic-closures.md ; date 2026-10-30 ; updated 2026-10-30)
 - **RFC-0198** — Recursive Closures (`1-under-review` ; rfcs/1-under-review/rfc-0198-recursive-closures.md ; date 2026-10-30 ; updated 2026-10-30)
-- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-26)
+- **RFC-0202** — Predicates and Refinement Types (`1-under-review` ; rfcs/1-under-review/rfc-0202-refinement-types.md ; date 2026-11-01 ; updated 2026-11-28)
 - **RFC-0204** — Pipelines and Function Composition (`1-under-review` ; rfcs/1-under-review/rfc-0204-pipelines-and-function-composition.md ; date 2026-11-01 ; updated 2026-11-01)
 - **RFC-0205** — Hole Sections and Operator Functions (`1-under-review` ; rfcs/1-under-review/rfc-0205-hole-sections-and-operator-functions.md ; date 2026-11-01 ; updated 2026-11-22)
 - **RFC-0208** — Row-Only Generic Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0208-row-only-generic-parameters.md ; date 2026-11-02 ; updated 2026-11-26)
@@ -118,13 +118,13 @@ the curated thematic map.
 - **RFC-0238** — Derivation Registration (`1-under-review` ; rfcs/1-under-review/rfc-0238-derivation-registration.md ; date 2026-11-16 ; updated 2026-11-26)
 - **RFC-0240** — Spelling of Written Function Types (`1-under-review` ; rfcs/1-under-review/rfc-0240-spelling-of-written-function-types.md ; date 2026-11-16 ; updated 2026-11-22)
 - **RFC-0241** — Metel-Core: A Formal Semantic Foundation for Metel (`1-under-review` ; rfcs/1-under-review/rfc-0241-metel-core-a-formal-semantic-foundation-for-metel.md ; date 2026-11-17 ; updated 2026-11-20)
-- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-26)
+- **RFC-0243** — Row Visibility Follows Field Visibility: Retiring the Named Record Kind (`1-under-review` ; rfcs/1-under-review/rfc-0243-row-visibility-follows-field-visibility-retiring-the-named-record-kind.md ; date 2026-11-19 ; updated 2026-11-28)
 - **RFC-0246** — Derivation arguments: the flow parameter, mixed arguments and the computed rest (`1-under-review` ; rfcs/1-under-review/rfc-0246-derivation-arguments-the-flow-parameter-mixed-arguments-and-the-computed-rest.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0247** — Variadic parameters (`1-under-review` ; rfcs/1-under-review/rfc-0247-variadic-parameters.md ; date 2026-11-23 ; updated 2026-11-23)
 - **RFC-0248** — Default parameter values and the rest marker (`1-under-review` ; rfcs/1-under-review/rfc-0248-default-parameter-values-and-the-rest-marker.md ; date 2026-11-24 ; updated 2026-11-24)
-- **RFC-0250** — Named Extend Blocks (`1-under-review` ; rfcs/1-under-review/rfc-0250-named-extend-blocks.md ; date 2026-11-25 ; updated 2026-11-26)
+- **RFC-0250** — Named Extend Blocks (`1-under-review` ; rfcs/1-under-review/rfc-0250-named-extend-blocks.md ; date 2026-11-25 ; updated 2026-11-28)
 - **RFC-0253** — Generic Targets in Residual Type Projections (`1-under-review` ; rfcs/1-under-review/rfc-0253-generic-targets-in-residual-type-projections.md ; date 2026-11-25 ; updated 2026-11-26)
-- **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-27)
+- **RFC-0254** — Universal Row Extraction and Retiring Record Parameters (`1-under-review` ; rfcs/1-under-review/rfc-0254-universal-row-extraction-and-retiring-record-parameters.md ; date 2026-11-25 ; updated 2026-11-28)
 - **RFC-0255** — Row Sections: Shared Extraction and Contextual Field Assembly (`1-under-review` ; rfcs/1-under-review/rfc-0255-row-sections-shared-extraction-and-contextual-field-assembly.md ; date 2026-11-27 ; updated 2026-11-27)
 - **RFC-0256** — Whole-Row Argument Expansion at Ordinary Calls (`1-under-review` ; rfcs/1-under-review/rfc-0256-whole-row-argument-expansion-at-ordinary-calls.md ; date 2026-11-27 ; updated 2026-11-27)
 
