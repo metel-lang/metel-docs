@@ -3,7 +3,7 @@ id: rfc-0208
 title: "Row-Only Generic Parameters"
 date: '2026-11-02'
 status: under-review
-updated: '2026-11-26'
+updated: '2026-11-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/1789'
 ---
 
@@ -40,8 +40,9 @@ extend<..R> .{ R }: Display where R: Display { … }
 4. Extraction observes the same visibility as the operation that made the row available.
    Under RFC-0243's public-row option, matching a public bound against a residual exposes
    only its present public fields. Binding a remainder cannot reveal private fields.
-5. RFC-0186's existing `<record T>` can still bind a record type and extract its row with
-   `..T`. No conversion of existing declarations is required. Row parameters are erased.
+5. RFC-0186's `<record T>` is retired by RFC-0254, in the same v0.17.0 stage as this
+   binder (2026-11-28): existing declarations are rewritten to `<..R>` with `.{ R }`, or to
+   `<T>` with `..T` where the brand must be kept. Row parameters are erased.
 6. A row parameter may carry a structural bound at its binder or in a `where` clause.
    `<..R: .{ .id: i32, .. }>` and `<..R> ... where R: .{ .id: i32, .. }` impose
    the same requirement. A closed bound is exact and `..` allows additional fields.
@@ -54,9 +55,9 @@ extend<..R> .{ R }: Display where R: Display { … }
    Explicit type-argument application spelling follows RFC-0192; this example is
    illustrative until its interaction with row arguments is integrated.
 
-RFC-0254 proposes retiring `record T` and making `..T` available for every type.
-Until that proposal is integrated, references here to existing `record T` describe the
-current language, not the intended end state.
+RFC-0254 retires `record T` and makes `..T` available for every type; both land with this
+binder's shared slice in the stage "Row visibility and named records" (2026-11-28).
+References here to `record T` describe the language before that stage.
 
 ## Enum interaction
 
@@ -90,7 +91,8 @@ the declaration of the parameter to suggest the correct spelling.
 
 ## Relationship to existing RFCs
 
-- **RFC-0186** — amended additively. It stays implemented; `record R` is unchanged.
+- **RFC-0186** — amended: `record R` is retired by RFC-0254 in the same stage, and this
+  binder is its replacement for row uses.
 - **RFC-0121 / RFC-0123** — open rows and field-wise constraints, the origin of `..R` and
   `where ..R: A`.
 - **RFC-0125** — positional operations over numeric rows.

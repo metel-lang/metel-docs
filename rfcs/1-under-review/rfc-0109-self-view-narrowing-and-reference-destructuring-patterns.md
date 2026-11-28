@@ -3,7 +3,7 @@ id: rfc-0109
 title: "Self-View Narrowing"
 date: '2026-07-18'
 status: under-review
-updated: '2026-11-25'
+updated: '2026-11-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/842'
 ---
 
@@ -481,7 +481,11 @@ should also be composable per-field as Niko proposes, is open for this RFC.
 6. **Generic view targets** — included (language owner, 2026-11-25). Each view
    instantiation names the corresponding instantiated residual; exact syntax and
    bound checking need integration review. RFC-0253 owns generic residual projection
-   types and their use in transparent aliases.
+   types and their use in transparent aliases. Open, moved here from RFC-0253 (2026-11-28):
+   should a generic named view keep dedicated sugar (`view Value<T> for Box<T> { value }`),
+   or be written only as a transparent alias (`type Value<T> := Box<T>.{ .value };`)? The
+   capability is the same either way; this is a surface decision, and it does not block
+   RFC-0253.
 7. **Nested and mixed receivers** are in scope (§6). The working single-field form is
    `&Self.{ .label }`, a reference to a branded one-field residual (language owner,
    2026-11-25). Loan compatibility is checked pairwise over all leaves, independent of
