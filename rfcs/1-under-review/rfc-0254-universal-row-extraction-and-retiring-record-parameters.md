@@ -3,7 +3,7 @@ id: rfc-0254
 title: "Universal Row Extraction and Retiring Record Parameters"
 date: '2026-11-25'
 status: under-review
-updated: '2026-11-27'
+updated: '2026-11-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2195'
 ---
 
@@ -179,7 +179,8 @@ unchanged machinery.
   (`where ..T: A`); it is never itself the thing an impl is matched against. A primitive's or `Never`'s empty
   extracted row does not make it eligible for row-conditional impl matching — that eligibility was never keyed
   on the extracted row to begin with; only a record, or a nominal type that has explicitly opted in (RFC-0202
-  section 6, RFC-0250 section 0), is ever a candidate.
+  section 6, RFC-0250 section 0), is ever a candidate. Both opt-in grants are deferred from v0.17.0
+  (RFC-0243, 2026-11-28), so in v0.17.0 no nominal type is a candidate.
 - **Negative bounds** (`T: !A`) are about `T` itself, unaffected by extraction directly; the field-wise case is
   covered above.
 - **Field-wise aspect constraints** (`where ..R: A`, RFC-0123) keep their existing, already-implemented rule;
@@ -225,7 +226,8 @@ new syntax exercising section 1's classification and section 2a's findings, plus
 `<record T>` is a compile error naming its replacement. "The deliberate loss of automatic nominal row
 implementations after record retirement" is RFC-0243's concern, not this RFC's — RFC-0243 retires the `record`
 *declaration* kind (a different thing from this RFC's `record T` *parameter* kind) and already has its own
-migration story and bridge mechanism (RFC-0202 section 6, RFC-0250 section 0); this RFC does not need to fixture
+migration story and an eventual bridge mechanism (RFC-0202 section 6, RFC-0250 section 0, both deferred from
+v0.17.0); this RFC does not need to fixture
 that loss itself.
 
 ## 3a. Opacity, aliases, separate compilation and private representation

@@ -3,11 +3,11 @@ id: rfc-0250
 title: "Named Extend Blocks"
 date: '2026-11-25'
 status: under-review
-updated: '2026-11-26'
+updated: '2026-11-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2196'
 ---
 
-> **Status — under review (2026-11-26).** Section 0's migration-naming slice is decided and committed to closing RFC-0243's migration gap in v0.17.0
+> **Status — under review (2026-11-26).** Section 0's migration-naming slice is decided. It was committed to closing RFC-0243's migration gap in v0.17.0, then deferred (language owner, 2026-11-28): v0.17.0 retires the `record` kind without it, and the slice moves to the Surface settlement theme with no release commitment
 
 ## Summary
 
@@ -38,7 +38,8 @@ provider's row requirements must hold and its body is checked.
 
 **A minimal slice of this is decided (language owner, 2026-11-26): section 0.** It closes RFC-0243's migration gap — a
 struct migrated from a `record` regaining a plain aspect's lost blanket match — without settling this RFC's general
-provider-selection design. Everything else here (multiple providers, label mapping, comptime provider values, residual
+provider-selection design. It is deferred from v0.17.0 (language owner, 2026-11-28): the decision stands, but v0.17.0
+retires the `record` kind and accepts the gap, and the slice is implemented later. Everything else here (multiple providers, label mapping, comptime provider values, residual
 selection, interaction with derived `Clone`, the active-vs-inactive-blanket question) remains undecided, a design draft.
 
 ## 0. The decided slice: migration naming
@@ -69,7 +70,9 @@ impl of `A`.
 - **Migration mechanics.** For each existing `record` with a plain aspect's blanket match that would otherwise be lost
   on retirement (RFC-0243), a migration tool can compute the match today and emit one `extend T: A using Name;` per
   (type, aspect) pair — mechanically, since the match itself is unaffected by naming. A match whose aspect fails the
-  by-reference restriction has no bridge here and is flagged for manual follow-up rather than silently dropped.
+  by-reference restriction has no bridge here and is flagged for manual follow-up rather than silently dropped. While
+  this slice is deferred (2026-11-28), v0.17.0 ships no migration tool at all: records are rewritten by hand and a lost
+  match is restored, if wanted, by a handwritten impl (RFC-0243, Migration).
 
 ## Motivation
 
