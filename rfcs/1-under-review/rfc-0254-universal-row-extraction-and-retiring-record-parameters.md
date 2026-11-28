@@ -23,8 +23,8 @@ fun use_row<..R>(value: &.{ R }) where R: Display { … }
 ```
 
 The language owner agreed to universal extraction and retiring record parameters.
-References expose their referents’ public rows. The abstract-row reconciliation
-below remains open before acceptance.
+References expose their referents’ public rows. An abstract type's row is symbolic,
+not empty (language owner, 2026-11-28; Cluster reconciliation below).
 
 ## Motivation
 
@@ -52,17 +52,17 @@ For ordinary structural matching and extraction, the row is module-independent:
 | Function type (`\|A, B\| -> R`, `dyn Callable<..>`) | Empty; never the parameter row (see below) |
 | `Never` | Empty, vacuously: no value exists to have fields |
 | Aspect object (`dyn A`) | Empty; the underlying type is erased, nothing to read statically |
-| Unconstrained type parameter or associated type | Empty unless narrowed by a structural bound, in which case exactly the bound's stated fields and no more |
+| Type parameter or associated type not yet instantiated | Symbolic: an opaque row whose known fields are exactly those its structural bounds state; never equal to any concrete row, including the empty one (Cluster reconciliation below) |
 
 **The classification is total, by one governing principle (language owner, 2026-11-26), not a list of unrelated
 special cases:** a type's extracted row is the maximal set of (label, type) pairs *statically* known, at the point
 of extraction, to be selectable through a value by ordinary field access, including reference
 auto-dereference. Extraction does not look through erasure (a `dyn` object),
 homogeneous indexing (an array or slice), a call signature (a function type), or an
-as-yet-undetermined instantiation (an unconstrained type parameter or associated type) beyond what an explicit
-structural bound states. Every row above, including the categories already agreed, is this one rule applied. No
+as-yet-undetermined instantiation (a type parameter or associated type) beyond what an explicit
+structural bound states; for those the row is symbolic, with the bound's fields as its only known part. Every row above, including the categories already agreed, is this one rule applied. No
 category is excluded from universal extraction — every type has *an* answer, even where that answer is uniformly
-Empty.
+Empty or, for an abstract type, symbolic.
 
 Field-row extraction and structural shape bounds follow the same rule for shared and
 exclusive references (language owner, 2026-11-27). For every `T`, `..&T` and
@@ -103,9 +103,10 @@ opposite of what a module-independent, structural operation is supposed to guara
 **What a generic body knows about an abstract type's row** is the bound's row and nothing more — the same
 parametricity discipline RFC-0146's lower-bounded row receiver already establishes for a residual (a method
 checked against `Self.R` where `R: { fd, .. }` may use only `.fd`, never assuming a specific caller's residual
-happens to have more). An unconstrained type parameter and an associated type with no stated bound are the same
-case under this rule, not two different ones: both are "a type not yet concretely known at this point," so both
-default to Empty until a bound says otherwise.
+happens to have more). A type parameter and an associated type are the same case under this rule, not two
+different ones: both are "a type not yet concretely known at this point," so both extract a symbolic row whose only
+known fields are the ones a bound states. With no bound, nothing is known; that is not the same as knowing the row is
+empty (Cluster reconciliation below).
 
 These categories, now exhaustive, replace the earlier "initial categories are agreed direction; other current and
 future types need classification" framing — this is that classification. Empty means the row contains no fields,
@@ -124,8 +125,9 @@ other public fields. Matching a bound preserves `T` and does not convert its val
 
 An ordinary `T` can occur as a type and `..T` denotes its extracted row. A row-only
 parameter `R` declared by `<..R>` denotes fields directly and is used as `R` in row
-positions, as proposed by RFC-0208. Field-wise bounds over an empty row hold vacuously;
-therefore `where ..T: A` alone does not assert `T: A`. A function using only such a bound
+positions, as proposed by RFC-0208. Field-wise bounds over a *concrete* empty row hold
+vacuously (a primitive, an array, an enum's ordinary row); over a symbolic row nothing holds
+vacuously, and a field-wise bound must be stated. Either way `where ..T: A` alone does not assert `T: A`. A function using only such a bound
 must not invoke an `A` method on `T` itself without a separate `T: A` bound. A negative
 field-wise bound (`where ..T: !A`) is vacuously true over an empty row by the same logic.
 
@@ -263,7 +265,10 @@ the answer:
 
 - **RFC-0208 / RFC-0186:** one row kind and bare row use; this RFC replaces the record
   type-parameter eligibility gate, rather than changing the difference between a type
-  and its extracted row. Explicit arguments and row equations need joint review.
+  and its extracted row. Explicit arguments compose with RFC-0192 as `record R`'s do (open
+  question 5). Row equations are RFC-0208's own open question 2, outside its shared binder
+  slice (metel-core#1789, delivered in the same stage); extraction adds no equation, and a
+  symbolic `..T` enters RFC-0208's algebra only as an opaque input.
 - **RFC-0243 / RFC-0137:** public and present field selection, residual brands and named
   record retirement. Visibility must not depend on the use-site module or reveal private
   fields through remainders, reflection, diagnostics or inferred public interfaces.
@@ -275,7 +280,10 @@ inventories require a separately defined operation. Proposed variant types expos
 - **RFC-0121 / RFC-0060 / RFC-0228:** broader structural eligibility affects generic and
   row-conditional impl domains, coherence, orphan rules and dispatch. Existing active
   anonymous-row blankets must not silently grant aspects to nominal types under the
-  deferred nominal-implementation design. Check primitive, reference and enum domains.
+  deferred nominal-implementation design. Checked (2026-11-28): impl matching never reads
+  the extracted row (section 2a), so primitives, references and enums gain no
+  row-conditional impl from their extracted rows; only anonymous records are candidates
+  in v0.17.0 (RFC-0243).
 - **RFC-0214 / RFC-0217:** nominal row implementations and residual aspect behavior stay open (RFC-0209, their
   own basis, is superseded with no successor yet); extraction and a vacuous field-wise bound do not settle them
   either way.
@@ -299,15 +307,41 @@ remains open in RFC-0210; a generic bound over `..T` must not accidentally be in
 every variant payload. RFC-0208 supplies field-row binders, not yet a variant-inventory
 binder.
 
-The classification above says an unconstrained abstract type's row is empty. That claim
-needs adversarial reconciliation before acceptance: "no fields are statically known" is
-not necessarily proof that the eventual concrete row is exactly empty. For example, an
-unconstrained generic `T` instantiated with a struct having `.id` must not use an
-assumed `..T = ..{}` to satisfy an exact-empty bound or resolve an overload differently
-from the concrete instantiation. A symbolic unknown row with no guaranteed fields is a
-candidate; its equality, field-wise constraints, substitution and separate-compilation
-rules remain to be settled. The enum and primitive cases are concrete empty rows, not
-proof that every abstract type has a concrete empty row.
+**Resolved (language owner, 2026-11-28): an abstract type's extracted row is symbolic, not empty.** For a type
+parameter or an associated type `T` whose instantiation is not yet known, `..T` is an opaque row, written here
+`ρ(T)`. Its known part is exactly the fields its structural bounds state, at their stated types. No other field
+can be selected through it. It is never equal to any concrete row, the empty row included. "No fields are statically
+known" is not proof that the eventual concrete row is empty, so the earlier classification (Empty) is withdrawn.
+
+1. **Bounds are stated, never derived from emptiness.** An exact bound (`T: .{}`, `T: .{ .id: i32 }`) or a
+   field-wise bound (`where ..T: A`) holds for an abstract `T` only when its own bounds state it or imply it.
+   Vacuous truth applies only after substitution, to a concrete empty row.
+2. **Resolution inside a generic body.** A requirement that is not provable from `ρ(T)` is unsatisfied. An
+   overload or bound check never treats it as satisfied by an assumed empty row, so a body cannot pick a
+   candidate that its instantiation would reject.
+3. **Substitution.** At an instantiation `T := U`, `ρ(T)` becomes `..U` as computed by section 1's table. The
+   caller discharges each stated bound against `..U` at the call site; the generic body is checked once,
+   against its declared bounds (RFC-0173), and is not rechecked per instantiation.
+4. **Equality.** Two symbolic rows are equal only when they are the same parameter's row. `ρ(T)` never unifies
+   with a concrete row or with another parameter's row.
+5. **References.** `..&T` and `..&var T` are `ρ(T)` while `T` is abstract (the 2026-11-27 reference rule,
+   section 1, applies unchanged).
+6. **Separate compilation.** `ρ(T)` appears only in the generic's own checked signature and body. A downstream
+   instantiation computes `..U` from `U`'s public declaration, module-independently, so no new hazard arises.
+
+```metel
+struct Point { pub id: i32 }
+fun only_empty<T: .{}>(x: &T) -> i32 { 0 }
+
+fun g<T>(x: &T) -> i32 { only_empty(x) }        // error: `T: .{}` is not stated; ..T is symbolic, not empty
+fun h<T: .{}>(x: &T) -> i32 { only_empty(x) }   // OK: the bound is stated
+
+h(&Point(id = 1));   // error at the call: ..Point is .{ .id: i32 }, not exactly empty
+h(&5);               // OK: ..i32 is the concrete empty row
+```
+
+Under the withdrawn rule, `g` would have type-checked by assuming `..T = .{}` and then been wrong for
+`T = Point`. Enums and primitives are unaffected: their rows are concrete empty rows, not symbolic ones.
 
 ## Open questions
 
@@ -343,6 +377,10 @@ proof that every abstract type has a concrete empty row.
 7. **Resolved (language owner, 2026-11-26), section 3, split in two.** This RFC's own need is small: ordinary
    fixtures for the new syntax, plus one negative fixture for `<record T>`'s retirement. "The deliberate loss of
    automatic nominal row implementations" is RFC-0243's concern (a different declaration kind), not this RFC's.
+
+8. **Resolved (language owner, 2026-11-28), Cluster reconciliation.** An abstract type's extracted row is
+   symbolic, not empty: its known part is its stated bounds, it is never equal to a concrete row, and bounds
+   over it are stated rather than derived. This was the last question blocking acceptance.
 
 ## Decision
 

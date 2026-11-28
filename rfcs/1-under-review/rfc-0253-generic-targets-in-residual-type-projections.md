@@ -3,7 +3,7 @@ id: rfc-0253
 title: "Generic Targets in Residual Type Projections"
 date: '2026-11-25'
 status: under-review
-updated: '2026-11-26'
+updated: '2026-11-28'
 tracking: 'https://github.com/metel-lang/metel-core/issues/2194'
 ---
 
@@ -115,41 +115,82 @@ not viable if the same grammar excludes generic arguments in the projection base
 
 - **RFC-0109 / RFC-0160:** generic transparent view names and alias expansion. Narrowed
   receivers, automatic borrowing, and opaque views are independent and remain under
-  review in RFC-0109, RFC-0251 and RFC-0252.
+  review in RFC-0109, RFC-0251 and RFC-0252. Whether generic named views keep dedicated
+  `view` sugar or use aliases only is RFC-0109's decision (moved there 2026-11-28).
 - **RFC-0137:** preserves the instantiated brand and full-width normalization. Partial
   moves, ownership and `Drop` are not modified.
-- **RFC-0208 / RFC-0192:** row binders, open tails, row literals and explicit arguments
-  require joint grammar and kind checking. This draft does not settle their syntax.
+- **RFC-0208 / RFC-0192:** a row argument in the base (`Session<..R>.{ .id }`) uses
+  RFC-0208's binder, delivered in the same stage (metel-core#1789, #2167). An open tail
+  (`Box<T>.{ .value, ..R }`) follows the existing residual-tail rule unchanged (see open
+  question 3); this RFC adds no row-equation or disjointness rule.
 - **RFC-0211 / RFC-0214 / RFC-0217:** aspect satisfaction of residuals and behavior gained
   on narrowing follow their own rules and open questions; an alias grants no aspect.
-- **RFC-0229:** single-field projection shorthand needs reconciliation with generic bases
-  and associated-item path syntax.
+- **RFC-0229:** the single-field shorthand (`Box<T>.value`) is distinguished from this
+  RFC's form by the token after the dot, `{` or an identifier, so this RFC leaves it free.
+  Reconciling the shorthand with generic bases is RFC-0229's own work.
+- **RFC-0243 / RFC-0254:** structural matching of a generic residual sees its present
+  public fields (RFC-0243 open question 5), and `..Box<T>.{ .value }` extracts the same
+  row (RFC-0254 section 1). A projection naming a private field does not widen either.
+
+## Implementation notes
+
+- **Grammar.** `record_projection_type` and `open_record_projection_type` take a
+  `named_type` base (`type_path` with optional `<type_args>`) instead of a bare
+  `type_path`.
+- **Residual identity.** `InferType::Residual { brand, fields }` carries no type arguments
+  today. It gains the instantiation's arguments (and the brand's `NominalId`), so
+  `Box<String>.{ .value }` and `Box<i32>.{ .value }` stay distinct and unify by brand,
+  then arguments positionally, then fields. Full-width normalization produces
+  `Named(brand, args)`.
+- **Resolution order.** Alias expansion and substitution run before the projection is
+  resolved. Field lookup then uses the substituted field types, and the existing
+  `projections::check` pass reports unknown types, labels and arity.
 
 ## Open questions
 
-1. The initial base is an instantiated nominal path or a transparent alias resolving to
-   one; arbitrary type expressions and associated-type projections are out of scope
-   (language owner, 2026-11-25). The grammar must resolve `Box<T>.{ ... }` without
-   ambiguity with expression comparison and the proposed `Self.field` shorthand.
-2. **Aliases as bases:** expand and substitute before projection, with definition-site
-   name resolution for imported aliases (language owner, 2026-11-25). Nested aliases and
-   interaction with inference still need integration checks.
-3. **Argument kinds:** the base accepts every kind its nominal declaration accepts,
-   including rows, with the existing kind and bound checks (language owner, 2026-11-25).
-   Propagation through aliases and open residual tails across modules needs integration review.
-4. **Privacy:** apply existing visibility rules after expansion and substitution; a
-   chain of aliases cannot expose a private field in a public signature (language owner,
-   2026-11-25). **Disambiguated:** this governs *access* to the field from outside the
-   declaring module, not the alias *declaration* itself — a `pub` alias retaining a
-   private field in its projected row is legal to declare wherever that field is visible
-   (worked example above); only an external access to it is rejected. The implementing
-   phases and diagnostics need integration review.
-5. **Full width:** a projection of every declared field normalizes to the instantiated
-   nominal type, including when some fields are private (language owner, 2026-11-25).
-   Chained projection type syntax is deferred to RFC-0150; associated types and inference
-   still need integration review.
-6. Should generic transparent named views in RFC-0109 use aliases exclusively or retain
-   dedicated sugar? That surface decision is separate from this residual-type capability.
+All resolved; none blocks acceptance.
+
+1. **Resolved (language owner, 2026-11-25; grammar checked 2026-11-28).** The base is an
+   instantiated nominal path or a transparent alias resolving to one; arbitrary type
+   expressions and associated-type projections are out of scope. The grammar has no
+   ambiguity to resolve. Types and expressions parse through separate rules, and the
+   only places a type follows an expression, `as` and `:` ascription, already accept a
+   projection type today (`x as Handle.{ .fd }`), so adding `<args>` to the base creates
+   no new conflict with comparison. The single-field shorthand of RFC-0229
+   (`Box<T>.value`) is told apart by the token after the dot (see Interactions).
+2. **Resolved (language owner, 2026-11-25; nested aliases and inference 2026-11-28).**
+   Expand and substitute before projection, with definition-site name resolution for
+   imported aliases. Nested aliases need no new rule: RFC-0160 already expands
+   recursively, rejects cycles, and resolves turbofish through the expansion. Inference
+   treats a residual's type arguments like a nominal type's: they are part of its
+   identity and unify positionally, so `fun f<T>(v: &Box<T>.{ .value })` called with a
+   projection of a `Box<String>` infers `T = String`.
+3. **Resolved (language owner, 2026-11-25; tails 2026-11-28).** The base accepts every
+   kind its nominal declaration accepts, including rows, with the existing kind and bound
+   checks. Through aliases, a row argument is substituted like any other argument. An open
+   tail over a generic base (`Box<T>.{ .value, ..R }`) follows the existing rule
+   (`spec.types.generics.open-rows.legality-3`) unchanged: it is accepted only as a
+   parameter type, it takes its argument whole, and `R` binds the instantiated row's
+   remaining fields abstractly. What the tail exposes across modules is RFC-0243's rule,
+   not this RFC's: matching sees only public fields.
+4. **Resolved (language owner, 2026-11-25; phase 2026-11-28).** Apply existing visibility
+   rules after expansion and substitution; a chain of aliases cannot expose a private
+   field in a public signature. This governs *access* to the field from outside the
+   declaring module, not the alias *declaration* itself (worked example above). The
+   check runs after expansion, in the existing visibility rules
+   (`spec.modules.visibility.legality-3`, `legality-8`), with their existing diagnostics
+   and no new error code.
+5. **Resolved (language owner, 2026-11-25; 2026-11-28).** A projection of every declared
+   field normalizes to the instantiated nominal type, including when some fields are
+   private. Full width counts the declaration's fields, which do not depend on the type
+   arguments, so it is decided before substitution. Associated types may appear as type
+   arguments (`Box<I::Item>.{ .value }`) and substitute like any other argument; as a base
+   they are out of scope (question 1). Chained projection type syntax is deferred to
+   RFC-0150.
+
+Former open question 6 (whether generic named views use aliases only or keep `view`
+sugar) is a surface decision separate from this capability. It moved to RFC-0109 on
+2026-11-28.
 
 ## Decision
 
