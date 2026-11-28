@@ -372,10 +372,9 @@ section is deleted.
 
 **Lost blanket matches (decided 2026-11-25, no bridge in v0.17.0 since 2026-11-28).** A `record` whose row matched a
 plain aspect's blanket row-conditional impl loses that implementation when it becomes a struct, and v0.17.0 offers no
-grant to restore it (RFC-0250 section 0 is deferred). The migration tool computes each such (type, aspect) match before
-rewriting and reports it rather than dropping it silently. The author restores the behavior with a handwritten
-`extend X: A { … }`, or leaves it lost. Once a grant mechanism ships, the same report is the list of one-line
-`using` grants to write. Anonymous records are unaffected: they keep matching blanket impls automatically. Under O4 a record becomes `struct … derives Exposed`. `Copy` is already `declared` (RFC-0212), so any type —
+grant to restore it (RFC-0250 section 0 is deferred). v0.17.0 ships no migration tool (language owner, 2026-11-28):
+the rewrite is done by hand, and the loss is a documented breaking change in the release notes. The author restores
+the behavior with a handwritten `extend X: A { … }`, or leaves it lost. Anonymous records are unaffected: they keep matching blanket impls automatically. Under O4 a record becomes `struct … derives Exposed`. `Copy` is already `declared` (RFC-0212), so any type —
 record or struct — already needs a header entry (`derives Clone`/`copy struct`) for it today, independent of this RFC; a migrated
 record needing the same entry is nothing new. Existing structs start satisfying bounds under O2 and O3; under O1
 and O4 they do not.
@@ -469,8 +468,8 @@ a question this RFC needs to carry.
 ## Implementation notes
 
 Not started. v0.17.0 (stage "Row visibility and named records", metel-core#2138) ships two things: the public-row bounds
-rule, and retiring the `record` declaration kind with RFC-0137 section 3 and the spec chapter amended. The migration tool
-reports each lost blanket match (see Migration), and T0012 stops advising "declare it as a record". Deferred
+rule, and retiring the `record` declaration kind with RFC-0137 section 3 and the spec chapter amended. No migration tool
+ships (see Migration), and T0012 stops advising "declare it as a record". Deferred
 (2026-11-28): RFC-0250 section 0's named `using` form, and any other row-based implementation for a nominal type. Later,
 in no fixed order: the colon-list `satisfying` entry (RFC-0202 section 6); RFC-0250; then opaque views after
 reference rules and borrow checking (RFC-0122), as a user of RFC-0241's place algebra; then label namespacing if wanted.

@@ -71,8 +71,8 @@ impl of `A`.
   on retirement (RFC-0243), a migration tool can compute the match today and emit one `extend T: A using Name;` per
   (type, aspect) pair — mechanically, since the match itself is unaffected by naming. A match whose aspect fails the
   by-reference restriction has no bridge here and is flagged for manual follow-up rather than silently dropped. While
-  this slice is deferred (2026-11-28), the v0.17.0 migration emits no grants: it reports every lost match the same way,
-  and the report becomes the list of grants to write once this slice ships (RFC-0243, Migration).
+  this slice is deferred (2026-11-28), v0.17.0 ships no migration tool at all: records are rewritten by hand and a lost
+  match is restored, if wanted, by a handwritten impl (RFC-0243, Migration).
 
 ## Motivation
 
